@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-// These paths assume your components are in src/components/...
-import NoomaVisualizer from './components/nooma/NoomaVisualizer';
-import AblinqAuditDesk from './components/ablinq/AblinqAuditDesk';
+// Strictly lowercase paths to match your folder structure
+import CitySelector from './components/nooma/cityselector';
+import AblinqAuditDesk from './components/ablinq/ablinqauditdesk';
 
 function App() {
-  const [mode, setMode] = useState('vision'); // 'vision' = Nooma, 'audit' = Ablinq
+  const [mode, setMode] = useState('vision');
 
   return (
     <div style={{ 
@@ -13,7 +13,7 @@ function App() {
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden' // Keeps the Truth Engine contained
+      overflow: 'hidden' 
     }}>
       
       {/* GLOBAL TRUTH ENGINE NAV */}
@@ -26,7 +26,7 @@ function App() {
         fontFamily: 'monospace',
         fontSize: '0.8rem',
         letterSpacing: '1px',
-        zIndex: 1000, // Ensures nav stays above the Canvas
+        zIndex: 1000, 
         backgroundColor: 'black'
       }}>
         <div style={{ fontWeight: 'bold' }}>KRYLO // {mode.toUpperCase()}</div>
@@ -67,7 +67,7 @@ function App() {
       {/* VIEWPORT AREA */}
       <main style={{ flexGrow: 1, position: 'relative', width: '100%' }}>
         {mode === 'vision' ? (
-          <NoomaVisualizer />
+          <CitySelector />
         ) : (
           <AblinqAuditDesk />
         )}
