@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 // These now match your screenshot's lowercase filenames exactly
-import CitySelector from './components/nooma/cityselector';
-import AblinqAuditDesk from './components/ablinq/ablinquauditdesk';
+import CitySelector from './components/nooma/cityselector.jsx';
+import AblinqAuditDesk from './components/ablinq/ablinqauditdesk.jsx';
 
 function App() {
   const [mode, setMode] = useState('vision');
