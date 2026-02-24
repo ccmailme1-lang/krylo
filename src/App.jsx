@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-// Strictly lowercase paths to match your folder structure
+// These now match your screenshot's lowercase filenames exactly
 import CitySelector from './components/nooma/cityselector';
-import AblinqAuditDesk from './components/ablinq/ablinqauditdesk';
+import AblinqAuditDesk from './components/ablinq/ablinquauditdesk';
 
 function App() {
   const [mode, setMode] = useState('vision');
@@ -64,7 +64,6 @@ function App() {
         </div>
       </nav>
 
-      {/* VIEWPORT AREA */}
       <main style={{ flexGrow: 1, position: 'relative', width: '100%' }}>
         {mode === 'vision' ? (
           <CitySelector />
@@ -72,7 +71,6 @@ function App() {
           <AblinqAuditDesk />
         )}
       </main>
-
     </div>
   );
 }
