@@ -2,9 +2,16 @@ import React, { useState } from 'react';
 // These now match your screenshot's lowercase filenames exactly
 import CitySelector from './components/nooma/cityselector.jsx';
 import AblinqAuditDesk from './components/ablinq/ablinqauditdesk.jsx';
+import healthcheck from './components/audit/healthcheck.jsx';
+
+const HealthCheck = healthcheck;
 
 function App() {
-  const [mode, setMode] = useState('vision');
+  const [mode, setMode] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('health') || window.location.pathname === '/health') return 'health';
+    return 'vision';
+  });
 
   return (
     <div style={{ 
@@ -65,11 +72,9 @@ function App() {
       </nav>
 
       <main style={{ flexGrow: 1, position: 'relative', width: '100%' }}>
-        {mode === 'vision' ? (
-          <CitySelector />
-        ) : (
-          <AblinqAuditDesk />
-        )}
+        {mode === 'health' && <HealthCheck />}
+        {mode === 'vision' && <CitySelector />}
+        {mode === 'audit' && <AblinqAuditDesk />}
       </main>
     </div>
   );
