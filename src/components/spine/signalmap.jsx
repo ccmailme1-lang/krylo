@@ -1,10 +1,11 @@
 // src/components/spine/signalmap.jsx
-// WO-248 — Kinetic Signal Map: InstancedMesh, Friction Matrix shaders, GPU disposal
-// Four Golden Pillars: InstancedMesh, Shader Normalization, Frustum Culling, Geometry Disposal
+// WO-248 — InstancedMesh, Friction Matrix shaders, GPU disposal
+// WO-232 — Tracking Listener: camera intelligence, edge intelligence, contamination field
+// WO-233 — Friction Record: surface fracture, crystallization, heat dissipation
 // Location: src/components/spine/signalmap.jsx
 
-import React, { useRef, useMemo, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -12,34 +13,41 @@ const MAX_NODES = 512;
 const FIELD_COUNT = 40;
 const BOUNDS = 8;
 
-// ── Friction Matrix Shaders ───────────────────────────────────────────────────
+// ── Friction Matrix Shaders v2 ────────────────────────────────────────────────
 const VERT = /* glsl */`
   uniform float uTime;
-  uniform float uFidelity;
-  uniform float uStress;
 
-  attribute vec3  aOffset;
   attribute float aFidelity;
   attribute float aStress;
   attribute float aPhase;
   attribute float aScale;
+  attribute float aIsStub;
 
   varying float vFidelity;
+  varying float vStress;
   varying vec3  vNormal;
 
   void main() {
     vFidelity = aFidelity;
+    vStress   = aStress;
     vNormal   = normalize(normalMatrix * normal);
 
-    // Surface deformation — low fidelity = high turbulence
     float cohesion = 1.0 - aFidelity;
-    float noise    = sin(position.x * 6.0 + uTime + aPhase)
-                   * cos(position.y * 6.0 + uTime)
-                   * sin(position.z * 6.0 + uTime - aPhase);
+
+    // Surface noise — low fidelity = high turbulence
+    float noise = sin(position.x * 6.0 + uTime + aPhase)
+                * cos(position.y * 6.0 + uTime)
+                * sin(position.z * 6.0 + uTime - aPhase);
+
+    // Viral contamination — drives surface fracture
     float viral    = aStress * sin(uTime * (2.0 + aStress * 12.0));
+    float fracture = aStress * sin(uTime * (3.0 + aStress * 18.0)) * cohesion * 0.25;
+
+    // Crystallization — high fidelity locks geometry
+    float crystal  = aFidelity * 0.04 * sin(uTime * 0.8 + aPhase);
 
     vec3 displaced = position
-      + normal * (noise * cohesion * 0.18 + viral * 0.09);
+      + normal * (noise * cohesion * 0.18 + viral * 0.09 + fracture + crystal);
 
     vec4 world = instanceMatrix * vec4(displaced * aScale, 1.0);
     gl_Position = projectionMatrix * modelViewMatrix * world;
@@ -47,14 +55,17 @@ const VERT = /* glsl */`
 `;
 
 const FRAG = /* glsl */`
+  uniform float uTime;
+
   varying float vFidelity;
+  varying float vStress;
   varying vec3  vNormal;
 
   void main() {
     // HARDENED ≥0.70 → cold white | WATCH 0.40–0.69 → signal blue | CALM <0.40 → amber
-    vec3 coldWhite  = vec3(0.91, 0.957, 1.0);
-    vec3 signalBlue = vec3(0.0,  0.588, 1.0);
-    vec3 amber      = vec3(0.961,0.651, 0.137);
+    vec3 coldWhite  = vec3(0.91,  0.957, 1.0);
+    vec3 signalBlue = vec3(0.0,   0.588, 1.0);
+    vec3 amber      = vec3(0.961, 0.651, 0.137);
 
     vec3 color;
     if (vFidelity >= 0.70) {
@@ -65,15 +76,23 @@ const FRAG = /* glsl */`
       color = amber;
     }
 
-    float rim   = pow(1.0 - dot(normalize(vNormal), vec3(0.0,0.0,1.0)), 2.0);
-    color      += rim * vFidelity * 0.35;
-    float alpha = 0.55 + vFidelity * 0.45;
+    // Contamination heat — high stress bleeds amber into any color
+    color = mix(color, amber, vStress * 0.45);
 
+    // Rim lighting — crystalline nodes get stronger rim
+    float rim  = pow(1.0 - dot(normalize(vNormal), vec3(0.0, 0.0, 1.0)), 2.0);
+    color     += rim * vFidelity * 0.4;
+
+    // Heat shimmer on contaminated nodes
+    float shimmer = vStress * sin(uTime * 8.0) * 0.08;
+    color        += vec3(shimmer, shimmer * 0.3, 0.0);
+
+    float alpha = 0.55 + vFidelity * 0.45;
     gl_FragColor = vec4(color, alpha);
   }
 `;
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function clamp01(x) {
   const n = Number.isFinite(x) ? x : 0;
   return Math.min(1, Math.max(0, n));
@@ -85,56 +104,156 @@ function lcg(seed) {
   return (s & 0xffffff) / 0x1000000;
 }
 
+function sentimentLabel(fs) {
+  if (fs >= 0.80) return 'Confirmed';
+  if (fs >= 0.60) return 'Aligned';
+  if (fs >= 0.40) return 'Mixed';
+  if (fs >= 0.20) return 'Weak';
+  return 'Contested';
+}
+
+function velocityLabel(eViral) {
+  if (eViral >= 0.80) return 'Surging';
+  if (eViral >= 0.60) return 'Rising';
+  if (eViral >= 0.40) return 'Stable';
+  if (eViral >= 0.20) return 'Cooling';
+  return 'Dormant';
+}
+
+function contaminationLabel(eViral) {
+  if (eViral >= 0.80) return 'Critical';
+  if (eViral >= 0.60) return 'High';
+  if (eViral >= 0.40) return 'Moderate';
+  if (eViral >= 0.20) return 'Low';
+  return 'Clean';
+}
+
+// ── Hover Card ────────────────────────────────────────────────────────────────
+function HoverCard({ node }) {
+  const accent = '#0096ff';
+  const contColor = node.eViral >= 0.6 ? '#F5A623' : node.eViral >= 0.4 ? '#aaa' : '#00b894';
+  return (
+    <Html position={[0, node.scale + 0.5, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
+      <div style={{
+        fontFamily: 'IBM Plex Mono, monospace',
+        fontSize: '10px',
+        background: 'rgba(5,7,10,0.92)',
+        borderRadius: '8px',
+        padding: '10px 14px',
+        width: '200px',
+        border: `1px solid ${accent}33`,
+        color: 'rgba(232,244,255,0.9)',
+        boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
+        letterSpacing: '0.05em',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <span style={{ fontWeight: 'bold', color: accent, fontSize: '11px' }}>{node.id}</span>
+          <span style={{ color: 'rgba(232,244,255,0.4)', fontSize: '9px' }}>Fs {node.fs.toFixed(2)}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px' }}>
+          <span style={{ opacity: 0.5, fontSize: '9px' }}>sentiment</span>
+          <span style={{ fontSize: '9px', color: node.fs >= 0.7 ? '#00b894' : accent }}>{sentimentLabel(node.fs)}</span>
+          <span style={{ opacity: 0.5, fontSize: '9px' }}>velocity</span>
+          <span style={{ fontSize: '9px' }}>{velocityLabel(node.eViral)}</span>
+          <span style={{ opacity: 0.5, fontSize: '9px' }}>contamination</span>
+          <span style={{ fontSize: '9px', color: contColor }}>{contaminationLabel(node.eViral)}</span>
+        </div>
+      </div>
+    </Html>
+  );
+}
+
+// ── ETR Label ────────────────────────────────────────────────────────────────
+function ETRLabel({ node, hovered }) {
+  return (
+    <Html position={[0, node.scale + 0.18, 0]} center distanceFactor={14} style={{ pointerEvents: 'none' }}>
+      <div style={{
+        fontFamily: 'IBM Plex Mono, monospace',
+        fontSize: '8px',
+        color: `rgba(100,160,255,${hovered ? 0.95 : 0.4})`,
+        letterSpacing: '0.12em',
+        transition: 'opacity 0.2s',
+        whiteSpace: 'nowrap',
+        textTransform: 'uppercase',
+      }}>
+        {node.id}
+      </div>
+    </Html>
+  );
+}
+
+// ── Camera Intelligence ───────────────────────────────────────────────────────
+function CameraController({ primaryNodes, orbitRef }) {
+  const { camera } = useThree();
+  const targetRef  = useRef(new THREE.Vector3(0, 0, 16));
+  const doneRef    = useRef(false);
+
+  useEffect(() => {
+    if (!primaryNodes.length) return;
+    // Find centroid of highest Fs cluster (top 50%)
+    const sorted  = [...primaryNodes].sort((a, b) => b.fs - a.fs);
+    const top     = sorted.slice(0, Math.max(1, Math.floor(sorted.length * 0.5)));
+    const centroid = top.reduce((acc, n) => acc.add(n.pos), new THREE.Vector3())
+      .divideScalar(top.length);
+    targetRef.current.set(centroid.x * 0.25, centroid.y * 0.25, 16);
+    doneRef.current = false;
+  }, [primaryNodes]);
+
+  useFrame(() => {
+    if (doneRef.current) return;
+    camera.position.lerp(targetRef.current, 0.004);
+    if (camera.position.distanceTo(targetRef.current) < 0.05) doneRef.current = true;
+  });
+
+  return null;
+}
+
 // ── Scene ─────────────────────────────────────────────────────────────────────
 function Scene({ signals }) {
-  const meshRef    = useRef(null);
-  const matRef     = useRef(null);
-  const stateRef   = useRef([]);
+  const meshRef  = useRef(null);
+  const matRef   = useRef(null);
+  const stateRef = useRef([]);
+  const orbitRef = useRef(null);
+  const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  // Build per-instance data once
-  const { geometry, material, edges } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
-    // Per-instance attributes
-    const offsets    = new Float32Array(MAX_NODES * 3);
     const fidelities = new Float32Array(MAX_NODES);
     const stresses   = new Float32Array(MAX_NODES);
     const phases     = new Float32Array(MAX_NODES);
     const scales     = new Float32Array(MAX_NODES);
+    const isStubs    = new Float32Array(MAX_NODES);
 
-    const state = [];
+    const state    = [];
     const primaries = [];
 
-    // Primary nodes — from ETR signals
     signals.forEach((sig, i) => {
-      const fs      = clamp01(sig.fs ?? (sig.strength ?? 1) / 5);
-      const eViral  = clamp01(sig.fidelity?.e_viral ?? 0);
-      const r       = lcg(i);
-      const phi     = i * 2.399963;
-      const radius  = Math.sqrt(i / Math.max(signals.length, 1)) * BOUNDS * 0.65;
+      const fs     = clamp01(sig.fs ?? (sig.strength ?? 1) / 5);
+      const eViral = clamp01(sig.fidelity?.e_viral ?? 0);
+      const phi    = i * 2.399963;
+      const rad    = Math.sqrt(i / Math.max(signals.length, 1)) * BOUNDS * 0.65;
+      const scale  = 0.28 + fs * 0.52;
 
       const pos = new THREE.Vector3(
-        Math.cos(phi) * radius + (lcg(i * 3 + 1) * 2 - 1) * 1.5,
+        Math.cos(phi) * rad + (lcg(i * 3 + 1) * 2 - 1) * 1.5,
         (lcg(i * 3 + 2) * 2 - 1) * BOUNDS * 0.45,
-        Math.sin(phi) * radius * 0.5 + (lcg(i * 3 + 3) * 2 - 1) * 1.0
+        Math.sin(phi) * rad * 0.5 + (lcg(i * 3 + 3) * 2 - 1) * 1.0
       );
       const vel = new THREE.Vector3(
-        (lcg(i * 7 + 1) * 2 - 1) * 0.01,
-        (lcg(i * 7 + 2) * 2 - 1) * 0.007,
-        (lcg(i * 7 + 3) * 2 - 1) * 0.005
+        (lcg(i * 7 + 1) * 2 - 1) * 0.008,
+        (lcg(i * 7 + 2) * 2 - 1) * 0.006,
+        (lcg(i * 7 + 3) * 2 - 1) * 0.004
       );
-      const scale = 0.28 + fs * 0.42;
 
-      offsets[i * 3]     = pos.x;
-      offsets[i * 3 + 1] = pos.y;
-      offsets[i * 3 + 2] = pos.z;
-      fidelities[i]      = fs;
-      stresses[i]        = eViral;
-      phases[i]          = r * Math.PI * 2;
-      scales[i]          = scale;
+      fidelities[i] = fs;
+      stresses[i]   = eViral;
+      phases[i]     = lcg(i) * Math.PI * 2;
+      scales[i]     = scale;
+      isStubs[i]    = sig._isStub ? 1.0 : 0.0;
 
-      state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 2.5, primary: true, index: i });
-      primaries.push({ pos: pos.clone(), id: sig.id ?? `etr-${i}`, fs, sig });
+      state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 3.0, primary: true, index: i });
+      primaries.push({ pos: pos.clone(), id: sig.id ?? `ETR-${String(i+1).padStart(3,'0')}`, fs, eViral, scale, index: i });
     });
 
     // Field nodes
@@ -144,63 +263,66 @@ function Scene({ signals }) {
       const r2  = Math.sqrt(j / FIELD_COUNT) * BOUNDS;
       const pos = new THREE.Vector3(
         Math.cos(phi) * r2,
-        (lcg(j * 5 + 4) * 2 - 1) * BOUNDS * 0.6,
+        (lcg(j * 5 + 4) * 2 - 1) * BOUNDS * 0.7,
         Math.sin(phi) * r2 * 0.4
       );
-      const vel = new THREE.Vector3(
-        (lcg(j * 11 + 1) * 2 - 1) * 0.02,
-        (lcg(j * 11 + 2) * 2 - 1) * 0.015,
-        (lcg(j * 11 + 3) * 2 - 1) * 0.01
-      );
 
-      offsets[i * 3]     = pos.x;
-      offsets[i * 3 + 1] = pos.y;
-      offsets[i * 3 + 2] = pos.z;
-      fidelities[i]      = 0.15;
-      stresses[i]        = 0.05;
-      phases[i]          = lcg(j * 3) * Math.PI * 2;
-      scales[i]          = 0.06;
+      fidelities[i] = 0.15;
+      stresses[i]   = 0.05;
+      phases[i]     = lcg(j * 3) * Math.PI * 2;
+      scales[i]     = 0.06;
+      isStubs[i]    = 0.0;
 
-      state.push({ pos: pos.clone(), vel, speedScale: 1, primary: false, index: i });
+      state.push({
+        pos: pos.clone(),
+        vel: new THREE.Vector3(
+          (lcg(j * 11 + 1) * 2 - 1) * 0.018,
+          (lcg(j * 11 + 2) * 2 - 1) * 0.012,
+          (lcg(j * 11 + 3) * 2 - 1) * 0.009
+        ),
+        speedScale: 1,
+        primary: false,
+        index: i
+      });
     }
 
-    geo.setAttribute('aOffset',   new THREE.InstancedBufferAttribute(offsets,    3));
     geo.setAttribute('aFidelity', new THREE.InstancedBufferAttribute(fidelities, 1));
     geo.setAttribute('aStress',   new THREE.InstancedBufferAttribute(stresses,   1));
     geo.setAttribute('aPhase',    new THREE.InstancedBufferAttribute(phases,     1));
     geo.setAttribute('aScale',    new THREE.InstancedBufferAttribute(scales,     1));
+    geo.setAttribute('aIsStub',   new THREE.InstancedBufferAttribute(isStubs,    1));
 
     const mat = new THREE.ShaderMaterial({
       vertexShader:   VERT,
       fragmentShader: FRAG,
       transparent:    true,
       depthWrite:     false,
-      uniforms: {
-        uTime:     { value: 0 },
-        uFidelity: { value: 0.5 },
-        uStress:   { value: 0 },
-      },
+      uniforms: { uTime: { value: 0 } },
     });
 
-    // Build edges between primary nodes
+    // Edge intelligence — opacity and width driven by avg Fs of connected nodes
     const edgeList = [];
     for (let a = 0; a < primaries.length; a++) {
       for (let b = a + 1; b < primaries.length; b++) {
-        if (primaries[a].pos.distanceTo(primaries[b].pos) < BOUNDS * 1.2) {
+        if (primaries[a].pos.distanceTo(primaries[b].pos) < BOUNDS * 1.3) {
+          const avgFs = (primaries[a].fs + primaries[b].fs) / 2;
           edgeList.push({
-            key: `e-${a}-${b}`,
-            start: primaries[a].pos.clone(),
-            end:   primaries[b].pos.clone(),
+            key:     `e-${a}-${b}`,
+            start:   primaries[a].pos.clone(),
+            end:     primaries[b].pos.clone(),
+            opacity: 0.08 + avgFs * 0.35,
+            width:   0.3 + avgFs * 0.8,
+            color:   avgFs >= 0.7 ? '#9dd0ff' : avgFs >= 0.4 ? '#0096FF' : '#F5A623',
           });
         }
       }
     }
 
     stateRef.current = state;
-    return { geometry: geo, material: mat, instanceData: { count: state.length }, primaryNodes: primaries, edges: edgeList };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, totalCount: state.length };
   }, [signals]);
 
-  // Pillar 4 — GPU disposal on unmount
+  // Pillar 4 — GPU disposal
   useEffect(() => {
     matRef.current = material;
     return () => {
@@ -211,16 +333,26 @@ function Scene({ signals }) {
 
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
+  // Average e_viral for contamination field speed
+  const avgViral = useMemo(() => {
+    if (!primaryNodes.length) return 0;
+    return primaryNodes.reduce((acc, n) => acc + n.eViral, 0) / primaryNodes.length;
+  }, [primaryNodes]);
+
   useFrame(({ clock }, dt) => {
     const m = matRef.current ?? material;
-    const t = clock.getElapsedTime();
-    m.uniforms.uTime.value = t;
+    m.uniforms.uTime.value = clock.getElapsedTime();
 
     const mesh = meshRef.current;
     if (!mesh) return;
 
     stateRef.current.forEach((node) => {
-      node.pos.addScaledVector(node.vel, dt * node.speedScale * 60);
+      // Contamination field — field nodes near high viral primary nodes accelerate
+      const speed = node.primary
+        ? node.speedScale
+        : 1 + avgViral * 2.5;
+
+      node.pos.addScaledVector(node.vel, dt * speed * 60);
 
       const b = node.primary ? BOUNDS * 0.8 : BOUNDS;
       if (Math.abs(node.pos.x) > b) node.vel.x *= -1;
@@ -235,39 +367,72 @@ function Scene({ signals }) {
     mesh.instanceMatrix.needsUpdate = true;
   });
 
-  const totalCount = signals.length + FIELD_COUNT;
-
   return (
     <>
-      {/* Pillar 1 — Single InstancedMesh draw call */}
+      <CameraController primaryNodes={primaryNodes} orbitRef={orbitRef} />
+
+      {/* Pillar 1 — Single InstancedMesh */}
       <instancedMesh
         ref={meshRef}
         args={[geometry, material, totalCount]}
         frustumCulled={true}
       />
 
+      {/* Primary node overlays — hover cards + ETR labels */}
+      {primaryNodes.map((node, i) => {
+        const state = stateRef.current[i];
+        if (!state) return null;
+        return (
+          <group key={node.id} position={state.pos}>
+            {/* Invisible hit sphere for pointer events */}
+            <mesh
+              onPointerOver={e => { e.stopPropagation(); setHoveredIdx(i); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={e => { e.stopPropagation(); setHoveredIdx(null); document.body.style.cursor = 'auto'; }}
+            >
+              <sphereGeometry args={[node.scale * 1.4, 16, 16]} />
+              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+            </mesh>
+            <ETRLabel node={node} hovered={hoveredIdx === i} />
+            {hoveredIdx === i && <HoverCard node={node} />}
+          </group>
+        );
+      })}
+
+      {/* Edge intelligence */}
       {edges.map(e => (
         <Line
           key={e.key}
           points={[e.start, e.end]}
-          color="#0096FF"
-          lineWidth={0.4}
+          color={e.color}
+          lineWidth={e.width}
           transparent
-          opacity={0.2}
+          opacity={e.opacity}
         />
       ))}
 
-      {/* Node count label */}
+      {/* Node count */}
       <Html position={[-BOUNDS * 0.9, -BOUNDS * 0.65, 0]} style={{ pointerEvents: 'none' }}>
         <div style={{
           fontFamily: 'IBM Plex Mono, monospace',
           fontSize: '10px',
-          color: 'rgba(100,160,255,0.45)',
+          color: 'rgba(100,160,255,0.4)',
           letterSpacing: '0.1em',
         }}>
           nodes: {totalCount}
         </div>
       </Html>
+
+      <OrbitControls
+        ref={orbitRef}
+        enableDamping
+        enablePan={false}
+        dampingFactor={0.08}
+        rotateSpeed={0.5}
+        minDistance={6}
+        maxDistance={22}
+        autoRotate
+        autoRotateSpeed={0.2}
+      />
     </>
   );
 }
@@ -300,16 +465,6 @@ export default function SignalMap({ data, signalMapData }) {
         <ambientLight intensity={0.25} />
         <directionalLight position={[10, 10, 5]} intensity={0.4} />
         <Scene signals={signals} />
-        <OrbitControls
-          enableDamping
-          enablePan={false}
-          dampingFactor={0.08}
-          rotateSpeed={0.5}
-          minDistance={6}
-          maxDistance={22}
-          autoRotate
-          autoRotateSpeed={0.2}
-        />
       </Canvas>
     </div>
   );
