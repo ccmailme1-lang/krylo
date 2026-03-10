@@ -7,6 +7,7 @@
 // KRYL-310 — Edge pulse: staggered 0.8Hz sine per edge, opacity 0.3–0.7
 // KRYL-322 — Forensic halo: shader ring around HARDENED nodes, #EAEAEF, 0.15 opacity, 1.4× radius
 // KRYL-243 — ALERT state: Fs ≥ 0.844 → pulse intensifies, edges amber, node glow increases
+// KRYL-274 — 0.844 threshold: 3s hysteresis gate → CONFIRMED state + ALERT cascade + console audit
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -337,7 +338,7 @@ function Scene({ signals, alertRef }) {
       scales[i]     = scale;
       isStubs[i]    = sig._isStub ? 1.0 : 0.0;
 
-      state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 3.0, primary: true, index: i });
+      state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 3.0, primary: true, index: i, crossTime: null, confirmed: false });
       primaries.push({ pos: pos.clone(), id: sig.id ?? `ETR-${String(i+1).padStart(3,'0')}`, fs, eViral, scale, index: i });
     });
 
@@ -455,6 +456,27 @@ function Scene({ signals, alertRef }) {
     });
 
     mesh.instanceMatrix.needsUpdate = true;
+
+    // KRYL-274 — 0.844 hysteresis gate: 3s hold → CONFIRMED + ALERT cascade
+    const elapsed = clock.getElapsedTime();
+    stateRef.current.forEach((node) => {
+      if (!node.primary) return;
+      const sig = signals[node.index];
+      if (!sig) return;
+      const fs = Math.min(1, Math.max(0, sig.fs ?? (sig.strength ?? 1) / 5));
+      if (fs >= 0.844) {
+        if (node.crossTime === null) {
+          node.crossTime = elapsed;
+        } else if (!node.confirmed && (elapsed - node.crossTime) >= 3.0) {
+          node.confirmed = true;
+          if (alertRef) alertRef.current = true;
+          console.log(`[KRYL-274] CONFIRMED: ${sig.id ?? 'node-' + node.index} Fs=${fs.toFixed(3)} held ≥0.844 for 3s — ALERT cascade triggered`);
+        }
+      } else {
+        node.crossTime = null;
+        node.confirmed = false;
+      }
+    });
   });
 
   return (
