@@ -2,6 +2,7 @@
 // WO-248 — InstancedMesh, Friction Matrix shaders, GPU disposal
 // WO-232 — Tracking Listener: camera intelligence, edge intelligence, contamination field
 // WO-233 — Friction Record: surface fracture, crystallization, heat dissipation
+// KRYL-311 — Logarithmic node size: radius = baseRadius * (1 + log10(1 + Fs * 9))
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -233,7 +234,7 @@ function Scene({ signals }) {
       const eViral = clamp01(sig.fidelity?.e_viral ?? 0);
       const phi    = i * 2.399963;
       const rad    = Math.sqrt(i / Math.max(signals.length, 1)) * BOUNDS * 0.65;
-      const scale  = 0.28 + fs * 0.52;
+      const scale  = 0.28 * (1 + Math.log10(1 + fs * 9));
 
       const pos = new THREE.Vector3(
         Math.cos(phi) * rad + (lcg(i * 3 + 1) * 2 - 1) * 1.5,
