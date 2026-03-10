@@ -5,6 +5,7 @@
 // KRYL-311 — Logarithmic node size: radius = baseRadius * (1 + log10(1 + Fs * 9))
 // KRYL-235 — Atmospheric pulse: 4.4Hz sine wave, background opacity 0.02–0.05
 // KRYL-310 — Edge pulse: staggered 0.8Hz sine per edge, opacity 0.3–0.7
+// KRYL-322 — Forensic halo: shader ring around HARDENED nodes, #EAEAEF, 0.15 opacity, 1.4× radius
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -92,6 +93,18 @@ const FRAG = /* glsl */`
 
     float alpha = 0.55 + vFidelity * 0.45;
     gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+// ── Forensic Halo Shaders (KRYL-322) ─────────────────────────────────────────
+const HALO_VERT = /* glsl */`
+  void main() {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const HALO_FRAG = /* glsl */`
+  void main() {
+    gl_FragColor = vec4(0.918, 0.918, 0.937, 0.15);
   }
 `;
 
@@ -207,6 +220,44 @@ function PulsedEdge({ edge, idx }) {
   );
 }
 
+// ── Forensic Halo (KRYL-322) ──────────────────────────────────────────────────
+function HaloMesh({ hardenedNodes, stateRef }) {
+  const meshRef  = useRef();
+  const { camera } = useThree();
+  const dummy    = useMemo(() => new THREE.Object3D(), []);
+  const count    = hardenedNodes.length;
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader:   HALO_VERT,
+    fragmentShader: HALO_FRAG,
+    transparent:    true,
+    depthWrite:     false,
+    side:           THREE.DoubleSide,
+  }), []);
+  useEffect(() => () => material.dispose(), [material]);
+  useFrame(() => {
+    const mesh = meshRef.current;
+    if (!mesh || !count) return;
+    hardenedNodes.forEach((node, i) => {
+      const state = stateRef.current[node.index];
+      if (!state) return;
+      dummy.position.copy(state.pos);
+      dummy.scale.setScalar(node.scale * 1.4);
+      dummy.quaternion.copy(camera.quaternion);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    });
+    mesh.count = count;
+    mesh.instanceMatrix.needsUpdate = true;
+  });
+  if (!count) return null;
+  return (
+    <instancedMesh ref={meshRef} args={[null, null, Math.max(1, count)]} frustumCulled={false}>
+      <ringGeometry args={[0.9, 1.0, 64]} />
+      <primitive object={material} attach="material" />
+    </instancedMesh>
+  );
+}
+
 // ── Camera Intelligence ───────────────────────────────────────────────────────
 function CameraController({ primaryNodes, orbitRef }) {
   const { camera } = useThree();
@@ -241,7 +292,7 @@ function Scene({ signals }) {
   const orbitRef = useRef(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  const { geometry, material, primaryNodes, edges, totalCount } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, hardenedNodes, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
     const fidelities = new Float32Array(MAX_NODES);
@@ -343,8 +394,10 @@ function Scene({ signals }) {
       }
     }
 
+    const hardenedNodes = primaries.filter(n => n.fs >= 0.70);
+
     stateRef.current = state;
-    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, totalCount: state.length };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, hardenedNodes, totalCount: state.length };
   }, [signals]);
 
   // Pillar 4 — GPU disposal
@@ -422,6 +475,9 @@ function Scene({ signals }) {
           </group>
         );
       })}
+
+      {/* Forensic halo — KRYL-322 */}
+      <HaloMesh hardenedNodes={hardenedNodes} stateRef={stateRef} />
 
       {/* Edge intelligence — KRYL-310 pulsed */}
       {edges.map((e, i) => (
