@@ -5,6 +5,25 @@
 // Location: src/components/audit/healthcheck.jsx
 
 import React, { useState, useCallback } from 'react';
+import { evaluateThresholds, THRESHOLD_COLORS } from '../../engine/thresholdevaluator.js';
+
+function checkThresholdColor(id, detail) {
+  if (id === 'heartbeat') {
+    const m = detail?.match(/^([\d.]+)/);
+    if (m) {
+      const band = evaluateThresholds({ heartbeat: parseFloat(m[1]) }).heartbeat;
+      return THRESHOLD_COLORS[band];
+    }
+  }
+  if (id === 'reaction') {
+    const m = detail?.match(/^(\d+)ms/);
+    if (m) {
+      const band = evaluateThresholds({ reaction: parseInt(m[1]) }).reaction;
+      return THRESHOLD_COLORS[band];
+    }
+  }
+  return null;
+}
 
 const CHECKS = [
   {
@@ -340,7 +359,12 @@ export default function HealthCheck() {
               {r.status === STATUS.running ? '...' : r.status === STATUS.idle ? 'IDLE' : r.status}
             </span>
             <span style={{ fontSize: 11, flex: 1, opacity: 0.8 }}>{r.label}</span>
-            <span style={{ fontSize: 10, opacity: 0.4, textAlign: 'right', maxWidth: 240 }}>{r.detail}</span>
+            <span style={{
+              fontSize: 10,
+              textAlign: 'right',
+              maxWidth: 240,
+              color: checkThresholdColor(r.id, r.detail) ?? 'rgba(232,244,255,0.4)',
+            }}>{r.detail}</span>
           </div>
         ))}
       </div>

@@ -21,6 +21,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { THRESHOLDS } from './constants.js';
+import { evaluateThresholds, THRESHOLD_COLORS } from '../../engine/thresholdevaluator.js';
 
 const MAX_NODES   = 512;
 const FIELD_COUNT = 40;
@@ -295,14 +296,22 @@ function signalStrengthLabel(s) {
 }
 
 // ── Hover Card ────────────────────────────────────────────────────────────────
-function HoverCard({ node, locked, velocity, strength }) {
+function HoverCard({ node, locked, velocity, strength, velocityTimerState }) {
   const accent    = locked ? '#FFD700' : '#0096ff';
   const contColor = node.eViral >= 0.6 ? '#F5A623' : node.eViral >= 0.4 ? '#aaa' : '#00b894';
-  const velLabel  = frictionVelocityLabel(velocity ?? 0);
-  const velColor  = (velocity ?? 0) > 0.001 ? '#00b894' : (velocity ?? 0) < -0.001 ? '#F5A623' : 'rgba(232,244,255,0.55)';
+  const velVal    = velocity ?? 0;
   const strVal    = strength ?? 0;
+  const velLabel  = frictionVelocityLabel(velVal);
   const strLabel  = signalStrengthLabel(strVal);
-  const strColor  = strVal >= 0.6 ? '#00b894' : strVal >= 0.35 ? '#F5A623' : 'rgba(232,244,255,0.4)';
+
+  // Threshold-driven colors
+  const bands  = evaluateThresholds({
+    velocity:            velVal,
+    velocityNegDuration: velocityTimerState === 'amber' || velocityTimerState === 'red' ? 999 : 0,
+    signal:              strLabel,
+  });
+  const velColor = THRESHOLD_COLORS[velocityTimerState === 'red' ? 'red' : bands.velocity ?? 'green'];
+  const strColor = THRESHOLD_COLORS[bands.signal ?? 'green'];
   return (
     <Html position={[0, node.scale + 0.5, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
       <div style={{
@@ -1050,6 +1059,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
                 locked={isLocked}
                 velocity={fsVelocityRef.current[node.id] ?? 0}
                 strength={nodeStrength[i] ?? 0}
+                velocityTimerState={velocityTimerRef.current[i]?.state ?? 'green'}
               />
             )}
           </group>
@@ -1212,27 +1222,33 @@ export default function SignalMap({ data, signalMapData }) {
       )}
 
       {/* Heartbeat HUD */}
-      <div style={{
-        position:      'absolute', bottom: 16, left: 16, zIndex: 10,
-        display:       'flex', alignItems: 'center', gap: '6px',
-        pointerEvents: 'none',
-      }}>
-        <div style={{
-          width:        '7px',
-          height:       '7px',
-          borderRadius: '50%',
-          background:   heartbeat >= 0.95 ? '#00b894' : heartbeat >= 0.8 ? '#F5A623' : '#FF6B6B',
-          boxShadow:    `0 0 6px ${heartbeat >= 0.95 ? '#00b89466' : heartbeat >= 0.8 ? '#F5A62366' : '#FF6B6B66'}`,
-        }} />
-        <span style={{
-          fontFamily:    'IBM Plex Mono, monospace',
-          fontSize:      '9px',
-          letterSpacing: '0.12em',
-          color:         heartbeat >= 0.95 ? 'rgba(0,184,148,0.6)' : heartbeat >= 0.8 ? 'rgba(245,166,35,0.6)' : 'rgba(255,107,107,0.6)',
-        }}>
-          HEARTBEAT
-        </span>
-      </div>
+      {(() => {
+        const hbBand  = evaluateThresholds({ heartbeat }).heartbeat ?? 'green';
+        const hbColor = THRESHOLD_COLORS[hbBand];
+        return (
+          <div style={{
+            position:      'absolute', bottom: 16, left: 16, zIndex: 10,
+            display:       'flex', alignItems: 'center', gap: '6px',
+            pointerEvents: 'none',
+          }}>
+            <div style={{
+              width:        '7px',
+              height:       '7px',
+              borderRadius: '50%',
+              background:   hbColor,
+              boxShadow:    `0 0 6px ${hbColor}66`,
+            }} />
+            <span style={{
+              fontFamily:    'IBM Plex Mono, monospace',
+              fontSize:      '9px',
+              letterSpacing: '0.12em',
+              color:         `${hbColor}99`,
+            }}>
+              HEARTBEAT
+            </span>
+          </div>
+        );
+      })()}
 
       {/* KRYL-314: search input — top center */}
       <div style={{
