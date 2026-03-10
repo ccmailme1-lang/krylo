@@ -8,6 +8,8 @@
 // KRYL-322 — Forensic halo: shader ring around HARDENED nodes, #EAEAEF, 0.15 opacity, 1.4× radius
 // KRYL-243 — ALERT state: Fs ≥ 0.844 → per-node rim glow only (aAlert instanced attribute); no global effects
 // KRYL-274 — 0.844 threshold: 3s hysteresis gate → CONFIRMED state + ALERT cascade + console audit
+// KRYL-275 — 719ms slam: CONFIRMED → scale 1.0→1.3→1.0 sin-ease, 50ms white flash, #00D4FF rim lock
+// KRYL-277 — Ghost Photo: CONFIRMED → console [GHOST PHOTO] JSON { id, fs, timestamp, telemetry, geo }
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -29,17 +31,24 @@ const VERT = /* glsl */`
   attribute float aScale;
   attribute float aIsStub;
   attribute float aAlert;
+  attribute float aSlamScale;
+  attribute float aConfirmed;
+  attribute float aSlamFlash;
 
   varying float vFidelity;
   varying float vStress;
   varying vec3  vNormal;
   varying float vAlert;
+  varying float vSlamFlash;
+  varying float vConfirmed;
 
   void main() {
-    vFidelity = aFidelity;
-    vStress   = aStress;
-    vNormal   = normalize(normalMatrix * normal);
-    vAlert    = aAlert;
+    vFidelity  = aFidelity;
+    vStress    = aStress;
+    vNormal    = normalize(normalMatrix * normal);
+    vAlert     = aAlert;
+    vSlamFlash = aSlamFlash;
+    vConfirmed = aConfirmed;
 
     float cohesion = 1.0 - aFidelity;
 
@@ -58,7 +67,7 @@ const VERT = /* glsl */`
     vec3 displaced = position
       + normal * (noise * cohesion * 0.18 + viral * 0.09 + fracture + crystal);
 
-    vec4 world = instanceMatrix * vec4(displaced * aScale, 1.0);
+    vec4 world = instanceMatrix * vec4(displaced * aScale * aSlamScale, 1.0);
     gl_Position = projectionMatrix * modelViewMatrix * world;
   }
 `;
@@ -70,6 +79,8 @@ const FRAG = /* glsl */`
   varying float vStress;
   varying vec3  vNormal;
   varying float vAlert;
+  varying float vSlamFlash;
+  varying float vConfirmed;
 
   void main() {
     // HARDENED ≥0.70 → cold white | WATCH 0.40–0.69 → signal blue | CALM <0.40 → amber
@@ -93,6 +104,14 @@ const FRAG = /* glsl */`
     float rim  = pow(1.0 - dot(normalize(vNormal), vec3(0.0, 0.0, 1.0)), 2.0);
     color     += rim * vFidelity * (0.4 + vAlert * 0.6);
     color     += vAlert * vFidelity * vec3(0.91, 0.957, 1.0) * 0.25;
+
+    // CONFIRMED rim lock to #00D4FF (KRYL-275)
+    vec3 confirmedBlue = vec3(0.0, 0.831, 1.0);
+    color += vConfirmed * rim * confirmedBlue * 1.2;
+    color += vConfirmed * vFidelity * confirmedBlue * 0.4;
+
+    // Slam flash — white overlay first 50ms (KRYL-275)
+    color = mix(color, vec3(1.0), vSlamFlash);
 
     // Heat shimmer on contaminated nodes
     float shimmer = vStress * sin(uTime * 8.0) * 0.08;
@@ -298,17 +317,21 @@ function Scene({ signals, alertRef }) {
   const matRef   = useRef(null);
   const stateRef = useRef([]);
   const orbitRef = useRef(null);
+  const slamRef  = useRef({});
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
   const { geometry, material, primaryNodes, edges, hardenedNodes, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
-    const fidelities = new Float32Array(MAX_NODES);
-    const stresses   = new Float32Array(MAX_NODES);
-    const phases     = new Float32Array(MAX_NODES);
-    const scales     = new Float32Array(MAX_NODES);
-    const isStubs    = new Float32Array(MAX_NODES);
-    const alerts     = new Float32Array(MAX_NODES);
+    const fidelities   = new Float32Array(MAX_NODES);
+    const stresses     = new Float32Array(MAX_NODES);
+    const phases       = new Float32Array(MAX_NODES);
+    const scales       = new Float32Array(MAX_NODES);
+    const isStubs      = new Float32Array(MAX_NODES);
+    const alerts       = new Float32Array(MAX_NODES);
+    const slamScales   = new Float32Array(MAX_NODES).fill(1.0);
+    const confirmedArr = new Float32Array(MAX_NODES);
+    const slamFlashArr = new Float32Array(MAX_NODES);
 
     const state    = [];
     const primaries = [];
@@ -372,12 +395,15 @@ function Scene({ signals, alertRef }) {
       });
     }
 
-    geo.setAttribute('aFidelity', new THREE.InstancedBufferAttribute(fidelities, 1));
-    geo.setAttribute('aStress',   new THREE.InstancedBufferAttribute(stresses,   1));
-    geo.setAttribute('aPhase',    new THREE.InstancedBufferAttribute(phases,     1));
-    geo.setAttribute('aScale',    new THREE.InstancedBufferAttribute(scales,     1));
-    geo.setAttribute('aIsStub',   new THREE.InstancedBufferAttribute(isStubs,    1));
-    geo.setAttribute('aAlert',    new THREE.InstancedBufferAttribute(alerts,     1));
+    geo.setAttribute('aFidelity',  new THREE.InstancedBufferAttribute(fidelities,   1));
+    geo.setAttribute('aStress',    new THREE.InstancedBufferAttribute(stresses,     1));
+    geo.setAttribute('aPhase',     new THREE.InstancedBufferAttribute(phases,       1));
+    geo.setAttribute('aScale',     new THREE.InstancedBufferAttribute(scales,       1));
+    geo.setAttribute('aIsStub',    new THREE.InstancedBufferAttribute(isStubs,      1));
+    geo.setAttribute('aAlert',     new THREE.InstancedBufferAttribute(alerts,       1));
+    geo.setAttribute('aSlamScale', new THREE.InstancedBufferAttribute(slamScales,   1));
+    geo.setAttribute('aConfirmed', new THREE.InstancedBufferAttribute(confirmedArr, 1));
+    geo.setAttribute('aSlamFlash', new THREE.InstancedBufferAttribute(slamFlashArr, 1));
 
     const mat = new THREE.ShaderMaterial({
       vertexShader:   VERT,
@@ -429,8 +455,9 @@ function Scene({ signals, alertRef }) {
   }, [primaryNodes]);
 
   useFrame(({ clock }, dt) => {
-    const m = matRef.current ?? material;
-    m.uniforms.uTime.value = clock.getElapsedTime();
+    const elapsed          = clock.getElapsedTime();
+    const m                = matRef.current ?? material;
+    m.uniforms.uTime.value = elapsed;
 
     const mesh = meshRef.current;
     if (!mesh) return;
@@ -455,8 +482,32 @@ function Scene({ signals, alertRef }) {
 
     mesh.instanceMatrix.needsUpdate = true;
 
+    // KRYL-275 — Slam animation tick
+    if (Object.keys(slamRef.current).length > 0) {
+      const ssArr    = geometry.attributes.aSlamScale.array;
+      const confArr  = geometry.attributes.aConfirmed.array;
+      const flashArr = geometry.attributes.aSlamFlash.array;
+      Object.entries(slamRef.current).forEach(([idxStr, slam]) => {
+        const i = parseInt(idxStr, 10);
+        const t = Math.min(1.0, (elapsed - slam.startTime) / 0.719);
+        // Scale: 1.0 → 1.3 → 1.0 via back-weighted sine (physical weight)
+        ssArr[i]    = 1.0 + 0.3 * Math.sin(t * Math.PI);
+        // Flash: white at full, fades out over first 50ms
+        const fp    = t / (0.05 / 0.719);
+        flashArr[i] = fp < 1.0 ? 0.6 * (1.0 - fp) : 0.0;
+        if (t >= 1.0) {
+          ssArr[i]    = 1.0;
+          confArr[i]  = 1.0;
+          flashArr[i] = 0.0;
+          delete slamRef.current[i];
+        }
+      });
+      geometry.attributes.aSlamScale.needsUpdate = true;
+      geometry.attributes.aConfirmed.needsUpdate = true;
+      geometry.attributes.aSlamFlash.needsUpdate = true;
+    }
+
     // KRYL-274 — 0.844 hysteresis gate: 3s hold → CONFIRMED + ALERT cascade
-    const elapsed = clock.getElapsedTime();
     stateRef.current.forEach((node) => {
       if (!node.primary) return;
       const sig = signals[node.index];
@@ -467,6 +518,7 @@ function Scene({ signals, alertRef }) {
           node.crossTime = elapsed;
         } else if (!node.confirmed && (elapsed - node.crossTime) >= 3.0) {
           node.confirmed = true;
+          slamRef.current[node.index] = { startTime: elapsed };
           if (alertRef) alertRef.current = true;
           console.log(`[KRYL-274] CONFIRMED: ${sig.id ?? 'node-' + node.index} Fs=${fs.toFixed(3)} held ≥0.844 for 3s — ALERT cascade triggered`);
         }
