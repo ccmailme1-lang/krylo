@@ -195,6 +195,22 @@ const CHECKS = [
     },
   },
   {
+    id: 'reaction',
+    label: 'Reaction Time — API Round-Trip (target: 719ms)',
+    run: async () => {
+      const t0  = performance.now();
+      const res = await fetch('/api/truth', {
+        method:  'POST',
+        headers: { 'content-type': 'application/json' },
+        body:    JSON.stringify({ query: 'health' }),
+      });
+      const actualMs = Math.round(performance.now() - t0);
+      console.log(`[REACTION] ${actualMs}ms`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return `${actualMs}ms (target: 719ms)`;
+    },
+  },
+  {
     id: 'heartbeat',
     label: 'Engine Heartbeat — Resonance Index Valid',
     run: async () => {
