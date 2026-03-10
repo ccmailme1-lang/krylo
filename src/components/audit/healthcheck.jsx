@@ -1,5 +1,6 @@
 // src/components/audit/healthcheck.jsx
 // WO-249 — KRYLO Automated Health Check
+// WO-249 rev — HARDENED node presence + Fs range (0.0–1.0) validation added
 // Route: /health
 // Location: src/components/audit/healthcheck.jsx
 
@@ -123,6 +124,48 @@ const CHECKS = [
       const el = all.find(e => e.textContent?.startsWith('nodes:'));
       if (!el) throw new Error('nodes: label not found — navigate to Signal Map first');
       return el.textContent.trim();
+    },
+  },
+  {
+    id: 'hardened',
+    label: 'HARDENED Node — Fs ≥ 0.70 Present in Signal Set',
+    run: async () => {
+      const res = await fetch('/api/truth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'health' }),
+      });
+      const data = await res.json();
+      const arr  = Array.isArray(data) ? data : [data];
+      const FS_W = { m_checksum: 0.4, t_telemetry: 0.3, d_docs: 0.2, v_voice: 0.09, e_viral: 0.01 };
+      const hardened = arr.filter(r => {
+        const fc = r.fidelity_components ?? {};
+        const fs = Object.entries(FS_W).reduce((s, [k, w]) => s + (fc[k] ?? 0) * w, 0);
+        return fs >= 0.70;
+      });
+      if (!hardened.length) throw new Error('No HARDENED nodes in signal set');
+      return `${hardened.length} HARDENED node(s)`;
+    },
+  },
+  {
+    id: 'fsrange',
+    label: 'Fs Range — All Values Within 0.0–1.0',
+    run: async () => {
+      const res = await fetch('/api/truth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'health' }),
+      });
+      const data = await res.json();
+      const arr  = Array.isArray(data) ? data : [data];
+      const FS_W = { m_checksum: 0.4, t_telemetry: 0.3, d_docs: 0.2, v_voice: 0.09, e_viral: 0.01 };
+      const scores = arr.map(r => {
+        const fc = r.fidelity_components ?? {};
+        return Object.entries(FS_W).reduce((s, [k, w]) => s + (fc[k] ?? 0) * w, 0);
+      });
+      const invalid = scores.filter(fs => fs < 0 || fs > 1);
+      if (invalid.length) throw new Error(`${invalid.length} out-of-range Fs value(s)`);
+      return `${scores.length} values in [0.0, 1.0]`;
     },
   },
   {
