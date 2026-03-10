@@ -122,17 +122,7 @@ const FRAG = /* glsl */`
   }
 `;
 
-// ── Forensic Halo Shaders (KRYL-322) ─────────────────────────────────────────
-const HALO_VERT = /* glsl */`
-  void main() {
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-const HALO_FRAG = /* glsl */`
-  void main() {
-    gl_FragColor = vec4(0.918, 0.918, 0.937, 0.15);
-  }
-`;
+// (KRYL-322 custom halo shaders removed — replaced with meshBasicMaterial per-ring approach)
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function clamp01(x) {
@@ -247,41 +237,37 @@ function PulsedEdge({ edge, idx }) {
   );
 }
 
-// ── Forensic Halo (KRYL-322) ──────────────────────────────────────────────────
-function HaloMesh({ hardenedNodes, stateRef }) {
-  const meshRef  = useRef();
-  const { camera } = useThree();
-  const dummy    = useMemo(() => new THREE.Object3D(), []);
-  const count    = hardenedNodes.length;
-  const material = useMemo(() => new THREE.ShaderMaterial({
-    vertexShader:   HALO_VERT,
-    fragmentShader: HALO_FRAG,
-    transparent:    true,
-    depthWrite:     false,
-    side:           THREE.DoubleSide,
-  }), []);
-  useEffect(() => () => material.dispose(), [material]);
+// ── Forensic Halo — single ring (KRYL-322) ───────────────────────────────────
+// One mesh per HARDENED node; tracks live node position via stateRef in useFrame.
+// meshBasicMaterial for reliable #EAEAEF color — no custom shader needed.
+function HaloRing({ node, stateRef }) {
+  const meshRef        = useRef();
+  const { camera }     = useThree();
   useFrame(() => {
-    const mesh = meshRef.current;
-    if (!mesh || !count) return;
-    hardenedNodes.forEach((node, i) => {
-      const state = stateRef.current[node.index];
-      if (!state) return;
-      dummy.position.copy(state.pos);
-      dummy.scale.setScalar(node.scale * 1.4);
-      dummy.quaternion.copy(camera.quaternion);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    });
-    mesh.count = count;
-    mesh.instanceMatrix.needsUpdate = true;
+    const mesh  = meshRef.current;
+    if (!mesh) return;
+    const state = stateRef.current[node.index];
+    if (!state) return;
+    mesh.position.copy(state.pos);
+    mesh.quaternion.copy(camera.quaternion);
+    mesh.scale.setScalar(node.scale * 1.4);
   });
-  if (!count) return null;
   return (
-    <instancedMesh ref={meshRef} args={[null, null, Math.max(1, count)]} frustumCulled={false}>
+    <mesh ref={meshRef} frustumCulled={false}>
       <ringGeometry args={[0.9, 1.0, 64]} />
-      <primitive object={material} attach="material" />
-    </instancedMesh>
+      <meshBasicMaterial color="#EAEAEF" transparent opacity={0.15} depthWrite={false} side={THREE.DoubleSide} />
+    </mesh>
+  );
+}
+
+function HaloMesh({ hardenedNodes, stateRef }) {
+  if (!hardenedNodes.length) return null;
+  return (
+    <>
+      {hardenedNodes.map(node => (
+        <HaloRing key={node.id} node={node} stateRef={stateRef} />
+      ))}
+    </>
   );
 }
 
