@@ -287,12 +287,21 @@ function frictionVelocityLabel(vel) {
   return '— Stable';
 }
 
+function signalStrengthLabel(s) {
+  if (s >= 0.6)  return 'Strong';
+  if (s >= 0.35) return 'Moderate';
+  return 'Weak';
+}
+
 // ── Hover Card ────────────────────────────────────────────────────────────────
-function HoverCard({ node, locked, velocity }) {
+function HoverCard({ node, locked, velocity, strength }) {
   const accent    = locked ? '#FFD700' : '#0096ff';
   const contColor = node.eViral >= 0.6 ? '#F5A623' : node.eViral >= 0.4 ? '#aaa' : '#00b894';
   const velLabel  = frictionVelocityLabel(velocity ?? 0);
   const velColor  = (velocity ?? 0) > 0.001 ? '#00b894' : (velocity ?? 0) < -0.001 ? '#F5A623' : 'rgba(232,244,255,0.55)';
+  const strVal    = strength ?? 0;
+  const strLabel  = signalStrengthLabel(strVal);
+  const strColor  = strVal >= 0.6 ? '#00b894' : strVal >= 0.35 ? '#F5A623' : 'rgba(232,244,255,0.4)';
   return (
     <Html position={[0, node.scale + 0.5, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
       <div style={{
@@ -320,6 +329,8 @@ function HoverCard({ node, locked, velocity }) {
           <span style={{ fontSize: '9px', color: velColor }}>{velLabel}</span>
           <span style={{ opacity: 0.5, fontSize: '9px' }}>contamination</span>
           <span style={{ fontSize: '9px', color: contColor }}>{contaminationLabel(node.eViral)}</span>
+          <span style={{ opacity: 0.5, fontSize: '9px' }}>signal strength</span>
+          <span style={{ fontSize: '9px', color: strColor }}>{strLabel}</span>
         </div>
       </div>
     </Html>
@@ -671,7 +682,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
   const alertModeRef = useRef(false);
   alertModeRef.current = alertMode;
 
-  const { geometry, material, primaryNodes, edges, totalCount } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, nodeStrength, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
     const fidelities = new Float32Array(MAX_NODES);
@@ -776,8 +787,22 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
       }
     }
 
+    // Per-node signal strength: avgEdgeStrength / edgeCount
+    const edgeAcc = {};
+    for (const edge of edgeList) {
+      for (const idx of [edge.nodeA, edge.nodeB]) {
+        if (!edgeAcc[idx]) edgeAcc[idx] = { sum: 0, count: 0 };
+        edgeAcc[idx].sum   += edge.avgFs;
+        edgeAcc[idx].count += 1;
+      }
+    }
+    const nodeStrength = {};
+    for (const [idx, { sum, count }] of Object.entries(edgeAcc)) {
+      nodeStrength[idx] = count > 0 ? sum / count : 0;
+    }
+
     stateRef.current = state;
-    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, totalCount: state.length };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, nodeStrength, totalCount: state.length };
   }, [signals]);
 
   const lowestCluster = useMemo(() => {
@@ -1003,7 +1028,12 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
 
             {/* KRYL-312: show card if hovered OR locked */}
             {(hoveredIdx === i || isLocked) && (
-              <HoverCard node={node} locked={isLocked} velocity={fsVelocityRef.current[node.id] ?? 0} />
+              <HoverCard
+                node={node}
+                locked={isLocked}
+                velocity={fsVelocityRef.current[node.id] ?? 0}
+                strength={nodeStrength[i] ?? 0}
+              />
             )}
           </group>
         );
