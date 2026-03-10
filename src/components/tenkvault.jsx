@@ -50,7 +50,7 @@ function ageLabel(record) {
 }
 
 // ── Stat Pill ─────────────────────────────────────────────────────────────────
-function StatPill({ label, value }) {
+function StatPill({ label, value, valueColor }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
       <span style={{
@@ -65,7 +65,7 @@ function StatPill({ label, value }) {
         fontSize:      '14px',
         fontFamily:    'IBM Plex Mono, monospace',
         fontWeight:    700,
-        color:         'rgba(232,244,255,0.85)',
+        color:         valueColor ?? 'rgba(232,244,255,0.85)',
         letterSpacing: '0.04em',
         fontVariantNumeric: 'tabular-nums',
       }}>
@@ -208,7 +208,8 @@ export default function TenKVault({ score, data, records = [] }) {
       ? records.reduce((acc, r) => acc + (r.fs ?? 0), 0) / count
       : null;
     const hardenedCount = records.filter(r => (r.fs ?? 0) >= 0.70).length;
-    return { count, avgFs, hardenedCount };
+    const headroom      = Math.max(0, 100 - (count / 10000) * 100);
+    return { count, avgFs, hardenedCount, headroom };
   }, [records]);
 
   // Filtered
@@ -267,6 +268,11 @@ export default function TenKVault({ score, data, records = [] }) {
             value={stats.avgFs !== null ? stats.avgFs.toFixed(3) : '—'}
           />
           <StatPill label="HARDENED" value={stats.hardenedCount} />
+          <StatPill
+            label="HEADROOM"
+            value={`${stats.headroom.toFixed(1)}%`}
+            valueColor={stats.headroom > 30 ? '#00b894' : stats.headroom > 10 ? '#F5A623' : '#FF6B6B'}
+          />
         </div>
       </div>
 
