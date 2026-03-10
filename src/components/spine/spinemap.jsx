@@ -1164,9 +1164,20 @@ export default function SignalMap({ data, signalMapData }) {
   const signals  = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
   const loading  = resolved?.loading ?? false;
 
+  // Live Feed state — WO-254 (declared here so activeSignals can depend on it)
+  const [liveFeed, setLiveFeed] = useState(() => {
+    try { return localStorage.getItem('krylo_live_feed') === '1'; } catch { return false; }
+  });
+  const [newsSignals,  setNewsSignals]  = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [fetchError,   setFetchError]   = useState(false);
+
+  // Active signal source: live feed when ON + data present, else mock
+  const activeSignals = liveFeed && newsSignals.length ? newsSignals : signals;
+
   const alertMode = useMemo(
-    () => signals.some(s => clamp01(s.fs ?? (s.strength ?? 1) / 5) < ALERT_FS),
-    [signals]
+    () => activeSignals.some(s => clamp01(s.fs ?? (s.strength ?? 1) / 5) < ALERT_FS),
+    [activeSignals]
   );
 
   const captureRef = useRef(null);
@@ -1176,11 +1187,6 @@ export default function SignalMap({ data, signalMapData }) {
   const [searchQuery, setSearchQuery] = useState('');     // KRYL-314
   const [heartbeat, setHeartbeat]     = useState(1.0);
 
-  // Live Feed toggle — WO-254
-  const [liveFeed, setLiveFeed] = useState(() => {
-    try { return localStorage.getItem('krylo_live_feed') === '1'; } catch { return false; }
-  });
-
   const toggleLiveFeed = useCallback(() => {
     setLiveFeed(prev => {
       const next = !prev;
@@ -1188,6 +1194,40 @@ export default function SignalMap({ data, signalMapData }) {
       return next;
     });
   }, []);
+
+  // Refresh handler — WO-254 Step 4 (wired to fetchHeadlines in WO-255)
+  const handleRefresh = useCallback(async () => {
+    if (fetchLoading) return;
+    setFetchLoading(true);
+    setFetchError(false);
+    try {
+      const res = await fetch('/api/truth', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'live' }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const arr  = Array.isArray(data) ? data : [data];
+      setNewsSignals(arr.map(r => ({
+        id:       r.id,
+        text:     r.truth_statement ?? r.title ?? r.id,
+        source:   r.source_type ?? 'news',
+        strength: Math.round((r.signal_score ?? 0.5) * 5),
+        fs:       r.signal_score ?? 0.5,
+        primary:  true,
+        fidelity: {
+          m_checksum:  r.fidelity_components?.m_checksum  ?? 0,
+          t_telemetry: r.fidelity_components?.t_telemetry ?? 0,
+          e_viral:     r.fidelity_components?.e_viral     ?? 0,
+        },
+      })));
+    } catch {
+      setFetchError(true);
+    } finally {
+      setFetchLoading(false);
+    }
+  }, [fetchLoading]);
 
   // Inject spinner keyframes once
   useEffect(() => {
@@ -1306,6 +1346,37 @@ export default function SignalMap({ data, signalMapData }) {
         }}>
           LIVE FEED
         </span>
+
+        {liveFeed && (fetchLoading ? (
+          <div style={{
+            width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
+            border: '1.5px solid rgba(232,244,255,0.12)', borderTopColor: '#00b894',
+            animation: 'krylo-spin 0.8s linear infinite',
+          }} />
+        ) : (
+          <button
+            onClick={handleRefresh}
+            style={{
+              fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px',
+              color: 'rgba(232,244,255,0.4)', background: 'none',
+              border: 'none', cursor: 'pointer', padding: '0',
+              letterSpacing: '0.08em',
+            }}
+          >
+            ↻ Refresh
+          </button>
+        ))}
+
+        {fetchError && !fetchLoading && (
+          <div
+            title="Feed Error"
+            style={{
+              width: '7px', height: '7px', borderRadius: '50%',
+              background: '#FF4444', boxShadow: '0 0 5px #FF444466',
+              flexShrink: 0,
+            }}
+          />
+        )}
       </div>
 
       {/* Heartbeat HUD */}
@@ -1425,7 +1496,7 @@ export default function SignalMap({ data, signalMapData }) {
         />
         <directionalLight position={[10, 10, 5]} intensity={0.4} />
         <Scene
-          signals={signals}
+          signals={activeSignals}
           alertMode={alertMode}
           captureRef={captureRef}
           lockedIdx={lockedIdx}
