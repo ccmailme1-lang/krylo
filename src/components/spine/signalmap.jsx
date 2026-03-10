@@ -12,10 +12,11 @@
 // KRYL-277 — Ghost Photo: CONFIRMED → console [GHOST PHOTO] JSON { id, fs, timestamp, telemetry, geo }
 // Location: src/components/spine/signalmap.jsx
 
-import React, { useRef, useMemo, useEffect, useState } from 'react'; // useState used by SignalMap export
+import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react'; // useState used by SignalMap export
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
+import { fetchHeadlines, ingestHeadlines } from '../../engine/newsfeed.js';
 
 const MAX_NODES = 512;
 const FIELD_COUNT = 40;
@@ -640,6 +641,61 @@ export default function SignalMap({ data, signalMapData }) {
   const mousePosRef  = useRef(new THREE.Vector2());
   const [hoveredNode, setHoveredNode] = useState(null);
 
+  // Live Feed state — WO-254
+  const [liveFeed,     setLiveFeed]     = useState(() => {
+    try { return localStorage.getItem('krylo_live_feed') === '1'; } catch { return false; }
+  });
+  const [newsSignals,  setNewsSignals]  = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [fetchError,   setFetchError]   = useState(false);
+
+  // Active signal source: live feed when ON + data present, else mock
+  const activeSignals = liveFeed && newsSignals.length ? newsSignals : signals;
+
+  const toggleLiveFeed = useCallback(() => {
+    setLiveFeed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('krylo_live_feed', next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }, []);
+
+  const handleRefresh = useCallback(async () => {
+    if (fetchLoading) return;
+    setFetchLoading(true);
+    setFetchError(false);
+    try {
+      const etrs = await fetchHeadlines();
+      ingestHeadlines(etrs);
+      setNewsSignals(etrs.map(r => ({
+        id:       r.id,
+        text:     r.title ?? r.id,
+        source:   'news',
+        strength: Math.round(r.fs * 5),
+        fs:       r.fs,
+        primary:  true,
+        fidelity: {
+          m_checksum:  r.fidelity_components.m_checksum,
+          t_telemetry: r.fidelity_components.t_telemetry,
+          e_viral:     r.fidelity_components.e_viral,
+        },
+      })));
+    } catch {
+      setFetchError(true);
+    } finally {
+      setFetchLoading(false);
+    }
+  }, [fetchLoading]);
+
+  // Inject spinner keyframes once
+  useEffect(() => {
+    if (document.getElementById('krylo-live-feed-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'krylo-live-feed-styles';
+    s.textContent = '@keyframes krylo-spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(s);
+  }, []);
+
   // KRYL-235 — Atmospheric pulse: 4.4Hz sine, background opacity 0.02–0.05
   useEffect(() => {
     let frame;
@@ -683,13 +739,79 @@ export default function SignalMap({ data, signalMapData }) {
         <ambientLight intensity={0.25} />
         <directionalLight position={[10, 10, 5]} intensity={0.4} />
         <Scene
-          signals={signals}
+          signals={activeSignals}
           alertRef={alertRef}
           cardRef={cardRef}
           mousePosRef={mousePosRef}
           onHoverChange={setHoveredNode}
         />
       </Canvas>
+
+      {/* Live Feed Toggle — WO-254/256 */}
+      <div style={{
+        position:      'absolute', bottom: 46, left: 16, zIndex: 10,
+        display:       'flex', alignItems: 'center', gap: '8px',
+        pointerEvents: 'auto',
+      }}>
+        <div
+          onClick={toggleLiveFeed}
+          style={{
+            width: '28px', height: '16px', borderRadius: '8px',
+            background:  liveFeed ? 'rgba(0,184,148,0.3)' : 'rgba(232,244,255,0.06)',
+            border:      `1px solid ${liveFeed ? 'rgba(0,184,148,0.45)' : 'rgba(232,244,255,0.1)'}`,
+            position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{
+            position:   'absolute', top: '2px',
+            left:       liveFeed ? '14px' : '2px',
+            width:      '10px', height: '10px', borderRadius: '50%',
+            background: liveFeed ? '#00b894' : 'rgba(232,244,255,0.22)',
+            transition: 'left 0.18s, background 0.18s',
+          }} />
+        </div>
+        <span style={{
+          fontFamily:    'IBM Plex Mono, monospace',
+          fontSize:      '9px',
+          letterSpacing: '0.1em',
+          color:         liveFeed ? 'rgba(0,184,148,0.65)' : 'rgba(232,244,255,0.28)',
+          userSelect:    'none',
+        }}>
+          LIVE FEED
+        </span>
+
+        {liveFeed && (fetchLoading ? (
+          <div style={{
+            width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
+            border: '1.5px solid rgba(232,244,255,0.12)', borderTopColor: '#00b894',
+            animation: 'krylo-spin 0.8s linear infinite',
+          }} />
+        ) : (
+          <button
+            onClick={handleRefresh}
+            style={{
+              fontFamily: 'IBM Plex Mono, monospace', fontSize: '9px',
+              color: 'rgba(232,244,255,0.4)', background: 'none',
+              border: 'none', cursor: 'pointer', padding: '0',
+              letterSpacing: '0.08em',
+            }}
+          >
+            ↻ Refresh
+          </button>
+        ))}
+
+        {fetchError && !fetchLoading && (
+          <div
+            title="Feed Error"
+            style={{
+              width: '7px', height: '7px', borderRadius: '50%',
+              background: '#FF4444', boxShadow: '0 0 5px #FF444466',
+              flexShrink: 0,
+            }}
+          />
+        )}
+      </div>
 
       {/* Hover card — DOM overlay, screen-projected from live world position */}
       <div

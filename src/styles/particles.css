@@ -1,0 +1,40 @@
+/* particles.css */
+/* WO-228 — CSS-only ambient ETR text. No JS. No fixed positioning. No z-index conflict. */
+/* Location: src/styles/particles.css */
+
+.particle-field {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.particle-field span {
+  position: absolute;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  opacity: 0;
+  animation: etrdrift 8s ease-in-out infinite;
+}
+
+.particle-field span:nth-child(1)  { top: 8%;  left: 7%;   animation-delay: 0s;    animation-duration: 9s;  }
+.particle-field span:nth-child(2)  { top: 15%; left: 72%;  animation-delay: 1.5s;  animation-duration: 11s; }
+.particle-field span:nth-child(3)  { top: 28%; left: 5%;   animation-delay: 3s;    animation-duration: 8s;  }
+.particle-field span:nth-child(4)  { top: 38%; left: 80%;  animation-delay: 0.8s;  animation-duration: 10s; }
+.particle-field span:nth-child(5)  { top: 52%; left: 12%;  animation-delay: 2.2s;  animation-duration: 9s;  }
+.particle-field span:nth-child(6)  { top: 62%; left: 68%;  animation-delay: 4s;    animation-duration: 12s; }
+.particle-field span:nth-child(7)  { top: 72%; left: 22%;  animation-delay: 1s;    animation-duration: 10s; }
+.particle-field span:nth-child(8)  { top: 82%; left: 75%;  animation-delay: 3.5s;  animation-duration: 8s;  }
+.particle-field span:nth-child(9)  { top: 88%; left: 40%;  animation-delay: 2s;    animation-duration: 11s; }
+.particle-field span:nth-child(10) { top: 20%; left: 45%;  animation-delay: 5s;    animation-duration: 9s;  }
+
+@keyframes etrdrift {
+  0%   { opacity: 0;    transform: translateY(0px);   }
+  15%  { opacity: 0.75; transform: translateY(-4px);  }
+  85%  { opacity: 0.75; transform: translateY(-12px); }
+  100% { opacity: 0;    transform: translateY(-18px); }
+}

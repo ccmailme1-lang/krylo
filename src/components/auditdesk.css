@@ -1,0 +1,215 @@
+/* =============================================================
+   auditdesk.css  v1.0.0
+   AOP: Target #2 — The Ablinq Audit Ledger
+   Lowercase Law: every key is kebab-case.
+   Base44 Law:    every spatial value = var(--b) × n.
+   Perspective:   1400 px centred, 1000 px depth.
+   ============================================================= */
+
+/* ─── 0. RESET ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ─── 1. DESK (root perspective container) ─────────────── */
+.desk {
+  width: 1400px;
+  min-height: 100vh;
+  margin: 0 auto;
+
+  perspective: 1000px;
+  transform-style: preserve-3d;
+
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: monospace;
+  overflow: hidden;
+}
+
+/* ─── 2. PANE (shared) ─────────────────────────────────── */
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transform-style: preserve-3d;
+}
+
+.pane--ledger {
+  width: var(--ledger-w);
+  transform: translateZ(var(--ledger-z));
+}
+
+.pane--signal {
+  width: var(--signal-w);
+  transform: translateZ(var(--signal-z));
+}
+
+/* ─── 3. PANE HEADER ───────────────────────────────────── */
+.pane__header {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--b);
+  border-bottom: 1px solid var(--c-dim);
+  flex-shrink: 0;
+}
+
+.pane__title {
+  font-size: var(--b);
+  line-height: var(--header-h);
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── 4. LEDGER SCROLL (heavy-scroll target) ──────────── */
+.ledger-scroll {
+  flex: 1;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ledger-scroll:active {
+  cursor: grabbing;
+}
+
+/* ─── 5. LEDGER TABLE ──────────────────────────────────── */
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ledger-table__head-row {
+  height: var(--row-h);
+  background-color: var(--c-surface);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ledger-table__th {
+  height: var(--row-h);
+  padding: 0 var(--b);
+  text-align: left;
+  font-size: calc(var(--b) * 0.3636);
+  font-weight: 600;
+  text-transform: lowercase;
+  border-bottom: 1px solid var(--c-dim);
+  color: var(--c-dim);
+}
+
+.ledger-table__row {
+  height: var(--row-h);
+  transition: background-color 0.15s ease;
+}
+
+.ledger-table__row:nth-child(even) {
+  background-color: var(--c-surface);
+}
+
+.ledger-table__row:hover {
+  background-color: rgba(0, 255, 65, 0.06);
+}
+
+.ledger-table__td {
+  height: var(--row-h);
+  padding: 0 var(--b);
+  font-size: calc(var(--b) * 0.3636);
+  line-height: var(--row-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.08);
+}
+
+.ledger-table__td--mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 6. TRUTH / FRICTION TIERS ────────────────────────── */
+.tier--high {
+  color: var(--c-text);
+  text-shadow: 0 0 6px var(--c-glow);
+}
+
+.tier--mid {
+  color: var(--c-warn);
+}
+
+.tier--low {
+  color: var(--c-danger);
+}
+
+/* ─── 7. LIVE SIGNAL MAP ──────────────────────────────── */
+.signal-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--b);
+  padding: var(--b);
+  overflow-y: auto;
+}
+
+.signal-node {
+  height: var(--b2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--b);
+
+  background: linear-gradient(
+    90deg,
+    var(--c-surface) 0%,
+    var(--c-surface) var(--strength),
+    transparent var(--strength)
+  );
+  border: 1px solid var(--c-dim);
+  position: relative;
+}
+
+.signal-node::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: var(--truth);
+  background-color: var(--c-glow);
+  opacity: 0.15;
+  pointer-events: none;
+}
+
+.signal-node__label {
+  font-size: calc(var(--b) * 0.3636);
+  text-transform: lowercase;
+}
+
+.signal-node__db {
+  font-size: calc(var(--b) * 0.3636);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-dim);
+}
+
+/* ─── 8. RESPONSIVE GUARD ─────────────────────────────── */
+@media (max-width: 1440px) {
+  .desk {
+    width: 100%;
+  }
+
+  .pane--ledger {
+    width: 60%;
+  }
+
+  .pane--signal {
+    width: 40%;
+  }
+}

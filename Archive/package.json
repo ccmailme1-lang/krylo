@@ -1,0 +1,31 @@
+{
+  "name": "krylo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "dev:ablinq": "yarn workspace @krylo/ablinq-audit-desk dev",
+    "dev:nooma": "yarn workspace @krylo/nooma-engine dev",
+    "dev:root": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "preflight": "node scripts/preflight.js"
+  },
+  "dependencies": {
+    "@react-three/drei": "9.122.0",
+    "@react-three/fiber": "8.17.10",
+    "date-fns": "^4.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0"
+  }
+}

@@ -1,0 +1,119 @@
+:root {
+  --void-bg: #000000;
+  --void-surface: #050505;
+  --void-border: #222222;
+  --void-accent: #ffffff;
+  --void-text-muted: #888888;
+  --krylo-glow: rgba(255, 255, 255, 0.05);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--void-bg);
+  color: var(--void-accent);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow-x: hidden;
+}
+
+.void-root {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+/* Krylo Layer Activation */
+.krylo-active {
+  background: radial-gradient(circle at center, #0a0a0a 0%, #000000 100%);
+}
+
+.surfaced {
+  background-color: var(--void-surface);
+  border: 1px solid var(--void-border);
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  max-width: 800px;
+  width: 100%;
+}
+
+/* Funnel Styles */
+.funnel-container form {
+  display: flex;
+  gap: 1rem;
+}
+
+.funnel-container input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--void-border);
+  color: var(--void-accent);
+  padding: 0.5rem;
+  font-size: 1.5rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.funnel-container input:focus {
+  border-color: var(--void-accent);
+}
+
+/* Oracle Styles */
+.shimmer-loading {
+  color: var(--void-text-muted);
+  font-style: italic;
+  animation: pulse 2s infinite;
+}
+
+.signal-item {
+  border-left: 2px solid var(--void-border);
+  padding-left: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.signal-item:hover {
+  border-color: var(--void-accent);
+}
+
+.score-highlight {
+  font-family: monospace;
+  font-size: 1.2rem;
+  color: var(--void-accent);
+}
+
+/* Vault Visualization */
+.circular-chart {
+  display: block;
+  margin: 2rem auto;
+  max-width: 200px;
+}
+
+.circle-bg {
+  fill: none;
+  stroke: #111;
+  stroke-width: 2;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--void-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s ease-in-out;
+}
+
+.percentage {
+  fill: var(--void-accent);
+  font-family: monospace;
+  font-size: 0.5rem;
+  text-anchor: middle;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

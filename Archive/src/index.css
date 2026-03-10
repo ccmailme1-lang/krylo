@@ -1,0 +1,23 @@
+body {
+  font-family: sans-serif;
+  background: #111;
+  color: #eee;
+  padding: 2rem;
+}
+
+button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.systems {
+  display: flex;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}

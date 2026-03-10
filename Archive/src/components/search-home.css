@@ -1,0 +1,87 @@
+.search-portal {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: -apple-system, system-ui, sans-serif;
+}
+
+.search-header {
+  padding: 50px 0;
+  text-align: center;
+}
+
+.logo-text {
+  font-size: 1rem;
+  letter-spacing: 12px;
+  font-weight: 200;
+  opacity: 0.4;
+  text-transform: lowercase;
+}
+
+.relentless-flow-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  perspective: 2000px;
+}
+
+.perspective-shifter {
+  display: flex;
+  gap: 1.5rem;
+  transform: rotateY(-18deg) translateX(5%);
+  padding: 0 10%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.perspective-shifter::-webkit-scrollbar { display: none; }
+
+.truth-card-v3 {
+  flex: 0 0 200px; /* Precise neat width */
+  height: 280px;   /* Precise neat height to fit the frame */
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: blur(15px);
+  border-radius: 2px;
+}
+
+.card-label-mini {
+  font-size: 8px;
+  letter-spacing: 3px;
+  color: #555;
+  text-transform: lowercase;
+}
+
+.card-title-mini {
+  font-size: 1.1rem;
+  font-weight: 300;
+  margin: 0;
+  letter-spacing: -0.5px;
+  text-transform: lowercase;
+}
+
+.card-bottom-mini {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot-mini {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.status-text-mini {
+  font-size: 9px;
+  color: #555;
+  text-transform: lowercase;
+}

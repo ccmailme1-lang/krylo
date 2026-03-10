@@ -1,0 +1,269 @@
+/* =============================================================
+   auditdesk.css  v1.0.0
+   AOP: Target #2 — The Ablinq Audit Ledger
+   Lowercase Law: every key is kebab-case.
+   Base44 Law:    every spatial value = var(--b) × n.
+   Perspective:   1400 px centred, 1000 px depth.
+   ============================================================= */
+
+/* ─── 0. RESET ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ─── 1. DESK (root perspective container) ─────────────── */
+.desk {
+  width: 1400px;
+  min-height: 100vh;
+  margin: 0 auto;
+
+  perspective: 1000px;
+  transform-style: preserve-3d;
+
+  display: flex;
+  flex-direction: row;
+  gap: 0;
+
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  font-family: monospace;
+  overflow: hidden;
+}
+
+/* ─── 2. PANE (shared) ─────────────────────────────────── */
+.pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  transform-style: preserve-3d;
+}
+
+.pane--ledger {
+  width: var(--ledger-w);                   /* 840 px */
+  transform: translateZ(var(--ledger-z));    /* -200 px */
+}
+
+.pane--signal {
+  width: var(--signal-w);                   /* 560 px */
+  transform: translateZ(var(--signal-z));    /* -250 px */
+}
+
+/* ─── 3. PANE HEADER ───────────────────────────────────── */
+.pane__header {
+  height: var(--header-h);                  /* 88 px */
+  display: flex;
+  align-items: center;
+  padding: 0 var(--b);                     /* 0 44 px */
+  border-bottom: 1px solid var(--c-dim);
+  flex-shrink: 0;
+}
+
+.pane__title {
+  font-size: var(--b);                     /* 44 px */
+  line-height: var(--header-h);
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── 4. LEDGER SCROLL (heavy-scroll target) ──────────── */
+.ledger-scroll {
+  flex: 1;
+  overflow: hidden;                        /* JS drives scroll */
+  touch-action: none;                      /* prevent native inertia */
+  cursor: grab;
+}
+
+.ledger-scroll:active {
+  cursor: grabbing;
+}
+
+/* ─── 5. LEDGER TABLE ──────────────────────────────────── */
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.ledger-table__head-row {
+  height: var(--row-h);                    /* 44 px */
+  background-color: var(--c-surface);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.ledger-table__th {
+  height: var(--row-h);                    /* 44 px */
+  padding: 0 var(--b);                    /* 0 44 px */
+  text-align: left;
+  font-size: calc(var(--b) * 0.3636);     /* 16 px — nearest B fraction
+                                              that preserves readability;
+                                              row height stays B-strict */
+  font-weight: 600;
+  text-transform: lowercase;
+  border-bottom: 1px solid var(--c-dim);
+  color: var(--c-dim);
+}
+
+.ledger-table__row {
+  height: var(--row-h);                    /* 44 px — strict */
+  transition: background-color 0.15s ease;
+}
+
+.ledger-table__row:nth-child(even) {
+  background-color: var(--c-surface);
+}
+
+.ledger-table__row:hover {
+  background-color: rgba(0, 255, 65, 0.06);
+}
+
+.ledger-table__td {
+  height: var(--row-h);                    /* 44 px */
+  padding: 0 var(--b);                    /* 0 44 px */
+  font-size: calc(var(--b) * 0.3636);     /* 16 px */
+  line-height: var(--row-h);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-bottom: 1px solid rgba(0, 255, 65, 0.08);
+}
+
+.ledger-table__td--mono {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 6. TRUTH / FRICTION TIERS ────────────────────────── */
+.tier--high {
+  color: var(--c-text);                    /* green — strong */
+  text-shadow: 0 0 6px var(--c-glow);
+}
+
+.tier--mid {
+  color: var(--c-warn);                    /* amber — caution */
+}
+
+.tier--low {
+  color: var(--c-danger);                  /* red — alert */
+}
+
+/* ─── 7. live signal map (visibility lock) ────────────── */
+.signal-canvas {
+  flex: 1;
+  position: relative;
+  width: 100%;
+  min-height: 560px; /* law: prevents container collapse */
+  background: #050505; /* ultra-dark gray, not pure black */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.signal-node {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00ff00; /* phosphor green */
+  box-shadow: 0 0 10px #00ff00;
+  z-index: 100;
+  cursor: grab;
+}
+
+.node-label {
+  position: absolute;
+  bottom: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #00ff00;
+  font-family: monospace;
+  font-size: 10px;
+  pointer-events: none;
+}
+/* ─── 8. RESPONSIVE GUARD ─────────────────────────────── */
+@media (max-width: 1440px) {
+  .desk {
+    width: 100%;
+  }
+
+  .pane--ledger {
+    width: 60%;
+  }
+
+  .pane--signal {
+    width: 40%;
+  }
+}
+/* ─── 9. detail: the friction record ────────────────── */
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  animation: slide-in 0.227s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.event-status {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-text);
+}
+
+.status--gold {
+  background: #ffcc00;
+  box-shadow: 0 0 8px #ffcc00;
+}
+
+.event-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.event-id {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--c-text);
+  text-transform: lowercase;
+}
+
+.event-ts {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+@keyframes slide-in {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+/* ─── absolute layout override ────────────────────── */
+.desk {
+  display: grid !important;
+  /* side: 280px | ledger: flexible | map: 420px */
+  grid-template-columns: 280px 1fr 420px !important; 
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed !important; /* force it to the front */
+  top: 0;
+  left: 0;
+  background: #000;
+  z-index: 9999;
+}
+
+/* ensure the side panel has a distinct border to prove it exists */
+.pane--side {
+  background: #111 !important;
+  border-right: 2px solid #ffcc00 !important; /* gold border for truth */
+  overflow-y: auto;
+}
+
+/* ensure the signal map is visible */
+.pane--signal {
+  background: #050505 !important;
+  border-left: 1px solid rgba(255,255,255,0.1);
+}
