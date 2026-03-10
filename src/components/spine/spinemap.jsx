@@ -22,6 +22,7 @@ import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { THRESHOLDS } from './constants.js';
 import { evaluateThresholds, THRESHOLD_COLORS } from '../../engine/thresholdevaluator.js';
+import { fetchHeadlines, ingestHeadlines } from '../../engine/newsfeed.js';
 
 const MAX_NODES   = 512;
 const FIELD_COUNT = 40;
@@ -1195,31 +1196,27 @@ export default function SignalMap({ data, signalMapData }) {
     });
   }, []);
 
-  // Refresh handler — WO-254 Step 4 (wired to fetchHeadlines in WO-255)
+  // Refresh handler — WO-255 Step 6: fetchHeadlines → ingest → update Signal Map
   const handleRefresh = useCallback(async () => {
     if (fetchLoading) return;
     setFetchLoading(true);
     setFetchError(false);
     try {
-      const res = await fetch('/api/truth', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ query: 'live' }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const arr  = Array.isArray(data) ? data : [data];
-      setNewsSignals(arr.map(r => ({
+      const etrs = await fetchHeadlines();
+      // Ingest bridge: POST to /api/ingest (fire-and-forget)
+      ingestHeadlines(etrs);
+      // Map to Signal Map signal shape
+      setNewsSignals(etrs.map(r => ({
         id:       r.id,
-        text:     r.truth_statement ?? r.title ?? r.id,
-        source:   r.source_type ?? 'news',
-        strength: Math.round((r.signal_score ?? 0.5) * 5),
-        fs:       r.signal_score ?? 0.5,
+        text:     r.title ?? r.id,
+        source:   'news',
+        strength: Math.round(r.fs * 5),
+        fs:       r.fs,
         primary:  true,
         fidelity: {
-          m_checksum:  r.fidelity_components?.m_checksum  ?? 0,
-          t_telemetry: r.fidelity_components?.t_telemetry ?? 0,
-          e_viral:     r.fidelity_components?.e_viral     ?? 0,
+          m_checksum:  r.fidelity_components.m_checksum,
+          t_telemetry: r.fidelity_components.t_telemetry,
+          e_viral:     r.fidelity_components.e_viral,
         },
       })));
     } catch {

@@ -87,3 +87,19 @@ export async function fetchHeadlines() {
   const articles = json.articles ?? [];
   return articles.map((a, i) => parseHeadline(a, i));
 }
+
+// ── Ingest Bridge — WO-255 Step 5 ────────────────────────────────────────────
+// POST each ETR record to /api/ingest (KRYL-300). Fire-and-forget — silent on error.
+async function ingestRecord(etr) {
+  try {
+    await fetch('/api/ingest', {
+      method:  'POST',
+      headers: { 'content-type': 'application/json' },
+      body:    JSON.stringify(etr),
+    });
+  } catch { /* silent */ }
+}
+
+export async function ingestHeadlines(etrs) {
+  await Promise.allSettled(etrs.map(ingestRecord));
+}
