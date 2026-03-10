@@ -20,6 +20,7 @@ import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
+import { THRESHOLDS } from './constants.js';
 
 const MAX_NODES   = 512;
 const FIELD_COUNT = 40;
@@ -664,7 +665,7 @@ function CorroborationBridges({ selectedNodes, stateRef }) {
 }
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
-function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, selectedSet, setSelectedSet, searchQuery }) {
+function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, selectedSet, setSelectedSet, searchQuery, onRedAlert }) {
   const meshRef  = useRef(null);
   const matRef   = useRef(null);
   const stateRef = useRef([]);
@@ -867,6 +868,22 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
     matRef.current = material;
     return () => { geometry.dispose(); material.dispose(); };
   }, [geometry, material]);
+
+  // Signal-strength breach detection — fire onRedAlert when any node enters red
+  const prevSignalStateRef = useRef({});
+  const onRedAlertRef      = useRef(onRedAlert);
+  onRedAlertRef.current    = onRedAlert;
+  useEffect(() => {
+    Object.entries(nodeStrength).forEach(([idx, s]) => {
+      const band = s >= 0.6 ? 'green' : s >= 0.35 ? 'amber' : 'red';
+      const prev = prevSignalStateRef.current[idx] ?? 'green';
+      if (band === 'red' && prev !== 'red') {
+        console.log('[THRESHOLD BREACH] signal entered RED state');
+        onRedAlertRef.current?.('signal');
+      }
+      prevSignalStateRef.current[idx] = band;
+    });
+  }, [nodeStrength]);
 
   const dummy    = useMemo(() => new THREE.Object3D(), []);
   const avgViral = useMemo(() => {
@@ -1146,6 +1163,24 @@ export default function SignalMap({ data, signalMapData }) {
     setTimeout(() => setFlashing(false), 120);
   }, []);
 
+  // Red-state breach handler — Ghost Photo + log
+  const handleRedAlert = useCallback((metric) => {
+    console.log(`[THRESHOLD BREACH] ${metric} entered RED state`);
+    triggerCapture();
+  }, [triggerCapture]);
+
+  // Heartbeat red-state detection
+  const prevHeartbeatBandRef = useRef('green');
+  useEffect(() => {
+    const band = heartbeat >= THRESHOLDS.heartbeat.amber ? 'green'
+      : heartbeat >= THRESHOLDS.heartbeat.red            ? 'amber'
+      : 'red';
+    if (band === 'red' && prevHeartbeatBandRef.current !== 'red') {
+      handleRedAlert('heartbeat');
+    }
+    prevHeartbeatBandRef.current = band;
+  }, [heartbeat, handleRedAlert]);
+
   useEffect(() => {
     const handler = (e) => { if (e.key === 'g' || e.key === 'G') triggerCapture(); };
     window.addEventListener('keydown', handler);
@@ -1295,6 +1330,7 @@ export default function SignalMap({ data, signalMapData }) {
           selectedSet={selectedSet}
           setSelectedSet={setSelectedSet}
           searchQuery={searchQuery}
+          onRedAlert={handleRedAlert}
         />
       </Canvas>
     </div>
