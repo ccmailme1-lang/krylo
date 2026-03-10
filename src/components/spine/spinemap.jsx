@@ -281,10 +281,18 @@ function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
+function frictionVelocityLabel(vel) {
+  if (vel >  0.001) return '↑ Rising';
+  if (vel < -0.001) return '↓ Cooling';
+  return '— Stable';
+}
+
 // ── Hover Card ────────────────────────────────────────────────────────────────
-function HoverCard({ node, locked }) {
+function HoverCard({ node, locked, velocity }) {
   const accent    = locked ? '#FFD700' : '#0096ff';
   const contColor = node.eViral >= 0.6 ? '#F5A623' : node.eViral >= 0.4 ? '#aaa' : '#00b894';
+  const velLabel  = frictionVelocityLabel(velocity ?? 0);
+  const velColor  = (velocity ?? 0) > 0.001 ? '#00b894' : (velocity ?? 0) < -0.001 ? '#F5A623' : 'rgba(232,244,255,0.55)';
   return (
     <Html position={[0, node.scale + 0.5, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
       <div style={{
@@ -309,7 +317,7 @@ function HoverCard({ node, locked }) {
           <span style={{ opacity: 0.5, fontSize: '9px' }}>sentiment</span>
           <span style={{ fontSize: '9px', color: node.fs >= 0.7 ? '#00b894' : accent }}>{sentimentLabel(node.fs)}</span>
           <span style={{ opacity: 0.5, fontSize: '9px' }}>velocity</span>
-          <span style={{ fontSize: '9px' }}>{velocityLabel(node.eViral)}</span>
+          <span style={{ fontSize: '9px', color: velColor }}>{velLabel}</span>
           <span style={{ opacity: 0.5, fontSize: '9px' }}>contamination</span>
           <span style={{ fontSize: '9px', color: contColor }}>{contaminationLabel(node.eViral)}</span>
         </div>
@@ -658,6 +666,8 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
   const [ringEvents, setRingEvents]       = useState([]);
   const [brightNodeSet, setBrightNodeSet] = useState(new Set());
   const prevFsRef    = useRef({});
+  const fsHistoryRef = useRef({});
+  const fsVelocityRef = useRef({});
   const alertModeRef = useRef(false);
   alertModeRef.current = alertMode;
 
@@ -783,11 +793,25 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
     const newSlams  = [];
     const newRings  = [];
     const newBright = [];
+    const now = performance.now();
 
     signals.forEach((sig, i) => {
       const fs   = clamp01(sig.fs ?? (sig.strength ?? 1) / 5);
       const id   = sig.id ?? i;
       const prev = prevFsRef.current[id] ?? -1;
+
+      // Velocity tracking
+      const hist = fsHistoryRef.current[id];
+      if (hist) {
+        const deltaT = (now - hist.time) / 1000;
+        if (deltaT > 0.1) {
+          fsVelocityRef.current[id] = (fs - hist.fs) / deltaT;
+          fsHistoryRef.current[id]  = { fs, time: now };
+        }
+      } else {
+        fsHistoryRef.current[id]  = { fs, time: now };
+        fsVelocityRef.current[id] = 0;
+      }
 
       if (prev < CRYSTAL_FS && fs >= CRYSTAL_FS && !firedRef.current.has(id)) {
         firedRef.current.add(id);
@@ -979,7 +1003,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
 
             {/* KRYL-312: show card if hovered OR locked */}
             {(hoveredIdx === i || isLocked) && (
-              <HoverCard node={node} locked={isLocked} />
+              <HoverCard node={node} locked={isLocked} velocity={fsVelocityRef.current[node.id] ?? 0} />
             )}
           </group>
         );
