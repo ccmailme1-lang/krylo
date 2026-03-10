@@ -4,6 +4,7 @@
 // WO-233 — Friction Record: surface fracture, crystallization, heat dissipation
 // KRYL-311 — Logarithmic node size: radius = baseRadius * (1 + log10(1 + Fs * 9))
 // KRYL-235 — Atmospheric pulse: 4.4Hz sine wave, background opacity 0.02–0.05
+// KRYL-310 — Edge pulse: staggered 0.8Hz sine per edge, opacity 0.3–0.7
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -181,6 +182,28 @@ function ETRLabel({ node, hovered }) {
         {node.id}
       </div>
     </Html>
+  );
+}
+
+// ── Edge Pulse (KRYL-310) ─────────────────────────────────────────────────────
+function PulsedEdge({ edge, idx }) {
+  const lineRef = useRef();
+  useFrame(({ clock }) => {
+    const mat = lineRef.current?.material;
+    if (!mat) return;
+    const t     = clock.getElapsedTime();
+    const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 0.8 + idx * 0.7);
+    mat.opacity = 0.3 + pulse * 0.4;
+  });
+  return (
+    <Line
+      ref={lineRef}
+      points={[edge.start, edge.end]}
+      color={edge.color}
+      lineWidth={edge.width}
+      transparent
+      opacity={edge.opacity}
+    />
   );
 }
 
@@ -400,16 +423,9 @@ function Scene({ signals }) {
         );
       })}
 
-      {/* Edge intelligence */}
-      {edges.map(e => (
-        <Line
-          key={e.key}
-          points={[e.start, e.end]}
-          color={e.color}
-          lineWidth={e.width}
-          transparent
-          opacity={e.opacity}
-        />
+      {/* Edge intelligence — KRYL-310 pulsed */}
+      {edges.map((e, i) => (
+        <PulsedEdge key={e.key} edge={e} idx={i} />
       ))}
 
       {/* Node count */}
