@@ -194,6 +194,31 @@ const CHECKS = [
       return '← RETURN found';
     },
   },
+  {
+    id: 'heartbeat',
+    label: 'Engine Heartbeat — Resonance Index Valid',
+    run: async () => {
+      return new Promise((resolve) => {
+        let frames = 0;
+        const start = performance.now();
+        const sampleMs = 1000;
+        function tick() {
+          frames++;
+          const elapsed = performance.now() - start;
+          if (elapsed < sampleMs) {
+            requestAnimationFrame(tick);
+          } else {
+            const fps = frames / (elapsed / 1000);
+            const measuredHz = fps * 4.4 / 60;
+            const score = Math.max(0, 1.0 - Math.abs(measuredHz - 4.4) / 4.4);
+            const band = score >= 0.95 ? 'GREEN' : score >= 0.8 ? 'AMBER' : 'RED';
+            resolve(`${score.toFixed(3)} [${band}] @ ${measuredHz.toFixed(2)} Hz`);
+          }
+        }
+        requestAnimationFrame(tick);
+      });
+    },
+  },
 ];
 
 const STATUS = { idle: 'IDLE', running: 'RUNNING', pass: 'PASS', fail: 'FAIL' };
