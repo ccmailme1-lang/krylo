@@ -12,7 +12,7 @@
 // KRYL-277 — Ghost Photo: CONFIRMED → console [GHOST PHOTO] JSON { id, fs, timestamp, telemetry, geo }
 // Location: src/components/spine/signalmap.jsx
 
-import React, { useRef, useMemo, useEffect, useState } from 'react';
+import React, { useRef, useMemo, useEffect, useState } from 'react'; // useState used by SignalMap export
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import * as THREE from 'three';
@@ -160,38 +160,36 @@ function contaminationLabel(eViral) {
   return 'Clean';
 }
 
-// ── Hover Card ────────────────────────────────────────────────────────────────
+// ── Hover Card — DOM overlay, positioned by screen projection (not Html/3D) ──
 function HoverCard({ node }) {
-  const accent = '#0096ff';
+  const accent    = '#0096ff';
   const contColor = node.eViral >= 0.6 ? '#F5A623' : node.eViral >= 0.4 ? '#aaa' : '#00b894';
   return (
-    <Html position={[0, node.scale + 0.5, 0]} center distanceFactor={12} style={{ pointerEvents: 'none' }}>
-      <div style={{
-        fontFamily: 'IBM Plex Mono, monospace',
-        fontSize: '10px',
-        background: 'rgba(5,7,10,0.92)',
-        borderRadius: '8px',
-        padding: '10px 14px',
-        width: '200px',
-        border: `1px solid ${accent}33`,
-        color: 'rgba(232,244,255,0.9)',
-        boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-        letterSpacing: '0.05em',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ fontWeight: 'bold', color: accent, fontSize: '11px' }}>{node.id}</span>
-          <span style={{ color: 'rgba(232,244,255,0.4)', fontSize: '9px' }}>Fs {node.fs.toFixed(2)}</span>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px' }}>
-          <span style={{ opacity: 0.5, fontSize: '9px' }}>sentiment</span>
-          <span style={{ fontSize: '9px', color: node.fs >= 0.7 ? '#00b894' : accent }}>{sentimentLabel(node.fs)}</span>
-          <span style={{ opacity: 0.5, fontSize: '9px' }}>velocity</span>
-          <span style={{ fontSize: '9px' }}>{velocityLabel(node.eViral)}</span>
-          <span style={{ opacity: 0.5, fontSize: '9px' }}>contamination</span>
-          <span style={{ fontSize: '9px', color: contColor }}>{contaminationLabel(node.eViral)}</span>
-        </div>
+    <div style={{
+      fontFamily:   'IBM Plex Mono, monospace',
+      fontSize:     '10px',
+      background:   'rgba(5,7,10,0.92)',
+      borderRadius: '8px',
+      padding:      '10px 14px',
+      width:        '200px',
+      border:       `1px solid ${accent}33`,
+      color:        'rgba(232,244,255,0.9)',
+      boxShadow:    '0 4px 32px rgba(0,0,0,0.5)',
+      letterSpacing: '0.05em',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+        <span style={{ fontWeight: 'bold', color: accent, fontSize: '11px' }}>{node.id}</span>
+        <span style={{ color: 'rgba(232,244,255,0.4)', fontSize: '9px' }}>Fs {node.fs.toFixed(2)}</span>
       </div>
-    </Html>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 8px' }}>
+        <span style={{ opacity: 0.5, fontSize: '9px' }}>sentiment</span>
+        <span style={{ fontSize: '9px', color: node.fs >= 0.7 ? '#00b894' : accent }}>{sentimentLabel(node.fs)}</span>
+        <span style={{ opacity: 0.5, fontSize: '9px' }}>velocity</span>
+        <span style={{ fontSize: '9px' }}>{velocityLabel(node.eViral)}</span>
+        <span style={{ opacity: 0.5, fontSize: '9px' }}>contamination</span>
+        <span style={{ fontSize: '9px', color: contColor }}>{contaminationLabel(node.eViral)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -298,13 +296,15 @@ function CameraController({ primaryNodes, orbitRef }) {
 }
 
 // ── Scene ─────────────────────────────────────────────────────────────────────
-function Scene({ signals, alertRef }) {
-  const meshRef  = useRef(null);
-  const matRef   = useRef(null);
-  const stateRef = useRef([]);
-  const orbitRef = useRef(null);
-  const slamRef  = useRef({});
-  const [hoveredIdx, setHoveredIdx] = useState(null);
+function Scene({ signals, alertRef, cardRef, mousePosRef, onHoverChange }) {
+  const meshRef      = useRef(null);
+  const matRef       = useRef(null);
+  const stateRef     = useRef([]);
+  const orbitRef     = useRef(null);
+  const slamRef      = useRef({});
+  const prevHoverRef = useRef(null);    // last hovered primaryNodes index
+  const projVec      = useMemo(() => new THREE.Vector3(), []);
+  const tempSphere   = useMemo(() => new THREE.Sphere(),  []);
 
   const { geometry, material, primaryNodes, edges, hardenedNodes, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
@@ -440,6 +440,20 @@ function Scene({ signals, alertRef }) {
     return primaryNodes.reduce((acc, n) => acc + n.eViral, 0) / primaryNodes.length;
   }, [primaryNodes]);
 
+  const { camera, gl, size, raycaster } = useThree();
+
+  // Mousemove → NDC coords for raycasting
+  useEffect(() => {
+    const el = gl.domElement;
+    const onMove = (e) => {
+      const rect = el.getBoundingClientRect();
+      mousePosRef.current.x =  ((e.clientX - rect.left) / rect.width)  * 2 - 1;
+      mousePosRef.current.y = -((e.clientY - rect.top)  / rect.height) * 2 + 1;
+    };
+    el.addEventListener('pointermove', onMove);
+    return () => el.removeEventListener('pointermove', onMove);
+  }, [gl, mousePosRef]);
+
   useFrame(({ clock }, dt) => {
     const elapsed          = clock.getElapsedTime();
     const m                = matRef.current ?? material;
@@ -521,6 +535,41 @@ function Scene({ signals, alertRef }) {
         node.confirmed = false;
       }
     });
+
+    // ── Hover raycast — world pos → screen projection → DOM card ────────────
+    raycaster.setFromCamera(mousePosRef.current, camera);
+    let hitIdx  = null;
+    let hitDist = Infinity;
+    primaryNodes.forEach((node, i) => {
+      const state = stateRef.current[i];
+      if (!state) return;
+      tempSphere.set(state.pos, node.scale * 1.4);
+      const target = projVec.clone();
+      if (raycaster.ray.intersectSphere(tempSphere, target)) {
+        const d = raycaster.ray.origin.distanceTo(target);
+        if (d < hitDist) { hitDist = d; hitIdx = i; }
+      }
+    });
+
+    if (hitIdx !== prevHoverRef.current) {
+      prevHoverRef.current = hitIdx;
+      onHoverChange(hitIdx !== null ? primaryNodes[hitIdx] : null);
+      document.body.style.cursor = hitIdx !== null ? 'pointer' : 'auto';
+    }
+
+    if (cardRef?.current) {
+      if (hitIdx !== null) {
+        const state = stateRef.current[hitIdx];
+        projVec.copy(state.pos).project(camera);
+        const x = ( projVec.x * 0.5 + 0.5) * size.width;
+        const y = (-projVec.y * 0.5 + 0.5) * size.height;
+        cardRef.current.style.left    = `${x + 10}px`;
+        cardRef.current.style.top     = `${y - 10}px`;
+        cardRef.current.style.display = 'block';
+      } else {
+        cardRef.current.style.display = 'none';
+      }
+    }
   });
 
   return (
@@ -534,22 +583,13 @@ function Scene({ signals, alertRef }) {
         frustumCulled={true}
       />
 
-      {/* Primary node overlays — hover cards + ETR labels */}
+      {/* ETR labels — fixed initial positions (label overlay only) */}
       {primaryNodes.map((node, i) => {
         const state = stateRef.current[i];
         if (!state) return null;
         return (
           <group key={node.id} position={state.pos}>
-            {/* Invisible hit sphere for pointer events */}
-            <mesh
-              onPointerOver={e => { e.stopPropagation(); setHoveredIdx(i); document.body.style.cursor = 'pointer'; }}
-              onPointerOut={e => { e.stopPropagation(); setHoveredIdx(null); document.body.style.cursor = 'auto'; }}
-            >
-              <sphereGeometry args={[node.scale * 1.4, 16, 16]} />
-              <meshBasicMaterial transparent opacity={0} depthWrite={false} />
-            </mesh>
-            <ETRLabel node={node} hovered={hoveredIdx === i} />
-            {hoveredIdx === i && <HoverCard node={node} />}
+            <ETRLabel node={node} hovered={false} />
           </group>
         );
       })}
@@ -592,10 +632,13 @@ function Scene({ signals, alertRef }) {
 // ── Export ────────────────────────────────────────────────────────────────────
 export default function SignalMap({ data, signalMapData }) {
   const resolved   = signalMapData ?? data;
-  const signals    = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
-  const loading    = resolved?.loading ?? false;
-  const pulseRef   = useRef(null);
-  const alertRef   = useRef(false);
+  const signals      = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
+  const loading      = resolved?.loading ?? false;
+  const pulseRef     = useRef(null);
+  const alertRef     = useRef(false);
+  const cardRef      = useRef(null);
+  const mousePosRef  = useRef(new THREE.Vector2());
+  const [hoveredNode, setHoveredNode] = useState(null);
 
   // KRYL-235 — Atmospheric pulse: 4.4Hz sine, background opacity 0.02–0.05
   useEffect(() => {
@@ -639,8 +682,28 @@ export default function SignalMap({ data, signalMapData }) {
       >
         <ambientLight intensity={0.25} />
         <directionalLight position={[10, 10, 5]} intensity={0.4} />
-        <Scene signals={signals} alertRef={alertRef} />
+        <Scene
+          signals={signals}
+          alertRef={alertRef}
+          cardRef={cardRef}
+          mousePosRef={mousePosRef}
+          onHoverChange={setHoveredNode}
+        />
       </Canvas>
+
+      {/* Hover card — DOM overlay, screen-projected from live world position */}
+      <div
+        ref={cardRef}
+        style={{
+          position:      'absolute',
+          zIndex:        10,
+          pointerEvents: 'none',
+          display:       'none',
+          transform:     'translateY(-100%)',
+        }}
+      >
+        {hoveredNode && <HoverCard node={hoveredNode} />}
+      </div>
     </div>
   );
 }
