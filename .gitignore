@@ -23,3 +23,5 @@ build/
 *.swp
 *.swo
 .DS_Store
+# Environment
+.env
