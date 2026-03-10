@@ -521,6 +521,14 @@ function Scene({ signals, alertRef }) {
           slamRef.current[node.index] = { startTime: elapsed };
           if (alertRef) alertRef.current = true;
           console.log(`[KRYL-274] CONFIRMED: ${sig.id ?? 'node-' + node.index} Fs=${fs.toFixed(3)} held ≥0.844 for 3s — ALERT cascade triggered`);
+          // KRYL-277 — Ghost Photo: immutable forensic snapshot at CONFIRMED moment
+          console.log('[GHOST PHOTO]', JSON.stringify({
+            id:        sig.id ?? `node-${node.index}`,
+            fs:        parseFloat(fs.toFixed(4)),
+            timestamp: new Date().toISOString(),
+            telemetry: sig.fidelity ?? null,
+            geo:       sig.geo ?? null,
+          }, null, 2));
         }
       } else {
         node.crossTime = null;
