@@ -6,7 +6,7 @@
 // KRYL-235 — Atmospheric pulse: 4.4Hz sine wave, background opacity 0.02–0.05
 // KRYL-310 — Edge pulse: staggered 0.8Hz sine per edge, opacity 0.3–0.7
 // KRYL-322 — Forensic halo: shader ring around HARDENED nodes, #EAEAEF, 0.15 opacity, 1.4× radius
-// KRYL-243 — ALERT state: Fs ≥ 0.844 → pulse intensifies, edges amber, node glow increases
+// KRYL-243 — ALERT state: Fs ≥ 0.844 → per-node rim glow only (aAlert instanced attribute); no global effects
 // KRYL-274 — 0.844 threshold: 3s hysteresis gate → CONFIRMED state + ALERT cascade + console audit
 // Location: src/components/spine/signalmap.jsx
 
@@ -28,15 +28,18 @@ const VERT = /* glsl */`
   attribute float aPhase;
   attribute float aScale;
   attribute float aIsStub;
+  attribute float aAlert;
 
   varying float vFidelity;
   varying float vStress;
   varying vec3  vNormal;
+  varying float vAlert;
 
   void main() {
     vFidelity = aFidelity;
     vStress   = aStress;
     vNormal   = normalize(normalMatrix * normal);
+    vAlert    = aAlert;
 
     float cohesion = 1.0 - aFidelity;
 
@@ -62,11 +65,11 @@ const VERT = /* glsl */`
 
 const FRAG = /* glsl */`
   uniform float uTime;
-  uniform float uAlert;
 
   varying float vFidelity;
   varying float vStress;
   varying vec3  vNormal;
+  varying float vAlert;
 
   void main() {
     // HARDENED ≥0.70 → cold white | WATCH 0.40–0.69 → signal blue | CALM <0.40 → amber
@@ -86,10 +89,10 @@ const FRAG = /* glsl */`
     // Contamination heat — high stress bleeds amber into any color
     color = mix(color, amber, vStress * 0.45);
 
-    // Rim lighting — crystalline nodes get stronger rim; ALERT increases glow
+    // Rim lighting — crystalline nodes get stronger rim; ALERT node glow per-instance via vAlert
     float rim  = pow(1.0 - dot(normalize(vNormal), vec3(0.0, 0.0, 1.0)), 2.0);
-    color     += rim * vFidelity * (0.4 + uAlert * 0.6);
-    color     += uAlert * vFidelity * vec3(0.91, 0.957, 1.0) * 0.25;
+    color     += rim * vFidelity * (0.4 + vAlert * 0.6);
+    color     += vAlert * vFidelity * vec3(0.91, 0.957, 1.0) * 0.25;
 
     // Heat shimmer on contaminated nodes
     float shimmer = vStress * sin(uTime * 8.0) * 0.08;
@@ -203,7 +206,7 @@ function ETRLabel({ node, hovered }) {
 }
 
 // ── Edge Pulse (KRYL-310) ─────────────────────────────────────────────────────
-function PulsedEdge({ edge, idx, alertRef }) {
+function PulsedEdge({ edge, idx }) {
   const lineRef = useRef();
   useFrame(({ clock }) => {
     const mat = lineRef.current?.material;
@@ -211,12 +214,7 @@ function PulsedEdge({ edge, idx, alertRef }) {
     const t     = clock.getElapsedTime();
     const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 0.8 + idx * 0.7);
     mat.opacity = 0.3 + pulse * 0.4;
-    // KRYL-243 — ALERT: shift edge color to amber
-    if (alertRef?.current) {
-      mat.color?.set('#FFB347');
-    } else {
-      mat.color?.set(edge.color);
-    }
+    mat.color?.set(edge.color);
   });
   return (
     <Line
@@ -302,7 +300,7 @@ function Scene({ signals, alertRef }) {
   const orbitRef = useRef(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  const { geometry, material, primaryNodes, edges, hardenedNodes, isAlert, totalCount } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, hardenedNodes, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
     const fidelities = new Float32Array(MAX_NODES);
@@ -310,6 +308,7 @@ function Scene({ signals, alertRef }) {
     const phases     = new Float32Array(MAX_NODES);
     const scales     = new Float32Array(MAX_NODES);
     const isStubs    = new Float32Array(MAX_NODES);
+    const alerts     = new Float32Array(MAX_NODES);
 
     const state    = [];
     const primaries = [];
@@ -337,6 +336,7 @@ function Scene({ signals, alertRef }) {
       phases[i]     = lcg(i) * Math.PI * 2;
       scales[i]     = scale;
       isStubs[i]    = sig._isStub ? 1.0 : 0.0;
+      alerts[i]     = fs >= 0.844 ? 1.0 : 0.0;
 
       state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 3.0, primary: true, index: i, crossTime: null, confirmed: false });
       primaries.push({ pos: pos.clone(), id: sig.id ?? `ETR-${String(i+1).padStart(3,'0')}`, fs, eViral, scale, index: i });
@@ -377,13 +377,14 @@ function Scene({ signals, alertRef }) {
     geo.setAttribute('aPhase',    new THREE.InstancedBufferAttribute(phases,     1));
     geo.setAttribute('aScale',    new THREE.InstancedBufferAttribute(scales,     1));
     geo.setAttribute('aIsStub',   new THREE.InstancedBufferAttribute(isStubs,    1));
+    geo.setAttribute('aAlert',    new THREE.InstancedBufferAttribute(alerts,     1));
 
     const mat = new THREE.ShaderMaterial({
       vertexShader:   VERT,
       fragmentShader: FRAG,
       transparent:    true,
       depthWrite:     false,
-      uniforms: { uTime: { value: 0 }, uAlert: { value: 0 } },
+      uniforms: { uTime: { value: 0 } },
     });
 
     // Edge intelligence — opacity and width driven by avg Fs of connected nodes
@@ -405,10 +406,9 @@ function Scene({ signals, alertRef }) {
     }
 
     const hardenedNodes = primaries.filter(n => n.fs >= 0.70);
-    const isAlert = primaries.some(n => n.fs >= 0.844);
 
     stateRef.current = state;
-    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, hardenedNodes, isAlert, totalCount: state.length };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, hardenedNodes, totalCount: state.length };
   }, [signals]);
 
   // Pillar 4 — GPU disposal
@@ -430,9 +430,7 @@ function Scene({ signals, alertRef }) {
 
   useFrame(({ clock }, dt) => {
     const m = matRef.current ?? material;
-    m.uniforms.uTime.value  = clock.getElapsedTime();
-    m.uniforms.uAlert.value = isAlert ? 1.0 : 0.0;
-    if (alertRef) alertRef.current = isAlert;
+    m.uniforms.uTime.value = clock.getElapsedTime();
 
     const mesh = meshRef.current;
     if (!mesh) return;
@@ -513,9 +511,9 @@ function Scene({ signals, alertRef }) {
       {/* Forensic halo — KRYL-322 */}
       <HaloMesh hardenedNodes={hardenedNodes} stateRef={stateRef} />
 
-      {/* Edge intelligence — KRYL-310 pulsed, KRYL-243 amber in ALERT */}
+      {/* Edge intelligence — KRYL-310 pulsed */}
       {edges.map((e, i) => (
-        <PulsedEdge key={e.key} edge={e} idx={i} alertRef={alertRef} />
+        <PulsedEdge key={e.key} edge={e} idx={i} />
       ))}
 
       {/* Node count */}
@@ -553,15 +551,14 @@ export default function SignalMap({ data, signalMapData }) {
   const pulseRef   = useRef(null);
   const alertRef   = useRef(false);
 
-  // KRYL-235 / KRYL-243 — Atmospheric pulse: 4.4Hz sine; ALERT doubles amplitude
+  // KRYL-235 — Atmospheric pulse: 4.4Hz sine, background opacity 0.02–0.05
   useEffect(() => {
     let frame;
     function tick() {
       if (pulseRef.current) {
         const t     = performance.now() / 1000;
         const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 4.4);
-        const amp   = alertRef.current ? 0.08 : 0.03;
-        pulseRef.current.style.opacity = (0.02 + pulse * amp).toFixed(4);
+        pulseRef.current.style.opacity = (0.02 + pulse * 0.03).toFixed(4);
       }
       frame = requestAnimationFrame(tick);
     }
