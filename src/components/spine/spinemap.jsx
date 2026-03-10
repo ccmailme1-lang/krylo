@@ -686,13 +686,15 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
   const [slamEvents, setSlamEvents]       = useState([]);
   const [ringEvents, setRingEvents]       = useState([]);
   const [brightNodeSet, setBrightNodeSet] = useState(new Set());
-  const prevFsRef    = useRef({});
-  const fsHistoryRef = useRef({});
-  const fsVelocityRef = useRef({});
+  const prevFsRef      = useRef({});
+  const fsHistoryRef   = useRef({});
+  const fsVelocityRef  = useRef({});
+  const velocityTimerRef  = useRef({});
+  const prevVelBandRef    = useRef({});
   const alertModeRef = useRef(false);
   alertModeRef.current = alertMode;
 
-  const { geometry, material, primaryNodes, edges, nodeStrength, totalCount } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, nodeStrength, nodeIds, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
     const fidelities = new Float32Array(MAX_NODES);
@@ -703,6 +705,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
 
     const state     = [];
     const primaries = [];
+    const ids       = [];
 
     signals.forEach((sig, i) => {
       const fs     = clamp01(sig.fs ?? (sig.strength ?? 1) / 5);
@@ -728,12 +731,10 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
       scales[i]     = scale;
       isStubs[i]    = sig._isStub ? 1.0 : 0.0;
 
+      const nodeId = sig.id ?? `ETR-${String(i + 1).padStart(3, '0')}`;
       state.push({ pos: pos.clone(), vel, speedScale: 1 + eViral * 3.0, primary: true, index: i, fsVal: fs });
-      primaries.push({
-        pos: pos.clone(),
-        id:     sig.id ?? `ETR-${String(i + 1).padStart(3, '0')}`,
-        fs, eViral, scale, index: i,
-      });
+      primaries.push({ pos: pos.clone(), id: nodeId, fs, eViral, scale, index: i });
+      ids.push(nodeId);
     });
 
     for (let j = 0; j < FIELD_COUNT; j++) {
@@ -812,7 +813,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
     }
 
     stateRef.current = state;
-    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, nodeStrength, totalCount: state.length };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, nodeStrength, nodeIds: ids, totalCount: state.length };
   }, [signals]);
 
   const lowestCluster = useMemo(() => {
@@ -947,6 +948,35 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
     });
 
     mesh.instanceMatrix.needsUpdate = true;
+
+    // Velocity timer — per-node negative duration tracking
+    const elapsed = clock.getElapsedTime();
+    nodeIds.forEach((id, i) => {
+      const vel   = fsVelocityRef.current[id] ?? 0;
+      const timer = velocityTimerRef.current[i] ?? { negStart: null, state: 'green' };
+
+      if (vel <= THRESHOLDS.velocity.redRate) {
+        timer.negStart = null;
+        timer.state    = 'red';
+      } else if (vel < -0.001) {
+        if (timer.negStart === null) timer.negStart = elapsed;
+        const dur = elapsed - timer.negStart;
+        timer.state = dur >= THRESHOLDS.velocity.amberDuration ? 'amber' : 'green';
+      } else {
+        timer.negStart = null;
+        timer.state    = 'green';
+      }
+
+      velocityTimerRef.current[i] = timer;
+
+      // Fire onRedAlert on transition to red
+      const prev = prevVelBandRef.current[i] ?? 'green';
+      if (timer.state === 'red' && prev !== 'red') {
+        console.log('[THRESHOLD BREACH] velocity entered RED state');
+        onRedAlertRef.current?.('velocity');
+      }
+      prevVelBandRef.current[i] = timer.state;
+    });
   });
 
   // KRYL-314: search match
