@@ -6,6 +6,7 @@
 // KRYL-235 — Atmospheric pulse: 4.4Hz sine wave, background opacity 0.02–0.05
 // KRYL-310 — Edge pulse: staggered 0.8Hz sine per edge, opacity 0.3–0.7
 // KRYL-322 — Forensic halo: shader ring around HARDENED nodes, #EAEAEF, 0.15 opacity, 1.4× radius
+// KRYL-324 — Pencil tracers: GLSL lineSegments between corroborating nodes (correlation > 0.7), cyan, 0.4 opacity
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -105,6 +106,18 @@ const HALO_VERT = /* glsl */`
 const HALO_FRAG = /* glsl */`
   void main() {
     gl_FragColor = vec4(0.918, 0.918, 0.937, 0.15);
+  }
+`;
+
+// ── Pencil Tracer Shaders (KRYL-324) ─────────────────────────────────────────
+const TRACER_VERT = /* glsl */`
+  void main() {
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`;
+const TRACER_FRAG = /* glsl */`
+  void main() {
+    gl_FragColor = vec4(0.0, 0.831, 1.0, 0.4);
   }
 `;
 
@@ -258,6 +271,42 @@ function HaloMesh({ hardenedNodes, stateRef }) {
   );
 }
 
+// ── Pencil Tracers (KRYL-324) ─────────────────────────────────────────────────
+function Tracers({ tracerPairs, stateRef }) {
+  const linesRef = useRef();
+  const posArray = useMemo(() => new Float32Array(Math.max(1, tracerPairs.length) * 6), [tracerPairs.length]);
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    return geo;
+  }, [posArray]);
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader:   TRACER_VERT,
+    fragmentShader: TRACER_FRAG,
+    transparent:    true,
+    depthWrite:     false,
+  }), []);
+  useEffect(() => () => { geometry.dispose(); material.dispose(); }, [geometry, material]);
+  useFrame(() => {
+    if (!tracerPairs.length || !linesRef.current) return;
+    tracerPairs.forEach(([ai, bi], t) => {
+      const sa = stateRef.current[ai];
+      const sb = stateRef.current[bi];
+      if (!sa || !sb) return;
+      const base = t * 6;
+      posArray[base]     = sa.pos.x;
+      posArray[base + 1] = sa.pos.y;
+      posArray[base + 2] = sa.pos.z;
+      posArray[base + 3] = sb.pos.x;
+      posArray[base + 4] = sb.pos.y;
+      posArray[base + 5] = sb.pos.z;
+    });
+    linesRef.current.geometry.attributes.position.needsUpdate = true;
+  });
+  if (!tracerPairs.length) return null;
+  return <lineSegments ref={linesRef} geometry={geometry} material={material} />;
+}
+
 // ── Camera Intelligence ───────────────────────────────────────────────────────
 function CameraController({ primaryNodes, orbitRef }) {
   const { camera } = useThree();
@@ -292,7 +341,7 @@ function Scene({ signals }) {
   const orbitRef = useRef(null);
   const [hoveredIdx, setHoveredIdx] = useState(null);
 
-  const { geometry, material, primaryNodes, edges, hardenedNodes, totalCount } = useMemo(() => {
+  const { geometry, material, primaryNodes, edges, hardenedNodes, tracerPairs, totalCount } = useMemo(() => {
     const geo = new THREE.SphereGeometry(1, 48, 48);
 
     const fidelities = new Float32Array(MAX_NODES);
@@ -396,8 +445,18 @@ function Scene({ signals }) {
 
     const hardenedNodes = primaries.filter(n => n.fs >= 0.70);
 
+    // Tracers — corroborating pairs: |fs_a - fs_b| < 0.3 (correlation > 0.7)
+    const tracerPairs = [];
+    for (let a = 0; a < primaries.length; a++) {
+      for (let b = a + 1; b < primaries.length; b++) {
+        if (Math.abs(primaries[a].fs - primaries[b].fs) < 0.3) {
+          tracerPairs.push([a, b]);
+        }
+      }
+    }
+
     stateRef.current = state;
-    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, hardenedNodes, totalCount: state.length };
+    return { geometry: geo, material: mat, primaryNodes: primaries, edges: edgeList, hardenedNodes, tracerPairs, totalCount: state.length };
   }, [signals]);
 
   // Pillar 4 — GPU disposal
@@ -478,6 +537,9 @@ function Scene({ signals }) {
 
       {/* Forensic halo — KRYL-322 */}
       <HaloMesh hardenedNodes={hardenedNodes} stateRef={stateRef} />
+
+      {/* Pencil tracers — KRYL-324 */}
+      <Tracers tracerPairs={tracerPairs} stateRef={stateRef} />
 
       {/* Edge intelligence — KRYL-310 pulsed */}
       {edges.map((e, i) => (
