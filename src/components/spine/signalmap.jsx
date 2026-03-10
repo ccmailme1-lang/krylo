@@ -3,6 +3,7 @@
 // WO-232 — Tracking Listener: camera intelligence, edge intelligence, contamination field
 // WO-233 — Friction Record: surface fracture, crystallization, heat dissipation
 // KRYL-311 — Logarithmic node size: radius = baseRadius * (1 + log10(1 + Fs * 9))
+// KRYL-235 — Atmospheric pulse: 4.4Hz sine wave, background opacity 0.02–0.05
 // Location: src/components/spine/signalmap.jsx
 
 import React, { useRef, useMemo, useEffect, useState } from 'react';
@@ -440,12 +441,34 @@ function Scene({ signals }) {
 
 // ── Export ────────────────────────────────────────────────────────────────────
 export default function SignalMap({ data, signalMapData }) {
-  const resolved = signalMapData ?? data;
-  const signals  = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
-  const loading  = resolved?.loading ?? false;
+  const resolved   = signalMapData ?? data;
+  const signals    = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
+  const loading    = resolved?.loading ?? false;
+  const pulseRef   = useRef(null);
+
+  // KRYL-235 — Atmospheric pulse: 4.4Hz sine, opacity 0.02–0.05
+  useEffect(() => {
+    let frame;
+    function tick() {
+      if (pulseRef.current) {
+        const t = performance.now() / 1000;
+        const pulse = 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * 4.4);
+        pulseRef.current.style.opacity = (0.02 + pulse * 0.03).toFixed(4);
+      }
+      frame = requestAnimationFrame(tick);
+    }
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <div style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
+      {/* KRYL-235 — Atmospheric pulse overlay */}
+      <div ref={pulseRef} style={{
+        position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+        background: 'rgba(0, 96, 255, 1)',
+        opacity: 0.02,
+      }} />
       {loading && (
         <div style={{
           position: 'absolute', inset: 0, zIndex: 2, pointerEvents: 'none',
