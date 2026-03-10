@@ -1176,6 +1176,28 @@ export default function SignalMap({ data, signalMapData }) {
   const [searchQuery, setSearchQuery] = useState('');     // KRYL-314
   const [heartbeat, setHeartbeat]     = useState(1.0);
 
+  // Live Feed toggle — WO-254
+  const [liveFeed, setLiveFeed] = useState(() => {
+    try { return localStorage.getItem('krylo_live_feed') === '1'; } catch { return false; }
+  });
+
+  const toggleLiveFeed = useCallback(() => {
+    setLiveFeed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('krylo_live_feed', next ? '1' : '0'); } catch {}
+      return next;
+    });
+  }, []);
+
+  // Inject spinner keyframes once
+  useEffect(() => {
+    if (document.getElementById('krylo-live-feed-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'krylo-live-feed-styles';
+    s.textContent = '@keyframes krylo-spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(s);
+  }, []);
+
   useEffect(() => {
     let raf;
     let frames = 0;
@@ -1250,6 +1272,41 @@ export default function SignalMap({ data, signalMapData }) {
           ⚠ ALERT
         </div>
       )}
+
+      {/* Live Feed Toggle — WO-254 */}
+      <div style={{
+        position:      'absolute', bottom: 46, left: 16, zIndex: 10,
+        display:       'flex', alignItems: 'center', gap: '8px',
+        pointerEvents: 'auto',
+      }}>
+        <div
+          onClick={toggleLiveFeed}
+          style={{
+            width: '28px', height: '16px', borderRadius: '8px',
+            background:  liveFeed ? 'rgba(0,184,148,0.3)' : 'rgba(232,244,255,0.06)',
+            border:      `1px solid ${liveFeed ? 'rgba(0,184,148,0.45)' : 'rgba(232,244,255,0.1)'}`,
+            position: 'relative', cursor: 'pointer', transition: 'background 0.2s',
+            flexShrink: 0,
+          }}
+        >
+          <div style={{
+            position:   'absolute', top: '2px',
+            left:       liveFeed ? '14px' : '2px',
+            width:      '10px', height: '10px', borderRadius: '50%',
+            background: liveFeed ? '#00b894' : 'rgba(232,244,255,0.22)',
+            transition: 'left 0.18s, background 0.18s',
+          }} />
+        </div>
+        <span style={{
+          fontFamily:    'IBM Plex Mono, monospace',
+          fontSize:      '9px',
+          letterSpacing: '0.1em',
+          color:         liveFeed ? 'rgba(0,184,148,0.65)' : 'rgba(232,244,255,0.28)',
+          userSelect:    'none',
+        }}>
+          LIVE FEED
+        </span>
+      </div>
 
       {/* Heartbeat HUD */}
       {(() => {
