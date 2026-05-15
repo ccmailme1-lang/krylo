@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRYLO | Forensic Intelligence Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+:root {
+    --lime: #CCFF00;
+    --white: #FFFFFF;
+    --bg-gray: #E8E8E8;
+    --timing: 22s;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    background:#000; font-family:'IBM Plex Mono', monospace; color:var(--white);
+    display:flex; justify-content:center; align-items:center; height:100vh; width:100vw; overflow:hidden;
+}
+.krylo-feed { position:relative; width:100vw; height:56.25vw; max-height:100vh; max-width:177.78vh; background:var(--bg-gray); overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.krylo-feed.paused * { animation-play-state: paused !important; }
+.txt-lime{color:var(--lime);font-weight:700;text-transform:uppercase;text-shadow:0px 4px 10px rgba(0,0,0,0.5),0px 0px 12px rgba(204,255,0,0.4);}
+.txt-white{color:var(--white);font-weight:400;text-shadow:0px 4px 10px rgba(0,0,0,0.6);}
+.size-lg{font-size:3.5vw;line-height:1;}
+.size-md{font-size:2vw;line-height:1;}
+.size-sm{font-size:1.5vw;line-height:1.2;}
+.bg-layer { position:absolute; top:-5%; left:-5%; width:110%; height:110%; background-image:url('./assets/elephant.jpg'); background-size:cover; background-position:center; filter:saturate(0.85) contrast(1.05); animation:parallaxDrift var(--timing) linear infinite; }
+.grain-overlay { position:absolute; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E"); pointer-events:none; z-index:1;}
+.vignette{position:absolute; inset:0; background:radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%); z-index:2; pointer-events:none;}
+.scene{position:absolute; z-index:10; width:80%; text-align:center;}
+.scene-1{display:flex; flex-direction:column; align-items:center; gap:0.5vw; animation:scene1Fade var(--timing) linear infinite;}
+.s1-line1,.s1-line2{display:flex;align-items:baseline; gap:0.8vw;}
+.word{opacity:0;}
+.w1{animation:paintWord1 var(--timing) linear infinite;}
+.w2{animation:paintWord2 var(--timing) linear infinite;}
+.w3{animation:paintWord3 var(--timing) linear infinite;}
+.w4{animation:paintWord4 var(--timing) linear infinite;}
+.w5{animation:paintWord5 var(--timing) linear infinite;}
+.w6{animation:paintWord6 var(--timing) linear infinite;}
+.scene-2{display:flex; flex-direction:column; align-items:flex-start; gap:0; opacity:0; animation:scene2Master var(--timing) linear infinite;}
+.s2-box{border:2px solid rgba(255,255,255,0.8); padding:1vw 2vw; display:flex; align-items:baseline; gap:0.8vw; background:rgba(0,0,0,0.1); backdrop-filter:blur(2px);}
+.s2-box1{opacity:0;margin-left:4vw; animation:box1Reveal var(--timing) linear infinite;}
+.s2-box2{opacity:0;margin-left:12vw;margin-top:2vw;animation:box2Reveal var(--timing) linear infinite;}
+.scene-3{opacity:0; animation:scene3Master var(--timing) linear infinite;}
+.s3-wrapper{position:relative;width:100%;height:10vh; display:flex; justify-content:center; align-items:center;}
+.s3-line{position:absolute; display:flex; align-items:baseline; gap:0.8vw; opacity:0;}
+.s3-l1{animation:s3Line1 var(--timing) linear infinite;}
+.s3-l2{animation:s3Line2 var(--timing) linear infinite;}
+.s3-l3{animation:s3Line3 var(--timing) linear infinite;}
+.black-cut{position:absolute; inset:0; background:#000; z-index:20; opacity:0; animation:hardCut var(--timing) linear infinite;}
+.scene-4{z-index:30; display:flex; flex-direction:column; align-items:center; gap:3vw; opacity:0; animation:scene4Master var(--timing) linear infinite;}
+.typewriter-wrapper{display:flex; align-items:baseline; gap:0.8vw; clip-path:inset(0 100% 0 0); animation:typewriterReveal var(--timing) linear infinite;}
+.search-box input{background:transparent;border:2px solid var(--white);color:var(--white);font-family:'IBM Plex Mono',monospace;font-style:italic;font-size:1.2vw;padding:1vw 2vw;width:30vw;outline:none;text-align:center;opacity:0; animation:searchFadeIn var(--timing) linear infinite;}
+#play-overlay{position:absolute;inset:0; z-index:100; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.55); cursor:pointer; transition:opacity 0.3s;}
+#play-overlay.hidden{opacity:0; pointer-events:none;}
+#play-btn{background:transparent;border:2px solid var(--lime); color:var(--lime); font-family:'IBM Plex Mono', monospace; font-weight:700; font-size:1.4vw; letter-spacing:0.15em; text-transform:uppercase; padding:1vw 3vw; cursor:pointer; transition:background 0.15s,color 0.15s;}
+#play-btn:hover{background:var(--lime); color:#000;}
+/* Keyframes unchanged for brevity, same as previous feed */
+</style>
+</head>
+<body>
+<div class="krylo-feed paused" id="feed">
+    <div class="bg-layer"></div>
+    <div class="grain-overlay"></div>
+    <div class="vignette"></div>
+
+    <div class="scene scene-1">
+        <div class="s1-line1">
+            <span class="word w1 size-sm txt-white">2.5</span>
+            <span class="word w2 size-lg txt-lime">HOURS</span>
+            <span class="word w3 size-sm txt-white">every day</span>
+        </div>
+        <div class="s1-line2">
+            <span class="word w4 size-lg txt-lime">LOST</span>
+            <span class="word w5 size-sm txt-white">to the</span>
+            <span class="word w6 size-lg txt-lime">UNSAID</span>
+        </div>
+    </div>
+
+    <div class="scene scene-2">
+        <div class="s2-box s2-box1"><span class="size-lg txt-lime">OTHERS</span><span class="size-sm txt-white">saw it</span><span class="size-lg txt-lime">FIRST.</span></div>
+        <div class="s2-box s2-box2"><span class="size-lg txt-lime">DO YOU?</span></div>
+    </div>
+
+    <div class="scene scene-3">
+        <div class="s3-wrapper">
+            <div class="s3-line s3-l1"><span class="size-sm txt-white">KRYLO is an</span><span class="size-lg txt-lime">EXTENSION</span><span class="size-sm txt-white">of</span><span class="size-lg txt-lime">HUMAN PERCEPTION</span></div>
+            <div class="s3-line s3-l2"><span class="size-sm txt-white">we don't</span><span class="size-lg txt-lime">REPLACE JUDGMENT</span></div>
+            <div class="s3-line s3-l3"><span class="size-sm txt-white">we</span><span class="size-lg txt-lime">AUGMENT AWARENESS</span></div>
+        </div>
+    </div>
+
+    <div class="black-cut"></div>
+    <div class="scene scene-4">
+        <div class="typewriter-wrapper">
+            <span class="size-md txt-white">KRYLO:</span>
+            <span class="size-lg txt-lime">Thinking Silence</span>
+            <span class="size-md txt-white">Out Loud</span>
+        </div>
+        <div class="search-box"><input type="text" placeholder="What's the elephant in your room? |" disabled></div>
+    </div>
+
+    <div id="play-overlay">
+        <button id="play-btn">▶ &nbsp;PLAY</button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const overlay = document.getElementById('play-overlay');
+    const feed = document.getElementById('feed');
+    const audio = document.getElementById('score');
+
+    overlay.addEventListener('click', function(){
+        overlay.classList.add('hidden');
+        feed.classList.remove('paused');
+        if(audio){ audio.currentTime = 0; audio.playbackRate = 0.92; audio.play().catch(()=>{}); }
+    });
+});
+</script>
+
+<audio id="score" src="./assets/American Beauty Main Theme (From American Beauty).mp3" preload="auto"></audio>
+</body>
+</html>

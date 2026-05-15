@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+build/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+# Environment
+.env
+
+# Large binary assets — not tracked in git
+Archive/
+Archive 2/
+Archive.zip
+*.mp4
+*.mov
+*.mp3
+*.zip
+public/assets/
+dist/assets/
+Chat\ Log
+"Chat Log"
+Claude\ Code\ chat
+"Claude Code chat"
+.ds_store
+.DS_Store

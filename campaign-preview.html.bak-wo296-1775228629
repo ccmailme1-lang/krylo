@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KRYLO — Special Report · Campaign Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+
+  /* ── RESET ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 14px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  /* ── 9:16 FRAME ─────────────────────────────────────────── */
+  #frame {
+    position: relative;
+    height: min(88vh, 720px);
+    width: calc(min(88vh, 720px) * 9 / 16);
+    overflow: hidden;
+    background: #E8E8E8;
+  }
+
+  /* ── BACKGROUND + DRIFT ─────────────────────────────────── */
+  #bg {
+    position: absolute;
+    inset: -4%;
+    /*
+      TO ADD ELEPHANT PHOTO:
+      1. Replace background: #E8E8E8 with:
+         background: #E8E8E8 url('elephant.jpg') center 45% / 58% auto no-repeat;
+      2. Remove the ::before and ::after placeholder rules below.
+    */
+    background: #E8E8E8;
+    animation: drift 15s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+
+  /* Elephant placeholder guides — remove once photo is live */
+  #bg::before {
+    content: '';
+    position: absolute;
+    inset: 20% 18% 25%;
+    border: 1px dashed rgba(0,0,0,0.12);
+  }
+  #bg::after {
+    content: 'elephant.jpg';
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(0,0,0,0.18);
+    font-size: 11px;
+    letter-spacing: .1em;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  @keyframes drift {
+    0%   { transform: scale(1.02) translate( 0.0%,  0.0%); }
+    25%  { transform: scale(1.03) translate(-0.5%,  0.3%); }
+    50%  { transform: scale(1.02) translate( 0.3%, -0.5%); }
+    75%  { transform: scale(1.03) translate(-0.2%,  0.2%); }
+    100% { transform: scale(1.02) translate( 0.0%,  0.0%); }
+  }
+
+  /* ── SCANLINES (CRT, always on) ─────────────────────────── */
+  #scanlines {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0,0,0,0.07) 3px,
+      rgba(0,0,0,0.07) 4px
+    );
+    background-size: 100% 4px;
+    animation: scan-scroll 4s linear infinite;
+    animation-play-state: paused;
+  }
+
+  /* One 4px cycle = seamless loop */
+  @keyframes scan-scroll {
+    from { background-position: 0 0; }
+    to   { background-position: 0 4px; }
+  }
+
+  /* ── FILM GRAIN ─────────────────────────────────────────── */
+  #grain {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    pointer-events: none;
+    opacity: 0.055;
+    mix-blend-mode: overlay;
+    background-size: 200px 200px;
+    animation: grain-roll 0.09s steps(1) infinite;
+  }
+
+  @keyframes grain-roll {
+    0%   { background-position:   0%   0%; }
+    12%  { background-position: -12% -15%; }
+    25%  { background-position:  18%   8%; }
+    37%  { background-position:   4% -22%; }
+    50%  { background-position: -18%  18%; }
+    62%  { background-position:  12%   4%; }
+    75%  { background-position:  -4%  14%; }
+    87%  { background-position:  22%  -8%; }
+    100% { background-position:   0%   0%; }
+  }
+
+  /* ── VIGNETTE ───────────────────────────────────────────── */
+  #vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 7;
+    pointer-events: none;
+    background: radial-gradient(ellipse at 50% 50%,
+      transparent 36%,
+      rgba(0,0,0,0.20) 100%
+    );
+  }
+
+  /* ── REC INDICATOR ──────────────────────────────────────── */
+  #rec {
+    position: absolute;
+    top: 3%;
+    right: 4%;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0;
+    transition: none;
+  }
+  #rec.on { opacity: 1; }
+
+  .rec-dot {
+    width: clamp(6px, 1.1vh, 9px);
+    height: clamp(6px, 1.1vh, 9px);
+    border-radius: 50%;
+    background: #FF0000;
+    box-shadow: 0 0 7px rgba(255,0,0,0.75);
+    flex-shrink: 0;
+    /* 1s on / 0.5s off = 1.5s cycle */
+    animation: rec-pulse 1.5s steps(1) infinite;
+  }
+
+  @keyframes rec-pulse {
+    0%   { opacity: 1; }
+    67%  { opacity: 1; }
+    68%  { opacity: 0; }
+    100% { opacity: 0; }
+  }
+
+  .rec-label,
+  .rec-time {
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: clamp(7px, 1.5vh, 12px);
+    font-weight: 400;
+    letter-spacing: .07em;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+    white-space: nowrap;
+  }
+
+  /* ── STAIRCASE BOXES ────────────────────────────────────── */
+  .sbox {
+    position: absolute;
+    border: 1.5px solid rgba(255,255,255,0.85);
+    padding: clamp(4px, 0.65vh, 6px) clamp(5px, 1.1vh, 9px);
+    max-width: 72%;
+    z-index: 20;
+    opacity: 0;
+    /* No background fill — just the border */
+    background: transparent;
+  }
+
+  .sbox.visible { opacity: 1; }
+
+  /* Staircase positions — step 3% right, 9.5% down per box */
+  #b1 {
+    top: 2.5%;
+    left: 0; right: 0;
+    max-width: 100%;
+    border-left: none; border-right: none; border-top: none;
+    background: rgba(0,0,0,0.68);
+  }
+  #b2 { top: 15%;  left: 2%;  }
+  #b3 { top: 24%;  left: 5%;  }
+  #b4 { top: 33%;  left: 8%;  }
+  #b5 { top: 42%;  left: 11%; }
+  #b6 { top: 51%;  left: 14%; }
+  #b7 { top: 60%;  left: 17%; }
+  #b8 { top: 68%;  left: 20%; }
+
+  /* Micro-jolt on staircase impact */
+  .jolting {
+    animation: micro-jolt 0.05s steps(2) forwards !important;
+  }
+  @keyframes micro-jolt {
+    0%   { transform: translateY(0);   }
+    50%  { transform: translateY(1px); }
+    100% { transform: translateY(0);   }
+  }
+
+  /* Full-frame shake on box arrival */
+  .shaking {
+    animation: frame-shake 0.05s steps(3) forwards;
+  }
+  @keyframes frame-shake {
+    0%   { transform: translate( 0px,  0px); }
+    33%  { transform: translate(-1px,  1px); }
+    66%  { transform: translate( 1px, -1px); }
+    100% { transform: translate( 0px,  0px); }
+  }
+
+  /* ── ENTRY ANIMATIONS ───────────────────────────────────── */
+
+  /* Banner slam (b1) */
+  .a-slam { animation: a-slam 0.10s cubic-bezier(0.05,0,0,1) forwards; }
+  @keyframes a-slam {
+    from { transform: translateY(-140%); }
+    to   { transform: translateY(0);     }
+  }
+
+  /* Slide from left (b2, b3) */
+  .a-left { animation: a-left 0.13s cubic-bezier(0.05,0,0,1) forwards; }
+  @keyframes a-left {
+    from { transform: translateX(-160%); }
+    to   { transform: translateX(0);     }
+  }
+
+  /* Slide from right (b6) */
+  .a-right { animation: a-right 0.13s cubic-bezier(0.05,0,0,1) forwards; }
+  @keyframes a-right {
+    from { transform: translateX(220%); }
+    to   { transform: translateX(0);   }
+  }
+
+  /* Explode from center (b4) */
+  .a-explode { animation: a-explode 0.14s cubic-bezier(0.15,0,0.1,1.4) forwards; }
+  @keyframes a-explode {
+    from { transform: scale(0.35); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+
+  /* Glitch fade (b5) */
+  .a-glitch { animation: a-glitch 0.20s steps(4) forwards; }
+  @keyframes a-glitch {
+    0%   { opacity: 0;   transform: translateX(-6px) skewX(-3deg); }
+    25%  { opacity: 0.6; transform: translateX( 4px) skewX( 1deg); }
+    50%  { opacity: 0.3; transform: translateX(-2px) skewX( 0deg); }
+    75%  { opacity: 0.8; transform: translateX( 1px);               }
+    100% { opacity: 1;   transform: none;                           }
+  }
+
+  /* Hard pop (b7) */
+  .a-pop { animation: a-pop 0.03s step-end forwards; }
+  @keyframes a-pop {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Glitch burst → lock (b8) */
+  .a-burst { animation: a-burst 0.26s steps(6) forwards; }
+  @keyframes a-burst {
+    0%   { transform: translateX(-7px); opacity: 0;   filter: hue-rotate(130deg) saturate(3); }
+    16%  { transform: translateX( 5px); opacity: 1;   filter: hue-rotate(250deg) saturate(2); }
+    33%  { transform: translateX(-3px); opacity: 0.5; filter: saturate(4);                    }
+    50%  { transform: translateX( 2px); opacity: 1;   filter: none;                           }
+    66%  { transform: translateX(-1px); opacity: 0.9;                                         }
+    83%  { transform: translateX( 1px); opacity: 1;                                           }
+    100% { transform: none;             opacity: 1;   filter: none;                           }
+  }
+
+  /* Slow fade (s9 final frame only) */
+  .a-fade { animation: a-fade 0.9s ease forwards; }
+  @keyframes a-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* ── TYPOGRAPHY ─────────────────────────────────────────── */
+  .lime  { color: #CCFF00; text-shadow: 0 0 22px rgba(204,255,0,0.38), 0 2px 9px rgba(0,0,0,0.75); }
+  .white { color: #FFFFFF; text-shadow: 0 2px 9px rgba(0,0,0,0.85); }
+
+  .xl  { font-size: clamp(20px, 5.2vh, 44px); font-weight: 700; line-height: 1.00; }
+  .lg  { font-size: clamp(16px, 4.0vh, 34px); font-weight: 700; line-height: 1.05; }
+  .md  { font-size: clamp(13px, 3.2vh, 27px); font-weight: 500; line-height: 1.15; }
+  .sm  { font-size: clamp(10px, 2.4vh, 20px); font-weight: 400; line-height: 1.25; }
+  .xs  { font-size: clamp( 8px, 1.9vh, 15px); font-weight: 400; line-height: 1.35; }
+
+  .tight { letter-spacing: -0.03em; }
+  .wide  { letter-spacing:  0.13em; }
+  .ital  { font-style: italic; }
+
+  /* Row: baseline-aligned word groups inside a box */
+  .srow {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: clamp(3px, 0.65vh, 7px);
+    line-height: 1.1;
+  }
+
+  /* ── S9: FINAL FRAME ────────────────────────────────────── */
+  #s9 {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 25;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #s9.visible { opacity: 1; }
+  #s9 .s9-inner > div { margin: clamp(2px, 0.5vh, 7px) 0; }
+
+  /* ── CUT TO BLACK ───────────────────────────────────────── */
+  #blackout {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    z-index: 50;
+    opacity: 0;
+    pointer-events: none;
+  }
+  #blackout.cut { animation: cut 0.07s step-end forwards; }
+  @keyframes cut { to { opacity: 1; } }
+
+  /* ── CONTROLS ───────────────────────────────────────────── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .btn {
+    background: #CCFF00;
+    color: #000;
+    border: none;
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .10em;
+    text-transform: uppercase;
+    padding: 9px 24px;
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .btn:hover        { background: #fff; }
+  .btn.stop         { background: #ff3b3b; color: #fff; }
+  .btn.stop:hover   { background: #ff6060; }
+
+  .timer {
+    color: #444;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    min-width: 44px;
+  }
+
+  .note {
+    color: #2e2e2e;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .06em;
+  }
+
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     9:16 FRAME
+════════════════════════════════════════════ -->
+<div id="frame">
+
+  <div id="bg"></div>
+  <div id="scanlines"></div>
+  <div id="grain"></div>
+  <div id="vignette"></div>
+
+  <!-- REC indicator — always on during playback -->
+  <div id="rec">
+    <div class="rec-dot"></div>
+    <span class="rec-label">REC</span>
+    <span class="rec-time" id="rec-time">00:00:00</span>
+  </div>
+
+
+  <!-- ══ B1 · 0:00 · KRYLO SPECIAL REPORT ══ -->
+  <div class="sbox" id="b1">
+    <div class="srow">
+      <span class="lime xl tight" data-txt="KRYLO">KRYLO</span>
+      <span class="white xs wide"  data-txt="SPECIAL REPORT">SPECIAL REPORT</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B2 · 0:02 · 2.5 HRS ══ -->
+  <div class="sbox" id="b2">
+    <div class="srow">
+      <span class="lime xl tight" data-txt="2.5 HRS">2.5 HRS</span>
+      <span class="white xs"      data-txt="every day">every day</span>
+    </div>
+    <div class="srow">
+      <span class="white lg"      data-txt="LOST">LOST</span>
+      <span class="white xs ital" data-txt="to the unsaid">to the unsaid</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B3 · 0:04 · OTHERS SAW IT FIRST ══ -->
+  <div class="sbox" id="b3">
+    <div class="srow">
+      <span class="lime xl tight" data-txt="OTHERS">OTHERS</span>
+      <span class="white sm"      data-txt="saw it">saw it</span>
+    </div>
+    <div class="srow">
+      <span class="white xl tight" data-txt="FIRST">FIRST</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B4 · 0:06 · THE MORE / THE STRONGER ══ -->
+  <div class="sbox" id="b4">
+    <div class="srow">
+      <span class="lime lg"  data-txt="THE MORE">THE MORE</span>
+      <span class="white xs" data-txt="who know">who know</span>
+    </div>
+    <div class="srow">
+      <span class="white xs" data-txt="and stay silent —">and stay silent —</span>
+    </div>
+    <div class="srow">
+      <span class="lime lg"  data-txt="THE STRONGER">THE STRONGER</span>
+      <span class="white xs" data-txt="it gets">it gets</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B5 · 0:08 · ONE QUESTION ══ -->
+  <div class="sbox" id="b5">
+    <div class="srow">
+      <span class="lime xl tight" data-txt="ONE QUESTION.">ONE QUESTION.</span>
+    </div>
+    <div class="srow">
+      <span class="lime md tight" style="letter-spacing:-0.02em;" data-txt="THAT'S ALL.">THAT'S ALL.</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B6 · 0:10 · PARKING LOT ══ -->
+  <div class="sbox" id="b6">
+    <div class="srow">
+      <span class="lime xl tight" data-txt="PARKING LOT">PARKING LOT</span>
+    </div>
+    <div class="srow">
+      <span class="white sm"      data-txt="conversations.">conversations.</span>
+    </div>
+    <div class="srow" style="align-items:flex-end; gap: clamp(5px,1.1vh,11px);">
+      <span class="lime lg"       data-txt="EVERY.">EVERY.</span>
+      <span class="lime md"       data-txt="MEETING.">MEETING.</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B7 · 0:12 · TAKE YOUR TIME ══ -->
+  <div class="sbox" id="b7">
+    <div class="srow">
+      <span class="lime md"      data-txt="TAKE YOUR TIME.">TAKE YOUR TIME.</span>
+    </div>
+    <div class="srow">
+      <span class="white xs wide" data-txt="WHENEVER YOU'RE READY.">WHENEVER YOU'RE READY.</span>
+    </div>
+  </div>
+
+
+  <!-- ══ B8 · 0:13 · UNSPOKEN SIGNAL / PATTERN CONFIRMED ══ -->
+  <div class="sbox" id="b8">
+    <div class="srow">
+      <span class="white sm"       data-txt="UNSPOKEN">UNSPOKEN</span>
+      <span class="lime xl tight"  data-txt="SIGNAL">SIGNAL</span>
+    </div>
+    <div class="srow">
+      <span class="white sm"       data-txt="PATTERN">PATTERN</span>
+      <span class="lime xl tight"  data-txt="CONFIRMED">CONFIRMED</span>
+    </div>
+  </div>
+
+
+  <!-- ══ S9 · 0:14 · THINKING SILENCE OUT LOUD (final, no border) ══ -->
+  <div id="s9">
+    <div class="s9-inner">
+      <div><span class="white xs wide tight">KRYLO:</span></div>
+      <div><span class="lime xl tight">THINKING SILENCE</span></div>
+      <div><span class="white md">OUT LOUD</span></div>
+    </div>
+  </div>
+
+
+  <div id="blackout"></div>
+
+</div><!-- /frame -->
+
+
+<div class="controls">
+  <button class="btn" id="playBtn" onclick="play()">▶ PLAY</button>
+  <span class="timer" id="timer">0.0s</span>
+</div>
+<div class="note">add elephant photo: edit #bg background rule in CSS, remove placeholder ::before/::after</div>
+
+
+<script>
+/* ── GRAIN: generate noise texture once ──────────────────── */
+(function () {
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(256, 256);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255 | 0;
+    img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+    img.data[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  document.getElementById('grain').style.backgroundImage = `url(${c.toDataURL()})`;
+})();
+
+
+/* ── SCRAMBLE ────────────────────────────────────────────── */
+const GLITCH_CHARS = '!@#$%^&*()[]{}<>?/|\\+=~,.;:0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function randChar(c) {
+  // Preserve spaces and apostrophes — everything else gets scrambled
+  if (c === ' ' || c === '\'' || c === '.') return c;
+  return GLITCH_CHARS[Math.floor(Math.random() * GLITCH_CHARS.length)];
+}
+
+function scrambleBox(boxEl) {
+  const spans = Array.from(boxEl.querySelectorAll('[data-txt]'));
+  const finals = spans.map(s => s.getAttribute('data-txt'));
+
+  let tick = 0;
+  const TICKS = 4; // 3–5 frames at ~16ms each = ~64ms total
+
+  function step() {
+    tick++;
+    if (tick >= TICKS) {
+      spans.forEach((s, i) => { s.textContent = finals[i]; });
+      return;
+    }
+    spans.forEach((s, i) => {
+      s.textContent = finals[i].split('').map(randChar).join('');
+    });
+    setTimeout(step, 16);
+  }
+
+  // First frame: full scramble immediately
+  spans.forEach((s, i) => {
+    s.textContent = finals[i].split('').map(randChar).join('');
+  });
+  setTimeout(step, 16);
+}
+
+
+/* ── IMPACT: jolt all visible boxes + shake frame ────────── */
+function triggerImpact() {
+  const frame = document.getElementById('frame');
+
+  // Jolt all currently visible staircase boxes
+  TIMELINE.forEach(({ id }) => {
+    const el = document.getElementById(id);
+    if (el && el.classList.contains('visible')) {
+      el.classList.remove('jolting');
+      void el.offsetWidth;
+      el.classList.add('jolting');
+      el.addEventListener('animationend', () => el.classList.remove('jolting'), { once: true });
+    }
+  });
+
+  // Micro-shake the whole frame
+  frame.classList.remove('shaking');
+  void frame.offsetWidth;
+  frame.classList.add('shaking');
+  frame.addEventListener('animationend', () => frame.classList.remove('shaking'), { once: true });
+}
+
+
+/* ── TIMELINE ────────────────────────────────────────────── */
+const TIMELINE = [
+  { id: 'b1', showAt:     0, anim: 'a-slam'    },
+  { id: 'b2', showAt:  2000, anim: 'a-left'    },
+  { id: 'b3', showAt:  4000, anim: 'a-left'    },
+  { id: 'b4', showAt:  6000, anim: 'a-explode' },
+  { id: 'b5', showAt:  8000, anim: 'a-glitch'  },
+  { id: 'b6', showAt: 10000, anim: 'a-right'   },
+  { id: 'b7', showAt: 12000, anim: 'a-pop'     },
+  { id: 'b8', showAt: 13000, anim: 'a-burst'   },
+];
+
+const ALL_ANIMS = ['a-slam','a-left','a-right','a-explode','a-glitch','a-pop','a-burst','a-fade'];
+
+
+/* ── STATE ───────────────────────────────────────────────── */
+let running   = false;
+let handles   = [];
+let rafId     = null;
+let recRafId  = null;
+let t0        = null;
+
+
+/* ── SHOW A BOX ──────────────────────────────────────────── */
+function showBox(entry) {
+  const el = document.getElementById(entry.id);
+
+  // Clear any residual animation classes, force reflow, apply new one
+  ALL_ANIMS.forEach(a => el.classList.remove(a));
+  void el.offsetWidth;
+  el.classList.add(entry.anim);
+  el.classList.add('visible');
+  el.addEventListener('animationend', () => {
+    ALL_ANIMS.forEach(a => el.classList.remove(a));
+  }, { once: true });
+
+  // Character scramble
+  scrambleBox(el);
+
+  // Impact effect on all other boxes (skip b1 — it's the header, not a stack box)
+  if (entry.id !== 'b1') triggerImpact();
+}
+
+
+/* ── RESET ───────────────────────────────────────────────── */
+function reset() {
+  handles.forEach(clearTimeout);
+  handles = [];
+  if (rafId)    { cancelAnimationFrame(rafId);    rafId    = null; }
+  if (recRafId) { cancelAnimationFrame(recRafId); recRafId = null; }
+
+  TIMELINE.forEach(({ id }) => {
+    const el = document.getElementById(id);
+    el.classList.remove('visible', 'jolting', ...ALL_ANIMS);
+    // Restore original text
+    el.querySelectorAll('[data-txt]').forEach(s => {
+      s.textContent = s.getAttribute('data-txt');
+    });
+  });
+
+  const s9 = document.getElementById('s9');
+  s9.classList.remove('visible', 'a-fade');
+
+  document.getElementById('blackout').classList.remove('cut');
+  document.getElementById('frame').classList.remove('shaking');
+  document.getElementById('rec').classList.remove('on');
+  document.getElementById('rec-time').textContent = '00:00:00';
+  document.getElementById('timer').textContent = '0.0s';
+  document.getElementById('bg').style.animationPlayState = 'paused';
+  document.getElementById('scanlines').style.animationPlayState = 'paused';
+}
+
+
+/* ── PLAY ────────────────────────────────────────────────── */
+function play() {
+  if (running) {
+    reset();
+    running = false;
+    setBtn('play');
+    return;
+  }
+
+  reset();
+  running = true;
+  setBtn('stop');
+  t0 = performance.now();
+
+  // Kick continuous-loop elements
+  document.getElementById('bg').style.animationPlayState       = 'running';
+  document.getElementById('scanlines').style.animationPlayState = 'running';
+  document.getElementById('rec').classList.add('on');
+
+  // Elapsed timer display
+  (function tickTimer() {
+    if (!running) return;
+    const s = Math.min((performance.now() - t0) / 1000, 15);
+    document.getElementById('timer').textContent = s.toFixed(1) + 's';
+    if (s < 15.05) rafId = requestAnimationFrame(tickTimer);
+  })();
+
+  // REC clock (ticks every rAF frame — smooth)
+  (function tickRec() {
+    if (!running) return;
+    const s = (performance.now() - t0) / 1000;
+    const mm = Math.floor(s / 60);
+    const ss = Math.floor(s % 60);
+    document.getElementById('rec-time').textContent =
+      '00:' +
+      String(mm).padStart(2, '0') + ':' +
+      String(ss).padStart(2, '0');
+    recRafId = requestAnimationFrame(tickRec);
+  })();
+
+  // Staircase entries
+  TIMELINE.forEach(entry => {
+    handles.push(setTimeout(() => showBox(entry), entry.showAt));
+  });
+
+  // 0:14 — clear all staircase boxes, reveal final frame
+  handles.push(setTimeout(() => {
+    TIMELINE.forEach(({ id }) => {
+      document.getElementById(id).classList.remove('visible');
+    });
+    const s9 = document.getElementById('s9');
+    ALL_ANIMS.forEach(a => s9.classList.remove(a));
+    void s9.offsetWidth;
+    s9.classList.add('visible', 'a-fade');
+  }, 14000));
+
+  // 0:15 — cut to black
+  handles.push(setTimeout(() => {
+    document.getElementById('s9').classList.remove('visible');
+    document.getElementById('blackout').classList.add('cut');
+  }, 15000));
+
+  // Done
+  handles.push(setTimeout(() => {
+    running = false;
+    setBtn('replay');
+  }, 15300));
+}
+
+
+/* ── BUTTON STATE ────────────────────────────────────────── */
+function setBtn(state) {
+  const b = document.getElementById('playBtn');
+  if (state === 'play')   { b.textContent = '▶ PLAY';   b.classList.remove('stop'); }
+  if (state === 'stop')   { b.textContent = '■ STOP';   b.classList.add('stop');    }
+  if (state === 'replay') { b.textContent = '↺ REPLAY'; b.classList.remove('stop'); }
+}
+</script>
+
+</body>
+</html>

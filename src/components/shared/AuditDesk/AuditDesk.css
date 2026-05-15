@@ -1,0 +1,130 @@
+/* src/components/shared/AuditDesk/AuditDesk.css */
+/* WO-266b + WO-287 — Audit Desk styles */
+
+.audit-desk {
+  font-family: 'IBM Plex Mono', monospace;
+  background: #6a6c7a;
+  padding: 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.audit-desk__insufficient {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #999;
+}
+
+.audit-desk__header {
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 20px;
+}
+
+.audit-desk__charts {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.audit-desk__drill-btn {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #1A1A1A;
+  background: transparent;
+  border: 1px solid #1A1A1A;
+  padding: 8px 20px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.audit-desk__drill-btn:hover {
+  background: #1A1A1A;
+  color: #F5F5F7;
+}
+
+/* Histogram */
+.pillar-histogram {
+  flex: 1 1 200px;
+}
+
+.pillar-histogram__title {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 10px;
+}
+
+.pillar-histogram__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.pillar-histogram__row:hover .pillar-histogram__bar-fill {
+  opacity: 0.8;
+}
+
+.pillar-histogram__label {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #666;
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.pillar-histogram__track {
+  flex: 1;
+  height: 6px;
+  background: #E0E0E0;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.pillar-histogram__bar-fill {
+  height: 100%;
+  background: #66FF00;
+  border-radius: 3px;
+  transition: width 400ms ease;
+}
+
+.pillar-histogram__val {
+  font-size: 0.6rem;
+  color: #999;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Radar */
+.pillar-radar {
+  flex: 0 0 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pillar-radar__title {
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #999;
+  margin-bottom: 10px;
+  align-self: flex-start;
+}

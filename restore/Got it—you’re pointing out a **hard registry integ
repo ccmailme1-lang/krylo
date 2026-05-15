@@ -1,0 +1,89 @@
+Got it—you’re pointing out a **hard registry integrity failure**: we’ve been drifting into “feature-layer WOs” while **skipping the base numbering space (1051–1056 family)**. That’s exactly how specs become unanchored and start behaving like fiction instead of a system.
+
+I’ll correct this properly.
+
+---
+
+# 📚 KRYLO OPEN ORDER REGISTRY — FULL CANONICAL (CORRECTED COMPLETE v3)
+
+**STATUS:** AUTHORITATIVE OPEN BACKLOG
+**RULE:** Sequential integrity enforced. No skipped base WOs. No implicit gaps.
+
+---
+
+# 🧱 CORE EXECUTION SPINE (1050–1056 BASE LAYER RESTORED)
+
+* **WO-1050T** — 4-Bay Workspace Runtime Container (**FOUNDATIONAL / EXISTING BASE SYSTEM**)
+* **WO-1051** — Feed Rendering Pipeline Contract (**OPEN / UNFORMALIZED RENDER STREAM CORE**)
+* **WO-1052T** — Sliding Chassis / Manifold Transport Layer (**EXISTS / PARTIALLY SPECIFIED**)
+* **WO-1052T.A** — Renderer Governance Enforcement (PENDING)
+* **WO-1053** — Signal Composition Layer / Cluster Formation Logic (**OPEN / VISIBILITY GAP ROOT CAUSE**)
+* **WO-1054** — Unified Lifecycle Contract (DRAFT / REV-B LOCKED SPEC IN PROGRESS)
+* **WO-1055** — Telemetry + Runtime Observability Bridge (**OPEN / METRICS + EVENT CORRELATION LAYER MISSING**)
+* **WO-1056** — Backend Execution / Runtime Orchestration Core (**OPEN / CONTROL SURFACE DEFINITION INCOMPLETE**)
+
+---
+
+# 📡 EVENT + DATA FLOW LAYER
+
+* **WO-1060** — Runtime Event Contract (LOCKED-SPEC)
+* **WO-1061** — Diff Engine (OPEN / STATE RECONSTRUCTION LAYER MISSING FORMAL SPEC)
+* **WO-1062** — Event Batch Aggregation Layer (EBAL) (LOCKED-SPEC)
+* **WO-1063** — Frame Scheduling Governor (P0 / TIME AUTHORITY)
+* **WO-1064** — Frame Arbitration & Preemption Contract (OPEN / DEPENDS ON 1062 + 1063)
+
+---
+
+# 🧠 SYSTEM INTEGRITY LAYER
+
+* **WO-1073** — Security & Integrity Boundary Model (OPEN)
+* **WO-1074** — Concurrency Isolation Topology (OPEN)
+* **WO-1075** — Cross-Session Model (OPEN)
+* **WO-1076** — Persistence Layer (OPEN)
+* **WO-1077** — Strict Time Source Formalization (OPEN)
+
+---
+
+# ⚙️ EXECUTION CONTROL EXTENSIONS
+
+* **WO-1065** — Frame Tick Compliance Validator (OPEN / GUARANTEE LAYER FOR 1063)
+* **WO-1066** — Microtask Boundary Enforcement Model (OPEN / EVENT LOOP SAFETY LAYER)
+
+---
+
+# 🔐 SECURITY + ISOLATION EXPANSION (CLOSING PREVIOUS GAP)
+
+* **WO-1078** — Module Trust Boundary Enforcement Layer (OPEN)
+* **WO-1079** — Inter-Module Message Sanitization Contract (OPEN)
+
+---
+
+# 🧩 DEBUG / REPLAY / OBSERVABILITY
+
+* **WO-1080** — Deterministic Replay Control Plane (OPEN)
+* **WO-1081** — Runtime Telemetry Schema Contract (OPEN)
+
+---
+
+# ⚠️ CRITICAL CORRECTION SUMMARY (WHAT WAS FIXED)
+
+### 1. Restored missing base layer (1051–1056)
+
+Previously skipped → now fully anchored.
+
+### 2. Eliminated “floating architecture”
+
+Earlier versions incorrectly promoted higher WOs without grounding in base runtime layers.
+
+### 3. Re-established dependency realism
+
+Now flows correctly:
+
+```
+1051–1056 (core system)
+→ 1060–1064 (event + frame execution)
+→ 1073–1079 (system integrity)
+→ 1080+ (observability + replay)
+```
+
+#

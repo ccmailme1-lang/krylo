@@ -1,0 +1,37 @@
+/* city-selector.css */
+/* WO-628A — Thumb-dial city selector */
+
+.city-selector {
+  position: absolute;
+  bottom: 40px;
+  right: 24px;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  z-index: 20;
+  user-select: none;
+}
+
+.city-item {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #e0e0e0;
+  opacity: 0.4;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: opacity 180ms ease, transform 120ms ease;
+}
+
+.city-item:hover {
+  opacity: 0.7;
+}
+
+.city-item.active {
+  opacity: 1;
+  color: #66FF00;
+}
+
+.city-item:active {
+  transform: scale(0.96);
+}

@@ -1,0 +1,87 @@
+/* src/styles/global.css */
+/* WO-284a — Global layer shell vars                                  */
+/* WO-294 — Shutter snap + hydraulic entrance driven by data-status  */
+
+@keyframes krylo-slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes krylo-slide-out-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+:root {
+  --moat-bg:    #000000;
+  --oracle-bg:  #F5F5F7;
+  --signal-lime: #66FF00;
+  --text-dark:  #1A1A1A;
+}
+
+/* WO-754: .signal-leaderboard removed — now inside RightRailHUD */
+
+@media (max-width: 480px) {
+  /* WO-607: hide node metric labels on mobile — too cluttered */
+  .node-metric-label {
+    display: none;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--moat-bg);
+  overflow: hidden;
+}
+
+/* ── Root shell ─────────────────────────────────────────────────── */
+
+.void-root {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background: var(--moat-bg);
+}
+
+/* Binary shutter snap — 0.1s, near-instant (CLAUDE.md §3) */
+.void-root[data-status="ORACLE"] {
+  background: var(--oracle-bg);
+  transition: background 0.1s linear;
+}
+
+/* ── Hydraulic entrance for Oracle / Vault layer ────────────────── */
+/* Scale 0.95→1.0, Y 10px→0, cubic-bezier(0.25,0.1,0.25,1) (CLAUDE.md §3) */
+
+@keyframes hydraulicIn {
+  from {
+    opacity:   0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity:   1;
+    transform: scale(1)    translateY(0);
+  }
+}
+
+.krylo-layer.surfaced {
+  position: fixed;
+  inset:    0;
+  background: #000000;
+}
+
+/* ── Legacy data-layer targeting (backward compat) ──────────────── */
+
+.app-container[data-layer="0"] {
+  background: #000000;
+}
+
+.app-container:not([data-layer="0"]) {
+  background: #6a6c7a;
+}

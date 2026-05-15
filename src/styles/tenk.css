@@ -1,0 +1,27 @@
+/* src/styles/tenk.css */
+/* WO-283 — 10K View styles */
+
+/* ── Score ── */
+.signal-score {
+  color: #66FF00;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Score container ── */
+.tenk-score-container {
+  position: relative;
+  z-index: 10;
+  cursor: crosshair;
+}
+
+/* ── Meaning ── */
+.tenk-meaning {
+  pointer-events: none;
+}
+
+/* ── Pulse keyframe ── */
+@keyframes tenkPulse {
+  0%   { opacity: 1;    transform: scale(1);    }
+  50%  { opacity: 0.65; transform: scale(1.04); }
+  100% { opacity: 1;    transform: scale(1);    }
+}

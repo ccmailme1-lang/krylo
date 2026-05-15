@@ -1,0 +1,37 @@
+[
+  {
+    "id": "mc_001",
+    "text": "The silence from leadership after the reorganization is the loudest signal we have seen this quarter.",
+    "source": "internal",
+    "timestamp": "2026-03-01T09:14:00Z",
+    "strength": 0.91
+  },
+  {
+    "id": "mc_002",
+    "text": "Three executives departed within sixty days. No official narrative was ever provided.",
+    "source": "spine",
+    "timestamp": "2026-03-04T14:33:00Z",
+    "strength": 0.78
+  },
+  {
+    "id": "mc_003",
+    "text": "The board approved the restructuring without a public statement. Filings were amended twice.",
+    "source": "regulatory",
+    "timestamp": "2026-03-08T11:05:00Z",
+    "strength": 0.85
+  },
+  {
+    "id": "mc_004",
+    "text": "Recruiting activity spiked in markets the company previously exited. Expansion or distraction?",
+    "source": "hackernews",
+    "timestamp": "2026-03-12T16:47:00Z",
+    "strength": 0.62
+  },
+  {
+    "id": "mc_005",
+    "text": "Revenue guidance was revised downward but investor call tone remained aggressively optimistic.",
+    "source": "financial",
+    "timestamp": "2026-03-15T08:22:00Z",
+    "strength": 0.74
+  }
+]
