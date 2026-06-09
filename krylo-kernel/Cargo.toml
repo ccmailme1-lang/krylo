@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = [
+    "core/scl",
+    "core/bus",
+    "engine/math",
+    "engine/fsm",
+    "engine/watchdog",
+    "engine/temporal",
+    "engine/precursor",
+    "adapters/webgl_tx",
+    "adapters/ingest",
+    "adapters/forensic_panel",
+    "adapters/session_lock"
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

@@ -1,0 +1,9 @@
+[package]
+name = "krylo-bus"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl = { path = "../../core/scl" }
+crossbeam-channel = "0.5"
+serde = { version = "1", features = ["derive"] }

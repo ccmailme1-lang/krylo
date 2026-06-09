@@ -1,0 +1,1947 @@
+// src/components/spine/conemap.jsx
+// Phase 1 — single ConeMap, single Canvas, no overlays, no auxiliary systems
+
+import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, Html } from '@react-three/drei';
+import * as THREE from 'three';
+import { aggregateSignals }       from '../../engine/aggregation.js';
+import { encodeCone }             from '../../engine/coneencoding.js';
+import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import LeverageLattice            from './leveragelattice.jsx';
+import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
+import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
+
+const LIME    = '#66FF00';
+const SPACING = 4.43;
+
+// velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
+function velocityDisplay(v) {
+  const a = Math.abs(v);
+  let glyph;
+  if      (v >   5) glyph = '↑';
+  else if (v >=  1) glyph = '↗';
+  else if (a <   1) glyph = '→';
+  else if (v >= -5) glyph = '↘';
+  else              glyph = '↓';
+  const color =
+    v >  0 ? LIME :
+    v <  0 ? 'rgba(255,255,255,0.45)' :
+             'rgba(255,255,255,0.55)';
+  const sign = v > 0 ? '+' : '';
+  return { glyph, color, text: `${sign}${Math.round(v)}%` };
+}
+
+// convergence-state → hex (per CLAUDE.md §6, classifier theme tokens WO-1126A)
+const THEME_COLOR = {
+  void_gray:      '#4A4A4A', // INSUFFICIENT SIGNAL
+  muted_slate:    '#4A4A4A', // LOW SIGNAL YIELD
+  signal_lime:    '#66FF00', // BUILDING CONVERGENCE
+  signal_blue:    '#007FFF', // TURBULENT CONVERGENCE
+  unicorn_purple: '#8A2BE2', // HIGH CONVERGENCE
+};
+
+const ARC_THESIS = {
+  'capital+technology':  'WATCH: LIQUIDITY FLOW',
+  'capital+ownership':   'WATCH: ASSET TRANSFER',
+  'capital+labor':       'WATCH: COST PRESSURE',
+  'capital+media':       'WATCH: NARRATIVE SHIFT',
+  'capital+knowledge':   'WATCH: YIELD SIGNAL',
+  'legal+career':        'WATCH: EXECUTIVE EVENT',
+  'labor+media':         'WATCH: NARRATIVE BREAK',
+  'technology+labor':    'WATCH: DISPLACEMENT SIGNAL',
+  'legal+technology':    'WATCH: REGULATORY SIGNAL',
+  'knowledge+ownership': 'WATCH: IP TRANSFER',
+  'knowledge+labor':     'WATCH: TALENT PRESSURE',
+  'media+ownership':     'WATCH: BRAND TRANSFER',
+};
+function arcThesis(a, b) {
+  return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
+}
+
+function Cone({ state, position, isSelected = true, isLocked = false }) {
+  const bays       = useBayStore(s => s.bays);
+  const hoveredBay = useBayStore(s => s.hoveredBay);
+  const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
+  const assignment = bayId > 0 ? bays[bayId]?.assignment : null;
+  const coneLabel  = assignment?.title ?? (state.domain ?? '').toUpperCase();
+  const isHovered  = hoveredBay === bayId;
+
+  const [flashOpacity, setFlashOpacity] = useState(1);
+  const prevTitle = useRef(assignment?.title);
+  useEffect(() => {
+    if (assignment?.title && assignment.title !== prevTitle.current) {
+      prevTitle.current = assignment.title;
+      let count = 0;
+      const interval = setInterval(() => {
+        setFlashOpacity(o => o < 0.5 ? 1 : 0.15);
+        count++;
+        if (count >= 6) { clearInterval(interval); setFlashOpacity(1); }
+      }, 180);
+      return () => clearInterval(interval);
+    }
+  }, [assignment?.title]);
+
+  // WO-1340: entity signal override — hook fetches live entity data; falls back to ambient while loading
+  const { pressure: entityPressure, volatility: entityVolatility, loading: entityLoading } = useEntitySignal(assignment?.title ?? null);
+  const activePressure   = (assignment && !entityLoading) ? entityPressure   : (state.pressure   ?? 0);
+  const activeVolatility = (assignment && !entityLoading) ? entityVolatility : (state.volatility ?? 0.5);
+
+  const { height, radius } = encodeCone({ ...state, pressure: activePressure, volatility: activeVolatility }, { focusId: null });
+  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * 8);
+  const baseY      = coneHeight / 2 - coneHeight * 0.1;
+
+  // Phase A heuristic vector derivation — canonical mapping pending WO-1125
+  const leverageN  = activePressure / 100;
+  const vector     = { D: leverageN, V: activeVolatility, A: leverageN, T: 0.7 };
+  const { theme }  = classifyConvergenceState(vector, 0.8);
+  const stateColor = THEME_COLOR[theme] ?? LIME;
+
+  // velocity heuristic (Phase A) — deviation from neutral baseline (50)
+  const velocity = (activePressure - 50) * 0.3;
+  const v        = velocityDisplay(velocity);
+
+  // 7-day forecast band — projects cone height by velocity over horizon
+  // Pairs with temporal scrubber: scrub back to verify past forecasts proved right.
+  const forecastFactor = 1 + velocity * 0.018; // gentle: max ~±27% projection
+  const forecastDelta  = coneHeight * (forecastFactor - 1);
+  const forecastY      = coneHeight / 2 + forecastDelta;
+  // Offset trajectory to the right of the cone so the always-on apex label
+  // doesn't occlude it. X = +0.8 places it just past the cone radius.
+  const trajX = 0.8 + (radius * 1.5972);
+  const trajPts = useMemo(() => new Float32Array([
+    trajX, coneHeight / 2, 0,
+    trajX, forecastY,      0,
+  ]), [trajX, coneHeight, forecastY]);
+  const tickPts = useMemo(() => {
+    const w = 0.5;
+    return new Float32Array([-w, 0, 0, w, 0, 0]);
+  }, []);
+
+  return (
+    // base lowered 10% of cone height below ground
+    <group position={[position[0], baseY, position[2]]}>
+      <mesh>
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
+        <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
+      </mesh>
+
+
+      <Html position={[0, coneHeight / 2 + 0.4, 0]} center>
+        <div style={{
+          fontFamily:    "'IBM Plex Mono', monospace",
+          fontSize:      11,
+          lineHeight:    '1.6',
+          letterSpacing: '0.12em',
+          textAlign:     'center',
+          whiteSpace:    'nowrap',
+          color:         isHovered ? LIME : isSelected ? '#ffffff' : 'rgba(255,255,255,0.35)',
+          opacity:       isHovered ? 1 : flashOpacity,
+          transition:    'color 150ms ease, opacity 150ms ease',
+          userSelect:    'none',
+          pointerEvents: 'none',
+          transition:    'color 200ms',
+        }}>
+          <div>{coneLabel.toUpperCase()}</div>
+          <div style={{ color: isSelected ? LIME : 'rgba(102,255,0,0.35)', fontSize: 10, opacity: 0.9 }}>
+            SIGNAL {Math.round(state.pressure ?? 0)}
+            <span style={{ color: isSelected ? v.color : 'rgba(255,255,255,0.3)', marginLeft: 8 }}>
+              {v.glyph} {v.text}
+            </span>
+          </div>
+        </div>
+      </Html>
+    </group>
+  );
+}
+
+// matches OrbitControls autoRotateSpeed={0.5} angular velocity
+const SPIN = (2 * Math.PI / 60) * 0.5;
+
+// Global baseline feeder weights — average leverage coefficients across sectors.
+const COMPOSITION = [
+  { name: 'TECHNOLOGY', pct: 30 },
+  { name: 'CAPITAL',   pct: 22 },
+  { name: 'KNOWLEDGE', pct: 18 },
+  { name: 'LABOR',     pct: 12 },
+  { name: 'MEDIA',     pct: 10 },
+  { name: 'OWNERSHIP', pct:  8 },
+];
+
+// 6-domain → 4-pillar surface mapping (engine stays at 6 domains)
+const DOMAIN_TO_PILLAR = {
+  capital:    'financial',
+  ownership:  'financial',
+  knowledge:  'operating',
+  technology: 'operating',
+  labor:      'time',
+  media:      'personal',
+};
+const CANONICAL_PILLARS = ['financial', 'operating', 'time', 'personal'];
+
+function aggregateToPillars(domainState) {
+  const acc = {};
+  CANONICAL_PILLARS.forEach(p => { acc[p] = { pressure: [], volatility: [] }; });
+  domainState.forEach(s => {
+    const pillar = DOMAIN_TO_PILLAR[s.domain];
+    if (!pillar) return;
+    acc[pillar].pressure.push(s.pressure ?? 0);
+    acc[pillar].volatility.push(s.volatility ?? 0);
+  });
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  return CANONICAL_PILLARS.map(p => ({
+    domain: p,
+    pressure:   avg(acc[p].pressure),
+    volatility: avg(acc[p].volatility),
+  }));
+}
+
+// Per-lens composition — reweighted to 4 pillars. Sums to 100. Phase A heuristic.
+const LENS_COMPOSITION = {
+  INVESTOR: [
+    { name: 'OPERATING', pct: 43 },
+    { name: 'FINANCIAL', pct: 36 },
+    { name: 'PERSONAL',  pct: 12 },
+    { name: 'TIME',      pct:  9 },
+  ],
+  REALTOR: [
+    { name: 'FINANCIAL', pct: 36 },
+    { name: 'OPERATING', pct: 24 },
+    { name: 'PERSONAL',  pct: 18 },
+    { name: 'TIME',      pct: 22 },
+  ],
+  ATHLETE: [
+    { name: 'PERSONAL',  pct: 35 },
+    { name: 'FINANCIAL', pct: 29 },
+    { name: 'OPERATING', pct: 24 },
+    { name: 'TIME',      pct: 12 },
+  ],
+  SALES: [
+    { name: 'FINANCIAL', pct: 33 },
+    { name: 'OPERATING', pct: 32 },
+    { name: 'PERSONAL',  pct: 22 },
+    { name: 'TIME',      pct: 13 },
+  ],
+  LEGAL: [
+    { name: 'OPERATING', pct: 44 },
+    { name: 'FINANCIAL', pct: 42 },
+    { name: 'PERSONAL',  pct:  8 },
+    { name: 'TIME',      pct:  6 },
+  ],
+};
+
+// Mock provenance: per-domain source documents/feeds.
+// Each entry: { src, t, title } — src = feed/outlet code, t = timestamp HH:MM.
+// Phase A heuristic; swap for live attribution payload when WO-1026 lands.
+// WO-1310: Driver Node-Map — entity chains per domain. Root = domain, 2 downstream nodes.
+const NODE_MAP = {
+  capital:    ['SERIES A CAPITAL', 'LEAD INVESTOR'],
+  technology: ['PATENT FILING',    'ASSIGNEE'],
+  knowledge:  ['RESEARCH GRANT',   'INSTITUTION'],
+  labor:      ['UNION CONTRACT',   'NEGOTIATOR'],
+  media:      ['PRESS RELEASE',    'PUBLISHER'],
+  ownership:  ['HOLDING ENTITY',   'BENEFICIARY'],
+  economy:    ['FISCAL PRESSURE',  'POLICY ACTOR'],
+  housing:    ['LENDING DESK',     'ORIGINATOR'],
+  transit:    ['FUNDING DESK',     'AUTHORITY'],
+  insurance:  ['REINSURANCE',      'CARRIER'],
+  education:  ['BUDGET DESK',      'DISTRICT ADMIN'],
+};
+
+// WO-1339: Resonance Path — mock resolver (Phase A)
+// Structure: { path: string[], confidence: number }
+// MAX_VISIBLE_HOPS = 5. Phase B: replace resolveResonancePath() with live engine call.
+const MAX_VISIBLE_HOPS = 5;
+const RESONANCE_PATHS = {
+  dogs:        { path: ['Dogs', 'Veterinary Demand', 'Pet Insurance', 'Healthcare Spend', 'Regulatory Activity'], confidence: 74 },
+  nvidia:      { path: ['Nvidia', 'AI Chip Supply', 'Data Center Demand', 'Energy Consumption', 'Grid Pressure'], confidence: 81 },
+  apple:       { path: ['Apple', 'Consumer Device Spend', 'App Revenue', 'Developer Labor', 'IP Litigation'], confidence: 78 },
+  tesla:       { path: ['Tesla', 'EV Adoption', 'Battery Supply', 'Lithium Demand', 'Mining Policy'], confidence: 69 },
+  fed:         { path: ['Fed Rate', 'Mortgage Rates', 'Housing Demand', 'Construction Labor', 'Material Cost'], confidence: 83 },
+  amazon:      { path: ['Amazon', 'Logistics Demand', 'Warehouse Labor', 'Last-Mile Delivery', 'Urban Zoning'], confidence: 77 },
+  google:      { path: ['Google', 'Ad Market Spend', 'Retail Revenue', 'Consumer Sentiment', 'Credit Activity'], confidence: 72 },
+  openai:      { path: ['OpenAI', 'AI Inference Demand', 'Cloud Compute', 'Energy Grid', 'Carbon Policy'], confidence: 68 },
+  inflation:   { path: ['Inflation', 'Wage Pressure', 'Consumer Spend', 'Retail Margin', 'Supply Chain Cost'], confidence: 86 },
+  china:       { path: ['China', 'Export Controls', 'Semiconductor Supply', 'Defense Procurement', 'Allied Policy'], confidence: 79 },
+};
+function resolveResonancePath(title) {
+  if (!title) return null;
+  const key = title.toLowerCase().trim();
+  const exact = RESONANCE_PATHS[key];
+  if (exact) return exact;
+  // fuzzy: first word match
+  const firstWord = key.split(/\s+/)[0];
+  for (const k of Object.keys(RESONANCE_PATHS)) {
+    if (k.startsWith(firstWord)) return RESONANCE_PATHS[k];
+  }
+  // generic fallback
+  return { path: [title, 'Market Activity', 'Consumer Response', 'Regulatory Signal'], confidence: 61 };
+}
+
+// WO-1340: Entity Signal Injection — Phase A mock resolver
+// Structure: { pressure: 0–100, volatility: 0–1 }
+// Phase B: replace resolveEntitySignal() with live ingest lookup. UI contract unchanged.
+const ENTITY_SIGNALS = {
+  dogs:        { pressure: 72, volatility: 0.61 },
+  nvidia:      { pressure: 88, volatility: 0.74 },
+  apple:       { pressure: 76, volatility: 0.52 },
+  tesla:       { pressure: 65, volatility: 0.82 },
+  amazon:      { pressure: 80, volatility: 0.58 },
+  google:      { pressure: 78, volatility: 0.55 },
+  openai:      { pressure: 84, volatility: 0.79 },
+  microsoft:   { pressure: 82, volatility: 0.47 },
+  fed:         { pressure: 91, volatility: 0.55 },
+  inflation:   { pressure: 86, volatility: 0.63 },
+  china:       { pressure: 79, volatility: 0.71 },
+  ukraine:     { pressure: 83, volatility: 0.88 },
+  oil:         { pressure: 77, volatility: 0.69 },
+  bitcoin:     { pressure: 70, volatility: 0.94 },
+  housing:     { pressure: 68, volatility: 0.57 },
+};
+function resolveEntitySignal(title) {
+  if (!title) return null;
+  const key = title.toLowerCase().trim();
+  const exact = ENTITY_SIGNALS[key];
+  if (exact) return exact;
+  const firstWord = key.split(/\s+/)[0];
+  for (const k of Object.keys(ENTITY_SIGNALS)) {
+    if (k.startsWith(firstWord)) return ENTITY_SIGNALS[k];
+  }
+  return { pressure: 55, volatility: 0.50 };
+}
+
+const MOCK_PROVENANCE = {
+  economy: [
+    { src: 'FRED', t: '14:32', title: 'Texas pension funds shortfall widens Q3' },
+    { src: 'WSJ',  t: '13:55', title: 'State budget pressure intensifies, analysts say' },
+    { src: 'BLS',  t: '12:48', title: 'Unemployment claims tick up across Sun Belt' },
+  ],
+  housing: [
+    { src: 'NYT',  t: '14:21', title: 'California exurban commute distances hit record' },
+    { src: 'HN',   t: '13:40', title: 'Mortgage origination data shows distance creep' },
+    { src: 'FRED', t: '12:15', title: '30Y rates push affordability index lower again' },
+  ],
+  transit: [
+    { src: 'NYT',  t: '14:11', title: 'MTA ridership falls 11% YoY in Q3 filing' },
+    { src: 'WSJ',  t: '13:22', title: 'Subway authority faces FY24 funding shortfall' },
+    { src: 'HN',   t: '11:58', title: 'Remote work share holds steady in tri-state area' },
+  ],
+  insurance: [
+    { src: 'WSJ',  t: '14:38', title: 'Florida insurer exits coastal counties' },
+    { src: 'BIZJ', t: '13:50', title: 'Reinsurance pricing up 23% in Atlantic basin' },
+    { src: 'NOAA', t: '12:30', title: 'Hurricane season forecast revised upward' },
+  ],
+  education: [
+    { src: 'WSJ',  t: '14:45', title: 'Chicago Public Schools projects $391M shortfall' },
+    { src: 'BLS',  t: '13:12', title: 'Teacher vacancy data shows third-year decline' },
+    { src: 'NPR',  t: '11:40', title: 'Federal ESSER funds expire Sept 30, schools brace' },
+  ],
+};
+
+const EMA_ALPHA = 0.18;
+
+const PILLAR_INDEX = ['financial', 'operating', 'time', 'personal'];
+
+// WO-1348 — Multi-Bay Comparative Analysis panel
+function ComparePanel() {
+  const bays = useBayStore(s => s.bays);
+  const flagged = Object.values(bays).filter(b => b.compareFlag && b.assignment);
+  if (flagged.length < 2) return null;
+
+  return (
+    <div style={{
+      position:   'fixed',
+      top:        48,
+      bottom:     190,
+      right:      272,
+      width:      280,
+      padding:    '14px 16px',
+      background: 'rgba(0,0,0,0.72)',
+      border:     '1px solid rgba(102,255,0,0.18)',
+      fontFamily: "'IBM Plex Mono', monospace",
+      overflowY:  'auto',
+      zIndex:     20,
+    }}>
+      <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(102,255,0,0.7)', marginBottom: 12, textTransform: 'uppercase' }}>
+        Cross-Bay Analysis · {flagged.length} subjects
+      </div>
+
+      {/* Subject headers */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {flagged.map(b => (
+          <div key={b.id} style={{
+            flex: 1, padding: '6px 8px',
+            border: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(255,255,255,0.03)',
+          }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', marginBottom: 3 }}>BAY {b.id}</div>
+            <div style={{ fontSize: 9, color: '#66FF00', letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.3 }}>
+              {b.assignment.title}
+            </div>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', marginTop: 2, letterSpacing: '0.12em' }}>{b.domain}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Signal delta matrix — pairwise */}
+      {flagged.length >= 2 && (() => {
+        const pairs = [];
+        for (let i = 0; i < flagged.length; i++) {
+          for (let j = i + 1; j < flagged.length; j++) {
+            pairs.push([flagged[i], flagged[j]]);
+          }
+        }
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>COMPARATIVE VECTORS</div>
+            {pairs.map(([a, b]) => {
+              const alignment = Math.max(0, 100 - Math.abs((a.id * 17 + 31) % 100 - (b.id * 17 + 31) % 100));
+              const delta     = ((a.id * 13 + b.id * 7) % 40) - 20;
+              const diverge   = alignment < 40 ? 'DIVERGING' : alignment < 70 ? 'NEUTRAL' : 'CONVERGING';
+              const divColor  = diverge === 'CONVERGING' ? '#66FF00' : diverge === 'DIVERGING' ? 'rgba(255,80,80,0.7)' : 'rgba(255,255,255,0.4)';
+              return (
+                <div key={`${a.id}-${b.id}`} style={{
+                  padding: '8px 10px',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  display: 'flex', flexDirection: 'column', gap: 5,
+                }}>
+                  <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.12em' }}>
+                    {a.assignment.title.split(' ')[0]} ↔ {b.assignment.title.split(' ')[0]}
+                  </div>
+                  {[
+                    { label: 'SIGNAL DELTA',    value: `${delta >= 0 ? '+' : ''}${delta}%` },
+                    { label: 'ALIGNMENT',       value: `${alignment}%` },
+                    { label: 'VECTOR',          value: diverge, color: divColor },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.18em' }}>{label}</span>
+                      <span style={{ fontSize: 8, color: color ?? '#66FF00', letterSpacing: '0.1em' }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
+      <div style={{ marginTop: 12, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.2)' }}>
+        PHASE A · MOCK VECTORS · LIVE ENGINE PENDING
+      </div>
+    </div>
+  );
+}
+
+export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], searchPreview = null, onSearchPreviewSave = null }) {
+  const [tab, setTab]         = React.useState('stats');
+  const emaRef                = React.useRef({});
+  const prevDomain            = React.useRef(null);
+  const panelRef              = React.useRef(null);
+  const searchInputRef        = React.useRef(null);
+  const [xraySnap,    setXraySnap]    = React.useState(null);
+  const [assignInput, setAssignInput] = React.useState('');
+  const [isEditing,   setIsEditing]   = React.useState(false);
+  const [candOpen,      setCandOpen]      = React.useState(false);
+  const [candInput,     setCandInput]     = React.useState('');
+  const [bayPickerOpen, setBayPickerOpen] = React.useState(false);
+  const [panelSearch,   setPanelSearch]   = React.useState(false);
+  const [panelInput,    setPanelInput]    = React.useState('');
+  const [panelResult,   setPanelResult]   = React.useState(null);
+  const [convTick,      setConvTick]      = React.useState(0);
+  const convergenceStartRef               = React.useRef({ label: null, startTime: Date.now() });
+
+  // Bay store — panel is the primary control surface
+  const bays           = useBayStore(s => s.bays);
+  const setHoveredBay  = useBayStore(s => s.setHoveredBay);
+  const assignToBay    = useBayStore(s => s.assignToBay);
+  const clearBay       = useBayStore(s => s.clearBay);
+  const setBayView     = useBayStore(s => s.setBayView);
+  const toggleXray     = useBayStore(s => s.toggleXray);
+  const toggleFreeze   = useBayStore(s => s.toggleFreeze);
+  const toggleCompare  = useBayStore(s => s.toggleCompare);
+  const addCandidate      = useBayStore(s => s.addCandidate);
+  const removeCandidate   = useBayStore(s => s.removeCandidate);
+  const candidateCache    = useBayStore(s => s.candidateCache);
+  const domainCandidates  = useBayStore(s => s.domainCandidates);
+
+  const pillarIdx = cone ? PILLAR_INDEX.indexOf(cone.domain) : -1;
+  const bayId     = pillarIdx >= 0 ? pillarIdx + 1 : null;
+  const bay       = bayId ? bays[bayId] : null;
+
+  React.useEffect(() => {
+    setIsEditing(false);
+    setAssignInput('');
+    setCandOpen(false);
+    setCandInput('');
+  }, [cone?.domain]);
+
+  React.useEffect(() => {
+    if (panelSearch && panelRef.current) {
+      setTimeout(() => {
+        panelRef.current.scrollTop = panelRef.current.scrollHeight;
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  }, [panelSearch]);
+
+  React.useEffect(() => {
+    const iv = setInterval(() => setConvTick(t => t + 1), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  if (!cone) return null;
+  const leverageN   = (cone.pressure ?? 0) / 100;
+  const vector      = { D: leverageN, V: cone.volatility ?? 0.5, A: leverageN, T: 0.7 };
+  const { label, theme } = classifyConvergenceState(vector, 0.8);
+  const accent      = THEME_COLOR[theme] ?? LIME;
+
+  if (convergenceStartRef.current.label !== label) {
+    convergenceStartRef.current = { label, startTime: Date.now() };
+  }
+  const convElapsed  = Math.floor((Date.now() - convergenceStartRef.current.startTime) / 1000);
+  const convMins     = Math.floor(convElapsed / 60);
+  const convSecs     = convElapsed % 60;
+  const convDuration = convMins > 0
+    ? `${convMins}m ${String(convSecs).padStart(2, '0')}s`
+    : `${convSecs}s`;
+
+  const isReplay    = timeOffset > 0;
+  const hoursBack   = Math.round(timeOffset * 24);
+
+  const leaderboard = [...coneState]
+    .map(c => {
+      const raw = ((c.pressure ?? 50) - 50) * 0.3;
+      const prev = emaRef.current[c.domain] ?? raw;
+      const ema  = EMA_ALPHA * raw + (1 - EMA_ALPHA) * prev;
+      emaRef.current[c.domain] = ema;
+      return { domain: c.domain, vel: ema, abs: Math.abs(ema) };
+    })
+    .sort((a, b) => b.abs - a.abs);
+
+  return (
+    <div ref={panelRef} style={{
+        position:      'fixed',
+        top:           48,
+        bottom:        190,
+        right:         16,
+        width:         240,
+        padding:       '14px 16px',
+        background:    'rgba(0,0,0,0.68)',
+        border:        `1px solid ${accent}22`,
+        fontFamily:    "'IBM Plex Mono', monospace",
+        color:         'rgba(255,255,255,0.75)',
+        fontSize:      10,
+        lineHeight:    '1.5',
+        letterSpacing: '0.08em',
+        userSelect:    'none',
+        pointerEvents: 'auto',
+        zIndex:        10,
+        maxHeight:     'calc(100vh - 320px)',
+        overflowY:     'hidden',
+        borderBottom:  '1px solid rgba(0,255,0,0.3)',
+      }}>
+      {/* Search preview — entity loaded from search, pending bay assignment */}
+      {searchPreview && (
+        <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px solid ${LIME}33`, background: `${LIME}08` }}>
+          <div style={{ fontSize: 7, color: `${LIME}88`, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 4 }}>Signal Loaded</div>
+          <div style={{ fontSize: 13, color: LIME, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{searchPreview.title}</div>
+          {!bayPickerOpen ? (
+            <button
+              onClick={() => setBayPickerOpen(true)}
+              style={{ width: '100%', padding: '6px 0', background: 'transparent', border: `1px solid ${LIME}55`, color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer' }}
+              onMouseEnter={e => { e.currentTarget.style.background = `${LIME}18`; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+            >SAVE TO BAY →</button>
+          ) : (
+            <div>
+              <div style={{ fontSize: 7, color: `${LIME}66`, letterSpacing: '0.2em', marginBottom: 6 }}>SELECT BAY</div>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[1,2,3,4,5,6].map(n => (
+                  <button key={n}
+                    onClick={() => { assignToBay(n, searchPreview); setBayPickerOpen(false); setHoveredBay(null); onSearchPreviewSave?.(); }}
+                    onMouseEnter={e => { e.currentTarget.style.background = `${LIME}22`; setHoveredBay(n); }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredBay(null); }}
+                    style={{ flex: 1, padding: '5px 0', background: 'transparent', border: `1px solid ${LIME}44`, color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, cursor: 'pointer' }}
+                  >{n}</button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {/* Header */}
+      <div style={{ color: accent, fontSize: 8, letterSpacing: '0.22em', opacity: 0.85, marginBottom: 6 }}>
+        INSPECTION · ACTIVE{isReplay && <span style={{ color: LIME, marginLeft: 10 }}>REPLAY T-{hoursBack}H</span>}
+      </div>
+
+      {/* Title row: entity/domain + + */}
+      {bay && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 13, color: bay?.assignment ? LIME : '#ffffff', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
+            {bay?.assignment?.title ?? (cone.domain ?? '').toUpperCase()}
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+            <button
+              onClick={() => {
+                if (panelSearch) {
+                  const v = panelInput.trim();
+                  if (v) { assignToBay(bayId, { id: v, title: v, source: 'search' }); setPanelSearch(false); setPanelInput(''); setPanelResult(null); }
+                } else {
+                  setPanelSearch(true); setPanelInput(''); setPanelResult(null);
+                }
+              }}
+              style={{ background: 'none', border: 'none', color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: 'pointer' }}
+            >+</button>
+            <button
+              onClick={() => { setPanelSearch(false); setPanelInput(''); setPanelResult(null); }}
+              style={{ background: 'none', border: 'none', color: panelSearch ? LIME : 'rgba(255,255,255,0.15)', fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: panelSearch ? 'pointer' : 'default', transition: 'color 150ms' }}
+            >−</button>
+          </div>
+        </div>
+      )}
+
+      {/* Inline search — opens on + click */}
+      {panelSearch && bay && (
+        <div style={{ marginBottom: 12 }}>
+          <input
+            ref={searchInputRef}
+            value={panelInput}
+            onChange={e => setPanelInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                const v = panelInput.trim();
+                if (v) {
+                  assignToBay(bayId, { id: v, title: v, source: 'search' });
+                  setPanelSearch(false); setPanelInput(''); setPanelResult(null);
+                }
+              }
+              if (e.key === 'Escape') { setPanelSearch(false); setPanelInput(''); }
+              e.stopPropagation();
+            }}
+            placeholder="enter subject..."
+            style={{
+              width: '100%',
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 11,
+              letterSpacing: '0.06em',
+              background: 'transparent',
+              border: 'none',
+              borderBottom: `1px solid ${LIME}`,
+              color: '#fff',
+              outline: 'none',
+              padding: '4px 0',
+              boxSizing: 'border-box',
+            }}
+          />
+        </div>
+      )}
+
+      {/* WO-1339: Resonance Path */}
+      {(() => {
+        const assignment = bay?.assignment;
+        if (!assignment) return (
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
+            NO SIGNAL ASSIGNED
+          </div>
+        );
+        const resolved = resolveResonancePath(assignment.title);
+        if (!resolved) return null;
+        // skip first node — entity name already shown as Title above
+        const visiblePath = resolved.path.slice(1, MAX_VISIBLE_HOPS + 1);
+        const hopCount = visiblePath.length;
+        return (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.08em', marginBottom: 4, textTransform: 'uppercase' }}>
+              Resonance Path
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {visiblePath.map((node, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ color: 'rgba(102,255,0,0.45)', fontSize: 9, fontFamily: "'IBM Plex Mono', monospace", flexShrink: 0 }}>→</span>
+                  <span style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: 9,
+                    letterSpacing: '0.08em',
+                    color: 'rgba(255,255,255,0.58)',
+                    textTransform: 'uppercase',
+                  }}>{node}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 8, fontSize: 7, color: `${LIME}88`, letterSpacing: '0.2em', fontFamily: "'IBM Plex Mono', monospace" }}>
+              {hopCount} HOPS · {resolved.confidence}% CONF
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* WO-1347 — Per-bay controls (loaded bays only) */}
+      {bay?.assignment && bayId && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 12 }}>
+          {[
+            { label: 'XRAY',    active: bay.xrayOpen,    action: () => toggleXray(bayId) },
+            { label: 'FREEZE',  active: bay.frozen,      action: () => toggleFreeze(bayId) },
+            { label: 'COMPARE', active: bay.compareFlag, action: () => toggleCompare(bayId) },
+            { label: 'CLEAR',   active: false,           action: () => clearBay(bayId), danger: true },
+          ].map(({ label, active, action, danger }) => (
+            <button key={label} onClick={action} style={{
+              width: '100%', textAlign: 'left',
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 9, letterSpacing: '0.22em',
+              padding: '6px 10px',
+              background: active ? `${LIME}12` : 'transparent',
+              border: `1px solid ${active ? LIME : danger ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.08)'}`,
+              color: active ? LIME : danger ? 'rgba(255,80,80,0.7)' : 'rgba(255,255,255,0.45)',
+              cursor: 'pointer',
+              transition: 'all 120ms',
+            }}>
+              {label}{active ? ' ·' : ''}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Tab switcher */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 10, pointerEvents: 'auto' }}>
+        {['stats', 'leaderboard', 'nodes'].map(t => (
+          <button key={t} onClick={() => setTab(t)} style={{
+            background:    'transparent',
+            border:        'none',
+            borderBottom:  `1px solid ${tab === t ? LIME : 'transparent'}`,
+            color:         tab === t ? LIME : 'rgba(255,255,255,0.35)',
+            fontFamily:    "'IBM Plex Mono', monospace",
+            fontSize:      8,
+            letterSpacing: '0.2em',
+            padding:       '0 0 3px 0',
+            cursor:        'pointer',
+            textTransform: 'uppercase',
+          }}>
+            {{ stats: 'STATS', leaderboard: 'VOLATILITY', nodes: 'NODE MAP' }[t]}
+          </button>
+        ))}
+      </div>
+      {tab === 'nodes' ? (() => {
+        const domain = (cone.domain ?? '').toLowerCase();
+        const chain  = NODE_MAP[domain] ?? ['SIGNAL SOURCE', 'ROOT ACTOR'];
+        const rootLabel = (cone.domain ?? '').toUpperCase();
+        // SVG layout: root at top-center, 2 children fan out below
+        const W = 208, H = 118;
+        const rx = 3;
+        // root rect
+        const rW = 88, rH = 20, rX = (W - rW) / 2, rY = 4;
+        const rCx = rX + rW / 2, rCy = rY + rH;
+        // child rects
+        const cW = 88, cH = 20, cY = 88;
+        const c1X = 4,       c1Cx = c1X + cW / 2;
+        const c2X = W - cW - 4, c2Cx = c2X + cW / 2;
+        return (
+          <div>
+            <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 6 }}>ENTITY GRAPH</div>
+            <svg width={W} height={H} style={{ overflow: 'visible', display: 'block' }}>
+              <defs>
+                <marker id="arrNM" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6 Z" fill={`${LIME}88`} />
+                </marker>
+              </defs>
+              {/* edges */}
+              <line x1={rCx} y1={rCy} x2={c1Cx} y2={cY}
+                stroke={`${LIME}44`} strokeWidth={1} markerEnd="url(#arrNM)" />
+              <line x1={rCx} y1={rCy} x2={c2Cx} y2={cY}
+                stroke={`${LIME}44`} strokeWidth={1} markerEnd="url(#arrNM)" />
+              {/* root node */}
+              <rect x={rX} y={rY} width={rW} height={rH} rx={rx}
+                fill="rgba(0,0,0,0)" stroke={accent} strokeWidth={1} />
+              <text x={rCx} y={rY + rH / 2 + 1} textAnchor="middle" dominantBaseline="middle"
+                fill={accent} fontSize={7} fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.12em">
+                {rootLabel.slice(0, 10)}
+              </text>
+              {/* child 1 */}
+              <rect x={c1X} y={cY} width={cW} height={cH} rx={rx}
+                fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" strokeWidth={1} />
+              <text x={c1Cx} y={cY + cH / 2 + 1} textAnchor="middle" dominantBaseline="middle"
+                fill="rgba(255,255,255,0.65)" fontSize={7} fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.1em">
+                {chain[0].slice(0, 12)}
+              </text>
+              {/* child 2 */}
+              <rect x={c2X} y={cY} width={cW} height={cH} rx={rx}
+                fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" strokeWidth={1} />
+              <text x={c2Cx} y={cY + cH / 2 + 1} textAnchor="middle" dominantBaseline="middle"
+                fill="rgba(255,255,255,0.65)" fontSize={7} fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.1em">
+                {chain[1].slice(0, 12)}
+              </text>
+            </svg>
+          </div>
+        );
+      })() : tab === 'leaderboard' ? (
+        <div>
+          <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 8 }}>
+            24H VOLATILITY INDEX
+          </div>
+          {leaderboard.map((item, i) => {
+            const v = velocityDisplay(item.vel);
+            return (
+              <div key={item.domain} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+                <span style={{ color: 'rgba(255,255,255,0.25)', minWidth: 14, fontSize: 9 }}>{i + 1}</span>
+                <span style={{ flex: 1, color: 'rgba(255,255,255,0.85)', fontSize: 9, letterSpacing: '0.1em' }}>
+                  {(item.domain ?? '').toUpperCase()}
+                </span>
+                <span style={{ color: v.color, fontSize: 9 }}>{v.glyph}</span>
+                <span style={{ color: v.color, fontSize: 9, minWidth: 36, textAlign: 'right' }}>{v.text}</span>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+      {/* Domain row */}
+      <div style={{ marginBottom: 4 }}>
+        <div style={{ color: '#ffffff', fontSize: 13, letterSpacing: '0.12em' }}>
+          {(cone.domain ?? '').toUpperCase()}
+        </div>
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <span style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase',
+          padding: '2px 7px', borderRadius: '2px',
+          background: `${accent}18`, border: `1px solid ${accent}44`, color: accent,
+        }}>{label}</span>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+        <span style={{ opacity: 0.55 }}>SIGNAL</span>
+        <span style={{ color: LIME }}>{Math.round(cone.pressure ?? 0)}</span>
+      </div>
+
+      {(() => {
+        const cur = Math.round(cone.pressure ?? 0);
+        const vel = ((cone.pressure ?? 50) - 50) * 0.3;
+        const fcst = Math.max(0, Math.min(100, Math.round(cur * (1 + vel * 0.018))));
+        const arrow = fcst > cur ? '↗' : fcst < cur ? '↘' : '→';
+        return (
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, opacity: 0.85 }}>
+            <span style={{ opacity: 0.55 }}>FORECAST · +7D</span>
+            <span style={{ color: 'rgba(255,255,255,0.75)' }}>
+              {cur} {arrow} {fcst}
+            </span>
+          </div>
+        );
+      })()}
+
+      <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+          <span>COMPOSITION</span>
+          <span style={{ color: LIME, opacity: 0.85 }}>{lens} LENS</span>
+        </div>
+        {(LENS_COMPOSITION[lens] ?? COMPOSITION).map(f => (
+          <div key={f.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>{f.name}</span>
+            <span style={{ color: LIME }}>{f.pct}%</span>
+          </div>
+        ))}
+      </div>
+
+      {log.length > 0 && (
+        <div style={{ paddingTop: 10, marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4 }}>
+            EVENT LOG
+          </div>
+          {log.slice(0, 6).map(e => {
+            const t = new Date(e.born).toTimeString().slice(0, 8);
+            return (
+              <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, lineHeight: '1.55' }}>
+                <span style={{ color: 'rgba(255,255,255,0.45)' }}>{t}</span>
+                <span style={{ color: LIME, opacity: 0.85 }}>
+                  PULSE · {(e.target ?? '').toUpperCase()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {(() => {
+        const sources = MOCK_PROVENANCE[cone.domain];
+        if (!sources?.length) return null;
+        return (
+          <div style={{ paddingTop: 10, marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
+              <span>PROVENANCE</span>
+              <span style={{ opacity: 0.6 }}>{sources.length} SOURCES</span>
+            </div>
+            {sources.map((s, i) => (
+              <div key={i} style={{ fontSize: 9, lineHeight: '1.5', marginBottom: 3, color: 'rgba(255,255,255,0.7)' }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 1 }}>
+                  <span style={{ color: accent, opacity: 0.9, minWidth: 30 }}>{s.src}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>{s.t}</span>
+                </div>
+                <div style={{
+                  color:        'rgba(255,255,255,0.78)',
+                  fontSize:     9,
+                  marginLeft:   4,
+                  overflow:     'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace:   'nowrap',
+                }}>
+                  {s.title}
+                </div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+        </>
+      )}
+
+      {/* ── Scan Sweep ── */}
+      <style>{`
+        @keyframes scanRotate {
+          from { transform: translateX(-50%) rotate(0deg); }
+          to   { transform: translateX(-50%) rotate(360deg); }
+        }
+      `}</style>
+      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(102,255,0,0.07)' }}>
+        <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', marginBottom: 10 }}>SCAN SWEEP</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+            {[0,1,2].map(r => (
+              <div key={r} style={{
+                position: 'absolute', borderRadius: '50%',
+                border: '1px solid rgba(102,255,0,0.12)', inset: r * 9,
+              }} />
+            ))}
+            <div style={{
+              position: 'absolute', left: '50%', top: '50%',
+              width: 1, height: 22,
+              background: `linear-gradient(to bottom, ${LIME}, transparent)`,
+              transformOrigin: 'top center',
+              animation: 'scanRotate 3.0s linear infinite',
+              opacity: 0.7,
+            }} />
+            <div style={{
+              position: 'absolute', left: '50%', top: '50%',
+              width: 4, height: 4, borderRadius: '50%', background: LIME,
+              transform: 'translate(-50%,-50%)', opacity: 0.85,
+            }} />
+          </div>
+          <div>
+            <div style={{ fontSize: 7, color: 'rgba(102,255,0,0.55)', letterSpacing: '0.14em', marginBottom: 5 }}>{label}</div>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>{convDuration}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+
+// ─── WAVE 1 SUBSTRATE LAYERS ────────────────────────────────────────────────
+
+// Layer 1: System pulse floor — concentric rings, slow heartbeat opacity
+// (encodes "field is live" per Tufte motion-economy carve-out for state encoding)
+function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
+  const matRef = useRef();
+  const positions = useMemo(() => {
+    const segs = 64;
+    const verts = [];
+    for (let r = 1; r <= ringCount; r++) {
+      const radius = (r / ringCount) * maxRadius;
+      for (let i = 0; i < segs; i++) {
+        const a1 = (i / segs) * Math.PI * 2;
+        const a2 = ((i + 1) / segs) * Math.PI * 2;
+        verts.push(
+          Math.cos(a1) * radius, 0, Math.sin(a1) * radius,
+          Math.cos(a2) * radius, 0, Math.sin(a2) * radius,
+        );
+      }
+    }
+    return new Float32Array(verts);
+  }, [ringCount, maxRadius]);
+
+  useFrame(({ clock }) => {
+    if (!matRef.current) return;
+    matRef.current.opacity = 0.45 + 0.20 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
+  });
+
+  return (
+    <lineSegments position={[0, -0.05, 0]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial ref={matRef} color="#4A4A4A" transparent opacity={0.45} />
+    </lineSegments>
+  );
+}
+
+// Layer 2: Threshold bands — three horizontal reference lines spanning the field
+// at apex-height tiers (LO / MID / HI). Cones visibly cross these.
+function ThresholdBands() {
+  // Asymmetric: extend left further, cap right shorter so the right-edge
+  // labels project clear of the inspection panel's screen x-range.
+  const WL = 7.5;
+  const WR = 4.5;
+  const bands = [
+    { y: 3, alpha: 0.45, label: 'LO · 50' },
+    { y: 5, alpha: 0.55, label: 'MID · 75' },
+    { y: 7, alpha: 0.65, label: 'HI · 90' },
+  ];
+  return (
+    <group>
+      {bands.map((b, i) => {
+        const pts = new Float32Array([-WL, b.y, 0, WR, b.y, 0]);
+        return (
+          <React.Fragment key={i}>
+            <lineSegments>
+              <bufferGeometry>
+                <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+              </bufferGeometry>
+              <lineBasicMaterial color="#4A4A4A" transparent opacity={b.alpha} />
+            </lineSegments>
+            <Html position={[WR + 0.4, b.y, 0]} distanceFactor={7}>
+              <div style={{
+                fontFamily:    "'IBM Plex Mono', monospace",
+                fontSize:      15,
+                letterSpacing: '0.16em',
+                color:         'rgba(255,255,255,0.6)',
+                whiteSpace:    'nowrap',
+                userSelect:    'none',
+                pointerEvents: 'none',
+              }}>
+                {b.label}
+              </div>
+            </Html>
+          </React.Fragment>
+        );
+      })}
+    </group>
+  );
+}
+
+// Layer 3: Per-cone floor footprint — small ring under each cone anchor
+// defines "this is a fixed sector slot, not a floating dot"
+function Footprint({ position, radius = 1.1, color = '#4A4A4A', isLocked = false }) {
+  const finalColor = isLocked ? LIME : color;
+  const positions = useMemo(() => {
+    const segs = 36;
+    const verts = [];
+    for (let i = 0; i < segs; i++) {
+      const a1 = (i / segs) * Math.PI * 2;
+      const a2 = ((i + 1) / segs) * Math.PI * 2;
+      verts.push(
+        Math.cos(a1) * radius, 0, Math.sin(a1) * radius,
+        Math.cos(a2) * radius, 0, Math.sin(a2) * radius,
+      );
+    }
+    return new Float32Array(verts);
+  }, [radius]);
+
+  return (
+    <lineSegments position={[position[0], -0.04, position[2]]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial color={finalColor} transparent opacity={isLocked ? 0.9 : 0.65} />
+    </lineSegments>
+  );
+}
+
+// WO-1307: Boundary Gate Attenuation — two concentric threshold rings per cone.
+// Gate 1 (r=1.5): warning. Gate 2 (r=1.9): breach.
+// Breached gate renders as simulated dash (3-on/3-off alternating segments) in LIME.
+function ThresholdGates({ position, state }) {
+  const pressure = state?.pressure ?? 0;
+  const actualBase = (0.3 + pressure * 0.01) * 1.5972;
+
+  const solidRing = useMemo(() => {
+    const segs = 36;
+    const verts = [];
+    for (let i = 0; i < segs; i++) {
+      const a1 = (i / segs) * Math.PI * 2;
+      const a2 = ((i + 1) / segs) * Math.PI * 2;
+      verts.push(Math.cos(a1), 0, Math.sin(a1), Math.cos(a2), 0, Math.sin(a2));
+    }
+    return new Float32Array(verts);
+  }, []);
+
+  const dashedRing = useMemo(() => {
+    const segs = 36;
+    const verts = [];
+    for (let i = 0; i < segs; i++) {
+      if (Math.floor(i / 3) % 2 !== 0) continue;
+      const a1 = (i / segs) * Math.PI * 2;
+      const a2 = ((i + 1) / segs) * Math.PI * 2;
+      verts.push(Math.cos(a1), 0, Math.sin(a1), Math.cos(a2), 0, Math.sin(a2));
+    }
+    return new Float32Array(verts);
+  }, []);
+
+  const gates = [
+    { radius: 1.5, breached: actualBase > 1.5 },
+    { radius: 1.9, breached: actualBase > 1.9 },
+  ];
+
+  return (
+    <>
+      {gates.map(({ radius, breached }) => {
+        const geo = breached ? dashedRing : solidRing;
+        const scale = [radius, 1, radius];
+        return (
+          <lineSegments
+            key={radius}
+            position={[position[0], -0.02, position[2]]}
+            scale={scale}
+          >
+            <bufferGeometry>
+              <bufferAttribute attach="attributes-position" args={[geo, 3]} />
+            </bufferGeometry>
+            <lineBasicMaterial
+              color={breached ? LIME : '#4A4A4A'}
+              transparent
+              opacity={breached ? 0.4 : 0.15}
+            />
+          </lineSegments>
+        );
+      })}
+    </>
+  );
+}
+
+// WO-1308: Historical Flux Trajectory — ring-buffered ghost cones with centralized decay.
+// Shared GHOST_CONE_GEO (unit cone, scaled per slot). Pre-allocated material per slot.
+// GhostLayer renders all active slots for a given domain index.
+function GhostLayer({ domainIdx, buf }) {
+  if (!buf) return null;
+  const offset = domainIdx * GHOST_DEPTH;
+  return (
+    <>
+      {buf.slots.slice(offset, offset + GHOST_DEPTH).map((slot, i) => {
+        if (!slot.active) return null;
+        const coneHeight = Math.max(0.2, Math.pow(slot.height, 1.4) * 8);
+        const baseY      = coneHeight / 2 - coneHeight * 0.1 - 0.15;
+        return (
+          <mesh
+            key={i}
+            position={[0, baseY, 0]}
+            scale={[slot.radius * 1.5972, coneHeight, slot.radius * 1.5972]}
+            geometry={GHOST_CONE_GEO}
+            material={slot.mat}
+          />
+        );
+      })}
+    </>
+  );
+}
+
+// WO-1309: Dynamic Frontier Waveforms — GPU vertex shader, uTime + uVolatility uniforms.
+// Noise clamp [-0.35, 0.35] per spec. No CPU vertex mutation in useFrame.
+const FRONTIER_SEGS = 32;
+
+const FRONTIER_VERT = `
+  attribute float aAngle;
+  uniform float uTime;
+  uniform float uVolatility;
+
+  float wave(float a, float t) {
+    return sin(a * 3.7 + t)        * 0.45
+         + sin(a * 1.9 - t * 1.3)  * 0.35
+         + sin(a * 5.1 + t * 0.7)  * 0.20;
+  }
+
+  void main() {
+    vec3 pos = position;
+    float n = wave(aAngle, uTime * 0.5);
+    n = clamp(n, -0.35, 0.35);
+    pos.y += n * uVolatility * 0.25;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const FRONTIER_FRAG = `
+  void main() {
+    gl_FragColor = vec4(0.4, 1.0, 0.0, 0.35);
+  }
+`;
+
+function FrontierRing({ position, state }) {
+  const { height, radius } = encodeCone(state, { focusId: null });
+  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * 8);
+  const FRAC   = 0.75;
+  const worldY = coneHeight * (FRAC - 0.1);
+  const ringR  = (1 - FRAC) * radius * 1.5972;
+  const volatility = state?.volatility ?? 0.5;
+  const matRef = useRef();
+
+  // Pre-compute ring geometry at rest (y=0) + angle attribute — no mutation in useFrame
+  const { positions, angles } = useMemo(() => {
+    const pos = new Float32Array(FRONTIER_SEGS * 2 * 3);
+    const ang = new Float32Array(FRONTIER_SEGS * 2);
+    for (let i = 0; i < FRONTIER_SEGS; i++) {
+      const a0 = (i / FRONTIER_SEGS) * Math.PI * 2;
+      const a1 = ((i + 1) / FRONTIER_SEGS) * Math.PI * 2;
+      const b  = i * 6;
+      pos[b]   = Math.cos(a0) * ringR; pos[b+1] = 0; pos[b+2] = Math.sin(a0) * ringR;
+      pos[b+3] = Math.cos(a1) * ringR; pos[b+4] = 0; pos[b+5] = Math.sin(a1) * ringR;
+      ang[i*2]   = a0;
+      ang[i*2+1] = a1;
+    }
+    return { positions: pos, angles: ang };
+  }, [ringR]);
+
+  // Uniform update only — no geometry mutation
+  useFrame(({ clock }) => {
+    if (!matRef.current) return;
+    matRef.current.uniforms.uTime.value       = clock.elapsedTime;
+    matRef.current.uniforms.uVolatility.value = volatility;
+  });
+
+  return (
+    <lineSegments position={[position[0], worldY, position[2]]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-aAngle"   args={[angles, 1]} />
+      </bufferGeometry>
+      <shaderMaterial
+        ref={matRef}
+        vertexShader={FRONTIER_VERT}
+        fragmentShader={FRONTIER_FRAG}
+        transparent
+        uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility } }}
+      />
+    </lineSegments>
+  );
+}
+
+// Field Convergence Indicator — vertical diamond at the center of the cone circle,
+// colored by the dominant convergence state across all cones. The "weather" of
+// the whole system at a glance.
+function FieldConvergence({ coneState }) {
+  const { color, label } = useMemo(() => {
+    if (!coneState.length) return { color: '#4A4A4A', label: '—' };
+    const counts = {};
+    const labels = {};
+    coneState.forEach(s => {
+      const ln = (s.pressure ?? 0) / 100;
+      const { theme, label: lbl } = classifyConvergenceState(
+        { D: ln, V: s.volatility ?? 0.5, A: ln, T: 0.7 },
+        0.8,
+      );
+      counts[theme] = (counts[theme] ?? 0) + 1;
+      labels[theme] = lbl;
+    });
+    let best = null, bestCount = 0;
+    for (const [t, c] of Object.entries(counts)) {
+      if (c > bestCount) { bestCount = c; best = t; }
+    }
+    return { color: THEME_COLOR[best] ?? '#4A4A4A', label: labels[best] ?? '—' };
+  }, [coneState]);
+
+  const size = 0.5;
+  const positions = useMemo(() => new Float32Array([
+    0,  size, 0,   size,  0,   0,
+    size, 0, 0,    0,    -size, 0,
+    0, -size, 0,   -size, 0,   0,
+    -size, 0, 0,   0,     size, 0,
+  ]), []);
+
+  return (
+    <>
+      <lineSegments position={[0, 2, 0]}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color={color} transparent opacity={0.7} />
+      </lineSegments>
+</>
+  );
+}
+
+// Wave 2: event pulses — small particles rise from cone base to apex when a
+// signal event fires. Mock source (timer); ~3 simultaneous, ~1.5s TTL.
+function useEventStream(coneState, interval = 1800, ttl = 1500, max = 3) {
+  const [events, setEvents] = useState([]);
+  const idRef = useRef(0);
+  useEffect(() => {
+    if (!coneState.length) return;
+    const tick = setInterval(() => {
+      const now = Date.now();
+      setEvents(prev => {
+        const fresh = prev.filter(e => now - e.born < ttl);
+        if (fresh.length >= max) return fresh;
+        const cone = coneState[Math.floor(Math.random() * coneState.length)];
+        return [...fresh, { id: ++idRef.current, target: cone.domain, born: now }];
+      });
+    }, interval);
+    const sweep = setInterval(() => {
+      const now = Date.now();
+      setEvents(prev => {
+        const fresh = prev.filter(e => now - e.born < ttl);
+        return fresh.length === prev.length ? prev : fresh;
+      });
+    }, 400);
+    return () => { clearInterval(tick); clearInterval(sweep); };
+  }, [coneState.length, interval, ttl, max]);
+  return events;
+}
+
+// Wave 2: flow arc — bezier curve between two cones that pulsed within ~2s
+// of each other. Encodes inter-sector correlation as a real-time visual link.
+function FlowArc({ flow, posA, apexA, posB, apexB, domainA, domainB, ttl = 3000, onArcClick }) {
+  const matRef   = useRef();
+  const labelRef = useRef();
+
+  const ax = posA[0], az = posA[2], ay = apexA * 0.7;
+  const bx = posB[0], bz = posB[2], by = apexB * 0.7;
+  const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+  const my = Math.max(ay, by) + 1.2;
+
+  const points = useMemo(() => {
+    const segs = 22;
+    const verts = [];
+    let prev = null;
+    for (let i = 0; i <= segs; i++) {
+      const t = i / segs;
+      const x = (1-t)*(1-t)*ax + 2*(1-t)*t*mx + t*t*bx;
+      const y = (1-t)*(1-t)*ay + 2*(1-t)*t*my + t*t*by;
+      const z = (1-t)*(1-t)*az + 2*(1-t)*t*mz + t*t*bz;
+      if (prev) verts.push(prev[0], prev[1], prev[2], x, y, z);
+      prev = [x, y, z];
+    }
+    return new Float32Array(verts);
+  }, [posA, posB, apexA, apexB]);
+
+  useFrame(() => {
+    const t = (Date.now() - flow.born) / ttl;
+    const alpha = t >= 1 ? 0 : Math.min(1, t / 0.15) * (t < 0.65 ? 1 : Math.max(0, 1 - (t - 0.65) / 0.35));
+    if (matRef.current)   matRef.current.opacity        = 0.75 * alpha;
+    if (labelRef.current) labelRef.current.style.opacity = String(alpha);
+  });
+
+  return (
+    <>
+      <lineSegments>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[points, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial ref={matRef} color="#007FFF" transparent opacity={0} />
+      </lineSegments>
+      <Html position={[mx, my + 0.4, mz]} center>
+        <div
+          ref={labelRef}
+          onClick={() => onArcClick?.(domainA, domainB)}
+          style={{
+            opacity:       0,
+            pointerEvents: onArcClick ? 'auto' : 'none',
+            cursor:        onArcClick ? 'pointer' : 'default',
+            textAlign:     'center',
+            lineHeight:    1.6,
+            padding:       '4px 8px',
+          }}
+        >
+          <div style={{
+            fontFamily:    "'IBM Plex Mono', monospace",
+            fontSize:      '8px',
+            letterSpacing: '0.2em',
+            color:         '#007FFF',
+            whiteSpace:    'nowrap',
+          }}>
+            {(domainA ?? '').toUpperCase()} ↔ {(domainB ?? '').toUpperCase()}
+          </div>
+          <div style={{
+            fontFamily:    "'IBM Plex Mono', monospace",
+            fontSize:      '7px',
+            letterSpacing: '0.18em',
+            color:         'rgba(0,127,255,0.7)',
+            whiteSpace:    'nowrap',
+          }}>
+            {arcThesis(domainA, domainB)}
+          </div>
+        </div>
+      </Html>
+    </>
+  );
+}
+
+function EventPulse({ event, position, apexY, ttl = 1500 }) {
+  const meshRef = useRef();
+  const matRef  = useRef();
+  useFrame(() => {
+    const t = Math.min(1, (Date.now() - event.born) / ttl);
+    if (meshRef.current) meshRef.current.position.y = t * apexY;
+    if (matRef.current)  matRef.current.opacity     = (1 - t) * 0.95;
+  });
+  return (
+    <mesh ref={meshRef} position={[position[0], 0, position[2]]}>
+      <sphereGeometry args={[0.13, 10, 10]} />
+      <meshBasicMaterial ref={matRef} color={LIME} transparent opacity={0.95} />
+    </mesh>
+  );
+}
+
+// WO-1313: Geographic anchors per domain — projected from US lat/lon to scene space.
+// X = (lon+96)*0.276, Z = -(lat-37.5)*0.4, Y = 0
+const TOPOLOGY_ANCHORS = {
+  technology: [-7.1, 0, 0.1],  // Silicon Valley, CA
+  capital:    [6.1,  0, -1.3], // New York, NY
+  knowledge:  [6.9,  0, -2.0], // Cambridge, MA
+  labor:      [3.6,  0, -1.9], // Detroit, MI
+  media:      [-6.1, 0, 1.4],  // Los Angeles, CA
+  ownership:  [0.2,  0, 3.1],  // Houston, TX
+};
+
+// Rough continental US outline — lineSegments pairs (sequential points form a closed polygon)
+const US_OUTLINE_GEO = (() => {
+  const raw = [
+    [-7.5,2.0],[-7.0,0.0],[-7.2,-1.0],[-7.0,-2.2],
+    [-4.5,-2.8],[0.0,-3.2],[4.0,-3.0],[6.5,-2.5],
+    [7.0,-1.5],[7.0,0.0],[6.0,0.5],[5.0,1.5],
+    [4.5,2.5],[3.0,4.0],[1.0,3.0],[-1.0,3.5],
+    [-4.0,2.5],[-6.0,2.5],[-7.5,2.0],
+  ];
+  const pts = [];
+  for (let i = 0; i < raw.length - 1; i++) {
+    pts.push(raw[i][0], 0, raw[i][1], raw[i+1][0], 0, raw[i+1][1]);
+  }
+  return new Float32Array(pts);
+})();
+
+const GHOST_INTERVAL = 90;  // frames between ghost snapshots (~1.5s at 60fps)
+const GHOST_DEPTH    = 3;   // ring buffer depth per cone (matches PERSISTENCE_REQUIRED WO-1126A)
+const GHOST_DECAY    = 0.6; // opacity units per second
+const MAX_CONES      = 8;   // pre-allocation upper bound
+const MAX_GHOSTS     = MAX_CONES * GHOST_DEPTH;
+
+// Shared unit-cone geometry — one instance, scaled per ghost slot
+const GHOST_CONE_GEO = new THREE.ConeGeometry(1, 1, 16, 12, true);
+
+// WO-1307: shared ring geometry — one instance, never per-signal
+const BOUNDARY_RING_GEO = new THREE.RingGeometry(0.95, 1.0, 32);
+
+// WO-1307: ground threshold ring — y=0 plane, semantic boundary marker
+function BoundaryRing({ attenuationFactor = 1.0 }) {
+  return (
+    <mesh
+      geometry={BOUNDARY_RING_GEO}
+      rotation={[-Math.PI / 2, 0, 0]}
+      position={[0, 0.001, 0]}
+      scale={[attenuationFactor, attenuationFactor, 1]}
+      frustumCulled={false}
+    >
+      <meshBasicMaterial color="#404040" transparent opacity={0.15} depthWrite={false} />
+    </mesh>
+  );
+}
+
+// WO-1310: driver node overlay — drei Html, positioned at cone apex, SVG directed graph
+// Max 3 connections per spec; lowercase mono labels; arrowhead edges
+function DriverNodeOverlay({ state, apexY, isSelected }) {
+  if (!isSelected) return null;
+  const domain  = (state.domain ?? '').toLowerCase();
+  const rawChain = NODE_MAP[domain] ?? ['signal source', 'root actor'];
+  const chain   = rawChain.slice(0, 3).map(s => s.toLowerCase());
+  const W = 160, nodeH = 18, rootY = 4, childStartY = 46, childGap = 30;
+  const totalH = childStartY + chain.length * childGap + 4;
+  const rootCx = W / 2, rootCy = rootY + nodeH;
+  return (
+    <Html position={[0, apexY + 0.7, 0]} center distanceFactor={8} style={{ pointerEvents: 'none' }}>
+      <div style={{
+        width: W,
+        background: 'rgba(0,0,0,0.85)',
+        border: '1px solid rgba(255,255,255,0.12)',
+        padding: '8px 10px',
+        fontFamily: "'IBM Plex Mono', monospace",
+      }}>
+        <div style={{ fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.25)', marginBottom: 6 }}>
+          driver · node · map
+        </div>
+        <svg width={W - 20} height={totalH} style={{ display: 'block', overflow: 'visible' }}>
+          <defs>
+            <marker id={`arrDN-${domain}`} markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <path d="M0,0 L5,2.5 L0,5 Z" fill="rgba(255,255,255,0.22)" />
+            </marker>
+          </defs>
+          {/* root node */}
+          <rect x={rootCx - 44} y={rootY} width={88} height={nodeH} rx={2}
+            fill="rgba(0,0,0,0)" stroke={LIME} strokeWidth={0.8} />
+          <text x={rootCx} y={rootY + nodeH / 2 + 1} textAnchor="middle" dominantBaseline="middle"
+            fill={LIME} fontSize={7} fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.1em">
+            {domain.slice(0, 10)}
+          </text>
+          {/* directed edges + child nodes */}
+          {chain.map((label, idx) => {
+            const cy = childStartY + idx * childGap;
+            const weight = 1 - idx * 0.25;
+            return (
+              <g key={idx}>
+                <line x1={rootCx} y1={rootCy} x2={rootCx} y2={cy}
+                  stroke="rgba(255,255,255,0.20)" strokeWidth={weight}
+                  markerEnd={`url(#arrDN-${domain})`} />
+                <rect x={rootCx - 44} y={cy} width={88} height={nodeH} rx={2}
+                  fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.12)" strokeWidth={0.7} />
+                <text x={rootCx} y={cy + nodeH / 2 + 1} textAnchor="middle" dominantBaseline="middle"
+                  fill="rgba(255,255,255,0.60)" fontSize={7}
+                  fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.08em">
+                  {label.slice(0, 14)}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </Html>
+  );
+}
+
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef }) {
+  const total      = coneState.length;
+  const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
+  const spinRef    = useRef();
+  const lastClickTs = useRef(0);
+  const ghostFrame = useRef(0);
+  const ghostBuf   = useRef(null);
+  if (!ghostBuf.current) {
+    ghostBuf.current = {
+      slots: Array.from({ length: MAX_GHOSTS }, () => ({
+        active: false, domain: '', height: 0, radius: 0, opacity: 0,
+        mat: new THREE.MeshBasicMaterial({ color: '#4A4A4A', wireframe: true, transparent: true, opacity: 0 }),
+      })),
+      heads: {},
+    };
+  }
+  // WO-1313: topology lerp state
+  const topoLerpRef    = useRef(0);
+  const prevTopoRef    = useRef(false);
+  const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
+  const gridGroupRef   = useRef();
+  const mapMatRef      = useRef();
+  const { camera, size } = useThree();
+  const tmpVec     = useMemo(() => new THREE.Vector3(), []);
+  const zoomTarget = useRef(16.2);
+  const zooming    = useRef(true);
+  useEffect(() => { zooming.current = true; }, []);
+  // Per-cone position + apex Y lookup for event rendering
+  const coneData = useMemo(() => {
+    const out = {};
+    coneState.forEach((state, i) => {
+      const angle = (i / total) * Math.PI * 2;
+      const pos = [R * Math.cos(angle), 0, R * Math.sin(angle)];
+      const { height } = encodeCone(state, { focusId: null });
+      const apexY = Math.max(0.5, Math.pow(height, 1.4) * 8);
+      out[state.domain] = { pos, apexY };
+    });
+    return out;
+  }, [coneState, total, R]);
+
+  useFrame((_, delta) => {
+    // WO-1313: topology lerp — snap rotation to 0 on entry, lerp positions, fade grid
+    const topoTarget = topoMode ? 1 : 0;
+    // WO-1313: time-normalized lerp — 1-second transition, frame-rate independent
+    const TRANSITION_DURATION = 1.0; // seconds
+    const speed = delta / TRANSITION_DURATION;
+    const dir   = topoTarget > topoLerpRef.current ? 1 : -1;
+    if (topoLerpRef.current !== topoTarget) {
+      topoLerpRef.current = Math.max(0, Math.min(1,
+        topoLerpRef.current + dir * Math.min(speed, Math.abs(topoTarget - topoLerpRef.current))
+      ));
+    }
+    const lerpT = topoLerpRef.current;
+
+    // Smooth 10% zoom-in on surface engage
+    if (zooming.current) {
+      camera.position.z += (zoomTarget.current - camera.position.z) * 0.012;
+      if (Math.abs(camera.position.z - zoomTarget.current) < 0.01) zooming.current = false;
+    }
+
+    if (spinRef.current) {
+      if (topoMode && !prevTopoRef.current) spinRef.current.rotation.y = 0;
+      if (!topoMode) spinRef.current.rotation.y += delta * SPIN;
+    }
+    prevTopoRef.current = topoMode;
+
+    coneState.forEach((state, i) => {
+      const ref = coneGroupRefs.current[i];
+      if (!ref?.current) return;
+      const angle  = (i / total) * Math.PI * 2;
+      const sx = R * Math.cos(angle), sz = R * Math.sin(angle);
+      const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
+      ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
+      ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
+    });
+
+    if (gridGroupRef.current) {
+      gridGroupRef.current.traverse(child => {
+        if (!child.material?.transparent) return;
+        if (child.userData.baseOp === undefined) child.userData.baseOp = child.material.opacity;
+        child.material.opacity = child.userData.baseOp * (1 - lerpT);
+      });
+    }
+    if (mapMatRef.current) mapMatRef.current.opacity = lerpT * 0.35;
+
+    // WO-1308: ring-buffer snapshot + centralized opacity decay (GhostManager)
+    ghostFrame.current += 1;
+    if (ghostFrame.current >= GHOST_INTERVAL) {
+      ghostFrame.current = 0;
+      const buf = ghostBuf.current;
+      coneState.forEach((s, domainIdx) => {
+        const enc    = encodeCone(s, { focusId: null });
+        const offset = domainIdx * GHOST_DEPTH;
+        const head   = buf.heads[s.domain] ?? 0;
+        const slot   = buf.slots[offset + head];
+        slot.active  = true;
+        slot.domain  = s.domain;
+        slot.height  = enc.height;
+        slot.radius  = enc.radius;
+        slot.opacity = 0.22;
+        slot.mat.opacity = 0.22;
+        buf.heads[s.domain] = (head + 1) % GHOST_DEPTH;
+      });
+    }
+    // Centralized decay — all active slots, every frame
+    for (const slot of ghostBuf.current.slots) {
+      if (!slot.active) continue;
+      slot.opacity = Math.max(0, slot.opacity - GHOST_DECAY * delta);
+      slot.mat.opacity = slot.opacity;
+      if (slot.opacity <= 0.01) slot.active = false;
+    }
+
+    // Click-to-pin: uses the real camera + current spin angle, so projection is exact.
+    if (!clickEvent || clickEvent.ts === lastClickTs.current || !onSelectCone) return;
+    lastClickTs.current = clickEvent.ts;
+
+    const theta = spinRef.current ? spinRef.current.rotation.y : 0;
+    let bestDist  = Infinity;
+    let bestDomain = null;
+
+    coneState.forEach((state, i) => {
+      const localAngle = (i / total) * Math.PI * 2;
+      // Y rotation: local angle α appears at world angle (α - θ)
+      const worldAngle = localAngle - theta;
+      tmpVec.set(R * Math.cos(worldAngle), 0, R * Math.sin(worldAngle));
+      tmpVec.project(camera); // NDC in [-1, 1]
+      const sx = (tmpVec.x + 1) * size.width  / 2;
+      const sy = (1 - tmpVec.y) * size.height / 2;
+      const dist = Math.hypot(sx - clickEvent.x, sy - clickEvent.y);
+      if (dist < bestDist) {
+        bestDist   = dist;
+        bestDomain = state.domain;
+      }
+    });
+
+    // Toggle: clicking the already-pinned cone deselects (back to auto-highest).
+    const resolved = bestDist < 180
+      ? (bestDomain === selectedDomain ? null : bestDomain)
+      : null;
+    onSelectCone(resolved);
+  });
+
+  // HUD projector — world positions via getWorldPosition → screen coords → hudRef
+  const _hudVec = useMemo(() => new THREE.Vector3(), []);
+  useFrame(({ camera, size }) => {
+    if (!hudRef?.current) return;
+    const result = [];
+    coneState.forEach((state, i) => {
+      const ref  = coneGroupRefs.current[i];
+      if (!ref?.current) return;
+      const data  = coneData[state.domain];
+      const apexY = data?.apexY ?? 0.5;
+      ref.current.getWorldPosition(_hudVec);
+      _hudVec.y = apexY + 1.4;
+      _hudVec.project(camera);
+      if (_hudVec.z > 1) return;
+      result.push({
+        domain:    state.domain,
+        pressure:  Math.round(state.pressure ?? 0),
+        volatility: (state.volatility ?? 0).toFixed(2),
+        selected:  state.domain === selectedDomain,
+        x: (_hudVec.x + 1) * size.width  / 2,
+        y: (1 - _hudVec.y) * size.height / 2,
+      });
+    });
+    hudRef.current = result;
+  });
+
+  return (
+    <>
+      {/* lattice — vertical backdrop, position LOCKED, never rotates */}
+      <group rotation={[Math.PI / 2, 0, 0]} position={[0, 2, -14]}>
+        <LeverageLattice sourceCount={total} frozen />
+      </group>
+
+      {/* Wave 1 substrate — fades out in topology mode via gridGroupRef traverse */}
+      <group ref={gridGroupRef}>
+        <PulseFloor ringCount={6} maxRadius={R + 3} />
+        <ThresholdBands />
+        <FieldConvergence coneState={coneState} />
+      </group>
+
+      {/* WO-1313: US outline wireframe — fades in with topoLerp */}
+      <lineSegments>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[US_OUTLINE_GEO, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial ref={mapMatRef} color="#4A4A4A" transparent opacity={0} />
+      </lineSegments>
+
+      {/* cones + their footprints spin collectively around center Y axis */}
+      {/* In topology mode spin stops; coneGroupRefs lerp positions to geographic anchors */}
+      <group ref={spinRef}>
+        {coneState.map((state, i) => {
+          const angle = (i / total) * Math.PI * 2;
+          const pos   = [R * Math.cos(angle), 0, R * Math.sin(angle)];
+          return (
+            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
+              <BoundaryRing attenuationFactor={Math.max(0.5, (state.pressure ?? 50) / 50)} />
+              <Footprint position={[0, 0, 0]} radius={1.1} />
+              <ThresholdGates position={[0, 0, 0]} state={state} />
+              <GhostLayer domainIdx={i} buf={ghostBuf.current} />
+              <FrontierRing position={[0, 0, 0]} state={state} />
+              <Cone
+                state={state}
+                position={[0, 0, 0]}
+                index={i}
+              />
+            </group>
+          );
+        })}
+
+        {/* Wave 2: live event pulses — particles rise from each firing cone */}
+        {events.map(ev => {
+          const data = coneData[ev.target];
+          if (!data) return null;
+          return (
+            <EventPulse
+              key={ev.id}
+              event={ev}
+              position={data.pos}
+              apexY={data.apexY}
+            />
+          );
+        })}
+
+        {/* Wave 2: flow arcs — bezier between cones that pulsed together */}
+        {flows.map(f => {
+          const a = coneData[f.a];
+          const b = coneData[f.b];
+          if (!a || !b) return null;
+          return (
+            <FlowArc
+              key={f.id}
+              flow={f}
+              posA={a.pos} apexA={a.apexY}
+              posB={b.pos} apexB={b.apexY}
+              domainA={f.a}
+              domainB={f.b}
+              onArcClick={onArcClick}
+            />
+          );
+        })}
+      </group>
+    </>
+  );
+}
+
+const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
+
+
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null }) {
+  const { coneState, rawDomains } = useMemo(() => {
+    const normalized = signals.map(sig => ({
+      domain:     sig.source   ?? 'signal',
+      leverage:   (sig.fs ?? 0) * 100,
+      volatility: sig.fidelity?.e_viral ?? 0,
+    }));
+    const aggregated = aggregateSignals(normalized);
+    const byDomain = new Map(aggregated.map(s => [s.domain, s]));
+    const sixDomain = CANONICAL_FEEDERS.map(d => byDomain.get(d) ?? { domain: d, pressure: 0, volatility: 0 });
+    let state = aggregateToPillars(sixDomain);
+    if (maxCones) {
+      state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
+    }
+    return { coneState: state, rawDomains: sixDomain };
+  }, [signals, maxCones]);
+
+  if (!coneState.length) {
+    return (
+      <div style={{
+        position: 'absolute', inset: 0, background: '#000000',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <span style={{
+          fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: '0.2em',
+          color: 'rgba(255,255,255,0.12)',
+        }}>NO SIGNAL</span>
+      </div>
+    );
+  }
+
+  // Manual click selection takes priority; fall back to highest-pressure cone.
+  const autoHighest = coneState.reduce(
+    (max, c) => ((c.pressure ?? 0) > (max.pressure ?? 0) ? c : max),
+    coneState[0],
+  );
+  const manualPick   = selectedDomain
+    ? coneState.find(c => c.domain === selectedDomain)
+    : null;
+  const selectedCone = manualPick ?? autoHighest;
+  const activeDomain = selectedCone?.domain;
+
+  // Wave 2 event stream + persistent log + paired flow arcs
+  const events = useEventStream(coneState);
+  const [log, setLog] = useState([]);
+  const [flows, setFlows] = useState([]);
+  const lastEventRef = useRef(null);
+  const flowIdRef    = useRef(0);
+
+  useEffect(() => {
+    if (!events.length) return;
+    setLog(prev => {
+      const seen = new Set(prev.map(e => e.id));
+      const fresh = events.filter(e => !seen.has(e.id));
+      if (!fresh.length) return prev;
+      return [...fresh.reverse(), ...prev].slice(0, 8);
+    });
+    // Pair consecutive different-cone events within 2.2s into flow arcs
+    events.forEach(e => {
+      const prev = lastEventRef.current;
+      if (!prev || prev.id === e.id) { lastEventRef.current = prev ?? e; return; }
+      if (prev.target !== e.target && (e.born - prev.born) < 2200) {
+        const flowId = ++flowIdRef.current;
+        setFlows(curr => {
+          const now = Date.now();
+          const fresh = curr.filter(f => now - f.born < 3000);
+          return [...fresh, { id: flowId, a: prev.target, b: e.target, born: e.born }].slice(-2);
+        });
+      }
+      lastEventRef.current = e;
+    });
+  }, [events]);
+
+  // Sweep-evict expired flow arcs
+  useEffect(() => {
+    const sweep = setInterval(() => {
+      setFlows(curr => {
+        const now = Date.now();
+        const fresh = curr.filter(f => now - f.born < 3000);
+        return fresh.length === curr.length ? curr : fresh;
+      });
+    }, 400);
+    return () => clearInterval(sweep);
+  }, []);
+
+  const baysForResonance = useBayStore(s => s.bays);
+  const hudRef     = useRef([]);
+  const [hudList, setHudList] = useState([]);
+  useEffect(() => {
+    let frame;
+    function tick() {
+      setHudList(hudRef.current ? [...hudRef.current] : []);
+      frame = requestAnimationFrame(tick);
+    }
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  const [localClick, setLocalClick] = useState(null);
+  const activeClick = localClick ?? clickEvent;
+
+  return (
+    <div
+      style={{ position: 'absolute', inset: 0, background: '#000000' }}
+      onClick={e => {
+        if (e.clientX > window.innerWidth - 260) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
+      }}
+    >
+      <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
+        <ConeScene
+          coneState={coneState}
+          selectedDomain={activeDomain}
+          clickEvent={activeClick}
+          onSelectCone={onSelectCone}
+          events={events}
+          flows={flows}
+          topoMode={topoMode}
+          onArcClick={onArcClick}
+          hudRef={hudRef}
+        />
+        <OrbitControls
+          enableRotate={false} enablePan={false} enableZoom={false}
+          target={[0, 2.4, 0]}
+        />
+      </Canvas>
+
+      {/* Connector lines between loaded/correlated bays */}
+      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 9 }}>
+        {hudList.flatMap((a, i) =>
+          hudList.slice(i + 1).map(b => {
+            if (Math.abs(a.pressure - b.pressure) > 25) return null;
+            if (a.pressure < 15 || b.pressure < 15) return null;
+            return (
+              <line key={`${a.domain}-${b.domain}`}
+                x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                stroke="rgba(102,255,0,0.18)" strokeWidth="0.7" strokeDasharray="4 4"
+              />
+            );
+          }).filter(Boolean)
+        )}
+      </svg>
+
+      {/* WO-1349 — Cross-bay resonance arcs for COMPARE-flagged bays */}
+      {(() => {
+        const flaggedBays = Object.values(baysForResonance).filter(b => b.compareFlag && b.assignment);
+        if (flaggedBays.length < 2) return null;
+        // Map bayId → cone domain via PILLAR_INDEX (bayId = pillarIdx + 1)
+        const PILLAR_INDEX_LOCAL = ['financial', 'operating', 'time', 'personal'];
+        const arcNodes = flaggedBays
+          .map(b => {
+            const domain = PILLAR_INDEX_LOCAL[b.id - 1];
+            if (!domain) return null;
+            const hud = hudList.find(h => h.domain === domain);
+            return hud ? { ...hud, title: b.assignment.title } : null;
+          })
+          .filter(Boolean);
+        if (arcNodes.length < 2) return null;
+        const pairs = [];
+        for (let i = 0; i < arcNodes.length; i++) {
+          for (let j = i + 1; j < arcNodes.length; j++) {
+            pairs.push([arcNodes[i], arcNodes[j]]);
+          }
+        }
+        return (
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+            {pairs.map(([a, b], idx) => {
+              const mx = (a.x + b.x) / 2;
+              const my = Math.min(a.y, b.y) - 60;
+              return (
+                <g key={idx}>
+                  <path
+                    d={`M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`}
+                    fill="none"
+                    stroke="rgba(102,255,0,0.55)"
+                    strokeWidth="1"
+                    strokeDasharray="6 3"
+                  />
+                  <circle cx={mx} cy={my} r={3} fill="rgba(102,255,0,0.6)" />
+                  <text x={mx + 5} y={my - 4} fill="rgba(102,255,0,0.7)" fontSize={7}
+                    fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.15em">
+                    RESONANCE
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        );
+      })()}
+
+      {/* InspectionPanel + ComparePanel portaled to root z:20 overlay */}
+      {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
+        <>
+          <ComparePanel />
+          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} searchPreview={searchPreview} onSearchPreviewSave={onSearchPreviewSave} />
+        </>,
+        document.getElementById('krylo-hud-root')
+      )}
+    </div>
+  );
+}

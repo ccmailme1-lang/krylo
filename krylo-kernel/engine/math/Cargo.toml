@@ -1,0 +1,8 @@
+[package]
+name = "krylo-math"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl = { path = "../../core/scl" }
+krylo-bus = { path = "../../core/bus" }

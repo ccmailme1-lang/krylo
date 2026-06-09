@@ -1,0 +1,8 @@
+[package]
+name = "krylo-webgl-tx"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl = { path = "../../core/scl" }
+serde = { version = "1", features = ["derive"] }

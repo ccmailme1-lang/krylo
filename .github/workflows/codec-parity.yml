@@ -1,0 +1,61 @@
+name: Codec Parity Gate
+
+on:
+  push:
+    paths:
+      - 'codec/**'
+      - 'core/codec/**'
+  pull_request:
+    paths:
+      - 'codec/**'
+      - 'core/codec/**'
+
+jobs:
+  parity:
+    name: ABI v1.0 Parity Gate
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust build
+        uses: actions/cache@v4
+        with:
+          path: codec/target
+          key: ${{ runner.os }}-codec-${{ hashFiles('codec/Cargo.toml') }}
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Rust — unit tests
+        working-directory: codec
+        run: cargo test --quiet
+
+      - name: Rust — build parity + verify binaries
+        working-directory: codec
+        run: cargo build --bins --quiet
+
+      - name: TS — unit tests
+        run: npx --yes tsx core/codec/codec.test.ts
+
+      - name: TS — cross-runtime parity
+        run: npx tsx core/codec/parity.test.ts
+
+      - name: TS — differential fuzz suite
+        run: npx tsx core/codec/fuzz.test.ts
+
+      - name: TS — flow control correctness (WO-1093)
+        run: npx tsx core/codec/flow.test.ts
+
+      - name: TS — replay parity (WO-1084-G)
+        run: |
+          if [ -s runtime/frames.ndjson ]; then
+            npx tsx core/codec/replay-parity.test.ts
+          else
+            echo "No persisted frames — skip"
+          fi

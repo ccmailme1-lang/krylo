@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "krylo/contract/execution-plan-persistence/v1.0.0",
+  "title": "ExecutionPlan Persistence Contract",
+  "description": "POST /api/v1/persistence/execution-plan — WO-1334. Binding contract between Krylo UI and Node persistence proxy (port 4000). WO-1327 Rust kernel refactor is a single-point redirect when promoted.",
+  "version": "1.0.0",
+
+  "request": {
+    "method": "POST",
+    "endpoint": "/api/v1/persistence/execution-plan",
+    "content_type": "application/json",
+    "schema": {
+      "type": "object",
+      "required": ["header", "payload", "metadata"],
+      "properties": {
+        "header": {
+          "type": "object",
+          "required": ["plan_id", "timestamp", "version"],
+          "properties": {
+            "plan_id":   { "type": "string", "format": "uuid" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "version":   { "type": "string", "const": "1.0.0" }
+          }
+        },
+        "payload": {
+          "type": "object",
+          "required": ["execution_plan", "scrubber_range", "signature"],
+          "properties": {
+            "execution_plan": {
+              "type": "object",
+              "required": ["initial_ask", "branches", "meta"],
+              "properties": {
+                "initial_ask": {
+                  "type": "object",
+                  "required": ["value", "basis", "condition"],
+                  "properties": {
+                    "value":     { "type": "integer" },
+                    "basis":     { "type": "string" },
+                    "condition": { "type": "string" }
+                  }
+                },
+                "branches": {
+                  "type": "object",
+                  "required": ["stall", "lowball"],
+                  "properties": {
+                    "stall": {
+                      "type": "object",
+                      "required": ["trigger", "action", "pressure_type"],
+                      "properties": {
+                        "trigger":       { "type": "string" },
+                        "action":        { "type": "string" },
+                        "pressure_type": { "type": "string" }
+                      }
+                    },
+                    "lowball": {
+                      "type": "object",
+                      "required": ["trigger", "action", "pivot_vector", "demand"],
+                      "properties": {
+                        "trigger":      { "type": "string" },
+                        "action":       { "type": "string" },
+                        "pivot_vector": { "type": "string" },
+                        "demand":       { "type": "string" }
+                      }
+                    }
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "required": ["geo", "org_type", "anchor", "threshold"],
+                  "properties": {
+                    "geo":       { "type": "string" },
+                    "org_type":  { "type": "string" },
+                    "anchor":    { "type": "integer" },
+                    "threshold": { "type": "integer" }
+                  }
+                }
+              }
+            },
+            "scrubber_range": {
+              "type": "object",
+              "required": ["start", "end"],
+              "properties": {
+                "start": { "type": "integer", "description": "epoch ms" },
+                "end":   { "type": "integer", "description": "epoch ms" }
+              }
+            },
+            "signature": {
+              "type": "string",
+              "description": "SHA-256 hash of serialized payload"
+            }
+          }
+        },
+        "metadata": {
+          "type": "object",
+          "required": ["source", "commit_hash"],
+          "properties": {
+            "source":      { "type": "string", "const": "Krylo-UI-1334" },
+            "commit_hash": { "type": "string" }
+          }
+        }
+      }
+    }
+  },
+
+  "response": {
+    "success": {
+      "http_status": 201,
+      "schema": {
+        "type": "object",
+        "required": ["status", "receipt_id", "latency_ms"],
+        "properties": {
+          "status":     { "type": "string", "const": "DB_WRITE_SUCCESS" },
+          "receipt_id": { "type": "string", "description": "hex transaction id" },
+          "latency_ms": { "type": "integer" }
+        }
+      }
+    },
+    "error": {
+      "http_status": 422,
+      "schema": {
+        "type": "object",
+        "required": ["status", "error"],
+        "properties": {
+          "status": { "type": "string", "const": "DB_WRITE_FAILED" },
+          "error":  { "type": "string" }
+        }
+      }
+    }
+  },
+
+  "upgrade_path": {
+    "note": "When WO-1327 Rust kernel is promoted to BUILDING, redirect connector from port 4000 Node proxy to Rust internal socket. Contract schema is version-gated — bump version field to trigger migration guard."
+  }
+}

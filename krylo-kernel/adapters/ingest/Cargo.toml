@@ -1,0 +1,8 @@
+[package]
+name = "krylo-ingest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-math = { path = "../../engine/math" }
+krylo-bus = { path = "../../core/bus" }

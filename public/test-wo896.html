@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WO-896 Validation Suite</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; color: #fff; font-family: 'IBM Plex Mono', monospace; padding: 40px 32px; min-height: 100vh; }
+  h1 { font-size: 11px; letter-spacing: 0.3em; text-transform: uppercase; color: #66FF00; margin-bottom: 4px; }
+  .subtitle { font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); margin-bottom: 40px; }
+  .chunk { margin-bottom: 32px; border-left: 2px solid rgba(255,255,255,0.08); padding-left: 20px; }
+  .chunk-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .chunk-title { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.7); }
+  .chunk-status { font-size: 9px; letter-spacing: 0.2em; padding: 3px 8px; border: 1px solid; }
+  .chunk-status.running  { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.3); }
+  .chunk-status.pass     { border-color: #66FF00; color: #66FF00; }
+  .chunk-status.fail     { border-color: #FF4444; color: #FF4444; }
+  .chunk-status.blocked  { border-color: #FFB800; color: #FFB800; }
+  .chunk-status.pending  { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.15); }
+  .tests { display: flex; flex-direction: column; gap: 6px; }
+  .test { display: flex; align-items: flex-start; gap: 10px; font-size: 10px; line-height: 1.5; }
+  .test-icon { flex-shrink: 0; width: 14px; }
+  .test-icon.pass  { color: #66FF00; }
+  .test-icon.fail  { color: #FF4444; }
+  .test-icon.skip  { color: rgba(255,255,255,0.2); }
+  .test-icon.wait  { color: rgba(255,255,255,0.3); }
+  .test-label { color: rgba(255,255,255,0.55); flex: 1; }
+  .test-detail { color: rgba(255,255,255,0.25); font-size: 9px; margin-top: 2px; }
+  .divider { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 32px 0; }
+  .summary { margin-top: 40px; padding: 20px; border: 1px solid rgba(255,255,255,0.08); }
+  .summary-row { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: 0.15em; padding: 4px 0; }
+  .summary-row .val.pass { color: #66FF00; }
+  .summary-row .val.fail { color: #FF4444; }
+  .summary-row .val.skip { color: rgba(255,255,255,0.25); }
+  #run-btn { margin-top: 32px; background: transparent; border: 1px solid #66FF00; color: #66FF00; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; padding: 10px 24px; cursor: pointer; }
+  #run-btn:hover { background: rgba(102,255,0,0.08); }
+  #run-btn:disabled { border-color: rgba(255,255,255,0.15); color: rgba(255,255,255,0.15); cursor: default; }
+  .timestamp { font-size: 9px; color: rgba(255,255,255,0.2); margin-top: 8px; letter-spacing: 0.1em; }
+</style>
+</head>
+<body>
+
+<h1>WO-896 — Signal Field Overhaul</h1>
+<div class="subtitle">Deployment Validation Suite · Run after each chunk</div>
+
+<div id="suite"></div>
+
+<button id="run-btn" onclick="runSuite()">▶ RUN VALIDATION</button>
+<div class="timestamp" id="ts"></div>
+
+<script>
+// ── Test definitions ─────────────────────────────────────────────────────────
+
+const FILES = {
+  signalfield:   '/src/components/signalfield.jsx',
+  spinemap:      '/src/components/spine/spinemap.jsx',
+  usmesh:        '/src/components/spine/usmesh.jsx',
+  geoprojection: '/src/utils/geoprojection.js',
+  app:           '/src/app.jsx',
+}
+
+const CHUNKS = [
+  {
+    id: 'C1',
+    title: 'Chunk 1 — Foundation (geoprojection.js)',
+    tests: [
+      {
+        label: 'geoprojection.js exists',
+        run: async (files) => {
+          const ok = files.geoprojection !== null
+          return { pass: ok, detail: ok ? 'HTTP 200' : 'File not found' }
+        }
+      },
+      {
+        label: 'latLonToScene is exported',
+        run: async (files) => {
+          if (!files.geoprojection) return { pass: false, detail: 'File missing' }
+          const ok = /export\s+function\s+latLonToScene/.test(files.geoprojection)
+          return { pass: ok, detail: ok ? 'export found' : 'export not found' }
+        }
+      },
+      {
+        label: 'geoAlbersUsa projection used',
+        run: async (files) => {
+          if (!files.geoprojection) return { pass: false, detail: 'File missing' }
+          const ok = /geoAlbersUsa/.test(files.geoprojection)
+          return { pass: ok, detail: ok ? 'geoAlbersUsa present' : 'missing' }
+        }
+      },
+      {
+        label: 'usmesh.jsx imports latLonToScene from geoprojection',
+        run: async (files) => {
+          if (!files.usmesh) return { pass: false, detail: 'usmesh.jsx missing' }
+          const ok = /from.*geoprojection/.test(files.usmesh)
+          const noLocal = !/function\s+latLonToScene/.test(files.usmesh)
+          return { pass: ok && noLocal, detail: ok ? (noLocal ? 'Import correct, no local copy' : 'FAIL: local copy still exists') : 'Import not found' }
+        }
+      },
+      {
+        label: 'BOUNDS defined in geoprojection.js',
+        run: async (files) => {
+          if (!files.geoprojection) return { pass: false, detail: 'File missing' }
+          const ok = /BOUNDS/.test(files.geoprojection)
+          return { pass: ok, detail: ok ? 'BOUNDS present' : 'missing' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C2',
+    title: 'Chunk 2 — 896-A: Node Engine',
+    tests: [
+      {
+        label: 'signalfield.jsx exists',
+        run: async (files) => {
+          const ok = files.signalfield !== null
+          return { pass: ok, detail: ok ? 'HTTP 200' : 'File not found' }
+        }
+      },
+      {
+        label: 'NODE_COUNT is 320',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /NODE_COUNT\s*=\s*320/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'NODE_COUNT = 320' : 'Not found or wrong value' }
+        }
+      },
+      {
+        label: 'InstancedMesh used (single draw call)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /instancedMesh|InstancedMesh/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'InstancedMesh present' : 'missing — individual meshes not allowed' }
+        }
+      },
+      {
+        label: 'generateNodes function exists',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /function\s+generateNodes/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'generateNodes defined' : 'missing' }
+        }
+      },
+      {
+        label: '25 ATTRACTORS defined',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const matches = (files.signalfield.match(/\{\s*lat:/g) || []).length
+          const ok = matches >= 25
+          return { pass: ok, detail: `Found ${matches} attractor entries (need ≥25)` }
+        }
+      },
+      {
+        label: 'Spring inflation physics present',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /velScale|force.*delta/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Spring physics present' : 'missing' }
+        }
+      },
+      {
+        label: 'TERRAIN_Y = -3',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /TERRAIN_Y\s*=\s*-3/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'TERRAIN_Y = -3 confirmed' : 'Wrong value or missing' }
+        }
+      },
+      {
+        label: 'spinemap.jsx imports SignalField',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'spinemap.jsx missing' }
+          const ok = /import\s+SignalField/.test(files.spinemap)
+          return { pass: ok, detail: ok ? 'Import present' : 'SignalField not imported' }
+        }
+      },
+      {
+        label: 'SignalField mounted in spinemap Scene',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'spinemap.jsx missing' }
+          const ok = /<SignalField/.test(files.spinemap)
+          return { pass: ok, detail: ok ? '<SignalField /> found' : 'Not mounted in Scene' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C3',
+    title: 'Chunk 3 — 896-B: Proximity Mesh',
+    tests: [
+      {
+        label: 'LineSegments used (not Line)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /lineSegments|LineSegments/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'LineSegments present' : 'missing' }
+        }
+      },
+      {
+        label: 'Dynamic BufferGeometry for mesh',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /BufferGeometry/.test(files.signalfield) && /BufferAttribute/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'BufferGeometry + BufferAttribute present' : 'missing' }
+        }
+      },
+      {
+        label: 'Mesh rebuilds every 3rd frame',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /frame\.current\s*%\s*3/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'frame % 3 gate present' : 'missing — rebuilds every frame (perf issue)' }
+        }
+      },
+      {
+        label: 'Elevation gate on mesh connections',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /LIFT_THRESHOLD/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'LIFT_THRESHOLD gate present' : 'missing — ground nodes will connect' }
+        }
+      },
+      {
+        label: 'PROXIMITY_R radius defined',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /PROXIMITY_R/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'PROXIMITY_R present' : 'missing' }
+        }
+      },
+      {
+        label: 'MAX_MESH_LINKS cap defined (perf guard)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /MAX_MESH_LINKS/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'MAX_MESH_LINKS present' : 'missing — unbounded connections' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C4',
+    title: 'Chunk 4 — 896-C: Score Color',
+    blocked: 'BLOCKED — Founder must provide hex values before this chunk executes',
+    tests: [
+      {
+        label: 'Linear color space (convertSRGBToLinear)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /convertSRGBToLinear/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Linear color space confirmed' : 'missing — colors will be incorrect in Three.js r152+' }
+        }
+      },
+      {
+        label: 'THREE.Color.lerp() used for gradient',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /\.lerp\(/.test(files.signalfield)
+          return { pass: ok, detail: ok ? '.lerp() present' : 'missing — stepped colors not acceptable' }
+        }
+      },
+      {
+        label: 'vertexColors or instanceColor enabled',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /vertexColors|instanceColor|setColorAt/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Per-instance color wired' : 'missing — all nodes same color' }
+        }
+      },
+      {
+        label: 'getColor function defined',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /function\s+getColor/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'getColor present' : 'missing' }
+        }
+      },
+      {
+        label: 'No amber in color definitions (BANNED)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const banned = /#CC8833|#cc8833|amber/i.test(files.signalfield)
+          return { pass: !banned, detail: !banned ? 'No amber found' : 'BANNED COLOR DETECTED — amber present' }
+        }
+      },
+      {
+        label: 'No glow / bloom / EffectComposer',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const banned = /EffectComposer|bloom|AdditiveBlending/.test(files.signalfield)
+          return { pass: !banned, detail: !banned ? 'No glow effects — correct' : 'BANNED: glow/bloom present' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C5',
+    title: 'Chunk 5 — 896-E: Perlin Drift',
+    tests: [
+      {
+        label: 'noise() function defined',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /function\s+noise/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'noise() defined' : 'missing' }
+        }
+      },
+      {
+        label: 'Per-node seed assigned at spawn',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /seed:\s*Math\.random/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Unique seed per node' : 'missing — all nodes drift identically' }
+        }
+      },
+      {
+        label: 'Gaussian spread (gauss function)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /function\s+gauss/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'gauss() defined' : 'missing' }
+        }
+      },
+      {
+        label: '±15% entropy on Gaussian falloff',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /0\.3|entropy|Math\.random.*0\.3/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Entropy variable present' : 'missing — spawn will appear algorithmic' }
+        }
+      },
+      {
+        label: 'Drift applies unique seed+time offset',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /noise\(n\.seed.*t\s*\//.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'noise(seed, t/x) pattern confirmed' : 'Drift not unique per node' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C6',
+    title: 'Chunk 6 — 896-F: Zone Gravity Well',
+    tests: [
+      {
+        label: 'Elevation derived from score (not zone label)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const scoreElevation = /lift.*score|score.*lift/.test(files.signalfield)
+          const noZoneLabel = !/geoTier.*TERRAIN|TERRAIN.*geoTier/.test(files.signalfield)
+          return { pass: scoreElevation && noZoneLabel, detail: scoreElevation ? (noZoneLabel ? 'Score-driven elevation confirmed' : 'FAIL: zone label in elevation') : 'Lift not score-derived' }
+        }
+      },
+      {
+        label: 'TERRAIN_Y used as base elevation',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /TERRAIN_Y\s*\+\s*lift/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'TERRAIN_Y + lift pattern confirmed' : 'missing' }
+        }
+      },
+      {
+        label: 'No hard zone band assignment in signalfield',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const banned = /LOCAL|REGIONAL|NATIONAL|geoTier/.test(files.signalfield)
+          return { pass: !banned, detail: !banned ? 'No zone bands — correct' : 'FAIL: zone band logic present' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C7',
+    title: 'Chunk 7 — 896-G: DOS + Audio',
+    tests: [
+      {
+        label: 'dosRegistry is module-level Map',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /const\s+dosRegistry\s*=\s*new\s+Map/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Module-level Map confirmed — persists across remounts' : 'missing or not module-level' }
+        }
+      },
+      {
+        label: 'hasFiredDOS is set once and never reset',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const setCount  = (files.signalfield.match(/hasFiredDOS/g) || []).length
+          const ok = setCount >= 2
+          return { pass: ok, detail: `hasFiredDOS appears ${setCount} time(s) — need ≥2 (set + read)` }
+        }
+      },
+      {
+        label: '8s global audio cooldown',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /8000|COOLDOWN/.test(files.signalfield)
+          return { pass: ok, detail: ok ? '8s cooldown present' : 'missing — audio will fire on every DOS' }
+        }
+      },
+      {
+        label: 'WebAudio unlock gate',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /unlock|AudioContext|webkitAudioContext/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Audio unlock gate present' : 'missing — will throw before user gesture' }
+        }
+      },
+      {
+        label: 'Bubble burst audio path correct',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /Bubble.burst|bubble.burst/i.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Audio path references Bubble burst' : 'Wrong audio file referenced' }
+        }
+      },
+      {
+        label: 'Gain capped at 0.15',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /gain.*0\.1[0-9]|0\.15/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Gain ≤ 0.15 confirmed' : 'Gain value not found or exceeds spec' }
+        }
+      },
+      {
+        label: 'DOS only fires on live ETR (not ambient drift)',
+        run: async (files) => {
+          if (!files.signalfield) return { pass: false, detail: 'File missing' }
+          const ok = /fsVal|live.*signal|signals\[i\]/.test(files.signalfield)
+          return { pass: ok, detail: ok ? 'Live signal gate present' : 'missing — DOS will fire on ambient drift' }
+        }
+      },
+    ]
+  },
+  {
+    id: 'C8',
+    title: 'Chunk 8 — Cutover',
+    tests: [
+      {
+        label: 'Old primaryNodes.map() disabled with false&&',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'File missing' }
+          const ok = /false\s*&&\s*primaryNodes\.map/.test(files.spinemap)
+          return { pass: ok, detail: ok ? 'Old nodes disabled — rollback available' : 'Old nodes still active OR hard-deleted (no rollback)' }
+        }
+      },
+      {
+        label: 'Rollback comment present',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'File missing' }
+          const ok = /Re-enable to rollback|rollback/i.test(files.spinemap)
+          return { pass: ok, detail: ok ? 'Rollback comment present' : 'missing — no rollback path documented' }
+        }
+      },
+      {
+        label: 'SignalField still mounted in Scene',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'File missing' }
+          const ok = /<SignalField/.test(files.spinemap)
+          return { pass: ok, detail: ok ? '<SignalField /> confirmed in Scene' : 'SignalField removed from Scene' }
+        }
+      },
+      {
+        label: 'No amber in spinemap (BANNED)',
+        run: async (files) => {
+          if (!files.spinemap) return { pass: false, detail: 'File missing' }
+          const banned = /#CC8833|#cc8833/.test(files.spinemap)
+          return { pass: !banned, detail: !banned ? 'No amber in spinemap' : 'BANNED COLOR in spinemap' }
+        }
+      },
+    ]
+  },
+]
+
+// ── Runner ───────────────────────────────────────────────────────────────────
+
+async function fetchFile(path) {
+  try {
+    const r = await fetch(path)
+    if (!r.ok) return null
+    return await r.text()
+  } catch {
+    return null
+  }
+}
+
+async function runSuite() {
+  const btn = document.getElementById('run-btn')
+  btn.disabled = true
+  btn.textContent = '⏳ RUNNING...'
+
+  document.getElementById('ts').textContent = 'Started: ' + new Date().toLocaleTimeString()
+
+  const files = {}
+  for (const [key, path] of Object.entries(FILES)) {
+    files[key] = await fetchFile(path)
+  }
+
+  let totalPass = 0, totalFail = 0, totalSkip = 0
+  const suiteEl = document.getElementById('suite')
+  suiteEl.innerHTML = ''
+
+  for (const chunk of CHUNKS) {
+    const chunkEl = document.createElement('div')
+    chunkEl.className = 'chunk'
+
+    const headerEl = document.createElement('div')
+    headerEl.className = 'chunk-header'
+
+    const titleEl = document.createElement('span')
+    titleEl.className = 'chunk-title'
+    titleEl.textContent = chunk.title
+
+    const statusEl = document.createElement('span')
+    statusEl.className = 'chunk-status running'
+    statusEl.textContent = 'RUNNING'
+    headerEl.appendChild(titleEl)
+    headerEl.appendChild(statusEl)
+    chunkEl.appendChild(headerEl)
+
+    if (chunk.blocked) {
+      const blockedEl = document.createElement('div')
+      blockedEl.style.cssText = 'font-size:9px;color:#FFB800;letter-spacing:0.1em;margin-bottom:8px;'
+      blockedEl.textContent = '⚠ ' + chunk.blocked
+      chunkEl.appendChild(blockedEl)
+    }
+
+    const testsEl = document.createElement('div')
+    testsEl.className = 'tests'
+
+    let chunkPass = 0, chunkFail = 0
+
+    for (const test of chunk.tests) {
+      const result = await test.run(files)
+      const testEl = document.createElement('div')
+      testEl.className = 'test'
+
+      const iconEl = document.createElement('span')
+      iconEl.className = 'test-icon ' + (result.pass ? 'pass' : 'fail')
+      iconEl.textContent = result.pass ? '✓' : '✗'
+
+      const bodyEl = document.createElement('div')
+      const labelEl = document.createElement('div')
+      labelEl.className = 'test-label'
+      labelEl.textContent = test.label
+      const detailEl = document.createElement('div')
+      detailEl.className = 'test-detail'
+      detailEl.textContent = result.detail || ''
+
+      bodyEl.appendChild(labelEl)
+      if (result.detail) bodyEl.appendChild(detailEl)
+      testEl.appendChild(iconEl)
+      testEl.appendChild(bodyEl)
+      testsEl.appendChild(testEl)
+
+      if (result.pass) { chunkPass++; totalPass++ } else { chunkFail++; totalFail++ }
+    }
+
+    chunkEl.appendChild(testsEl)
+    suiteEl.appendChild(chunkEl)
+
+    statusEl.className = 'chunk-status ' + (chunkFail === 0 ? 'pass' : 'fail')
+    statusEl.textContent = chunkFail === 0 ? `PASS ${chunkPass}/${chunk.tests.length}` : `FAIL ${chunkFail} of ${chunk.tests.length}`
+
+    const divEl = document.createElement('hr')
+    divEl.className = 'divider'
+    suiteEl.appendChild(divEl)
+  }
+
+  // Summary
+  const summaryEl = document.createElement('div')
+  summaryEl.className = 'summary'
+  summaryEl.innerHTML = `
+    <div class="summary-row"><span>TOTAL PASS</span><span class="val pass">${totalPass}</span></div>
+    <div class="summary-row"><span>TOTAL FAIL</span><span class="val ${totalFail > 0 ? 'fail' : 'pass'}">${totalFail}</span></div>
+    <div class="summary-row"><span>RESULT</span><span class="val ${totalFail === 0 ? 'pass' : 'fail'}">${totalFail === 0 ? 'ALL CLEAR' : 'NEEDS ATTENTION'}</span></div>
+  `
+  suiteEl.appendChild(summaryEl)
+
+  btn.disabled = false
+  btn.textContent = '↺ RUN AGAIN'
+  document.getElementById('ts').textContent = 'Completed: ' + new Date().toLocaleTimeString()
+}
+</script>
+
+<div style="position:fixed;bottom:16px;right:20px;font-size:9px;letter-spacing:0.2em;color:rgba(255,255,255,0.15);pointer-events:none;">WO-896 TEST v1</div>
+</body>
+</html>

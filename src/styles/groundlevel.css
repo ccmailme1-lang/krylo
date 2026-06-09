@@ -1,0 +1,130 @@
+/* ------------------------------------------------ */
+/* groundlevel.css                                  */
+/* Ground Level Lens — WO-281 palette alignment     */
+/* ------------------------------------------------ */
+
+/* VIEWPORT */
+.oracle-container {
+  width: 100%;
+  background: transparent;
+  color: rgba(255,255,255,0.92);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: clamp(12px, 1.6vw, 14px);
+  line-height: 1.4;
+  position: relative;
+}
+
+/* FRAME */
+.oracle-frame {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2vh 2vw;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* ROW */
+.oracle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 1.2rem 0 0.8rem;
+  position: relative;
+}
+
+.oracle-row-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  flex: 1;
+  font-size: 0.85em;
+}
+
+.oracle-data {
+  text-align: right;
+  font-weight: 700;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5em;
+}
+
+/* METRIC VALUE */
+.oracle-mono {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  font-size: 1em;
+  color: #66FF00;
+  text-transform: uppercase;
+}
+
+/* DELTA INDICATOR */
+.oracle-delta {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75em;
+  color: rgba(204, 255, 0, 0.4);
+  letter-spacing: 0;
+}
+
+.oracle-unit {
+  font-weight: 400;
+  color: rgba(255,255,255,0.25);
+  font-size: 0.85em;
+  margin-left: 0.3em;
+}
+
+/* DIVIDER */
+.oracle-divider {
+  height: 1px;
+  background: #1a1a1a;
+  margin: 0;
+}
+
+/* INTRO STATE — kept for reference, no longer triggered */
+.oracle-intro {
+  height: 100vh;
+  width: 100%;
+  background: #6a6c7a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.oracle-pulse {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(102,255,0,0.4) 0%, transparent 70%);
+  animation: gl-pulse 1.2s ease-in-out infinite;
+  margin-bottom: 2rem;
+}
+
+@keyframes gl-pulse {
+  0%, 100% { opacity: 0.2; transform: scale(1);   }
+  50%       { opacity: 0.8; transform: scale(1.1); }
+}
+
+.oracle-intro .oracle-label {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(102,255,0,0.25);
+}
+
+/* TRANSITIONS */
+.oracle-row,
+.oracle-divider {
+  transition: opacity 0.2s ease-out;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .oracle-frame { padding: 4vh 5vw; max-width: none; }
+  .oracle-row   { padding: 1rem 0 0.6rem; }
+}

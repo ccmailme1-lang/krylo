@@ -1,0 +1,8 @@
+[package]
+name = "krylo-temporal"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl = { path = "../../core/scl" }
+krylo-webgl-tx = { path = "../../adapters/webgl_tx" }

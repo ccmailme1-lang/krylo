@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-05-14T19:21:52.533Z",
+  "abiVersion": "1.0",
+  "totalMutations": 2986,
+  "totalConverged": 2986,
+  "totalDiverged": 0,
+  "totalDurationMs": 138,
+  "clean": true,
+  "phases": [
+    {
+      "name": "Phase 1 — Structural",
+      "mutationCount": 21,
+      "converged": 21,
+      "diverged": 0,
+      "durationMs": 7,
+      "divergences": []
+    },
+    {
+      "name": "Phase 2 — Header Byte Sweep",
+      "mutationCount": 2805,
+      "converged": 2805,
+      "diverged": 0,
+      "durationMs": 121,
+      "divergences": []
+    },
+    {
+      "name": "Phase 3 — Event Bit Flips",
+      "mutationCount": 160,
+      "converged": 160,
+      "diverged": 0,
+      "durationMs": 10,
+      "divergences": []
+    }
+  ]
+}

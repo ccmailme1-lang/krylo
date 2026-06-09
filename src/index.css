@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+/* Scrubber track — locked white */
+input[type="range"].krylo-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+}
+input[type="range"].krylo-scrubber::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #ffffff;
+  border-radius: 2px;
+}
+input[type="range"].krylo-scrubber::-moz-range-track {
+  height: 4px;
+  background: #ffffff;
+  border-radius: 2px;
+}
+input[type="range"].krylo-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #66FF00;
+  margin-top: -4px;
+  cursor: pointer;
+}
+input[type="range"].krylo-scrubber::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #66FF00;
+  border: none;
+  cursor: pointer;
+}
+
+body {
+  font-family: sans-serif;
+  background: #111;
+  color: #eee;
+  padding: 2rem;
+}
+
+button {
+  margin: 0.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.systems {
+  display: flex;
+  gap: 3rem;
+  margin-top: 2rem;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}

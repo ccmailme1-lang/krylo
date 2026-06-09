@@ -1,0 +1,10 @@
+[package]
+name = "krylo-precursor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl  = { path = "../../core/scl" }
+krylo-math = { path = "../math" }
+
+[dev-dependencies]

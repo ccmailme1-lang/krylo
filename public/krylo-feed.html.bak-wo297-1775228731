@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KRYLO | Forensic Intelligence Feed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+
+<style>
+    /* =========================================
+       BASE VARIABLES & SETUP
+       ========================================= */
+    :root {
+        --lime: #CCFF00;
+        --white: #FFFFFF;
+        --bg-gray: #E8E8E8;
+        --timing: 22s;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+        background-color: #000;
+        overflow: hidden;
+        font-family: 'IBM Plex Mono', monospace;
+        color: var(--white);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100vw;
+    }
+
+    .krylo-feed {
+        position: relative;
+        width: 100vw;
+        height: 56.25vw;
+        max-height: 100vh;
+        max-width: 177.78vh;
+        background-color: var(--bg-gray);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .krylo-feed.paused * {
+        animation-play-state: paused !important;
+    }
+
+    #sync-overlay {
+        position: absolute;
+        inset: 0;
+        z-index: 200;
+        cursor: default;
+    }
+
+    #build-version {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 300;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        color: rgba(255,255,255,0.35);
+        pointer-events: none;
+    }
+
+    #skip-intro-btn {
+        position: fixed;
+        top: 12px;
+        right: 24px;
+        z-index: 300;
+        background: transparent;
+        border: 1px solid rgba(255,255,255,0.3);
+        color: rgba(255,255,255,0.5);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        padding: 8px 14px;
+        cursor: pointer;
+    }
+
+    /* =========================================
+       TYPOGRAPHY CLASSES
+       ========================================= */
+    .txt-lime {
+        color: var(--lime);
+        font-weight: 700;
+        text-transform: uppercase;
+        text-shadow: 0px 4px 10px rgba(0,0,0,0.5), 0px 0px 12px rgba(204, 255, 0, 0.4);
+    }
+
+    .txt-white {
+        color: var(--white);
+        font-weight: 400;
+        text-shadow: 0px 4px 10px rgba(0,0,0,0.6);
+    }
+
+    .size-lg { font-size: 3.5vw; line-height: 1; }
+    .size-md { font-size: 2vw;   line-height: 1; }
+    .size-sm { font-size: 1.5vw; line-height: 1.2; }
+
+    /* =========================================
+       BACKGROUND
+       ========================================= */
+    .bg-layer {
+        position: absolute;
+        top: -5%; left: -5%;
+        width: 110%; height: 110%;
+        background-image: url('./assets/elephant.jpg');
+        background-size: cover;
+        background-position: center;
+        filter: saturate(0.85) contrast(1.05);
+        animation: parallaxDrift var(--timing) linear forwards;
+    }
+
+    .grain-overlay {
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%);
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    /* =========================================
+       SCENE CONTAINERS
+       ========================================= */
+    .scene {
+        position: absolute;
+        z-index: 10;
+        width: 80%;
+        text-align: center;
+    }
+
+    /* =========================================
+       SCENE 1
+       ========================================= */
+    .scene-1 {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5vw;
+        animation: scene1Fade var(--timing) linear forwards;
+    }
+
+    .s1-line1, .s1-line2 { display: flex; align-items: baseline; gap: 0.8vw; }
+
+    .word { opacity: 0; }
+    .w1 { animation: paintWord1 var(--timing) linear forwards; }
+    .w2 { animation: paintWord2 var(--timing) linear forwards; }
+    .w3 { animation: paintWord3 var(--timing) linear forwards; }
+    .w4 { animation: paintWord4 var(--timing) linear forwards; }
+    .w5 { animation: paintWord5 var(--timing) linear forwards; }
+    .w6 { animation: paintWord6 var(--timing) linear forwards; }
+
+    /* =========================================
+       SCENE 2
+       ========================================= */
+    .scene-2 {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0;
+        opacity: 0;
+        animation: scene2Master var(--timing) linear forwards;
+    }
+
+    .s2-box {
+        border: 2px solid rgba(255,255,255,0.8);
+        padding: 1vw 2vw;
+        display: flex;
+        align-items: baseline;
+        gap: 0.8vw;
+        background: rgba(0,0,0,0.1);
+        backdrop-filter: blur(2px);
+    }
+
+    .s2-box1 { opacity: 0; margin-left: 4vw;  animation: box1Reveal var(--timing) linear forwards; }
+    .s2-box2 { opacity: 0; margin-left: 12vw; margin-top: 2vw; animation: box2Reveal var(--timing) linear forwards; }
+
+    /* =========================================
+       SCENE 3
+       ========================================= */
+    .scene-3 { opacity: 0; animation: scene3Master var(--timing) linear forwards; }
+    .s3-wrapper { position: relative; width: 100%; height: 10vh; display: flex; justify-content: center; align-items: center; }
+    .s3-line { position: absolute; display: flex; align-items: baseline; gap: 0.8vw; opacity: 0; }
+
+    .s3-l1 { animation: s3Line1 var(--timing) linear forwards; }
+    .s3-l2 { animation: s3Line2 var(--timing) linear forwards; }
+    .s3-l3 { animation: s3Line3 var(--timing) linear forwards; }
+
+    /* =========================================
+       SCENE 4 & 5
+       ========================================= */
+    .black-cut {
+        position: absolute; inset: 0; background: #000; z-index: 20;
+        opacity: 0; animation: hardCut var(--timing) linear forwards;
+    }
+
+    .scene-4 {
+        z-index: 30;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2vw;
+        opacity: 0;
+        animation: scene4Master var(--timing) linear forwards;
+    }
+
+    .typewriter-wrapper {
+        display: flex; align-items: baseline; gap: 0.8vw;
+        clip-path: inset(0 100% 0 0);
+        animation: typewriterReveal var(--timing) linear forwards;
+    }
+
+    /* =========================================
+       SCENE 5 — SEARCH BOX — WO-256
+       ========================================= */
+
+    .search-wrap {
+        position: relative;
+        width: 60vw;
+        height: 7.5vw;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 12px;
+        box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.04),
+            0 8px 30px rgba(0,0,0,0.6);
+        opacity: 0;
+        animation: searchBoxFadeIn var(--timing) linear forwards;
+        transition:
+            transform     160ms cubic-bezier(0.4, 0, 0.2, 1),
+            box-shadow    220ms cubic-bezier(0.4, 0, 0.2, 1),
+            border-color  160ms ease;
+    }
+
+    .search-wrap:focus-within {
+        border-color: rgba(255,255,255,0.28);
+        box-shadow:
+            inset 0 0 0 1px rgba(255,255,255,0.06),
+            0 0 0 1px rgba(255,255,255,0.04),
+            0 10px 40px rgba(0,0,0,0.7);
+        transform: scale(1.015);
+    }
+
+    .search-inner {
+        position: absolute;
+        inset: 0;
+        border-radius: 12px;
+        background: rgba(10, 10, 12, 0.72);
+        backdrop-filter: blur(24px) saturate(1.2);
+        pointer-events: none;
+    }
+
+    .ghost-text {
+        position: absolute;
+        left: 2vw;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 1.1vw;
+        font-weight: 400;
+        font-style: normal;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+        pointer-events: none;
+        text-rendering: geometricPrecision;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* WO-261: resting state for each painted char */
+    .ghost-text .char {
+        color: rgba(255,255,255,0.38);
+        filter: brightness(1);
+    }
+
+    .ghost-cursor {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 2.2vw;
+        background: #ffffff;
+        box-shadow: 0 0 6px rgba(255,255,255,0.6);
+        animation: blink 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        pointer-events: none;
+    }
+
+    @keyframes blink {
+        0%, 45% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+    }
+
+    .search-wrap input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        right: 6vw;
+        background: transparent;
+        border: none;
+        border-radius: 12px 0 0 12px;
+        color: rgba(255, 255, 255, 0.92);
+        caret-color: #ffffff;
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 2vw;
+        font-weight: 400;
+        font-style: normal;
+        letter-spacing: -0.01em;
+        padding: 0 1vw 0 2vw;
+        outline: none;
+        text-align: left;
+        z-index: 1;
+    }
+
+    /* Submit button — KRYLO lime */
+    .submit-btn {
+        position: absolute;
+        right: 1vw;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4vw;
+        height: 4vw;
+        border-radius: 50%;
+        background: #CCFF00;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1),
+                    background 120ms ease,
+                    opacity 120ms ease;
+        flex-shrink: 0;
+    }
+
+    .submit-btn:hover  { background: #d9ff33; transform: translateY(-50%) scale(1.06); }
+    .submit-btn:active { transform: translateY(-50%) scale(0.95); }
+
+    /* Dormant during pour */
+    .submit-btn.dormant {
+        opacity: 0.35;
+        pointer-events: none;
+        cursor: default;
+    }
+
+    /* Single pulse on pour completion */
+    @keyframes submitPulse {
+        0%   { transform: translateY(-50%) scale(1);    box-shadow: 0 0 0 0   rgba(204,255,0,0.6); }
+        50%  { transform: translateY(-50%) scale(1.12); box-shadow: 0 0 0 10px rgba(204,255,0,0);   }
+        100% { transform: translateY(-50%) scale(1);    box-shadow: 0 0 0 0   rgba(204,255,0,0);   }
+    }
+
+    .submit-btn.pulse-once {
+        animation: submitPulse 0.4s ease-out forwards;
+        transition: none;
+    }
+
+    .submit-btn svg { width: 45%; height: 45%; }
+
+    /* =========================================
+       WO-259 — TRUTH LENS PILLS
+       ========================================= */
+
+    .pill-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.8vw;
+        opacity: 0;
+        animation: pillFadeIn var(--timing) linear forwards;
+    }
+
+    .pill-hint {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.75vw;
+        font-weight: 400;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.4);
+    }
+
+    .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+        max-width: 62vw;
+    }
+
+    .pill-btn {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.95vw;
+        font-weight: 400;
+        font-style: normal;
+        color: rgba(255,255,255,0.9);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 100px;
+        padding: 0.45vw 1.4vw;
+        background: transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: color 150ms ease,
+                    border-color 150ms ease;
+    }
+
+    .pill-btn:hover,
+    .pill-btn.active {
+        color: #CCFF00;
+        border-color: #CCFF00;
+    }
+
+    @keyframes pillFadeIn {
+        0%, 93.3% { opacity: 0; }
+        100%       { opacity: 1; }
+    }
+
+    /* Search box fade-in */
+    @keyframes searchBoxFadeIn {
+        0%, 93.3% { opacity: 0; transform: translateY(6px) scale(0.98); }
+        100%       { opacity: 1; transform: translateY(0)  scale(1);    }
+    }
+
+    /* =========================================
+       KEYFRAME ANIMATIONS
+       ========================================= */
+
+    @keyframes parallaxDrift {
+        0%   { transform: scale(1)     translate(0,    0);    }
+        80%  { transform: scale(1.025) translate(-1%,  0.5%); }
+        100% { transform: scale(1.025) translate(-1%,  0.5%); }
+    }
+
+    /* SCENE 1 — WO-261 brightness hot-stamp */
+    @keyframes scene1Fade {
+        0%   { opacity: 1; }
+        18%  { opacity: 1; }
+        20%  { opacity: 0; }
+        100% { opacity: 0; }
+    }
+    @keyframes paintWord1 { 0%, 2%  { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 4%   { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 4.4%, 100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+    @keyframes paintWord2 { 0%, 4%  { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 6%   { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 6.4%, 100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+    @keyframes paintWord3 { 0%, 6%  { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 8%   { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 8.4%, 100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+    @keyframes paintWord4 { 0%, 8%  { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 10%  { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 10.4%,100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+    @keyframes paintWord5 { 0%, 10% { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 12%  { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 12.4%,100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+    @keyframes paintWord6 { 0%, 12% { opacity: 0; transform: translateX(-10px); filter: brightness(1); } 14%  { opacity: 1; transform: translateX(0); filter: brightness(1.2); } 14.4%,100% { opacity: 1; transform: translateX(0); filter: brightness(1); } }
+
+    /* SCENE 2 */
+    @keyframes scene2Master {
+        0%, 19.9% { opacity: 0; }
+        20%  { opacity: 1; }
+        38%  { opacity: 1; }
+        40%, 100% { opacity: 0; }
+    }
+    @keyframes box1Reveal {
+        0%, 19.9% { opacity: 0; transform: translateY(10px); }
+        20%, 100%  { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes box2Reveal {
+        0%, 23.2%  { opacity: 0; transform: translateY(10px);   }
+        23.3%      { opacity: 1; transform: translate(3px, -3px); }
+        24%, 100%  { opacity: 1; transform: translate(0, 0);     }
+    }
+
+    /* SCENE 3 — WO-261 brightness hot-stamp */
+    @keyframes scene3Master {
+        0%, 39.9% { opacity: 0; }
+        40%  { opacity: 1; }
+        79%  { opacity: 1; }
+        80%, 100% { opacity: 0; }
+    }
+    @keyframes s3Line1 {
+        0%, 39.9% { opacity: 0; filter: brightness(1); }
+        40%   { opacity: 1; filter: brightness(1.2); }
+        40.4%, 52.9% { opacity: 1; filter: brightness(1); }
+        53.3%, 100% { opacity: 0; filter: brightness(1); }
+    }
+    @keyframes s3Line2 {
+        0%, 53.2% { opacity: 0; filter: brightness(1); }
+        53.3% { opacity: 1; filter: brightness(1.2); transform: scale(1.02); }
+        54%   { opacity: 1; filter: brightness(1);   transform: scale(1);    }
+        66.2% { opacity: 1; }
+        66.6%, 100% { opacity: 0; }
+    }
+    @keyframes s3Line3 {
+        0%, 66.5% { opacity: 0; filter: brightness(1); }
+        66.6% { opacity: 1; filter: brightness(1.2); transform: scale(1.02); }
+        67.3% { opacity: 1; filter: brightness(1);   transform: scale(1);    }
+        80%, 100% { opacity: 1; }
+    }
+
+    /* SCENE 4 & 5 — WO-261 brightness hot-stamp on typewriter reveal */
+    @keyframes hardCut {
+        0%, 79.9% { opacity: 0; }
+        80%, 100%  { opacity: 1; }
+    }
+    @keyframes scene4Master {
+        0%, 79.9% { opacity: 0; }
+        80%, 100%  { opacity: 1; }
+    }
+    @keyframes typewriterReveal {
+        0%, 80%  { clip-path: inset(0 100% 0 0); filter: brightness(1);   }
+        80.1%    { clip-path: inset(0 99% 0 0);  filter: brightness(1.2); }
+        80.5%    { clip-path: inset(0 99% 0 0);  filter: brightness(1);   }
+        93.3%    { clip-path: inset(0 0 0 0);    filter: brightness(1);   }
+        100%     { clip-path: inset(0 0 0 0);    filter: brightness(1);   }
+    }
+
+</style>
+</head>
+<body>
+
+<div class="krylo-feed paused" id="feed">
+
+    <div class="bg-layer"></div>
+    <div class="grain-overlay"></div>
+    <div class="vignette"></div>
+
+    <!-- SCENE 1 -->
+    <div class="scene scene-1">
+        <div class="s1-line1">
+            <span class="word w1 size-sm txt-white">2.5</span>
+            <span class="word w2 size-lg txt-lime">HOURS</span>
+            <span class="word w3 size-sm txt-white">every day</span>
+        </div>
+        <div class="s1-line2">
+            <span class="word w4 size-lg txt-lime">LOST</span>
+            <span class="word w5 size-sm txt-white">to the</span>
+            <span class="word w6 size-lg txt-lime">UNSAID</span>
+        </div>
+    </div>
+
+    <!-- SCENE 2 -->
+    <div class="scene scene-2">
+        <div class="s2-box s2-box1">
+            <span class="size-lg txt-lime">OTHERS</span>
+            <span class="size-sm txt-white">saw it</span>
+            <span class="size-lg txt-lime">FIRST.</span>
+        </div>
+        <div class="s2-box s2-box2">
+            <span class="size-lg txt-lime">DO YOU?</span>
+        </div>
+    </div>
+
+    <!-- SCENE 3 -->
+    <div class="scene scene-3">
+        <div class="s3-wrapper">
+            <div class="s3-line s3-l1">
+                <span class="size-sm txt-white">KRYLO is an</span>
+                <span class="size-lg txt-lime">EXTENSION</span>
+                <span class="size-sm txt-white">of</span>
+                <span class="size-lg txt-lime">HUMAN PERCEPTION</span>
+            </div>
+            <div class="s3-line s3-l2">
+                <span class="size-sm txt-white">we don't</span>
+                <span class="size-lg txt-lime">REPLACE JUDGMENT</span>
+            </div>
+            <div class="s3-line s3-l3">
+                <span class="size-sm txt-white">we</span>
+                <span class="size-lg txt-lime">AUGMENT AWARENESS</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCENE 4 & 5 -->
+    <div class="black-cut"></div>
+    <div class="scene scene-4">
+        <div class="typewriter-wrapper">
+            <span class="size-md txt-white">KRYLO:</span>
+            <span class="size-lg txt-lime">Thinking Silence</span>
+            <span class="size-md txt-white">Out Loud</span>
+        </div>
+
+        <!-- SEARCH BOX — WO-256 -->
+        <div class="search-wrap" id="search-wrap">
+            <div class="search-inner">
+                <div class="ghost-text" id="ghost-text"></div>
+                <span class="ghost-cursor" id="ghost-cursor"></span>
+            </div>
+            <input
+                type="text"
+                id="search-input"
+                autocomplete="off"
+                spellcheck="false"
+            >
+            <button class="submit-btn" id="submit-btn" aria-label="Submit">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 19V5M5 12l7-7 7 7" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- WO-259 — TRUTH LENS PILLS -->
+        <div class="pill-section" id="pill-section">
+            <div class="pill-hint">Not sure where to start?</div>
+            <div class="pill-row" id="pill-row"></div>
+        </div>
+    </div>
+
+    <div id="sync-overlay"></div>
+</div>
+<button id="skip-intro-btn">Skip Intro</button>
+<div id="build-version">v26</div>
+
+<audio id="score" src="./assets/American Beauty Main Theme (From American Beauty).mp3" preload="auto"></audio>
+
+<script>
+(function () {
+
+    /* ── URL PARAM: ?search=1 → skip intro, show search directly ── */
+    if (new URLSearchParams(window.location.search).get('search') === '1') {
+        var bgLayer = document.querySelector('.bg-layer');
+        if (bgLayer) { bgLayer.style.backgroundImage = 'none'; bgLayer.style.background = '#000'; bgLayer.style.animation = 'none'; }
+        document.querySelectorAll('.scene-1,.scene-2,.scene-3').forEach(function(s) {
+            s.style.opacity = '0';
+            s.style.animation = 'none';
+        });
+        var s4 = document.querySelector('.scene-4');
+        if (s4) { s4.style.opacity = '1'; s4.style.animation = 'none'; }
+        var sw = document.getElementById('search-wrap');
+        if (sw) { sw.style.opacity = '1'; sw.style.animation = 'none'; }
+        var ps = document.getElementById('pill-section');
+        if (ps) { ps.style.opacity = '1'; ps.style.animation = 'none'; }
+        var tw = document.querySelector('.typewriter-wrapper');
+        if (tw) { tw.style.clipPath = 'inset(0 0% 0 0)'; tw.style.animation = 'none'; }
+        document.getElementById('skip-intro-btn').style.display = 'none';
+    }
+
+    /* ── WO-301: SKIP INTRO button ───────────────────── */
+    document.getElementById('skip-intro-btn').addEventListener('click', function () {
+        var bgLayer = document.querySelector('.bg-layer');
+        if (bgLayer) { bgLayer.style.backgroundImage = 'none'; bgLayer.style.background = '#000'; bgLayer.style.animation = 'none'; }
+        document.querySelectorAll('.scene-1,.scene-2,.scene-3').forEach(function(s) {
+            s.style.opacity = '0';
+            s.style.animation = 'none';
+        });
+        var s4 = document.querySelector('.scene-4');
+        if (s4) { s4.style.opacity = '1'; s4.style.animation = 'none'; }
+        var sw = document.getElementById('search-wrap');
+        if (sw) { sw.style.opacity = '1'; sw.style.animation = 'none'; }
+        var ps = document.getElementById('pill-section');
+        if (ps) { ps.style.opacity = '1'; ps.style.animation = 'none'; }
+        var tw = document.querySelector('.typewriter-wrapper');
+        if (tw) { tw.style.clipPath = 'inset(0 0% 0 0)'; tw.style.animation = 'none'; }
+        document.getElementById('skip-intro-btn').style.display = 'none';
+    });
+
+    /* ── SYNC LAUNCH ─────────────────────────────────── */
+    var feed    = document.getElementById('feed');
+    var overlay = document.getElementById('sync-overlay');
+    var audio   = document.getElementById('score');
+    audio.playbackRate = 0.92;
+
+    function launch() {
+        audio.currentTime = 0;
+        audio.play().catch(function () {});
+        feed.classList.remove('paused');
+        overlay.remove();
+    }
+
+    audio.play().then(function () {
+        audio.pause();
+        audio.currentTime = 0;
+        launch();
+    }).catch(function () {
+        overlay.addEventListener('click',      launch, { once: true });
+        overlay.addEventListener('keydown',    launch, { once: true });
+        overlay.addEventListener('touchstart', launch, { once: true });
+    });
+
+    /* ── TYPEWRITER ENGINE ───────────────────────────── */
+    var TEXTS = [
+        'What are they not saying about the layoffs?',
+        'Is the board hiding the truth?',
+        'Searching unfiltered signals...',
+    ];
+
+    var el          = document.getElementById('ghost-text');
+    var cursor      = document.getElementById('ghost-cursor');
+    var searchInput = document.getElementById('search-input');
+    var searchWrap  = document.getElementById('search-wrap');
+    var submitBtn   = document.getElementById('submit-btn');
+
+    var textIndex   = 0;
+    var charIndex   = 0;
+    var deleting    = false;
+    var typingTimer = null;
+    var userTyping  = false;
+
+    /* timing */
+    var TYPE_SPEED         = 35;
+    var DELETE_SPEED       = 15;
+    var PAUSE_AFTER_TYPE   = 2500;
+    var PAUSE_AFTER_DELETE = 150;
+
+    function jitter() {
+        return Math.random() * 18 - 9;
+    }
+
+    function setCursorState(isTyping) {
+        cursor.style.opacity   = '1';
+        cursor.style.animation = isTyping
+            ? 'none'
+            : 'blink 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite';
+    }
+
+    function moveCursor() {
+        var rect       = el.getBoundingClientRect();
+        var parentRect = el.parentElement.getBoundingClientRect();
+        cursor.style.left = (rect.right - parentRect.left + 6) + 'px';
+    }
+
+    /* ── WO-261: span-based char rendering with hot-stamp decay ── */
+    var charSpans = [];
+
+    function renderChar(ch) {
+        var span = document.createElement('span');
+        span.className   = 'char';
+        span.textContent = ch;
+        span.style.color      = 'rgba(255,255,255,1.0)';
+        span.style.filter     = 'brightness(1.2)';
+        span.style.transition = 'none';
+        el.appendChild(span);
+        charSpans.push(span);
+        requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+                span.style.transition = 'color 90ms linear, filter 90ms linear';
+                span.style.color      = 'rgba(255,255,255,0.38)';
+                span.style.filter     = 'brightness(1)';
+            });
+        });
+    }
+
+    function removeLastChar() {
+        if (charSpans.length > 0) {
+            el.removeChild(charSpans.pop());
+        }
+    }
+
+    function clearChars() {
+        el.innerHTML = '';
+        charSpans    = [];
+    }
+
+    function step() {
+        if (userTyping) return;
+        var current = TEXTS[textIndex];
+
+        if (!deleting) {
+            charIndex++;
+            renderChar(current[charIndex - 1]);
+            setCursorState(true);
+            moveCursor();
+
+            if (charIndex === current.length) {
+                deleting = true;
+                setCursorState(false);
+                typingTimer = setTimeout(step, PAUSE_AFTER_TYPE);
+            } else {
+                typingTimer = setTimeout(step, TYPE_SPEED + jitter());
+            }
+        } else {
+            charIndex--;
+            removeLastChar();
+            setCursorState(true);
+            moveCursor();
+
+            if (charIndex === 0) {
+                deleting  = false;
+                textIndex = (textIndex + 1) % TEXTS.length;
+                typingTimer = setTimeout(step, PAUSE_AFTER_DELETE);
+            } else {
+                typingTimer = setTimeout(step, DELETE_SPEED);
+            }
+        }
+    }
+
+    step();
+
+    /* ── WO-259: TRUTH LENS PILLS ────────────────────── */
+    var PILLS = [
+        {
+            label:         'Economic Pressure',
+            lens:          'PAPER_TRAIL',
+            dominantField: 'm_checksum',
+            prompt:        'Surface all legally filed records, timestamped artifacts, and verified documentation — the hard evidence that cannot be walked back.',
+        },
+        {
+            label:         'Trust Breakdown',
+            lens:          'CONFIDENCE_GAP',
+            dominantField: 't_telemetry',
+            prompt:        'Measure the distance between public narrative and private signal — where confidence and reality have separated.',
+        },
+        {
+            label:         'Social Fragmentation',
+            lens:          'SIGNAL_BREAK',
+            dominantField: 't_telemetry',
+            prompt:        'Identify the precise moment this signal deviated from its baseline — what changed, when, and what triggered it.',
+        },
+        {
+            label:         'Tech Displacement',
+            lens:          'WHO_BENEFITS',
+            dominantField: 'm_checksum',
+            prompt:        'Identify who gains from this signal remaining unspoken — follow the asymmetry of silence.',
+        },
+        {
+            label:         'System Strain',
+            lens:          'EVERYONE_KNOWS',
+            dominantField: 'v_voice',
+            prompt:        'Surface the shared unspoken — the signal that exists in collective awareness but has never been said out loud in the room.',
+        },
+    ];
+
+    var currentRecords  = [];
+    var activePillCtx   = null;
+    var pourTimer       = null;
+    var pourInProgress  = false;
+
+    function rankPills(pills, records) {
+        var aggFs = records.length
+            ? records.reduce(function (acc, r) { return acc + (r.fs || 0); }, 0) / records.length
+            : 0;
+
+        return pills
+            .map(function (pill) {
+                var relevant = records.filter(function (r) {
+                    return ((r.fidelity_components && r.fidelity_components[pill.dominantField]) || 0) > 0;
+                });
+                var score = relevant.length
+                    ? relevant.reduce(function (acc, r) { return acc + (r.fs || 0); }, 0) / relevant.length
+                    : aggFs;
+                return Object.assign({}, pill, { score: score });
+            })
+            .sort(function (a, b) { return b.score - a.score; });
+    }
+
+    function renderPills() {
+        var row    = document.getElementById('pill-row');
+        var ranked = rankPills(PILLS, currentRecords);
+        row.innerHTML = '';
+        ranked.forEach(function (pill) {
+            var btn = document.createElement('button');
+            btn.className   = 'pill-btn';
+            btn.textContent = pill.label;
+            if (activePillCtx && activePillCtx.lens === pill.lens) {
+                btn.classList.add('active');
+            }
+            btn.addEventListener('click', function () {
+                activePillCtx = {
+                    pill:          pill.label,
+                    lens:          pill.lens,
+                    dominantField: pill.dominantField,
+                    prompt:        pill.prompt,
+                };
+                wipeThenPour(pill.prompt, btn);
+            });
+            row.appendChild(btn);
+        });
+    }
+
+    /* render pills with empty records initially — all pills visible at equal rank */
+    renderPills();
+
+    /* ── WIPE & POUR ─────────────────────────────────── */
+
+    function setSubmitDormant(dormant) {
+        if (dormant) {
+            submitBtn.classList.add('dormant');
+        } else {
+            submitBtn.classList.remove('dormant');
+        }
+    }
+
+    function wipeThenPour(prompt, activePillBtn) {
+        /* kill any in-progress pour */
+        clearTimeout(pourTimer);
+        pourInProgress = true;
+
+        /* stop ghost typewriter */
+        userTyping = true;
+        clearTimeout(typingTimer);
+        clearChars();
+        cursor.style.opacity = '0';
+
+        /* mark active pill */
+        document.querySelectorAll('.pill-btn').forEach(function (b) {
+            b.classList.remove('active');
+        });
+        if (activePillBtn) activePillBtn.classList.add('active');
+
+        /* disable submit during pour */
+        setSubmitDormant(true);
+
+        /* wipe existing input text at DELETE_SPEED = 15ms */
+        var current = searchInput.value;
+        var idx     = current.length;
+
+        function wipeStep() {
+            if (idx > 0) {
+                idx--;
+                searchInput.value = current.slice(0, idx);
+                pourTimer = setTimeout(wipeStep, DELETE_SPEED);
+            } else {
+                pourStep(prompt, 0);
+            }
+        }
+
+        wipeStep();
+    }
+
+    function pourStep(prompt, i) {
+        if (i < prompt.length) {
+            searchInput.value = prompt.slice(0, i + 1);
+
+            /* WO-261 bloom on input — brightness flash on each poured character */
+            searchInput.style.transition = 'none';
+            searchInput.style.filter     = 'brightness(1.2)';
+            searchInput.style.color      = 'rgba(255,255,255,1.0)';
+            requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                    searchInput.style.transition = 'filter 90ms linear, color 90ms linear';
+                    searchInput.style.filter     = 'brightness(1)';
+                    searchInput.style.color      = 'rgba(255,255,255,0.92)';
+                });
+            });
+
+            pourTimer = setTimeout(function () {
+                pourStep(prompt, i + 1);
+            }, TYPE_SPEED + jitter());
+        } else {
+            /* pour complete */
+            pourInProgress = false;
+            setSubmitDormant(false);
+
+            /* single pulse on submit button */
+            submitBtn.classList.remove('pulse-once');
+            void submitBtn.offsetWidth; /* force reflow to restart animation */
+            submitBtn.classList.add('pulse-once');
+            setTimeout(function () {
+                submitBtn.classList.remove('pulse-once');
+            }, 400);
+        }
+    }
+
+    /* ── INPUT LISTENERS ─────────────────────────────── */
+
+    /* manual typing: reset pill context, restore ghost on clear */
+    searchInput.addEventListener('input', function () {
+        if (pourInProgress) return; /* don't interfere with pour */
+        if (this.value.trim().length > 0) {
+            userTyping        = true;
+            activePillCtx     = null;
+            el.style.opacity  = '0';
+            cursor.style.opacity = '0';
+            clearTimeout(typingTimer);
+            /* clear active pill highlight */
+            document.querySelectorAll('.pill-btn').forEach(function (b) {
+                b.classList.remove('active');
+            });
+        } else {
+            userTyping           = false;
+            el.style.opacity     = '1';
+            cursor.style.opacity = '1';
+            step();
+        }
+    });
+
+    /* ── SUBMIT ──────────────────────────────────────── */
+
+    function doSubmit(query) {
+        if (pourInProgress) return;
+        clearTimeout(typingTimer);
+        clearTimeout(pourTimer);
+        window.parent.postMessage({
+            type:            'krylo-submit',
+            query:           query,
+            categoryContext: activePillCtx || null,
+        }, '*');
+    }
+
+    searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && this.value.trim() && !pourInProgress) {
+            doSubmit(this.value.trim());
+        }
+    });
+
+    submitBtn.addEventListener('click', function () {
+        if (pourInProgress) return;
+        if (searchInput.value.trim()) {
+            doSubmit(searchInput.value.trim());
+        } else {
+            searchInput.focus();
+        }
+    });
+
+    /* ── postMessage BRIDGE ──────────────────────────── */
+
+    window.addEventListener('message', function (e) {
+        if (!e.data) return;
+
+        /* HN signal titles → ghost text feed */
+        if (e.data.type === 'krylo-marquee' &&
+            Array.isArray(e.data.titles) &&
+            e.data.titles.length) {
+            TEXTS     = e.data.titles;
+            textIndex = 0;
+            charIndex = 0;
+            deleting  = false;
+            clearChars();
+            clearTimeout(typingTimer);
+            if (!userTyping) step();
+        }
+
+        /* mergedRecords fidelity data → re-rank pills */
+        if (e.data.type === 'krylo-records' &&
+            Array.isArray(e.data.records)) {
+            currentRecords = e.data.records;
+            renderPills();
+        }
+
+        /* Return from Layer 2 — skip to search state */
+        if (e.data.type === 'krylo-search') {
+            var earlyScenes = document.querySelectorAll('.scene-1,.scene-2,.scene-3');
+            earlyScenes.forEach(function(s) { s.style.opacity = '0'; s.style.animation = 'none'; });
+            var scene4 = document.querySelector('.scene-4');
+            if (scene4) { scene4.style.opacity = '1'; scene4.style.animation = 'none'; }
+            searchWrap.style.opacity = '1';
+            searchWrap.style.animation = 'none';
+            var pillSection = document.getElementById('pill-section');
+            if (pillSection) { pillSection.style.opacity = '1'; pillSection.style.animation = 'none'; }
+            searchInput.value = '';
+            searchInput.focus();
+        }
+    });
+
+    window.addEventListener('resize', function () {
+        if (!userTyping) moveCursor();
+    });
+
+})();
+</script>
+
+</body>
+</html>

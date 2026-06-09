@@ -1,0 +1,11 @@
+[package]
+name = "krylo-fsm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+krylo-scl = { path = "../../core/scl" }
+krylo-bus = { path = "../../core/bus" }
+
+[dev-dependencies]
+krylo-math = { path = "../math" }
