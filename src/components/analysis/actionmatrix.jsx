@@ -1,81 +1,26 @@
-// WO-1319 — Analysis P4: Action Matrix — "What can I do"
+// WO-1319 / WO-1710 — Action Matrix with Hero Card Elevation
+// WO-1710: hero card (highest-impact action) receives full-width visual dominance.
+// Supporting cards are recessed. 3-column equal grid removed.
 import React, { useState, useMemo } from 'react';
-import { useAnalysisStore } from '../../store/useanalysisstore.js';
-import { synthesizeQuery }  from '../../engine/querysynthesis.js';
-import { getDisplayEntity } from '../../utils/formatters.js';
+import { useAnalysisStore }   from '../../store/useanalysisstore.js';
+import { synthesizeQuery }    from '../../engine/querysynthesis.js';
+import { getVisibleCards }    from '../../engine/editorialgate.js';
+import { getDisplayEntity }   from '../../utils/formatters.js';
 
-const MONO  = "'IBM Plex Mono', monospace";
-const SERIF = "Georgia, 'Playfair Display', serif";
-const LIME  = '#66FF00';
+const MONO   = "'IBM Plex Mono', monospace";
+const SERIF  = "Georgia, 'Playfair Display', serif";
+const LIME   = '#66FF00';
 const BORDER = 'rgba(26,26,26,1)';
 
-const ACTIONS = {
-  IMMEDIATE: [
-    {
-      id: 'i1',
-      label:    'REBALANCE EXPOSURE',
-      impact:   0.88,
-      rationale: 'Three fracture signals converge on liquidity. Reduce variable exposure within 30 days to extend runway past the 12-month threshold.',
-      tag:      'RISK',
-    },
-    {
-      id: 'i2',
-      label:    'LOCK INCOME ANCHOR',
-      impact:   0.74,
-      rationale: 'Income stability is your only load-bearing vector at 81%. Secure it contractually before it becomes the next fracture.',
-      tag:      'INCOME',
-    },
-  ],
-  SHORT_TERM: [
-    {
-      id: 's1',
-      label:    'ACCELERATE SAVINGS VELOCITY',
-      impact:   0.81,
-      rationale: 'Coverage gap widens 6 points per year at current rate. A +8% velocity correction closes the gap before the 2040 horizon.',
-      tag:      'COVERAGE',
-    },
-    {
-      id: 's2',
-      label:    'REDUCE DEBT LOAD',
-      impact:   0.67,
-      rationale: 'Debt signal is the loudest fracture at $2.4M and climbing. Structured reduction in months 2–5 flattens the trajectory before Q3.',
-      tag:      'DEBT',
-    },
-    {
-      id: 's3',
-      label:    'AUDIT OPERATIONAL COSTS',
-      impact:   0.58,
-      rationale: 'Burn rate at $45K/mo leaves limited compression margin. A cost audit identifies 12–18% reduction without disrupting core operations.',
-      tag:      'BURN',
-    },
-  ],
-  STRUCTURAL: [
-    {
-      id: 'r1',
-      label:    'DIVERSIFY INCOME STREAMS',
-      impact:   0.92,
-      rationale: 'Single-source income is a structural fragility. A second uncorrelated stream at 20–30% of current income transforms your leverage position.',
-      tag:      'LEVERAGE',
-    },
-    {
-      id: 'r2',
-      label:    'ESTABLISH COVERAGE FLOOR',
-      impact:   0.79,
-      rationale: 'Portfolio coverage must reach 80% to clear the threshold. Build a floor instrument — indexed, low-volatility — that holds regardless of market conditions.',
-      tag:      'COVERAGE',
-    },
-  ],
+const HORIZON_LABEL = {
+  IMMEDIATE:  '0–30 DAYS',
+  SHORT_TERM: '1–6 MONTHS',
+  STRUCTURAL: '6+ MONTHS',
 };
 
-const HORIZONS = [
-  { key: 'IMMEDIATE',   label: 'IMMEDIATE',    sub: '0–30 DAYS'   },
-  { key: 'SHORT_TERM',  label: 'SHORT-TERM',   sub: '1–6 MONTHS'  },
-  { key: 'STRUCTURAL',  label: 'STRUCTURAL',   sub: '6+ MONTHS'   },
-];
-
-function ImpactBar({ score }) {
+function ImpactBar({ score, height = 2 }) {
   return (
-    <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1, marginTop: 8 }}>
+    <div style={{ height, background: 'rgba(255,255,255,0.07)', borderRadius: 1, marginTop: 8 }}>
       <div style={{
         height: '100%', borderRadius: 1,
         width: `${score * 100}%`,
@@ -86,54 +31,82 @@ function ImpactBar({ score }) {
   );
 }
 
-function ActionCard({ action, active, onHover }) {
-  const isHigh = action.impact >= 0.8;
+function HeroCard({ action }) {
+  return (
+    <div style={{
+      padding: '20px 28px',
+      borderBottom: `1px solid ${BORDER}`,
+      borderTop: `2px solid ${LIME}`,
+      background: 'rgba(102,255,0,0.03)',
+      flexShrink: 0,
+    }}>
+      <div style={{ fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.32em', marginBottom: 10 }}>
+        LEAD ACTION
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.18em', color: LIME }}>
+          {action.label}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginLeft: 16 }}>
+          <div style={{
+            fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em',
+            color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', padding: '2px 7px',
+          }}>
+            {action.tag}
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.25)' }}>
+            {HORIZON_LABEL[action._horizon]}
+          </div>
+        </div>
+      </div>
+      <div style={{ fontFamily: SERIF, fontSize: 13, lineHeight: 1.65, color: 'rgba(255,255,255,0.75)', maxWidth: 640 }}>
+        {action.rationale}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
+        <div style={{ flex: 1 }}>
+          <ImpactBar score={action.impact} height={3} />
+        </div>
+        <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.12em', flexShrink: 0 }}>
+          {Math.round(action.impact * 100)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SecondaryCard({ action, active, onHover }) {
   return (
     <div
       onMouseEnter={() => onHover(action.id)}
       onMouseLeave={() => onHover(null)}
       style={{
-        padding: '16px 0',
+        padding: '12px 0',
         borderBottom: `1px solid ${BORDER}`,
         cursor: 'default',
         transition: 'opacity 150ms',
-        opacity: active === null || active === action.id ? 1 : 0.4,
+        opacity: active === null || active === action.id ? 0.6 : 0.22,
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-        <div style={{
-          fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em',
-          color: isHigh ? LIME : 'rgba(255,255,255,0.75)',
-        }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', color: 'rgba(255,255,255,0.6)' }}>
           {action.label}
         </div>
-        <div style={{
-          fontFamily: MONO, fontSize: 7,
-          color: 'rgba(255,255,255,0.25)',
-          letterSpacing: '0.14em',
-          background: 'rgba(255,255,255,0.05)',
-          padding: '2px 7px',
-          flexShrink: 0, marginLeft: 12,
-        }}>
-          {action.tag}
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 12 }}>
+          <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.12em' }}>
+            {HORIZON_LABEL[action._horizon]}
+          </div>
+          <div style={{
+            fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)',
+            background: 'rgba(255,255,255,0.04)', padding: '2px 6px', letterSpacing: '0.12em',
+          }}>
+            {action.tag}
+          </div>
         </div>
       </div>
-      <div style={{
-        fontFamily: SERIF, fontSize: 11, lineHeight: 1.6,
-        color: 'rgba(255,255,255,0.55)',
-      }}>
+      <div style={{ fontFamily: SERIF, fontSize: 11, lineHeight: 1.6, color: 'rgba(255,255,255,0.4)' }}>
         {action.rationale}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-        <ImpactBar score={action.impact} />
-        <div style={{
-          fontFamily: MONO, fontSize: 7,
-          color: isHigh ? LIME : 'rgba(255,255,255,0.3)',
-          letterSpacing: '0.12em', flexShrink: 0,
-        }}>
-          {Math.round(action.impact * 100)}
-        </div>
-      </div>
+      <ImpactBar score={action.impact} />
     </div>
   );
 }
@@ -145,17 +118,15 @@ export default function ActionMatrix() {
   const activeSessionId = useAnalysisStore((s) => s.activeSessionId);
   const session         = activeSessionId ? sessions[activeSessionId] : null;
   const targetLabel     = getDisplayEntity(session?.query ?? '').toUpperCase() || 'TARGET';
-  const lensLabel       = session?.lens?.toUpperCase()  ?? 'OPEN';
+  const lensLabel       = session?.lens?.toUpperCase() ?? 'OPEN';
 
-  const synthesis   = useMemo(() => synthesizeQuery(session), [session]);
-  const ACTIONS     = synthesis?.actions ?? {
-    IMMEDIATE:  [],
-    SHORT_TERM: [],
-    STRUCTURAL: [],
-  };
+  const synthesis    = useMemo(() => synthesizeQuery(session), [session]);
+  const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
+  const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 
-  const totalActions = Object.values(ACTIONS).flat().length;
-  const highImpact   = Object.values(ACTIONS).flat().filter(a => a.impact >= 0.8).length;
+  const hero      = visibleCards[0] ?? null;
+  const secondary = visibleCards.slice(1);
+  const highImpact = visibleCards.filter(c => c.impact >= 0.8).length;
 
   return (
     <div style={{
@@ -164,7 +135,7 @@ export default function ActionMatrix() {
       background: '#000000', fontFamily: MONO, overflow: 'hidden',
     }}>
 
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────────────────── */}
       <div style={{
         padding: '16px 28px',
         borderBottom: `1px solid ${BORDER}`,
@@ -185,56 +156,77 @@ export default function ActionMatrix() {
             <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>HIGH IMPACT</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 16, color: '#ffffff', lineHeight: 1 }}>{totalActions}</div>
+            <div style={{ fontSize: 16, color: '#ffffff', lineHeight: 1 }}>{visibleCards.length}</div>
             <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>TOTAL ACTIONS</div>
           </div>
         </div>
       </div>
 
-      {/* ── 3-column matrix ───────────────────────────────────────── */}
-      <div style={{
-        flex: 1, overflow: 'hidden',
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr',
-      }}>
-        {HORIZONS.map(({ key, label, sub }, colIdx) => (
-          <div
-            key={key}
-            style={{
-              borderRight: colIdx < 2 ? `1px solid ${BORDER}` : 'none',
-              display: 'flex', flexDirection: 'column',
-              height: '100%', overflow: 'hidden',
-            }}
-          >
-            {/* Column header */}
-            <div style={{
-              padding: '14px 20px',
-              borderBottom: `1px solid ${BORDER}`,
-              flexShrink: 0,
-            }}>
-              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.2em', marginBottom: 2 }}>
-                {label}
-              </div>
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.16em' }}>
-                {sub}
-              </div>
-            </div>
+      {/* ── Hero card ───────────────────────────────────────────────── */}
+      {hero && <HeroCard action={hero} />}
 
-            {/* Actions */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 20px' }}>
-              {ACTIONS[key].map(action => (
-                <ActionCard
-                  key={action.id}
-                  action={action}
-                  active={hoveredId}
-                  onHover={setHoveredId}
-                />
-              ))}
+      {/* ── Supporting stack ────────────────────────────────────────── */}
+      {secondary.length > 0 && (
+        <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div style={{ padding: '8px 28px 4px', borderBottom: `1px solid ${BORDER}` }}>
+            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.28em' }}>
+              SUPPORTING ACTIONS
             </div>
           </div>
-        ))}
-      </div>
+          <div style={{ padding: '0 28px' }}>
+            {secondary.map(action => (
+              <SecondaryCard
+                key={action.id}
+                action={action}
+                active={hoveredId}
+                onHover={setHoveredId}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
-      {/* ── Footer ────────────────────────────────────────────────── */}
+      {/* ── Happy Path ──────────────────────────────────────────────── */}
+      {(() => {
+        const arb = session?.tensor?.arbitration ?? null;
+        const hp  = arb?.topK?.[0] ?? null;
+        const alt = arb?.topK?.slice(1) ?? [];
+        const gap = hp && alt.length > 0 ? ((hp.score - alt[0].score) * 100).toFixed(0) : null;
+        if (!hp) return null;
+        return (
+          <div style={{ flexShrink: 0, padding: '10px 28px', borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.012)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+              <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
+              <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
+                <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
+                <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
+                <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
+                <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
+              </svg>
+            </div>
+            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+              {[
+                { label: 'RANK',   value: `#${hp.dominanceRank ?? 1}`,           lime: false },
+                { label: 'TYPE',   value: hp.type?.toUpperCase() ?? '—',          lime: true  },
+                { label: 'SCORE',  value: `${(hp.score * 100).toFixed(0)} / 100`, lime: true  },
+                { label: 'DELTA',  value: gap ? `↑ ${gap} pts above next` : '—', lime: false },
+                { label: 'ENGINE', value: 'LEV-02 ARBITRATED',                    lime: true  },
+              ].map(({ label, value, lime }) => (
+                <span key={label} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)' }}>
+                  {label} <span style={{ color: lime ? LIME : 'rgba(255,255,255,0.6)' }}>{value}</span>
+                </span>
+              ))}
+            </div>
+            {hp.content && (
+              <div style={{ fontFamily: SERIF, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginTop: 6, borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
+                {hp.content}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Footer ──────────────────────────────────────────────────── */}
       <div style={{
         padding: '10px 28px',
         borderTop: `1px solid ${BORDER}`,

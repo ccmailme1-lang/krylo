@@ -14,6 +14,7 @@ export const SITUATIONS = [
   { label: 'HEALTH & COSTS',       lens: 'HEALTH'     },
   { label: 'BUILDING SOMETHING',   lens: 'SALES'      },
   { label: 'NOT SURE YET',         lens: 'OPEN'       },
+  { label: 'REDUCING EXPENSES',    lens: 'EXPENSE'    },
 ];
 
 // Signal domains — engine vocabulary (6-bay classification system).
@@ -28,6 +29,7 @@ export const LENS_DOMAIN_MAP = {
   HEALTH:     ['HEALTH'],
   SALES:      ['FINANCIAL', 'MARKET'],
   OPEN:       [],
+  EXPENSE:    ['FINANCIAL', 'HEALTH'],
 };
 
 // Broker domain — deterministic product domain from lens. No free-text inference.
@@ -44,6 +46,7 @@ export const LENS_BROKER_DOMAIN_MAP = {
   HEALTH:     'HEALTH',
   SALES:      'BUSINESS',
   OPEN:       'GENERAL',
+  EXPENSE:    'BUDGET',
 };
 
 export const FLOOR_RANGES = [
@@ -68,6 +71,7 @@ export const CALIBRATION_SIGNALS = {
   HEALTH:     { observation: "Most people in this situation found coverage gaps before addressing cost exposure.",                               confidence: 0.71 },
   SALES:      { observation: "Builders in early stages most often found cash runway was the first constraint, not market fit.",                  confidence: 0.66 },
   OPEN:       { observation: "Most users in open mode found a more specific lens after their first run.",                                       confidence: 0.60 },
+  EXPENSE:    { observation: "Most seniors on fixed income qualify for assistance programs they've never applied for.",                          confidence: 0.82 },
 };
 
 export const KEY_OPS = [

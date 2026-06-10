@@ -198,42 +198,6 @@ export default function IntelligenceBrief() {
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
 
-        {/* 00.5 · HP · HAPPY PATH — document layer, after classification, before BLUF */}
-        {(() => {
-          const arb = session?.tensor?.arbitration ?? null;
-          const hp  = arb?.topK?.[0] ?? null;
-          const alt = arb?.topK?.slice(1) ?? [];
-          const gap = hp && alt.length > 0 ? ((hp.score - alt[0].score) * 100).toFixed(0) : null;
-          if (!hp) return null;
-
-          const rows = [
-            { label: 'RANK',   value: `#${hp.dominanceRank ?? 1}`,            lime: false },
-            { label: 'TYPE',   value: hp.type?.toUpperCase() ?? '—',           lime: true  },
-            { label: 'SCORE',  value: `${(hp.score * 100).toFixed(0)} / 100`,  lime: true  },
-            { label: 'DELTA',  value: gap ? `↑ ${gap} pts above next` : '—',  lime: false },
-            { label: 'ENGINE', value: 'LEV-02 ARBITRATED',                     lime: true  },
-          ];
-
-          return (
-            <div style={{ width: '100%', margin: '8px 0 16px 0', padding: '8px 14px', borderTop: '1px solid rgba(102,255,0,0.22)', borderBottom: '1px solid rgba(102,255,0,0.22)', background: 'rgba(255,255,255,0.015)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginBottom: 5 }}>
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)', textTransform: 'uppercase' }}>HP · Happy Path</span>
-                <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', marginLeft: '2%', position: 'relative', top: 1 }}>
-                  <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
-                  <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
-                  <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
-                  <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
-                </svg>
-              </div>
-              {rows.map(({ label, value, lime }) => (
-                <FieldRow key={label} label={label} value={value} valueColor={lime ? LIME : MID} />
-              ))}
-              <div style={{ fontFamily: SERIF, fontSize: 11, color: 'rgba(255,255,255,0.62)', lineHeight: 1.65, marginTop: 5, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 6 }}>
-                {hp.content}
-              </div>
-            </div>
-          );
-        })()}
 
         {/* 01 · BLUF */}
         <Panel seq="01" label="BLUF · Introduction">

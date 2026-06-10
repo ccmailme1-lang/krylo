@@ -8,7 +8,9 @@ const DIM    = 'rgba(255,255,255,0.25)';
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function extractNumbers(text) {
-  const raw = text?.match(/\$?\d[\d,]*(?:\.\d+)?[kKmM]?/g) ?? [];
+  // Strip age-context numbers before extraction — "81 year old" must not become $81
+  const cleaned = (text ?? '').replace(/\b\d+\s*-?\s*years?\s*-?\s*old\b/gi, '');
+  const raw = cleaned.match(/\$?\d[\d,]*(?:\.\d+)?[kKmM]?/g) ?? [];
   return raw.map(m => {
     const n = parseFloat(m.replace(/[$,]/g, ''));
     if (/[kK]$/.test(m)) return n * 1000;
@@ -104,6 +106,17 @@ export function detectDomain(query, lens) {
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
   if (/car|vehicle|suv|truck|auto|lease|buick|ford|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
   if (/house|home|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing/.test(q)) return 'REAL_ESTATE';
+  // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
+  // QA-101: retired + expense/distress signals
+  if (/\bretired\b/.test(q) && /fixed income|expenses? down|reduce.*expense|lower.*bill|cut.*cost|monthly.*down|expenses? lower|struggling/.test(q)) return 'EXPENSE_REDUCTION';
+  // fixed income + senior demographic
+  if (/fixed income/.test(q) && /senior|grandmother|grandfather|grandma|grandpa|elderly/.test(q)) return 'EXPENSE_REDUCTION';
+  // QA-102: social security as current income source + any distress/cost signal
+  if (/\b(?:living on|on)\s+(?:a\s+)?(?:fixed income|social security)\b/.test(q)) return 'EXPENSE_REDUCTION';
+  if (/social security/.test(q) && /struggling|afford|expenses?|bills?|reduce|lower|cut|tight|fixed/.test(q)) return 'EXPENSE_REDUCTION';
+  // QA-103: senior + medicare cost signals; or medicare premiums alone
+  if (/medicare\s+premiums?/.test(q)) return 'EXPENSE_REDUCTION';
+  if (/\bsenior\b/.test(q) && /medicare|medicaid|premiums?|copay|out.of.pocket|healthcare cost/.test(q)) return 'EXPENSE_REDUCTION';
   if (/retire|401k|ira|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
   if (/job|career|salary|offer|negotiat|hire|compensation|raise|role/.test(q)) return 'CAREER';
 
@@ -467,6 +480,88 @@ function synthRetirement(session, numbers, query) {
   };
 }
 
+function synthExpenseReduction(session, numbers, query) {
+  const capital = numbers[0] || null;
+  const burn    = numbers[1] || null;
+  const runway  = capital && burn ? (capital / burn).toFixed(1) : null;
+  const shortQ  = query.length > 50 ? query.slice(0, 50) + '…' : query;
+
+  return {
+    stateLabel: 'EXPENSE AUDIT ACTIVE',
+    confidence: 0.81,
+    primaryInsight: `Fixed income scenario. ${runway ? `Runway: ${runway}mo at current burn ($${fmtN(burn)}/mo). ` : ''}Primary lever: expense reduction, not accumulation. Medicare optimization + assistance programs are the highest-yield actions.`,
+    momentum:   { value: '+6%', h1: '+1%', h24: '+6%' },
+    trajPoints: [0.30,0.36,0.42,0.48,0.54,0.60,0.64,0.68,0.72,0.76,0.78,0.81],
+    attentionStack: [
+      { rank:1, signal:'Medicare Plan Fit',      category:'Healthcare / Monthly',  trend:'↘', momentum:'Optimizable', mColor:LIME, conf:0.88 },
+      { rank:2, signal:'Assistance Eligibility', category:'Benefits / Federal',    trend:'↑', momentum:'Unclaimed',   mColor:LIME, conf:0.83 },
+      { rank:3, signal:'Subscription Bleed',     category:'Fixed / Discretionary', trend:'↑', momentum:'Recoverable', mColor:BLUE, conf:0.76 },
+      { rank:4, signal:'Prescription Costs',     category:'Drug / Out-of-Pocket',  trend:'↘', momentum:'Reducible',   mColor:LIME, conf:0.71 },
+    ],
+    keyDrivers: [
+      { label:'Medicare Advantage savings',     delta:'$100–300/mo', pos:true },
+      { label:'SNAP avg senior benefit',        delta:'$281/mo',     pos:true },
+      { label:'LIHEAP utility assistance',      delta:'$400–600/yr', pos:true },
+      { label:'Senior property tax exemption',  delta:'$500–2K/yr',  pos:true },
+    ],
+    recommendedAction: `Start with Medicare plan comparison (Medicare.gov) — highest-leverage monthly cost reduction available. Then check SNAP eligibility for food assistance.`,
+    timeHorizon: '30–60 days',
+    impactLevel: 'High',
+    bluf: `On a fixed income, the only lever is expense reduction. Medicare optimization, federal assistance programs, and a subscription audit can recover $300–600/mo without reducing quality of life.`,
+    purpose: `Expense reduction analysis for fixed-income senior. Covers Medicare optimization, assistance program eligibility, discretionary audit, and prescription cost reduction.`,
+    fiveWs: [
+      { w:'WHO',   answer:`Retired individual on fixed income. Income is fixed — expense reduction is the only financial lever.` },
+      { w:'WHAT',  answer:`Monthly expense audit. Largest senior cost categories: healthcare, food, housing, transportation, prescriptions.` },
+      { w:'WHEN',  answer:`Medicare plan comparison: Oct 15–Dec 7 (Annual Enrollment). LIHEAP: Oct–April. SNAP: open year-round.` },
+      { w:'WHERE', answer:`Primary savings: Medicare plan optimization. Secondary: federal/state assistance programs. Tertiary: subscription and insurance audit.` },
+      { w:'WHY',   answer:`Many seniors on fixed income qualify for assistance programs they never applied for. Medicare Advantage vs Original Medicare gap is often $100–300/mo unclaimed.` },
+    ],
+    evidence: [
+      `Medicare Advantage plans can reduce monthly costs vs Original Medicare + Medigap by $100–300/mo.`,
+      `SNAP: seniors at or below 130% of poverty line qualify. Average senior benefit: $281/mo.`,
+      `LIHEAP: federal heating/cooling assistance. Enrollment Oct–April. Avg benefit: $400–600.`,
+      `Senior homestead exemptions reduce property tax $500–2,000/yr in most states — must apply annually.`,
+    ],
+    assumptions: [
+      `Medicare-eligible (age 65+). Part A and B enrolled or eligible.`,
+      `Income qualifies for one or more assistance programs at fixed-income levels.`,
+    ],
+    assessment: `The highest-yield actions for a fixed-income senior are cost recovery actions, not savings strategies. Medicare plan optimization, SNAP, and LIHEAP together can recover $400–700/mo. Prescription drug costs (Part D optimization or GoodRx) add $50–200/mo depending on medications. Subscription and insurance audit typically recovers $50–150/mo.`,
+    threats: [
+      { label:'Healthcare cost inflation',              level:'HIGH',   color:LIME },
+      { label:'Medicare plan changes (annual)',          level:'MEDIUM', color:BLUE },
+      { label:'Assistance program enrollment deadlines', level:'MEDIUM', color:BLUE },
+      { label:'Utility rate increases',                 level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`Medicare Extra Help (LIS): reduces Part D drug costs to near zero if income qualifies.` },
+      { label:`Senior Farmers Market Nutrition Program: additional food assistance in participating states.` },
+      { label:`Telephone Lifeline program: $9.25/mo credit on phone/internet — apply through provider.` },
+    ],
+    alternativeView: `Reverse mortgage products provide monthly income against home equity for homeowners. High-fee product — appropriate only if no plans to relocate and estate considerations are resolved.`,
+    outlook: [
+      { prob:0.72, label:`Medicare optimization + assistance programs recover $400–600/mo`, color:LIME },
+      { prob:0.20, label:`Partial recovery — one or two programs accessible, not all`,       color:BLUE },
+      { prob:0.08, label:`Income or asset threshold disqualifies most programs`,             color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'COMPARE MEDICARE PLANS',   impact:0.92, rationale:`Go to Medicare.gov Plan Finder. Compare your current plan vs Medicare Advantage options. Many seniors save $100–300/mo. Annual Enrollment: Oct 15–Dec 7. Outside that window, call 1-800-MEDICARE to review options.`, tag:'HEALTHCARE' },
+        { id:'a2', label:'AUDIT SUBSCRIPTIONS',      impact:0.78, rationale:`List every recurring charge: cable, streaming, insurance riders, club memberships. Cancel anything unused. Average senior household recovers $50–150/mo from subscription bleed.`,                                   tag:'CASH FLOW'  },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'APPLY FOR SNAP BENEFITS',  impact:0.88, rationale:`Seniors at or below 130% of poverty line qualify. Apply at Benefits.gov or local DHS office. Average senior benefit: $281/mo in groceries. Most seniors who qualify have never applied.`,                         tag:'FOOD'       },
+        { id:'b2', label:'APPLY FOR LIHEAP',         impact:0.74, rationale:`Federal heating and cooling assistance. Apply through local Community Action Agency. Enrollment typically Oct–April. Avg benefit: $400–600. Covers electric, gas, or fuel oil.`,                                  tag:'UTILITIES'  },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'FILE PROPERTY TAX EXEMPTION', impact:0.81, rationale:`Most states offer homestead exemptions for seniors 65+. Reduces annual tax bill $500–2,000. File with county assessor — many seniors miss this. Check your state deadline.`,                                tag:'HOUSING'       },
+        { id:'c2', label:'OPTIMIZE PRESCRIPTIONS',   impact:0.69, rationale:`Check GoodRx or RxSaver for every medication. Brand-to-generic switch cuts costs 80%+. Apply for Medicare Extra Help (LIS) if income qualifies — reduces Part D costs to near zero.`,                          tag:'PRESCRIPTIONS' },
+      ],
+    },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'LOW', deRatio: 0.1, permissionless: true, industryNorm: 0.5 },
+  };
+}
+
 function synthGeneral(session, numbers, query) {
   const floor = session?.tensor?.floor || numbers[0] || null;
   const lens  = session?.lens ?? 'OPEN';
@@ -550,23 +645,27 @@ function synthGeneral(session, numbers, query) {
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
-  AUTO:        synthAuto,
-  REAL_ESTATE: synthRealEstate,
-  CAREER:      synthCareer,
-  RETIREMENT:  synthRetirement,
-  INVESTOR:    synthGeneral,
-  HEALTH:      synthGeneral,
-  GENERAL:     synthGeneral,
+  AUTO:              synthAuto,
+  REAL_ESTATE:       synthRealEstate,
+  CAREER:            synthCareer,
+  RETIREMENT:        synthRetirement,
+  EXPENSE_REDUCTION: synthExpenseReduction,
+  INVESTOR:          synthGeneral,
+  HEALTH:            synthGeneral,
+  GENERAL:           synthGeneral,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
+import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
+
 export function synthesizeQuery(session) {
   if (!session) return null;
-  const query   = session.query ?? '';
-  const numbers = extractNumbers(query);
-  const domain  = detectDomain(query, session.lens);
-  const fn      = SYNTH_MAP[domain] ?? synthGeneral;
-  const result  = fn(session, numbers, query);
-  return { ...result, queryDomain: domain };
+  const query        = session.query ?? '';
+  const numbers      = extractNumbers(query);
+  const domain       = detectDomain(query, session.lens);
+  const fn           = SYNTH_MAP[domain] ?? synthGeneral;
+  const result       = fn(session, numbers, query);
+  const contractLens = resolveContractLens(domain, session.lens);
+  return { ...result, queryDomain: domain, actions: applyEditorialGate(result.actions, contractLens) };
 }
