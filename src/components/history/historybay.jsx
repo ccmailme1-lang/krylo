@@ -281,12 +281,13 @@ export default function HistoryBay() {
       background: '#000000', fontFamily: MONO,
     }}>
 
-      {/* Header */}
+      {/* Header — centered 1280 well, same bumpers as the front page */}
       <div style={{
         padding: '16px 24px 12px',
         borderBottom: `1px solid ${BORDER}`,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
+        width: '100%', maxWidth: 1280, margin: '0 auto',
       }}>
         <div>
           <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
@@ -302,7 +303,7 @@ export default function HistoryBay() {
       </div>
 
       {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px', width: '100%', maxWidth: 1280, margin: '0 auto' }}>
 
         {history.length === 0 ? (
           <div style={{ paddingTop: 16, display: 'flex', alignItems: 'baseline', gap: 20 }}>
