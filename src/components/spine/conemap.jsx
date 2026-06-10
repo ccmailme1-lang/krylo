@@ -1797,7 +1797,8 @@ const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media
 export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null }) {
   const { coneState, rawDomains } = useMemo(() => {
     const normalized = signals.map(sig => ({
-      domain:     sig.source   ?? 'signal',
+      // cone_domain (live records) routes to canonical feeders; stubs keep source
+      domain:     sig.domain ?? sig.source ?? 'signal',
       leverage:   (sig.fs ?? 0) * 100,
       volatility: sig.fidelity?.e_viral ?? 0,
     }));
