@@ -667,11 +667,26 @@ export default function App() {
     return () => window.removeEventListener('KRYLO_LIVE_INJECT', handler);
   }, []);
 
+  // Live signal pool — every other ingest hook is query-gated, so with no
+  // active search the GDELT rotation records (cone_domain + signal_score)
+  // never reached the client and the cones starved. Poll the pool directly.
+  const [poolSignals, setPoolSignals] = useState([]);
+  useEffect(() => {
+    let dead = false;
+    const pull = () => fetch('/api/signals')
+      .then(r => r.json())
+      .then(arr => { if (!dead && Array.isArray(arr)) setPoolSignals(arr); })
+      .catch(() => {});
+    pull();
+    const id = setInterval(pull, 60000);
+    return () => { dead = true; clearInterval(id); };
+  }, []);
+
   const mergedRecords = useMemo(() => {
     const map = new Map();
-    [...hnSignals, ...frameSignals, ...ingestSignals, ...records, ...liveInjectSignals].forEach(r => map.set(r.id, r));
+    [...poolSignals, ...hnSignals, ...frameSignals, ...ingestSignals, ...records, ...liveInjectSignals].forEach(r => map.set(r.id, r));
     return Array.from(map.values());
-  }, [records, ingestSignals, hnSignals, frameSignals, liveInjectSignals]);
+  }, [poolSignals, records, ingestSignals, hnSignals, frameSignals, liveInjectSignals]);
 
   const activeSession = activeSessionId ? (sessions[activeSessionId] ?? null) : null;
   const canonical     = useOracleMapper(activeSession);
@@ -692,21 +707,25 @@ export default function App() {
 
   const liveSignals = useMemo(
     () => mergedRecords.length
-      ? mergedRecords.map(r => ({
+      ? mergedRecords.map(r => {
+          // signal_score scale differs by source: rotation 0–1, seed ETRs 0–100
+          const score = r.fs ?? (typeof r.signal_score === 'number'
+            ? (r.signal_score > 1 ? r.signal_score / 100 : r.signal_score)
+            : 0);
+          return {
           text:     r.truth_statement ?? r.title ?? r.id,
           source:   r.source_type ?? 'spine',
           domain:   r.cone_domain ?? null,
-          // Live rotation records carry signal_score (0–1), not fs
-          strength: Math.round((r.fs ?? r.signal_score ?? 0) * 5),
+          strength: Math.round(score * 5),
           id:       r.id,
-          fs:       r.fs ?? r.signal_score ?? 0,
+          fs:       score,
           primary:  true,
           fidelity: {
             m_checksum:  r.fidelity_components?.m_checksum  ?? 0,
             t_telemetry: r.fidelity_components?.t_telemetry ?? 0,
             e_viral:     r.fidelity_components?.e_viral     ?? 0,
           },
-        }))
+        };})
       : STUB_SIGNALS,
     [mergedRecords],
   );
