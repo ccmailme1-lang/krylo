@@ -32,7 +32,8 @@ function deriveConesFromSignals(liveSignals) {
   Object.values(BAY_MAP).forEach(d => { acc[d] = []; });
 
   liveSignals.forEach(sig => {
-    const cone = SIG_TO_CONE[(sig.source ?? '').toLowerCase()];
+    // cone_domain (live records) routes via domain; stubs keep source
+    const cone = SIG_TO_CONE[((sig.domain ?? sig.source) ?? '').toLowerCase()];
     if (cone) acc[cone].push(Math.min(1, Number(sig.strength ?? 0) / 5));
   });
 
