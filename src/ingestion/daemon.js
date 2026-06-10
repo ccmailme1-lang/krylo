@@ -25,7 +25,7 @@ const FRED_SERIES = [
 async function fetchFRED() {
   const results = [];
   for (const series of FRED_SERIES) {
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${series.id}&api_key=${FRED_KEY}&file_type=json&limit=1&sort_order=desc`;
+    const url = `/api/fred?series_id=${series.id}&api_key=${FRED_KEY}`;
     const res  = await fetch(url);
     const data = await res.json();
     const obs  = data.observations?.[0];
@@ -57,7 +57,7 @@ const FINNHUB_SYMBOLS = [
 async function fetchFinnhub() {
   const results = [];
   for (const sym of FINNHUB_SYMBOLS) {
-    const url  = `https://finnhub.io/api/v1/quote?symbol=${sym.symbol}&token=${FINNHUB_KEY}`;
+    const url  = `/api/finnhub?symbol=${sym.symbol}&token=${FINNHUB_KEY}`;
     const res  = await fetch(url);
     const data = await res.json();
     if (!data.c) continue; // c = current price

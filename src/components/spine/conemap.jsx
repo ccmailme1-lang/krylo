@@ -490,6 +490,24 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     return () => clearInterval(iv);
   }, []);
 
+  // WO-1339 Phase B — live resonance path via Ollama
+  const [resonancePath, setResonancePath] = React.useState(null);
+  const resonanceTitleRef = React.useRef(null);
+  React.useEffect(() => {
+    const title = bay?.assignment?.title;
+    if (!title || title === resonanceTitleRef.current) return;
+    resonanceTitleRef.current = title;
+    setResonancePath(null);
+    fetch('/api/resonance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+      .then(r => r.json())
+      .then(data => { if (data?.path) setResonancePath(data); })
+      .catch(() => {});
+  }, [bay?.assignment?.title]);
+
   if (!cone) return null;
   const leverageN   = (cone.pressure ?? 0) / 100;
   const vector      = { D: leverageN, V: cone.volatility ?? 0.5, A: leverageN, T: 0.7 };
@@ -637,7 +655,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         </div>
       )}
 
-      {/* WO-1339: Resonance Path */}
+      {/* WO-1339 Phase B: Live Resonance Path via Ollama */}
       {(() => {
         const assignment = bay?.assignment;
         if (!assignment) return (
@@ -645,9 +663,12 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             NO SIGNAL ASSIGNED
           </div>
         );
-        const resolved = resolveResonancePath(assignment.title);
-        if (!resolved) return null;
-        // skip first node — entity name already shown as Title above
+        const resolved = resonancePath;
+        if (!resolved) return (
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
+            RESOLVING PATH…
+          </div>
+        );
         const visiblePath = resolved.path.slice(1, MAX_VISIBLE_HOPS + 1);
         const hopCount = visiblePath.length;
         return (
@@ -981,13 +1002,43 @@ function ThresholdBands() {
   // labels project clear of the inspection panel's screen x-range.
   const WL = 7.5;
   const WR = 4.5;
+  // True unit mapping — must match SignalCone: coneHeight = pow(score/100, 1.4) * 8
+  const yOf = s => Math.pow(s / 100, 1.4) * 8;
   const bands = [
-    { y: 3, alpha: 0.45, label: 'LO · 50' },
-    { y: 5, alpha: 0.55, label: 'MID · 75' },
-    { y: 7, alpha: 0.65, label: 'HI · 90' },
+    { y: yOf(50), alpha: 0.45, label: 'LO · 50' },
+    { y: yOf(75), alpha: 0.55, label: 'MID · 75' },
+    { y: yOf(90), alpha: 0.65, label: 'HI · 90' },
   ];
+  // Interval tics every 10 signal units (named bands carry the full lines)
+  const tics = [30, 40, 60, 70, 80, 100].map(s => ({ y: yOf(s), s }));
   return (
     <group>
+      {tics.map(t => {
+        const pts = new Float32Array([WR, t.y, 0, WR + 0.35, t.y, 0]);
+        return (
+          <React.Fragment key={`tic-${t.s}`}>
+            <lineSegments>
+              <bufferGeometry>
+                <bufferAttribute attach="attributes-position" args={[pts, 3]} />
+              </bufferGeometry>
+              <lineBasicMaterial color="#4A4A4A" transparent opacity={0.35} />
+            </lineSegments>
+            <Html position={[WR + 0.55, t.y, 0]} distanceFactor={7}>
+              <div style={{
+                fontFamily:    "'IBM Plex Mono', monospace",
+                fontSize:      10,
+                letterSpacing: '0.1em',
+                color:         'rgba(255,255,255,0.35)',
+                whiteSpace:    'nowrap',
+                userSelect:    'none',
+                pointerEvents: 'none',
+              }}>
+                {t.s}
+              </div>
+            </Html>
+          </React.Fragment>
+        );
+      })}
       {bands.map((b, i) => {
         const pts = new Float32Array([-WL, b.y, 0, WR, b.y, 0]);
         return (

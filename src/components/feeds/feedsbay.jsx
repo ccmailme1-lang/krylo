@@ -1,5 +1,12 @@
-// feedsbay.jsx — Newspaper Front Page (NYT-inspired)
-import React, { useState, useEffect, useRef } from 'react';
+// feedsbay.jsx — FP-3.0 NYT Front Page Anatomy (Founder-approved mockup 2026-06-10)
+// Geometry: main well (~66%) | hairline spine | right rail (~34%)
+//           well subdivides: text stack (~36%) | dominant image column (~64%)
+// Grammar:  story atom = headline → deck → meta, degrading bottom-up.
+//           Domain packages: header + subtopic links, LIVE-stamped text stack
+//           left, package image right. No boxes, no fills — hairlines and
+//           whitespace only. Monotonic density gradient.
+// Skin locked per CLAUDE.md §6: #000000, #66FF00, IBM Plex Mono + Georgia.
+import React, { useState, useEffect, useMemo } from 'react';
 
 const MONO  = "'IBM Plex Mono', monospace";
 const SERIF = "Georgia, 'Times New Roman', serif";
@@ -8,8 +15,9 @@ const RULE  = 'rgba(255,255,255,0.10)';
 const RULE2 = 'rgba(255,255,255,0.20)';
 const LIME  = '#66FF00';
 const TEXT  = 'rgba(255,255,255,0.92)';
+const SOFT  = 'rgba(255,255,255,0.60)';
 const MUTED = 'rgba(255,255,255,0.38)';
-const DIM   = 'rgba(255,255,255,0.18)';
+const FAINT = 'rgba(255,255,255,0.30)';
 
 const DOMAINS = ['ALL', 'FINANCIAL', 'MARKET', 'LEGAL', 'HEALTH', 'CAREER', 'TECHNOLOGY'];
 const SUBCATEGORIES = {
@@ -20,6 +28,12 @@ const SUBCATEGORIES = {
   HEALTH:     ['PHARMA', 'POLICY', 'RESEARCH', 'OUTBREAKS'],
   CAREER:     ['LAYOFFS', 'HIRING', 'COMPENSATION', 'STARTUPS'],
   TECHNOLOGY: ['AI', 'SEMICONDUCTORS', 'CYBERSECURITY', 'PLATFORMS'],
+};
+
+// Cone domain (server) → feeds domain (page)
+const CONE_TO_FEED = {
+  capital: 'FINANCIAL', ownership: 'MARKET', media: 'MARKET',
+  labor: 'CAREER', technology: 'TECHNOLOGY', knowledge: 'TECHNOLOGY',
 };
 
 const MOCK = [
@@ -60,66 +74,87 @@ function formatDate() {
   return new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' }).toUpperCase();
 }
 
-function CategoryTag({ type }) {
-  return (
-    <span style={{ fontFamily:MONO, fontSize:8, letterSpacing:'0.22em', color:LIME, border:`1px solid ${LIME}`, padding:'1px 5px' }}>
-      {type}
-    </span>
-  );
-}
+// ── Atoms ─────────────────────────────────────────────────────────────────────
 
-function Chip({ label, active, onClick }) {
+function Meta({ story }) {
   return (
-    <button onClick={onClick} style={{
-      fontFamily:MONO, fontSize:9, letterSpacing:'0.18em',
-      color: active ? '#000' : MUTED,
-      background: active ? LIME : 'transparent',
-      border:`1px solid ${active ? LIME : DIM}`,
-      padding:'3px 10px', cursor:'pointer', borderRadius:2,
-      whiteSpace:'nowrap', transition:'all 120ms',
-    }}>
-      {label}
-    </button>
-  );
-}
-
-function ImageBlock({ imageUrl, category, style = {} }) {
-  return (
-    <div style={{ overflow:'hidden', position:'relative', flexShrink:0, ...style }}>
-      {imageUrl ? (
-        <img src={imageUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-      ) : (
-        <div style={{
-          width:'100%', height:'100%',
-          background:`repeating-linear-gradient(0deg,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 24px),repeating-linear-gradient(90deg,rgba(255,255,255,0.025) 0px,rgba(255,255,255,0.025) 1px,transparent 1px,transparent 24px),#080808`,
-          display:'flex', alignItems:'flex-end', padding:10,
-        }}>
-          <CategoryTag type={category} />
-        </div>
-      )}
+    <div style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.15em', marginTop:6 }}>
+      {readTime(story)} MIN READ
     </div>
   );
 }
 
-// ── Live Ticker ───────────────────────────────────────────────────────────────
+function Credit({ source }) {
+  return (
+    <div style={{ fontFamily:MONO, fontSize:7, color:FAINT, letterSpacing:'0.12em', marginTop:4 }}>
+      {(source ?? 'KRYLO WIRE').toUpperCase()} · KRYLO
+    </div>
+  );
+}
+
+function LiveStamp({ story }) {
+  return (
+    <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:6 }}>
+      <span style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:LIME, letterSpacing:'0.18em' }}>● LIVE</span>
+      <span style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.12em' }}>
+        {story.publishedAt ? timeAgo(story.publishedAt) : story.time}
+      </span>
+    </div>
+  );
+}
+
+function FidelityBar({ fs }) {
+  if (fs == null) return null;
+  return (
+    <div style={{ marginTop:8, height:2, background:'rgba(255,255,255,0.10)', maxWidth:160 }}>
+      <div style={{ width:`${Math.round(fs * 100)}%`, height:'100%', background:LIME }} />
+    </div>
+  );
+}
+
+function Img({ imageUrl, style = {} }) {
+  if (!imageUrl) return null;
+  return (
+    <div style={{ overflow:'hidden', flexShrink:0, ...style }}>
+      <img src={imageUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+    </div>
+  );
+}
+
+// Story atom: headline → deck → meta. Degrades bottom-up.
+function StoryAtom({ story, size = 17, showDeck = false, showFs = false, live = false }) {
+  return (
+    <div>
+      {live && <LiveStamp story={story} />}
+      <h3 style={{ fontFamily:SERIF, fontSize:size, fontWeight:700, lineHeight:1.2, color:TEXT, margin:'0 0 4px' }}>
+        {story.title}
+      </h3>
+      {showDeck && story.description && (
+        <p style={{ fontFamily:SERIF, fontSize:14, lineHeight:1.55, color:SOFT, margin:'4px 0 0' }}>
+          {story.description}
+        </p>
+      )}
+      <Meta story={story} />
+      {showFs && <FidelityBar fs={story.fs} />}
+    </div>
+  );
+}
+
+// ── Ticker + Filter (unchanged surfaces) ─────────────────────────────────────
+
 function LiveTicker({ stories }) {
-  const tickerRef = useRef(null);
   const items = stories.slice(0, 6);
   if (!items.length) return null;
   return (
     <div style={{
-      borderBottom:`1px solid ${RULE}`,
-      padding:'8px 32px',
-      display:'flex', alignItems:'center', gap:0,
-      overflowX:'auto', scrollbarWidth:'none',
+      borderBottom:`1px solid ${RULE}`, padding:'8px 32px',
+      display:'flex', alignItems:'center', overflowX:'auto', scrollbarWidth:'none',
     }}>
-      <span style={{ fontFamily:MONO, fontSize:9, color:LIME, letterSpacing:'0.2em', marginRight:16, flexShrink:0 }}>
-        ● LIVE
-      </span>
-      <div ref={tickerRef} style={{ display:'flex', gap:0, alignItems:'center', flexWrap:'nowrap' }}>
+      <span style={{ fontFamily:MONO, fontSize:9, color:LIME, letterSpacing:'0.2em', marginRight:16, flexShrink:0 }}>● LIVE</span>
+      <div style={{ display:'flex', alignItems:'center', flexWrap:'nowrap' }}>
         {items.map((s, i) => (
           <React.Fragment key={s.id}>
-            {i > 0 && <span style={{ color:DIM, margin:'0 12px', fontSize:10 }}>|</span>}
+            {i > 0 && <span style={{ color:RULE2, margin:'0 12px', fontSize:10 }}>|</span>}
             <span style={{ display:'flex', alignItems:'center', gap:8, whiteSpace:'nowrap' }}>
               <span style={{ fontFamily:SERIF, fontSize:12, color:TEXT }}>{s.title}</span>
               <span style={{ fontFamily:MONO, fontSize:9, color:LIME, letterSpacing:'0.12em' }}>
@@ -133,7 +168,21 @@ function LiveTicker({ stories }) {
   );
 }
 
-// ── Filter Bar ────────────────────────────────────────────────────────────────
+function Chip({ label, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      fontFamily:MONO, fontSize:9, letterSpacing:'0.18em',
+      color: active ? '#000' : MUTED,
+      background: active ? LIME : 'transparent',
+      border:`1px solid ${active ? LIME : 'rgba(255,255,255,0.18)'}`,
+      padding:'3px 10px', cursor:'pointer', borderRadius:2,
+      whiteSpace:'nowrap', transition:'all 120ms',
+    }}>
+      {label}
+    </button>
+  );
+}
+
 function FilterBar({ domain, setDomain, sub, setSub, mobile }) {
   const subs = SUBCATEGORIES[domain] ?? [];
   return (
@@ -153,93 +202,216 @@ function FilterBar({ domain, setDomain, sub, setSub, mobile }) {
   );
 }
 
-// ── Left Column Story (text + small right thumbnail) ──────────────────────────
-function LeftStory({ story, divider }) {
-  const rt = readTime(story);
-  return (
-    <div style={{ display:'flex', gap:12, paddingBottom:16, marginBottom:16, borderBottom: divider ? `1px solid ${RULE}` : 'none', alignItems:'flex-start' }}>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ marginBottom:6 }}><CategoryTag type={story.type} /></div>
-        <h3 style={{ fontFamily:SERIF, fontSize:15, fontWeight:700, lineHeight:1.3, color:TEXT, margin:'0 0 6px' }}>
-          {story.title}
-        </h3>
-        <div style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.14em' }}>
-          {rt} MIN READ
-        </div>
-      </div>
-      <ImageBlock imageUrl={story.imageUrl} category={story.type} style={{ width:72, height:56, borderRadius:1 }} />
-    </div>
-  );
-}
+// ── Main well: top package — text stack left, dominant image right ───────────
 
-// ── Center Story (dominant) ───────────────────────────────────────────────────
-function CenterStory({ story }) {
-  const rt = readTime(story);
-  return (
-    <div style={{ display:'flex', flexDirection:'column' }}>
-      <ImageBlock imageUrl={story.imageUrl} category={story.type} style={{ width:'100%', height:340 }} />
-      <div style={{ padding:'16px 0 0' }}>
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:10 }}>
-          <CategoryTag type={story.type} />
-        </div>
-        <h1 style={{ fontFamily:SERIF, fontSize:24, fontWeight:700, lineHeight:1.25, color:TEXT, margin:'0 0 10px', letterSpacing:'-0.01em' }}>
-          {story.title}
-        </h1>
-        {story.description && (
-          <p style={{ fontFamily:SERIF, fontSize:14, lineHeight:1.6, color:'rgba(255,255,255,0.60)', margin:'0 0 12px' }}>
-            {story.description}
-          </p>
+function TopWell({ lead, related, photo, mobile }) {
+  if (mobile) {
+    return (
+      <div>
+        <StoryAtom story={lead} size={26} showDeck showFs />
+        {photo && (
+          <div style={{ marginTop:20 }}>
+            <Img imageUrl={photo.imageUrl} style={{ width:'100%', height:210 }} />
+            <Credit source={photo.source} />
+            <div style={{ marginTop:8 }}><StoryAtom story={photo} size={19} showDeck /></div>
+          </div>
         )}
-        <div style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.15em' }}>
-          {story.source.toUpperCase()} · {story.time} · {rt} MIN READ
+        {related.map(s => (
+          <div key={s.id} style={{ borderTop:`1px solid ${RULE}`, marginTop:16, paddingTop:16 }}>
+            <StoryAtom story={s} size={17} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div style={{ display:'flex', gap:32 }}>
+      {/* TEXT STACK — 36% of well */}
+      <div style={{ width:'36%', flexShrink:0 }}>
+        <StoryAtom story={lead} size={26} showDeck showFs />
+        {related.map(s => (
+          <div key={s.id} style={{ borderTop:`1px solid ${RULE}`, marginTop:18, paddingTop:18 }}>
+            <StoryAtom story={s} size={17} />
+          </div>
+        ))}
+      </div>
+      {/* DOMINANT IMAGE COLUMN — 64% of well */}
+      <div style={{ flex:1, minWidth:0 }}>
+        {photo ? (
+          <>
+            <Img imageUrl={photo.imageUrl} style={{ width:'100%', height:340 }} />
+            <Credit source={photo.source} />
+            <div style={{ marginTop:10 }}><StoryAtom story={photo} size={20} showDeck /></div>
+          </>
+        ) : (
+          <StoryAtom story={related[related.length - 1] ?? lead} size={20} showDeck />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Domain package — header + subtopics, LIVE text stack left, image right ───
+
+function PackageSection({ domain, stories, setDomain, mobile }) {
+  const photo   = stories.find(s => s.imageUrl);
+  const lead    = stories.find(s => s !== photo) ?? stories[0];
+  const related = stories.filter(s => s !== lead && s !== photo).slice(0, 2);
+  const subs    = (SUBCATEGORIES[domain] ?? []).slice(0, 4);
+  const canNav  = DOMAINS.includes(domain);
+
+  return (
+    <div style={{ borderTop:`1px solid ${RULE2}`, marginTop:28, paddingTop:20 }}>
+      {/* Package header: domain label + plain-text subtopic links */}
+      <div style={{ display:'flex', alignItems:'baseline', gap:18, flexWrap:'wrap', marginBottom:16 }}>
+        <span style={{ fontFamily:MONO, fontSize:10, fontWeight:700, color:LIME, letterSpacing:'0.26em' }}>{domain}</span>
+        {subs.map(t => (
+          <span key={t} style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.16em' }}>{t}</span>
+        ))}
+      </div>
+
+      <div style={{ display:'flex', flexDirection: mobile ? 'column' : 'row', gap: mobile ? 18 : 32 }}>
+        {/* TEXT STACK */}
+        <div style={{ width: mobile ? '100%' : '36%', flexShrink:0 }}>
+          <StoryAtom story={lead} size={19} showDeck live />
+          {canNav && (
+            <button onClick={() => setDomain(domain)} style={{
+              fontFamily:MONO, fontSize:9, letterSpacing:'0.18em', color:LIME,
+              background:'transparent', border:'none', padding:0, cursor:'pointer',
+              marginTop:10, display:'block',
+            }}>
+              SEE MORE {domain} SIGNALS ›
+            </button>
+          )}
+          {related.map(s => (
+            <div key={s.id} style={{ borderTop:`1px solid ${RULE}`, marginTop:16, paddingTop:16 }}>
+              <StoryAtom story={s} size={15} />
+            </div>
+          ))}
         </div>
+        {/* PACKAGE IMAGE */}
+        {photo && (
+          <div style={{ flex:1, minWidth:0 }}>
+            <Img imageUrl={photo.imageUrl} style={{ width:'100%', height: mobile ? 200 : 280 }} />
+            <Credit source={photo.source} />
+            <div style={{ marginTop:8 }}><StoryAtom story={photo} size={17} /></div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// ── Right Column Card (image top, text below) ─────────────────────────────────
-function RightCard({ story, divider }) {
-  const rt = readTime(story);
+// ── Right rail sections — hairline-separated, no boxes ───────────────────────
+
+function RailSection({ label, children, first = false }) {
   return (
-    <div style={{ paddingBottom:16, marginBottom:16, borderBottom: divider ? `1px solid ${RULE}` : 'none' }}>
-      <ImageBlock imageUrl={story.imageUrl} category={story.type} style={{ width:'100%', height:140, marginBottom:10 }} />
-      <div style={{ marginBottom:6 }}><CategoryTag type={story.type} /></div>
-      <h3 style={{ fontFamily:SERIF, fontSize:14, fontWeight:700, lineHeight:1.3, color:TEXT, margin:'0 0 6px' }}>
-        {story.title}
-      </h3>
-      <div style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.14em' }}>
-        {rt} MIN READ
-      </div>
+    <div style={{ borderTop: first ? 'none' : `1px solid ${RULE}`, marginTop: first ? 0 : 20, paddingTop: first ? 0 : 18 }}>
+      {label && (
+        <div style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:LIME, letterSpacing:'0.26em', marginBottom:12 }}>
+          {label}
+        </div>
+      )}
+      {children}
     </div>
   );
 }
 
-// ── Below Fold — headline only, no image ─────────────────────────────────────
-function TextStory({ story, mobile }) {
+function RailFeature({ story, extra }) {
+  if (!story) return null;
   return (
-    <div style={{
-      padding: mobile ? '0 0 20px' : '0 20px 20px',
-      borderRight: mobile ? 'none' : `1px solid ${RULE}`,
-      borderBottom: `1px solid ${RULE}`,
-      marginBottom: 20,
-    }}>
-      <h3 style={{ fontFamily:SERIF, fontSize:16, fontWeight:700, lineHeight:1.3, color:TEXT, margin:'0 0 8px' }}>
-        {story.title}
-      </h3>
-      <div style={{ fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.14em' }}>
-        {story.source.toUpperCase()}
+    <div>
+      {/* Mosaic: large image + up to 2 small stacked beside it */}
+      <div style={{ display:'flex', gap:6 }}>
+        <Img imageUrl={story.imageUrl} style={{ flex:2, height:170 }} />
+        {extra.length > 0 && (
+          <div style={{ flex:1, display:'flex', flexDirection:'column', gap:6 }}>
+            {extra.map(s => <Img key={s.id} imageUrl={s.imageUrl} style={{ flex:1, minHeight:0 }} />)}
+          </div>
+        )}
       </div>
+      <Credit source={story.source} />
+      <div style={{ marginTop:8 }}><StoryAtom story={story} size={20} showDeck /></div>
+    </div>
+  );
+}
+
+function RailPair({ pair }) {
+  if (!pair.length) return null;
+  return (
+    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+      {pair.map(s => (
+        <div key={s.id}>
+          <Img imageUrl={s.imageUrl} style={{ width:'100%', height:110, marginBottom:8 }} />
+          <StoryAtom story={s} size={14} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RailScroll({ stories }) {
+  if (!stories.length) return null;
+  return (
+    <div>
+      {stories.map((s, i) => (
+        <div key={s.id} style={{ marginBottom: i < stories.length - 1 ? 12 : 0 }}>
+          <div style={{ fontFamily:MONO, fontSize:8, color:LIME, letterSpacing:'0.14em', marginBottom:2 }}>
+            {s.type} · {s.publishedAt ? timeAgo(s.publishedAt) : s.time}
+          </div>
+          <div style={{ fontFamily:SERIF, fontSize:13, fontWeight:700, lineHeight:1.35, color:TEXT }}>
+            {s.title}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RailPressure({ stories }) {
+  const counts = {};
+  stories.forEach(s => { counts[s.type] = (counts[s.type] ?? 0) + 1; });
+  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  const max  = Math.max(1, ...rows.map(([, n]) => n));
+  if (!rows.length) return null;
+  return (
+    <div>
+      {rows.map(([d, n]) => (
+        <div key={d} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:7 }}>
+          <span style={{ fontFamily:MONO, fontSize:8, color:SOFT, letterSpacing:'0.16em' }}>{d}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ width:70, height:2, background:'rgba(255,255,255,0.10)' }}>
+              <div style={{ width:`${Math.round((n / max) * 100)}%`, height:'100%', background:LIME }} />
+            </div>
+            <span style={{ fontFamily:MONO, fontSize:9, color:MUTED, minWidth:14, textAlign:'right' }}>{n}</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function RailWire({ stories }) {
+  if (!stories.length) return null;
+  return (
+    <div>
+      {stories.map((s, i) => (
+        <div key={s.id} style={{ display:'flex', gap:8, alignItems:'baseline', marginBottom: i < stories.length - 1 ? 8 : 0 }}>
+          <span style={{ fontFamily:MONO, fontSize:8, color:LIME, flexShrink:0 }}>▸</span>
+          <span style={{ fontFamily:SERIF, fontSize:12, lineHeight:1.4, color:SOFT }}>{s.title}</span>
+        </div>
+      ))}
     </div>
   );
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
+
 export default function FeedsBay() {
-  const [stories, setStories]  = useState(MOCK);
-  const [loading, setLoading]  = useState(false);
-  const [domain,  setDomain]   = useState('ALL');
-  const [sub,     setSub]      = useState('ALL');
+  const [stories, setStories] = useState(MOCK);
+  const [loading, setLoading] = useState(false);
+  const [domain,  setDomain]  = useState('ALL');
+  const [sub,     setSub]     = useState('ALL');
   const mobile = useIsMobile();
 
   useEffect(() => {
@@ -251,7 +423,7 @@ export default function FeedsBay() {
         if (data.articles?.length > 0) {
           const mapped = data.articles.map((a, i) => ({
             id: i,
-            type: domain !== 'ALL' ? domain : 'SIGNAL',
+            type: domain !== 'ALL' ? domain : (CONE_TO_FEED[a.domain] ?? 'SIGNAL'),
             sub: null,
             title: a.title ?? '',
             description: a.description ?? null,
@@ -269,17 +441,42 @@ export default function FeedsBay() {
       .finally(() => setLoading(false));
   }, [domain]);
 
-  const filtered  = sub === 'ALL' ? stories : stories.filter(s => s.sub === sub);
-  const sorted    = [...filtered].sort((a, b) => (b.fs ?? 0) - (a.fs ?? 0));
-  const center    = sorted[0];
-  const leftCol   = sorted.slice(1, 4);
-  const rightCol  = sorted.slice(4, 7);
-  const belowFold = sorted.slice(7, 13);
+  // Page mandate: never render empty — empty sub-filter falls back to full set
+  const subFiltered = sub === 'ALL' ? stories : stories.filter(s => s.sub === sub);
+  const filtered = subFiltered.length > 0 ? subFiltered : stories;
+  const sorted = useMemo(() => [...filtered].sort((a, b) => (b.fs ?? 0) - (a.fs ?? 0)), [filtered]);
+
+  // Allocation: top well → rail features → digest/wire → domain packages take the rest
+  const alloc = useMemo(() => {
+    const used = new Set();
+    const take = (pred, n = 1) => {
+      const out = [];
+      for (const s of sorted) {
+        if (out.length >= n) break;
+        if (!used.has(s.id) && (!pred || pred(s))) { out.push(s); used.add(s.id); }
+      }
+      return out;
+    };
+    const lead        = take(s => s.description)[0] ?? take()[0];
+    const photo       = take(s => s.imageUrl)[0] ?? null;
+    const related     = take(null, 2);
+    const railFeature = take(s => s.imageUrl)[0] ?? null;
+    const railExtra   = take(s => s.imageUrl, 2);
+    const railPair    = take(s => s.imageUrl, 2);
+    const digest      = take(null, 5);
+    const wire        = take(null, 6);
+    const rest        = sorted.filter(s => !used.has(s.id));
+    const groups = {};
+    rest.forEach(s => { (groups[s.type] = groups[s.type] ?? []).push(s); });
+    const packages = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+    return { lead, photo, related, railFeature, railExtra, railPair, digest, wire, packages };
+  }, [sorted]);
 
   const pad = mobile ? '14px 16px' : '18px 32px 14px';
 
   return (
-    <div style={{ background:BG, color:TEXT, minHeight:'100vh', overflowY:'auto' }}>
+    <div style={{ background:BG, color:TEXT, height:'100%', overflowY:'auto', zoom:0.9 }}>
+     <div style={{ maxWidth:1280, margin:'0 auto' }}>
 
       {/* MASTHEAD */}
       <header style={{
@@ -291,7 +488,7 @@ export default function FeedsBay() {
         {!mobile && <div style={{ fontFamily:MONO, fontSize:9, color:MUTED, letterSpacing:'0.22em' }}>{formatDate()}</div>}
         <div>
           <div style={{ fontFamily:SERIF, fontSize: mobile ? 22 : 28, fontWeight:700, color:TEXT, letterSpacing:'-0.02em', lineHeight:1 }}>KRYLO</div>
-          <div style={{ fontFamily:MONO, fontSize:7, color:MUTED, letterSpacing:'0.3em', marginTop:3 }}>SIGNAL / INTELLIGENCE</div>
+          <div style={{ fontFamily:MONO, fontSize:7, color:MUTED, letterSpacing:'0.3em', marginTop:3 }}>SIGNAL / INTELLIGENCE · FP-3.0</div>
         </div>
         <div style={{ fontFamily:MONO, fontSize:9, letterSpacing:'0.2em', textAlign: mobile ? 'center' : 'right' }}>
           <span style={{ color:LIME }}>● LIVE</span>
@@ -305,68 +502,45 @@ export default function FeedsBay() {
       {/* LIVE TICKER */}
       {!mobile && <LiveTicker stories={sorted} />}
 
-      {/* MAIN BODY */}
-      {center ? (
-        <>
-          {mobile ? (
-            /* Mobile: single column stack */
-            <div style={{ padding:'20px 16px' }}>
-              <CenterStory story={center} />
-              {leftCol.map((s, i) => <div key={s.id} style={{ marginTop:20, paddingTop:20, borderTop:`1px solid ${RULE}` }}><LeftStory story={s} divider={false} /></div>)}
-              {rightCol.map((s, i) => <div key={s.id} style={{ marginTop:20, paddingTop:20, borderTop:`1px solid ${RULE}` }}><RightCard story={s} divider={false} /></div>)}
+      {alloc.lead ? (
+        mobile ? (
+          <div style={{ padding:'24px 16px 48px' }}>
+            <TopWell lead={alloc.lead} related={alloc.related} photo={alloc.photo} mobile />
+            {alloc.packages.map(([d, items]) => (
+              <PackageSection key={d} domain={d} stories={items} setDomain={setDomain} mobile />
+            ))}
+            <RailSection label="FEATURED"><RailFeature story={alloc.railFeature} extra={alloc.railExtra} /></RailSection>
+            <RailSection><RailPair pair={alloc.railPair} /></RailSection>
+            <RailSection label="THE SCROLL"><RailScroll stories={alloc.digest} /></RailSection>
+            <RailSection label="DOMAIN PRESSURE"><RailPressure stories={sorted} /></RailSection>
+            <RailSection label="SIGNAL WIRE"><RailWire stories={alloc.wire} /></RailSection>
+          </div>
+        ) : (
+          <div style={{ display:'flex', padding:'28px 32px 56px' }}>
+            {/* MAIN WELL ~66% */}
+            <div style={{ flex:2, minWidth:0, paddingRight:28 }}>
+              <TopWell lead={alloc.lead} related={alloc.related} photo={alloc.photo} mobile={false} />
+              {alloc.packages.map(([d, items]) => (
+                <PackageSection key={d} domain={d} stories={items} setDomain={setDomain} mobile={false} />
+              ))}
             </div>
-          ) : (
-            /* Desktop: 3-column */
-            <div style={{
-              display:'grid',
-              gridTemplateColumns:'260px 1fr 280px',
-              gap:0,
-              padding:'28px 32px 0',
-              borderBottom:`1px solid ${RULE2}`,
-            }}>
-              {/* LEFT */}
-              <div style={{ borderRight:`1px solid ${RULE}`, paddingRight:24 }}>
-                {leftCol.map((s, i) => <LeftStory key={s.id} story={s} divider={i < leftCol.length - 1} />)}
-              </div>
-
-              {/* CENTER */}
-              <div style={{ padding:'0 24px', borderRight:`1px solid ${RULE}` }}>
-                <CenterStory story={center} />
-              </div>
-
-              {/* RIGHT */}
-              <div style={{ paddingLeft:24 }}>
-                {rightCol.map((s, i) => <RightCard key={s.id} story={s} divider={i < rightCol.length - 1} />)}
-              </div>
+            {/* HAIRLINE SPINE + RIGHT RAIL ~34% */}
+            <div style={{ flex:1, minWidth:0, borderLeft:`1px solid ${RULE2}`, paddingLeft:28 }}>
+              <RailSection first><RailFeature story={alloc.railFeature} extra={alloc.railExtra} /></RailSection>
+              <RailSection><RailPair pair={alloc.railPair} /></RailSection>
+              <RailSection label="THE SCROLL"><RailScroll stories={alloc.digest} /></RailSection>
+              <RailSection label="DOMAIN PRESSURE"><RailPressure stories={sorted} /></RailSection>
+              <RailSection label="SIGNAL WIRE"><RailWire stories={alloc.wire} /></RailSection>
             </div>
-          )}
-
-          {/* CONTINUED SIGNALS */}
-          {belowFold.length > 0 && (
-            <>
-              <div style={{
-                padding: mobile ? '10px 16px' : '10px 32px',
-                borderBottom:`1px solid ${RULE}`, borderTop: mobile ? 'none' : `1px solid ${RULE2}`,
-                fontFamily:MONO, fontSize:8, color:MUTED, letterSpacing:'0.28em',
-              }}>
-                CONTINUED SIGNALS
-              </div>
-              <div style={{
-                display: mobile ? 'block' : 'grid',
-                gridTemplateColumns: mobile ? undefined : 'repeat(4, 1fr)',
-                padding: mobile ? '20px 16px 40px' : '24px 12px 40px',
-              }}>
-                {belowFold.map(s => <TextStory key={s.id} story={s} mobile={mobile} />)}
-              </div>
-            </>
-          )}
-        </>
+          </div>
+        )
       ) : (
         <div style={{ padding:'60px 32px', fontFamily:MONO, fontSize:10, color:MUTED, letterSpacing:'0.2em', textAlign:'center' }}>
           NO SIGNALS MATCH THIS FILTER
         </div>
       )}
 
+     </div>
     </div>
   );
 }

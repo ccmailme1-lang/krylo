@@ -32,7 +32,9 @@ export function useSignalStream() {
 
       ws.onmessage = (e) => {
         try {
-          const data = JSON.parse(e.data);
+          const msg  = JSON.parse(e.data);
+          // WO-1031/1102: unwrap REVENUE_SIGNAL envelope
+          const data = msg.type === 'REVENUE_SIGNAL' ? msg.payload : msg;
           if (
             typeof data.score       === 'number' &&
             typeof data.sourceCount === 'number' &&

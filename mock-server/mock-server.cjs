@@ -30,7 +30,7 @@ const NEWS_INGEST_MS     = 5 * 60 * 1000;
 const CONE_DOMAINS       = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
 
 // ── WO-707: SignalV1 WebSocket ────────────────────────────────────────────────
-const WS_PATH    = '/signals';
+const WS_PATH    = '/api/stream';
 const wsClients  = new Set();
 const sseClients = new Set();
 
@@ -64,6 +64,30 @@ function wsBroadcast(type, payload) {
 
 function makeSyncEnvelope(signals) {
   return wsFrame(JSON.stringify({ type: 'SIGNAL_SYNC', v: 1, ts: Date.now(), payload: { signals } }));
+}
+
+// WO-1031/WO-1102 — Revenue signal heartbeat envelope
+// Computes live LTV/CAC/score from ALL_ETRS pool; unicorn gate: U = (LTV/CAC)×√sourceCount ≥ 25
+function makeRevenueEnvelope() {
+  const pool = ALL_ETRS || [];
+  const sourceCount = Math.max(1, pool.length);
+  const avgScore = pool.length
+    ? pool.reduce((s, e) => s + (e.signal_score ?? 50), 0) / pool.length
+    : 50;
+  const ltv = 200 + avgScore * 3.5;
+  const cac = 80 + (100 - avgScore) * 0.8;
+  const ratio = ltv / cac;
+  const U = ratio * Math.sqrt(Math.min(sourceCount, 20));
+  const uIsUnicorn = U >= 25;
+  const payload = {
+    score:       parseFloat((avgScore / 100).toFixed(3)),
+    sourceCount,
+    ltv:         parseFloat(ltv.toFixed(2)),
+    cac:         parseFloat(cac.toFixed(2)),
+    uIsUnicorn,
+    uUnicornPos: [-1.2, 0, 1.8],
+  };
+  return wsFrame(JSON.stringify({ type: 'REVENUE_SIGNAL', v: 1, ts: Date.now(), payload }));
 }
 
 const MODEL      = 'gemma4:31b-cloud'; // analysis
@@ -247,14 +271,272 @@ const GDELT_TTL = 60_000;
 const gdeltCache = { articles: [], ts: 0, query: null };
 
 async function fetchGdeltRemote(query) {
+  // GDELT rejects bare sourcelang-only queries with 429 — a real query term is required.
+  // Hard API rule: max one request per 5 seconds per IP.
   const q = query.trim()
     ? encodeURIComponent(`${query} sourcelang:english`)
-    : encodeURIComponent('sourcelang:english');
-  const url = `${GDELT_API}?query=${q}&mode=artlist&maxrecords=250&format=json&timespan=24h`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
+    : encodeURIComponent('news sourcelang:english');
+  const url = `${GDELT_API}?query=${q}&mode=artlist&maxrecords=75&format=json&timespan=24h`;
+  const res = await fetch(url, {
+    signal: AbortSignal.timeout(15000),
+    headers: { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)' },
+  });
   if (!res.ok) throw new Error(`GDELT HTTP ${res.status}`);
-  const data = await res.json();
+  const raw = await res.text();
+  let data;
+  try { data = JSON.parse(raw); }
+  catch { throw new Error(`GDELT throttled: ${raw.slice(0, 60)}`); }
   return data.articles ?? [];
+}
+
+// ── WO-1713: 24-hour story rotation cache ────────────────────────────────────
+const GDELT_DOMAIN_QUERIES = {
+  technology: 'artificial intelligence software patent innovation',
+  capital:    'interest rates funding investment equity federal reserve',
+  knowledge:  'research education data expertise',
+  labor:      'employment wages workforce hiring layoffs',
+  media:      'press coverage public sentiment brand narrative',
+  ownership:  'property assets land commodities real estate',
+};
+const STORY_CACHE_TTL    = 24 * 60 * 60 * 1000;
+const STORY_CACHE_CAP    = 50;
+const GDELT_RETRY_DELAY  = 5 * 60 * 1000;
+const storyCache = {};
+let   gdeltLastAttempt = 0;
+let   gdeltLastSuccess = 0;
+
+// Pre-scored seed stories — no URLs, no dead links. Cache is warm at boot.
+// Replaced by live GDELT content as soon as it populates.
+const SEED_STORIES = {
+  technology: [
+    { title: 'AI model costs drop 90% in 18 months as compute efficiency compounds', domain_scores: { technology: 0.92, capital: 0.61, knowledge: 0.55, labor: 0.22, media: 0.30, ownership: 0.10 } },
+    { title: 'Open-source models close gap with proprietary systems on coding benchmarks', domain_scores: { technology: 0.88, capital: 0.38, knowledge: 0.72, labor: 0.18, media: 0.25, ownership: 0.05 } },
+    { title: 'Semiconductor supply chain reshoring accelerates amid geopolitical pressure', domain_scores: { technology: 0.84, capital: 0.58, knowledge: 0.30, labor: 0.45, media: 0.20, ownership: 0.60 } },
+    { title: 'Enterprise software adoption lags as IT departments resist agent-based workflows', domain_scores: { technology: 0.80, capital: 0.42, knowledge: 0.48, labor: 0.52, media: 0.18, ownership: 0.08 } },
+    { title: 'Robotics deployments in warehouses double year-over-year as labor costs rise', domain_scores: { technology: 0.78, capital: 0.55, knowledge: 0.28, labor: 0.82, media: 0.22, ownership: 0.35 } },
+  ],
+  capital: [
+    { title: 'Federal Reserve signals extended hold as inflation readings remain above target', domain_scores: { technology: 0.10, capital: 0.94, knowledge: 0.20, labor: 0.38, media: 0.45, ownership: 0.50 } },
+    { title: 'Private credit market surpasses $2 trillion as banks retreat from mid-market lending', domain_scores: { technology: 0.12, capital: 0.91, knowledge: 0.22, labor: 0.18, media: 0.30, ownership: 0.40 } },
+    { title: 'Venture funding concentrates in AI infrastructure as consumer apps dry up', domain_scores: { technology: 0.68, capital: 0.88, knowledge: 0.40, labor: 0.20, media: 0.28, ownership: 0.12 } },
+    { title: 'Corporate debt refinancing wave creates pressure on leveraged balance sheets', domain_scores: { technology: 0.08, capital: 0.90, knowledge: 0.15, labor: 0.25, media: 0.20, ownership: 0.55 } },
+    { title: 'Carry trade unwind triggers volatility spike across emerging market currencies', domain_scores: { technology: 0.05, capital: 0.93, knowledge: 0.18, labor: 0.12, media: 0.38, ownership: 0.30 } },
+  ],
+  knowledge: [
+    { title: 'University research output increasingly captured by corporate IP agreements', domain_scores: { technology: 0.45, capital: 0.42, knowledge: 0.91, labor: 0.35, media: 0.28, ownership: 0.30 } },
+    { title: 'Synthetic training data quality surpasses human-labeled sets in narrow domains', domain_scores: { technology: 0.72, capital: 0.30, knowledge: 0.88, labor: 0.22, media: 0.18, ownership: 0.08 } },
+    { title: 'Skills gap widens as automation redefines entry-level knowledge work requirements', domain_scores: { technology: 0.55, capital: 0.38, knowledge: 0.85, labor: 0.78, media: 0.30, ownership: 0.10 } },
+    { title: 'Proprietary data moats increasingly cited as primary competitive differentiator', domain_scores: { technology: 0.60, capital: 0.55, knowledge: 0.90, labor: 0.15, media: 0.22, ownership: 0.45 } },
+    { title: 'Academic publishing consolidation concentrates access to peer-reviewed research', domain_scores: { technology: 0.18, capital: 0.40, knowledge: 0.89, labor: 0.28, media: 0.35, ownership: 0.38 } },
+  ],
+  labor: [
+    { title: 'White-collar hiring freeze extends as companies absorb productivity gains from automation', domain_scores: { technology: 0.55, capital: 0.45, knowledge: 0.40, labor: 0.92, media: 0.30, ownership: 0.10 } },
+    { title: 'Gig economy reclassification battles escalate in three major jurisdictions simultaneously', domain_scores: { technology: 0.15, capital: 0.48, knowledge: 0.22, labor: 0.91, media: 0.50, ownership: 0.20 } },
+    { title: 'Remote work policy reversals trigger retention crisis at mid-size firms', domain_scores: { technology: 0.28, capital: 0.40, knowledge: 0.35, labor: 0.89, media: 0.55, ownership: 0.15 } },
+    { title: 'Manufacturing wages rise fastest in a decade as reshoring competes for skilled trades', domain_scores: { technology: 0.30, capital: 0.52, knowledge: 0.25, labor: 0.88, media: 0.22, ownership: 0.45 } },
+    { title: 'Non-compete enforcement crackdown reshapes talent mobility in tech sector', domain_scores: { technology: 0.60, capital: 0.38, knowledge: 0.50, labor: 0.86, media: 0.40, ownership: 0.12 } },
+  ],
+  media: [
+    { title: 'Algorithmic feed changes collapse traffic to legacy news publishers by 40%', domain_scores: { technology: 0.55, capital: 0.42, knowledge: 0.28, labor: 0.30, media: 0.93, ownership: 0.18 } },
+    { title: 'Creator economy consolidation accelerates as platforms squeeze monetization rates', domain_scores: { technology: 0.48, capital: 0.55, knowledge: 0.22, labor: 0.40, media: 0.91, ownership: 0.25 } },
+    { title: 'Synthetic media detection arms race intensifies ahead of election cycle', domain_scores: { technology: 0.68, capital: 0.30, knowledge: 0.45, labor: 0.18, media: 0.90, ownership: 0.08 } },
+    { title: 'Podcast advertising outpaces digital display for the first time on a per-listener basis', domain_scores: { technology: 0.30, capital: 0.60, knowledge: 0.20, labor: 0.22, media: 0.88, ownership: 0.15 } },
+    { title: 'Local news deserts expand as hedge fund ownership accelerates newsroom closures', domain_scores: { technology: 0.12, capital: 0.55, knowledge: 0.35, labor: 0.45, media: 0.92, ownership: 0.40 } },
+  ],
+  ownership: [
+    { title: 'Commercial real estate distress deepens as office vacancy hits post-war record', domain_scores: { technology: 0.12, capital: 0.65, knowledge: 0.15, labor: 0.30, media: 0.25, ownership: 0.94 } },
+    { title: 'Institutional single-family home acquisition slows as financing costs compress returns', domain_scores: { technology: 0.08, capital: 0.70, knowledge: 0.12, labor: 0.18, media: 0.28, ownership: 0.92 } },
+    { title: 'Data center land acquisition drives rural property price spikes in power-rich corridors', domain_scores: { technology: 0.72, capital: 0.58, knowledge: 0.30, labor: 0.20, media: 0.18, ownership: 0.90 } },
+    { title: 'Critical mineral rights become contested as EV supply chain demand accelerates', domain_scores: { technology: 0.45, capital: 0.55, knowledge: 0.25, labor: 0.30, media: 0.22, ownership: 0.91 } },
+    { title: 'Water rights trading emerges as asset class in drought-stressed western states', domain_scores: { technology: 0.15, capital: 0.62, knowledge: 0.28, labor: 0.20, media: 0.35, ownership: 0.93 } },
+  ],
+};
+
+// Story cache survives restarts — deploys must not wipe live stories or
+// trigger a GDELT refetch burst (which rate-bans the IP).
+const STORY_CACHE_FILE = path.join(__dirname, '..', 'runtime', 'storycache.json');
+
+// Editorial decks for seed stories — page must never serve bare headlines
+const SEED_DECKS = {
+  'AI model costs drop 90% in 18 months as compute efficiency compounds': 'Inference pricing collapse is rewriting unit economics across the application layer, with margin pressure shifting from model providers to infrastructure.',
+  'Open-source models close gap with proprietary systems on coding benchmarks': 'Benchmark parity on code generation is eroding the pricing power of closed-model vendors as enterprises re-evaluate procurement.',
+  'Semiconductor supply chain reshoring accelerates amid geopolitical pressure': 'Fab construction commitments now exceed $400B globally as governments subsidize domestic capacity against concentration risk.',
+  'Enterprise software adoption lags as IT departments resist agent-based workflows': 'Security review cycles and integration debt are slowing agent deployment despite executive mandates for AI adoption.',
+  'Robotics deployments in warehouses double year-over-year as labor costs rise': 'Per-unit automation economics crossed the labor-cost threshold in three major logistics markets this quarter.',
+  'Federal Reserve signals extended hold as inflation readings remain above target': 'Officials cited persistent services inflation as justification for maintaining current policy stance through the third quarter.',
+  'Private credit market surpasses $2 trillion as banks retreat from mid-market lending': 'Non-bank lenders now originate the majority of mid-market deals, concentrating refinancing risk outside regulated balance sheets.',
+  'Venture funding concentrates in AI infrastructure as consumer apps dry up': 'Capital concentration in compute and data-layer plays has pushed consumer seed funding to its lowest share in a decade.',
+  'Corporate debt refinancing wave creates pressure on leveraged balance sheets': 'A maturity wall concentrated in 2027 is forcing early refinancing at rates that compress coverage ratios across leveraged issuers.',
+  'Carry trade unwind triggers volatility spike across emerging market currencies': 'Rapid positioning reversals produced the sharpest one-week EM currency moves since the last tightening cycle.',
+  'University research output increasingly captured by corporate IP agreements': 'Sponsored-research contracts now route a growing share of academic output into private patent portfolios before publication.',
+  'Synthetic training data quality surpasses human-labeled sets in narrow domains': 'Domain-specific synthetic corpora are outperforming human annotation on consistency metrics, cutting labeling budgets.',
+  'Skills gap widens as automation redefines entry-level knowledge work requirements': 'Employers report the steepest mismatch on record between graduate skill sets and restructured entry-level roles.',
+  'Proprietary data moats increasingly cited as primary competitive differentiator': 'Investor diligence has shifted from model capability to data exclusivity as the durable basis of competitive advantage.',
+  'Academic publishing consolidation concentrates access to peer-reviewed research': 'Five publishers now control the majority of high-impact journals, raising institutional access costs.',
+  'White-collar hiring freeze extends as companies absorb productivity gains from automation': 'Headcount plans remain frozen across professional services as firms bank automation-driven productivity instead of expanding.',
+  'Gig economy reclassification battles escalate in three major jurisdictions simultaneously': 'Parallel rulings could force platform operators to restructure labor models across their largest markets in the same fiscal year.',
+  'Remote work policy reversals trigger retention crisis at mid-size firms': 'Return-to-office mandates are driving senior departures concentrated in exactly the cohorts firms can least afford to lose.',
+  'Manufacturing wages rise fastest in a decade as reshoring competes for skilled trades': 'Competition for certified trades has pushed wage growth past every other sector for four consecutive quarters.',
+  'Non-compete enforcement crackdown reshapes talent mobility in tech sector': 'Regulatory hostility to non-competes is accelerating senior engineering mobility between direct competitors.',
+  'Algorithmic feed changes collapse traffic to legacy news publishers by 40%': 'Referral traffic declines are forcing publishers toward direct-subscription models on compressed timelines.',
+  'Creator economy consolidation accelerates as platforms squeeze monetization rates': 'Falling revenue shares are pushing mid-tier creators toward owned channels and direct patronage.',
+  'Synthetic media detection arms race intensifies ahead of election cycle': 'Detection vendors and generation tools are iterating against each other weekly, with verification lagging distribution.',
+  'Podcast advertising outpaces digital display for the first time on a per-listener basis': 'Host-read inventory is commanding premium CPMs as display rates continue their structural decline.',
+  'Local news deserts expand as hedge fund ownership accelerates newsroom closures': 'Counties without daily local coverage grew again this year, concentrating civic information risk.',
+  'Commercial real estate distress deepens as office vacancy hits post-war record': 'Refinancing at current valuations implies equity wipeouts across a widening share of central business district towers.',
+  'Institutional single-family home acquisition slows as financing costs compress returns': 'Cap-rate compression has pushed institutional buyers to the sidelines in all but the highest-yield metros.',
+  'Data center land acquisition drives rural property price spikes in power-rich corridors': 'Parcels near transmission capacity are trading at multiples that have detached from agricultural comparables.',
+  'Critical mineral rights become contested as EV supply chain demand accelerates': 'Sovereign and corporate buyers are competing for the same concentrated set of extraction rights.',
+  'Water rights trading emerges as asset class in drought-stressed western states': 'Institutional capital is entering water markets as allocation scarcity converts rights into yield-bearing assets.',
+};
+
+function persistStoryCache() {
+  try {
+    fs.mkdirSync(path.dirname(STORY_CACHE_FILE), { recursive: true });
+    fs.writeFileSync(STORY_CACHE_FILE, JSON.stringify({ gdeltLastSuccess, storyCache }));
+  } catch (err) {
+    console.warn(`[WO-1713] cache persist failed: ${err.message}`);
+  }
+}
+
+function loadPersistedStoryCache() {
+  try {
+    const raw = JSON.parse(fs.readFileSync(STORY_CACHE_FILE, 'utf8'));
+    if (raw?.storyCache && raw.gdeltLastSuccess) {
+      Object.assign(storyCache, raw.storyCache);
+      gdeltLastSuccess = raw.gdeltLastSuccess;
+      const total = CONE_DOMAINS.reduce((s, d) => s + (storyCache[d]?.stories.length ?? 0), 0);
+      console.log(`[WO-1713] story cache restored from disk — ${total} stories, live as of ${new Date(gdeltLastSuccess).toISOString()}`);
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+function seedStoryCache() {
+  loadPersistedStoryCache();
+  CONE_DOMAINS.forEach(d => {
+    if (!storyCache[d] || storyCache[d].stories.length === 0) {
+      storyCache[d] = { stories: SEED_STORIES[d] ?? [], pointer: 0, fetchedAt: 0 };
+    }
+  });
+  console.log('[WO-1713] Seed story cache loaded — guests receive signals immediately on connect');
+}
+
+let gdeltInFlight = false;
+
+async function fetchGdeltDomains() {
+  if (gdeltInFlight) return 0; // boot loop, 300s interval, and /api/news can all trigger this
+  gdeltInFlight = true;
+  try {
+    return await fetchGdeltDomainsInner();
+  } finally {
+    gdeltInFlight = false;
+  }
+}
+
+async function fetchGdeltDomainsInner() {
+  gdeltLastAttempt = Date.now();
+  const buckets = {};
+  CONE_DOMAINS.forEach(d => { buckets[d] = []; });
+  // One query per domain (bare queries are rejected), spaced 5.5s apart per
+  // GDELT's one-request-per-5-seconds rule. Domain is known from the query —
+  // no per-article scoring needed on this path.
+  let anySuccess = false;
+  for (let i = 0; i < CONE_DOMAINS.length; i++) {
+    const d = CONE_DOMAINS[i];
+    if (i > 0) await new Promise(r => setTimeout(r, 6000));
+    try {
+      const articles = await fetchGdeltRemote(GDELT_DOMAIN_QUERIES[d] ?? d);
+      // Image-bearing articles first — front page favors stories with art
+      const valid = articles.filter(a => a.title && a.url);
+      valid.sort((a, b) => (b.socialimage ? 1 : 0) - (a.socialimage ? 1 : 0));
+      buckets[d] = valid.slice(0, STORY_CACHE_CAP);
+      anySuccess = true;
+    } catch (err) {
+      console.warn(`[WO-1713] GDELT fetch failed (${d}): ${err.message}`);
+      // 429 = IP penalty active. Every further request extends it — stop now,
+      // keep whatever landed, let the retry interval try again after the drain.
+      if (err.message.includes('429') || err.message.includes('throttled')) break;
+    }
+  }
+  if (!anySuccess) {
+    console.warn(`[WO-1713] GDELT fully unreachable — retrying in ${GDELT_RETRY_DELAY / 60000}m`);
+    CONE_DOMAINS.forEach(d => { if (!storyCache[d]) storyCache[d] = { stories: [], pointer: 0, fetchedAt: 0 }; });
+    return 0;
+  }
+  gdeltLastSuccess = Date.now();
+  const now = Date.now();
+  let total = 0;
+  CONE_DOMAINS.forEach(d => {
+    // Keep existing stories (persisted live > seeds) for domains GDELT didn't populate
+    const existing = storyCache[d]?.stories?.length ? storyCache[d].stories : (SEED_STORIES[d] ?? []);
+    const stories  = buckets[d].length > 0 ? buckets[d] : existing;
+    storyCache[d] = { stories, pointer: storyCache[d]?.pointer ?? 0, fetchedAt: now };
+    total += stories.length;
+    console.log(`[WO-1713] GDELT refresh — ${d}: ${buckets[d].length} live`);
+  });
+  persistStoryCache();
+  return total;
+}
+
+async function rotateFromCache() {
+  const now          = Date.now();
+  const cacheEmpty   = CONE_DOMAINS.some(d => !storyCache[d] || storyCache[d].stories.length === 0);
+  // gdeltLastSuccess === 0 means GDELT has never populated — seeds alone don't count as fresh
+  const cacheStale   = gdeltLastSuccess === 0 || (now - gdeltLastSuccess) > STORY_CACHE_TTL;
+  const cooldownOk   = (now - gdeltLastAttempt) > GDELT_RETRY_DELAY;
+  if ((cacheEmpty || cacheStale) && cooldownOk) await fetchGdeltDomains();
+
+  let ingested = 0;
+  for (const domain of CONE_DOMAINS) {
+    const cache = storyCache[domain];
+    if (!cache?.stories.length) continue;
+    const article = cache.stories[cache.pointer % cache.stories.length];
+    cache.pointer = (cache.pointer + 1) % cache.stories.length;
+
+    const title  = article.title ?? article.seendomain ?? 'Untitled';
+    // No Ollama dependency on this path: seeds carry pre-scored domain_scores,
+    // live GDELT stories were fetched by domain-specific query — the domain is known.
+    // (Ollama fallback returned uniform 0.1 < 0.15 threshold on the VPS, which
+    //  silently discarded every story and starved the cones.)
+    let scores = article.domain_scores ?? article._scores;
+    if (!scores) {
+      scores = {};
+      CONE_DOMAINS.forEach(cd => { scores[cd] = cd === domain ? 0.65 : 0.10; });
+    }
+    const topDomain = CONE_DOMAINS.reduce((a, b) => scores[a] >= scores[b] ? a : b);
+    const topScore  = scores[topDomain];
+    if (topScore < 0.15) continue;
+
+    broadcastDomain(scores, title);
+    const signal = {
+      id:               `GDELT-${Date.now()}-${ingested}`,
+      source_type:      'live',
+      title:            topDomain,
+      truth_statement:  title,
+      truth_supporting: article.socialimage ?? title,
+      definition:       title,
+      origin:           article.domain ?? 'GDELT',
+      usage:            'Live news signal from GDELT rotation cache',
+      comments:         [],
+      tags:             [topDomain, 'live', 'gdelt'],
+      signal_score:     topScore,
+      signals: [], patterns: [], ground: {},
+      fidelity_components: { m_checksum: topScore, t_telemetry: topScore, d_docs: 0.5, v_voice: 0.3, e_viral: 0.3 },
+      domain_scores:    scores,
+      cone_domain:      topDomain,
+      publishedAt:      article.seendate ?? new Date().toISOString(),
+    };
+    ALL_ETRS.push(signal);
+    const frame  = signalsToFrame([signal]);
+    const b64    = frame.toString('base64');
+    const result = flowCtrl.enqueue(b64);
+    appendFrameLog(b64, 1, 1);
+    console.log(`[WO-1713] rotated: "${title.slice(0, 60)}" → ${topDomain} (${topScore.toFixed(2)}) flow=${result.action}`);
+    ingested++;
+  }
+  return ingested;
 }
 
 // ── Signal Cast Prompt ────────────────────────────────────────────────────────
@@ -944,6 +1226,80 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── GET /api/signals/stats — WO-1713: GDELT cache + rotation health ─────────
+  if (req.method === 'GET' && req.url === '/api/signals/stats') {
+    const domainStats = {};
+    let totalCacheSize = 0;
+    CONE_DOMAINS.forEach(d => {
+      const c = storyCache[d] ?? { stories: [], pointer: 0, fetchedAt: 0 };
+      domainStats[d] = { count: c.stories.length, pointer: c.pointer, fetchedAt: c.fetchedAt };
+      totalCacheSize += c.stories.length;
+    });
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      cacheSize:       totalCacheSize,
+      pointer:         totalCacheSize > 0 ? 'active' : null,
+      gdeltLastAttempt,
+      gdeltLastSuccess,
+      cooldownExpiresIn: Math.max(0, GDELT_RETRY_DELAY - (Date.now() - gdeltLastAttempt)),
+      domains:         domainStats,
+      totalSignals:    ALL_ETRS.length,
+    }));
+    return;
+  }
+
+  // ── GET /api/news — FeedsBay article feed from GDELT story cache ────────────
+  // Maps FeedsBay domains → cone domains. socialimage → imageUrl (real images
+  // when GDELT is live; seed stories carry none). Shape: { articles: [...] }
+  if (req.method === 'GET' && req.url.startsWith('/api/news')) {
+    (async () => {
+      const NEWS_DOMAIN_MAP = {
+        FINANCIAL:  ['capital'],
+        MARKET:     ['ownership', 'media'],
+        CAREER:     ['labor'],
+        TECHNOLOGY: ['technology', 'knowledge'],
+      };
+      const urlObj = new URL(req.url, 'http://localhost');
+      const domainParam = (urlObj.searchParams.get('domain') ?? 'ALL').toUpperCase();
+
+      // Refresh cache if empty/stale, same policy as rotateFromCache
+      const now        = Date.now();
+      const cacheEmpty = CONE_DOMAINS.some(d => !storyCache[d] || storyCache[d].stories.length === 0);
+      const cacheStale = gdeltLastSuccess === 0 || (now - gdeltLastSuccess) > STORY_CACHE_TTL;
+      const cooldownOk = (now - gdeltLastAttempt) > GDELT_RETRY_DELAY;
+      // Fire-and-forget: per-domain fetch takes ~30s with rate-limit spacing.
+      // Serve seeds now; live articles (with images) appear on the next request.
+      if ((cacheEmpty || cacheStale) && cooldownOk) {
+        fetchGdeltDomains().catch(() => {});
+      }
+
+      const coneDomains = NEWS_DOMAIN_MAP[domainParam] ?? CONE_DOMAINS;
+      const articles = [];
+      const nowTs = Date.now();
+      for (const d of coneDomains) {
+        const cache = storyCache[d];
+        if (!cache?.stories.length) continue;
+        cache.stories.forEach((a, idx) => {
+          const isSeed = !a.url; // seeds carry no URL; live GDELT always does
+          articles.push({
+            domain:      d,
+            title:       a.title ?? '',
+            description: a.description ?? (isSeed ? SEED_DECKS[a.title] ?? null : null),
+            source:      a.domain ?? (isSeed ? 'KRYLO WIRE' : 'GDELT'),
+            // Seeds get staggered recent timestamps so the page reads live
+            publishedAt: a.seendate ?? new Date(nowTs - (idx + 1) * 7 * 60000).toISOString(),
+            // Dummy art for seeds until GDELT socialimage takes over
+            imageUrl:    a.socialimage || (isSeed ? `https://picsum.photos/seed/krylo-${d}-${idx}/800/450` : null),
+            url:         a.url ?? null,
+          });
+        });
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ articles }));
+    })();
+    return;
+  }
+
   // ── POST /api/signals/frames — WO-1090: ABI frame transport ─────────────
   if (req.method === 'POST' && req.url === '/api/signals/frames') {
     let body = '';
@@ -1168,6 +1524,74 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── GET /api/fred — CORS proxy for FRED API ──────────────────────────────────
+  if (req.method === 'GET' && req.url?.startsWith('/api/fred')) {
+    (async () => {
+      try {
+        const urlObj   = new URL(req.url, 'http://localhost:3001');
+        const seriesId = urlObj.searchParams.get('series_id') ?? 'UNRATE';
+        const apiKey   = urlObj.searchParams.get('api_key') ?? '';
+        const target   = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&limit=1&sort_order=desc`;
+        const r = await fetch(target, { signal: AbortSignal.timeout(10000) });
+        const data = await r.json();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    })();
+    return;
+  }
+
+  // ── GET /api/finnhub — CORS proxy for Finnhub API ────────────────────────────
+  if (req.method === 'GET' && req.url?.startsWith('/api/finnhub')) {
+    (async () => {
+      try {
+        const urlObj = new URL(req.url, 'http://localhost:3001');
+        const symbol = urlObj.searchParams.get('symbol') ?? 'SPY';
+        const token  = urlObj.searchParams.get('token') ?? '';
+        const target = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${token}`;
+        const r = await fetch(target, { signal: AbortSignal.timeout(10000) });
+        const data = await r.json();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err) {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: err.message }));
+      }
+    })();
+    return;
+  }
+
+  // ── GET /api/signals/headline — WO-1712: top headline per domain ────────────
+  if (req.method === 'GET' && req.url?.startsWith('/api/signals/headline')) {
+    const urlObj = new URL(req.url, 'http://localhost:3001');
+    const domain = (urlObj.searchParams.get('domain') ?? '').toUpperCase();
+    const pool   = [...ALL_ETRS, ...ingestedSignals];
+    // Filter by domain tag or cone_domain, fall back to highest scored
+    const domainKeywords = {
+      FINANCIAL: ['rate','equity','debt','revenue','finance','credit','bank','fund','capital','inflation'],
+      MARKET:    ['market','stock','equity','commodity','trade','index','etf','crypto','valuation'],
+      CAREER:    ['labor','job','hiring','salary','career','talent','workforce','layoff','compensation'],
+      HEALTH:    ['health','pharma','drug','clinical','patient','hospital','biosync','medical','outbreak'],
+    };
+    const keywords = domainKeywords[domain] ?? [];
+    const scored = pool.map(e => {
+      const text = ((e.truth_statement ?? '') + ' ' + (e.tags ?? []).join(' ') + ' ' + (e.cone_domain ?? '')).toLowerCase();
+      const hits  = keywords.filter(k => text.includes(k)).length;
+      return { ...e, _domainHits: hits };
+    });
+    const filtered = scored.filter(e => e._domainHits > 0 || e.cone_domain?.toUpperCase() === domain);
+    const pool2    = filtered.length ? filtered : scored;
+    pool2.sort((a, b) => (b.signal_score ?? 0) - (a.signal_score ?? 0) || (b._domainHits ?? 0) - (a._domainHits ?? 0));
+    const top = pool2[0];
+    const headline = top?.truth_statement ?? top?.title ?? 'No signal available';
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ headline, score: top?.signal_score ?? 0, domain }));
+    return;
+  }
+
   // ── GET /api/stats/stream — Live stat card SSE ───────────────────────────
   if (req.method === 'GET' && req.url === '/api/stats/stream') {
     res.writeHead(200, {
@@ -1181,6 +1605,95 @@ const server = http.createServer((req, res) => {
     push();
     const iv = setInterval(push, 5000);
     req.on('close', () => clearInterval(iv));
+    return;
+  }
+
+  // ── GET /api/signals/entity — WO-1340: live entity pressure + volatility ──────
+  if (req.method === 'GET' && req.url?.startsWith('/api/signals/entity')) {
+    (async () => {
+      try {
+        const urlObj = new URL(req.url, 'http://localhost:3001');
+        const q = urlObj.searchParams.get('q') || '';
+        if (!q) { res.writeHead(400); res.end('q required'); return; }
+
+        const prompt = `You are a signal intelligence engine. For the entity or topic "${q}", return ONLY valid JSON with two fields:
+- pressure: integer 0-100 (current market/news pressure on this entity — 0=dormant, 100=critical)
+- volatility: float 0.0-1.0 (signal stability — 0=stable, 1=highly volatile)
+
+Respond with ONLY: {"pressure": <number>, "volatility": <number>}`;
+
+        const ollamaRes = await fetch('http://localhost:11434/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: CONV_MODEL, messages: [{ role: 'user', content: prompt }], stream: false }),
+          signal: AbortSignal.timeout(15000),
+        });
+
+        if (!ollamaRes.ok) throw new Error(`Ollama ${ollamaRes.status}`);
+        const data = await ollamaRes.json();
+        const text = data.choices?.[0]?.message?.content ?? '';
+        const match = text.match(/\{[\s\S]*?\}/);
+        const parsed = match ? JSON.parse(match[0]) : null;
+
+        const pressure   = Math.max(0, Math.min(100, Math.round(parsed?.pressure ?? 50)));
+        const volatility = Math.max(0, Math.min(1, parseFloat((parsed?.volatility ?? 0.5).toFixed(2))));
+
+        console.log(`[WO-1340] Entity signal for "${q}": pressure=${pressure} volatility=${volatility}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ pressure, volatility }));
+      } catch (err) {
+        console.warn(`[WO-1340] Entity signal fallback for "${req.url}": ${err.message}`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ pressure: 50, volatility: 0.45 }));
+      }
+    })();
+    return;
+  }
+
+  // ── POST /api/resonance — WO-1339: live causal chain via Ollama ───────────────
+  if (req.method === 'POST' && req.url === '/api/resonance') {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', async () => {
+      try {
+        const { title } = JSON.parse(body);
+        if (!title) { res.writeHead(400); res.end('title required'); return; }
+
+        const prompt = `You are a signal intelligence engine that traces causal chains. For the topic "${title}", return ONLY valid JSON:
+{
+  "path": ["${title}", "<second-order effect>", "<third-order effect>", "<fourth-order effect>", "<fifth-order effect>"],
+  "confidence": <integer 60-92>
+}
+
+Rules: path must have exactly 5 nodes. Each node is a distinct downstream effect. Be specific and domain-accurate. confidence reflects signal strength.
+Respond with ONLY the JSON object.`;
+
+        const ollamaRes = await fetch('http://localhost:11434/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: CONV_MODEL, messages: [{ role: 'user', content: prompt }], stream: false }),
+          signal: AbortSignal.timeout(20000),
+        });
+
+        if (!ollamaRes.ok) throw new Error(`Ollama ${ollamaRes.status}`);
+        const data = await ollamaRes.json();
+        const text = data.choices?.[0]?.message?.content ?? '';
+        const match = text.match(/\{[\s\S]*?\}/);
+        const parsed = match ? JSON.parse(match[0]) : null;
+
+        const path       = Array.isArray(parsed?.path) && parsed.path.length >= 2 ? parsed.path.slice(0, 5) : [title, 'Market Activity', 'Consumer Response', 'Regulatory Signal', 'Policy Shift'];
+        const confidence = Math.max(55, Math.min(95, parseInt(parsed?.confidence ?? 65)));
+
+        console.log(`[WO-1339] Resonance path for "${title}": ${path.length} hops, ${confidence}% conf`);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ path, confidence }));
+      } catch (err) {
+        console.warn(`[WO-1339] Resonance fallback: ${err.message}`);
+        const { title: t = 'Signal' } = (() => { try { return JSON.parse(body); } catch { return {}; } })();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ path: [t, 'Market Activity', 'Consumer Response', 'Regulatory Signal', 'Policy Shift'], confidence: 61 }));
+      }
+    });
     return;
   }
 
@@ -1241,11 +1754,15 @@ Return JSON only (float 0.0–1.0 per domain):
 
 // ── WO-1092: NewsAPI → Ollama → FlowController pipeline ──────────────────────
 async function fetchAndIngestNews() {
-  if (!NEWS_API_KEY) { console.warn('[WO-1092] VITE_NEWS_API_KEY not set — skipping news ingest'); return 0; }
+  if (!NEWS_API_KEY) return rotateFromCache();
   try {
     const res = await fetch(
       `https://newsapi.org/v2/top-headlines?country=us&pageSize=20&apiKey=${NEWS_API_KEY}`
     );
+    if (res.status === 429) {
+      console.warn('[WO-1092] NewsAPI 429 — falling back to GDELT rotation cache');
+      return rotateFromCache();
+    }
     if (!res.ok) throw new Error(`NewsAPI ${res.status}`);
     const { articles } = await res.json();
     const fresh = (articles ?? []).filter(a => a.title && a.title !== '[Removed]');
@@ -1284,33 +1801,48 @@ async function fetchAndIngestNews() {
     }
     return ingested;
   } catch (err) {
-    console.warn(`[WO-1092] news ingest failed: ${err.message}`);
-    return 0;
+    console.warn(`[WO-1092] news ingest failed: ${err.message} — falling back to GDELT`);
+    return rotateFromCache();
   }
 }
 
-// WO-707: WebSocket upgrade on /signals
+// WO-707/WO-1102: WebSocket upgrade on /api/stream
 server.on('upgrade', (req, socket) => {
   if (req.url !== WS_PATH) { socket.destroy(); return; }
   wsHandshake(req, socket);
   wsClients.add(socket);
-  // Send SIGNAL_SYNC immediately on connect
-  try { socket.write(makeSyncEnvelope(signals)); } catch { wsClients.delete(socket); }
+  // Send SIGNAL_SYNC + REVENUE_SIGNAL immediately on connect
+  try {
+    socket.write(makeSyncEnvelope(ALL_ETRS));
+    socket.write(makeRevenueEnvelope());
+  } catch { wsClients.delete(socket); }
   socket.on('close', () => wsClients.delete(socket));
   socket.on('error', () => wsClients.delete(socket));
   console.log(`[WO-707] WS client connected — total: ${wsClients.size}`);
 });
 
+// WO-1031: Broadcast revenue signal every 10s
+setInterval(() => {
+  if (wsClients.size === 0) return;
+  const frame = makeRevenueEnvelope();
+  for (const sock of wsClients) {
+    try { sock.write(frame); } catch { wsClients.delete(sock); }
+  }
+}, 10000);
+
+// WO-1713: warm the cache before any guest can connect
+seedStoryCache();
+
 server.listen(3001, () => {
   console.log(`[WO-503] Mock Truth Engine — http://localhost:3001`);
   console.log(`[WO-503] Signal Cast active — model: ${MODEL}`);
   console.log(`[WO-707] SignalV1 WebSocket — ws://localhost:3001${WS_PATH}`);
-  // WO-1092: start news ingestion loop
+  // WO-1092/1713: start news ingestion loop — NewsAPI if key present, GDELT rotation otherwise
+  fetchAndIngestNews();
+  setInterval(fetchAndIngestNews, NEWS_INGEST_MS);
   if (NEWS_API_KEY) {
-    fetchAndIngestNews();
-    setInterval(fetchAndIngestNews, NEWS_INGEST_MS);
     console.log(`[WO-1092] News ingestion active — interval: ${NEWS_INGEST_MS / 1000}s`);
   } else {
-    console.warn('[WO-1092] News ingestion disabled — VITE_NEWS_API_KEY not set');
+    console.log(`[WO-1713] GDELT rotation active — interval: ${NEWS_INGEST_MS / 1000}s (no NewsAPI key)`);
   }
 });

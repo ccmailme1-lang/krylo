@@ -81,7 +81,7 @@ function SystemClock() {
 
 // ── Domain Isolation Console ──────────────────────────────────────────────────
 
-function SignalCluster({ entityTitle, pressure, volatility, loading }) {
+function SignalCluster({ entityTitle, pressure, volatility, loading, headline }) {
   const [ring, setRing] = useState(0);
   const [opacity, setOpacity] = useState(0.35);
 
@@ -133,22 +133,45 @@ function SignalCluster({ entityTitle, pressure, volatility, loading }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         transition: 'border-color 400ms ease',
       }}>
-        <span style={{
-          fontSize: 7, color: (!loading && entityTitle) ? LIME : `rgba(255,255,255,${opacity.toFixed(2)})`,
-          fontFamily: MONO, letterSpacing: '0.12em', textTransform: 'uppercase',
-          transition: 'color 400ms ease',
-        }}>
-          {(!loading && entityTitle) ? entityTitle : '···'}
-        </span>
+        {(!loading && (entityTitle || headline)) ? (
+          <span style={{
+            fontSize: 7, color: LIME, fontFamily: SERIF,
+            lineHeight: 1.3, textAlign: 'center', padding: '0 8px',
+            transition: 'color 400ms ease',
+          }}>
+            {entityTitle
+              ? entityTitle
+              : headline.split(' ').slice(0, 6).join(' ')}
+          </span>
+        ) : (
+          <span style={{
+            fontSize: 7, color: `rgba(255,255,255,${opacity.toFixed(2)})`,
+            fontFamily: MONO, letterSpacing: '0.12em',
+            transition: 'color 400ms ease',
+          }}>···</span>
+        )}
       </div>
     </div>
   );
 }
 
+function useDomainHeadline(domain, active) {
+  const [headline, setHeadline] = useState(null);
+  useEffect(() => {
+    if (!active) return;
+    fetch(`/api/signals/headline?domain=${domain}`)
+      .then(r => r.json())
+      .then(d => setHeadline(d.headline ?? null))
+      .catch(() => {});
+  }, [domain, active]);
+  return headline;
+}
+
 function DomainCard({ bayId, domainLabel }) {
-  const bay        = useBayStore(s => s.bays[bayId]);
+  const bay         = useBayStore(s => s.bays[bayId]);
   const entityTitle = bay?.assignment?.title ?? null;
   const { pressure, volatility, loading } = useEntitySignal(entityTitle);
+  const headline    = useDomainHeadline(domainLabel, true);
 
   return (
     <div style={{
@@ -166,7 +189,7 @@ function DomainCard({ bayId, domainLabel }) {
             DOMAIN: {domainLabel}
           </div>
         </div>
-        <SignalCluster entityTitle={entityTitle} pressure={pressure} volatility={volatility} loading={!entityTitle || loading} />
+        <SignalCluster entityTitle={entityTitle} pressure={pressure} volatility={volatility} loading={!headline && !entityTitle} headline={headline} />
       </div>
       {entityTitle && !loading && (
         <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
@@ -178,7 +201,16 @@ function DomainCard({ bayId, domainLabel }) {
           </div>
         </div>
       )}
-      {!entityTitle && (
+      {headline && (
+        <div style={{
+          fontSize: 9, color: 'rgba(255,255,255,0.70)', fontFamily: SERIF,
+          lineHeight: 1.4, marginTop: 2,
+          borderTop: `1px solid rgba(255,255,255,0.06)`, paddingTop: 6,
+        }}>
+          {headline.length > 120 ? headline.slice(0, 117) + '…' : headline}
+        </div>
+      )}
+      {!entityTitle && !headline && (
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', fontFamily: MONO, marginTop: 4, letterSpacing: '0.18em' }}>
           NO SIGNAL ASSIGNED
         </div>

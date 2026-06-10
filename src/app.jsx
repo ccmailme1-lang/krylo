@@ -695,9 +695,11 @@ export default function App() {
       ? mergedRecords.map(r => ({
           text:     r.truth_statement ?? r.title ?? r.id,
           source:   r.source_type ?? 'spine',
-          strength: Math.round((r.fs ?? 0) * 5),
+          domain:   r.cone_domain ?? null,
+          // Live rotation records carry signal_score (0–1), not fs
+          strength: Math.round((r.fs ?? r.signal_score ?? 0) * 5),
           id:       r.id,
-          fs:       r.fs ?? 0,
+          fs:       r.fs ?? r.signal_score ?? 0,
           primary:  true,
           fidelity: {
             m_checksum:  r.fidelity_components?.m_checksum  ?? 0,
@@ -736,7 +738,8 @@ export default function App() {
 
   const leaderboardState = useMemo(() => {
     const normalized = replayedSignals.map(sig => ({
-      domain:    sig.source   ?? 'signal',
+      // cone_domain (live records) routes to canonical feeders; stubs keep source
+      domain:    sig.domain ?? sig.source ?? 'signal',
       leverage:  (sig.fs ?? 0) * 100,
       volatility: sig.fidelity?.e_viral ?? 0,
     }));
