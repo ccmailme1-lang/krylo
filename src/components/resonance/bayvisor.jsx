@@ -157,19 +157,32 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
             <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{assignment ? 'ASSIGNED' : 'EMPTY BAY'}</span>
           </div>
         )}
-        {module === 'METRICS' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
-            {[['VAL', cone?.value ?? '—'], ['TRD', cone?.trend?.length ?? 0], ['ALT', cone?.alerts?.length ?? 0],
-              ['MIN', cone?.trend?.length ? Math.min(...cone.trend).toFixed(2) : '—'],
-              ['MAX', cone?.trend?.length ? Math.max(...cone.trend).toFixed(2) : '—'],
-              ['PCT', `${pct}%`]].map(([lbl, val]) => (
-              <div key={lbl} style={{ display: 'flex', gap: 3, alignItems: 'baseline' }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>{lbl}</span>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: BRT }}>{val}</span>
+        {module === 'METRICS' && (() => {
+          const t = cone?.trend ?? [];
+          const velocity = t.length >= 2 ? (t[t.length - 1] - t[t.length - 2]).toFixed(3) : null;
+          const trendUp  = t.length >= 2 ? t[t.length - 1] > t[t.length - 2] : null;
+          return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 14px', gap: 10 }}>
+              {/* Signal Score */}
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.20em' }}>SIGNAL SCORE</span>
+                <span style={{ fontFamily: MONO, fontSize: 18, color: LIME, letterSpacing: '0.04em' }}>{pct}<span style={{ fontSize: 9 }}>%</span></span>
               </div>
-            ))}
-          </div>
-        )}
+              {/* Velocity */}
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.20em' }}>VELOCITY</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, letterSpacing: '0.06em' }}>{velocity ?? '—'}</span>
+              </div>
+              {/* Trend */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.20em' }}>TREND</span>
+                <span style={{ fontSize: 16, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B' }}>
+                  {trendUp === null ? '—' : trendUp ? '↑' : '↓'}
+                </span>
+              </div>
+            </div>
+          );
+        })()}
         {module === 'SPARKLINE' && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
             <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>MIN {trend.length ? Math.min(...trend).toFixed(2) : '—'}</span>
