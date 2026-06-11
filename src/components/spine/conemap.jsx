@@ -1714,7 +1714,11 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 
   return (
     <>
-      <group ref={gridGroupRef} />
+      <group ref={gridGroupRef}>
+        <PulseFloor ringCount={6} maxRadius={R + 3} />
+        <ThresholdBands />
+        <FieldConvergence coneState={coneState} />
+      </group>
 
       {/* WO-1313: US outline wireframe — fades in with topoLerp */}
       <lineSegments>
