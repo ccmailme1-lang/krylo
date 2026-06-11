@@ -118,8 +118,8 @@ function AlertsMode({ isPremium }) {
 
 /* ── MODULE BODY — each module owns the full bay body (label row + waveform + content) ── */
 function ModuleBody({ module, d, cone, assignment, color, pct }) {
-  const label = { HEADLINE: d.type, METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', VIDEO: 'VIDEO', AUDIO: 'AUDIO' }[module] ?? module;
-  const sublabel = { HEADLINE: assignment?.title ?? '— NO SIGNAL —', METRICS: null, SPARKLINE: null, FIDELITY: null, VIDEO: null, AUDIO: null }[module];
+  const label = { HEADLINE: d.type, METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', 'A/V': 'A/V' }[module] ?? module;
+  const sublabel = { HEADLINE: assignment?.title ?? '— NO SIGNAL —', METRICS: null, SPARKLINE: null, FIDELITY: null, 'A/V': null }[module];
 
   /* wave for headline + fidelity; sparkline data for sparkline; none for metrics/video/audio */
   const showWave     = module === 'HEADLINE' || module === 'FIDELITY';
@@ -224,9 +224,9 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
             </div>
           );
         })()}
-        {(module === 'VIDEO' || module === 'AUDIO') && (
+        {module === 'A/V' && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{module} · PENDING</span>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>A/V · PENDING</span>
           </div>
         )}
       </div>
