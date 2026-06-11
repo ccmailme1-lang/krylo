@@ -188,7 +188,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
   const sublabel = { HEADLINE: assignment?.title ?? '— NO SIGNAL —', METRICS: null, SPARKLINE: null, FIDELITY: null, 'A/V': null }[module];
 
   /* wave for headline + fidelity; sparkline data for sparkline; none for metrics/video/audio */
-  const showWave     = module === 'HEADLINE' || module === 'FIDELITY';
+  const showWave     = module === 'FIDELITY';
   const showSparkline = module === 'SPARKLINE';
   const trend        = cone?.trend ?? [];
 
@@ -239,11 +239,11 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
       {/* content area */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
         {module === 'HEADLINE' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 12px' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 4 }}>SIGNAL SCORE</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-              <span style={{ fontFamily: MONO, fontSize: 64, lineHeight: 1, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
-              <span style={{ fontFamily: MONO, fontSize: 18, color: color, opacity: 0.6 }}>%</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '8px 12px' }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 6 }}>SIGNAL SCORE</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+              <span style={{ fontFamily: MONO, fontSize: 56, lineHeight: 0.9, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
+              <span style={{ fontFamily: MONO, fontSize: 16, color: color, opacity: 0.6 }}>%</span>
             </div>
           </div>
         )}
@@ -392,7 +392,6 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         padding: '0 10px',
         borderTop: '0.5px solid rgba(255,255,255,0.07)',
       }}>
-        <span style={{ fontFamily: MONO, fontSize: 12.5, color: LIME, letterSpacing: '0.04em' }}>{pct}%</span>
         {/* Module arrow selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <button onClick={e => cycleModule(-1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 10, padding: '0 4px', lineHeight: 1 }}>{'<'}</button>
