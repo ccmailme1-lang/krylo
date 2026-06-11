@@ -4,7 +4,7 @@
 
 import React, { useState } from "react";
 import { BAY_MAP } from "../../engine/cones.js";
-import { useBayStore } from "../../store/usebaystore.js";
+import { useBayStore, MODULE_TYPES } from "../../store/usebaystore.js";
 
 const MODES   = ['metrics', 'graphics', 'alerts', 'color'];
 const PALETTE = ['#66FF00', '#007FFF', '#8A2BE2'];
@@ -116,6 +116,83 @@ function AlertsMode({ isPremium }) {
   );
 }
 
+/* ── MODULE CONTENT RENDERERS (WO-1713) ──────────────────────────────────── */
+function ModuleHeadline({ assignment, d, color }) {
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 3 }}>
+      <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{d.type}</div>
+      <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+        {assignment?.title ?? '— NO SIGNAL —'}
+      </div>
+    </div>
+  );
+}
+
+function ModuleMetrics({ cone, pct }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
+      {[
+        ['VAL', cone?.value ?? '—'],
+        ['TRD', cone?.trend?.length ?? 0],
+        ['ALT', cone?.alerts?.length ?? 0],
+        ['MIN', cone?.trend?.length ? Math.min(...cone.trend).toFixed(2) : '—'],
+        ['MAX', cone?.trend?.length ? Math.max(...cone.trend).toFixed(2) : '—'],
+        ['PCT', `${pct}%`],
+      ].map(([lbl, val]) => (
+        <div key={lbl} style={{ display: 'flex', gap: 3, alignItems: 'baseline' }}>
+          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>{lbl}</span>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: BRT }}>{val}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ModuleSparkline({ cone, color }) {
+  const trend = cone?.trend ?? [];
+  if (!trend.length) return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>NO TREND DATA</span>
+    </div>
+  );
+  const min = Math.min(...trend), max = Math.max(...trend), range = max - min || 1;
+  const W = 120, H = 36;
+  const pts = trend.map((v, i) => `${(i / (trend.length - 1)) * W},${H - ((v - min) / range) * H}`).join(' ');
+  return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '4px 10px' }}>
+      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.2" opacity="0.85" />
+      </svg>
+    </div>
+  );
+}
+
+function ModuleFidelity({ assignment, color }) {
+  const fs = assignment?.fs ?? null;
+  const pct = fs !== null ? Math.round(fs * 100) : null;
+  const tier = pct === null ? '—' : pct >= 85 ? 'VALIDATED' : pct >= 50 ? 'ESTIMATED' : 'LOW FIDELITY';
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 5 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>FIDELITY</span>
+        <span style={{ fontFamily: MONO, fontSize: 10, color: pct !== null ? color : DIM }}>{pct !== null ? `${pct}%` : '—'}</span>
+      </div>
+      <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }}>
+        {pct !== null && <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 1, transition: 'width 400ms ease' }} />}
+      </div>
+      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{tier}</span>
+    </div>
+  );
+}
+
+function ModulePlaceholder({ label }) {
+  return (
+    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{label} · PENDING</span>
+    </div>
+  );
+}
+
 /* ── BAY PANEL ───────────────────────────────────────────────────────────── */
 function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum }) {
   const [modeIdx,      setModeIdx]      = useState(0);
@@ -124,6 +201,8 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const setConeColor       = useBayStore(s => s.setConeColor ?? (() => {}));
+  const activeModule       = useBayStore(s => s.bays[bayNum]?.module ?? 'HEADLINE');
+  const setModule          = useBayStore(s => s.setModule);
 
   const colorOverride = coneColorOverrides[bayNum] ?? null;
   const baseColor     = cone?.color ?? LIME;
@@ -194,8 +273,29 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       </div>
 
 
-      {/* ── MODE CONTENT ── */}
+      {/* ── MODULE SELECTOR (WO-1713) — only when expanded ── */}
+      {isExpanded && (
+        <div style={{ height: 22, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1, padding: '0 8px', borderTop: '0.5px solid rgba(255,255,255,0.07)', overflowX: 'auto' }}>
+          {MODULE_TYPES.map(m => (
+            <button key={m} onClick={e => { e.stopPropagation(); setModule(bayNum, m); }}
+              style={{ background: activeModule === m ? 'rgba(102,255,0,0.12)' : 'none', border: `0.5px solid ${activeModule === m ? 'rgba(102,255,0,0.40)' : 'rgba(255,255,255,0.10)'}`, color: activeModule === m ? LIME : DIM, fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.18em', padding: '1px 5px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms ease' }}>
+              {m}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── MODULE CONTENT ── */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch' }}>
+        {activeModule === 'HEADLINE' && <ModuleHeadline assignment={assignment} d={d} color={color} />}
+        {activeModule === 'METRICS'  && <ModuleMetrics  cone={cone} pct={pct} />}
+        {activeModule === 'SPARKLINE'&& <ModuleSparkline cone={cone} color={color} />}
+        {activeModule === 'FIDELITY' && <ModuleFidelity  assignment={assignment} color={color} />}
+        {(activeModule === 'VIDEO' || activeModule === 'AUDIO') && <ModulePlaceholder label={activeModule} />}
+      </div>
+
+      {/* ── MODE CONTENT (legacy — hidden while module panel is shown) ── */}
+      <div style={{ display: 'none' }}>
         {mode === 'metrics' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
             {[

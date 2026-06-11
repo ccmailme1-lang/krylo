@@ -4,6 +4,9 @@ import { create } from 'zustand';
 // Operator-facing domain registry — bays cycle through these freely
 export const DOMAIN_REGISTRY = ['TECH', 'LEGAL', 'MARKET', 'HEALTH', 'CAREER', 'FINANCE'];
 
+// WO-1713: Bay Module Selector — content type per bay
+export const MODULE_TYPES = ['HEADLINE', 'METRICS', 'SPARKLINE', 'FIDELITY', 'VIDEO', 'AUDIO'];
+
 // Default domain-to-bay mapping (mutable at runtime via setBayDomain)
 export const BAY_DOMAINS = {
   1: 'TECH',
@@ -32,6 +35,7 @@ const initBay = (id) => ({
   frozen:      false,            // WO-1347: bay locked — no live signal updates
   compareFlag: false,            // WO-1347: flagged for cross-bay comparison
   candidates:  [],
+  module:      'HEADLINE',       // WO-1713: active content module
 });
 
 export const useBayStore = create((set) => ({
@@ -114,6 +118,11 @@ export const useBayStore = create((set) => ({
   // SET_BAY_DOMAIN: mutate domain orientation — cycles through DOMAIN_REGISTRY
   setBayDomain: (bayId, targetDomain) => set(s => ({
     bays: { ...s.bays, [bayId]: { ...s.bays[bayId], domain: targetDomain } },
+  })),
+
+  // WO-1713: SET_MODULE — bind content module to bay
+  setModule: (bayId, module) => set(s => ({
+    bays: { ...s.bays, [bayId]: { ...s.bays[bayId], module } },
   })),
 
   setPendingAssignment: (signal) => set({ pendingAssignment: signal }),
