@@ -193,7 +193,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
   const trend        = cone?.trend ?? [];
 
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000' }}>
+    <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#000' }}>
 
       {/* label row */}
       <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
@@ -201,8 +201,8 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
         {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
       </div>
 
-      {/* waveform or sparkline */}
-      <div style={{ height: 48, padding: '3px 8px', flexShrink: 0, background: '#000' }}>
+      {/* waveform or sparkline — hidden when unused */}
+      <div style={{ height: (showWave || showSparkline) ? 48 : 0, padding: (showWave || showSparkline) ? '3px 8px' : 0, flexShrink: 0, background: '#000', overflow: 'hidden' }}>
         {showWave && <Wave color={color} />}
         {showSparkline && trend.length > 1 && (() => {
           const min = Math.min(...trend), max = Math.max(...trend), range = max - min || 1;
@@ -236,8 +236,16 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
       {/* content area */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
         {module === 'HEADLINE' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 4 }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{assignment ? 'ASSIGNED' : 'EMPTY BAY'}</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '8px 10px 6px' }}>
+            {/* oversized score */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <span style={{ fontFamily: MONO, fontSize: 42, lineHeight: 1, color: color, letterSpacing: '-0.02em' }}>{pct}</span>
+              <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.10em', marginBottom: 6 }}>%</span>
+            </div>
+            {/* signal title */}
+            <div style={{ fontFamily: MONO, fontSize: 7, color: assignment ? BRT : DIM, letterSpacing: '0.10em', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {assignment?.title ?? '— NO SIGNAL —'}
+            </div>
           </div>
         )}
         {module === 'METRICS' && (() => {
