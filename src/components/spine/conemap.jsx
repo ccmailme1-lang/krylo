@@ -169,16 +169,16 @@ const COMPOSITION = [
   { name: 'OWNERSHIP', pct:  8 },
 ];
 
-// 6-domain → 4-pillar surface mapping (engine stays at 6 domains)
+// 6-domain → 6-pillar surface mapping (WO-1717: market + knowledge promoted)
 const DOMAIN_TO_PILLAR = {
   capital:    'financial',
   ownership:  'financial',
-  knowledge:  'operating',
-  technology: 'operating',
+  knowledge:  'knowledge',
+  technology: 'market',
   labor:      'time',
   media:      'personal',
 };
-const CANONICAL_PILLARS = ['financial', 'operating', 'time', 'personal'];
+const CANONICAL_PILLARS = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
 
 function aggregateToPillars(domainState) {
   const acc = {};
@@ -341,7 +341,7 @@ const MOCK_PROVENANCE = {
 
 const EMA_ALPHA = 0.18;
 
-const PILLAR_INDEX = ['financial', 'operating', 'time', 'personal'];
+const PILLAR_INDEX = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
 
 // WO-1348 — Multi-Bay Comparative Analysis panel
 function ComparePanel() {
@@ -1438,6 +1438,7 @@ const TOPOLOGY_ANCHORS = {
   labor:      [3.6,  0, -1.9], // Detroit, MI
   media:      [-6.1, 0, 1.4],  // Los Angeles, CA
   ownership:  [0.2,  0, 3.1],  // Houston, TX
+  market:     [-3.5, 0, -2.5], // WO-1717 pillar anchor
 };
 
 // Rough continental US outline — lineSegments pairs (sequential points form a closed polygon)
@@ -1944,7 +1945,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         const flaggedBays = Object.values(baysForResonance).filter(b => b.compareFlag && b.assignment);
         if (flaggedBays.length < 2) return null;
         // Map bayId → cone domain via PILLAR_INDEX (bayId = pillarIdx + 1)
-        const PILLAR_INDEX_LOCAL = ['financial', 'operating', 'time', 'personal'];
+        const PILLAR_INDEX_LOCAL = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
         const arcNodes = flaggedBays
           .map(b => {
             const domain = PILLAR_INDEX_LOCAL[b.id - 1];
