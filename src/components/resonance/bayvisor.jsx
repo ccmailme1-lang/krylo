@@ -140,10 +140,27 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
         {showWave && <Wave color={color} />}
         {showSparkline && trend.length > 1 && (() => {
           const min = Math.min(...trend), max = Math.max(...trend), range = max - min || 1;
-          const pts = trend.map((v, i) => `${(i / (trend.length - 1)) * 100}%,${48 - ((v - min) / range) * 44}`).join(' ');
+          const W = 200, H = 42;
+          const pts = trend.map((v, i) => ({
+            x: (i / (trend.length - 1)) * W,
+            y: H - ((v - min) / range) * (H - 4) - 2,
+          }));
+          // segment colors: each segment is rising(lime), falling(red), or flat(dim)
+          const segments = pts.slice(1).map((p, i) => {
+            const prev = pts[i];
+            const rising  = p.y < prev.y;
+            const falling = p.y > prev.y;
+            const segColor = rising ? '#66FF00' : falling ? '#FF3B3B' : 'rgba(255,255,255,0.25)';
+            return { x1: prev.x, y1: prev.y, x2: p.x, y2: p.y, color: segColor };
+          });
           return (
-            <svg width="100%" height="48" viewBox="0 0 100 48" preserveAspectRatio="none">
-              <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" opacity="0.9" />
+            <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+              {segments.map((s, i) => (
+                <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" />
+              ))}
+              {/* endpoint dot */}
+              <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2"
+                fill={segments.length ? segments[segments.length - 1].color : LIME} />
             </svg>
           );
         })()}
