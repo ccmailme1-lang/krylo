@@ -195,8 +195,6 @@ function ModulePlaceholder({ label }) {
 
 /* ── BAY PANEL ───────────────────────────────────────────────────────────── */
 function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum }) {
-  const [modeIdx,      setModeIdx]      = useState(0);
-  const [velMetric,    setVelMetric]    = useState('VALUE');
   const [titleHovered, setTitleHovered] = useState(false);
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
@@ -210,18 +208,6 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
   const pct       = Math.round((cone?.value ?? 0) * 100);
   const mainLabel = assignment?.title ?? d.name;
   const isLoaded  = !!assignment;
-  const mode      = MODES[modeIdx];
-
-  const velocity = (() => {
-    const t = cone?.trend;
-    if (!t || t.length < 2) return '—';
-    return (t[t.length - 1] - t[t.length - 2]).toFixed(3);
-  })();
-
-  const cycle = (dir, e) => {
-    e.stopPropagation();
-    setModeIdx(i => (i + dir + MODES.length) % MODES.length);
-  };
 
   const borderColor = isExpanded
     ? (isLoaded ? 'rgba(102,255,0,0.30)' : 'rgba(255,255,255,0.18)')
@@ -273,18 +259,6 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       </div>
 
 
-      {/* ── MODULE SELECTOR (WO-1713) — only when expanded ── */}
-      {isExpanded && (
-        <div style={{ height: 22, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1, padding: '0 8px', borderTop: '0.5px solid rgba(255,255,255,0.07)', overflowX: 'auto' }}>
-          {MODULE_TYPES.map(m => (
-            <button key={m} onClick={e => { e.stopPropagation(); setModule(bayNum, m); }}
-              style={{ background: activeModule === m ? 'rgba(102,255,0,0.12)' : 'none', border: `0.5px solid ${activeModule === m ? 'rgba(102,255,0,0.40)' : 'rgba(255,255,255,0.10)'}`, color: activeModule === m ? LIME : DIM, fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.18em', padding: '1px 5px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms ease' }}>
-              {m}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* ── MODULE CONTENT ── */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch' }}>
         {activeModule === 'HEADLINE' && <ModuleHeadline assignment={assignment} d={d} color={color} />}
@@ -294,51 +268,6 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         {(activeModule === 'VIDEO' || activeModule === 'AUDIO') && <ModulePlaceholder label={activeModule} />}
       </div>
 
-      {/* ── MODE CONTENT (legacy — hidden while module panel is shown) ── */}
-      <div style={{ display: 'none' }}>
-        {mode === 'metrics' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
-            {[
-              ['VAL', cone?.value ?? '—'],
-              ['TRD', cone?.trend?.length ?? 0],
-              ['ALT', cone?.alerts?.length ?? 0],
-              ['MIN', cone?.trend?.length ? Math.min(...cone.trend) : '—'],
-              ['MAX', cone?.trend?.length ? Math.max(...cone.trend) : '—'],
-              ['PCT', `${pct}%`],
-            ].map(([lbl, val]) => (
-              <div key={lbl} style={{ display: 'flex', gap: 3, alignItems: 'baseline' }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>{lbl}</span>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: BRT }}>{val}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {mode === 'graphics' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.2em' }}>VEL</span>
-            <select value={velMetric} onChange={e => setVelMetric(e.target.value)} onClick={e => e.stopPropagation()}
-              style={{ background: '#000', border: '0.5px solid rgba(255,255,255,0.12)', color: MID, fontFamily: MONO, fontSize: 6, outline: 'none', padding: '1px 3px', letterSpacing: '0.1em' }}>
-              <option value="VALUE">VALUE</option>
-              <option value="TREND">TREND</option>
-              <option value="ALERTS">ALERTS</option>
-            </select>
-            <span style={{ fontFamily: MONO, fontSize: 11, color, marginLeft: 'auto', letterSpacing: '0.04em' }}>{velocity}</span>
-          </div>
-        )}
-
-        {mode === 'alerts' && <AlertsMode isPremium={isPremium} />}
-
-        {mode === 'color' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px' }}>
-            {PALETTE.map(c => (
-              <button key={c} onClick={e => { e.stopPropagation(); setConeColor(bayNum, colorOverride === c ? null : c); }}
-                style={{ width: 12, height: 12, borderRadius: '50%', background: c, border: colorOverride === c ? '1.5px solid #fff' : '1.5px solid transparent', opacity: colorOverride === c ? 1 : 0.4, cursor: 'pointer', padding: 0, flexShrink: 0 }} />
-            ))}
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, marginLeft: 'auto', letterSpacing: '0.14em' }}>{colorOverride ?? 'AUTO'}</span>
-          </div>
-        )}
-      </div>
 
       {/* ── FOOTER ── */}
       <div style={{
@@ -348,11 +277,14 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         borderTop: '0.5px solid rgba(255,255,255,0.07)',
       }}>
         <span style={{ fontFamily: MONO, fontSize: 12.5, color: LIME, letterSpacing: '0.04em' }}>{pct}%</span>
-        {/* Mode selector — center of footer */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <button onClick={e => cycle(-1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>←</button>
-          <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{mode}</span>
-          <button onClick={e => cycle(1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>→</button>
+        {/* Module selector — replaces legacy mode arrows */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, overflowX: 'auto', maxWidth: '60%' }}>
+          {MODULE_TYPES.map(m => (
+            <button key={m} onClick={e => { e.stopPropagation(); setModule(bayNum, m); }}
+              style={{ background: activeModule === m ? 'rgba(102,255,0,0.14)' : 'none', border: `0.5px solid ${activeModule === m ? 'rgba(102,255,0,0.45)' : 'rgba(255,255,255,0.10)'}`, color: activeModule === m ? LIME : DIM, fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', padding: '2px 5px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms ease', flexShrink: 0 }}>
+              {m}
+            </button>
+          ))}
         </div>
         <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.2em' }}>{d.id} · SYNCED</span>
       </div>
