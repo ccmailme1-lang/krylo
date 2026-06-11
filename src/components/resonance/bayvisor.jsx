@@ -239,15 +239,11 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
       {/* content area */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
         {module === 'HEADLINE' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '8px 10px 6px' }}>
-            {/* oversized score */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: MONO, fontSize: 42, lineHeight: 1, color: color, letterSpacing: '-0.02em' }}>{pct}</span>
-              <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.10em', marginBottom: 6 }}>%</span>
-            </div>
-            {/* signal title */}
-            <div style={{ fontFamily: MONO, fontSize: 7, color: assignment ? BRT : DIM, letterSpacing: '0.10em', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-              {assignment?.title ?? '— NO SIGNAL —'}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 12px' }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 4 }}>SIGNAL SCORE</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+              <span style={{ fontFamily: MONO, fontSize: 64, lineHeight: 1, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
+              <span style={{ fontFamily: MONO, fontSize: 18, color: color, opacity: 0.6 }}>%</span>
             </div>
           </div>
         )}
