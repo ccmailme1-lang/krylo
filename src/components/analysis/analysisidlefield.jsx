@@ -17,7 +17,6 @@ import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
 import OptionCapital                    from './optioncapital.jsx';
 import CoachWell                        from './coachwell.jsx';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
-import { useBayStore } from '../../store/usebaystore.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
@@ -172,7 +171,6 @@ function PacketRow({ packet }) {
 export default function AnalysisIdleField({ activeCones = null }) {
 
   // Store
-  const assignToBay   = useBayStore(s => s.assignToBay);
   const createSession = useAnalysisStore(s => s.createSession);
   const sessions      = useAnalysisStore(s => s.sessions);
   const activeSessionId       = useAnalysisStore(s => s.activeSessionId);
@@ -441,16 +439,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
     processingTimer.current = setTimeout(() => {
       createSession(id, activeLens, seedQuery.trim(), tensor);
       setProcessing(false);
-      // WO-1712: Push search query into Domain Isolation Console bays
-      const query = seedQuery.trim();
-      const domainMap = { FINANCIAL: 1, MARKET: 2, CAREER: 3, HEALTH: 4 };
-      const primaryBay = domainMap[tensor.domain?.toUpperCase()] ?? null;
-      // Assign primary domain bay first, then seed remaining with domain context
-      [1, 2, 3, 4].forEach(bayId => {
-        const domainLabel = Object.keys(domainMap).find(k => domainMap[k] === bayId);
-        const title = primaryBay === bayId ? query : `${query} — ${domainLabel}`;
-        assignToBay(bayId, { title, domain: domainLabel, source: 'analysis-search', ts: Date.now() });
-      });
     }, 900);
   }
 

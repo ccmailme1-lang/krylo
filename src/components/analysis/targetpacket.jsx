@@ -1,7 +1,7 @@
 // WO-1340 — Emergence Payload: Unified Pane View
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { useAnalysisStore }  from '../../store/useanalysisstore.js';
-import { useBayStore }       from '../../store/usebaystore.js';
+import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
 import { useEntitySignal }   from '../../hooks/useEntitySignal.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
@@ -346,6 +346,19 @@ export default function TargetPacket() {
     : null;
 
   const revelationStep = 3;
+
+  // WO-1716: Domain Clamp — user-controlled bay assignment
+  const assignToBay    = useBayStore(s => s.assignToBay);
+  const [clampBay, setClampBay] = useState('');
+  const BAY_MAP = { TECH: 1, LEGAL: 2, MARKET: 3, HEALTH: 4, CAREER: 5, FINANCE: 6 };
+  const qualified = envelope?.status === 'VALIDATED' || envelope?.status === 'ESTIMATED';
+  function handleClampAssign() {
+    if (!qualified || !clampBay || !session) return;
+    const bayId = BAY_MAP[clampBay];
+    if (!bayId) return;
+    assignToBay(bayId, { title: session.query, domain: clampBay, source: 'user-clamp', ts: Date.now() });
+    setClampBay('');
+  }
 
   const [showAlts, setShowAlts] = useState(false);
   const actionPanelRef = useRef(null);
@@ -742,6 +755,36 @@ export default function TargetPacket() {
               </div>
             ))}
             {envelope.olp?.rationale && <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, lineHeight: 1.65, letterSpacing: '0.06em' }}>{envelope.olp.rationale}</div>}
+
+            {/* WO-1716: Domain Clamp — user assigns result to a bay */}
+            <div style={{ borderTop: `1px solid rgba(255,255,255,0.06)`, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>ASSIGN TO BAY</span>
+              <select
+                value={clampBay}
+                onChange={e => setClampBay(e.target.value)}
+                disabled={!qualified}
+                title={!qualified ? 'Requires qualified candidate status' : ''}
+                style={{
+                  flex: 1, background: '#000', color: qualified ? LIME : 'rgba(255,255,255,0.2)',
+                  border: `1px solid ${qualified ? 'rgba(102,255,0,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                  fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', padding: '3px 6px',
+                  cursor: qualified ? 'pointer' : 'not-allowed', outline: 'none',
+                }}
+              >
+                <option value="">— SELECT DOMAIN —</option>
+                {DOMAIN_REGISTRY.map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+              <button
+                onClick={handleClampAssign}
+                disabled={!qualified || !clampBay}
+                style={{
+                  fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', textTransform: 'uppercase',
+                  background: 'transparent', cursor: qualified && clampBay ? 'pointer' : 'not-allowed',
+                  border: `1px solid ${qualified && clampBay ? 'rgba(102,255,0,0.5)' : 'rgba(255,255,255,0.08)'}`,
+                  color: qualified && clampBay ? LIME : 'rgba(255,255,255,0.2)', padding: '3px 10px', flexShrink: 0,
+                }}
+              >CLAMP</button>
+            </div>
             {envelope.criteria && Object.keys(envelope.criteria).length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, marginBottom: 2 }}>CRITERIA SUBMITTED</div>
