@@ -1714,17 +1714,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 
   return (
     <>
-      {/* lattice — vertical backdrop, position LOCKED, never rotates */}
-      <group rotation={[Math.PI / 2, 0, 0]} position={[0, 2, -14]}>
-        <LeverageLattice sourceCount={total} frozen />
-      </group>
-
-      {/* Wave 1 substrate — fades out in topology mode via gridGroupRef traverse */}
-      <group ref={gridGroupRef}>
-        <PulseFloor ringCount={6} maxRadius={R + 3} />
-        <ThresholdBands />
-        <FieldConvergence coneState={coneState} />
-      </group>
+      <group ref={gridGroupRef} />
 
       {/* WO-1313: US outline wireframe — fades in with topoLerp */}
       <lineSegments>
