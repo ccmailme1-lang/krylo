@@ -221,6 +221,9 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
           });
           return (
             <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+              {/* Y-axis labels */}
+              <text x="1" y="7" fontSize="5" fill="rgba(255,255,255,0.25)" fontFamily="monospace">{max.toFixed(0)}%</text>
+              <text x="1" y={H - 1} fontSize="5" fill="rgba(255,255,255,0.25)" fontFamily="monospace">{min.toFixed(0)}%</text>
               {segments.map((s, i) => (
                 <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.color} strokeWidth="1.8" strokeLinecap="round" />
               ))}
@@ -262,7 +265,9 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
               {/* Velocity */}
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.20em' }}>VELOCITY</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, letterSpacing: '0.06em' }}>{velocity ?? '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, letterSpacing: '0.06em' }}>
+                  {velocity ?? '—'}<span style={{ fontSize: 6, color: DIM, marginLeft: 2 }}>pts/tick</span>
+                </span>
               </div>
               {/* Trend */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -276,8 +281,24 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
         })()}
         {module === 'SPARKLINE' && (
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>MIN {trend.length ? Math.min(...trend).toFixed(2) : '—'}</span>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>MAX {trend.length ? Math.max(...trend).toFixed(2) : '—'}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <span style={{ fontFamily: MONO, fontSize: 5, color: DIM, letterSpacing: '0.14em' }}>MIN</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: BRT, letterSpacing: '0.06em' }}>
+                {trend.length ? Math.min(...trend).toFixed(1) : '—'}<span style={{ fontSize: 5, color: DIM, marginLeft: 1 }}>%</span>
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
+              <span style={{ fontFamily: MONO, fontSize: 5, color: DIM, letterSpacing: '0.14em' }}>RANGE</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em' }}>
+                {trend.length ? (Math.max(...trend) - Math.min(...trend)).toFixed(1) : '—'}<span style={{ fontSize: 5, color: DIM, marginLeft: 1 }}>pts</span>
+              </span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+              <span style={{ fontFamily: MONO, fontSize: 5, color: DIM, letterSpacing: '0.14em' }}>MAX</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: BRT, letterSpacing: '0.06em' }}>
+                {trend.length ? Math.max(...trend).toFixed(1) : '—'}<span style={{ fontSize: 5, color: DIM, marginLeft: 1 }}>%</span>
+              </span>
+            </div>
           </div>
         )}
         {module === 'FIDELITY' && (() => {
