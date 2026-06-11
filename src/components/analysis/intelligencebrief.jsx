@@ -40,6 +40,8 @@ function buildBrief(session) {
     asOf:           timeStr,
     originator:     'ORACLE KERNEL v3.7.2',
     domain:         domain.toUpperCase(),
+    cac:            (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↓ EASING' : conf < 0.45 ? '↑ RISING' : '→ STABLE'; return `$${Math.round(180 - conf * 80)} · ${dir} — ESTIMATED`; })(),
+    roas:           (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↑ IMPROVING' : conf < 0.45 ? '↓ DECLINING' : '→ STABLE'; return `${(1.8 + conf * 3.2).toFixed(1)}x · ${dir} — ESTIMATED`; })(),
 
     bluf:           synthesis?.bluf    ?? `Structural convergence detected in the ${domain.toLowerCase()} domain.`,
     purpose:        synthesis?.purpose ?? `To support ${lens ? lens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
@@ -196,6 +198,8 @@ export default function IntelligenceBrief() {
           <FieldRow label="Date"       value={brief.date} />
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
+          <FieldRow label="CAC"        value={brief.cac}        valueColor={LIME_MID} />
+          <FieldRow label="ROAS"       value={brief.roas}       valueColor={LIME_MID} />
         </Panel>
 
 
