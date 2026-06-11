@@ -15,7 +15,7 @@ const MID     = 'rgba(255,255,255,0.50)';
 const BRT     = 'rgba(255,255,255,0.88)';
 
 const COLLAPSED_H = 26;
-const EXPANDED_H  = 182;
+const EXPANDED_H  = 248;
 
 const domains = [
   { id: "B01", name: "FINANCIAL",  type: "CAPITAL"      },
@@ -195,11 +195,13 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
   return (
     <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#000' }}>
 
-      {/* label row */}
-      <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{label}</div>
-        {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
-      </div>
+      {/* label row — hidden for HEADLINE (content covers it) */}
+      {module !== 'HEADLINE' && (
+        <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
+          <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{label}</div>
+          {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
+        </div>
+      )}
 
       {/* waveform or sparkline — hidden when unused */}
       <div style={{ height: (showWave || showSparkline) ? 48 : 0, padding: (showWave || showSparkline) ? '3px 8px' : 0, flexShrink: 0, background: '#000', overflow: 'hidden' }}>
@@ -254,18 +256,31 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
               </div>
               {/* two small cards */}
               <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-                {/* velocity card */}
+                {/* velocity card — mini sparkline */}
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>VELOCITY</span>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 14, color: BRT, letterSpacing: '0.02em' }}>{velocity ?? '—'}</span>
-                    {velocity && <span style={{ fontFamily: MONO, fontSize: 5, color: DIM }}>pts</span>}
-                  </div>
+                  {t.length > 1 ? (() => {
+                    const vels = t.slice(1).map((v, i) => v - t[i]);
+                    const vmin = Math.min(...vels), vmax = Math.max(...vels), vrange = vmax - vmin || 1;
+                    const W = 80, H = 22;
+                    const segs = vels.map((v, i) => ({
+                      x1: (i / (vels.length - 1)) * W,
+                      y1: H - ((vels[Math.max(0, i-1)] - vmin) / vrange) * (H - 2) - 1,
+                      x2: ((i) / (vels.length - 1)) * W,
+                      y2: H - ((v - vmin) / vrange) * (H - 2) - 1,
+                      c: v > 0 ? '#66FF00' : v < 0 ? '#FF3B3B' : 'rgba(255,255,255,0.25)',
+                    }));
+                    return (
+                      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+                        {segs.map((s, i) => <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c} strokeWidth="1.5" strokeLinecap="round" />)}
+                      </svg>
+                    );
+                  })() : <span style={{ fontFamily: MONO, fontSize: 6, color: DIM }}>—</span>}
                 </div>
-                {/* 24hr trend card */}
+                {/* 24hr trend card — arrow only */}
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>24H TREND</span>
-                  <span style={{ fontSize: 20, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B' }}>
+                  <span style={{ fontSize: 24, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B' }}>
                     {trendUp === null ? '—' : trendUp ? '↑' : '↓'}
                   </span>
                 </div>
