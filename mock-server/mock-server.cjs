@@ -536,6 +536,7 @@ async function rotateFromCache() {
     console.log(`[WO-1713] rotated: "${title.slice(0, 60)}" → ${topDomain} (${topScore.toFixed(2)}) flow=${result.action}`);
     ingested++;
   }
+  console.log(`[rotate] ts=${Date.now()} pool=${ALL_ETRS.length} (+${ingested})`);
   return ingested;
 }
 
@@ -1830,8 +1831,56 @@ setInterval(() => {
   }
 }, 10000);
 
+// Guarantee live cone_domain records in the pool at boot — independent of
+// GDELT/Ollama/interval timing. Iterates the (disk-persisted) story cache and
+// pushes one live ETR per cached story across all six domains. Deterministic,
+// synchronous, no external deps — cannot fail or hang. Root fix: live records
+// are in-memory and the client was polling an empty-of-live pool at startup.
+function populatePoolFromCache() {
+  let added = 0;
+  for (const domain of CONE_DOMAINS) {
+    const cache = storyCache[domain];
+    if (!cache?.stories.length) continue;
+    cache.stories.forEach((article, i) => {
+      const title  = article.title ?? 'Untitled';
+      let scores = article.domain_scores ?? article._scores;
+      if (!scores) {
+        scores = {};
+        CONE_DOMAINS.forEach(cd => { scores[cd] = cd === domain ? 0.65 : 0.10; });
+      }
+      const topDomain = CONE_DOMAINS.reduce((a, b) => scores[a] >= scores[b] ? a : b);
+      const topScore  = scores[topDomain];
+      // Skip duplicates if boot runs more than once
+      const id = `BOOT-${domain}-${i}`;
+      if (ALL_ETRS.some(r => r.id === id)) return;
+      ALL_ETRS.push({
+        id,
+        source_type:      'live',
+        title:            topDomain,
+        truth_statement:  title,
+        truth_supporting: article.socialimage ?? title,
+        definition:       title,
+        origin:           article.domain ?? 'GDELT',
+        usage:            'Live news signal (boot-populated from cache)',
+        comments:         [],
+        tags:             [topDomain, 'live', 'gdelt'],
+        signal_score:     topScore,
+        signals: [], patterns: [], ground: {},
+        fidelity_components: { m_checksum: topScore, t_telemetry: topScore, d_docs: 0.5, v_voice: 0.3, e_viral: 0.3 },
+        domain_scores:    scores,
+        cone_domain:      topDomain,
+        publishedAt:      article.seendate ?? new Date().toISOString(),
+      });
+      added++;
+    });
+  }
+  console.log(`[pool] boot-populated ${added} live records — ALL_ETRS=${ALL_ETRS.length}`);
+  return added;
+}
+
 // WO-1713: warm the cache before any guest can connect
 seedStoryCache();
+populatePoolFromCache();
 
 server.listen(3001, () => {
   console.log(`[WO-503] Mock Truth Engine — http://localhost:3001`);
