@@ -210,16 +210,17 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
           const fs = assignment?.fs ?? null;
           const fpct = fs !== null ? Math.round(fs * 100) : null;
           const tier = fpct === null ? '—' : fpct >= 85 ? 'VALIDATED' : fpct >= 50 ? 'ESTIMATED' : 'LOW FIDELITY';
+          const tierColor = fpct === null ? DIM : fpct >= 85 ? '#66FF00' : fpct >= 50 ? '#007FFF' : '#FF3B3B';
           return (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 5 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>Fs</span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: fpct !== null ? color : DIM }}>{fpct !== null ? `${fpct}%` : '—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>TRUST</span>
+                <span style={{ fontFamily: MONO, fontSize: 18, color: tierColor }}>{fpct !== null ? `${fpct}%` : '—'}</span>
               </div>
               <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }}>
-                {fpct !== null && <div style={{ height: '100%', width: `${fpct}%`, background: color, borderRadius: 1 }} />}
+                {fpct !== null && <div style={{ height: '100%', width: `${fpct}%`, background: tierColor, borderRadius: 1, transition: 'width 400ms ease, background 400ms ease' }} />}
               </div>
-              <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{tier}</span>
+              <span style={{ fontFamily: MONO, fontSize: 6, color: tierColor, letterSpacing: '0.16em' }}>{tier}</span>
             </div>
           );
         })()}
