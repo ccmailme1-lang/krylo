@@ -200,15 +200,12 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const setConeColor       = useBayStore(s => s.setConeColor ?? (() => {}));
-  const setModule          = useBayStore(s => s.setModule);
 
   const activeModule = MODULE_TYPES[modIdx];
 
   const cycleModule = (dir, e) => {
     e.stopPropagation();
-    const next = (modIdx + dir + MODULE_TYPES.length) % MODULE_TYPES.length;
-    setModIdx(next);
-    setModule(bayNum, MODULE_TYPES[next]);
+    setModIdx(i => (i + dir + MODULE_TYPES.length) % MODULE_TYPES.length);
   };
 
   const colorOverride = coneColorOverrides[bayNum] ?? null;
