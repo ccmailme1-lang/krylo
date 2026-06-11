@@ -1,0 +1,76 @@
+case_id: ROUTE-00082
+
+description: >
+  Protected medical routing lock: medical/disability indicators (hypotonia,
+  physical therapy, adaptive mobility) must resolve to HEALTH regardless of
+  lens selection or incidental housing vocabulary in the query.
+
+  Root cause this anchors: "home & community access" fired the bare /home/
+  REAL_ESTATE regex before the protected entity gate existed, producing
+  mortgage synthesis for a pediatric disability support query.
+
+  Executable runner: qa_route00082_routing.mjs
+
+cases:
+
+  # --- Primary regression anchor ---
+  - id: ROUTE-00082-A
+    description: "Full hypotonia query — the exact production failure"
+    input:
+      query: "10 year old with severe hypotonia looking for mobility opportunities and support from programs like adaptive mobility programs physical therapy home & community access"
+      lens: OPEN
+    expected:
+      domain: HEALTH
+    invariants:
+      - selected_domain == "HEALTH"
+      - protected_gate_triggered == true
+      - output_contains_mortgage == false
+
+  # --- Negative control 1: real estate path must stay intact ---
+  - id: ROUTE-00082-B
+    description: "Home purchase with explicit buy context — must still route REAL_ESTATE"
+    input:
+      query: "looking to buy a home in chicago budget 400k need mortgage pre-approval"
+      lens: OPEN
+    expected:
+      domain: REAL_ESTATE
+    invariants:
+      - selected_domain == "REAL_ESTATE"
+      - protected_gate_triggered == false
+
+  # --- Negative control 2: house-hunting vocabulary ---
+  - id: ROUTE-00082-C
+    description: "House hunting with bedroom/bath signals — must still route REAL_ESTATE"
+    input:
+      query: "house hunting in austin 3bed 2bath under 350k"
+      lens: OPEN
+    expected:
+      domain: REAL_ESTATE
+    invariants:
+      - selected_domain == "REAL_ESTATE"
+      - protected_gate_triggered == false
+
+  # --- Extension: PT without disability context ---
+  - id: ROUTE-00082-D
+    description: "Plain physical therapy query — routes HEALTH via protected entity"
+    input:
+      query: "physical therapy options for my knee after surgery"
+      lens: OPEN
+    expected:
+      domain: HEALTH
+    invariants:
+      - selected_domain == "HEALTH"
+      - protected_gate_triggered == true
+
+  # --- Extension: wheelchair — no incidental financial vocabulary ---
+  - id: ROUTE-00082-E
+    description: "Wheelchair + insurance — must not bleed to FINANCIAL"
+    input:
+      query: "looking for wheelchair options and insurance funding for my son"
+      lens: OPEN
+    expected:
+      domain: HEALTH
+    invariants:
+      - selected_domain == "HEALTH"
+      - protected_gate_triggered == true
+      - output_contains_mortgage == false
