@@ -101,11 +101,21 @@ function fmtN(n) { return Math.round(n).toLocaleString(); }
 export function detectDomain(query, lens) {
   const q = (query ?? '').toLowerCase();
 
-  // Query keywords first — content beats lens label
+  // Protected entity gate — medical/disability signals lock domain unconditionally.
+  // Runs before all keyword matching to prevent vocabulary contamination (e.g.,
+  // "home & community access" firing REAL_ESTATE when hypotonia is present).
+  const protectedDomain = detectProtectedDomain(query);
+  if (protectedDomain) return protectedDomain;
+
+  // Query keywords — content beats lens label
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
   if (/car|vehicle|suv|truck|auto|lease|buick|ford|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
-  if (/house|home|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing/.test(q)) return 'REAL_ESTATE';
+  // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
+  if (
+    /\bhouse\b|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing/.test(q) ||
+    (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|market/.test(q))
+  ) return 'REAL_ESTATE';
   // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
   // QA-101: retired + expense/distress signals
   if (/\bretired\b/.test(q) && /fixed income|expenses? down|reduce.*expense|lower.*bill|cut.*cost|monthly.*down|expenses? lower|struggling/.test(q)) return 'EXPENSE_REDUCTION';
@@ -642,6 +652,92 @@ function synthGeneral(session, numbers, query) {
   };
 }
 
+// ── Health synthesizer ─────────────────────────────────────────────────────────
+
+function synthHealth(session, numbers, query) {
+  const lens   = session?.lens ?? 'HEALTH';
+  const shortQ = query.length > 50 ? query.slice(0, 50) + '…' : query;
+  const hasChild = /\b\d+\s*-?\s*year.?\s*old\b|\bchild\b|\bkid\b|\bpediatric\b|\bson\b|\bdaughter\b/i.test(query);
+
+  return {
+    stateLabel: 'HEALTH SIGNAL ACTIVE',
+    confidence: 0.84,
+    primaryInsight: `Health & access pathway identified. Medicaid waiver eligibility and adaptive program access are the highest-leverage entry points.`,
+    momentum:   { value: '+12%', h1: '+4%', h24: '+12%' },
+    trajPoints: [0.40,0.48,0.54,0.60,0.66,0.71,0.76,0.79,0.81,0.83,0.84,0.84],
+    attentionStack: [
+      { rank:1, signal:'Medicaid HCBS Waiver',   category:'Funding / Access',   trend:'↗', momentum:'Open Enrollment', mColor:LIME, conf:0.84 },
+      { rank:2, signal:'PT/OT Clinical Access',  category:'Therapy / Program',  trend:'↑', momentum:'Expanding',       mColor:LIME, conf:0.78 },
+      { rank:3, signal:'Adaptive Equipment DME', category:'Funding / Equipment',trend:'↗', momentum:'Grant Available',  mColor:BLUE, conf:0.72 },
+      { rank:4, signal:'Title V / CYSHCN',       category:'State Program',      trend:'→', momentum:'Stable',           mColor:LIME, conf:0.68 },
+    ],
+    keyDrivers: [
+      { label:'Medicaid HCBS waiver availability', delta:'State-dependent',     pos:true  },
+      { label:'Diagnosis documentation',           delta:'Required for intake', pos:true  },
+      { label:'PT/OT referral status',             delta:'Primary gateway',     pos:true  },
+      { label:'Capital floor',                     delta:numbers[0] ? `$${fmtN(numbers[0])}` : 'Not set', pos:!!numbers[0] },
+    ],
+    recommendedAction: hasChild
+      ? 'File for Medicaid HCBS waiver immediately — waitlists are long and position is set at filing. Pair with a Title V / CYSHCN intake call this week.'
+      : 'Initiate Medicaid waiver intake and confirm PT/OT clinical referral. Adaptive equipment funding follows diagnosis documentation.',
+    timeHorizon: '30–90 days',
+    impactLevel: 'High',
+    bluf: hasChild
+      ? `Pediatric mobility support: Medicaid HCBS waiver + adaptive equipment grant are the two highest-leverage funding channels. Apply now — waitlists are 1–3 years.`
+      : `Mobility access pathway: Medicaid waiver + PT/OT clinical access + adaptive equipment DME funding.`,
+    purpose: `Health access analysis for: "${shortQ}". Domain locked to HEALTH via protected entity detection.`,
+    fiveWs: [
+      { w:'WHO',   answer: hasChild ? `Child with diagnosed mobility impairment. Caregiver is the decision-maker and primary intake agent.` : `Individual with mobility-related health needs.` },
+      { w:'WHAT',  answer:`Medicaid HCBS waiver, adaptive equipment DME, PT/OT program access, Title V CYSHCN state navigator, school district IEP (age 3+).` },
+      { w:'WHEN',  answer:`Apply for Medicaid HCBS waiver immediately — waitlists are 1–3 years in most states. PT/OT referral: this week.` },
+      { w:'WHERE', answer:`State Medicaid agency (HCBS waiver). Pediatric rehab center (PT/OT). State Title V / CYSHCN office. Local school district (IEP at 3+).` },
+      { w:'WHY',   answer:`Waitlist position is established at application, not approval. Filing now preserves optionality regardless of current eligibility status.` },
+    ],
+    evidence: [
+      `Medicaid HCBS waiver covers PT/OT, adaptive equipment, home modification, respite care, and community access support.`,
+      `Title V / CYSHCN: federally funded, state-administered. Free intake navigator available in all 50 states — no documentation required to call.`,
+      `Adaptive equipment (wheelchairs, orthotics, AAC devices): covered under Medicaid DME with a physician order.`,
+      `IDEA mandate: school district must provide free evaluation and IEP services at age 3+ if child qualifies. PT/OT is enforceable if educationally necessary.`,
+    ],
+    assumptions: [
+      `Medicaid eligibility or private insurance with DME coverage assumed. Cash-pay options exist but are secondary.`,
+      `Diagnosis documentation (ICD-10 code or physician letter) required for most funding pathways.`,
+    ],
+    assessment: `The highest-leverage action is immediate Medicaid HCBS waiver application — waitlist position is established at filing. PT/OT access follows a physician referral and is typically covered under Medicaid or private insurance. Title V / CYSHCN provides a free state navigator who maps every available program. For children age 3+, the school district IEP is legally mandated and PT/OT services are enforceable.`,
+    threats: [
+      { label:'HCBS waiver waitlist: 1–3 years in most states', level:'HIGH',   color:LIME },
+      { label:'Documentation gaps slow DME approval',            level:'MEDIUM', color:BLUE },
+      { label:'Program eligibility varies by state',             level:'MEDIUM', color:BLUE },
+    ],
+    opportunities: [
+      { label:`Medicaid HCBS waiver: apply immediately — waitlist position is locked at filing.` },
+      { label:`Title V CYSHCN free navigator call: available in all 50 states, no prior documentation required.` },
+      { label:`School district IEP: legally mandated at age 3+. PT/OT is enforceable if educationally necessary.` },
+    ],
+    alternativeView: `Private-pay PT/OT ($150–$300/session) bypasses waitlists if budget allows. Begin private pay while waiver application processes to avoid therapy gap.`,
+    outlook: [
+      { prob:0.70, label:`Medicaid HCBS waiver approval within 12–24 months unlocks full adaptive program access`, color:LIME },
+      { prob:0.20, label:`Immediate PT/OT access via insurance referral while waiver processes`,                    color:BLUE },
+      { prob:0.10, label:`Funding gap — private-pay bridge required during waiver waitlist period`,                 color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'APPLY: MEDICAID HCBS WAIVER',   impact:0.92, rationale:`File today — waitlist position is established at application. Contact your state Medicaid agency or call 1-800-MEDICARE for a direct referral to the waiver program.`, tag:'FUNDING'    },
+        { id:'a2', label:'CALL TITLE V / CYSHCN',          impact:0.85, rationale:`Every state has a Children with Special Health Care Needs program. Free intake call maps every available state + federal program. Find yours at mchb.hrsa.gov.`, tag:'NAVIGATION' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'GET PT/OT REFERRAL',             impact:0.80, rationale:`Primary care referral opens pediatric rehab access. Required for most insurance coverage and for DME orders. Request in writing so it creates a documentation trail.`, tag:'THERAPY'   },
+        { id:'b2', label:'FILE FOR ADAPTIVE EQUIPMENT DME', impact:0.75, rationale:`Wheelchair, orthotics, AAC devices: covered under Medicaid and most private insurance with a physician DME order. Diagnosis documentation is the prerequisite.`, tag:'EQUIPMENT'  },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'REQUEST SCHOOL IEP EVALUATION', impact:0.70, rationale:`At age 3+, IDEA mandates a free evaluation. PT/OT services must be provided if educationally necessary — this is legally enforceable through the school district.`, tag:'EDUCATION' },
+        { id:'c2', label:'MAP STATE DISABILITY PROGRAMS',  impact:0.60, rationale:`States maintain additional programs beyond federal coverage. State DD councils and Disability Rights Advocates maintain searchable program databases.`, tag:'ACCESS'     },
+      ],
+    },
+    leverage: { typeY: 0, typeLabel: 'CODE', tierLabel: 'HIGH', deRatio: 0.0, permissionless: true, industryNorm: 0.0 },
+  };
+}
+
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
@@ -651,13 +747,14 @@ const SYNTH_MAP = {
   RETIREMENT:        synthRetirement,
   EXPENSE_REDUCTION: synthExpenseReduction,
   INVESTOR:          synthGeneral,
-  HEALTH:            synthGeneral,
+  HEALTH:            synthHealth,
   GENERAL:           synthGeneral,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
+import { detectProtectedDomain } from './ingress.js';
 
 export function synthesizeQuery(session) {
   if (!session) return null;

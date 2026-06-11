@@ -58,6 +58,36 @@ export const FLOOR_RANGES = [
 
 export const CONFIDENCE_THRESHOLD = 0.65;
 
+// Protected entity registry — terms that lock routing to a domain before any
+// keyword scoring runs. Prevents vocabulary contamination where generic words
+// like "home", "funding", or "programs" override specific medical signals.
+// A single match is sufficient to lock the domain — no scoring, no arbitration.
+export const PROTECTED_ENTITY_REGISTRY = {
+  HEALTH: [
+    'hypotonia', 'cerebral palsy', 'autism', 'down syndrome', 'spina bifida',
+    'muscular dystrophy', 'wheelchair', 'mobility aid', 'adaptive equipment',
+    'occupational therapy', 'physical therapy', 'medicaid waiver', 'special needs',
+    'disability', 'developmental delay', 'aba therapy', 'sensory processing',
+    'adaptive mobility', 'pediatric therapy', 'adaptive program', 'cyshcn',
+    'early intervention', 'iep ', ' iep', 'hcbs', 'dme funding',
+  ],
+  CRISIS: [
+    'eviction notice', 'foreclosure notice', 'suicidal', 'domestic abuse',
+  ],
+};
+
+// Returns the locked domain if any protected entity is found in the query,
+// null otherwise. Called as the first gate in detectDomain().
+export function detectProtectedDomain(query) {
+  const q = (query ?? '').toLowerCase();
+  for (const [domain, terms] of Object.entries(PROTECTED_ENTITY_REGISTRY)) {
+    for (const term of terms) {
+      if (q.includes(term)) return domain;
+    }
+  }
+  return null;
+}
+
 // Calibration signals keyed by lens. Observation only — no recommendations.
 // confidence < CONFIDENCE_THRESHOLD = signal does not render.
 export const CALIBRATION_SIGNALS = {
