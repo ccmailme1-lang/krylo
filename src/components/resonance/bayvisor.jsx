@@ -196,11 +196,20 @@ function ModulePlaceholder({ label }) {
 /* ── BAY PANEL ───────────────────────────────────────────────────────────── */
 function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum }) {
   const [titleHovered, setTitleHovered] = useState(false);
+  const [modIdx, setModIdx] = useState(0);
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const setConeColor       = useBayStore(s => s.setConeColor ?? (() => {}));
-  const activeModule       = useBayStore(s => s.bays[bayNum]?.module ?? 'HEADLINE');
   const setModule          = useBayStore(s => s.setModule);
+
+  const activeModule = MODULE_TYPES[modIdx];
+
+  const cycleModule = (dir, e) => {
+    e.stopPropagation();
+    const next = (modIdx + dir + MODULE_TYPES.length) % MODULE_TYPES.length;
+    setModIdx(next);
+    setModule(bayNum, MODULE_TYPES[next]);
+  };
 
   const colorOverride = coneColorOverrides[bayNum] ?? null;
   const baseColor     = cone?.color ?? LIME;
@@ -277,14 +286,11 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         borderTop: '0.5px solid rgba(255,255,255,0.07)',
       }}>
         <span style={{ fontFamily: MONO, fontSize: 12.5, color: LIME, letterSpacing: '0.04em' }}>{pct}%</span>
-        {/* Module selector — replaces legacy mode arrows */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 2, overflowX: 'auto', maxWidth: '60%' }}>
-          {MODULE_TYPES.map(m => (
-            <button key={m} onClick={e => { e.stopPropagation(); setModule(bayNum, m); }}
-              style={{ background: activeModule === m ? 'rgba(102,255,0,0.14)' : 'none', border: `0.5px solid ${activeModule === m ? 'rgba(102,255,0,0.45)' : 'rgba(255,255,255,0.10)'}`, color: activeModule === m ? LIME : DIM, fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', padding: '2px 5px', cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 150ms ease', flexShrink: 0 }}>
-              {m}
-            </button>
-          ))}
+        {/* Module arrow selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button onClick={e => cycleModule(-1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>←</button>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{activeModule}</span>
+          <button onClick={e => cycleModule(1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>→</button>
         </div>
         <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.2em' }}>{d.id} · SYNCED</span>
       </div>
