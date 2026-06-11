@@ -116,79 +116,89 @@ function AlertsMode({ isPremium }) {
   );
 }
 
-/* ── MODULE CONTENT RENDERERS (WO-1713) ──────────────────────────────────── */
-function ModuleHeadline({ assignment, d, color }) {
+/* ── MODULE BODY — each module owns the full bay body (label row + waveform + content) ── */
+function ModuleBody({ module, d, cone, assignment, color, pct }) {
+  const label = { HEADLINE: d.type, METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', VIDEO: 'VIDEO', AUDIO: 'AUDIO' }[module] ?? module;
+  const sublabel = { HEADLINE: assignment?.title ?? '— NO SIGNAL —', METRICS: null, SPARKLINE: null, FIDELITY: null, VIDEO: null, AUDIO: null }[module];
+
+  /* wave for headline + fidelity; sparkline data for sparkline; none for metrics/video/audio */
+  const showWave     = module === 'HEADLINE' || module === 'FIDELITY';
+  const showSparkline = module === 'SPARKLINE';
+  const trend        = cone?.trend ?? [];
+
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 3 }}>
-      <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{d.type}</div>
-      <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
-        {assignment?.title ?? '— NO SIGNAL —'}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000' }}>
+
+      {/* label row */}
+      <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
+        <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{label}</div>
+        {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
       </div>
-    </div>
-  );
-}
 
-function ModuleMetrics({ cone, pct }) {
-  return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
-      {[
-        ['VAL', cone?.value ?? '—'],
-        ['TRD', cone?.trend?.length ?? 0],
-        ['ALT', cone?.alerts?.length ?? 0],
-        ['MIN', cone?.trend?.length ? Math.min(...cone.trend).toFixed(2) : '—'],
-        ['MAX', cone?.trend?.length ? Math.max(...cone.trend).toFixed(2) : '—'],
-        ['PCT', `${pct}%`],
-      ].map(([lbl, val]) => (
-        <div key={lbl} style={{ display: 'flex', gap: 3, alignItems: 'baseline' }}>
-          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>{lbl}</span>
-          <span style={{ fontFamily: MONO, fontSize: 8, color: BRT }}>{val}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ModuleSparkline({ cone, color }) {
-  const trend = cone?.trend ?? [];
-  if (!trend.length) return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>NO TREND DATA</span>
-    </div>
-  );
-  const min = Math.min(...trend), max = Math.max(...trend), range = max - min || 1;
-  const W = 120, H = 36;
-  const pts = trend.map((v, i) => `${(i / (trend.length - 1)) * W},${H - ((v - min) / range) * H}`).join(' ');
-  return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', padding: '4px 10px' }}>
-      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-        <polyline points={pts} fill="none" stroke={color} strokeWidth="1.2" opacity="0.85" />
-      </svg>
-    </div>
-  );
-}
-
-function ModuleFidelity({ assignment, color }) {
-  const fs = assignment?.fs ?? null;
-  const pct = fs !== null ? Math.round(fs * 100) : null;
-  const tier = pct === null ? '—' : pct >= 85 ? 'VALIDATED' : pct >= 50 ? 'ESTIMATED' : 'LOW FIDELITY';
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 5 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>FIDELITY</span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: pct !== null ? color : DIM }}>{pct !== null ? `${pct}%` : '—'}</span>
+      {/* waveform or sparkline */}
+      <div style={{ height: 48, padding: '3px 8px', flexShrink: 0, background: '#000' }}>
+        {showWave && <Wave color={color} />}
+        {showSparkline && trend.length > 1 && (() => {
+          const min = Math.min(...trend), max = Math.max(...trend), range = max - min || 1;
+          const pts = trend.map((v, i) => `${(i / (trend.length - 1)) * 100}%,${48 - ((v - min) / range) * 44}`).join(' ');
+          return (
+            <svg width="100%" height="48" viewBox="0 0 100 48" preserveAspectRatio="none">
+              <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" opacity="0.9" />
+            </svg>
+          );
+        })()}
+        {showSparkline && !trend.length && <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}><span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>NO TREND DATA</span></div>}
       </div>
-      <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }}>
-        {pct !== null && <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 1, transition: 'width 400ms ease' }} />}
-      </div>
-      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{tier}</span>
-    </div>
-  );
-}
 
-function ModulePlaceholder({ label }) {
-  return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-      <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{label} · PENDING</span>
+      {/* content area */}
+      <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
+        {module === 'HEADLINE' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 4 }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{assignment ? 'ASSIGNED' : 'EMPTY BAY'}</span>
+          </div>
+        )}
+        {module === 'METRICS' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', padding: '5px 10px', gap: '2px 0', flex: 1, alignContent: 'center' }}>
+            {[['VAL', cone?.value ?? '—'], ['TRD', cone?.trend?.length ?? 0], ['ALT', cone?.alerts?.length ?? 0],
+              ['MIN', cone?.trend?.length ? Math.min(...cone.trend).toFixed(2) : '—'],
+              ['MAX', cone?.trend?.length ? Math.max(...cone.trend).toFixed(2) : '—'],
+              ['PCT', `${pct}%`]].map(([lbl, val]) => (
+              <div key={lbl} style={{ display: 'flex', gap: 3, alignItems: 'baseline' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>{lbl}</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: BRT }}>{val}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {module === 'SPARKLINE' && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px' }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>MIN {trend.length ? Math.min(...trend).toFixed(2) : '—'}</span>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>MAX {trend.length ? Math.max(...trend).toFixed(2) : '—'}</span>
+          </div>
+        )}
+        {module === 'FIDELITY' && (() => {
+          const fs = assignment?.fs ?? null;
+          const fpct = fs !== null ? Math.round(fs * 100) : null;
+          const tier = fpct === null ? '—' : fpct >= 85 ? 'VALIDATED' : fpct >= 50 ? 'ESTIMATED' : 'LOW FIDELITY';
+          return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 10px', gap: 5 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.18em' }}>Fs</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: fpct !== null ? color : DIM }}>{fpct !== null ? `${fpct}%` : '—'}</span>
+              </div>
+              <div style={{ height: 2, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }}>
+                {fpct !== null && <div style={{ height: '100%', width: `${fpct}%`, background: color, borderRadius: 1 }} />}
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.16em' }}>{tier}</span>
+            </div>
+          );
+        })()}
+        {(module === 'VIDEO' || module === 'AUDIO') && (
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{module} · PENDING</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -238,40 +248,23 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
     }}>
       <Reticles color={reticleColor} />
 
-      {/* ── HEADER (always visible, clickable) ── */}
+      {/* ── COLLAPSED HEADER (click to expand) ── */}
       <div onClick={onToggle} style={{
-        height: COLLAPSED_H,
-        flexShrink: 0,
+        height: COLLAPSED_H, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 10px',
-        cursor: 'pointer',
+        padding: '0 10px', cursor: 'pointer',
         borderBottom: isExpanded ? '0.5px solid rgba(255,255,255,0.07)' : 'none',
       }}>
         <span style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.22em', flexShrink: 0 }}>{d.id}</span>
-        <span
-          onMouseEnter={() => setTitleHovered(true)}
-          onMouseLeave={() => setTitleHovered(false)}
+        <span onMouseEnter={() => setTitleHovered(true)} onMouseLeave={() => setTitleHovered(false)}
           style={{ fontFamily: MONO, fontSize: 9, color: titleHovered ? '#ffffff' : (isLoaded ? color : MID), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
           {mainLabel}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>
-          {d.type}
-        </span>
+        <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>{d.type}</span>
       </div>
 
-      {/* ── WAVEFORM ── */}
-      <div style={{ height: 48, padding: '3px 8px', flexShrink: 0, background: '#000' }}>
-        <Wave color={color} />
-      </div>
-
-      {/* ── MODULE CONTENT ── */}
-      <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
-        {activeModule === 'HEADLINE' && <ModuleHeadline assignment={assignment} d={d} color={color} />}
-        {activeModule === 'METRICS'  && <ModuleMetrics  cone={cone} pct={pct} />}
-        {activeModule === 'SPARKLINE'&& <ModuleSparkline cone={cone} color={color} />}
-        {activeModule === 'FIDELITY' && <ModuleFidelity  assignment={assignment} color={color} />}
-        {(activeModule === 'VIDEO' || activeModule === 'AUDIO') && <ModulePlaceholder label={activeModule} />}
-      </div>
+      {/* ── MODULE BODY — full body changes with selector ── */}
+      <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} />
 
 
       {/* ── FOOTER ── */}
