@@ -238,15 +238,41 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
 
       {/* content area */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
-        {module === 'HEADLINE' && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '8px 12px' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 6 }}>SIGNAL SCORE</span>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-              <span style={{ fontFamily: MONO, fontSize: 56, lineHeight: 0.9, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
-              <span style={{ fontFamily: MONO, fontSize: 16, color: color, opacity: 0.6 }}>%</span>
+        {module === 'HEADLINE' && (() => {
+          const t = cone?.trend ?? [];
+          const velocity = t.length >= 2 ? (t[t.length - 1] - t[t.length - 2]).toFixed(2) : null;
+          const trendUp  = t.length >= 2 ? t[t.length - 1] > t[t.length - 2] : null;
+          return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px 6px', gap: 6 }}>
+              {/* big score */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 4 }}>SIGNAL SCORE</span>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 52, lineHeight: 0.9, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 14, color: color, opacity: 0.6 }}>%</span>
+                </div>
+              </div>
+              {/* two small cards */}
+              <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
+                {/* velocity card */}
+                <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>VELOCITY</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 14, color: BRT, letterSpacing: '0.02em' }}>{velocity ?? '—'}</span>
+                    {velocity && <span style={{ fontFamily: MONO, fontSize: 5, color: DIM }}>pts</span>}
+                  </div>
+                </div>
+                {/* 24hr trend card */}
+                <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>24H TREND</span>
+                  <span style={{ fontSize: 20, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B' }}>
+                    {trendUp === null ? '—' : trendUp ? '↑' : '↓'}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
         {module === 'METRICS' && (() => {
           const t = cone?.trend ?? [];
           const velocity = t.length >= 2 ? (t[t.length - 1] - t[t.length - 2]).toFixed(3) : null;
