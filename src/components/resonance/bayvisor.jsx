@@ -184,8 +184,8 @@ function AVModule() {
 
 /* ── MODULE BODY — each module owns the full bay body (label row + waveform + content) ── */
 function ModuleBody({ module, d, cone, assignment, color, pct }) {
-  const label = { HEADLINE: d.type, METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', 'A/V': 'A/V' }[module] ?? module;
-  const sublabel = { HEADLINE: assignment?.title ?? '— NO SIGNAL —', METRICS: null, SPARKLINE: null, FIDELITY: null, 'A/V': null }[module];
+  const label = { HEADLINE: 'HEADLINE', METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', 'A/V': 'A/V' }[module] ?? module;
+  const sublabel = { HEADLINE: null, METRICS: null, SPARKLINE: null, FIDELITY: null, 'A/V': null }[module];
 
   /* wave for headline + fidelity; sparkline data for sparkline; none for metrics/video/audio */
   const showWave     = module === 'FIDELITY';
@@ -195,13 +195,11 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
   return (
     <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#000' }}>
 
-      {/* label row — hidden for HEADLINE (content covers it) */}
-      {module !== 'HEADLINE' && (
-        <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
-          <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{label}</div>
-          {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
-        </div>
-      )}
+      {/* label row */}
+      <div style={{ padding: '6px 10px 2px', flexShrink: 0 }}>
+        <div style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.22em' }}>{label}</div>
+        {sublabel && <div style={{ fontFamily: MONO, fontSize: 9, color: assignment ? color : DIM, letterSpacing: '0.1em', lineHeight: 1.4, marginTop: 3 }}>{sublabel}</div>}
+      </div>
 
       {/* waveform or sparkline — hidden when unused */}
       <div style={{ height: (showWave || showSparkline) ? 48 : 0, padding: (showWave || showSparkline) ? '3px 8px' : 0, flexShrink: 0, background: '#000', overflow: 'hidden' }}>
@@ -241,48 +239,77 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
       {/* content area */}
       <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
         {module === 'HEADLINE' && (() => {
-          const t = cone?.trend ?? [];
-          const velocity = t.length >= 2 ? (t[t.length - 1] - t[t.length - 2]).toFixed(2) : null;
+          const t        = cone?.trend ?? [];
           const trendUp  = t.length >= 2 ? t[t.length - 1] > t[t.length - 2] : null;
+          const arrowColor = trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B';
           return (
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 10px 6px', gap: 6 }}>
-              {/* big score */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', marginBottom: 4 }}>SIGNAL SCORE</span>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 52, lineHeight: 0.9, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 14, color: color, opacity: 0.6 }}>%</span>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '4px 10px 6px', gap: 6 }}>
+              {/* score: number left, SIGNAL/SCORE label right — no gap */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontFamily: MONO, fontSize: 56, lineHeight: 0.9, color: color, letterSpacing: '-0.04em' }}>{pct}</span>
+                <span style={{ fontFamily: MONO, fontSize: 16, color: color, opacity: 0.6, lineHeight: 0.9, letterSpacing: '-0.02em' }}>%</span>
+                <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 6, justifyContent: 'center' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 6.5, color: DIM, letterSpacing: '0.18em', lineHeight: 1.4 }}>SIGNAL</span>
+                  <span style={{ fontFamily: MONO, fontSize: 6.5, color: DIM, letterSpacing: '0.18em', lineHeight: 1.4 }}>SCORE</span>
                 </div>
               </div>
-              {/* two small cards */}
+              {/* two cards */}
               <div style={{ display: 'flex', gap: 5, flexShrink: 0 }}>
-                {/* velocity card — mini sparkline */}
+                {/* VELOCITY — area chart with gradient fill */}
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>VELOCITY</span>
                   {t.length > 1 ? (() => {
                     const vels = t.slice(1).map((v, i) => v - t[i]);
                     const vmin = Math.min(...vels), vmax = Math.max(...vels), vrange = vmax - vmin || 1;
-                    const W = 80, H = 22;
-                    const segs = vels.map((v, i) => ({
-                      x1: (i / (vels.length - 1)) * W,
-                      y1: H - ((vels[Math.max(0, i-1)] - vmin) / vrange) * (H - 2) - 1,
-                      x2: ((i) / (vels.length - 1)) * W,
-                      y2: H - ((v - vmin) / vrange) * (H - 2) - 1,
-                      c: v > 0 ? '#66FF00' : v < 0 ? '#FF3B3B' : 'rgba(255,255,255,0.25)',
+                    const W = 100, H = 34;
+                    const pts = vels.map((v, i) => ({
+                      x: (i / (vels.length - 1)) * W,
+                      y: H - ((v - vmin) / vrange) * (H - 4) - 2,
                     }));
+                    const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                    const areaPath = linePath + ` L${pts[pts.length-1].x.toFixed(1)},${H} L${pts[0].x.toFixed(1)},${H} Z`;
+                    const gId = `vg-${d.id}`;
                     return (
                       <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-                        {segs.map((s, i) => <line key={i} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} stroke={s.c} strokeWidth="1.5" strokeLinecap="round" />)}
+                        <defs>
+                          <linearGradient id={gId} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#66FF00" stopOpacity="0.45" />
+                            <stop offset="100%" stopColor="#66FF00" stopOpacity="0" />
+                          </linearGradient>
+                        </defs>
+                        <path d={areaPath} fill={`url(#${gId})`} />
+                        <path d={linePath} stroke="#66FF00" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
                   })() : <span style={{ fontFamily: MONO, fontSize: 6, color: DIM }}>—</span>}
                 </div>
-                {/* 24hr trend card — arrow only */}
+                {/* 24H TREND — polyline + directional arrowhead */}
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '5px 8px', display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.18em' }}>24H TREND</span>
-                  <span style={{ fontSize: 24, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? '#66FF00' : '#FF3B3B' }}>
-                    {trendUp === null ? '—' : trendUp ? '↑' : '↓'}
-                  </span>
+                  {t.length > 1 ? (() => {
+                    const tmin = Math.min(...t), tmax = Math.max(...t), trange = tmax - tmin || 1;
+                    const W = 100, H = 34;
+                    const pts = t.map((v, i) => ({
+                      x: (i / (t.length - 1)) * W,
+                      y: H - ((v - tmin) / trange) * (H - 4) - 2,
+                    }));
+                    const linePath = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+                    // arrowhead at last point along direction of last segment
+                    const last = pts[pts.length - 1];
+                    const prev = pts[pts.length - 2];
+                    const dx = last.x - prev.x, dy = last.y - prev.y;
+                    const len = Math.sqrt(dx*dx + dy*dy) || 1;
+                    const nx = dx/len, ny = dy/len;
+                    const aL = 7, aW = 3;
+                    const tip = { x: last.x + nx*3, y: last.y + ny*3 };
+                    const arrowPath = `M${(tip.x - nx*aL - ny*aW).toFixed(1)},${(tip.y - ny*aL + nx*aW).toFixed(1)} L${tip.x.toFixed(1)},${tip.y.toFixed(1)} L${(tip.x - nx*aL + ny*aW).toFixed(1)},${(tip.y - ny*aL - nx*aW).toFixed(1)}`;
+                    return (
+                      <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+                        <path d={linePath} stroke={arrowColor} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d={arrowPath} stroke={arrowColor} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    );
+                  })() : <span style={{ fontFamily: MONO, fontSize: 6, color: DIM }}>—</span>}
                 </div>
               </div>
             </div>
