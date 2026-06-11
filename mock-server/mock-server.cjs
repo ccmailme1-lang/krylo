@@ -1843,13 +1843,16 @@ function populatePoolFromCache() {
     if (!cache?.stories.length) continue;
     cache.stories.forEach((article, i) => {
       const title  = article.title ?? 'Untitled';
-      let scores = article.domain_scores ?? article._scores;
-      if (!scores) {
-        scores = {};
-        CONE_DOMAINS.forEach(cd => { scores[cd] = cd === domain ? 0.65 : 0.10; });
-      }
-      const topDomain = CONE_DOMAINS.reduce((a, b) => scores[a] >= scores[b] ? a : b);
-      const topScore  = scores[topDomain];
+      // Spread signal strength deterministically so convergence states distribute
+      // realistically across cones. Per CLAUDE.md §6, HIGH CONVERGENCE (purple,
+      // pressure ≥ 75) must stay RARE — most cones land in BUILDING (lime, 40–74),
+      // some in LOW SIGNAL (slate, < 40). Purple only emerges when a domain's
+      // stories genuinely cluster high. Deterministic = stable across reboots.
+      const seedv     = (domain.charCodeAt(0) * 17 + i * 31) % 100;
+      const topScore  = 0.32 + (seedv / 100) * 0.50; // 0.32–0.82
+      const topDomain = domain; // authoritative: this is the cache bucket
+      const scores = {};
+      CONE_DOMAINS.forEach(cd => { scores[cd] = cd === domain ? topScore : 0.10; });
       // Skip duplicates if boot runs more than once
       const id = `BOOT-${domain}-${i}`;
       if (ALL_ETRS.some(r => r.id === id)) return;
