@@ -2,7 +2,7 @@
 // Posture: COLLAPSED (26px header strip) → EXPANDED (180px full HUD)
 // Replaces ConsoleDashboard bar. Same data binding.
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { BAY_MAP } from "../../engine/cones.js";
 import { useBayStore, MODULE_TYPES } from "../../store/usebaystore.js";
 
@@ -116,6 +116,72 @@ function AlertsMode({ isPremium }) {
   );
 }
 
+/* ── A/V MODULE ──────────────────────────────────────────────────────────── */
+const AV_MAX_BYTES = 100 * 1024 * 1024; // 100MB
+
+function AVModule() {
+  const [src,     setSrc]     = useState(null);
+  const [error,   setError]   = useState(null);
+  const [playing, setPlaying] = useState(false);
+  const fileRef = useRef();
+  const vidRef  = useRef();
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > AV_MAX_BYTES) { setError('FILE EXCEEDS 100MB LIMIT'); return; }
+    if (!file.type.startsWith('video/')) { setError('MP4 FILES ONLY'); return; }
+    setError(null);
+    if (src) URL.revokeObjectURL(src);
+    setSrc(URL.createObjectURL(file));
+    setPlaying(false);
+  };
+
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    if (!vidRef.current) return;
+    if (vidRef.current.paused) { vidRef.current.play(); setPlaying(true); }
+    else { vidRef.current.pause(); setPlaying(false); }
+  };
+
+  const eject = (e) => {
+    e.stopPropagation();
+    if (vidRef.current) vidRef.current.pause();
+    if (src) URL.revokeObjectURL(src);
+    setSrc(null); setPlaying(false); setError(null);
+    fileRef.current.value = '';
+  };
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000' }} onClick={e => e.stopPropagation()}>
+      {src ? (
+        <>
+          <video ref={vidRef} src={src} onEnded={() => setPlaying(false)}
+            style={{ flex: 1, width: '100%', objectFit: 'contain', background: '#000', display: 'block' }} />
+          <div style={{ height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
+            <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: LIME, fontFamily: MONO, fontSize: 9, cursor: 'pointer', letterSpacing: '0.14em', padding: 0 }}>
+              {playing ? '⏸' : '▶'}
+            </button>
+            <button onClick={eject} style={{ background: 'none', border: 'none', color: DIM, fontFamily: MONO, fontSize: 6, cursor: 'pointer', letterSpacing: '0.18em', padding: 0, marginLeft: 'auto' }}>
+              EJECT
+            </button>
+          </div>
+        </>
+      ) : (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          {error && <span style={{ fontFamily: MONO, fontSize: 6, color: '#FF3B3B', letterSpacing: '0.16em' }}>{error}</span>}
+          <button onClick={e => { e.stopPropagation(); fileRef.current.click(); }}
+            style={{ background: 'none', border: '0.5px solid rgba(102,255,0,0.35)', color: LIME, fontFamily: MONO, fontSize: 6, letterSpacing: '0.20em', padding: '4px 12px', cursor: 'pointer' }}>
+            IMPORT MP4
+          </button>
+          <span style={{ fontFamily: MONO, fontSize: 5.5, color: DIM, letterSpacing: '0.14em' }}>MAX 100MB</span>
+        </div>
+      )}
+      <input ref={fileRef} type="file" accept="video/mp4,video/*" style={{ display: 'none' }} onChange={handleFile} />
+    </div>
+  );
+}
+
 /* ── MODULE BODY — each module owns the full bay body (label row + waveform + content) ── */
 function ModuleBody({ module, d, cone, assignment, color, pct }) {
   const label = { HEADLINE: d.type, METRICS: 'METRICS', SPARKLINE: 'TREND', FIDELITY: 'FIDELITY SCORE', 'A/V': 'A/V' }[module] ?? module;
@@ -224,11 +290,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
             </div>
           );
         })()}
-        {module === 'A/V' && (
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>A/V · PENDING</span>
-          </div>
-        )}
+        {module === 'A/V' && <AVModule />}
       </div>
     </div>
   );
