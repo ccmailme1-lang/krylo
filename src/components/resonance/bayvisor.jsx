@@ -263,13 +263,12 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       </div>
 
       {/* ── WAVEFORM ── */}
-      <div style={{ height: 48, padding: '3px 8px', flexShrink: 0 }}>
+      <div style={{ height: 48, padding: '3px 8px', flexShrink: 0, background: '#000' }}>
         <Wave color={color} />
       </div>
 
-
       {/* ── MODULE CONTENT ── */}
-      <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch' }}>
+      <div style={{ flex: 1, borderTop: '0.5px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'stretch', background: '#000' }}>
         {activeModule === 'HEADLINE' && <ModuleHeadline assignment={assignment} d={d} color={color} />}
         {activeModule === 'METRICS'  && <ModuleMetrics  cone={cone} pct={pct} />}
         {activeModule === 'SPARKLINE'&& <ModuleSparkline cone={cone} color={color} />}
@@ -288,9 +287,9 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         <span style={{ fontFamily: MONO, fontSize: 12.5, color: LIME, letterSpacing: '0.04em' }}>{pct}%</span>
         {/* Module arrow selector */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <button onClick={e => cycleModule(-1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>←</button>
-          <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{activeModule}</span>
-          <button onClick={e => cycleModule(1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: 0, lineHeight: 1 }}>→</button>
+          <button onClick={e => cycleModule(-1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 10, padding: '0 4px', lineHeight: 1 }}>{'<'}</button>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.18em', textTransform: 'uppercase', minWidth: 72, textAlign: 'center' }}>{activeModule ?? 'HEADLINE'}</span>
+          <button onClick={e => cycleModule(1, e)} style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 10, padding: '0 4px', lineHeight: 1 }}>{'>'}</button>
         </div>
         <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.2em' }}>{d.id} · SYNCED</span>
       </div>
