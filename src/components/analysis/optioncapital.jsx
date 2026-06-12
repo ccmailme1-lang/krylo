@@ -119,7 +119,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange }) {
           x={value > 80 ? dotX - 3 : dotX + 3}
           y={dotY - 4}
           textAnchor={value > 80 ? 'end' : 'start'}
-          fontFamily={MONO} fontSize="7" fontWeight="bold"
+          fontFamily={MONO} fontSize="4.5"
           fill={LIME} letterSpacing="-0.02em"
           style={{ fontVariantNumeric: 'tabular-nums' }}
         >{value}</text>
