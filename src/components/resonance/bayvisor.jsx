@@ -537,7 +537,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         </span>
         {isExpanded ? (
           <button onClick={e => { e.stopPropagation(); onToggle(); }}
-            style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.18)', color: DIM, fontFamily: MONO, fontSize: 8, lineHeight: 1, padding: '1px 5px', cursor: 'pointer', letterSpacing: '0.1em', flexShrink: 0 }}>
+            style={{ background: 'none', border: '0.5px solid rgba(102,255,0,0.35)', color: LIME, fontFamily: MONO, fontSize: 8, lineHeight: 1, padding: '1px 5px', cursor: 'pointer', letterSpacing: '0.1em', flexShrink: 0 }}>
             —
           </button>
         ) : (
