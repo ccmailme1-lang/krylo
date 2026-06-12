@@ -15,6 +15,7 @@ import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALI
 import { arbitrate }                  from '../../engine/aiae.js';
 import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
 import OptionCapital                    from './optioncapital.jsx';
+import { transformIntentToConstraints } from '../../engine/baylogic.js';
 import CoachWell                        from './coachwell.jsx';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
 
@@ -456,6 +457,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [signalVisible,   setSignalVisible]   = useState(false);
   const [processing,      setProcessing]      = useState(false);
   const [optCapResetKey,  setOptCapResetKey]  = useState(0);
+  const [intentMagnitude, setIntentMagnitude] = useState(50);
   const signalShownRef   = useRef(false);
   const processingTimer  = useRef(null);
 
@@ -482,6 +484,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const isLive        = history.length === 0 || currentIndex >= history.length - 1;
   const activeLens    = activeSituation?.lens ?? null;
   const canExecute    = !!activeLens;
+  const bayDomain     = LENS_BROKER_DOMAIN_MAP[activeLens] ?? 'GENERAL';
+  const bayResult     = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
   const scopeDot      = projectedState.stateId >= 4 ? LIME
@@ -827,7 +831,14 @@ export default function AnalysisIdleField({ activeCones = null }) {
           )}
 
           {/* WO-1706 — Option Capital: daily runway metric */}
-          <OptionCapital resetTrigger={optCapResetKey} capital={selectedFloor} onIntentChange={removeSituationToken} />
+          <OptionCapital
+            resetTrigger={optCapResetKey}
+            capital={selectedFloor}
+            onIntentChange={(mag) => { removeSituationToken(); if (mag != null) setIntentMagnitude(mag); }}
+            resolvedThreshold={bayResult.resolvedThreshold}
+            closestResolved={bayResult.closestResolved}
+            resolveScore={bayResult.score}
+          />
 
           {/* Scrollable intake body */}
           <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
@@ -884,18 +895,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
               />
             </div>
 
-            {/* SLOT 2 — FLOOR */}
-            {activeSituation && (
-              <ChainSlot label="WITH">
-                <FloorHistogram
-                  selectedFloor={selectedFloor}
-                  onFloor={v => { trackFloor(v); setSelectedFloor(v); }}
-                />
-              </ChainSlot>
-            )}
-
             {/* SLOT 3 — HORIZON */}
-            {activeSituation && selectedFloor != null && (
+            {activeSituation && (
               <ChainSlot label="OVER">
                 <StaggeredChips
                   chips={HORIZON_ORDER}
@@ -909,7 +910,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
             )}
 
             {/* SLOT 4 — CONTEXT (optional) */}
-            {activeSituation && selectedFloor != null && horizon && (
+            {activeSituation && horizon && (
               <ChainSlot label="SPECIFICALLY">
                 <input
                   value={seedQuery}

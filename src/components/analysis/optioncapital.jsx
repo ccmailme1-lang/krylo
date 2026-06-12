@@ -21,7 +21,7 @@ const CX = 22, CY = 8, CW = 88, CH = 52; // chart area origin + size in viewBox 
 function chartX(v) { return CX + (v / 100) * CW; }
 function chartY(v) { return CY + CH - (v / 100) * CH; } // y-inverted
 
-export default function OptionCapital({ resetTrigger = 0, onIntentChange }) {
+export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolvedThreshold = null, closestResolved = null, resolveScore = null }) {
   const [value,    setValue]    = useState(50);
   const [dragging, setDragging] = useState(false);
   const trackRef = useRef(null);
@@ -49,7 +49,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange }) {
     if (!rect) return;
     const next = Math.round(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)));
     setValue(next);
-    onIntentChange?.();
+    onIntentChange?.(next);
   }, [onIntentChange]);
 
   useEffect(() => {
@@ -151,6 +151,16 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange }) {
         </div>
         <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.06em', flexShrink: 0, fontVariantNumeric: 'tabular-nums', minWidth: 24, textAlign: 'right' }}>{value}</span>
       </div>
+
+      {/* Bay engine resolved output */}
+      {resolvedThreshold != null && (
+        <div style={{ marginTop: 8, fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: resolveScore != null && resolveScore < 0.60 ? 'rgba(102,255,0,0.35)' : 'rgba(102,255,0,0.55)' }}>
+          ↓ RESOLVED AT {resolvedThreshold}
+          {closestResolved != null && (
+            <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>(REQUESTED {closestResolved})</span>
+          )}
+        </div>
+      )}
 
     </div>
   );
