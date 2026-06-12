@@ -199,47 +199,33 @@ function AVModule() {
 function ColorModule({ bayNum }) {
   const overrides    = useBayStore(s => s.coneColorOverrides);
   const setConeColor = useBayStore(s => s.setConeColor);
-  const current      = overrides[bayNum] ?? null;
-  const [sel, setSel] = useState(current ?? '#66FF00');
-
-  const apply = (e) => {
-    e.stopPropagation();
-    setConeColor(bayNum, sel === '' ? null : sel);
-  };
+  const active       = overrides[bayNum] ?? null;
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '0 14px' }} onClick={e => e.stopPropagation()}>
       <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.18em', alignSelf: 'flex-start' }}>CONE COLOR</span>
-      <div style={{ position: 'relative', width: '100%' }}>
-        <select
-          value={sel ?? ''}
-          onChange={e => setSel(e.target.value)}
-          style={{
-            width: '100%', appearance: 'none', background: '#0a0a0a',
-            border: '0.5px solid rgba(255,255,255,0.18)', color: sel || MID,
-            fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em',
-            padding: '5px 24px 5px 8px', cursor: 'pointer', outline: 'none',
-          }}
-        >
-          {COLOR_OPTIONS.map(o => (
-            <option key={o.label} value={o.value ?? ''} style={{ background: '#0a0a0a' }}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: DIM, fontFamily: MONO, fontSize: 8, pointerEvents: 'none' }}>▾</span>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        {COLOR_OPTIONS.map(o => {
+          const isActive = (o.value === null ? active === null : active === o.value);
+          const swatch   = o.value ?? 'rgba(255,255,255,0.15)';
+          return (
+            <button key={o.label} onClick={e => { e.stopPropagation(); setConeColor(bayNum, o.value); }}
+              title={o.label}
+              style={{
+                width: 18, height: 18, borderRadius: '50%',
+                background: swatch,
+                border: isActive ? `2px solid #fff` : `1.5px solid rgba(255,255,255,0.2)`,
+                cursor: 'pointer', padding: 0, flexShrink: 0,
+                boxShadow: isActive ? `0 0 6px ${swatch}` : 'none',
+                transition: 'border 120ms, box-shadow 120ms',
+              }}
+            />
+          );
+        })}
       </div>
-      <button
-        onClick={apply}
-        style={{
-          width: '100%', background: 'none',
-          border: `0.5px solid ${sel || 'rgba(255,255,255,0.18)'}`,
-          color: sel || MID, fontFamily: MONO, fontSize: 8,
-          letterSpacing: '0.22em', padding: '5px 0', cursor: 'pointer',
-        }}
-      >
-        APPLY
-      </button>
+      <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>
+        {COLOR_OPTIONS.find(o => o.value === active)?.label ?? 'DEFAULT'}
+      </span>
     </div>
   );
 }

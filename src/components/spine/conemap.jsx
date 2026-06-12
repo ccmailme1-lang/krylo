@@ -96,7 +96,7 @@ function Cone({ state, position, isSelected = true, isLocked = false }) {
   const leverageN  = activePressure / 100;
   const vector     = { D: leverageN, V: activeVolatility, A: leverageN, T: 0.7 };
   const { theme }  = classifyConvergenceState(vector, 0.8);
-  const stateColor = THEME_COLOR[theme] ?? LIME;
+  const stateColor = state.colorOverride ?? THEME_COLOR[theme] ?? LIME;
 
   // velocity heuristic (Phase A) — deviation from neutral baseline (50)
   const velocity = (activePressure - 50) * 0.3;
@@ -1789,7 +1789,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
 
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, coneColorOverrides = {} }) {
   const { coneState, rawDomains } = useMemo(() => {
     const normalized = signals.map(sig => ({
       // cone_domain (live records) routes to canonical feeders; stubs keep source
@@ -1801,11 +1801,18 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     const byDomain = new Map(aggregated.map(s => [s.domain, s]));
     const sixDomain = CANONICAL_FEEDERS.map(d => byDomain.get(d) ?? { domain: d, pressure: 0, volatility: 0 });
     let state = aggregateToPillars(sixDomain);
+    if (Object.keys(coneColorOverrides).length) {
+      state = state.map(c => {
+        const bayNum = PILLAR_INDEX.indexOf(c.domain) + 1;
+        const override = coneColorOverrides[bayNum] ?? null;
+        return override ? { ...c, colorOverride: override } : c;
+      });
+    }
     if (maxCones) {
       state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
     }
     return { coneState: state, rawDomains: sixDomain };
-  }, [signals, maxCones]);
+  }, [signals, maxCones, coneColorOverrides]);
 
   if (!coneState.length) {
     return (

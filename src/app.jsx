@@ -908,6 +908,7 @@ export default function App() {
                 setSearchPreview({ id: `${a} ${b}`, title: `${a} ${b}`, source: 'arc' });
                 setSelection('technology');
               }}
+              coneColorOverrides={coneColorOverrides}
             />
           </div>
 
