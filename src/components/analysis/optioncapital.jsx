@@ -1,190 +1,156 @@
-// WO-1706 — Option Capital
-// Chevron toggles expand/collapse. No checkbox.
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 const MONO  = "'IBM Plex Mono', monospace";
 const LIME  = '#66FF00';
-const RED   = '#FF3300';
-const STORE = 'krylo_option_capital';
+const STORE = 'krylo_intent_magnitude';
 
-function load() {
-  try { return JSON.parse(localStorage.getItem(STORE) ?? 'null'); } catch { return null; }
-}
+function load()        { try { return JSON.parse(localStorage.getItem(STORE) ?? 'null'); } catch { return null; } }
+function persist(data) { try { localStorage.setItem(STORE, JSON.stringify(data)); } catch {} }
 
-function persist(data) {
-  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch {}
-}
+const TIERS = [
+  { max: 25,  capital: 500,    burn: 150,   capitalLabel: 'UNDER $1K',    horizon: 'NOW',   volatility: 'LOW',      meaning: 'EXPLORATORY'    },
+  { max: 50,  capital: 5000,   burn: 833,   capitalLabel: '$1K – $10K',   horizon: 'SHORT', volatility: 'LOW-MED',  meaning: 'OPEN · LEANING'  },
+  { max: 75,  capital: 50000,  burn: 4167,  capitalLabel: '$10K – $100K', horizon: 'MED',   volatility: 'MEDIUM',   meaning: 'FOCUSED'         },
+  { max: 101, capital: 150000, burn: 12500, capitalLabel: '$100K+',        horizon: 'LONG',  volatility: 'HIGH',     meaning: 'HIGH CONVICTION' },
+];
+function getTier(m) { return TIERS.find(t => m < t.max) ?? TIERS[TIERS.length - 1]; }
 
-function NumInput({ value, onChange, placeholder, step = 500 }) {
-  const adj = (dir) => {
-    const cur = parseFloat(value) || 0;
-    const next = Math.max(0, cur + dir * step);
-    onChange({ target: { value: String(next) } });
-  };
-  return (
-    <div style={{ display: 'flex', width: '100%', boxSizing: 'border-box' }}>
-      <input
-        type="text"
-        inputMode="decimal"
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-        style={{
-          flex: 1, minWidth: 0, boxSizing: 'border-box',
-          background: '#050505', border: '1px solid rgba(255,255,255,0.08)',
-          borderRight: 'none',
-          color: 'rgba(255,255,255,0.8)', fontFamily: MONO, fontSize: 11,
-          padding: '8px 10px', outline: 'none', letterSpacing: '0.04em',
-        }}
-      />
-      <div style={{
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-        border: '1px solid rgba(255,255,255,0.08)',
-      }}>
-        {[1, -1].map(dir => (
-          <button
-            key={dir}
-            type="button"
-            onMouseDown={e => { e.preventDefault(); adj(dir); }}
-            style={{
-              flex: 1, background: 'transparent', border: 'none',
-              borderBottom: dir === 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
-              color: 'rgba(255,255,255,0.25)', cursor: 'pointer',
-              padding: '0 7px', fontSize: 7, lineHeight: 1,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {dir === 1 ? '▲' : '▼'}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+// SVG chart constants
+const CX = 22, CY = 8, CW = 88, CH = 52; // chart area origin + size in viewBox units
 
-export default function OptionCapital({ capital = null, resetTrigger = 0 }) {
-  const [burn,         setBurn]        = useState('');
-  const [capOverride,  setCapOverride] = useState('');
-  const [expanded,     setExpanded]    = useState(false);
-  const [sessionStart, setSessionStart]= useState(null);
+function chartX(v) { return CX + (v / 100) * CW; }
+function chartY(v) { return CY + CH - (v / 100) * CH; } // y-inverted
+
+export default function OptionCapital({ resetTrigger = 0, onIntentChange }) {
+  const [value,    setValue]    = useState(50);
+  const [dragging, setDragging] = useState(false);
+  const trackRef = useRef(null);
   const saveTimer = useRef(null);
 
   useEffect(() => {
     const stored = load();
-    if (!stored) return;
-    if (stored.burn != null)        setBurn(String(stored.burn));
-    if (stored.capOverride != null) setCapOverride(String(stored.capOverride));
-    if (stored.runway != null)      setSessionStart(stored.runway);
+    if (stored?.intentMagnitude != null) setValue(stored.intentMagnitude);
   }, []);
 
   useEffect(() => {
     if (resetTrigger === 0) return;
-    clearTimeout(saveTimer.current);
     localStorage.removeItem(STORE);
-    setBurn('');
-    setCapOverride('');
-    setExpanded(false);
-    setSessionStart(null);
+    setValue(50);
   }, [resetTrigger]);
 
-  const effectiveCap = parseFloat(capOverride) || 0;
-  const burnN        = parseFloat(burn) || 0;
-  const runway       = effectiveCap > 0 && burnN > 0 ? effectiveCap / burnN : null;
-  const delta        = runway != null && sessionStart != null ? runway - sessionStart : null;
+  useEffect(() => {
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => persist({ intentMagnitude: value }), 1500);
+    return () => clearTimeout(saveTimer.current);
+  }, [value]);
+
+  const updateFromX = useCallback((clientX) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const next = Math.round(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)));
+    setValue(next);
+    onIntentChange?.();
+  }, [onIntentChange]);
 
   useEffect(() => {
-    if (runway == null) return;
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      persist({ burn: burnN, capOverride: capOverride ? parseFloat(capOverride) : null, runway });
-    }, 1500);
-    return () => clearTimeout(saveTimer.current);
-  }, [runway, burnN, capOverride]);
+    if (!dragging) return;
+    const onMove = e => updateFromX(e.clientX);
+    const onUp   = () => setDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup',  onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [dragging, updateFromX]);
 
-  const color = runway == null
-    ? 'rgba(255,255,255,0.18)'
-    : runway >= 6 ? LIME
-    : runway < 3  ? RED
-    : 'rgba(255,255,255,0.75)';
+  const tier = getTier(value);
+  const dotX = chartX(value);
+  const dotY = chartY(value);
 
-  const arrow      = delta == null ? '' : delta >= 0 ? ' ↑' : ' ↓';
-  const deltaStr   = delta == null ? '' : (delta >= 0 ? '+' : '-') + Math.abs(delta).toFixed(1);
-  const deltaColor = delta == null ? 'transparent' : delta >= 0 ? LIME : RED;
-  const noData     = runway == null;
+  // Tick marks for axes
+  const ticks = [0, 20, 40, 60, 80, 100];
 
   return (
-    <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '10px 24px 12px' }}>
+    <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '12px 20px 16px', userSelect: 'none' }}>
 
-      {/* Header row — label left, chevron right */}
-      <div
-        onClick={() => setExpanded(v => !v)}
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
-      >
-        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase' }}>
-          OPTION CAPITAL
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, userSelect: 'none' }}>
-          {expanded ? '▴' : '▾'}
-        </span>
+      {/* Header */}
+      <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 10 }}>
+        INTENT STRENGTH MAPPING
       </div>
 
-      {/* Expanded — metric + inputs inline */}
-      {expanded && (
-        <>
-          {/* Metric */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 10 }}>
-            {noData ? (
-              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(102,255,0,0.35)' }}>
-                SET BURN RATE
-              </span>
-            ) : (
-              <>
-                <span style={{ fontFamily: MONO, color, lineHeight: 1 }}>
-                  <span style={{ fontSize: 22, letterSpacing: '-0.02em' }}>{runway.toFixed(1)}</span>
-                  <span style={{ fontSize: 10, letterSpacing: '0.12em', marginLeft: 4 }}>mo</span>
-                </span>
-                {delta != null && (
-                  <span style={{ fontFamily: MONO, fontSize: 11, color: deltaColor, letterSpacing: '0.04em' }}>
-                    {arrow}&nbsp;{deltaStr}
-                  </span>
-                )}
-              </>
-            )}
-          </div>
+      {/* SVG Chart */}
+      <svg viewBox="0 0 120 75" style={{ width: '100%', display: 'block', marginBottom: 10 }}>
+        {/* Grid lines */}
+        {ticks.map(t => (
+          <g key={t}>
+            <line x1={chartX(t)} y1={CY} x2={chartX(t)} y2={CY + CH} stroke="rgba(255,255,255,0.05)" strokeWidth="0.4" />
+            <line x1={CX} y1={chartY(t)} x2={CX + CW} y2={chartY(t)} stroke="rgba(255,255,255,0.05)" strokeWidth="0.4" />
+          </g>
+        ))}
 
-          {/* Inputs */}
-          <div onClick={e => e.stopPropagation()} style={{ marginTop: 14 }}>
-            {!noData && (
-              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.22)', marginBottom: 14 }}>
-                ${effectiveCap.toLocaleString()} / ${burnN.toLocaleString()} mo
-              </div>
-            )}
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 4 }}>
-                LIQUID CAPITAL ($)
-              </div>
-              <NumInput
-                value={capOverride}
-                placeholder={capital ? String(capital) : '47000'}
-                onChange={e => setCapOverride(e.target.value)}
-                step={1000}
-              />
-            </div>
-            <div>
-              <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 4 }}>
-                MONTHLY BURN ($)
-              </div>
-              <NumInput
-                value={burn}
-                placeholder="3200"
-                onChange={e => setBurn(e.target.value)}
-                step={100}
-              />
-            </div>
+        {/* Axes */}
+        <line x1={CX} y1={CY} x2={CX} y2={CY + CH} stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+        <line x1={CX} y1={CY + CH} x2={CX + CW} y2={CY + CH} stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
+
+        {/* Axis labels */}
+        {[0, 50, 100].map(t => (
+          <g key={t}>
+            <text x={chartX(t)} y={CY + CH + 6} textAnchor="middle" fontFamily={MONO} fontSize="4" fill="rgba(255,255,255,0.2)">{t}</text>
+            <text x={CX - 3} y={chartY(t) + 1.5} textAnchor="end" fontFamily={MONO} fontSize="4" fill="rgba(255,255,255,0.2)">{t}</text>
+          </g>
+        ))}
+
+        {/* Axis labels */}
+        <text x={CX + CW / 2} y={75} textAnchor="middle" fontFamily={MONO} fontSize="3.5" fill="rgba(255,255,255,0.15)">RAW INTENT SIGNAL →</text>
+        <text x={CX - 14} y={CY + CH / 2} textAnchor="middle" fontFamily={MONO} fontSize="3.5" fill="rgba(255,255,255,0.15)" transform={`rotate(-90, ${CX - 14}, ${CY + CH / 2})`}>DOMAIN MAP %</text>
+
+        {/* Mapping slope (dashed diagonal) */}
+        <line x1={chartX(0)} y1={chartY(0)} x2={chartX(100)} y2={chartY(100)}
+          stroke="rgba(255,255,255,0.18)" strokeWidth="0.6" strokeDasharray="2 1.5" />
+
+        {/* Current target vertical line */}
+        <line x1={dotX} y1={CY} x2={dotX} y2={CY + CH}
+          stroke="rgba(102,255,0,0.5)" strokeWidth="0.7" />
+
+        {/* Projection crosshair (read-only, derived from slider) */}
+        <line x1={dotX - 3} y1={dotY} x2={dotX + 3} y2={dotY} stroke={LIME} strokeWidth="0.8" />
+        <line x1={dotX} y1={dotY - 3} x2={dotX} y2={dotY + 3} stroke={LIME} strokeWidth="0.8" />
+        <circle cx={dotX} cy={dotY} r="2.5" fill="none" stroke={LIME} strokeWidth="0.7" />
+        {/* HUD counter — floats at crosshair, flips anchor near right edge */}
+        <text
+          x={value > 80 ? dotX - 3 : dotX + 3}
+          y={dotY - 4}
+          textAnchor={value > 80 ? 'end' : 'start'}
+          fontFamily={MONO} fontSize="7" fontWeight="bold"
+          fill={LIME} letterSpacing="-0.02em"
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+        >{value}</text>
+        <text x={value > 80 ? dotX - 3 : dotX + 3} y={dotY - 4 + 4.5} textAnchor={value > 80 ? 'end' : 'start'} fontFamily={MONO} fontSize="2.8" fill="rgba(102,255,0,0.4)" letterSpacing="0.1em">PROJECTION</text>
+      </svg>
+
+      {/* Derived values table */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4, fontFamily: MONO, fontSize: 7, letterSpacing: '0.08em', marginBottom: 14, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        {[
+          { label: 'STATUS',     val: tier.meaning },
+          { label: 'ENVELOPE', val: tier.capitalLabel },
+          { label: 'HORIZON',    val: tier.horizon },
+          { label: 'VOLATILITY', val: tier.volatility },
+        ].map(({ label, val }) => (
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 6, letterSpacing: '0.2em' }}>{label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.6)' }}>{val}</span>
           </div>
-        </>
-      )}
+        ))}
+      </div>
+
+      {/* TARGET slider */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>TARGET</span>
+        <div ref={trackRef} onMouseDown={e => { e.preventDefault(); setDragging(true); updateFromX(e.clientX); }}
+          style={{ flex: 1, position: 'relative', height: 1, background: 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+          <div style={{ position: 'absolute', left: 0, width: `${value}%`, height: '100%', background: 'rgba(102,255,0,0.4)' }} />
+          <div style={{ position: 'absolute', left: `${value}%`, top: '50%', transform: 'translate(-50%,-50%)', width: 8, height: 8, background: LIME, cursor: dragging ? 'grabbing' : 'grab' }} />
+        </div>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.06em', flexShrink: 0, fontVariantNumeric: 'tabular-nums', minWidth: 24, textAlign: 'right' }}>{value}</span>
+      </div>
 
     </div>
   );

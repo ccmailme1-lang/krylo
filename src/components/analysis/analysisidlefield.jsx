@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
@@ -167,6 +167,267 @@ function PacketRow({ packet }) {
   );
 }
 
+// Mock histogram density — 20 bars, 5 per FLOOR_RANGES bucket
+const HIST_DENSITY = [0.22,0.38,0.48,0.62,0.58,0.72,0.88,0.92,0.78,0.68,0.82,0.95,0.88,0.72,0.62,0.52,0.46,0.42,0.32,0.28];
+
+const SIT_ABBREV = {
+  REALTOR: 'HOME', RETIREMENT: 'RETIRE', INVESTOR: 'INCOME',
+  ATHLETE: 'CAREER', FAMILY: 'FAMILY', STUDENT: 'START',
+  TRANSITION: 'OVER', HEALTH: 'HEALTH', SALES: 'BUILD',
+  OPEN: 'OPEN', EXPENSE: 'REDUCE',
+};
+const FLOOR_ABBREV = { 500: '<$1K', 5000: '$1K+', 50000: '$10K+', 150000: '$100K+' };
+
+function TokenBox({ activeSituation, selectedFloor, horizon, seedQuery,
+                    onRemoveSituation, onRemoveFloor, onRemoveHorizon,
+                    onQueryChange, onFocus, onBlur }) {
+  const inputRef = useRef(null);
+  const hasContent = activeSituation || selectedFloor != null || horizon || seedQuery;
+  const tokens = [
+    activeSituation && { id: 'sit',   label: SIT_ABBREV[activeSituation.lens]  ?? activeSituation.lens,  onRemove: onRemoveSituation },
+    activeSituation && selectedFloor != null && { id: 'floor', label: FLOOR_ABBREV[selectedFloor] ?? String(selectedFloor), onRemove: onRemoveFloor },
+    activeSituation && selectedFloor != null && horizon && { id: 'hz', label: HORIZON_LABELS[horizon] ?? horizon, onRemove: onRemoveHorizon },
+  ].filter(Boolean);
+
+  return (
+    <div
+      onClick={() => inputRef.current?.focus()}
+      style={{
+        border: `1px solid ${hasContent ? 'rgba(102,255,0,0.25)' : 'rgba(255,255,255,0.1)'}`,
+        padding: '8px 12px',
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6,
+        cursor: 'text', minHeight: 44,
+        transition: 'border-color 200ms',
+      }}
+    >
+      {tokens.map(t => (
+        <span key={t.id} style={{
+          display: 'inline-flex', alignItems: 'center', gap: 3,
+          borderRadius: 999, border: `1px solid ${LIME}`,
+          padding: '2px 8px 2px 10px',
+          fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+          color: LIME, textTransform: 'uppercase', flexShrink: 0,
+        }}>
+          {t.label}
+          <button onClick={e => { e.stopPropagation(); t.onRemove(); }} style={{
+            background: 'none', border: 'none',
+            color: 'rgba(102,255,0,0.5)', cursor: 'pointer',
+            padding: '0 0 0 2px', fontSize: 12, lineHeight: 1,
+          }}>×</button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        value={seedQuery}
+        onChange={e => onQueryChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder={tokens.length === 0 ? 'build your signal query...' : ''}
+        style={{
+          flex: 1, minWidth: 60,
+          background: 'transparent', border: 'none', outline: 'none',
+          fontFamily: MONO, fontSize: 9,
+          color: '#ffffff', letterSpacing: '0.1em',
+        }}
+      />
+    </div>
+  );
+}
+
+function StaggeredChips({ chips, selected, onSelect, getKey, getLabel, isSelected }) {
+  const containerRef = useRef(null);
+  const [offsets, setOffsets] = useState([]);
+
+  useLayoutEffect(() => {
+    const buttons = containerRef.current?.querySelectorAll('button[data-chip]');
+    if (!buttons?.length) return;
+    const rows = [];
+    let lastTop = -1, rowIdx = -1;
+    buttons.forEach(btn => {
+      const top = Math.round(btn.getBoundingClientRect().top);
+      if (Math.abs(top - lastTop) > 4) { rowIdx++; lastTop = top; }
+      rows.push(rowIdx);
+    });
+    setOffsets(chips.map((_, i) => {
+      const isFirstInRow = i === 0 || rows[i - 1] !== rows[i];
+      return isFirstInRow && rows[i] % 2 === 1 ? 12 : 0;
+    }));
+  }, [chips]);
+
+  return (
+    <div ref={containerRef} style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {chips.map((chip, i) => {
+        const key = getKey(chip);
+        const label = getLabel(chip);
+        const active = isSelected(chip, selected);
+        return (
+          <button
+            key={key}
+            data-chip="1"
+            onClick={() => onSelect(chip)}
+            style={{
+              marginLeft: offsets[i] ?? 0,
+              borderRadius: 999,
+              padding: '6px 14px',
+              fontFamily: MONO, fontSize: 9,
+              letterSpacing: '0.14em',
+              textTransform: 'uppercase',
+              background: 'transparent',
+              border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.2)'}`,
+              color: active ? LIME : 'rgba(255,255,255,0.4)',
+              cursor: 'pointer',
+              transition: 'border-color 120ms, color 120ms',
+            }}
+            onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.5)'; e.currentTarget.style.color = '#fff'; } }}
+            onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; } }}
+          >
+            {active ? '✓ ' : ''}{label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function deriveFromMagnitude(m) {
+  if (m < 25)  return { floor: 500,    horizon: 'IMMEDIATE', volatility: 'LOW' };
+  if (m < 50)  return { floor: 5000,   horizon: 'SHORT',     volatility: 'LOW-MED' };
+  if (m < 75)  return { floor: 50000,  horizon: 'MEDIUM',    volatility: 'MEDIUM' };
+  return         { floor: 150000,  horizon: 'LONG',      volatility: 'HIGH' };
+}
+
+function TargetSlider({ value, onChange, resolvedThreshold, closestResolved }) {
+  const derived    = deriveFromMagnitude(value);
+  const trackRef   = useRef(null);
+  const [dragging, setDragging] = useState(false);
+
+  const updateFromX = (clientX) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    onChange(Math.round(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100))));
+  };
+
+  const startDrag = (e) => { e.preventDefault(); setDragging(true); updateFromX(e.clientX); };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = e => updateFromX(e.clientX);
+    const onUp   = () => setDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div style={{ userSelect: 'none' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em' }}>INTENT STRENGTH</span>
+        <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, letterSpacing: '0.06em', fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+      </div>
+      <div ref={trackRef} onMouseDown={startDrag} style={{ position: 'relative', height: 1, background: 'rgba(255,255,255,0.12)', cursor: 'pointer', margin: '4px 0 16px' }}>
+        <div style={{ position: 'absolute', left: 0, width: `${value}%`, height: '100%', background: 'rgba(102,255,0,0.4)' }} />
+        <div style={{ position: 'absolute', left: `${value}%`, top: '50%', transform: 'translate(-50%,-50%)', width: 8, height: 8, background: LIME, cursor: dragging ? 'grabbing' : 'grab' }} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em' }}>
+        {[
+          { label: 'CAPITAL',    val: FLOOR_RANGES.find(r => r.value === derived.floor)?.label ?? '—' },
+          { label: 'HORIZON',    val: HORIZON_LABELS[derived.horizon] ?? derived.horizon },
+          { label: 'VOLATILITY', val: derived.volatility },
+        ].map(({ label, val }) => (
+          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ color: 'rgba(255,255,255,0.2)' }}>{label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.55)' }}>{val}</span>
+          </div>
+        ))}
+      </div>
+      {resolvedThreshold != null && (
+        <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 8, color: 'rgba(102,255,0,0.4)', letterSpacing: '0.2em' }}>
+          ↓ RESOLVED AT {resolvedThreshold}
+          {closestResolved != null && <span style={{ color: 'rgba(255,255,255,0.2)' }}> (requested {closestResolved})</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FloorHistogram({ selectedFloor, onFloor }) {
+  const trackRef = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const [pct, setPct] = useState(() => {
+    if (!selectedFloor) return 0.625; // default to 3rd bucket
+    const idx = FLOOR_RANGES.findIndex(r => r.value === selectedFloor);
+    return idx >= 0 ? (idx + 0.5) / FLOOR_RANGES.length : 0.625;
+  });
+
+  const bucketIdx = Math.min(FLOOR_RANGES.length - 1, Math.floor(pct * FLOOR_RANGES.length));
+  const barsPerBucket = HIST_DENSITY.length / FLOOR_RANGES.length; // 5
+
+  const updatePct = (clientX) => {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const newPct = Math.max(0.01, Math.min(0.99, (clientX - rect.left) / rect.width));
+    setPct(newPct);
+    const idx = Math.min(FLOOR_RANGES.length - 1, Math.floor(newPct * FLOOR_RANGES.length));
+    onFloor(FLOOR_RANGES[idx].value);
+  };
+
+  const startDrag = (e) => { e.preventDefault(); setDragging(true); updatePct(e.clientX); };
+
+  useEffect(() => {
+    if (!dragging) return;
+    const onMove = (e) => updatePct(e.clientX);
+    const onUp   = () => setDragging(false);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, [dragging]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div style={{ userSelect: 'none' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 40, marginBottom: 10 }}>
+        {HIST_DENSITY.map((d, i) => {
+          const barBucket = Math.floor(i / barsPerBucket);
+          const inRange   = barBucket <= bucketIdx;
+          return (
+            <div key={i} style={{
+              flex: 1, height: `${d * 100}%`,
+              background: inRange ? LIME : 'rgba(255,255,255,0.12)',
+              transition: 'background 100ms',
+            }} />
+          );
+        })}
+      </div>
+      <div ref={trackRef} onMouseDown={startDrag} style={{ position: 'relative', height: 1, background: 'rgba(255,255,255,0.12)', cursor: 'pointer', margin: '0 0 8px' }}>
+        <div style={{ position: 'absolute', left: 0, width: `${pct * 100}%`, height: '100%', background: 'rgba(102,255,0,0.4)' }} />
+        <div style={{
+          position: 'absolute', left: `${pct * 100}%`, top: '50%',
+          transform: 'translate(-50%,-50%)',
+          width: 6, height: 6, background: LIME, cursor: dragging ? 'grabbing' : 'grab',
+        }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em' }}>
+        <span style={{ color: 'rgba(255,255,255,0.2)' }}>$0</span>
+        <span style={{ color: LIME }}>{FLOOR_RANGES[bucketIdx].label}</span>
+        <span style={{ color: 'rgba(255,255,255,0.2)' }}>$100K+</span>
+      </div>
+    </div>
+  );
+}
+
+function ChainSlot({ label, children }) {
+  return (
+    <>
+      <hr style={{ border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)', margin: '14px 0' }} />
+      <div style={{ marginBottom: 24, opacity: 0, animation: 'slot-enter 280ms ease forwards' }}>
+        <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
+          {label}
+        </div>
+        {children}
+      </div>
+    </>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AnalysisIdleField({ activeCones = null }) {
 
@@ -186,7 +447,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   // Intake state
   const [activeSituation, setActiveSituation] = useState(null);
   const [seedQuery,       setSeedQuery]       = useState('');
-  const [selectedFloor,   setSelectedFloor]   = useState(() => topFloor(FLOOR_RANGES));
+  const [selectedFloor,   setSelectedFloor]   = useState(null);
   const [horizon,         setHorizon]         = useState(null);
   const [focused,         setFocused]         = useState(false);
   const [missingField,    setMissingField]    = useState(null);
@@ -220,7 +481,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const rankedSituations = useMemo(() => sortedSituations(SITUATIONS), [activeSituation]); // re-rank after each selection
   const isLive        = history.length === 0 || currentIndex >= history.length - 1;
   const activeLens    = activeSituation?.lens ?? null;
-  const canExecute    = !!activeLens && seedQuery.trim().length > 0;
+  const canExecute    = !!activeLens;
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
   const scopeDot      = projectedState.stateId >= 4 ? LIME
@@ -236,6 +497,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   useEffect(() => { fieldParamsRef.current    = fieldParams;    }, [fieldParams]);
   useEffect(() => { projectedStateRef.current = projectedState; }, [projectedState]);
   useEffect(() => () => clearTimeout(processingTimer.current), []);
+
 
   // Intake scroll indicators
   const intakeRef = useRef(null);
@@ -347,6 +609,13 @@ export default function AnalysisIdleField({ activeCones = null }) {
     }
   }
 
+  function removeSituationToken() {
+    setActiveSituation(null); setSelectedFloor(null); setHorizon(null);
+    setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
+  }
+  function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); }
+  function removeHorizonToken() { setHorizon(null); }
+
   function handleQueryBlur() {
     setFocused(false);
     if (!seedQuery.trim() || !activeLens) return;
@@ -371,8 +640,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   }
 
   function handleExecute() {
-    if (!activeLens)       { setMissingField('BASE');   return; }
-    if (!seedQuery.trim()) { setMissingField('TARGET'); return; }
+    if (!activeLens) { setMissingField('BASE'); return; }
     setMissingField(null);
     if (selectedFloor != null) trackFloor(selectedFloor);
     trackRules(activeLens, rules);
@@ -479,6 +747,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
         @keyframes vector-incomplete { 0%,100% { box-shadow: 0 0 0 1px rgba(102,255,0,0.7);  } 50% { box-shadow: 0 0 0 1px rgba(102,255,0,0.1);  } }
         @keyframes results-enter  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes processing-pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+        @keyframes slot-enter     { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
         .attractor-active  { animation: attractor-pulse   2.4s linear infinite; }
         .vector-incomplete { animation: vector-incomplete 0.9s ease-in-out infinite; }
         .aif-btn-live:hover { background: rgba(102,255,0,0.04); border-color: rgba(102,255,0,0.5); color: ${LIME}; }
@@ -524,37 +793,41 @@ export default function AnalysisIdleField({ activeCones = null }) {
             )}
           </div>
 
-          {/* QUERY — fixed above Option Capital */}
-          <div style={{ flexShrink: 0, padding: '20px 24px 16px', borderBottom: `1px solid ${BORDER_MED}`, opacity: hasSession ? 0 : 1, pointerEvents: hasSession ? 'none' : 'auto', transition: 'opacity 0.3s ease' }}>
-            {missingField === 'TARGET' && (
-              <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: LIME, letterSpacing: '0.28em', marginBottom: 8, opacity: 0.8 }}>
-                DESCRIBE YOUR SITUATION TO CONTINUE
-              </div>
-            )}
-            <SectionLabel>WHAT ARE YOU TRYING TO FIGURE OUT?</SectionLabel>
-            <textarea
-              value={seedQuery}
-              onChange={e => { setSeedQuery(e.target.value); if (missingField === 'TARGET') setMissingField(null); }}
-              onFocus={() => setFocused(true)}
-              onBlur={handleQueryBlur}
-              placeholder="Describe the decision you're facing or what you want to understand..."
-              className={missingField === 'TARGET' ? 'vector-incomplete' : attractorActive ? 'attractor-active' : ''}
-              style={{
-                width: '100%', height: 90, background: INPUT_BG,
-                border: `1px solid ${attractorActive ? LIME : 'rgba(255,255,255,0.07)'}`,
-                padding: '14px 16px', fontFamily: MONO, fontSize: FS_TEXTAREA,
-                color: '#ffffff', outline: 'none', resize: 'none',
-                boxSizing: 'border-box', lineHeight: 1.7, transition: 'border-color 300ms',
-              }}
-            />
-            <div style={{ marginTop: 6, fontFamily: MONO, fontSize: FS_HINT, letterSpacing: '0.2em', fontStyle: 'italic', transition: 'color 300ms', color: attractorActive ? 'rgba(102,255,0,0.45)' : 'rgba(255,255,255,0.12)' }}>
-              {attractorActive ? '// ANALYZING...' : '// WAITING FOR INPUT...'}
+          {/* Token search box */}
+          {!hasSession && (
+            <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_MED}` }}>
+              <TokenBox
+                activeSituation={activeSituation}
+                selectedFloor={selectedFloor}
+                horizon={horizon}
+                seedQuery={seedQuery}
+                onRemoveSituation={removeSituationToken}
+                onRemoveFloor={removeFloorToken}
+                onRemoveHorizon={removeHorizonToken}
+                onQueryChange={v => { setSeedQuery(v); if (missingField === 'TARGET') setMissingField(null); }}
+                onFocus={() => setFocused(true)}
+                onBlur={handleQueryBlur}
+              />
+              {(activeSituation || seedQuery.trim()) && (
+                <button
+                  onClick={removeSituationToken}
+                  style={{
+                    marginTop: 6, padding: 0, background: 'transparent', border: 'none',
+                    fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em',
+                    color: 'rgba(255,255,255,0.2)', cursor: 'pointer',
+                    textTransform: 'uppercase',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
+                >
+                  clear form
+                </button>
+              )}
             </div>
-            {signalVisible && activeLens && <div style={{ marginTop: 16 }}><CalibrationSignal lens={activeLens} /></div>}
-          </div>
+          )}
 
           {/* WO-1706 — Option Capital: daily runway metric */}
-          <OptionCapital resetTrigger={optCapResetKey} capital={selectedFloor} />
+          <OptionCapital resetTrigger={optCapResetKey} capital={selectedFloor} onIntentChange={removeSituationToken} />
 
           {/* Scrollable intake body */}
           <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
@@ -591,77 +864,73 @@ export default function AnalysisIdleField({ activeCones = null }) {
               transition: 'opacity 0.3s ease',
             }}>
 
-            {/* SITUATION */}
-            <div style={{ marginBottom: 32 }} className={missingField === 'BASE' ? 'vector-incomplete' : ''}>
+            {/* SLOT 1 — SITUATION */}
+            <div style={{ marginBottom: 24 }} className={missingField === 'BASE' ? 'vector-incomplete' : ''}>
               {missingField === 'BASE' && (
                 <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: LIME, letterSpacing: '0.28em', marginBottom: 10, opacity: 0.8 }}>
                   SELECT YOUR SITUATION TO CONTINUE
                 </div>
               )}
-              <SectionLabel>WHAT DESCRIBES YOUR SITUATION?</SectionLabel>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                {rankedSituations.map(sit => {
-                  const active = activeSituation?.lens === sit.lens;
-                  return (
-                    <button key={sit.lens} onClick={() => selectSituation(sit)} style={{
-                      fontFamily: MONO, fontSize: FS_CHIP, letterSpacing: '0.14em', padding: '9px 10px',
-                      background: 'transparent', color: active ? LIME : 'rgba(255,255,255,0.4)',
-                      border: 'none', borderBottom: active ? '1px solid rgba(102,255,0,0.45)' : '1px solid transparent',
-                      cursor: 'pointer', transition: 'color 120ms',
-                    }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#ffffff'; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
-                    >{active ? '✓ ' : ''}{sit.label}</button>
-                  );
-                })}
+              <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
+                I'M FOCUSED ON
               </div>
+              <StaggeredChips
+                chips={rankedSituations}
+                selected={activeSituation?.lens}
+                onSelect={selectSituation}
+                getKey={s => s.lens}
+                getLabel={s => s.label}
+                isSelected={(s, sel) => s.lens === sel}
+              />
             </div>
 
-            {/* FLOOR */}
-            <div style={{ marginBottom: 32 }}>
-              <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
-                HOW MUCH CAN YOU PUT TOWARD THIS?
-              </div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {FLOOR_RANGES.map(range => {
-                  const active = selectedFloor === range.value;
-                  return (
-                    <button key={range.value} onClick={() => setSelectedFloor(active ? null : range.value)} style={{
-                      flex: 1, fontFamily: MONO, fontSize: FS_SMALL, letterSpacing: '0.06em', padding: '8px 0', border: 'none',
-                      background: 'transparent', color: active ? LIME : 'rgba(255,255,255,0.3)',
-                      cursor: 'pointer', transition: 'color 120ms',
-                      borderBottom: active ? '1px solid rgba(102,255,0,0.45)' : '1px solid rgba(255,255,255,0.07)', whiteSpace: 'nowrap',
-                    }}
-                    onMouseEnter={e => { if (!active) e.currentTarget.style.color = LIME; }}
-                    onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
-                    >{range.label}</button>
-                  );
-                })}
-              </div>
-            </div>
+            {/* SLOT 2 — FLOOR */}
+            {activeSituation && (
+              <ChainSlot label="WITH">
+                <FloorHistogram
+                  selectedFloor={selectedFloor}
+                  onFloor={v => { trackFloor(v); setSelectedFloor(v); }}
+                />
+              </ChainSlot>
+            )}
 
-            {/* TEMPORAL HORIZON */}
-            <div style={{ marginBottom: 32 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-                <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em' }}>HOW FAR OUT ARE YOU THINKING?</div>
-                <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.2em' }}>{HORIZON_META[horizon]?.span ?? ''}</div>
-              </div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {HORIZON_ORDER.map(h => (
-                  <button key={h} onClick={() => setHorizon(horizon === h ? null : h)} style={{
-                    flex: 1, fontFamily: MONO, fontSize: FS_SMALL, letterSpacing: '0.1em', padding: '7px 0', border: 'none',
-                    background: 'transparent', color: horizon === h ? LIME : 'rgba(255,255,255,0.3)',
-                    cursor: 'pointer', transition: 'color 120ms',
-                    borderBottom: horizon === h ? '1px solid rgba(102,255,0,0.45)' : '1px solid rgba(255,255,255,0.07)',
+            {/* SLOT 3 — HORIZON */}
+            {activeSituation && selectedFloor != null && (
+              <ChainSlot label="OVER">
+                <StaggeredChips
+                  chips={HORIZON_ORDER}
+                  selected={horizon}
+                  onSelect={h => setHorizon(horizon === h ? null : h)}
+                  getKey={h => h}
+                  getLabel={h => HORIZON_LABELS[h] ?? h}
+                  isSelected={(h, sel) => h === sel}
+                />
+              </ChainSlot>
+            )}
+
+            {/* SLOT 4 — CONTEXT (optional) */}
+            {activeSituation && selectedFloor != null && horizon && (
+              <ChainSlot label="SPECIFICALLY">
+                <input
+                  value={seedQuery}
+                  onChange={e => setSeedQuery(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onBlur={handleQueryBlur}
+                  placeholder="any detail that sharpens the signal..."
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'transparent',
+                    border: 'none', borderBottom: `1px solid ${seedQuery.trim() ? LIME : 'rgba(255,255,255,0.12)'}`,
+                    padding: '6px 0', fontFamily: MONO, fontSize: FS_CHIP,
+                    color: '#ffffff', outline: 'none', letterSpacing: '0.06em',
+                    transition: 'border-color 200ms',
                   }}
-                  onMouseEnter={e => { if (horizon !== h) e.currentTarget.style.color = LIME; }}
-                  onMouseLeave={e => { if (horizon !== h) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
-                  >{HORIZON_LABELS[h] ?? h}</button>
-                ))}
-              </div>
-            </div>
+                />
+                {signalVisible && activeLens && <div style={{ marginTop: 16 }}><CalibrationSignal lens={activeLens} /></div>}
+              </ChainSlot>
+            )}
 
-            {/* ADVANCED CONSTRAINTS */}
+            {/* PROJECTION CONSTRAINTS */}
             <div style={{ marginBottom: 16 }}>
               <button onClick={() => { setAdvancedOpen(p => { if (!p) trackAdvanced(activeLens); return !p; }); }} style={{
                 fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em',
@@ -669,7 +938,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 display: 'flex', alignItems: 'center', gap: 8,
               }}>
                 <span style={{ color: LIME, fontSize: 13 }}>{advancedOpen ? '▾' : '▸'}</span>
-                ADVANCED CONSTRAINTS
+                PROJECTION CONSTRAINTS
               </button>
               {advancedOpen && (
                 <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -712,9 +981,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           ) : !hasSession ? (
             <div style={{ padding: '16px 24px', borderTop: `1px solid rgba(255,255,255,0.05)`, flexShrink: 0 }}>
-              {missingField && (
+              {missingField === 'BASE' && (
                 <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.22em', marginBottom: 10, textAlign: 'center' }}>
-                  {missingField === 'BASE' ? 'SELECT YOUR SITUATION TO CONTINUE' : 'DESCRIBE YOUR SITUATION TO CONTINUE'}
+                  SELECT YOUR SITUATION TO CONTINUE
                 </div>
               )}
               <button onClick={handleExecute} disabled={processing} style={{
