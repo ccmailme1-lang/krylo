@@ -120,20 +120,20 @@ function AlertsMode({ isPremium }) {
 }
 
 /* ── A/V MODULE ──────────────────────────────────────────────────────────── */
-const AV_MAX_BYTES = 100 * 1024 * 1024;
+const AV_MAX_BYTES = 3 * 1024 * 1024;
 
 function AVModule() {
   const [src,     setSrc]     = useState(null);
   const [error,   setError]   = useState(null);
   const [playing, setPlaying] = useState(false);
   const fileRef = useRef();
-  const vidRef  = useRef();
+  const audRef  = useRef();
 
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > AV_MAX_BYTES) { setError('FILE EXCEEDS 100MB LIMIT'); return; }
-    if (!file.type.startsWith('video/')) { setError('MP4 FILES ONLY'); return; }
+    if (file.size > AV_MAX_BYTES) { setError('FILE EXCEEDS 3MB LIMIT'); return; }
+    if (!file.type.startsWith('audio/')) { setError('MP3 / WAV ONLY'); return; }
     setError(null);
     if (src) URL.revokeObjectURL(src);
     setSrc(URL.createObjectURL(file));
@@ -142,14 +142,14 @@ function AVModule() {
 
   const togglePlay = (e) => {
     e.stopPropagation();
-    if (!vidRef.current) return;
-    if (vidRef.current.paused) { vidRef.current.play(); setPlaying(true); }
-    else { vidRef.current.pause(); setPlaying(false); }
+    if (!audRef.current) return;
+    if (audRef.current.paused) { audRef.current.play(); setPlaying(true); }
+    else { audRef.current.pause(); setPlaying(false); }
   };
 
   const eject = (e) => {
     e.stopPropagation();
-    if (vidRef.current) vidRef.current.pause();
+    if (audRef.current) audRef.current.pause();
     if (src) URL.revokeObjectURL(src);
     setSrc(null); setPlaying(false); setError(null);
     fileRef.current.value = '';
@@ -159,10 +159,13 @@ function AVModule() {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#000' }} onClick={e => e.stopPropagation()}>
       {src ? (
         <>
-          <video ref={vidRef} src={src} onEnded={() => setPlaying(false)}
-            style={{ flex: 1, width: '100%', objectFit: 'contain', background: '#000', display: 'block' }} />
-          <div style={{ height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
-            <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: LIME, fontFamily: MONO, fontSize: 8, cursor: 'pointer', padding: 0 }}>
+          <audio ref={audRef} src={src} onEnded={() => setPlaying(false)} />
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+            <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, lineHeight: 1 }}>♪</span>
+            <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>ALERT LOADED</span>
+          </div>
+          <div style={{ height: 22, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
+            <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: LIME, fontFamily: MONO, fontSize: 10, cursor: 'pointer', padding: 0 }}>
               {playing ? '⏸' : '▶'}
             </button>
             <button onClick={eject} style={{ background: 'none', border: 'none', color: DIM, fontFamily: MONO, fontSize: 8, cursor: 'pointer', letterSpacing: '0.18em', padding: 0, marginLeft: 'auto' }}>
@@ -175,12 +178,12 @@ function AVModule() {
           {error && <span style={{ fontFamily: MONO, fontSize: 8, color: '#FF3B3B', letterSpacing: '0.16em' }}>{error}</span>}
           <button onClick={e => { e.stopPropagation(); fileRef.current.click(); }}
             style={{ background: 'none', border: '0.5px solid rgba(102,255,0,0.35)', color: LIME, fontFamily: MONO, fontSize: 8, letterSpacing: '0.20em', padding: '4px 12px', cursor: 'pointer' }}>
-            IMPORT MP4
+            IMPORT AUDIO
           </button>
-          <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>MAX 100MB</span>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>MP3 · WAV · MAX 3MB</span>
         </div>
       )}
-      <input ref={fileRef} type="file" accept="video/mp4,video/*" style={{ display: 'none' }} onChange={handleFile} />
+      <input ref={fileRef} type="file" accept=".mp3,.wav,audio/mpeg,audio/wav" style={{ display: 'none' }} onChange={handleFile} />
     </div>
   );
 }
