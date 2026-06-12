@@ -245,9 +245,10 @@ function ModuleBody({ module, d, cone, assignment, color, pct, bayNum }) {
   return (
     <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: '#000' }}>
 
-      {/* ── LABEL ROW: 13px lime, letterSpacing 0.22em, padding 8 10 4 ── */}
-      <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
+      {/* ── LABEL ROW ── */}
+      <div style={{ padding: '8px 10px 4px', flexShrink: 0, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
         <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.22em' }}>{label}</span>
+        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em', textTransform: 'uppercase' }}>{d.type}</span>
       </div>
 
       {/* ── CONTENT AREA ── */}
@@ -534,7 +535,14 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
           style={{ fontFamily: MONO, fontSize: 8, color: titleHovered ? '#fff' : (isLoaded ? color : BRT), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
           {mainLabel}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 8, color: MID, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>{d.type}</span>
+        {isExpanded ? (
+          <button onClick={e => { e.stopPropagation(); onToggle(); }}
+            style={{ background: 'none', border: '0.5px solid rgba(255,255,255,0.18)', color: DIM, fontFamily: MONO, fontSize: 8, lineHeight: 1, padding: '1px 5px', cursor: 'pointer', letterSpacing: '0.1em', flexShrink: 0 }}>
+            —
+          </button>
+        ) : (
+          <span style={{ fontFamily: MONO, fontSize: 8, color: MID, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>{d.type}</span>
+        )}
       </div>
 
       {/* ── MODULE BODY ── */}
