@@ -11,8 +11,8 @@ const DIM  = 'rgba(255,255,255,0.22)';
 const MID  = 'rgba(255,255,255,0.50)';
 const BRT  = 'rgba(255,255,255,0.88)';
 
-const COLLAPSED_H = 26;
-const EXPANDED_H  = 248;
+const COLLAPSED_H = 23;
+const EXPANDED_H  = 223;
 
 const DOMAIN_METRIC = {
   B01: { label: 'FREE CASH FLOW', value: '+4.2K', unit: '$'  },
@@ -82,7 +82,7 @@ function AlertsMode({ isPremium }) {
   if (!isPremium) {
     return (
       <div style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center', padding: '0 10px' }}>
-        <div style={{ filter: 'blur(2px)', fontFamily: MONO, fontSize: 10, color: DIM, pointerEvents: 'none' }}>
+        <div style={{ filter: 'blur(2px)', fontFamily: MONO, fontSize: 9, color: DIM, pointerEvents: 'none' }}>
           when signal exceeds...
         </div>
         <div style={{
@@ -90,8 +90,8 @@ function AlertsMode({ isPremium }) {
           background: 'rgba(0,0,0,0.80)', display: 'flex',
           alignItems: 'center', justifyContent: 'space-between', padding: '0 10px',
         }}>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.2em' }}>ALERTS</span>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, border: '1px solid rgba(102,255,0,0.35)', padding: '2px 8px', letterSpacing: '0.16em', cursor: 'pointer' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>ALERTS</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, border: '1px solid rgba(102,255,0,0.35)', padding: '2px 8px', letterSpacing: '0.16em', cursor: 'pointer' }}>
             UPGRADE
           </span>
         </div>
@@ -103,16 +103,16 @@ function AlertsMode({ isPremium }) {
     <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, padding: '0 10px' }}>
       {trigger ? (
         <>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '0.08em' }}>● {trigger}</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '0.08em' }}>● {trigger}</span>
           <button onClick={e => { e.stopPropagation(); setTrigger(null); }}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,60,60,0.7)', fontFamily: MONO, fontSize: 10, cursor: 'pointer', letterSpacing: '0.1em' }}>CLEAR</button>
+            style={{ background: 'none', border: 'none', color: 'rgba(255,60,60,0.7)', fontFamily: MONO, fontSize: 9, cursor: 'pointer', letterSpacing: '0.1em' }}>CLEAR</button>
         </>
       ) : (
         <input value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { e.stopPropagation(); setTrigger(input.trim()); setInput(''); }}}
           onClick={e => e.stopPropagation()}
           placeholder="when signal exceeds..."
-          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '0.5px solid rgba(255,255,255,0.12)', outline: 'none', color: MID, fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '0.5px solid rgba(255,255,255,0.12)', outline: 'none', color: MID, fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em' }}
         />
       )}
     </div>
@@ -162,22 +162,22 @@ function AVModule() {
           <video ref={vidRef} src={src} onEnded={() => setPlaying(false)}
             style={{ flex: 1, width: '100%', objectFit: 'contain', background: '#000', display: 'block' }} />
           <div style={{ height: 24, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8, padding: '0 10px', borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
-            <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: LIME, fontFamily: MONO, fontSize: 10, cursor: 'pointer', padding: 0 }}>
+            <button onClick={togglePlay} style={{ background: 'none', border: 'none', color: LIME, fontFamily: MONO, fontSize: 9, cursor: 'pointer', padding: 0 }}>
               {playing ? '⏸' : '▶'}
             </button>
-            <button onClick={eject} style={{ background: 'none', border: 'none', color: DIM, fontFamily: MONO, fontSize: 10, cursor: 'pointer', letterSpacing: '0.18em', padding: 0, marginLeft: 'auto' }}>
+            <button onClick={eject} style={{ background: 'none', border: 'none', color: DIM, fontFamily: MONO, fontSize: 9, cursor: 'pointer', letterSpacing: '0.18em', padding: 0, marginLeft: 'auto' }}>
               EJECT
             </button>
           </div>
         </>
       ) : (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          {error && <span style={{ fontFamily: MONO, fontSize: 10, color: '#FF3B3B', letterSpacing: '0.16em' }}>{error}</span>}
+          {error && <span style={{ fontFamily: MONO, fontSize: 9, color: '#FF3B3B', letterSpacing: '0.16em' }}>{error}</span>}
           <button onClick={e => { e.stopPropagation(); fileRef.current.click(); }}
-            style={{ background: 'none', border: '0.5px solid rgba(102,255,0,0.35)', color: LIME, fontFamily: MONO, fontSize: 10, letterSpacing: '0.20em', padding: '4px 12px', cursor: 'pointer' }}>
+            style={{ background: 'none', border: '0.5px solid rgba(102,255,0,0.35)', color: LIME, fontFamily: MONO, fontSize: 9, letterSpacing: '0.20em', padding: '4px 12px', cursor: 'pointer' }}>
             IMPORT MP4
           </button>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.14em' }}>MAX 100MB</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.14em' }}>MAX 100MB</span>
         </div>
       )}
       <input ref={fileRef} type="file" accept="video/mp4,video/*" style={{ display: 'none' }} onChange={handleFile} />
@@ -202,7 +202,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
 
       {/* ── LABEL ROW: 13px lime, letterSpacing 0.22em, padding 8 10 4 ── */}
       <div style={{ padding: '8px 10px 4px', flexShrink: 0 }}>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.22em' }}>{label}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.22em' }}>{label}</span>
       </div>
 
       {/* ── CONTENT AREA ── */}
@@ -220,11 +220,11 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
               <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', minHeight: 0 }}>
                 {/* left: score */}
                 <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 54, lineHeight: 0.85, color, letterSpacing: '-0.04em' }}>{pct}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 17, color, opacity: 0.6, lineHeight: 0.85, alignSelf: 'flex-end', marginBottom: 6 }}>%</span>
+                  <span style={{ fontFamily: MONO, fontSize: 49, lineHeight: 0.85, color, letterSpacing: '-0.04em' }}>{pct}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 13, color, opacity: 0.6, lineHeight: 0.85, alignSelf: 'flex-end', marginBottom: 6 }}>%</span>
                   <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 8, gap: 2 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SIGNAL</span>
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SCORE</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SIGNAL</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SCORE</span>
                   </div>
                 </div>
                 {/* right: domain metric fills remaining space */}
@@ -233,10 +233,10 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                   if (!m) return null;
                   return (
                     <div style={{ flex: 1, marginLeft: 10, paddingLeft: 10, borderLeft: '0.5px solid rgba(255,255,255,0.09)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.16em', lineHeight: 1.4 }}>{m.label}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.16em', lineHeight: 1.4 }}>{m.label}</span>
                       <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 22, color, letterSpacing: '-0.02em', lineHeight: 1 }}>{m.value}</span>
-                        {m.unit && <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>{m.unit}</span>}
+                        <span style={{ fontFamily: MONO, fontSize: 18, color, letterSpacing: '-0.02em', lineHeight: 1 }}>{m.value}</span>
+                        {m.unit && <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>{m.unit}</span>}
                       </div>
                     </div>
                   );
@@ -247,7 +247,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
 
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em' }}>VELOCITY</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em' }}>VELOCITY</span>
                   {t.length > 1 ? (() => {
                     const vels  = t.slice(1).map((v, i) => v - t[i]);
                     const vmin  = Math.min(...vels), vmax = Math.max(...vels), vrange = vmax - vmin || 1;
@@ -271,11 +271,11 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                         <path d={line} stroke={LIME} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
-                  })() : <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>—</span>}
+                  })() : <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>—</span>}
                 </div>
 
                 <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '6px 8px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em' }}>24H TREND</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em' }}>24H TREND</span>
                   {t.length > 1 ? (() => {
                     const tmin  = Math.min(...t), tmax = Math.max(...t), trange = tmax - tmin || 1;
                     const W = 100, H = 38;
@@ -298,7 +298,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                         <path d={arrow} stroke={arrowColor} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     );
-                  })() : <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>—</span>}
+                  })() : <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>—</span>}
                 </div>
 
 
@@ -315,18 +315,18 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
           return (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 14px', gap: 12 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.20em' }}>SIGNAL SCORE</span>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: LIME }}>{pct}<span style={{ fontSize: 10, color: DIM, marginLeft: 1 }}>%</span></span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.20em' }}>SIGNAL SCORE</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{pct}<span style={{ fontSize: 9, color: DIM, marginLeft: 1 }}>%</span></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.20em' }}>VELOCITY</span>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: BRT }}>
-                  {velocity ?? '—'}<span style={{ fontSize: 10, color: DIM, marginLeft: 2 }}>pts/tick</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.20em' }}>VELOCITY</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: BRT }}>
+                  {velocity ?? '—'}<span style={{ fontSize: 9, color: DIM, marginLeft: 2 }}>pts/tick</span>
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.20em' }}>TREND</span>
-                <span style={{ fontSize: 15, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? LIME : '#FF3B3B' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.20em' }}>TREND</span>
+                <span style={{ fontSize: 13, lineHeight: 1, color: trendUp === null ? DIM : trendUp ? LIME : '#FF3B3B' }}>
                   {trendUp === null ? '—' : trendUp ? '↑' : '↓'}
                 </span>
               </div>
@@ -366,7 +366,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                   );
                 })() : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>NO DATA</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>NO DATA</span>
                   </div>
                 )}
               </div>
@@ -378,8 +378,8 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                   { label: 'MAX',   value: max   !== null ? max.toFixed(1)   + '%'  : '—' },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.14em' }}>{label}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 12, color: BRT }}>{value}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.14em' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 11, color: BRT }}>{value}</span>
                   </div>
                 ))}
               </div>
@@ -401,15 +401,15 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
               </div>
               {/* trust bar + tier label */}
               <div style={{ flexShrink: 0, padding: '6px 10px 8px', display: 'flex', flexDirection: 'column', gap: 5, borderTop: '0.5px solid rgba(255,255,255,0.07)' }}>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em' }}>TRUST PROGRESS BAR</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em' }}>TRUST PROGRESS BAR</span>
                 <div style={{ height: 4, background: 'rgba(255,255,255,0.07)', borderRadius: 1 }}>
                   {fpct !== null && (
                     <div style={{ height: '100%', width: `${fpct}%`, background: tierColor, borderRadius: 1, transition: 'width 400ms ease, background 400ms ease' }} />
                   )}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em' }}>VALIDATED TIER</span>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: tierColor, letterSpacing: '0.16em' }}>{tier}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em' }}>VALIDATED TIER</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: tierColor, letterSpacing: '0.16em' }}>{tier}</span>
                 </div>
               </div>
             </div>
@@ -479,14 +479,14 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         padding: '0 10px', cursor: 'pointer',
         borderBottom: isExpanded ? '0.5px solid rgba(255,255,255,0.07)' : 'none',
       }}>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.22em', flexShrink: 0 }}>{d.id}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.22em', flexShrink: 0 }}>{d.id}</span>
         <span
           onMouseEnter={() => setTitleHovered(true)}
           onMouseLeave={() => setTitleHovered(false)}
-          style={{ fontFamily: MONO, fontSize: 10, color: titleHovered ? '#fff' : (isLoaded ? color : BRT), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
+          style={{ fontFamily: MONO, fontSize: 9, color: titleHovered ? '#fff' : (isLoaded ? color : BRT), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
           {mainLabel}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: MID, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>{d.type}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0 }}>{d.type}</span>
       </div>
 
       {/* ── MODULE BODY ── */}
@@ -500,17 +500,17 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         padding: '0 10px',
         borderTop: '0.5px solid rgba(255,255,255,0.07)',
       }}>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.2em' }}>{d.id}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.2em' }}>{d.id}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button onClick={e => cycleModule(-1, e)}
-            style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: '0 2px', lineHeight: 1 }}>{'<'}</button>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.18em', textTransform: 'uppercase', minWidth: 72, textAlign: 'center' }}>
+            style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 11, padding: '0 2px', lineHeight: 1 }}>{'<'}</button>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.18em', textTransform: 'uppercase', minWidth: 72, textAlign: 'center' }}>
             {activeModule ?? 'HEADLINE'}
           </span>
           <button onClick={e => cycleModule(1, e)}
-            style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 12, padding: '0 2px', lineHeight: 1 }}>{'>'}</button>
+            style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 11, padding: '0 2px', lineHeight: 1 }}>{'>'}</button>
         </div>
-        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.2em' }}>SYNCED</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.2em' }}>SYNCED</span>
       </div>
     </div>
   );
