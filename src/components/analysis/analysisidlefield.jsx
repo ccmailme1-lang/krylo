@@ -16,6 +16,7 @@ import { arbitrate }                  from '../../engine/aiae.js';
 import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
 import OptionCapital                    from './optioncapital.jsx';
 import { transformIntentToConstraints } from '../../engine/baylogic.js';
+import { computeStructuralFriction }   from '../../engine/structuralfriction.js';
 import CoachWell                        from './coachwell.jsx';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
 
@@ -484,8 +485,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const isLive        = history.length === 0 || currentIndex >= history.length - 1;
   const activeLens    = activeSituation?.lens ?? null;
   const canExecute    = !!activeLens;
-  const bayDomain     = LENS_BROKER_DOMAIN_MAP[activeLens] ?? 'GENERAL';
-  const bayResult     = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
+  const bayDomain      = LENS_BROKER_DOMAIN_MAP[activeLens] ?? 'GENERAL';
+  const bayResult      = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
+  const frictionResult = useMemo(() => computeStructuralFriction(bayDomain, bayResult), [bayDomain, bayResult]);
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
   const scopeDot      = projectedState.stateId >= 4 ? LIME
@@ -681,7 +683,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
       floor:              selectedFloor ?? 0,
     };
 
-    tensor.arbitration = arbitrate(tensor);
+    tensor.horizonMix         = frictionResult.horizonMix;
+    tensor.structuralFriction = frictionResult.structuralFriction;
+    tensor.arbitration        = arbitrate(tensor);
 
     // CommitEvent — emitted at the payload boundary, not at render
     if (tensor.arbitration?.requestId) {
@@ -838,6 +842,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
             resolvedThreshold={bayResult.resolvedThreshold}
             closestResolved={bayResult.closestResolved}
             resolveScore={bayResult.score}
+            horizonMix={frictionResult.horizonMix}
           />
 
           {/* Scrollable intake body */}

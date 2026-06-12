@@ -21,7 +21,7 @@ const CX = 22, CY = 8, CW = 88, CH = 52; // chart area origin + size in viewBox 
 function chartX(v) { return CX + (v / 100) * CW; }
 function chartY(v) { return CY + CH - (v / 100) * CH; } // y-inverted
 
-export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolvedThreshold = null, closestResolved = null, resolveScore = null }) {
+export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolvedThreshold = null, closestResolved = null, resolveScore = null, horizonMix = null }) {
   const [value,    setValue]    = useState(50);
   const [dragging, setDragging] = useState(false);
   const trackRef = useRef(null);
@@ -151,6 +151,25 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
         </div>
         <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.06em', flexShrink: 0, fontVariantNumeric: 'tabular-nums', minWidth: 24, textAlign: 'right' }}>{value}</span>
       </div>
+
+      {/* Horizon Mix — read-only, engine-derived */}
+      {horizonMix != null && (
+        <div style={{ marginTop: 10, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 8 }}>
+          <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.18)', marginBottom: 6 }}>HORIZON MIX</div>
+          {[
+            { label: 'OPERATIONAL', pct: horizonMix.operational },
+            { label: 'STRATEGIC',   pct: horizonMix.strategic   },
+          ].map(({ label, pct }) => (
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+              <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.22)', width: 72, flexShrink: 0 }}>{label}</span>
+              <div style={{ flex: 1, height: 2, background: 'rgba(255,255,255,0.07)' }}>
+                <div style={{ height: '100%', width: `${pct * 100}%`, background: 'rgba(102,255,0,0.45)', transition: 'width 400ms ease' }} />
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.3)', width: 24, textAlign: 'right', flexShrink: 0 }}>{Math.round(pct * 100)}%</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Bay engine resolved output */}
       {resolvedThreshold != null && (

@@ -31,6 +31,44 @@ function ImpactBar({ score, height = 2 }) {
   );
 }
 
+function FrictionCard({ friction }) {
+  const { score, state, vector } = friction;
+  const opDef  = vector.operational > 0.05;
+  const strDef = vector.strategic   > 0.05;
+  const primary = (opDef && strDef)
+    ? (vector.operational >= vector.strategic ? 'OPERATIONAL' : 'STRATEGIC')
+    : opDef ? 'OPERATIONAL' : strDef ? 'STRATEGIC' : null;
+  const remediation = {
+    OPERATIONAL: 'Raise liquidity or execution capacity before pursuing optimization.',
+    STRATEGIC:   'Re-weight long-term goals to match available strategic runway.',
+  }[primary] ?? 'Reduce mismatch between desired structure and available capacity.';
+
+  return (
+    <div style={{
+      padding: '14px 28px',
+      borderBottom: `1px solid ${BORDER}`,
+      borderTop: '2px solid rgba(255,255,255,0.18)',
+      background: 'rgba(255,255,255,0.012)',
+      flexShrink: 0,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)' }}>STRUCTURAL FRICTION</span>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px' }}>
+          {state} · {Math.round(score * 100)}
+        </span>
+      </div>
+      {primary && (
+        <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.14em', marginBottom: 6 }}>
+          ↑ {primary} shortfall
+        </div>
+      )}
+      <div style={{ fontFamily: SERIF, fontSize: 11, lineHeight: 1.6, color: 'rgba(255,255,255,0.38)' }}>
+        {remediation}
+      </div>
+    </div>
+  );
+}
+
 function HeroCard({ action }) {
   return (
     <div style={{
@@ -124,9 +162,11 @@ export default function ActionMatrix() {
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
   const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 
-  const hero      = visibleCards[0] ?? null;
-  const secondary = visibleCards.slice(1);
-  const highImpact = visibleCards.filter(c => c.impact >= 0.8).length;
+  const hero               = visibleCards[0] ?? null;
+  const secondary          = visibleCards.slice(1);
+  const highImpact         = visibleCards.filter(c => c.impact >= 0.8).length;
+  const structuralFriction = session?.tensor?.structuralFriction ?? null;
+  const showFriction       = structuralFriction?.state === 'HIGH_FRICTION';
 
   return (
     <div style={{
@@ -161,6 +201,9 @@ export default function ActionMatrix() {
           </div>
         </div>
       </div>
+
+      {/* ── Structural Friction alert — injected pre-hero when HIGH_FRICTION */}
+      {showFriction && <FrictionCard friction={structuralFriction} />}
 
       {/* ── Hero card ───────────────────────────────────────────────── */}
       {hero && <HeroCard action={hero} />}

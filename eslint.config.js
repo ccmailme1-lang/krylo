@@ -15,4 +15,20 @@ export default [
       'boundary/no-math-in-glass': 'error',
     },
   },
+
+  // WO-1714 — V/F isolation: convergenceclassifier and positioningengine must not import structuralfriction
+  {
+    files: ['src/engine/convergenceclassifier.js', 'src/engine/positioningengine.js'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: ['**/structuralfriction*'] }],
+    },
+  },
+
+  // WO-1714 — F isolation: structuralfriction must not import V-side modules
+  {
+    files: ['src/engine/structuralfriction.js'],
+    rules: {
+      'no-restricted-imports': ['error', { patterns: ['**/convergenceclassifier*', '**/positioningengine*'] }],
+    },
+  },
 ];
