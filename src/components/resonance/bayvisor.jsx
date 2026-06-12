@@ -5,6 +5,13 @@ import React, { useState, useRef } from "react";
 import { BAY_MAP } from "../../engine/cones.js";
 import { useBayStore, MODULE_TYPES } from "../../store/usebaystore.js";
 
+const COLOR_OPTIONS = [
+  { label: 'SIGNAL LIME',     value: '#66FF00' },
+  { label: 'SIGNAL BLUE',     value: '#007FFF' },
+  { label: 'DIAMOND PURPLE',  value: '#8A2BE2' },
+  { label: 'RESET DEFAULT',   value: null      },
+];
+
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 const DIM  = 'rgba(255,255,255,0.22)';
@@ -188,8 +195,57 @@ function AVModule() {
   );
 }
 
+/* ── COLOR MODULE ────────────────────────────────────────────────────────── */
+function ColorModule({ bayNum }) {
+  const overrides    = useBayStore(s => s.coneColorOverrides);
+  const setConeColor = useBayStore(s => s.setConeColor);
+  const current      = overrides[bayNum] ?? null;
+  const [sel, setSel] = useState(current ?? '#66FF00');
+
+  const apply = (e) => {
+    e.stopPropagation();
+    setConeColor(bayNum, sel === '' ? null : sel);
+  };
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '0 14px' }} onClick={e => e.stopPropagation()}>
+      <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.18em', alignSelf: 'flex-start' }}>CONE COLOR</span>
+      <div style={{ position: 'relative', width: '100%' }}>
+        <select
+          value={sel ?? ''}
+          onChange={e => setSel(e.target.value)}
+          style={{
+            width: '100%', appearance: 'none', background: '#0a0a0a',
+            border: '0.5px solid rgba(255,255,255,0.18)', color: sel || MID,
+            fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em',
+            padding: '5px 24px 5px 8px', cursor: 'pointer', outline: 'none',
+          }}
+        >
+          {COLOR_OPTIONS.map(o => (
+            <option key={o.label} value={o.value ?? ''} style={{ background: '#0a0a0a' }}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <span style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: DIM, fontFamily: MONO, fontSize: 8, pointerEvents: 'none' }}>▾</span>
+      </div>
+      <button
+        onClick={apply}
+        style={{
+          width: '100%', background: 'none',
+          border: `0.5px solid ${sel || 'rgba(255,255,255,0.18)'}`,
+          color: sel || MID, fontFamily: MONO, fontSize: 8,
+          letterSpacing: '0.22em', padding: '5px 0', cursor: 'pointer',
+        }}
+      >
+        APPLY
+      </button>
+    </div>
+  );
+}
+
 /* ── MODULE BODY ─────────────────────────────────────────────────────────── */
-function ModuleBody({ module, d, cone, assignment, color, pct }) {
+function ModuleBody({ module, d, cone, assignment, color, pct, bayNum }) {
   const label = {
     HEADLINE:  'HEADLINE',
     METRICS:   'METRICS',
@@ -422,6 +478,9 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
         {/* A/V */}
         {module === 'A/V' && <AVModule />}
 
+        {/* COLOR */}
+        {module === 'COLOR' && <ColorModule bayNum={bayNum} />}
+
         {/* ALERTS */}
         {module === 'ALERTS' && <AlertsMode isPremium={false} />}
 
@@ -493,7 +552,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       </div>
 
       {/* ── MODULE BODY ── */}
-      <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} />
+      <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} bayNum={bayNum} />
 
       {/* ── FOOTER ── */}
       {/* [<] 16px lime · MODULE NAME 13px lime · [>] 16px lime | B01·SYNCED 11px lime */}

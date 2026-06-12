@@ -5,7 +5,7 @@ import { create } from 'zustand';
 export const DOMAIN_REGISTRY = ['TECH', 'LEGAL', 'MARKET', 'HEALTH', 'CAREER', 'FINANCE'];
 
 // WO-1713: Bay Module Selector — content type per bay
-export const MODULE_TYPES = ['HEADLINE', 'METRICS', 'SPARKLINE', 'FIDELITY', 'A/V'];
+export const MODULE_TYPES = ['HEADLINE', 'METRICS', 'SPARKLINE', 'FIDELITY', 'A/V', 'ALERTS', 'COLOR'];
 
 // Default domain-to-bay mapping (mutable at runtime via setBayDomain)
 export const BAY_DOMAINS = {
