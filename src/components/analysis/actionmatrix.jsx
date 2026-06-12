@@ -167,7 +167,7 @@ export default function ActionMatrix() {
 
       {/* ── Supporting stack ────────────────────────────────────────── */}
       {secondary.length > 0 && (
-        <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           <div style={{ padding: '8px 28px 4px', borderBottom: `1px solid ${BORDER}` }}>
             <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.28em' }}>
               SUPPORTING ACTIONS
