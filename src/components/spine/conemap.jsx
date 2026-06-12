@@ -69,7 +69,9 @@ function Cone({ state, position, isSelected = true, isLocked = false }) {
   const isHovered  = hoveredBay === bayId;
 
   const [flashOpacity, setFlashOpacity] = useState(1);
-  const prevTitle = useRef(assignment?.title);
+  const prevTitle       = useRef(assignment?.title);
+  const prevColorRef    = useRef(state.colorOverride);
+
   useEffect(() => {
     if (assignment?.title && assignment.title !== prevTitle.current) {
       prevTitle.current = assignment.title;
@@ -82,6 +84,19 @@ function Cone({ state, position, isSelected = true, isLocked = false }) {
       return () => clearInterval(interval);
     }
   }, [assignment?.title]);
+
+  useEffect(() => {
+    if (state.colorOverride !== prevColorRef.current) {
+      prevColorRef.current = state.colorOverride;
+      let count = 0;
+      const interval = setInterval(() => {
+        setFlashOpacity(o => o < 0.5 ? 1 : 0.1);
+        count++;
+        if (count >= 6) { clearInterval(interval); setFlashOpacity(1); }
+      }, 150);
+      return () => clearInterval(interval);
+    }
+  }, [state.colorOverride]);
 
   // WO-1340: entity signal override — hook fetches live entity data; falls back to ambient while loading
   const { pressure: entityPressure, volatility: entityVolatility, loading: entityLoading } = useEntitySignal(assignment?.title ?? null);
