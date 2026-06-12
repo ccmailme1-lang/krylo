@@ -14,6 +14,15 @@ const BRT  = 'rgba(255,255,255,0.88)';
 const COLLAPSED_H = 26;
 const EXPANDED_H  = 248;
 
+const DOMAIN_METRIC = {
+  B01: { label: 'FREE CASH FLOW', value: '+4.2K', unit: '$'  },
+  B02: { label: 'TIME ROI',       value: '3.1',   unit: 'x'  },
+  B03: { label: 'TIME ROI',       value: '2.8',   unit: 'x'  },
+  B04: { label: 'CAC / CLV',      value: '0.18',  unit: ''   },
+  B05: { label: 'RISK ADJ ROE',   value: '14.2',  unit: '%'  },
+  B06: { label: 'COMPOSITE',      value: '—',     unit: ''   },
+};
+
 const domains = [
   { id: "B01", name: "FINANCIAL",  type: "CAPITAL"      },
   { id: "B02", name: "OPERATING",  type: "EXECUTION"    },
@@ -274,6 +283,21 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                     );
                   })() : <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>—</span>}
                 </div>
+
+                {/* domain metric card */}
+                {(() => {
+                  const m = DOMAIN_METRIC[d.id];
+                  if (!m) return null;
+                  return (
+                    <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.14em', lineHeight: 1.3 }}>{m.label}</span>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 14, color, letterSpacing: '-0.02em' }}>{m.value}</span>
+                        {m.unit && <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>{m.unit}</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
 
               </div>
             </div>
