@@ -187,7 +187,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [activeSituation, setActiveSituation] = useState(null);
   const [seedQuery,       setSeedQuery]       = useState('');
   const [selectedFloor,   setSelectedFloor]   = useState(() => topFloor(FLOOR_RANGES));
-  const [horizon,         setHorizon]         = useState(DEFAULT_HORIZON);
+  const [horizon,         setHorizon]         = useState(null);
   const [focused,         setFocused]         = useState(false);
   const [missingField,    setMissingField]    = useState(null);
   const [advancedOpen,    setAdvancedOpen]    = useState(false);
@@ -605,8 +605,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
                   return (
                     <button key={sit.lens} onClick={() => selectSituation(sit)} style={{
                       fontFamily: MONO, fontSize: FS_CHIP, letterSpacing: '0.14em', padding: '9px 10px',
-                      background: active ? LIME : 'transparent', color: active ? '#000000' : 'rgba(255,255,255,0.4)',
-                      border: 'none', cursor: 'pointer', transition: 'color 120ms, background 120ms',
+                      background: 'transparent', color: active ? LIME : 'rgba(255,255,255,0.4)',
+                      border: 'none', borderBottom: active ? '1px solid rgba(102,255,0,0.45)' : '1px solid transparent',
+                      cursor: 'pointer', transition: 'color 120ms',
                     }}
                     onMouseEnter={e => { if (!active) e.currentTarget.style.color = '#ffffff'; }}
                     onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
@@ -627,9 +628,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
                   return (
                     <button key={range.value} onClick={() => setSelectedFloor(active ? null : range.value)} style={{
                       flex: 1, fontFamily: MONO, fontSize: FS_SMALL, letterSpacing: '0.06em', padding: '8px 0', border: 'none',
-                      background: active ? LIME : 'transparent', color: active ? '#000' : 'rgba(255,255,255,0.3)',
-                      cursor: 'pointer', transition: 'background 120ms, color 120ms',
-                      borderBottom: active ? 'none' : '1px solid rgba(255,255,255,0.07)', whiteSpace: 'nowrap',
+                      background: 'transparent', color: active ? LIME : 'rgba(255,255,255,0.3)',
+                      cursor: 'pointer', transition: 'color 120ms',
+                      borderBottom: active ? '1px solid rgba(102,255,0,0.45)' : '1px solid rgba(255,255,255,0.07)', whiteSpace: 'nowrap',
                     }}
                     onMouseEnter={e => { if (!active) e.currentTarget.style.color = LIME; }}
                     onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
@@ -647,11 +648,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
               </div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {HORIZON_ORDER.map(h => (
-                  <button key={h} onClick={() => setHorizon(h)} style={{
+                  <button key={h} onClick={() => setHorizon(horizon === h ? null : h)} style={{
                     flex: 1, fontFamily: MONO, fontSize: FS_SMALL, letterSpacing: '0.1em', padding: '7px 0', border: 'none',
-                    background: horizon === h ? LIME : 'transparent', color: horizon === h ? '#000' : 'rgba(255,255,255,0.3)',
-                    cursor: 'pointer', transition: 'background 120ms, color 120ms',
-                    borderBottom: horizon === h ? 'none' : '1px solid rgba(255,255,255,0.07)',
+                    background: 'transparent', color: horizon === h ? LIME : 'rgba(255,255,255,0.3)',
+                    cursor: 'pointer', transition: 'color 120ms',
+                    borderBottom: horizon === h ? '1px solid rgba(102,255,0,0.45)' : '1px solid rgba(255,255,255,0.07)',
                   }}
                   onMouseEnter={e => { if (horizon !== h) e.currentTarget.style.color = LIME; }}
                   onMouseLeave={e => { if (horizon !== h) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}
@@ -718,12 +719,12 @@ export default function AnalysisIdleField({ activeCones = null }) {
               )}
               <button onClick={handleExecute} disabled={processing} style={{
                 width: '100%', padding: '15px 0',
-                border: (!processing && !canExecute) ? '1px solid #66FF00' : 'none',
-                background: processing ? 'rgba(102,255,0,0.12)' : canExecute ? LIME : '#000000',
-                color: processing ? LIME : canExecute ? '#000000' : '#66FF00',
+                border: canExecute ? 'none' : '1px solid rgba(255,255,255,0.1)',
+                background: processing ? 'rgba(102,255,0,0.12)' : canExecute ? LIME : 'transparent',
+                color: processing ? LIME : canExecute ? '#000000' : 'rgba(255,255,255,0.22)',
                 fontFamily: MONO, fontSize: FS_EXECUTE, fontWeight: 700,
                 letterSpacing: '0.3em', textTransform: 'uppercase',
-                cursor: processing ? 'default' : 'pointer',
+                cursor: canExecute && !processing ? 'pointer' : 'default',
                 transition: 'background 300ms, color 300ms',
                 animation: processing ? 'processing-pulse 1.1s ease-in-out infinite' : 'none',
               }}
