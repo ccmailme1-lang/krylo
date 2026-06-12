@@ -216,14 +216,31 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
           return (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '6px 10px 8px', gap: 6 }}>
 
-              {/* score block: 72px number · 22px % · 11px SIGNAL/SCORE stacked */}
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                <span style={{ fontFamily: MONO, fontSize: 54, lineHeight: 0.85, color, letterSpacing: '-0.04em' }}>{pct}</span>
-                <span style={{ fontFamily: MONO, fontSize: 17, color, opacity: 0.6, lineHeight: 0.85, alignSelf: 'flex-end', marginBottom: 6 }}>%</span>
-                <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 8, gap: 2 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SIGNAL</span>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SCORE</span>
+              {/* score row: left = 96% SIGNAL SCORE · right = domain metric fills empty space */}
+              <div style={{ flex: 1, display: 'flex', alignItems: 'stretch', minHeight: 0 }}>
+                {/* left: score */}
+                <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 54, lineHeight: 0.85, color, letterSpacing: '-0.04em' }}>{pct}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 17, color, opacity: 0.6, lineHeight: 0.85, alignSelf: 'flex-end', marginBottom: 6 }}>%</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 8, gap: 2 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SIGNAL</span>
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.18em', lineHeight: 1.3 }}>SCORE</span>
+                  </div>
                 </div>
+                {/* right: domain metric fills remaining space */}
+                {(() => {
+                  const m = DOMAIN_METRIC[d.id];
+                  if (!m) return null;
+                  return (
+                    <div style={{ flex: 1, marginLeft: 10, paddingLeft: 10, borderLeft: '0.5px solid rgba(255,255,255,0.09)', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 6 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.16em', lineHeight: 1.4 }}>{m.label}</span>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 3 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 22, color, letterSpacing: '-0.02em', lineHeight: 1 }}>{m.value}</span>
+                        {m.unit && <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>{m.unit}</span>}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* two sub-cards: VELOCITY (area chart) + 24H TREND (polyline + arrow) */}
@@ -284,20 +301,6 @@ function ModuleBody({ module, d, cone, assignment, color, pct }) {
                   })() : <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>—</span>}
                 </div>
 
-                {/* domain metric card */}
-                {(() => {
-                  const m = DOMAIN_METRIC[d.id];
-                  if (!m) return null;
-                  return (
-                    <div style={{ flex: 1, border: '0.5px solid rgba(255,255,255,0.09)', padding: '6px 8px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.14em', lineHeight: 1.3 }}>{m.label}</span>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 14, color, letterSpacing: '-0.02em' }}>{m.value}</span>
-                        {m.unit && <span style={{ fontFamily: MONO, fontSize: 10, color: DIM }}>{m.unit}</span>}
-                      </div>
-                    </div>
-                  );
-                })()}
 
               </div>
             </div>
