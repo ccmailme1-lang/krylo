@@ -473,6 +473,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         padding: '0 10px',
         borderTop: '0.5px solid rgba(255,255,255,0.07)',
       }}>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.2em' }}>{d.id}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <button onClick={e => cycleModule(-1, e)}
             style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 16, padding: '0 2px', lineHeight: 1 }}>{'<'}</button>
@@ -482,7 +483,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
           <button onClick={e => cycleModule(1, e)}
             style={{ background: 'none', border: 'none', color: LIME, cursor: 'pointer', fontFamily: MONO, fontSize: 16, padding: '0 2px', lineHeight: 1 }}>{'>'}</button>
         </div>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.2em' }}>{d.id} · SYNCED</span>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.2em' }}>SYNCED</span>
       </div>
     </div>
   );
