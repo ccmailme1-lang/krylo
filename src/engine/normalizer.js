@@ -20,7 +20,7 @@ const DOMAIN_KEYWORDS = {
   sales:        ['pipeline', 'deal', 'quota', 'close', 'prospect', 'crm', 'outreach', 'conversion', 'mrr', 'churn', 'upsell', 'account'],
   legal:        ['contract', 'litigation', 'compliance', 'regulation', 'clause', 'jurisdiction', 'statute', 'precedent', 'liability', 'settlement'],
   procurement:  ['vendor', 'rfp', 'supply chain', 'bid', 'sourcing', 'logistics', 'inventory', 'sku', 'lead time', 'purchase order'],
-  negotiation:  ['engineer', 'manager', 'senior', 'staff', 'principal', 'startup', 'salary', 'compensation', 'offer', 'base', 'raleigh', 'nc', 'equity', 'vesting', 'hire', 'role', 'leveling'],
+  negotiation:  ['engineer', 'manager', 'senior', 'staff', 'principal', 'startup', 'salary', 'compensation', 'offer', 'base', 'raleigh', 'equity', 'vesting', 'hire', 'role', 'leveling'],
   health:       ['nonprofit', '501c3', 'foundation', 'donation', 'grant', 'fundraising', 'disability', 'down syndrome', 'medicaid', 'therapy', 'adaptive', 'charitable', 'endowment'],
 };
 

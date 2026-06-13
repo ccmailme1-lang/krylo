@@ -18,6 +18,8 @@ import { classifyConvergenceState } from './engine/convergenceclassifier.js';
 import { surfaceRouter, EVENT_DOMAIN, HYDRATION_OP } from './engine/surfacerouter.js';
 import { usesurfacerouter } from './hooks/usesurfacerouter.js';
 import { usereplay }        from './hooks/usereplay.js';
+import { useFredSignals }   from './hooks/usefredsignals.js';
+import { useEdgarSignals }  from './hooks/useedgarsignals.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -648,6 +650,10 @@ export default function App() {
   const { signals: ingestSignals } = useingest(activeQuery);
   const { signals: hnSignals }     = usehnsignals(activeQuery);
   const { signals: frameSignals }  = useframeingest(activeQuery);
+
+  // WO-1719/1720 — Shared pool feeds: dispatch directly to surfaceRouter on poll
+  useFredSignals();
+  useEdgarSignals();
 
   // X-RAY dedicated signal hooks — isolated from activeQuery
   const { signals: xrayIngest } = useingest(xrayQuery);

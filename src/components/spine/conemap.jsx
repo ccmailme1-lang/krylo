@@ -80,10 +80,10 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
       prevTitle.current = assignment.title;
       let count = 0;
       const interval = setInterval(() => {
-        setFlashOpacity(o => o < 0.5 ? 1 : 0.15);
+        setFlashOpacity(o => o < 0.5 ? 1 : 0);
         count++;
-        if (count >= 6) { clearInterval(interval); setFlashOpacity(1); }
-      }, 180);
+        if (count >= 10) { clearInterval(interval); setFlashOpacity(1); }
+      }, 120);
       return () => clearInterval(interval);
     }
   }, [assignment?.title]);
@@ -181,10 +181,9 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           color:         'rgba(255,255,255,0.55)',
           whiteSpace:    'nowrap',
           userSelect:    'none',
-          opacity:       isHovered || isSelected ? 1 : 0.45,
+          opacity:       1,
           transition:    'opacity 200ms ease',
         }}>
-          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>SIGNAL{'      '}</span><span style={{ color: isSelected || isHovered ? '#fff' : 'rgba(255,255,255,0.7)' }}>{kalshiSignal ? kalshiSignal.signal : Math.round(state.pressure ?? 0)}</span></div>
           <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>FORECAST{'    '}</span><span style={{ color: LIME }}>{kalshiSignal ? (kalshiSignal.forecast >= 0 ? '+' : '') + kalshiSignal.forecast + 'D' : '+7D'}</span></div>
           <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>VOLATILITY{'  '}</span><span style={{ color: kalshiSignal?.volatility === 'HIGH' ? '#ff4444' : kalshiSignal?.volatility === 'MED' ? '#ffaa00' : LIME }}>{kalshiSignal ? kalshiSignal.volatility : (state.volatility ?? 0) > 0.6 ? 'HIGH' : (state.volatility ?? 0) > 0.3 ? 'MED' : 'LOW'}</span></div>
           <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>CONFIDENCE{'  '}</span><span style={{ color: isSelected || isHovered ? '#fff' : 'rgba(255,255,255,0.7)' }}>{kalshiSignal ? kalshiSignal.confidence + '%' : Math.round((1 - (state.volatility ?? 0.5)) * 100) + '%'}</span></div>
@@ -473,7 +472,7 @@ function ComparePanel() {
 
 export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], searchPreview = null, onSearchPreviewSave = null }) {
   const [tab, setTab]         = React.useState('stats');
-  const [topTab, setTopTab]   = React.useState('cone');
+  const [topTab, setTopTab]   = React.useState('domain');
   const emaRef                = React.useRef({});
   const prevDomain            = React.useRef(null);
   const panelRef              = React.useRef(null);
@@ -513,6 +512,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     setAssignInput('');
     setCandOpen(false);
     setCandInput('');
+    setTopTab(cone?.domain ? 'cone' : 'domain');
   }, [cone?.domain]);
 
   React.useEffect(() => {
@@ -1114,7 +1114,7 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
 function ThresholdBands() {
   // Asymmetric: extend left further, cap right shorter so the right-edge
   // labels project clear of the inspection panel's screen x-range.
-  const WL = 7.5;
+  const WL = 7.875; // 7.5 + 5% left push
   const WR = 4.5;
   // True unit mapping — must match SignalCone: coneHeight = pow(score/100, 1.4) * CONE_HEIGHT_SCALE
   const yOf = s => Math.pow(s / 100, 1.4) * CONE_HEIGHT_SCALE;
@@ -1363,19 +1363,32 @@ function FrontierRing({ position, state }) {
   });
 
   return (
-    <lineSegments position={[position[0], worldY, position[2]]}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-aAngle"   args={[angles, 1]} />
-      </bufferGeometry>
-      <shaderMaterial
-        ref={matRef}
-        vertexShader={FRONTIER_VERT}
-        fragmentShader={FRONTIER_FRAG}
-        transparent
-        uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility } }}
-      />
-    </lineSegments>
+    <group position={[position[0], worldY, position[2]]}>
+      <lineSegments>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-aAngle"   args={[angles, 1]} />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={FRONTIER_VERT}
+          fragmentShader={FRONTIER_FRAG}
+          transparent
+          linewidth={3}
+          uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility } }}
+        />
+      </lineSegments>
+      <Html position={[ringR + 0.15, 0, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontFamily:    "'IBM Plex Mono', monospace",
+          fontSize:      7,
+          letterSpacing: '0.18em',
+          color:         'rgba(102,255,0,0.55)',
+          whiteSpace:    'nowrap',
+          userSelect:    'none',
+        }}>FRONTIER</div>
+      </Html>
+    </group>
   );
 }
 

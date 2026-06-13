@@ -260,6 +260,14 @@ This is the only WO list in this document. All prior separate lists (Active Regi
 | WO-INTAKE-STAT-003 | Signal Intake Architecture | SPEC LOCKED — A-B-A-A intake model. Situation-only execution. History read-only. Cascade delete. Post-execution adaptive refinement (1 cycle max). Chip chain built (WO-1718). Bay Logic layer = WO-BAY-LOGIC-002. | YES | NO |
 | WO-1718 | Chip Query Builder | COMPLETE — src/components/analysis/analysisidlefield.jsx. Token-in-box search (selected chips → inline tokens). 4 progressive slots: Situation chips / Floor histogram / Horizon chips / Context text. Staggered pill chips (border-radius 999px, lime selected). canExecute = situation only. History pre-fill removed. | YES | YES |
 | RTP-001 | Domain Isolation — Phase A | COMPLETE — src/engine/ingress.js: PROTECTED_ENTITY_REGISTRY + detectProtectedDomain(). src/engine/querysynthesis.js: protected gate fires first in detectDomain() (medical/disability entities lock to HEALTH unconditionally), REAL_ESTATE regex tightened (bare `home` removed — requires purchase/equity companion context), synthHealth() added (Medicaid HCBS waiver, PT/OT referral, adaptive DME, Title V CYSHCN, IEP), HEALTH→synthHealth wired in SYNTH_MAP. Regression corpus: routing_tests/health/ROUTE-00082.yaml + qa_route00082_routing.mjs (5/5 PASS, CI gate). Root cause closed: "home & community access" no longer fires REAL_ESTATE for medical queries. Phase B (Grafana metrics, retrieval masking, training sanitizer) not instantiated — spec only. Baseline: baseline_routing_guard_cac_roas. | YES | YES |
+| 1703  | Health Domain Ingress Normalization | COMPLETE — src/engine/normalizer.js: HEALTH added to SUPPORTED_DOMAINS + DOMAIN_KEYWORDS (nonprofit/501c3/foundation/donation/grant/fundraising/disability/down syndrome/medicaid/therapy/adaptive/charitable/endowment) + nonprofit_signal added to SIGNAL_KEYWORD_MAP. src/engine/ingress.js: nonprofit/501c3/foundation/donation/grant/fundraising/charitable/endowment added to PROTECTED_ENTITY_REGISTRY.HEALTH. src/engine/fidelityscoring.js: HEALTH added to DOMAIN_FIELDS (org_status/cause_category/fundraising_target/nonprofit_capacity). Stage 1→2 routing inconsistency closed. BAU: qa_roleplay_nonprofit.mjs. 6/6 PASS. Fs 95.3% VALIDATED. SHA: ad052fa. | YES | YES |
+| 1719  | FRED Capital Feed (Shared Pool) | COMPLETE — src/hooks/usefredsignals.js. Fetches BAMLH0A0HYM2 (HY credit spread) + T10Y2Y (yield curve) + M2V (money velocity) from FRED API. Normalizes to 0–100. Dispatches via surfaceRouter.dispatchBatch(). 5-min poll. Key: VITE_FRED_API_KEY (specs/fred.env). Wired in app.jsx. BAU: qa_wo1719_1720_feeds.mjs. 17/17 PASS. | YES | YES |
+| 1720  | EDGAR Form D Feed (Shared Pool) | COMPLETE — src/hooks/useedgarsignals.js. Fetches SEC Form D private placement filings (last 7 days) from EDGAR full-text search. Volume → 0–100 pressure score. Dispatches OWNERSHIP + attenuated CAPITAL signal via surfaceRouter.dispatchBatch(). 15-min poll. No auth required. Wired in app.jsx. BAU: qa_wo1719_1720_feeds.mjs. 17/17 PASS. | YES | YES |
+| 1721  | Kalshi Live Endpoint (Shared Pool) | BACKLOG — swap mock in usekalshisignals.js for live Kalshi Markets API. Blocked on API key. Shared pool contract: normalize → dispatchBatch(). | NO | NO |
+| 1722  | Cross-Domain Synthesis Layer (Munger Protocol) | BACKLOG — extend verdictsynthesis.js: when ≥3 domains reach BUILDING CONVERGENCE simultaneously, trigger unified cross-domain synthesis statement with provenance from each domain. Fs gate ≥0.70 per contributing domain. Depends on WO-1336 (COMPLETE). Origin: Munger role-play, Fit=8. | YES | NO |
+| 1723  | Global Macro Ingestion Layer (Dalio Protocol) | BACKLOG — Phase A: G7 sovereign yield series via FRED (same key, WO-1719 pattern). Phase B: cross-country domain pressure overlay. Phase C: debt supercycle classifier via temporal replay (WO-1003). Shared pool dispatch. Origin: Dalio role-play, Fit=8. Depends on WO-1719 (COMPLETE), WO-1003 (COMPLETE), WO-1722. | YES | NO |
+| 1724  | Ingress Keyword Contamination — Ticker + Proper Noun Bleed | BACKLOG — normalizer.js: ticker/proper noun exclusion pass before keyword scoring. querysynthesis.js: LENS takes priority over entity names in synthesis routing. normalizer.js: athletics keyword audit (ARK substring match). Pass criteria: Cathie Wood Stage 1 → investment, Stage 3 → INVESTOR. Depends on WO-1703, WO-1702. | YES | NO |
+| 1725  | Single-Entity Signal Injection Layer (Musk Protocol) | BACKLOG — Phase A: entity pressure attribution — tag signals by named entity at ingestion, weight entity contribution per domain. Phase B: cross-domain entity footprint radar/hex overlay (entity pressure share across all 6 cones). Phase C: sentiment manipulation detection gate (MEDIA convergence not corroborated by CAPITAL/OWNERSHIP = flagged). Pass criteria: entity assigned to ≥2 domains shows attributed cone pressure, footprint in BayHUD, Fs≥0.70. Origin: Musk role-play, Fit=9. Depends on WO-1340 (Phase A COMPLETE), WO-1720 (COMPLETE). | YES | NO |
 
 PAUSED COLORS — do not use until Founder confirms:
     #FDFDFD (Platinum White) — SAB proposed. NOT approved.
@@ -328,3 +336,44 @@ RULE 4 — DESIGN DECISIONS ARE NOT ENGINEERING DECISIONS.
 
 
 R
+
+16. SIGNAL INGESTION ARCHITECTURE (LOCKED — FOUNDER DIRECTIVE 2026-06-13)
+
+SHARED POOL PATTERN — ALL SIGNAL SOURCES MUST FOLLOW THIS CONTRACT:
+
+    Every external feed (FRED, EDGAR, Kalshi, or any future source) MUST:
+    1. Normalize output to 0–100 signal scale before dispatch
+    2. Dispatch via dispatchBatch() into surfacerouter.js — never directly to a cone
+    3. Tag each signal with: { source, domain, signal, confidence, ts }
+    4. Honor parity — no single source may dominate the pressure field
+
+    FORBIDDEN: Connector-to-cone direct wiring. No useFredSignals → CAPITAL cone.
+    REQUIRED: Connector → normalize → surfacerouter → cone assignment by router.
+
+    The normalization contract is the load-bearing boundary. One bad source
+    contaminates the whole field. Every connector must validate before dispatch.
+
+    SCALE RATIONALE: Marginal cost of adding a new signal source = near zero.
+    Every future feed plugs into one ingestion point. No new WO per connector.
+
+17. ROLE-PLAY PROTOCOL (LOCKED — FOUNDER DIRECTIVE 2026-06-13)
+
+When Mr. XS initiates a role-play by providing a Subject (person, persona, archetype, or use case), the agent MUST respond in this exact format — no deviation:
+
+    LENS: [assigned lens from lens tier model]
+
+    **What [Subject] Needs**
+    **What Krylo Delivers**
+    **The Gap**
+    **Fit for Krylo:** [score 1–10] — [one line why]
+
+RULES:
+    - Never break format. No preamble, no summary after.
+    - LENS is assigned first — derived from the persona, must map to the lens tier model (INVESTOR / REALTOR / ATHLETE / SALES / STUDENT / LEGAL / PROCUREMENT / HEALTH / GENERAL).
+    - "What Krylo Delivers" maps ONLY to features that exist in the current codebase, filtered through the assigned LENS.
+    - The 6 domains are LOCKED: TECHNOLOGY · CAPITAL · KNOWLEDGE · LABOR · MEDIA · OWNERSHIP. Never reference a domain outside this list (e.g., no "LEGAL cone", no "HEALTH cone"). All personas must be mapped through these 6.
+    - "The Gap" names what Krylo cannot yet do for this persona — honest, no spin.
+    - "Fit for Krylo" is a 1–10 score — honest assessment of how well Krylo serves this persona TODAY, not in Phase B.
+    - Score ≥ 8: file a WO immediately. The gap identified becomes the WO spec. Add to BACKLOG.
+    - Role-plays may be run through qa_roleplay_*.mjs harnesses when the pipeline is relevant.
+    - Format applies to any Subject: real people, archetypes, fictional characters, organizations.
