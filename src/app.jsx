@@ -930,17 +930,14 @@ export default function App() {
           {/* WO-1333: Scrubber-relative annotation layer */}
           {/* AnnotationLayer removed per Founder — 2026-06-03 */}
 
-          {/* WO-1718A: Leverage Towers — right-side surface overlay */}
+          {/* WO-1718A: Leverage Towers — HUD float, no background */}
           <div style={{
-            position:   'fixed',
-            top:        88,
-            right:      0,
-            bottom:     196,
-            zIndex:     8,
-            display:    'flex',
-            alignItems: 'flex-end',
-            background: 'linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0) 100%)',
-            paddingBottom: 8,
+            position:      'fixed',
+            bottom:        72,
+            right:         16,
+            zIndex:        8,
+            display:       'flex',
+            alignItems:    'flex-end',
             pointerEvents: 'auto',
           }}>
             <LeverageTowers
@@ -949,14 +946,13 @@ export default function App() {
             />
           </div>
 
-          {/* WO-1718A: Surface Bottom — Attention Stack + Delta chart, above scrubber */}
+          {/* WO-1718A: Surface Bottom — HUD float, no panel */}
           <div style={{
-            position: 'fixed',
-            bottom:   56,
-            left:     72,
-            right:    0,
-            height:   140,
-            zIndex:   9,
+            position:      'fixed',
+            bottom:        72,
+            left:          88,
+            zIndex:        9,
+            pointerEvents: 'auto',
           }}>
             <SurfaceBottom
               selectedDomain={selectedSurfaceDomain}

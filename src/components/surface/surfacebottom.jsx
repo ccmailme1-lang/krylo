@@ -58,7 +58,7 @@ function DeltaStepChart({ signals, selectedDomain }) {
   const lastY = yScale(cur);
 
   return (
-    <div style={{ flex: 1, padding: '8px 10px' }}>
+    <div style={{ padding: '0 10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>DELTA STEP-CHART</span>
         <span style={{ color: DIM, fontSize: 7 }}>SIGNAL SCORE ({signal.ticker?.slice(0, 10)})</span>
@@ -107,7 +107,7 @@ function AttentionStack({ signals, selectedDomain, onSignalClick }) {
   }
 
   return (
-    <div style={{ width: 310, borderLeft: '1px solid rgba(255,255,255,0.06)', padding: '8px 0' }}>
+    <div style={{ width: 310, padding: '0 0 0 16px' }}>
       <div style={{ padding: '0 10px 6px', display: 'flex', justifyContent: 'space-between' }}>
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>ATTENTION STACK</span>
         <span style={{ color: DIM, fontSize: 7 }}>HIERARCHY-DRIVEN FOCUS</span>
@@ -169,16 +169,10 @@ export default function SurfaceBottom({ selectedDomain, onSignalClick }) {
 
   return (
     <div style={{
-      position: 'absolute',
-      bottom: 0, left: 0, right: 0,
-      height: 140,
-      background: 'rgba(0,0,0,0.88)',
-      borderTop: '1px solid rgba(102,255,0,0.12)',
-      backdropFilter: 'blur(8px)',
-      WebkitBackdropFilter: 'blur(8px)',
       display: 'flex',
+      gap: 16,
       fontFamily: "'IBM Plex Mono', monospace",
-      overflow: 'hidden',
+      alignItems: 'flex-end',
     }}>
       <DeltaStepChart signals={signals} selectedDomain={selectedDomain} />
       <AttentionStack signals={signals} selectedDomain={selectedDomain} onSignalClick={onSignalClick} />
