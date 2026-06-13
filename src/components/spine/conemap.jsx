@@ -17,7 +17,7 @@ import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 7.2; // 8 × 0.9 — 10% cone size reduction
+const CONE_HEIGHT_SCALE = 5.35; // 4.86 × 1.10 — another 10% height increase, base unchanged
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -677,12 +677,12 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         return (
           <div>
             <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-              <div style={{fontSize:8,letterSpacing:'0.2em',opacity:0.5,marginBottom:8}}>24H VOLATILITY INDEX</div>
-              {leaderboard.map((item,i)=>{const v=velocityDisplay(item.vel);return(<div key={item.domain} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}><span style={{color:'rgba(255,255,255,0.25)',minWidth:14,fontSize:9}}>{i+1}</span><span style={{flex:1,color:'rgba(255,255,255,0.85)',fontSize:9,letterSpacing:'0.1em'}}>{(item.domain??'').toUpperCase()}</span><span style={{color:v.color,fontSize:9}}>{v.glyph}</span><span style={{color:v.color,fontSize:9,minWidth:36,textAlign:'right'}}>{v.text}</span></div>);})}
-            </div>
-            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>ATTENTION STACK</div>
               {mockRows.map((r,i)=>(<div key={r.label} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{color:'rgba(255,255,255,0.2)',fontSize:7,minWidth:10}}>{i+1}</span><span style={{flex:1,fontSize:7,color:'rgba(255,255,255,0.65)',letterSpacing:'0.06em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.label}</span><span style={{fontSize:8,color:'#fff',minWidth:22,textAlign:'right'}}>{r.signal}</span><span style={{fontSize:7,color:r.vol==='HIGH'?'#ff4444':r.vol==='MED'?'#ffaa00':LIME,minWidth:24}}>{r.vol}</span><span style={{fontSize:7,color:r.dir>0?LIME:r.dir<0?'#ff4444':'rgba(255,255,255,0.3)'}}>{r.dir>0?'↑':r.dir<0?'↓':'—'}</span></div>))}
+            </div>
+            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:8,letterSpacing:'0.2em',opacity:0.5,marginBottom:8}}>24H VOLATILITY INDEX</div>
+              {leaderboard.map((item,i)=>{const v=velocityDisplay(item.vel);return(<div key={item.domain} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}><span style={{color:'rgba(255,255,255,0.25)',minWidth:14,fontSize:9}}>{i+1}</span><span style={{flex:1,color:'rgba(255,255,255,0.85)',fontSize:9,letterSpacing:'0.1em'}}>{(item.domain??'').toUpperCase()}</span><span style={{color:v.color,fontSize:9}}>{v.glyph}</span><span style={{color:v.color,fontSize:9,minWidth:36,textAlign:'right'}}>{v.text}</span></div>);})}
             </div>
             <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>DELTA STEPS</div>
@@ -1128,7 +1128,7 @@ function ThresholdBands() {
   return (
     <group>
       {tics.map(t => {
-        const pts = new Float32Array([WR, t.y, 0, WR + 0.35, t.y, 0]);
+        const pts = new Float32Array([-WL - 0.35, t.y, 0, -WL, t.y, 0]);
         return (
           <React.Fragment key={`tic-${t.s}`}>
             <lineSegments>
@@ -1137,7 +1137,7 @@ function ThresholdBands() {
               </bufferGeometry>
               <lineBasicMaterial color="#4A4A4A" transparent opacity={0.35} />
             </lineSegments>
-            <Html position={[WR + 0.55, t.y, 0]} distanceFactor={7}>
+            <Html position={[-WL - 0.55, t.y, 0]} distanceFactor={7}>
               <div style={{
                 fontFamily:    "'IBM Plex Mono', monospace",
                 fontSize:      10,
@@ -1146,6 +1146,7 @@ function ThresholdBands() {
                 whiteSpace:    'nowrap',
                 userSelect:    'none',
                 pointerEvents: 'none',
+                transform:     'translateX(-100%)',
               }}>
                 {t.s}
               </div>
@@ -1163,7 +1164,7 @@ function ThresholdBands() {
               </bufferGeometry>
               <lineBasicMaterial color="#4A4A4A" transparent opacity={b.alpha} />
             </lineSegments>
-            <Html position={[WR + 0.4, b.y, 0]} distanceFactor={7}>
+            <Html position={[-WL - 0.4, b.y, 0]} distanceFactor={7}>
               <div style={{
                 fontFamily:    "'IBM Plex Mono', monospace",
                 fontSize:      15,
@@ -1172,6 +1173,7 @@ function ThresholdBands() {
                 whiteSpace:    'nowrap',
                 userSelect:    'none',
                 pointerEvents: 'none',
+                transform:     'translateX(-100%)',
               }}>
                 {b.label}
               </div>
