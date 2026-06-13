@@ -43,8 +43,7 @@ import { useAnalysisStore }   from './store/useanalysisstore.js';
 import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
-import SurfaceBottom          from './components/surface/surfacebottom.jsx';
-import LeverageTowers         from './components/surface/leveragetowers.jsx';
+import SurfacePanel           from './components/surface/surfacepanel.jsx';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
@@ -930,35 +929,7 @@ export default function App() {
           {/* WO-1333: Scrubber-relative annotation layer */}
           {/* AnnotationLayer removed per Founder — 2026-06-03 */}
 
-          {/* WO-1718A: Leverage Towers — HUD float, above CampaignFunnel */}
-          <div style={{
-            position:      'fixed',
-            bottom:        72,
-            right:         16,
-            zIndex:        12,
-            display:       'flex',
-            alignItems:    'flex-end',
-            pointerEvents: 'auto',
-          }}>
-            <LeverageTowers
-              selectedDomain={selectedSurfaceDomain}
-              onDomainClick={setSelectedSurfaceDomain}
-            />
-          </div>
-
-          {/* WO-1718A: Surface Bottom — HUD float, above CampaignFunnel */}
-          <div style={{
-            position:      'fixed',
-            bottom:        72,
-            left:          88,
-            zIndex:        12,
-            pointerEvents: 'auto',
-          }}>
-            <SurfaceBottom
-              selectedDomain={selectedSurfaceDomain}
-              onSignalClick={s => setSelectedSurfaceDomain(s.domain?.toLowerCase())}
-            />
-          </div>
+          {/* WO-1718A: Surface Panel — removed from hero per Founder */}
 
           {/* WO-1344D: Bay projection overlay (xray/signalmap modes) */}
           <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} />

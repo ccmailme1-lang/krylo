@@ -10,6 +10,7 @@ import { aggregateSignals }       from '../../engine/aggregation.js';
 import { encodeCone }             from '../../engine/coneencoding.js';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 import LeverageLattice            from './leveragelattice.jsx';
+import LeverageTowers             from '../surface/leveragetowers.jsx';
 import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
@@ -472,6 +473,7 @@ function ComparePanel() {
 
 export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], searchPreview = null, onSearchPreviewSave = null }) {
   const [tab, setTab]         = React.useState('stats');
+  const [topTab, setTopTab]   = React.useState('cone');
   const emaRef                = React.useRef({});
   const prevDomain            = React.useRef(null);
   const panelRef              = React.useRef(null);
@@ -564,15 +566,20 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   const isReplay    = timeOffset > 0;
   const hoursBack   = Math.round(timeOffset * 24);
 
-  const leaderboard = [...coneState]
-    .map(c => {
-      const raw = ((c.pressure ?? 50) - 50) * 0.3;
+  const ALL_DOMAINS = ['FINANCIAL','MARKET','KNOWLEDGE','PERSONAL','OPERATING','TIME'];
+  const leaderboard = (() => {
+    const map = {};
+    for (const c of coneState) {
+      const raw  = ((c.pressure ?? 50) - 50) * 0.3;
       const prev = emaRef.current[c.domain] ?? raw;
       const ema  = EMA_ALPHA * raw + (1 - EMA_ALPHA) * prev;
       emaRef.current[c.domain] = ema;
-      return { domain: c.domain, vel: ema, abs: Math.abs(ema) };
-    })
-    .sort((a, b) => b.abs - a.abs);
+      map[(c.domain ?? '').toUpperCase()] = ema;
+    }
+    return ALL_DOMAINS
+      .map(d => ({ domain: d, vel: map[d] ?? 0, abs: Math.abs(map[d] ?? 0) }))
+      .sort((a, b) => b.abs - a.abs);
+  })();
 
   return (
     <div ref={panelRef} style={{
@@ -625,6 +632,72 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
           )}
         </div>
       )}
+
+
+      {/* DOMAIN | CONE toggle */}
+      <div style={{ display: 'flex', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+        {[{ key: 'domain', label: 'DOMAIN' }, { key: 'cone', label: 'CONE' }].map(t => (
+          <button key={t.key} onClick={() => setTopTab(t.key)} style={{
+            flex: 1, background: 'transparent', border: 'none',
+            borderBottom: topTab === t.key ? `1px solid ${LIME}` : '1px solid transparent',
+            color: topTab === t.key ? LIME : 'rgba(255,255,255,0.3)',
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 8, letterSpacing: '0.22em',
+            padding: '0 0 6px 0', cursor: 'pointer', transition: 'color 150ms',
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {topTab === 'domain' && (() => {
+        const domain = (cone.domain ?? '').toUpperCase();
+        const sig    = Math.round(cone.pressure ?? 0);
+        const vol    = cone.volatility ?? 0.4;
+        const domainKey = (cone.domain ?? '').toLowerCase();
+        const DOMAIN_SIGNALS = {
+          financial: ['INTEREST RATE','EQUITY FLOW','CREDIT SPREAD','LIQUIDITY','YIELD CURVE'],
+          operating: ['THROUGHPUT','LATENCY INDEX','ERROR RATE','CAPACITY USE','DEPLOY VEL'],
+          time:      ['SESSION DEPTH','DECAY RATE','RECENCY BIAS','HORIZON COMPRESS','TEMPO'],
+          personal:  ['CAREER VEL','SKILL GAP','NETWORK DENSITY','LEVERAGE RATIO','TIME COMPRESS'],
+          market:    ['SENTIMENT','COVERAGE VEL','NARRATIVE IDX','AMPLIF RATE','CONSENSUS'],
+          knowledge: ['SOURCE DEPTH','CROSS-REF RATE','SIGNAL DECAY','NOVELTY IDX','VERIF RATE'],
+        };
+        const mockRows = (DOMAIN_SIGNALS[domainKey] ?? DOMAIN_SIGNALS.financial).map((label, i) => ({
+          label, signal: Math.max(8, Math.round(sig * (1 - i * 0.08) + (i % 3) * 5)),
+          vol: ['HIGH','MED','LOW','MED','HIGH'][i % 5], dir: [1,1,-1,1,0][i % 5],
+        }));
+        const stepBase = Math.max(20, sig - 15);
+        const steps = [0,2,2,0,4,4,sig-stepBase].reduce((acc,d)=>{acc.push((acc[acc.length-1]??stepBase)+d);return acc;},[]);
+        const dsW=208,dsH=72,dsPad={t:6,r:28,b:14,l:22};
+        const dsIW=dsW-dsPad.l-dsPad.r,dsIH=dsH-dsPad.t-dsPad.b;
+        const dsMin=Math.min(...steps)-2, dsMax=Math.max(...steps)+2;
+        const dsRange=dsMax-dsMin||1;
+        const dsX=i=>dsPad.l+(i/(steps.length-1))*dsIW, dsY=v=>dsPad.t+dsIH-((v-dsMin)/dsRange)*dsIH;
+        const dsPts=[];steps.forEach((v,i)=>{if(i===0){dsPts.push(`${dsX(0)},${dsY(v)}`);return;}dsPts.push(`${dsX(i)},${dsY(steps[i-1])}`);dsPts.push(`${dsX(i)},${dsY(v)}`);});
+        const maxAbs=Math.max(...leaderboard.map(d=>d.abs),1);
+        return (
+          <div>
+            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:8,letterSpacing:'0.2em',opacity:0.5,marginBottom:8}}>24H VOLATILITY INDEX</div>
+              {leaderboard.map((item,i)=>{const v=velocityDisplay(item.vel);return(<div key={item.domain} style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}><span style={{color:'rgba(255,255,255,0.25)',minWidth:14,fontSize:9}}>{i+1}</span><span style={{flex:1,color:'rgba(255,255,255,0.85)',fontSize:9,letterSpacing:'0.1em'}}>{(item.domain??'').toUpperCase()}</span><span style={{color:v.color,fontSize:9}}>{v.glyph}</span><span style={{color:v.color,fontSize:9,minWidth:36,textAlign:'right'}}>{v.text}</span></div>);})}
+            </div>
+            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>ATTENTION STACK</div>
+              {mockRows.map((r,i)=>(<div key={r.label} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{color:'rgba(255,255,255,0.2)',fontSize:7,minWidth:10}}>{i+1}</span><span style={{flex:1,fontSize:7,color:'rgba(255,255,255,0.65)',letterSpacing:'0.06em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.label}</span><span style={{fontSize:8,color:'#fff',minWidth:22,textAlign:'right'}}>{r.signal}</span><span style={{fontSize:7,color:r.vol==='HIGH'?'#ff4444':r.vol==='MED'?'#ffaa00':LIME,minWidth:24}}>{r.vol}</span><span style={{fontSize:7,color:r.dir>0?LIME:r.dir<0?'#ff4444':'rgba(255,255,255,0.3)'}}>{r.dir>0?'↑':r.dir<0?'↓':'—'}</span></div>))}
+            </div>
+            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>DELTA STEPS</div>
+              <svg width={dsW} height={dsH} style={{overflow:'visible'}}>{[0,25,50].map(v=><line key={v} x1={dsPad.l} y1={dsY(v)} x2={dsPad.l+dsIW} y2={dsY(v)} stroke="rgba(255,255,255,0.05)" strokeWidth={0.5}/>)}<polyline fill="none" stroke={LIME} strokeWidth={1.5} strokeLinecap="butt" strokeLinejoin="miter" points={dsPts.join(' ')}/><text x={dsPad.l+dsIW+3} y={dsY(sig)+3} fill={LIME} fontSize={7} fontFamily="'IBM Plex Mono',monospace">{sig}</text></svg>
+            </div>
+            <div style={{marginBottom:10}}>
+              <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:8}}>LEVERAGE TOWERS</div>
+              <div style={{display:'flex',alignItems:'flex-end',gap:4}}>{leaderboard.map(item=>{const h=Math.max(4,(item.abs/maxAbs)*80);const isActive=item.domain===domain;return(<div key={item.domain} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{width:'100%',height:h,background:LIME,opacity:isActive?1:0.45,clipPath:'polygon(15% 0%, 85% 0%, 100% 100%, 0% 100%)'}}/><div style={{fontSize:6,color:isActive?LIME:'rgba(255,255,255,0.3)',letterSpacing:'0.05em',marginTop:3,textAlign:'center'}}>{item.domain.slice(0,3)}</div></div>);})}</div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── CONE TAB ── */}
+      {topTab === 'cone' && <>
       {/* Header */}
       <div style={{ color: accent, fontSize: 8, letterSpacing: '0.22em', opacity: 0.85, marginBottom: 6 }}>
         INSPECTION · ACTIVE{isReplay && <span style={{ color: LIME, marginLeft: 10 }}>REPLAY T-{hoursBack}H</span>}
@@ -762,7 +835,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 10, pointerEvents: 'auto' }}>
-        {['stats', 'leaderboard', 'nodes'].map(t => (
+        {['stats', 'nodes'].map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             background:    'transparent',
             border:        'none',
@@ -775,7 +848,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             cursor:        'pointer',
             textTransform: 'uppercase',
           }}>
-            {{ stats: 'STATS', leaderboard: 'VOLATILITY', nodes: 'NODE MAP' }[t]}
+            {{ stats: 'STATS', leaderboard: 'DOMAIN', nodes: 'NODE MAP' }[t]}
           </button>
         ))}
       </div>
@@ -952,7 +1025,10 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         </>
       )}
 
+      </>}
+
       {/* ── Scan Sweep ── */}
+      {topTab === 'cone' && <>
       <style>{`
         @keyframes scanRotate {
           from { transform: translateX(-50%) rotate(0deg); }
@@ -989,6 +1065,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
           </div>
         </div>
       </div>
+      </>}
 
     </div>
   );
@@ -1985,21 +2062,6 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         />
       </Canvas>
 
-      {/* Connector lines between loaded/correlated bays */}
-      <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 9 }}>
-        {hudList.flatMap((a, i) =>
-          hudList.slice(i + 1).map(b => {
-            if (Math.abs(a.pressure - b.pressure) > 25) return null;
-            if (a.pressure < 15 || b.pressure < 15) return null;
-            return (
-              <line key={`${a.domain}-${b.domain}`}
-                x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-                stroke="rgba(102,255,0,0.18)" strokeWidth="0.7" strokeDasharray="4 4"
-              />
-            );
-          }).filter(Boolean)
-        )}
-      </svg>
 
       {/* WO-1349 — Cross-bay resonance arcs for COMPARE-flagged bays */}
       {(() => {
