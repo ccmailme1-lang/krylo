@@ -930,12 +930,12 @@ export default function App() {
           {/* WO-1333: Scrubber-relative annotation layer */}
           {/* AnnotationLayer removed per Founder — 2026-06-03 */}
 
-          {/* WO-1718A: Leverage Towers — HUD float, no background */}
+          {/* WO-1718A: Leverage Towers — HUD float, above CampaignFunnel */}
           <div style={{
             position:      'fixed',
             bottom:        72,
             right:         16,
-            zIndex:        8,
+            zIndex:        12,
             display:       'flex',
             alignItems:    'flex-end',
             pointerEvents: 'auto',
@@ -946,12 +946,12 @@ export default function App() {
             />
           </div>
 
-          {/* WO-1718A: Surface Bottom — HUD float, no panel */}
+          {/* WO-1718A: Surface Bottom — HUD float, above CampaignFunnel */}
           <div style={{
             position:      'fixed',
             bottom:        72,
             left:          88,
-            zIndex:        9,
+            zIndex:        12,
             pointerEvents: 'auto',
           }}>
             <SurfaceBottom

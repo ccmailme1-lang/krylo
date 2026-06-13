@@ -14,8 +14,9 @@ import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 
-const LIME    = '#66FF00';
-const SPACING = 4.43;
+const LIME             = '#66FF00';
+const SPACING          = 4.43;
+const CONE_HEIGHT_SCALE = 7.2; // 8 × 0.9 — 10% cone size reduction
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -105,7 +106,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   const activeVolatility = (assignment && !entityLoading) ? entityVolatility : (state.volatility ?? 0.5);
 
   const { height, radius } = encodeCone({ ...state, pressure: activePressure, volatility: activeVolatility }, { focusId: null });
-  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * 8);
+  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const baseY      = coneHeight / 2 - coneHeight * 0.1;
 
   // Phase A heuristic vector derivation — canonical mapping pending WO-1125
@@ -1038,8 +1039,8 @@ function ThresholdBands() {
   // labels project clear of the inspection panel's screen x-range.
   const WL = 7.5;
   const WR = 4.5;
-  // True unit mapping — must match SignalCone: coneHeight = pow(score/100, 1.4) * 8
-  const yOf = s => Math.pow(s / 100, 1.4) * 8;
+  // True unit mapping — must match SignalCone: coneHeight = pow(score/100, 1.4) * CONE_HEIGHT_SCALE
+  const yOf = s => Math.pow(s / 100, 1.4) * CONE_HEIGHT_SCALE;
   const bands = [
     { y: yOf(50), alpha: 0.45, label: 'LO · 50' },
     { y: yOf(75), alpha: 0.55, label: 'MID · 75' },
@@ -1204,7 +1205,7 @@ function GhostLayer({ domainIdx, buf }) {
     <>
       {buf.slots.slice(offset, offset + GHOST_DEPTH).map((slot, i) => {
         if (!slot.active) return null;
-        const coneHeight = Math.max(0.2, Math.pow(slot.height, 1.4) * 8);
+        const coneHeight = Math.max(0.2, Math.pow(slot.height, 1.4) * CONE_HEIGHT_SCALE);
         const baseY      = coneHeight / 2 - coneHeight * 0.1 - 0.15;
         return (
           <mesh
@@ -1252,7 +1253,7 @@ const FRONTIER_FRAG = `
 
 function FrontierRing({ position, state }) {
   const { height, radius } = encodeCone(state, { focusId: null });
-  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * 8);
+  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const FRAC   = 0.75;
   const worldY = coneHeight * (FRAC - 0.1);
   const ringR  = (1 - FRAC) * radius * 1.5972;
@@ -1623,7 +1624,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       const angle = (i / total) * Math.PI * 2;
       const pos = [R * Math.cos(angle), 0, R * Math.sin(angle)];
       const { height } = encodeCone(state, { focusId: null });
-      const apexY = Math.max(0.5, Math.pow(height, 1.4) * 8);
+      const apexY = Math.max(0.5, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
       out[state.domain] = { pos, apexY };
     });
     return out;
