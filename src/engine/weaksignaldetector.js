@@ -2,20 +2,22 @@
 //
 // Phase A: identify signals with pressure < WEAK_THRESHOLD
 // Phase B: velocity tracker — fast-rising weak signals flagged EMERGING
-// Phase C: cross-domain correlation — TECHNOLOGY + KNOWLEDGE both weak
-//          and emerging simultaneously triggers early convergence alert
-//          before the convergence classifier fires
 //
-// Input: signals[] — any array of { domain, signal (0-100), ts }
-// Output: { weakSignals, emergingSignals, earlyConvergenceAlert }
+// Phase C (cross-domain correlation) was originally specified here but is
+// architecturally mis-layered. Cross-domain correlation is NC-tier behavior.
+// It is re-homed as Phase A of WO-1734 (Non-Consensus Layer).
+//
+// Output contract: all emitted signal objects are tagged
+//   { _epistemicTier: 'WEAK', promotable: false }
+// Promotion logic must live ONLY in WO-1734 (NC tier) or higher.
 
-export const WEAK_THRESHOLD  = 20;   // pressure below this = weak signal territory
-const VELOCITY_WINDOW        = 3;    // readings kept per domain for slope
-const EMERGING_SLOPE         = 1.5;  // points-per-reading = emerging threshold
-const PHASE_C_DOMAINS        = ['TECHNOLOGY', 'KNOWLEDGE'];
+import { EPISTEMIC_TIER, tagWithTier } from './epistemictier.js';
+
+export const WEAK_THRESHOLD = 20;   // pressure below this = weak signal territory
+const VELOCITY_WINDOW       = 3;    // readings kept per domain for slope
+const EMERGING_SLOPE        = 1.5;  // points-per-reading = emerging threshold
 
 // Per-domain ring buffer: domain → [{ pressure, ts }, ...]
-// Module-level so velocity persists across calls within the same session.
 const _history = new Map();
 
 function _updateHistory(domain, pressure, ts) {
@@ -26,7 +28,6 @@ function _updateHistory(domain, pressure, ts) {
 }
 
 // Linear slope over the ring buffer (points per reading).
-// Positive = rising. Returns 0 if fewer than 2 readings.
 function _slope(domain) {
   const buf = _history.get(domain);
   if (!buf || buf.length < 2) return 0;
@@ -46,39 +47,29 @@ function _slope(domain) {
 // detectWeakSignals(signals)
 // signals: [{ domain, signal, ts, ...rest }]
 // Returns:
-//   weakSignals:          signals with pressure < WEAK_THRESHOLD (with slope attached)
-//   emergingSignals:      weak signals that are fast-rising (slope >= EMERGING_SLOPE)
-//   earlyConvergenceAlert: true when TECHNOLOGY and KNOWLEDGE are both emerging simultaneously
+//   weakSignals:     WEAK-tagged signals with pressure < WEAK_THRESHOLD + slope
+//   emergingSignals: WEAK-tagged signals that are fast-rising (slope >= EMERGING_SLOPE)
 export function detectWeakSignals(signals) {
   if (!Array.isArray(signals) || signals.length === 0) {
-    return { weakSignals: [], emergingSignals: [], earlyConvergenceAlert: false };
+    return { weakSignals: [], emergingSignals: [] };
   }
 
   const now = Date.now();
 
-  // Update velocity history for all incoming signals
   for (const s of signals) {
     _updateHistory(s.domain, s.signal ?? 0, s.ts ?? now);
   }
 
-  // Phase A: filter weak
   const weakSignals = signals
     .filter(s => (s.signal ?? 0) < WEAK_THRESHOLD)
-    .map(s => ({ ...s, slope: _slope(s.domain) }));
+    .map(s => tagWithTier({ ...s, slope: _slope(s.domain) }, EPISTEMIC_TIER.WEAK));
 
-  // Phase B: flag emerging
   const emergingSignals = weakSignals.filter(s => s.slope >= EMERGING_SLOPE);
 
-  // Phase C: early convergence — both Phase C domains weak AND emerging
-  const emergingDomains = new Set(emergingSignals.map(s => s.domain));
-  const earlyConvergenceAlert = PHASE_C_DOMAINS.every(d => emergingDomains.has(d));
-
-  return { weakSignals, emergingSignals, earlyConvergenceAlert };
+  return { weakSignals, emergingSignals };
 }
 
 // resetWeakSignalHistory() — call between sessions or on query change
 export function resetWeakSignalHistory() {
   _history.clear();
 }
-
-export { PHASE_C_DOMAINS };

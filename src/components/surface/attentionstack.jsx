@@ -26,8 +26,8 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
   const { signals, loading, lastFetch } = useKalshiSignals('ALL');
   const [expanded, setExpanded] = useState(false);
 
-  // WO-1726 — weak signal detection across all current signals
-  const { weakSignals, emergingSignals, earlyConvergenceAlert } = detectWeakSignals(signals);
+  // WO-1726 — weak signal detection (WEAK-tier read-only telemetry — no classification here)
+  const { weakSignals, emergingSignals } = detectWeakSignals(signals);
   const emergingDomains = new Set(emergingSignals.map(s => s.domain));
 
   // Top signals by OI, skip duplicates by domain+direction
@@ -123,22 +123,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         </div>
       ))}
 
-      {/* WO-1726 Phase C — Early Convergence Alert */}
-      {earlyConvergenceAlert && (
-        <div style={{
-          padding: '5px 10px',
-          borderTop: '1px solid rgba(102,255,0,0.18)',
-          background: 'rgba(102,255,0,0.06)',
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
-            ◈ EARLY CONVERGENCE DETECTED
-          </span>
-          <span style={{ color: DIM, fontSize: 6 }}>TECH + KNOWLEDGE rising below threshold</span>
-        </div>
-      )}
-
-      {/* WO-1726 Phase A/B — Weak Signals */}
+      {/* WO-1726 Phase A/B — Weak Signals (cross-domain alert lives in WO-1734 NC layer) */}
       {weakSignals.length > 0 && (
         <div>
           <div style={{
