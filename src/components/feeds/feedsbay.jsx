@@ -114,9 +114,17 @@ function FidelityBar({ fs }) {
 
 function Img({ imageUrl, style = {} }) {
   if (!imageUrl) return null;
+  const [loaded, setLoaded] = React.useState(false);
   return (
-    <div style={{ overflow:'hidden', flexShrink:0, ...style }}>
-      <img src={imageUrl} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+    <div style={{ overflow:'hidden', flexShrink:0, background:'#111', ...style }}>
+      <img
+        src={imageUrl}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', opacity: loaded ? 1 : 0, transition:'opacity 0.3s ease' }}
+      />
     </div>
   );
 }
