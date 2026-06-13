@@ -28,6 +28,7 @@ export const DOMAIN_FIELDS = {
   HOME:        ['debt_to_service_ratio', 'market_liquidity_index'],
   BUSINESS:    ['cac_ltv_ratio', 'burn_multiple', 'runway_velocity'],
   VACATION:    ['lifestyle_overhead', 'payload_drain_impact'],
+  HEALTH:      ['org_status', 'cause_category', 'fundraising_target', 'nonprofit_capacity'],
 };
 
 // ── COMPONENT SCORERS ────────────────────────────────────────────────────────

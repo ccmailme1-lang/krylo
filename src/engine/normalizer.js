@@ -8,7 +8,7 @@ export const PROJECTION_MODE = 'DETERMINISTIC_LOOKUP_ONLY';
 
 export const SUPPORTED_DOMAINS = [
   'admissions', 'investment', 'realestate', 'athletics',
-  'sales', 'legal', 'procurement', 'negotiation', 'general',
+  'sales', 'legal', 'procurement', 'negotiation', 'health', 'general',
 ];
 
 // Lookup table — keyword → domain. Pure membership check, no weighting logic.
@@ -21,6 +21,7 @@ const DOMAIN_KEYWORDS = {
   legal:        ['contract', 'litigation', 'compliance', 'regulation', 'clause', 'jurisdiction', 'statute', 'precedent', 'liability', 'settlement'],
   procurement:  ['vendor', 'rfp', 'supply chain', 'bid', 'sourcing', 'logistics', 'inventory', 'sku', 'lead time', 'purchase order'],
   negotiation:  ['engineer', 'manager', 'senior', 'staff', 'principal', 'startup', 'salary', 'compensation', 'offer', 'base', 'raleigh', 'nc', 'equity', 'vesting', 'hire', 'role', 'leveling'],
+  health:       ['nonprofit', '501c3', 'foundation', 'donation', 'grant', 'fundraising', 'disability', 'down syndrome', 'medicaid', 'therapy', 'adaptive', 'charitable', 'endowment'],
 };
 
 // Lookup table — keyword → signal type. Pure membership check, no weighting logic.
@@ -33,6 +34,7 @@ const SIGNAL_KEYWORD_MAP = {
   geographic_signal:     ['state', 'region', 'country', 'local', 'national', 'international', 'city'],
   demographic_signal:    ['first generation', 'underrepresented', 'legacy', 'international', 'transfer'],
   competitive_signal:    ['rank', 'percentile', 'average', 'median', 'competitive', 'selective', 'yield'],
+  nonprofit_signal:      ['foundation', 'donation', 'grant', 'fundraising', '501c3', 'charitable', 'endowment'],
   salary_anchor:         ['salary', 'compensation', 'base', 'offer', 'ask', 'pay', 'tc', 'total comp'],
   geo_market:            ['raleigh', 'nc', 'durham', 'charlotte', 'austin', 'denver', 'remote', 'hybrid'],
   role_tier:             ['senior', 'staff', 'principal', 'engineer', 'manager', 'director', 'lead'],

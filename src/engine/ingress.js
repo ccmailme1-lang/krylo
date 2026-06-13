@@ -70,6 +70,8 @@ export const PROTECTED_ENTITY_REGISTRY = {
     'disability', 'developmental delay', 'aba therapy', 'sensory processing',
     'adaptive mobility', 'pediatric therapy', 'adaptive program', 'cyshcn',
     'early intervention', 'iep ', ' iep', 'hcbs', 'dme funding',
+    'nonprofit', '501c3', '501(c)(3)', 'foundation', 'donation', 'grant',
+    'fundraising', 'charitable', 'endowment',
   ],
   CRISIS: [
     'eviction notice', 'foreclosure notice', 'suicidal', 'domestic abuse',
