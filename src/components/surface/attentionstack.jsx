@@ -1,11 +1,15 @@
 // attentionstack.jsx — SAB Visual Bifurcation Strategy: Attention Stack
 // Ranked Kalshi market signals. Hierarchy-driven focus. What matters, now.
+// WO-1726: Weak Signal Detection — sub-threshold signals surfaced below main stack.
 import React, { useState } from 'react';
 import { useKalshiSignals } from '../../hooks/usekalshisignals.js';
+import { detectWeakSignals } from '../../engine/weaksignaldetector.js';
 
-const LIME = '#66FF00';
-const DIM  = 'rgba(255,255,255,0.35)';
-const MID  = 'rgba(255,255,255,0.65)';
+const LIME  = '#66FF00';
+const DIM   = 'rgba(255,255,255,0.35)';
+const MID   = 'rgba(255,255,255,0.65)';
+const WEAK  = 'rgba(255,255,255,0.22)';   // sub-threshold label color
+const SLATE = 'rgba(58,61,74,0.90)';      // muted_slate per CLAUDE.md color semantics
 
 function TrendArrow({ forecast }) {
   if (forecast > 2)  return <span style={{ color: LIME }}>↑</span>;
@@ -21,6 +25,10 @@ function VolBadge({ volatility }) {
 export default function AttentionStack({ maxRows = 8, onSignalClick }) {
   const { signals, loading, lastFetch } = useKalshiSignals('ALL');
   const [expanded, setExpanded] = useState(false);
+
+  // WO-1726 — weak signal detection across all current signals
+  const { weakSignals, emergingSignals, earlyConvergenceAlert } = detectWeakSignals(signals);
+  const emergingDomains = new Set(emergingSignals.map(s => s.domain));
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -114,6 +122,69 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
           <TrendArrow forecast={s.forecast} />
         </div>
       ))}
+
+      {/* WO-1726 Phase C — Early Convergence Alert */}
+      {earlyConvergenceAlert && (
+        <div style={{
+          padding: '5px 10px',
+          borderTop: '1px solid rgba(102,255,0,0.18)',
+          background: 'rgba(102,255,0,0.06)',
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
+            ◈ EARLY CONVERGENCE DETECTED
+          </span>
+          <span style={{ color: DIM, fontSize: 6 }}>TECH + KNOWLEDGE rising below threshold</span>
+        </div>
+      )}
+
+      {/* WO-1726 Phase A/B — Weak Signals */}
+      {weakSignals.length > 0 && (
+        <div>
+          <div style={{
+            padding: '4px 10px',
+            borderTop: '1px solid rgba(255,255,255,0.05)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ color: WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+              WEAK SIGNALS · {weakSignals.length}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>PRESSURE &lt; 20</span>
+          </div>
+          {weakSignals.slice(0, 4).map(s => {
+            const isEmerging = emergingDomains.has(s.domain);
+            return (
+              <div
+                key={`weak-${s.ticker ?? s.domain}`}
+                onClick={() => onSignalClick?.(s)}
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '20px 60px 36px 1fr 50px',
+                  gap: 0,
+                  padding: '3px 10px',
+                  borderBottom: '1px solid rgba(255,255,255,0.02)',
+                  opacity: 0.55,
+                  cursor: onSignalClick ? 'pointer' : 'default',
+                }}
+                onMouseEnter={e => e.currentTarget.style.opacity = '0.80'}
+                onMouseLeave={e => e.currentTarget.style.opacity = '0.55'}
+              >
+                <span style={{ color: SLATE, fontSize: 7 }}>·</span>
+                <span style={{ color: WEAK, fontSize: 7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {s.domain}
+                </span>
+                <span style={{ color: WEAK, fontSize: 8 }}>{s.signal}</span>
+                <span style={{ color: WEAK, fontSize: 6 }}>
+                  {s.slope > 0 ? `+${s.slope.toFixed(1)}/r` : s.slope < 0 ? `${s.slope.toFixed(1)}/r` : '—'}
+                </span>
+                {isEmerging && (
+                  <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.1em' }}>↗ EMERGING</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Footer — market source */}
       <div style={{
