@@ -1,9 +1,11 @@
 // attentionstack.jsx — SAB Visual Bifurcation Strategy: Attention Stack
 // Ranked Kalshi market signals. Hierarchy-driven focus. What matters, now.
 // WO-1726: Weak Signal Detection — sub-threshold signals surfaced below main stack.
+// WO-1734: Non-Consensus Layer — NC classification strip (read-only telemetry).
 import React, { useState } from 'react';
 import { useKalshiSignals } from '../../hooks/usekalshisignals.js';
 import { detectWeakSignals } from '../../engine/weaksignaldetector.js';
+import { analyzeNonConsensus } from '../../engine/nonconsensusdetector.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -26,9 +28,12 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
   const { signals, loading, lastFetch } = useKalshiSignals('ALL');
   const [expanded, setExpanded] = useState(false);
 
-  // WO-1726 — weak signal detection (WEAK-tier read-only telemetry — no classification here)
+  // WO-1726 — WEAK-tier read-only telemetry
   const { weakSignals, emergingSignals } = detectWeakSignals(signals);
   const emergingDomains = new Set(emergingSignals.map(s => s.domain));
+
+  // WO-1734 — NC-tier read-only telemetry (no classification logic here)
+  const nc = analyzeNonConsensus(emergingSignals, signals);
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -168,6 +173,40 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* WO-1734 — NC Classification Strip */}
+      {(nc.classification !== 'AMBIGUOUS' || nc.crossDomainEmergenceDetected) && (
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '5px 10px',
+          background: nc.classification === 'DIVERGING'
+            ? 'rgba(102,255,0,0.04)'
+            : nc.consensusArriving
+              ? 'rgba(0,127,255,0.05)'
+              : 'transparent',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{
+              fontSize: 7, letterSpacing: '0.18em',
+              color: nc.classification === 'DIVERGING' ? LIME
+                   : nc.consensusArriving ? '#007FFF'
+                   : WEAK,
+            }}>
+              {nc.classification === 'DIVERGING' && '◈ NON-CONSENSUS WINDOW'}
+              {nc.classification === 'CONVERGING' && nc.consensusArriving && '◈ CONSENSUS FORMING'}
+              {nc.crossDomainEmergenceDetected && nc.classification === 'AMBIGUOUS' && '◈ CROSS-DOMAIN EMERGENCE'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              K {nc.knowledgeAlignment} · C {nc.capitalAlignment} · Δ{nc.consensusDelta > 0 ? '+' : ''}{nc.consensusDelta}
+            </span>
+          </div>
+          {nc.classification === 'DIVERGING' && nc.gapOpenMs > 0 && (
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              CONVICTION WINDOW OPEN {Math.round(nc.gapOpenMs / 1000)}s · POP {Math.round(nc.populationAgreement * 100)}%
+            </span>
+          )}
         </div>
       )}
 
