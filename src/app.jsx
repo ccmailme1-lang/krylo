@@ -43,6 +43,7 @@ import { useAnalysisStore }   from './store/useanalysisstore.js';
 import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
+import AttentionStack         from './components/surface/attentionstack.jsx';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
@@ -929,6 +930,16 @@ export default function App() {
 
           {/* WO-1344D: Bay projection overlay (xray/signalmap modes) */}
           <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} />
+
+          {/* Kalshi Attention Stack — bottom-right, above scrubber */}
+          <div style={{ position: 'fixed', bottom: 56, right: 0, zIndex: 10, width: 340 }}>
+            <AttentionStack
+              maxRows={8}
+              onSignalClick={(s) => {
+                setSelection(s.domain?.toLowerCase() ?? null);
+              }}
+            />
+          </div>
 
           {/* WO-1344B: Assignment Intent Modal */}
 
