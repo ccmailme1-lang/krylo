@@ -43,7 +43,8 @@ import { useAnalysisStore }   from './store/useanalysisstore.js';
 import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
-import AttentionStack         from './components/surface/attentionstack.jsx';
+import SurfaceBottom          from './components/surface/surfacebottom.jsx';
+import LeverageTowers         from './components/surface/leveragetowers.jsx';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
@@ -613,6 +614,7 @@ export default function App() {
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
+  const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
   useEffect(() => {
     if (!surfaceActivated) { setVisorReady(false); return; }
@@ -928,18 +930,43 @@ export default function App() {
           {/* WO-1333: Scrubber-relative annotation layer */}
           {/* AnnotationLayer removed per Founder — 2026-06-03 */}
 
+          {/* WO-1718A: Leverage Towers — right-side surface overlay */}
+          <div style={{
+            position:   'fixed',
+            top:        88,
+            right:      0,
+            bottom:     196,
+            zIndex:     8,
+            display:    'flex',
+            alignItems: 'flex-end',
+            background: 'linear-gradient(to left, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0) 100%)',
+            paddingBottom: 8,
+            pointerEvents: 'auto',
+          }}>
+            <LeverageTowers
+              selectedDomain={selectedSurfaceDomain}
+              onDomainClick={setSelectedSurfaceDomain}
+            />
+          </div>
+
+          {/* WO-1718A: Surface Bottom — Attention Stack + Delta chart, above scrubber */}
+          <div style={{
+            position: 'fixed',
+            bottom:   56,
+            left:     72,
+            right:    0,
+            height:   140,
+            zIndex:   9,
+          }}>
+            <SurfaceBottom
+              selectedDomain={selectedSurfaceDomain}
+              onSignalClick={s => setSelectedSurfaceDomain(s.domain?.toLowerCase())}
+            />
+          </div>
+
           {/* WO-1344D: Bay projection overlay (xray/signalmap modes) */}
           <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} />
 
-          {/* Kalshi Attention Stack — bottom-right, above scrubber */}
-          <div style={{ position: 'fixed', bottom: 56, right: 0, zIndex: 10, width: 340 }}>
-            <AttentionStack
-              maxRows={8}
-              onSignalClick={(s) => {
-                setSelection(s.domain?.toLowerCase() ?? null);
-              }}
-            />
-          </div>
 
           {/* WO-1344B: Assignment Intent Modal */}
 

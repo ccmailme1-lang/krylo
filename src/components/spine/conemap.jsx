@@ -12,6 +12,7 @@ import { classifyConvergenceState } from '../../engine/convergenceclassifier.js'
 import LeverageLattice            from './leveragelattice.jsx';
 import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
+import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 
 const LIME    = '#66FF00';
 const SPACING = 4.43;
@@ -60,7 +61,7 @@ function arcThesis(a, b) {
   return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
 }
 
-function Cone({ state, position, isSelected = true, isLocked = false }) {
+function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null }) {
   const bays       = useBayStore(s => s.bays);
   const hoveredBay = useBayStore(s => s.hoveredBay);
   const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
@@ -165,6 +166,26 @@ function Cone({ state, position, isSelected = true, isLocked = false }) {
               {v.glyph} {v.text}
             </span>
           </div>
+        </div>
+      </Html>
+
+      {/* Matrix Scaffold — data block at cone apex offset. Always on. Kalshi-fed when available. */}
+      <Html position={[radius * 1.5972 + 0.5, coneHeight / 2, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontFamily:    "'IBM Plex Mono', monospace",
+          fontSize:      9,
+          lineHeight:    '1.8',
+          letterSpacing: '0.13em',
+          color:         'rgba(255,255,255,0.55)',
+          whiteSpace:    'nowrap',
+          userSelect:    'none',
+          opacity:       isHovered || isSelected ? 1 : 0.45,
+          transition:    'opacity 200ms ease',
+        }}>
+          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>SIGNAL{'      '}</span><span style={{ color: isSelected || isHovered ? '#fff' : 'rgba(255,255,255,0.7)' }}>{kalshiSignal ? kalshiSignal.signal : Math.round(state.pressure ?? 0)}</span></div>
+          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>FORECAST{'    '}</span><span style={{ color: LIME }}>{kalshiSignal ? (kalshiSignal.forecast >= 0 ? '+' : '') + kalshiSignal.forecast + 'D' : '+7D'}</span></div>
+          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>VOLATILITY{'  '}</span><span style={{ color: kalshiSignal?.volatility === 'HIGH' ? '#ff4444' : kalshiSignal?.volatility === 'MED' ? '#ffaa00' : LIME }}>{kalshiSignal ? kalshiSignal.volatility : (state.volatility ?? 0) > 0.6 ? 'HIGH' : (state.volatility ?? 0) > 0.3 ? 'MED' : 'LOW'}</span></div>
+          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>CONFIDENCE{'  '}</span><span style={{ color: isSelected || isHovered ? '#fff' : 'rgba(255,255,255,0.7)' }}>{kalshiSignal ? kalshiSignal.confidence + '%' : Math.round((1 - (state.volatility ?? 0.5)) * 100) + '%'}</span></div>
         </div>
       </Html>
     </group>
@@ -1559,7 +1580,16 @@ function DriverNodeOverlay({ state, apexY, isSelected }) {
   );
 }
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef }) {
+const CONE_TO_KALSHI_DOMAIN = {
+  technology: 'TECHNOLOGY',
+  capital:    'FINANCIAL',
+  knowledge:  'FINANCIAL',
+  labor:      'SIGNAL',
+  media:      'MARKET',
+  ownership:  'HOME',
+};
+
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [] }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1746,9 +1776,18 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       {/* cones + their footprints spin collectively around center Y axis */}
       {/* In topology mode spin stops; coneGroupRefs lerp positions to geographic anchors */}
       <group ref={spinRef}>
-        {coneState.map((state, i) => {
+        {(() => {
+          // Build domain → best Kalshi signal map (highest OI per domain)
+          const kalshiMap = {};
+          for (const s of kalshiSignals) {
+            const d = s.domain?.toUpperCase();
+            if (!kalshiMap[d] || s.oi > (kalshiMap[d]?.oi ?? 0)) kalshiMap[d] = s;
+          }
+          return coneState.map((state, i) => {
           const angle = (i / total) * Math.PI * 2;
           const pos   = [R * Math.cos(angle), 0, R * Math.sin(angle)];
+          const kDomain = CONE_TO_KALSHI_DOMAIN[state.domain] ?? 'SIGNAL';
+          const kalshiSignal = kalshiMap[kDomain] ?? null;
           return (
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
               <BoundaryRing attenuationFactor={Math.max(0.5, (state.pressure ?? 50) / 50)} />
@@ -1760,10 +1799,13 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
                 state={state}
                 position={[0, 0, 0]}
                 index={i}
+                isSelected={state.domain === selectedDomain}
+                kalshiSignal={kalshiSignal}
               />
             </group>
           );
-        })}
+        });
+        })()}
 
         {/* Wave 2: live event pulses — particles rise from each firing cone */}
         {events.map(ev => {
@@ -1805,6 +1847,7 @@ const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media
 
 
 export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, coneColorOverrides = {} }) {
+  const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
     const normalized = signals.map(sig => ({
       // cone_domain (live records) routes to canonical feeders; stubs keep source
@@ -1933,6 +1976,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           topoMode={topoMode}
           onArcClick={onArcClick}
           hudRef={hudRef}
+          kalshiSignals={kalshiSignals}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
