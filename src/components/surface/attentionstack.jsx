@@ -11,6 +11,7 @@ import { detectPlatformFormation, PLATFORM_FORMATION_PHASE } from '../../engine/
 import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconviction.js';
 import { attributeEntityToSignals } from '../../engine/entityattribution.js';
 import { computePortfolioConvergence, detectPlatformInflection } from '../../engine/portfolioconvergence.js';
+import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -414,6 +415,40 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
           </div>
         )}
       </div>
+
+      {/* WO-EVIDENCE-001 — Signal Outcome Registry */}
+      {(() => {
+        checkExpiry();
+        const acc = getRunningAccuracy();
+        const hasData = acc.totalPredictions > 0;
+        return (
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '5px 10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: hasData ? LIME : WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+                {hasData ? '◈ SIGNAL REGISTRY' : '· SIGNAL REGISTRY'}
+              </span>
+              <span style={{ color: WEAK, fontSize: 6 }}>
+                {hasData
+                  ? `${acc.totalPredictions} TRACKED · ${acc.pending} PENDING`
+                  : 'ACCUMULATING'}
+              </span>
+            </div>
+            {hasData && (
+              <div style={{ display: 'flex', gap: 10, marginTop: 2 }}>
+                <span style={{ color: MID, fontSize: 6 }}>
+                  ACC {acc.overallAccuracy !== null ? `${Math.round(acc.overallAccuracy * 100)}%` : '—'}
+                </span>
+                <span style={{ color: MID, fontSize: 6 }}>
+                  AVG LEAD {acc.avgLeadTimeDays !== null ? `${acc.avgLeadTimeDays}d` : '—'}
+                </span>
+                <span style={{ color: acc.validated > 0 ? LIME : WEAK, fontSize: 6 }}>
+                  ✓{acc.validated} ✗{acc.invalidated}
+                </span>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Footer — market source */}
       <div style={{
