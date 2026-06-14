@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useKalshiSignals } from '../../hooks/usekalshisignals.js';
 import { detectWeakSignals } from '../../engine/weaksignaldetector.js';
 import { analyzeNonConsensus } from '../../engine/nonconsensusdetector.js';
+import { synthesizeCrossDomain } from '../../engine/verdictsynthesis.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -34,6 +35,16 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1734 — NC-tier read-only telemetry (no classification logic here)
   const nc = analyzeNonConsensus(emergingSignals, signals);
+
+  // WO-1722 — Munger cross-domain synthesis
+  // Derive domain states from Kalshi pressure + confidence as convergence proxy.
+  // signal >= 50 = BUILDING CONVERGENCE proxy. Fs = confidence / 100.
+  const domainStates = signals.map(s => ({
+    domain: s.domain,
+    convergenceLabel: (s.signal ?? 0) >= 50 ? 'BUILDING CONVERGENCE' : 'LOW SIGNAL YIELD',
+    fs: (s.confidence ?? 0) / 100,
+  }));
+  const munger = synthesizeCrossDomain(domainStates);
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -207,6 +218,34 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               CONVICTION WINDOW OPEN {Math.round(nc.gapOpenMs / 1000)}s · POP {Math.round(nc.populationAgreement * 100)}%
             </span>
           )}
+        </div>
+      )}
+
+      {/* WO-1722 — Munger Cross-Domain Synthesis */}
+      {munger?.triggered && (
+        <div style={{
+          borderTop: '1px solid rgba(102,255,0,0.18)',
+          padding: '6px 10px',
+          background: 'rgba(102,255,0,0.06)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+            <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
+              ◈ CROSS-DOMAIN SYNTHESIS
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              {munger.domainCount} DOMAINS · Fs {Math.round(munger.mungerScore * 100)}%
+            </span>
+          </div>
+          <div style={{ color: MID, fontSize: 7, lineHeight: 1.5, marginBottom: 3 }}>
+            {munger.synthesis}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {munger.provenance.map(p => (
+              <span key={p.domain} style={{ color: LIME, fontSize: 6, letterSpacing: '0.1em' }}>
+                {p.domain} {Math.round(p.fs * 100)}%
+              </span>
+            ))}
+          </div>
         </div>
       )}
 
