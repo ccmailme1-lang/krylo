@@ -15,6 +15,7 @@ import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.j
 import { detectRegulatoryWindow, REGULATORY_PHASE } from '../../engine/regulatoryconvergence.js';
 import { detectHNWConvergence, HNW_PHASE } from '../../engine/hnwconvergence.js';
 import { detectCriticalMaterials, MATERIALS_PHASE } from '../../engine/criticalmaterials.js';
+import { detectAIInfrastructureDemand } from '../../engine/aiinfrastructure.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -72,6 +73,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1738 — Critical Materials Demand Signal (Lacaze Protocol)
   const materials = detectCriticalMaterials(signals);
+
+  // WO-1739 — AI Infrastructure Demand Signal (Khoo Protocol)
+  const khoo = detectAIInfrastructureDemand(signals);
 
   // WO-1725 Phase A — Entity pressure attribution
   const [activeEntity, setActiveEntity] = React.useState('');
@@ -519,6 +523,37 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* WO-1739 — AI Infrastructure Demand Signal (Khoo Protocol) */}
+      {/* Evidence display only — no conclusions per WO-1745 contract */}
+      {khoo.triggered && (
+        <div style={{ borderTop: '1px solid rgba(102,255,0,0.08)', padding: '5px 10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+            <span style={{ color: WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+              · KHOO PROTOCOL
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              {khoo.evidence.filter(e => e.active).length}/3 · Fs {Math.round(khoo.fs * 100)}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {khoo.evidence.map(e => (
+              <span key={e.domain} style={{ color: e.active ? LIME : WEAK, fontSize: 6 }}>
+                {e.domain.slice(0, 4)} {e.score}{e.active ? ' ↑' : ''}
+              </span>
+            ))}
+          </div>
+          {khoo.provenance.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+              {khoo.provenance.map(p => (
+                <span key={p.source} style={{ color: WEAK, fontSize: 5, letterSpacing: '0.08em' }}>
+                  {p.source}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
