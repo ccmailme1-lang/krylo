@@ -14,6 +14,7 @@ import { computePortfolioConvergence, detectPlatformInflection } from '../../eng
 import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.js';
 import { detectRegulatoryWindow, REGULATORY_PHASE } from '../../engine/regulatoryconvergence.js';
 import { detectHNWConvergence, HNW_PHASE } from '../../engine/hnwconvergence.js';
+import { detectCriticalMaterials, MATERIALS_PHASE } from '../../engine/criticalmaterials.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -68,6 +69,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1737 — HNW Client Convergence Overlay (Cornerstone Protocol)
   const hnw = detectHNWConvergence(signals);
+
+  // WO-1738 — Critical Materials Demand Signal (Lacaze Protocol)
+  const materials = detectCriticalMaterials(signals);
 
   // WO-1725 Phase A — Entity pressure attribution
   const [activeEntity, setActiveEntity] = React.useState('');
@@ -467,6 +471,51 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               <>
                 <span style={{ color: MID, fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore} · O {hnw.ownershipScore}</span>
                 <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REBALANCE WINDOW OPEN</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* WO-1738 — Critical Materials Demand Signal (Lacaze Protocol) */}
+      {materials.triggered && (
+        <div style={{
+          borderTop: `1px solid ${materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          padding: '5px 10px',
+          background: materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK
+            ? 'rgba(0,127,255,0.06)'
+            : 'rgba(102,255,0,0.03)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{
+              fontSize: 7, letterSpacing: '0.18em',
+              color: materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK ? '#007FFF' : LIME,
+            }}>
+              {materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK   && '◈ GEOPOLITICAL SUPPLY RISK'}
+              {materials.phase === MATERIALS_PHASE.DEMAND_PIPELINE            && '◈ DEMAND PIPELINE FORMING'}
+              {materials.phase === MATERIALS_PHASE.SUPPLY_CHAIN_REPOSITIONING && '◈ SUPPLY CHAIN REPOSITIONING'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              {materials.leadTime?.label} · Fs {Math.round(materials.fs * 100)}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK && (
+              <>
+                <span style={{ color: '#007FFF', fontSize: 6 }}>M {materials.mediaScore} · O {materials.ownershipScore}</span>
+                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>POLICY ACTION IMMINENT</span>
+              </>
+            )}
+            {materials.phase === MATERIALS_PHASE.DEMAND_PIPELINE && (
+              <>
+                <span style={{ color: MID, fontSize: 6 }}>O {materials.ownershipScore}</span>
+                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>EDGAR MINING / MATERIALS FLOW</span>
+              </>
+            )}
+            {materials.phase === MATERIALS_PHASE.SUPPLY_CHAIN_REPOSITIONING && (
+              <>
+                <span style={{ color: MID, fontSize: 6 }}>T {materials.technologyScore} · C {materials.capitalScore} · O {materials.ownershipScore}</span>
+                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>NON-CHINA SOURCING WINDOW</span>
               </>
             )}
           </div>
