@@ -9,6 +9,7 @@ import { analyzeNonConsensus } from '../../engine/nonconsensusdetector.js';
 import { synthesizeCrossDomain } from '../../engine/verdictsynthesis.js';
 import { detectPlatformFormation, PLATFORM_FORMATION_PHASE } from '../../engine/platformformation.js';
 import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconviction.js';
+import { attributeEntityToSignals } from '../../engine/entityattribution.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -53,6 +54,11 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1735 — Platform Conviction Arc (interpretation layer)
   const conviction = classifyConviction(formation, signals, nc);
+
+  // WO-1725 Phase A — Entity pressure attribution
+  const [activeEntity, setActiveEntity] = React.useState('');
+  const [entityInput, setEntityInput] = React.useState('');
+  const entityResult = activeEntity ? attributeEntityToSignals(activeEntity, signals) : null;
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -327,6 +333,53 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
           </div>
         </div>
       )}
+
+      {/* WO-1725 Phase A — Entity Footprint */}
+      <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '5px 10px' }}>
+        <form onSubmit={e => { e.preventDefault(); setActiveEntity(entityInput.trim()); }} style={{ display: 'flex', gap: 4 }}>
+          <input
+            value={entityInput}
+            onChange={e => setEntityInput(e.target.value)}
+            placeholder="entity..."
+            style={{
+              flex: 1, background: 'transparent', border: 'none',
+              borderBottom: '1px solid rgba(102,255,0,0.25)',
+              color: '#fff', fontSize: 7, fontFamily: 'inherit',
+              outline: 'none', padding: '2px 0',
+            }}
+          />
+          <button type="submit" style={{ background: 'none', border: 'none', color: LIME, fontSize: 7, cursor: 'pointer' }}>↩</button>
+          {activeEntity && (
+            <button type="button" onClick={() => { setActiveEntity(''); setEntityInput(''); }} style={{ background: 'none', border: 'none', color: WEAK, fontSize: 7, cursor: 'pointer' }}>✕</button>
+          )}
+        </form>
+        {entityResult && (
+          <div style={{ marginTop: 4 }}>
+            {!entityResult.known && (
+              <span style={{ color: WEAK, fontSize: 6 }}>ENTITY NOT IN REGISTRY</span>
+            )}
+            {entityResult.known && (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                  <span style={{ color: entityResult.qualified ? LIME : WEAK, fontSize: 7, letterSpacing: '0.15em' }}>
+                    {entityResult.qualified ? '◈ ENTITY FOOTPRINT' : '· ENTITY FOOTPRINT'}
+                  </span>
+                  <span style={{ color: WEAK, fontSize: 6 }}>
+                    {entityResult.footprint} DOMAINS · Fs {Math.round(entityResult.fs * 100)}%
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {entityResult.contributing.map(d => (
+                    <span key={d.domain} style={{ color: LIME, fontSize: 6 }}>
+                      {d.domain} {Math.round(d.attributedPressure * 100)}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Footer — market source */}
       <div style={{
