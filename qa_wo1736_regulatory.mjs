@@ -1,6 +1,12 @@
-// qa_wo1736_regulatory.mjs — BAU harness for WO-1736 Regulatory Convergence Window
+// qa_wo1736_regulatory.mjs — v2 — dual-lens temporal kernel
 // Run: node qa_wo1736_regulatory.mjs
-import { detectRegulatoryWindow, REGULATORY_PHASE, REGULATORY_LEAD_TIME } from './src/engine/regulatoryconvergence.js';
+import {
+  evaluateTemporalKernel,
+  detectRegulatoryWindow,
+  clearRegulatoryLog,
+  REGULATORY_STATE,
+  FS_GATE,
+} from './src/engine/regulatoryconvergence.js';
 
 let pass = 0; let fail = 0;
 
@@ -9,186 +15,247 @@ function assert(label, condition) {
   else           { console.error(`  FAIL  ${label}`); fail++; }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 function sig(domain, signal, confidence = 80) {
   return { domain, signal, confidence, ts: Date.now() };
 }
 
-// ── 01: Null / empty input ────────────────────────────────────────────────────
-console.log('\n01 — Null / empty guard');
+// Build a temporal log entry at a specific offset from now
+function entry(kScore, mScore, tScore, cScore, daysAgo = 0) {
+  return { ts: Date.now() - daysAgo * 24 * 60 * 60 * 1000, kScore, mScore, tScore, cScore };
+}
+
+// ── 01: Empty log → DORMANT ───────────────────────────────────────────────────
+console.log('\n01 — Empty log → DORMANT');
+{
+  const r = evaluateTemporalKernel([]);
+  assert('state DORMANT', r.state === REGULATORY_STATE.DORMANT);
+  assert('micro not active', r.microWindow.active === false);
+  assert('macro not active', r.macroWindow.active === false);
+  assert('micro count 0', r.microWindow.count === 0);
+  assert('macro distinctDays 0', r.macroWindow.distinctDays === 0);
+}
+
+// ── 02: Single K entry in micro window → MICRO_IGNITION ──────────────────────
+console.log('\n02 — Single K > 50 in micro window → MICRO_IGNITION');
+{
+  const log = [entry(55, 30, 40, 30, 5)]; // 5 days ago
+  const r = evaluateTemporalKernel(log);
+  assert('MICRO_IGNITION', r.state === REGULATORY_STATE.MICRO_IGNITION);
+  assert('micro active', r.microWindow.active === true);
+  assert('micro count 1', r.microWindow.count === 1);
+  assert('micro domainCount 1', r.microWindow.domainCount === 1);
+  assert('KNOWLEDGE in domains', r.microWindow.domains.includes('KNOWLEDGE'));
+}
+
+// ── 03: Entry at boundary (K = 50) → DORMANT ─────────────────────────────────
+console.log('\n03 — K = 50 exactly → DORMANT (> not >=)');
+{
+  const log = [entry(50, 30, 40, 30, 5)];
+  const r = evaluateTemporalKernel(log);
+  assert('DORMANT on K=50', r.state === REGULATORY_STATE.DORMANT);
+}
+
+// ── 04: T > 55 in micro window → MICRO_IGNITION ──────────────────────────────
+console.log('\n04 — T > 55 in micro → MICRO_IGNITION');
+{
+  const log = [entry(30, 30, 60, 30, 3)];
+  const r = evaluateTemporalKernel(log);
+  assert('MICRO_IGNITION via T', r.state === REGULATORY_STATE.MICRO_IGNITION);
+  assert('TECHNOLOGY in domains', r.microWindow.domains.includes('TECHNOLOGY'));
+}
+
+// ── 05: Two entries same domain → MICRO_IGNITION (not CLUSTER) ───────────────
+console.log('\n05 — Two K entries in micro → MICRO_IGNITION, not CLUSTER');
+{
+  const log = [entry(55, 30, 30, 30, 10), entry(58, 30, 30, 30, 5)];
+  const r = evaluateTemporalKernel(log);
+  assert('MICRO_IGNITION (same domain)', r.state === REGULATORY_STATE.MICRO_IGNITION);
+  assert('domainCount 1', r.microWindow.domainCount === 1);
+}
+
+// ── 06: K + M in micro window → CROSS_JURISDICTIONAL_CLUSTER ─────────────────
+console.log('\n06 — K + M in micro → CROSS_JURISDICTIONAL_CLUSTER');
+{
+  const log = [entry(55, 55, 30, 30, 5)];
+  const r = evaluateTemporalKernel(log);
+  assert('CROSS_JURISDICTIONAL_CLUSTER', r.state === REGULATORY_STATE.CROSS_JURISDICTIONAL_CLUSTER);
+  assert('domainCount 2', r.microWindow.domainCount === 2);
+  assert('KNOWLEDGE in domains', r.microWindow.domains.includes('KNOWLEDGE'));
+  assert('MEDIA in domains',     r.microWindow.domains.includes('MEDIA'));
+}
+
+// ── 07: K + T in micro window → CROSS_JURISDICTIONAL_CLUSTER ─────────────────
+console.log('\n07 — K + T in micro → CROSS_JURISDICTIONAL_CLUSTER');
+{
+  const log = [entry(55, 30, 60, 30, 5)];
+  const r = evaluateTemporalKernel(log);
+  assert('CLUSTER via K+T', r.state === REGULATORY_STATE.CROSS_JURISDICTIONAL_CLUSTER);
+  assert('domainCount 2', r.microWindow.domainCount === 2);
+}
+
+// ── 08: Entry older than micro window → DORMANT ───────────────────────────────
+console.log('\n08 — Entry older than micro window (25 days ago) → DORMANT');
+{
+  const log = [entry(60, 60, 60, 30, 25)]; // 25 days > 21-day micro window
+  const r = evaluateTemporalKernel(log);
+  assert('DORMANT (entry outside micro)', r.state === REGULATORY_STATE.DORMANT);
+  assert('micro count 0', r.microWindow.count === 0);
+}
+
+// ── 09: Entry older than macro window → not counted ──────────────────────────
+console.log('\n09 — Entry older than macro window (130 days ago) → DORMANT');
+{
+  const log = [entry(60, 60, 60, 30, 130)]; // 130 days > 120-day macro window
+  const r = evaluateTemporalKernel(log);
+  assert('DORMANT (outside macro)', r.state === REGULATORY_STATE.DORMANT);
+  assert('macro count 0', r.macroWindow.count === 0);
+}
+
+// ── 10: MACRO_CONSOLIDATION — cluster + 3 distinct days ──────────────────────
+console.log('\n10 — MACRO_CONSOLIDATION: cluster in micro + 3 distinct days in macro');
+{
+  const log = [
+    entry(55, 55, 30, 30, 0),    // today — cluster in micro
+    entry(55, 55, 30, 30, 10),   // 10 days ago — distinct day 2 (also in micro)
+    entry(55, 55, 30, 30, 30),   // 30 days ago — distinct day 3 (outside micro, in macro)
+    entry(55, 55, 30, 30, 60),   // 60 days ago — distinct day 4 (macro only)
+  ];
+  const r = evaluateTemporalKernel(log);
+  assert('MACRO_CONSOLIDATION', r.state === REGULATORY_STATE.MACRO_CONSOLIDATION);
+  assert('macro active', r.macroWindow.active === true);
+  assert('macro distinctDays ≥ 3', r.macroWindow.distinctDays >= 3);
+  assert('micro active (day 0 + day 10)', r.microWindow.active === true);
+}
+
+// ── 11: ENFORCEMENT_PRECEDENCE_CONFIRMED — MACRO + phaseC ────────────────────
+console.log('\n11 — ENFORCEMENT_PRECEDENCE_CONFIRMED: MACRO_CONSOLIDATION + phaseC');
+{
+  const log = [
+    entry(55, 55, 30, 30, 0),
+    entry(55, 55, 30, 30, 10),
+    entry(55, 55, 30, 30, 30),
+    entry(55, 55, 30, 30, 60),
+  ];
+  const r = evaluateTemporalKernel(log, true); // phaseC = true
+  assert('ENFORCEMENT_PRECEDENCE_CONFIRMED', r.state === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED);
+}
+
+// ── 12: phaseC alone does NOT reach ENFORCEMENT_PRECEDENCE_CONFIRMED ──────────
+console.log('\n12 — phaseC alone without MACRO → no ENFORCEMENT_PRECEDENCE_CONFIRMED');
+{
+  // Only micro cluster, no macro persistence
+  const log = [entry(55, 55, 30, 30, 5), entry(55, 30, 60, 30, 8)];
+  const r = evaluateTemporalKernel(log, true); // phaseC = true, but only 2 days
+  assert('max CROSS_JURISDICTIONAL_CLUSTER without macro', r.state === REGULATORY_STATE.CROSS_JURISDICTIONAL_CLUSTER);
+}
+
+// ── 13: Micro entries on same day → 1 distinct day ───────────────────────────
+console.log('\n13 — Same-day entries count as 1 distinct day');
+{
+  // Two entries today + one 90 days ago + one 60 days ago = 3 distinct days
+  const log = [
+    entry(55, 55, 30, 30, 0),
+    { ts: Date.now() - 1000 * 60 * 60, kScore: 55, mScore: 55, tScore: 30, cScore: 30 }, // 1hr ago = same day
+    entry(55, 55, 30, 30, 60),
+    entry(55, 55, 30, 30, 90),
+  ];
+  const r = evaluateTemporalKernel(log);
+  assert('3 distinct days (not 4)', r.macroWindow.distinctDays === 3);
+  assert('MACRO_CONSOLIDATION', r.state === REGULATORY_STATE.MACRO_CONSOLIDATION);
+}
+
+// ── 14: Micro window isolation — old entries don't bleed into micro ───────────
+console.log('\n14 — Macro entries do not inflate micro count');
+{
+  // 3 entries in macro (30/60/90 days) + 0 in micro
+  const log = [
+    entry(55, 55, 30, 30, 30),
+    entry(55, 55, 30, 30, 60),
+    entry(55, 55, 30, 30, 90),
+  ];
+  const r = evaluateTemporalKernel(log);
+  assert('micro count 0 (all outside 21d)', r.microWindow.count === 0);
+  assert('DORMANT (no micro ignition)', r.state === REGULATORY_STATE.DORMANT);
+}
+
+// ── 15: Static phaseA — K + M > 50 ──────────────────────────────────────────
+console.log('\n15 — Static phaseA via detectRegulatoryWindow');
+{
+  clearRegulatoryLog();
+  const s = [sig('KNOWLEDGE', 55), sig('MEDIA', 60), sig('TECHNOLOGY', 40), sig('CAPITAL', 40)];
+  const r = detectRegulatoryWindow(s);
+  assert('phaseA:true', r.phaseA === true);
+  assert('CROSS_JURISDICTIONAL_CLUSTER (K+M both > 50)', r.velocityState === REGULATORY_STATE.CROSS_JURISDICTIONAL_CLUSTER);
+  assert('triggered:true', r.triggered === true);
+}
+
+// ── 16: Static phaseA boundary (K = 50) ──────────────────────────────────────
+console.log('\n16 — phaseA boundary (K = 50)');
+{
+  clearRegulatoryLog();
+  const s = [sig('KNOWLEDGE', 50), sig('MEDIA', 60), sig('TECHNOLOGY', 40), sig('CAPITAL', 40)];
+  const r = detectRegulatoryWindow(s);
+  assert('phaseA:false (K=50, > not >=)', r.phaseA === false);
+}
+
+// ── 17: Static phaseC — K − C > 20 ──────────────────────────────────────────
+console.log('\n17 — Static phaseC: enforcementDelta > 20');
+{
+  clearRegulatoryLog();
+  const s = [sig('KNOWLEDGE', 75), sig('MEDIA', 40), sig('TECHNOLOGY', 40), sig('CAPITAL', 50)];
+  const r = detectRegulatoryWindow(s);
+  assert('phaseC:true', r.phaseC === true);
+  assert('enforcementDelta = 25', r.enforcementDelta === 25);
+}
+
+// ── 18: phaseC boundary (delta = 20) ─────────────────────────────────────────
+console.log('\n18 — phaseC boundary (delta = 20)');
+{
+  clearRegulatoryLog();
+  const s = [sig('KNOWLEDGE', 70), sig('MEDIA', 40), sig('TECHNOLOGY', 40), sig('CAPITAL', 50)];
+  const r = detectRegulatoryWindow(s);
+  assert('phaseC:false (delta=20, > not >=)', r.phaseC === false);
+}
+
+// ── 19: Fs calculation ────────────────────────────────────────────────────────
+console.log('\n19 — Fs = mean(K_conf, M_conf) / 100');
+{
+  clearRegulatoryLog();
+  const s = [
+    { domain: 'KNOWLEDGE', signal: 55, confidence: 80 },
+    { domain: 'MEDIA',     signal: 60, confidence: 60 },
+  ];
+  const r = detectRegulatoryWindow(s);
+  assert('Fs = 0.70', Math.abs(r.fs - 0.70) < 0.001);
+}
+
+// ── 20: Output contract — no leadTime, no old phase labels ───────────────────
+console.log('\n20 — Output contract: WO-1745 compliant');
+{
+  clearRegulatoryLog();
+  const s = [sig('KNOWLEDGE', 55), sig('MEDIA', 60)];
+  const r = detectRegulatoryWindow(s);
+  assert('no leadTime field',   !('leadTime' in r));
+  assert('no phase field',      !('phase' in r));
+  assert('has velocityState',   typeof r.velocityState === 'string');
+  assert('has microWindow',     typeof r.microWindow === 'object');
+  assert('has macroWindow',     typeof r.macroWindow === 'object');
+  assert('has enforcementDelta', typeof r.enforcementDelta === 'number');
+}
+
+// ── 21: null/empty input ─────────────────────────────────────────────────────
+console.log('\n21 — Null / empty guard');
 {
   const r1 = detectRegulatoryWindow(null);
   const r2 = detectRegulatoryWindow([]);
-  assert('null input → triggered:false', r1.triggered === false);
-  assert('null input → NONE', r1.phase === REGULATORY_PHASE.NONE);
-  assert('empty array → triggered:false', r2.triggered === false);
-  assert('ts is populated on null input', r1.ts > 0);
-}
-
-// ── 02: All below threshold ───────────────────────────────────────────────────
-console.log('\n02 — All scores below threshold');
-{
-  const signals = [sig('KNOWLEDGE', 40), sig('MEDIA', 30), sig('TECHNOLOGY', 45), sig('CAPITAL', 35)];
-  const r = detectRegulatoryWindow(signals);
-  assert('below threshold → NONE', r.phase === REGULATORY_PHASE.NONE);
-  assert('below threshold → triggered:false', r.triggered === false);
-  assert('leadTime null when not triggered', r.leadTime === null);
-}
-
-// ── 03: Phase A — WINDOW_FORMING ─────────────────────────────────────────────
-console.log('\n03 — Phase A: KNOWLEDGE + MEDIA both > 50');
-{
-  const signals = [sig('KNOWLEDGE', 55), sig('MEDIA', 60), sig('TECHNOLOGY', 40), sig('CAPITAL', 40)];
-  const r = detectRegulatoryWindow(signals);
-  assert('Phase A fires', r.phase === REGULATORY_PHASE.WINDOW_FORMING);
-  assert('triggered:true', r.triggered === true);
-  assert('phaseA:true', r.phaseA === true);
-  assert('phaseB:false (MEDIA < 65)', r.phaseB === false);
-  assert('phaseC:false (delta < 20)', r.phaseC === false);
-  assert('lead time is 6–18 MO', r.leadTime?.label === '6–18 MO');
-}
-
-// ── 04: Phase A boundary — exactly at threshold, should NOT fire ──────────────
-console.log('\n04 — Phase A boundary (exactly 50)');
-{
-  const signals = [sig('KNOWLEDGE', 50), sig('MEDIA', 50), sig('TECHNOLOGY', 40), sig('CAPITAL', 30)];
-  const r = detectRegulatoryWindow(signals);
-  assert('K=50 M=50 → NONE (> not >=)', r.phase === REGULATORY_PHASE.NONE);
-}
-
-// ── 05: Phase A requires BOTH signals ────────────────────────────────────────
-console.log('\n05 — Phase A requires K AND M');
-{
-  // CAPITAL=55 keeps K-C delta=5, below Phase C threshold of 20
-  const rKonly = detectRegulatoryWindow([sig('KNOWLEDGE', 60), sig('MEDIA', 30), sig('CAPITAL', 55)]);
-  const rMonly = detectRegulatoryWindow([sig('KNOWLEDGE', 30), sig('MEDIA', 60), sig('CAPITAL', 55)]);
-  assert('K>50 alone → NONE', rKonly.phase === REGULATORY_PHASE.NONE);
-  assert('M>50 alone → NONE', rMonly.phase === REGULATORY_PHASE.NONE);
-}
-
-// ── 06: Phase B — MULTI_JURISDICTION ─────────────────────────────────────────
-console.log('\n06 — Phase B: MEDIA > 65 + TECHNOLOGY > 55');
-{
-  // Phase B can fire without Phase A (K may be < 50)
-  const signals = [sig('KNOWLEDGE', 40), sig('MEDIA', 70), sig('TECHNOLOGY', 60), sig('CAPITAL', 30)];
-  const r = detectRegulatoryWindow(signals);
-  assert('Phase B fires without Phase A', r.phase === REGULATORY_PHASE.MULTI_JURISDICTION);
-  assert('phaseB:true', r.phaseB === true);
-  assert('phaseA:false (K < 50)', r.phaseA === false);
-  assert('lead time is 3–12 MO', r.leadTime?.label === '3–12 MO');
-}
-
-// ── 07: Phase B boundary ─────────────────────────────────────────────────────
-console.log('\n07 — Phase B boundary (exactly 65 / 55)');
-{
-  const signals = [sig('KNOWLEDGE', 40), sig('MEDIA', 65), sig('TECHNOLOGY', 55), sig('CAPITAL', 30)];
-  const r = detectRegulatoryWindow(signals);
-  assert('M=65 T=55 → NONE (> not >=)', r.phase === REGULATORY_PHASE.NONE);
-}
-
-// ── 08: Phase C — ENFORCEMENT_AHEAD ──────────────────────────────────────────
-console.log('\n08 — Phase C: KNOWLEDGE > CAPITAL + 20');
-{
-  // K=75, C=50 → delta=25 > 20
-  const signals = [sig('KNOWLEDGE', 75), sig('MEDIA', 40), sig('TECHNOLOGY', 40), sig('CAPITAL', 50)];
-  const r = detectRegulatoryWindow(signals);
-  assert('Phase C fires', r.phase === REGULATORY_PHASE.ENFORCEMENT_AHEAD);
-  assert('phaseC:true', r.phaseC === true);
-  assert('enforcementDelta = 25', r.enforcementDelta === 25);
-  assert('lead time is 1–6 MO', r.leadTime?.label === '1–6 MO');
-}
-
-// ── 09: Phase C boundary — exactly 20, should NOT fire ───────────────────────
-console.log('\n09 — Phase C boundary (spread = 20)');
-{
-  const signals = [sig('KNOWLEDGE', 70), sig('MEDIA', 40), sig('TECHNOLOGY', 40), sig('CAPITAL', 50)];
-  const r = detectRegulatoryWindow(signals);
-  assert('K-C=20 → NONE (> not >=)', r.phaseC === false);
-}
-
-// ── 10: Phase C takes priority over Phase B ───────────────────────────────────
-console.log('\n10 — Phase priority: C > B');
-{
-  // Phase B: M=70, T=60. Phase C: K=80, C=55 → delta=25
-  const signals = [sig('KNOWLEDGE', 80), sig('MEDIA', 70), sig('TECHNOLOGY', 60), sig('CAPITAL', 55)];
-  const r = detectRegulatoryWindow(signals);
-  assert('C beats B', r.phase === REGULATORY_PHASE.ENFORCEMENT_AHEAD);
-  assert('phaseB also true', r.phaseB === true);
-  assert('phaseC takes priority', r.phaseC === true);
-}
-
-// ── 11: Phase B takes priority over Phase A ───────────────────────────────────
-console.log('\n11 — Phase priority: B > A');
-{
-  // Phase A: K=55 M=70. Phase B: M=70 T=60.
-  const signals = [sig('KNOWLEDGE', 55), sig('MEDIA', 70), sig('TECHNOLOGY', 60), sig('CAPITAL', 40)];
-  const r = detectRegulatoryWindow(signals);
-  assert('B beats A', r.phase === REGULATORY_PHASE.MULTI_JURISDICTION);
-  assert('phaseA also true', r.phaseA === true);
-}
-
-// ── 12: Fs calculation ────────────────────────────────────────────────────────
-console.log('\n12 — Fs = mean(K_conf, M_conf) / 100');
-{
-  const signals = [
-    { domain: 'KNOWLEDGE', signal: 55, confidence: 80 },
-    { domain: 'MEDIA',     signal: 60, confidence: 60 },
-    { domain: 'CAPITAL',   signal: 30, confidence: 90 },
-  ];
-  const r = detectRegulatoryWindow(signals);
-  assert('Fs = 0.70 (mean 80+60)', Math.abs(r.fs - 0.70) < 0.001);
-}
-
-// ── 13: Fs fallback — K only ──────────────────────────────────────────────────
-console.log('\n13 — Fs fallback when only K present');
-{
-  const signals = [{ domain: 'KNOWLEDGE', signal: 55, confidence: 90 }];
-  const r = detectRegulatoryWindow(signals);
-  assert('Fs = K_conf when M absent', Math.abs(r.fs - 0.90) < 0.001);
-}
-
-// ── 14: Fs fallback — neither K nor M ────────────────────────────────────────
-console.log('\n14 — Fs = 0 when neither K nor M present');
-{
-  const signals = [sig('TECHNOLOGY', 70), sig('CAPITAL', 30)];
-  const r = detectRegulatoryWindow(signals);
-  assert('Fs = 0', r.fs === 0);
-}
-
-// ── 15: enforcementDelta with C > K (negative) ───────────────────────────────
-console.log('\n15 — Negative enforcement delta (C > K)');
-{
-  const signals = [sig('KNOWLEDGE', 40), sig('MEDIA', 30), sig('TECHNOLOGY', 30), sig('CAPITAL', 70)];
-  const r = detectRegulatoryWindow(signals);
-  assert('enforcementDelta negative', r.enforcementDelta === -30);
-  assert('phaseC false on negative delta', r.phaseC === false);
-}
-
-// ── 16: Full-field scores populated ──────────────────────────────────────────
-console.log('\n16 — All domain scores surfaced on result');
-{
-  const signals = [sig('KNOWLEDGE', 55), sig('MEDIA', 60), sig('TECHNOLOGY', 45), sig('CAPITAL', 38)];
-  const r = detectRegulatoryWindow(signals);
-  assert('knowledgeScore = 55', r.knowledgeScore === 55);
-  assert('mediaScore = 60', r.mediaScore === 60);
-  assert('technologyScore = 45', r.technologyScore === 45);
-  assert('capitalScore = 38', r.capitalScore === 38);
-}
-
-// ── 17: duplicate domains — first match wins ──────────────────────────────────
-console.log('\n17 — Duplicate domain: first-match wins');
-{
-  const signals = [
-    { domain: 'KNOWLEDGE', signal: 70, confidence: 90 },
-    { domain: 'KNOWLEDGE', signal: 20, confidence: 40 }, // should be ignored
-    { domain: 'MEDIA',     signal: 60, confidence: 70 },
-  ];
-  const r = detectRegulatoryWindow(signals);
-  assert('first KNOWLEDGE used (70)', r.knowledgeScore === 70);
+  assert('null → DORMANT', r1.velocityState === REGULATORY_STATE.DORMANT);
+  assert('null → triggered:false', r1.triggered === false);
+  assert('empty → DORMANT', r2.velocityState === REGULATORY_STATE.DORMANT);
+  assert('ts populated', r1.ts > 0);
 }
 
 // ── Summary ───────────────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(52)}`);
-console.log(`WO-1736 QA: ${pass}/${pass + fail} PASS`);
+console.log(`WO-1736 v2 QA: ${pass}/${pass + fail} PASS`);
 if (fail > 0) { console.error(`  ${fail} FAILURE(S) — DO NOT MARK COMPLETE`); process.exit(1); }
-else          { console.log('  ALL PASS — WO-1736 VALIDATED'); }
+else          { console.log('  ALL PASS — WO-1736 TEMPORAL KERNEL VALIDATED'); }

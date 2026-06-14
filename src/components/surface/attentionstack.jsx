@@ -12,7 +12,7 @@ import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconvi
 import { attributeEntityToSignals } from '../../engine/entityattribution.js';
 import { computePortfolioConvergence, detectPlatformInflection } from '../../engine/portfolioconvergence.js';
 import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.js';
-import { detectRegulatoryWindow, REGULATORY_PHASE } from '../../engine/regulatoryconvergence.js';
+import { detectRegulatoryWindow, REGULATORY_STATE } from '../../engine/regulatoryconvergence.js';
 import { detectHNWConvergence, HNW_PHASE } from '../../engine/hnwconvergence.js';
 import { detectCriticalMaterials, MATERIALS_PHASE } from '../../engine/criticalmaterials.js';
 import { detectAIInfrastructureDemand } from '../../engine/aiinfrastructure.js';
@@ -388,49 +388,32 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       {/* WO-1736 — Regulatory Convergence Window (Gass-Benecke Protocol) */}
       {regulatory.triggered && (
         <div style={{
-          borderTop: `1px solid ${regulatory.phaseC ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          borderTop: `1px solid ${regulatory.velocityState === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
           padding: '5px 10px',
-          background: regulatory.phaseC
-            ? 'rgba(0,127,255,0.06)'
-            : 'rgba(102,255,0,0.03)',
+          background: regulatory.velocityState === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED
+            ? 'rgba(0,127,255,0.06)' : 'rgba(102,255,0,0.03)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
               fontSize: 7, letterSpacing: '0.18em',
-              color: regulatory.phaseC ? '#007FFF' : LIME,
+              color: regulatory.velocityState === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED ? '#007FFF' : LIME,
             }}>
-              {regulatory.phase === REGULATORY_PHASE.ENFORCEMENT_AHEAD  && '◈ ENFORCEMENT AHEAD OF INVESTMENT'}
-              {regulatory.phase === REGULATORY_PHASE.MULTI_JURISDICTION && '◈ MULTI-JURISDICTION ALIGNMENT'}
-              {regulatory.phase === REGULATORY_PHASE.WINDOW_FORMING     && '◈ REGULATORY WINDOW FORMING'}
+              ◈ GB · {regulatory.velocityState.replace(/_/g, ' ')}
             </span>
-            <span style={{ color: WEAK, fontSize: 6 }}>
-              {regulatory.leadTime?.label} · Fs {Math.round(regulatory.fs * 100)}%
-            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>Fs {Math.round(regulatory.fs * 100)}%</span>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {regulatory.phaseC ? (
-              <>
-                <span style={{ color: '#007FFF', fontSize: 6 }}>
-                  K {regulatory.knowledgeScore} · C {regulatory.capitalScore}
-                </span>
-                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>
-                  +{regulatory.enforcementDelta} ENFORCEMENT SPREAD
-                </span>
-              </>
-            ) : regulatory.phaseB ? (
-              <>
-                <span style={{ color: MID, fontSize: 6 }}>
-                  M {regulatory.mediaScore} · T {regulatory.technologyScore}
-                </span>
-                <span style={{ color: MID, fontSize: 6 }}>CROSS-BORDER PRESSURE DETECTED</span>
-              </>
-            ) : (
-              <>
-                <span style={{ color: MID, fontSize: 6 }}>
-                  K {regulatory.knowledgeScore} · M {regulatory.mediaScore}
-                </span>
-                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REGULATORY DRAFT PRECURSOR</span>
-              </>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ color: MID, fontSize: 6 }}>K {regulatory.knowledgeScore} · M {regulatory.mediaScore}</span>
+            {regulatory.microWindow.active && (
+              <span style={{ color: LIME, fontSize: 6 }}>μ {regulatory.microWindow.domainCount}J · {regulatory.microWindow.count}e</span>
+            )}
+            {regulatory.macroWindow.active && (
+              <span style={{ color: MID, fontSize: 6 }}>Σ {regulatory.macroWindow.distinctDays}d</span>
+            )}
+            {regulatory.phaseC && (
+              <span style={{ color: regulatory.velocityState === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED ? '#007FFF' : WEAK, fontSize: 6 }}>
+                K−C +{regulatory.enforcementDelta}
+              </span>
             )}
           </div>
         </div>
