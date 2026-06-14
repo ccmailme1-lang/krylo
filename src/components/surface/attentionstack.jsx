@@ -10,6 +10,7 @@ import { synthesizeCrossDomain } from '../../engine/verdictsynthesis.js';
 import { detectPlatformFormation, PLATFORM_FORMATION_PHASE } from '../../engine/platformformation.js';
 import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconviction.js';
 import { attributeEntityToSignals } from '../../engine/entityattribution.js';
+import { computePortfolioConvergence, detectPlatformInflection } from '../../engine/portfolioconvergence.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -54,6 +55,10 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1735 — Platform Conviction Arc (interpretation layer)
   const conviction = classifyConviction(formation, signals, nc);
+
+  // WO-1728 — Full-Field Portfolio Convergence (Bezos Protocol)
+  const portfolio   = computePortfolioConvergence(signals);
+  const inflection  = detectPlatformInflection(signals);
 
   // WO-1725 Phase A — Entity pressure attribution
   const [activeEntity, setActiveEntity] = React.useState('');
@@ -331,6 +336,35 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               </span>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* WO-1728 — Full-Field Portfolio Convergence */}
+      {portfolio.activeDomains > 0 && (
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '5px 10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+            <span style={{ color: inflection.triggered ? LIME : DIM, fontSize: 7, letterSpacing: '0.18em' }}>
+              {inflection.triggered ? '◈ PLATFORM BET WINDOW' : '· PORTFOLIO FIELD'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              AGG {portfolio.aggregateScore} · {portfolio.activeDomains}/6 · Fs {Math.round(portfolio.fs * 100)}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {portfolio.domainScores.filter(d => d.active).map(d => (
+              <span key={d.domain} style={{
+                fontSize: 6,
+                color: d.score > 50 ? LIME : WEAK,
+              }}>
+                {d.domain.slice(0, 4)} {d.score}
+              </span>
+            ))}
+          </div>
+          {inflection.triggered && (
+            <div style={{ marginTop: 3, color: LIME, fontSize: 6, letterSpacing: '0.1em' }}>
+              {inflection.convergenceCount} DOMAINS CONVERGING · {inflection.convergingDomains.map(d => d.slice(0,4)).join(' · ')}
+            </div>
+          )}
         </div>
       )}
 
