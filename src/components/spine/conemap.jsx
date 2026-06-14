@@ -1392,49 +1392,6 @@ function FrontierRing({ position, state }) {
   );
 }
 
-// Field Convergence Indicator — vertical diamond at the center of the cone circle,
-// colored by the dominant convergence state across all cones. The "weather" of
-// the whole system at a glance.
-function FieldConvergence({ coneState }) {
-  const { color, label } = useMemo(() => {
-    if (!coneState.length) return { color: '#4A4A4A', label: '—' };
-    const counts = {};
-    const labels = {};
-    coneState.forEach(s => {
-      const ln = (s.pressure ?? 0) / 100;
-      const { theme, label: lbl } = classifyConvergenceState(
-        { D: ln, V: s.volatility ?? 0.5, A: ln, T: 0.7 },
-        0.8,
-      );
-      counts[theme] = (counts[theme] ?? 0) + 1;
-      labels[theme] = lbl;
-    });
-    let best = null, bestCount = 0;
-    for (const [t, c] of Object.entries(counts)) {
-      if (c > bestCount) { bestCount = c; best = t; }
-    }
-    return { color: THEME_COLOR[best] ?? '#4A4A4A', label: labels[best] ?? '—' };
-  }, [coneState]);
-
-  const size = 0.5;
-  const positions = useMemo(() => new Float32Array([
-    0,  size, 0,   size,  0,   0,
-    size, 0, 0,    0,    -size, 0,
-    0, -size, 0,   -size, 0,   0,
-    -size, 0, 0,   0,     size, 0,
-  ]), []);
-
-  return (
-    <>
-      <lineSegments position={[0, 2, 0]}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color={color} transparent opacity={0.7} />
-      </lineSegments>
-</>
-  );
-}
 
 // Wave 2: event pulses — small particles rise from cone base to apex when a
 // signal event fires. Mock source (timer); ~3 simultaneous, ~1.5s TTL.
@@ -1855,7 +1812,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       <group ref={gridGroupRef}>
         <PulseFloor ringCount={6} maxRadius={R + 3} />
         <ThresholdBands />
-        <FieldConvergence coneState={coneState} />
+
       </group>
 
       {/* WO-1313: US outline wireframe — fades in with topoLerp */}
