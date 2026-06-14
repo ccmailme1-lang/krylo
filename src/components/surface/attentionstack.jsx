@@ -8,6 +8,7 @@ import { detectWeakSignals } from '../../engine/weaksignaldetector.js';
 import { analyzeNonConsensus } from '../../engine/nonconsensusdetector.js';
 import { synthesizeCrossDomain } from '../../engine/verdictsynthesis.js';
 import { detectPlatformFormation, PLATFORM_FORMATION_PHASE } from '../../engine/platformformation.js';
+import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconviction.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -49,6 +50,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1741 — Platform Formation Signal (META-SIGNAL / DETECTION)
   const formation = detectPlatformFormation(signals);
+
+  // WO-1735 — Platform Conviction Arc (interpretation layer)
+  const conviction = classifyConviction(formation, signals, nc);
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -254,6 +258,45 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               </span>
             )}
           </div>
+        </div>
+      )}
+
+      {/* WO-1735 — Platform Conviction Arc */}
+      {conviction.level !== CONVICTION_LEVEL.NONE && (
+        <div style={{
+          borderTop: '1px solid rgba(102,255,0,0.10)',
+          padding: '5px 10px',
+          background: conviction.level === CONVICTION_LEVEL.HYPERGROWTH
+            ? 'rgba(138,43,226,0.07)'
+            : 'rgba(102,255,0,0.03)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{
+              fontSize: 7, letterSpacing: '0.18em',
+              color: conviction.level === CONVICTION_LEVEL.HYPERGROWTH ? '#8A2BE2'
+                   : conviction.level === CONVICTION_LEVEL.CONFIRMED   ? LIME
+                   : WEAK,
+            }}>
+              {conviction.level === CONVICTION_LEVEL.HYPERGROWTH && '◈ HYPERGROWTH WINDOW'}
+              {conviction.level === CONVICTION_LEVEL.CONFIRMED   && '◈ CONVICTION CONFIRMED'}
+              {conviction.level === CONVICTION_LEVEL.EARLY       && '◈ EARLY CONVICTION'}
+            </span>
+            {conviction.ncContext && (
+              <span style={{ color: WEAK, fontSize: 6 }}>NC→CONFIRMED</span>
+            )}
+          </div>
+          {conviction.personas.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {conviction.personas.map(p => (
+                <span key={p} style={{
+                  color: conviction.level === CONVICTION_LEVEL.HYPERGROWTH ? '#8A2BE2' : LIME,
+                  fontSize: 6, letterSpacing: '0.1em',
+                }}>
+                  {p}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
