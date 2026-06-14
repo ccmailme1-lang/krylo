@@ -532,7 +532,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
         <span
           onMouseEnter={() => setTitleHovered(true)}
           onMouseLeave={() => setTitleHovered(false)}
-          style={{ fontFamily: MONO, fontSize: 8, color: titleHovered ? '#fff' : (isLoaded ? color : BRT), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
+          style={{ fontFamily: MONO, fontSize: 8, color: titleHovered ? LIME : (isLoaded ? color : BRT), letterSpacing: '0.14em', textTransform: 'uppercase', flexShrink: 0, transition: 'color 150ms ease', cursor: 'pointer' }}>
           {mainLabel}
         </span>
         {isExpanded ? (
