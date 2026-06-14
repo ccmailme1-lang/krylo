@@ -13,6 +13,7 @@ import { attributeEntityToSignals } from '../../engine/entityattribution.js';
 import { computePortfolioConvergence, detectPlatformInflection } from '../../engine/portfolioconvergence.js';
 import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.js';
 import { detectRegulatoryWindow, REGULATORY_PHASE } from '../../engine/regulatoryconvergence.js';
+import { detectHNWConvergence, HNW_PHASE } from '../../engine/hnwconvergence.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -64,6 +65,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
 
   // WO-1736 — Regulatory Convergence Window (Gass-Benecke Protocol)
   const regulatory = detectRegulatoryWindow(signals);
+
+  // WO-1737 — HNW Client Convergence Overlay (Cornerstone Protocol)
+  const hnw = detectHNWConvergence(signals);
 
   // WO-1725 Phase A — Entity pressure attribution
   const [activeEntity, setActiveEntity] = React.useState('');
@@ -418,6 +422,51 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
                   K {regulatory.knowledgeScore} · M {regulatory.mediaScore}
                 </span>
                 <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REGULATORY DRAFT PRECURSOR</span>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* WO-1737 — HNW Client Convergence Overlay (Cornerstone Protocol) */}
+      {hnw.triggered && (
+        <div style={{
+          borderTop: `1px solid ${hnw.phase === HNW_PHASE.SECTOR_ROTATION ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          padding: '5px 10px',
+          background: hnw.phase === HNW_PHASE.SECTOR_ROTATION
+            ? 'rgba(0,127,255,0.06)'
+            : 'rgba(102,255,0,0.03)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{
+              fontSize: 7, letterSpacing: '0.18em',
+              color: hnw.phase === HNW_PHASE.SECTOR_ROTATION ? '#007FFF' : LIME,
+            }}>
+              {hnw.phase === HNW_PHASE.LIQUIDITY_EVENT  && '◈ LIQUIDITY EVENT SIGNAL'}
+              {hnw.phase === HNW_PHASE.SECTOR_ROTATION  && '◈ SECTOR ROTATION IMMINENT'}
+              {hnw.phase === HNW_PHASE.PORTFOLIO_TIMING && '◈ PORTFOLIO TIMING WINDOW'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              Fs {Math.round(hnw.fs * 100)}%{hnw.fsQualified ? '' : ' ·UNQUALIFIED'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {hnw.phase === HNW_PHASE.LIQUIDITY_EVENT && (
+              <>
+                <span style={{ color: LIME, fontSize: 6 }}>O {hnw.ownershipScore} · C {hnw.capitalScore}</span>
+                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>DEAL FLOW SURGE / IPO WINDOW</span>
+              </>
+            )}
+            {hnw.phase === HNW_PHASE.SECTOR_ROTATION && (
+              <>
+                <span style={{ color: '#007FFF', fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore}</span>
+                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>Δ +{hnw.techCapitalDelta} TECH/CAP SPREAD</span>
+              </>
+            )}
+            {hnw.phase === HNW_PHASE.PORTFOLIO_TIMING && (
+              <>
+                <span style={{ color: MID, fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore} · O {hnw.ownershipScore}</span>
+                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REBALANCE WINDOW OPEN</span>
               </>
             )}
           </div>
