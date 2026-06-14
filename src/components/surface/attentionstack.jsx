@@ -12,6 +12,7 @@ import { classifyConviction, CONVICTION_LEVEL } from '../../engine/platformconvi
 import { attributeEntityToSignals } from '../../engine/entityattribution.js';
 import { computePortfolioConvergence, detectPlatformInflection } from '../../engine/portfolioconvergence.js';
 import { getRunningAccuracy, checkExpiry } from '../../engine/evidenceregistry.js';
+import { detectRegulatoryWindow, REGULATORY_PHASE } from '../../engine/regulatoryconvergence.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -60,6 +61,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
   // WO-1728 — Full-Field Portfolio Convergence (Bezos Protocol)
   const portfolio   = computePortfolioConvergence(signals);
   const inflection  = detectPlatformInflection(signals);
+
+  // WO-1736 — Regulatory Convergence Window (Gass-Benecke Protocol)
+  const regulatory = detectRegulatoryWindow(signals);
 
   // WO-1725 Phase A — Entity pressure attribution
   const [activeEntity, setActiveEntity] = React.useState('');
@@ -366,6 +370,57 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               {inflection.convergenceCount} DOMAINS CONVERGING · {inflection.convergingDomains.map(d => d.slice(0,4)).join(' · ')}
             </div>
           )}
+        </div>
+      )}
+
+      {/* WO-1736 — Regulatory Convergence Window (Gass-Benecke Protocol) */}
+      {regulatory.triggered && (
+        <div style={{
+          borderTop: `1px solid ${regulatory.phaseC ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          padding: '5px 10px',
+          background: regulatory.phaseC
+            ? 'rgba(0,127,255,0.06)'
+            : 'rgba(102,255,0,0.03)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{
+              fontSize: 7, letterSpacing: '0.18em',
+              color: regulatory.phaseC ? '#007FFF' : LIME,
+            }}>
+              {regulatory.phase === REGULATORY_PHASE.ENFORCEMENT_AHEAD  && '◈ ENFORCEMENT AHEAD OF INVESTMENT'}
+              {regulatory.phase === REGULATORY_PHASE.MULTI_JURISDICTION && '◈ MULTI-JURISDICTION ALIGNMENT'}
+              {regulatory.phase === REGULATORY_PHASE.WINDOW_FORMING     && '◈ REGULATORY WINDOW FORMING'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              {regulatory.leadTime?.label} · Fs {Math.round(regulatory.fs * 100)}%
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            {regulatory.phaseC ? (
+              <>
+                <span style={{ color: '#007FFF', fontSize: 6 }}>
+                  K {regulatory.knowledgeScore} · C {regulatory.capitalScore}
+                </span>
+                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>
+                  +{regulatory.enforcementDelta} ENFORCEMENT SPREAD
+                </span>
+              </>
+            ) : regulatory.phaseB ? (
+              <>
+                <span style={{ color: MID, fontSize: 6 }}>
+                  M {regulatory.mediaScore} · T {regulatory.technologyScore}
+                </span>
+                <span style={{ color: MID, fontSize: 6 }}>CROSS-BORDER PRESSURE DETECTED</span>
+              </>
+            ) : (
+              <>
+                <span style={{ color: MID, fontSize: 6 }}>
+                  K {regulatory.knowledgeScore} · M {regulatory.mediaScore}
+                </span>
+                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REGULATORY DRAFT PRECURSOR</span>
+              </>
+            )}
+          </div>
         </div>
       )}
 
