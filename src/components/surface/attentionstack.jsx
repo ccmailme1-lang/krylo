@@ -7,6 +7,7 @@ import { useKalshiSignals } from '../../hooks/usekalshisignals.js';
 import { detectWeakSignals } from '../../engine/weaksignaldetector.js';
 import { analyzeNonConsensus } from '../../engine/nonconsensusdetector.js';
 import { synthesizeCrossDomain } from '../../engine/verdictsynthesis.js';
+import { detectPlatformFormation, PLATFORM_FORMATION_PHASE } from '../../engine/platformformation.js';
 
 const LIME  = '#66FF00';
 const DIM   = 'rgba(255,255,255,0.35)';
@@ -45,6 +46,9 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
     fs: (s.confidence ?? 0) / 100,
   }));
   const munger = synthesizeCrossDomain(domainStates);
+
+  // WO-1741 — Platform Formation Signal (META-SIGNAL / DETECTION)
+  const formation = detectPlatformFormation(signals);
 
   // Top signals by OI, skip duplicates by domain+direction
   const seen = new Set();
@@ -218,6 +222,38 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
               CONVICTION WINDOW OPEN {Math.round(nc.gapOpenMs / 1000)}s · POP {Math.round(nc.populationAgreement * 100)}%
             </span>
           )}
+        </div>
+      )}
+
+      {/* WO-1741 — Platform Formation Signal */}
+      {formation.triggered && (
+        <div style={{
+          borderTop: '1px solid rgba(102,255,0,0.12)',
+          padding: '5px 10px',
+          background: formation.phase === PLATFORM_FORMATION_PHASE.CONFIRMED
+            ? 'rgba(102,255,0,0.07)'
+            : 'rgba(102,255,0,0.03)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+            <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
+              {formation.phase === PLATFORM_FORMATION_PHASE.CONFIRMED
+                ? '◈ PLATFORM FORMATION CONFIRMED'
+                : '◈ PLATFORM FORMATION DETECTED'}
+            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>
+              {formation.velocityQualified ? `≥14d SUSTAINED` : `T+${Math.floor(Math.max(formation.daysAbove?.TECHNOLOGY ?? 0, formation.daysAbove?.CAPITAL ?? 0))}d`}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <span style={{ color: MID, fontSize: 6 }}>
+              TECH {formation.technologyScore} · CAP {formation.capitalScore}
+            </span>
+            {!formation.velocityQualified && (
+              <span style={{ color: WEAK, fontSize: 6 }}>
+                VELOCITY GATE: {14 - Math.floor(Math.min(formation.daysAbove?.TECHNOLOGY ?? 0, formation.daysAbove?.CAPITAL ?? 0))}d REMAINING
+              </span>
+            )}
+          </div>
         </div>
       )}
 
