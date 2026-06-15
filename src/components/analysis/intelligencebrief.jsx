@@ -1,12 +1,12 @@
 // WO-1341 — Intelligence Brief: Premium HUD Surface
 // Houston Mission Control / Presidential Situation Room aesthetic
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
-import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE } from '../../engine/consultingexport.js';
+import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -140,6 +140,10 @@ export default function IntelligenceBrief() {
   const exportUnlocked = canExport(fs);
   const isImported     = session?.tensor?.isImported ?? false;
 
+  // WO-1752: runtime state
+  const replayState = session?.tensor?.replayState ?? RUNTIME_STATE.LIVE;
+  const replayMode  = replayState === RUNTIME_STATE.REPLAYING;
+
   function handleExport() {
     if (!exportUnlocked || !session) return;
     const brief   = buildBrief(session);
@@ -163,10 +167,14 @@ export default function IntelligenceBrief() {
     const validation = validateImport(json);
     if (!validation.valid) {
       const msg = {
-        INVALID_SCHEMA:  'SCHEMA MISMATCH — not a Krylo export',
-        MISSING_FIELDS:  'CORRUPT EXPORT — required fields missing',
-        FS_BELOW_GATE:   `Fs ${Math.round((validation.fs ?? 0) * 100)}% — below import gate (70%)`,
-        PARSE_FAILURE:   'PARSE FAILURE',
+        INVALID_SCHEMA:       'SCHEMA MISMATCH — not a Krylo export',
+        MISSING_FIELDS:       'CORRUPT EXPORT — required fields missing',
+        FS_BELOW_GATE:        `Fs ${Math.round((validation.fs ?? 0) * 100)}% — below import gate (70%)`,
+        PARSE_FAILURE:        'PARSE FAILURE',
+        HASH_MISMATCH:        'INTEGRITY FAILURE — artifact hash mismatch, possible tampering',
+        PROVENANCE_INTEGRITY: `PROVENANCE BREAK — ${validation.detail ?? 'signal source not found in snapshot'}`,
+        DAG_INTEGRITY:        `DAG BREAK — ${validation.detail ?? 'evidence graph invalid'}`,
+        FIDELITY_MISMATCH:    `Fs INCONSISTENCY — ${validation.detail ?? 'snapshot confidence diverges from provenance'}`,
       }[validation.error] ?? 'IMPORT REJECTED';
       setImportState({ status: 'error', message: msg });
       return;
@@ -185,13 +193,17 @@ export default function IntelligenceBrief() {
       staleDays:    validation.staleDays,
       stateType:    validation.stateType,
       timeFrozen:   validation.timeFrozen,
+      replayState:  validation.replayState,
+      artifactHash: validation.artifactHash,
+      isV1752:      validation.isV1752,
     });
   }
 
   useEffect(() => {
+    if (replayMode) return; // frozen clock in REPLAYING state
     const t = setInterval(() => setSysTime(new Date().toTimeString().slice(0, 8)), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [replayMode]);
 
   if (!session) {
     return (
@@ -262,13 +274,16 @@ export default function IntelligenceBrief() {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
               <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: BLUE }}>
-                ◈ IMPORTED ARTIFACT · {importState.stateType?.toUpperCase() ?? 'ANALYTICAL'}
+                ◈ {importState.replayState ?? 'REHYDRATED'} · {importState.stateType?.toUpperCase() ?? 'ANALYTICAL'}
               </span>
-              {!importState.versionMatch && (
-                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.12em' }}>
-                  ⚠ VERSION DRIFT
-                </span>
-              )}
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                {!importState.versionMatch && (
+                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.12em' }}>⚠ VERSION DRIFT</span>
+                )}
+                {importState.isV1752 && (
+                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.5)', letterSpacing: '0.12em' }}>✓ INTEGRITY VERIFIED</span>
+                )}
+              </div>
             </div>
             <div style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.1em' }}>
               FROZEN {importState.timeFrozen ? new Date(importState.timeFrozen).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '—'}
@@ -278,6 +293,11 @@ export default function IntelligenceBrief() {
                 </span>
               )}
             </div>
+            {importState.artifactHash && (
+              <div style={{ fontFamily: MONO, fontSize: 5.5, color: 'rgba(0,127,255,0.35)', letterSpacing: '0.1em', marginTop: 3 }}>
+                HASH: {importState.artifactHash}
+              </div>
+            )}
           </div>
         )}
 
@@ -404,11 +424,14 @@ export default function IntelligenceBrief() {
         position: 'relative', zIndex: 1, overflow: 'hidden',
       }}>
         {[
-          { label: 'SIGNAL',          value: 'LOCKED',    color: LIME },
-          { label: 'CONVERGENCE',     value: 'HIGH',      color: LIME },
-          { label: 'FRACTURE WINDOW', value: 'OPEN · 48H',color: LIME },
-          { label: 'NODES',           value: '5 / 7',     color: BLUE },
-          { label: 'KERNEL',          value: 'ACTIVE',    color: LIME },
+          { label: 'SIGNAL',          value: 'LOCKED',                         color: LIME },
+          { label: 'CONVERGENCE',     value: 'HIGH',                           color: LIME },
+          { label: 'FRACTURE WINDOW', value: 'OPEN · 48H',                     color: LIME },
+          { label: 'NODES',           value: '5 / 7',                          color: BLUE },
+          { label: 'KERNEL',
+            value: replayMode ? replayState : RUNTIME_STATE.LIVE,
+            color: replayMode ? BLUE : LIME,
+          },
         ].map(({ label, value, color }, i) => (
           <div key={label} style={{ display: 'flex', gap: 7, alignItems: 'center', paddingRight: 20, borderRight: i < 4 ? `1px solid rgba(255,255,255,0.06)` : 'none', marginRight: 20, flexShrink: 0 }}>
             <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{label}</span>
@@ -434,7 +457,7 @@ export default function IntelligenceBrief() {
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
-            CONSULTING I/O · WO-1751
+            CONSULTING I/O · WO-1752
           </span>
           <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
             {exportUnlocked
