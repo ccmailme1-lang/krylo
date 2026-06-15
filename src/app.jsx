@@ -38,6 +38,7 @@ import HistoryBay        from './components/history/historybay.jsx';
 import Workstation       from './components/bays/workstation.jsx';
 import SettingsPanel     from './components/settings/settingspanel.jsx';
 import ConsoleDashboard  from './components/resonance/consoledashboard.jsx';
+import MiddleConsole     from './components/console/middleconsole.jsx';
 import BayVisor          from './components/resonance/bayvisor.jsx';
 import signalmap          from './components/spine/spinemap.jsx';
 import AnnotationLayer    from './components/spine/annotationlayer.jsx';
@@ -1039,6 +1040,13 @@ export default function App() {
             fidelityInputs={{}}
             onReturn={() => setNavMode('surface')}
           />
+        </div>
+      )}
+
+      {/* WO-1753: Middle Console */}
+      {navMode === 'console' && (
+        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, overflow: 'hidden' }}>
+          <MiddleConsole onReturn={() => setNavMode('surface')} />
         </div>
       )}
 
