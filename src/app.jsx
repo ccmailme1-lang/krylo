@@ -1045,7 +1045,7 @@ export default function App() {
 
       {/* WO-1753: Middle Console */}
       {navMode === 'console' && (
-        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, overflow: 'hidden' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: '#0a0a0a', overflow: 'hidden' }}>
           <MiddleConsole onReturn={() => setNavMode('surface')} />
         </div>
       )}

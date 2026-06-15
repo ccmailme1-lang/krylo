@@ -2144,7 +2144,7 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
         <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><polyline points="9,5 9,9 12,11"/></svg>
         <span class="lnav-label">History</span>
     </div>
-    <div class="lnav-item" onclick="setMode('console')">
+    <div class="lnav-item" onclick="setMode('analysis')">
         <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="4" width="14" height="10" rx="1"/><line x1="5" y1="8" x2="13" y2="8"/><line x1="5" y1="11" x2="10" y2="11"/></svg>
         <span class="lnav-label">Console</span>
     </div>
@@ -3215,6 +3215,43 @@ Object.keys(slideData).forEach(id => {
 
   connect();
 })();
+</script>
+
+<!-- WO-1753: Signal Console overlay -->
+<div id="signal-console" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:9999;align-items:center;justify-content:center;flex-direction:column;">
+  <div style="width:100%;max-width:680px;padding:0 24px;box-sizing:border-box;">
+    <div style="background:#181818;border:1px solid rgba(255,255,255,0.09);border-radius:12px;overflow:hidden;">
+      <textarea id="console-ta" placeholder="Build your signal query..." rows="7"
+        style="display:block;width:100%;background:transparent;border:none;font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.8;color:rgba(255,255,255,0.88);letter-spacing:0.02em;padding:22px 22px 10px;resize:none;caret-color:#66FF00;box-sizing:border-box;outline:none;"
+        onkeydown="handleConsoleKey(event)"></textarea>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px 14px;border-top:1px solid rgba(255,255,255,0.05);">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:0.18em;">⌘ ENTER TO SUBMIT &nbsp;·&nbsp; ESC TO CLOSE</span>
+        <button onclick="submitConsole()" style="font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.18em;background:#66FF00;color:#000;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;">SUBMIT →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openConsole() {
+  var el = document.getElementById('signal-console');
+  el.style.display = 'flex';
+  setTimeout(function(){ document.getElementById('console-ta').focus(); }, 50);
+}
+function closeConsole() {
+  document.getElementById('signal-console').style.display = 'none';
+  document.getElementById('console-ta').value = '';
+}
+function submitConsole() {
+  var q = document.getElementById('console-ta').value.trim();
+  if (!q) return;
+  closeConsole();
+  window.parent.postMessage({ type: 'krylo-submit', query: q }, '*');
+}
+function handleConsoleKey(e) {
+  if (e.key === 'Escape') { closeConsole(); return; }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { submitConsole(); }
+}
 </script>
 
 </body>
