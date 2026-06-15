@@ -119,16 +119,34 @@ const KALSHI_PKEY = process.env.KALSHI_PRIVATE_KEY
     ? readFileSync(process.env.KALSHI_PRIVATE_KEY_FILE, 'utf8').trim()
     : '';
 
-const KALSHI_CATEGORY_MAP = {
-  Economics: 'capital',  Finance: 'capital', Financials: 'capital',
-  Crypto: 'capital',     Commodities: 'capital',
-  Technology: 'technology',
-  Science: 'knowledge',  Education: 'knowledge',
-  Politics: 'knowledge', Policy: 'knowledge',
-  Employment: 'labor',   Jobs: 'labor',
-  Sports: 'media',       Entertainment: 'media', Media: 'media',
-  'Real Estate': 'ownership', Housing: 'ownership',
-};
+// Ticker prefix → domain. Order matters: longest match wins.
+const TICKER_DOMAIN = [
+  ['KXBTC',       'capital'],  ['KXETH',      'capital'],
+  ['KXCRYPTO',    'capital'],  ['KXFED',      'capital'],
+  ['KXRATE',      'capital'],  ['KXNASD',     'capital'],
+  ['KXSP500',     'capital'],  ['KXDOW',      'capital'],
+  ['KXINFL',      'capital'],  ['KXCPI',      'capital'],
+  ['KXGDP',       'capital'],  ['KXGOLD',     'capital'],
+  ['KXOIL',       'capital'],
+  ['KXAI',        'technology'], ['KXTECH',   'technology'],
+  ['KXPRES',      'knowledge'], ['KXSENATE',  'knowledge'],
+  ['KXHOUSE',     'knowledge'], ['KXGOV',     'knowledge'],
+  ['KXSCOTUS',    'knowledge'], ['KXELECT',   'knowledge'],
+  ['KXUNEMPLOY',  'labor'],    ['KXJOBS',     'labor'],
+  ['KXPAYROLL',   'labor'],
+  ['KXNBA',       'media'],    ['KXNFL',      'media'],
+  ['KXNHL',       'media'],    ['KXMLB',      'media'],
+  ['KXUFC',       'media'],    ['KXATP',      'media'],
+  ['KXWC',        'media'],    ['KXSOCCER',   'media'],
+  ['KXHOUS',      'ownership'], ['KXREAL',    'ownership'],
+];
+
+function tickerToDomain(ticker) {
+  for (const [prefix, domain] of TICKER_DOMAIN) {
+    if (ticker.startsWith(prefix)) return domain;
+  }
+  return null;
+}
 
 function kalshiSign(method, path) {
   const ts  = Date.now().toString();
@@ -140,12 +158,12 @@ function kalshiSign(method, path) {
   return { ts, sig };
 }
 
-function kalshiGet(apiPath) {
+function kalshiGet(apiPath, qs = '') {
   return new Promise((resolve, reject) => {
     const { ts, sig } = kalshiSign('GET', apiPath);
     const req = https.request({
-      hostname: 'trading-api.kalshi.com',
-      path:     `${apiPath}?status=open&limit=200`,
+      hostname: 'api.elections.kalshi.com',
+      path:     apiPath + qs,
       method:   'GET',
       headers: {
         'KALSHI-ACCESS-KEY':       KALSHI_KEY,
@@ -167,24 +185,48 @@ function kalshiGet(apiPath) {
   });
 }
 
+// Paginate up to MAX_PAGES × 200 markets, stop early once all 6 domains have data.
+async function fetchKalshiMarkets() {
+  const BASE_PATH = '/trade-api/v2/markets';
+  const MAX_PAGES = 5;
+  const DOMAINS_NEEDED = new Set(['capital','technology','knowledge','labor','media','ownership']);
+  let cursor = null;
+  let all = [];
+
+  for (let i = 0; i < MAX_PAGES; i++) {
+    let qs = '?status=open&limit=200';
+    if (cursor) qs += `&cursor=${encodeURIComponent(cursor)}`;
+    const { markets = [], cursor: next } = await kalshiGet(BASE_PATH, qs);
+    all = all.concat(markets);
+    // Check coverage
+    const found = new Set(all.map(m => tickerToDomain(m.event_ticker || m.ticker)).filter(Boolean));
+    if ([...DOMAINS_NEEDED].every(d => found.has(d))) break;
+    cursor = next;
+    if (!next || !markets.length) break;
+  }
+  return all;
+}
+
 async function handleKalshiSignals(req, res) {
   if (!KALSHI_KEY || !KALSHI_PKEY) {
     return send(res, 503, { error: 'KALSHI env not configured', signals: [] });
   }
   try {
-    const { markets = [] } = await kalshiGet('/trade-api/v2/markets');
+    const markets      = await fetchKalshiMarkets();
     const qs           = new URL(req.url, 'http://x').searchParams;
     const domainFilter = qs.get('domain')?.toLowerCase() ?? null;
 
     const buckets = {};
     for (const m of markets) {
-      const domain = KALSHI_CATEGORY_MAP[m.category] ?? null;
+      const vol = parseFloat(m.volume_fp ?? '0');
+      if (vol === 0) continue;                                   // skip illiquid
+      const domain = tickerToDomain(m.event_ticker || m.ticker);
       if (!domain) continue;
       if (domainFilter && domain !== domainFilter) continue;
       if (!buckets[domain]) buckets[domain] = { scores: [], volumes: [] };
-      const price = m.last_price ?? m.yes_ask ?? 50;
+      const price = parseFloat(m.last_price_dollars ?? '0') * 100;
       buckets[domain].scores.push(Math.max(0, Math.min(100, price)));
-      buckets[domain].volumes.push(m.volume ?? 0);
+      buckets[domain].volumes.push(vol);
     }
 
     const signals = Object.entries(buckets).map(([domain, { scores, volumes }]) => {
