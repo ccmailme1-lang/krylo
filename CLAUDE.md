@@ -114,7 +114,28 @@ FORMAT:   WO-[NUMBER]: [TITLE]
 SEQUENCE: Numbering must follow the Active Registry.
 RULE:     No code is written without a WO and explicit "Go."
 
-MASTER WO REGISTRY — SINGLE SOURCE OF TRUTH (updated 2026-05-25)
+OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-14)
+Start at 1750. Work backwards. This is the only open list.
+
+1750 — EEG v2 DAG Runtime
+1742 — Narrative Permission Signal
+1740 — Disruption Alert Layer
+1733 — Attention Saturation Signal (Godin Protocol)
+1732 — Forward Compute Demand Signal (Huang Protocol)
+1731 — Fintech Infrastructure Expansion (Collison Protocol)
+1730 — Flexible Space Demand Signal (Neumann Protocol)
+1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
+1727 — Startup Market Readiness (YC Protocol)
+1724 — Ingress Keyword Contamination
+1723 — Global Macro Ingestion Layer (Dalio Protocol)
+1349 — Cross-Bay Resonance
+1348 — Multi-Bay Comparative Analysis
+1347 — Per-Bay Controls
+1342 — Deferred Cognitive Systems
+1028 — Golden Path Guardrails
+1027 — Feedback Rituals Infrastructure
+
+MASTER WO REGISTRY — SINGLE SOURCE OF TRUTH (updated 2026-06-14)
 This is the only WO list in this document. All prior separate lists (Active Registry, Deployment Table, Sprint Queue, Section 16) are consolidated here. Do not create secondary lists.
 
 | WO    | Title                            | Status                                                                 | Spec | Validation |
@@ -128,18 +149,11 @@ This is the only WO list in this document. All prior separate lists (Active Regi
 | 1006  | 90-Min Tasking                   | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1007  | Sensor Fabric HUD                | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1008  | Dark Signal ID                   | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
-| 1009  | Gold-Standard UI                 | BLOCKED — color approval required. #D4AF37 banned                      | NO   | NO         |
 | 1010  | Lattice Tasking                  | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1011  | Claims Traceability              | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1012  | Viewport Hydration               | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1013  | Trajectory Vectoring             | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
 | 1014  | Mechanical Shutter               | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
-| 1016  | State Filter                     | BACKLOG — unvetted. node.origin unverified                             | NO   | NO         |
-| 1017  | Ignorance Shadow                 | BACKLOG — unvetted. Hard dep: WO-1015 (undefined)                     | NO   | NO         |
-| 1018  | Chromodynamic Mapping            | BACKLOG — unvetted. Hard dep: WO-1015 (undefined)                     | NO   | NO         |
-| 1019  | Kelvin Histograms                | BACKLOG — unvetted. Hard dep: WO-1015 (undefined)                     | NO   | NO         |
-| 1020  | Terminus Hold                    | BACKLOG — unvetted. Location TBD                                       | NO   | NO         |
-| 1021  | Decorative Effects Purge         | BACKLOG — unvetted. Shatter is load-bearing — regression audit req'd  | NO   | NO         |
 | 1022  | Anisotropic Tensor               | COMPLETE — src/math/tensors.js. Float32Array(9), D/V/A axes, off-diagonal ≤0.4, identity init. createTensor/updateTensor/applyTensor/validateTensor. BAU harness: qa_wo1022_tensor.mjs. 4/4 PASS. 3 open items for Founder (see spec). | YES  | YES        |
 | 1023  | Hysteresis Buffer                | COMPLETE — src/engine/memory.js. Ring buffer depth=3 (PERSISTENCE_REQUIRED), Float32Array slots, writeFrame/readFrame/flushBuffer/isDesynced. Desync threshold=5 frames. BAU harness: qa_wo1023_hysteresis.mjs. 6/6 PASS. 3 open items for Founder (see spec). | YES  | YES        |
 | 1024  | Pre-Tremor Refraction            | STRUCK — no code on disk. Phantom entry. Closed 2026-05-26.            | NO   | NO         |
