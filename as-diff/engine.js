@@ -119,33 +119,45 @@ const KALSHI_PKEY = process.env.KALSHI_PRIVATE_KEY
     ? readFileSync(process.env.KALSHI_PRIVATE_KEY_FILE, 'utf8').trim()
     : '';
 
-// Ticker prefix → domain. Order matters: longest match wins.
-const TICKER_DOMAIN = [
-  ['KXBTC',       'capital'],  ['KXETH',      'capital'],
-  ['KXCRYPTO',    'capital'],  ['KXFED',      'capital'],
-  ['KXRATE',      'capital'],  ['KXNASD',     'capital'],
-  ['KXSP500',     'capital'],  ['KXDOW',      'capital'],
-  ['KXINFL',      'capital'],  ['KXCPI',      'capital'],
-  ['KXGDP',       'capital'],  ['KXGOLD',     'capital'],
-  ['KXOIL',       'capital'],
-  ['KXAI',        'technology'], ['KXTECH',   'technology'],
-  ['KXPRES',      'knowledge'], ['KXSENATE',  'knowledge'],
-  ['KXHOUSE',     'knowledge'], ['KXGOV',     'knowledge'],
-  ['KXSCOTUS',    'knowledge'], ['KXELECT',   'knowledge'],
-  ['KXUNEMPLOY',  'labor'],    ['KXJOBS',     'labor'],
-  ['KXPAYROLL',   'labor'],
-  ['KXNBA',       'media'],    ['KXNFL',      'media'],
-  ['KXNHL',       'media'],    ['KXMLB',      'media'],
-  ['KXUFC',       'media'],    ['KXATP',      'media'],
-  ['KXWC',        'media'],    ['KXSOCCER',   'media'],
-  ['KXHOUS',      'ownership'], ['KXREAL',    'ownership'],
-];
+// Kalshi event category → KRYLO domain
+const CATEGORY_DOMAIN = {
+  'Economics':             'capital',
+  'Financials':            'capital',
+  'Crypto':                'capital',
+  'Business':              'capital',
+  'Science and Technology':'technology',
+  'Elections':             'knowledge',
+  'Politics':              'knowledge',
+  'Law':                   'knowledge',
+  'Geopolitics':           'knowledge',
+  'Sports':                'media',
+  'Entertainment':         'media',
+  'News':                  'media',
+  'Employment':            'labor',
+  'Real Estate':           'ownership',
+  'Housing':               'ownership',
+};
 
-function tickerToDomain(ticker) {
-  for (const [prefix, domain] of TICKER_DOMAIN) {
-    if (ticker.startsWith(prefix)) return domain;
+function categoryToDomain(cat) {
+  return CATEGORY_DOMAIN[cat] ?? null;
+}
+
+// Step 1: fetch all open events, build event_ticker → domain map
+async function buildEventDomainMap() {
+  const map = {};
+  let cursor = null;
+  for (let i = 0; i < 10; i++) {
+    let qs = '?status=open&limit=100';
+    if (cursor) qs += `&cursor=${encodeURIComponent(cursor)}`;
+    const { events = [], cursor: next } = await kalshiGet('/trade-api/v2/events', qs);
+    for (const ev of events) {
+      const domain = categoryToDomain(ev.category);
+      if (domain) map[ev.event_ticker] = domain;
+    }
+    cursor = next;
+    if (!next || !events.length) break;
   }
-  return null;
+  return map;
 }
 
 function kalshiSign(method, path) {
@@ -185,8 +197,8 @@ function kalshiGet(apiPath, qs = '') {
   });
 }
 
-// Paginate up to MAX_PAGES × 200 markets, stop early once all 6 domains have data.
-async function fetchKalshiMarkets() {
+// Step 2: paginate markets; caller passes eventDomainMap for domain lookup.
+async function fetchKalshiMarkets(eventDomainMap) {
   const BASE_PATH = '/trade-api/v2/markets';
   const MAX_PAGES = 5;
   const DOMAINS_NEEDED = new Set(['capital','technology','knowledge','labor','media','ownership']);
@@ -198,8 +210,7 @@ async function fetchKalshiMarkets() {
     if (cursor) qs += `&cursor=${encodeURIComponent(cursor)}`;
     const { markets = [], cursor: next } = await kalshiGet(BASE_PATH, qs);
     all = all.concat(markets);
-    // Check coverage
-    const found = new Set(all.map(m => tickerToDomain(m.event_ticker || m.ticker)).filter(Boolean));
+    const found = new Set(all.map(m => eventDomainMap[m.event_ticker]).filter(Boolean));
     if ([...DOMAINS_NEEDED].every(d => found.has(d))) break;
     cursor = next;
     if (!next || !markets.length) break;
@@ -212,15 +223,16 @@ async function handleKalshiSignals(req, res) {
     return send(res, 503, { error: 'KALSHI env not configured', signals: [] });
   }
   try {
-    const markets      = await fetchKalshiMarkets();
-    const qs           = new URL(req.url, 'http://x').searchParams;
-    const domainFilter = qs.get('domain')?.toLowerCase() ?? null;
+    const eventDomainMap = await buildEventDomainMap();
+    const markets        = await fetchKalshiMarkets(eventDomainMap);
+    const qs             = new URL(req.url, 'http://x').searchParams;
+    const domainFilter   = qs.get('domain')?.toLowerCase() ?? null;
 
     const buckets = {};
     for (const m of markets) {
       const vol = parseFloat(m.volume_fp ?? '0');
       if (vol === 0) continue;                                   // skip illiquid
-      const domain = tickerToDomain(m.event_ticker || m.ticker);
+      const domain = eventDomainMap[m.event_ticker];
       if (!domain) continue;
       if (domainFilter && domain !== domainFilter) continue;
       if (!buckets[domain]) buckets[domain] = { scores: [], volumes: [] };
