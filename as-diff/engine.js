@@ -6,6 +6,7 @@
 
 import http  from 'http';
 import https from 'https';
+import { readFileSync } from 'fs';
 import { randomUUID, createSign } from 'crypto';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
@@ -111,8 +112,12 @@ async function handlePersistExecutionPlan(req, res) {
 
 // ── WO-1721: Kalshi Live Feed ─────────────────────────────────────────────────
 
-const KALSHI_KEY  = process.env.KALSHI_API_KEY     ?? '';
-const KALSHI_PKEY = (process.env.KALSHI_PRIVATE_KEY ?? '').replace(/\\n/g, '\n');
+const KALSHI_KEY  = process.env.KALSHI_API_KEY ?? '';
+const KALSHI_PKEY = process.env.KALSHI_PRIVATE_KEY
+  ? process.env.KALSHI_PRIVATE_KEY.replace(/\\n/g, '\n')
+  : process.env.KALSHI_PRIVATE_KEY_FILE
+    ? readFileSync(process.env.KALSHI_PRIVATE_KEY_FILE, 'utf8').trim()
+    : '';
 
 const KALSHI_CATEGORY_MAP = {
   Economics: 'capital',  Finance: 'capital', Financials: 'capital',

@@ -75,7 +75,7 @@ cat > /opt/krylo-api/package.json << 'ENDOFFILE'
 ENDOFFILE
 
 cat > /opt/krylo-api/ecosystem.config.cjs << 'ENDOFFILE'
-module.exports={apps:[{name:'krylo-api',script:'as-diff/engine.js',cwd:'/opt/krylo-api',env:{NODE_ENV:'production',DATABASE_URL:'postgresql://postgres:6CifNNSz1NTkE747@db.qgoyyxjyecpxoeqpibgv.supabase.co:5432/postgres'}}]}
+module.exports={apps:[{name:'krylo-api',script:'as-diff/engine.js',cwd:'/opt/krylo-api',env:{NODE_ENV:'production',DATABASE_URL:'postgresql://postgres:6CifNNSz1NTkE747@db.qgoyyxjyecpxoeqpibgv.supabase.co:5432/postgres',KALSHI_API_KEY:'38f8a227-8010-4fa4-9010-4f0f96a7f8d3',KALSHI_PRIVATE_KEY_FILE:'/opt/krylo-api/kalshi.key'}}]}
 ENDOFFILE
 
 cd /opt/krylo-api && npm install pg
