@@ -38,7 +38,7 @@ import HistoryBay        from './components/history/historybay.jsx';
 import Workstation       from './components/bays/workstation.jsx';
 import SettingsPanel     from './components/settings/settingspanel.jsx';
 import ConsoleDashboard  from './components/resonance/consoledashboard.jsx';
-import MiddleConsole     from './components/console/middleconsole.jsx';
+import CoachWellConsole  from './components/analysis/coachwell.jsx';
 import BayVisor          from './components/resonance/bayvisor.jsx';
 import signalmap          from './components/spine/spinemap.jsx';
 import AnnotationLayer    from './components/spine/annotationlayer.jsx';
@@ -1045,8 +1045,8 @@ export default function App() {
 
       {/* WO-1753: Middle Console */}
       {navMode === 'console' && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: '#0a0a0a', overflow: 'hidden' }}>
-          <MiddleConsole onReturn={() => setNavMode('surface')} />
+        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000', overflow: 'hidden' }}>
+          <CoachWellConsole />
         </div>
       )}
 

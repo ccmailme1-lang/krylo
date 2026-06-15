@@ -40,7 +40,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%' }}>
       <iframe
         ref={iframeRef}
-        src={src}
+        src={`${src}?v=20260615`}
         title="KRYLO Campaign"
         onLoad={handleLoad}
         scrolling="no"
