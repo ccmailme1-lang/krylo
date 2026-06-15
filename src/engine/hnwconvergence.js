@@ -8,11 +8,14 @@
 //
 // Phase priority: B > C > A. Fs = mean(T_conf, C_conf, O_conf).
 
+// WO-1745 cleanup: renamed from conclusion labels to observable state labels.
+// Old names: PORTFOLIO_TIMING / LIQUIDITY_EVENT / SECTOR_ROTATION (conclusions).
+// New names: observable measurements of domain relationships.
 export const HNW_PHASE = {
-  NONE:             'NONE',
-  PORTFOLIO_TIMING: 'PORTFOLIO_TIMING',  // Phase A
-  SECTOR_ROTATION:  'SECTOR_ROTATION',   // Phase C
-  LIQUIDITY_EVENT:  'LIQUIDITY_EVENT',   // Phase B (highest priority)
+  NONE:                       'NONE',
+  TRIPLE_CONVERGENCE:         'TRIPLE_CONVERGENCE',         // Phase A: T+C+O all >55
+  OWNERSHIP_CAPITAL_DIVERGENCE: 'OWNERSHIP_CAPITAL_DIVERGENCE', // Phase B: O>60, C<45
+  TECH_CAPITAL_SPREAD:        'TECH_CAPITAL_SPREAD',        // Phase C: T−C >15
 };
 
 const TRIPLE_THRESHOLD    = 55;   // Phase A: all three domains must exceed
@@ -74,9 +77,9 @@ export function detectHNWConvergence(signals) {
 
   // Priority: B > C > A
   let phase = HNW_PHASE.NONE;
-  if (phaseB)      phase = HNW_PHASE.LIQUIDITY_EVENT;
-  else if (phaseC) phase = HNW_PHASE.SECTOR_ROTATION;
-  else if (phaseA) phase = HNW_PHASE.PORTFOLIO_TIMING;
+  if (phaseB)      phase = HNW_PHASE.OWNERSHIP_CAPITAL_DIVERGENCE;
+  else if (phaseC) phase = HNW_PHASE.TECH_CAPITAL_SPREAD;
+  else if (phaseA) phase = HNW_PHASE.TRIPLE_CONVERGENCE;
 
   const triggered    = phase !== HNW_PHASE.NONE;
   const fsQualified  = fs >= FS_GATE;

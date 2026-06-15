@@ -422,43 +422,37 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       {/* WO-1737 — HNW Client Convergence Overlay (Cornerstone Protocol) */}
       {hnw.triggered && (
         <div style={{
-          borderTop: `1px solid ${hnw.phase === HNW_PHASE.SECTOR_ROTATION ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          borderTop: `1px solid ${hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
           padding: '5px 10px',
-          background: hnw.phase === HNW_PHASE.SECTOR_ROTATION
+          background: hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD
             ? 'rgba(0,127,255,0.06)'
             : 'rgba(102,255,0,0.03)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
               fontSize: 7, letterSpacing: '0.18em',
-              color: hnw.phase === HNW_PHASE.SECTOR_ROTATION ? '#007FFF' : LIME,
+              color: hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD ? '#007FFF' : LIME,
             }}>
-              {hnw.phase === HNW_PHASE.LIQUIDITY_EVENT  && '◈ LIQUIDITY EVENT SIGNAL'}
-              {hnw.phase === HNW_PHASE.SECTOR_ROTATION  && '◈ SECTOR ROTATION IMMINENT'}
-              {hnw.phase === HNW_PHASE.PORTFOLIO_TIMING && '◈ PORTFOLIO TIMING WINDOW'}
+              {hnw.phase === HNW_PHASE.OWNERSHIP_CAPITAL_DIVERGENCE && '◈ CS · OWNERSHIP CAPITAL DIVERGENCE'}
+              {hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD          && '◈ CS · TECH CAPITAL SPREAD'}
+              {hnw.phase === HNW_PHASE.TRIPLE_CONVERGENCE           && '◈ CS · TRIPLE CONVERGENCE'}
             </span>
             <span style={{ color: WEAK, fontSize: 6 }}>
-              Fs {Math.round(hnw.fs * 100)}%{hnw.fsQualified ? '' : ' ·UNQUALIFIED'}
+              Fs {Math.round(hnw.fs * 100)}%{hnw.fsQualified ? '' : ' · UNQUALIFIED'}
             </span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {hnw.phase === HNW_PHASE.LIQUIDITY_EVENT && (
-              <>
-                <span style={{ color: LIME, fontSize: 6 }}>O {hnw.ownershipScore} · C {hnw.capitalScore}</span>
-                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>DEAL FLOW SURGE / IPO WINDOW</span>
-              </>
+            {hnw.phase === HNW_PHASE.OWNERSHIP_CAPITAL_DIVERGENCE && (
+              <span style={{ color: LIME, fontSize: 6 }}>O {hnw.ownershipScore} · C {hnw.capitalScore}</span>
             )}
-            {hnw.phase === HNW_PHASE.SECTOR_ROTATION && (
+            {hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD && (
               <>
                 <span style={{ color: '#007FFF', fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore}</span>
-                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>Δ +{hnw.techCapitalDelta} TECH/CAP SPREAD</span>
+                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>Δ +{hnw.techCapitalDelta}</span>
               </>
             )}
-            {hnw.phase === HNW_PHASE.PORTFOLIO_TIMING && (
-              <>
-                <span style={{ color: MID, fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore} · O {hnw.ownershipScore}</span>
-                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>REBALANCE WINDOW OPEN</span>
-              </>
+            {hnw.phase === HNW_PHASE.TRIPLE_CONVERGENCE && (
+              <span style={{ color: MID, fontSize: 6 }}>T {hnw.technologyScore} · C {hnw.capitalScore} · O {hnw.ownershipScore}</span>
             )}
           </div>
         </div>
@@ -467,43 +461,32 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       {/* WO-1738 — Critical Materials Demand Signal (Lacaze Protocol) */}
       {materials.triggered && (
         <div style={{
-          borderTop: `1px solid ${materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
+          borderTop: `1px solid ${materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE ? 'rgba(0,127,255,0.22)' : 'rgba(102,255,0,0.12)'}`,
           padding: '5px 10px',
-          background: materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK
+          background: materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE
             ? 'rgba(0,127,255,0.06)'
             : 'rgba(102,255,0,0.03)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
               fontSize: 7, letterSpacing: '0.18em',
-              color: materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK ? '#007FFF' : LIME,
+              color: materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE ? '#007FFF' : LIME,
             }}>
-              {materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK   && '◈ GEOPOLITICAL SUPPLY RISK'}
-              {materials.phase === MATERIALS_PHASE.DEMAND_PIPELINE            && '◈ DEMAND PIPELINE FORMING'}
-              {materials.phase === MATERIALS_PHASE.SUPPLY_CHAIN_REPOSITIONING && '◈ SUPPLY CHAIN REPOSITIONING'}
+              {materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE && '◈ LACAZE · MEDIA OWNERSHIP CONVERGENCE'}
+              {materials.phase === MATERIALS_PHASE.OWNERSHIP_ELEVATION         && '◈ LACAZE · OWNERSHIP ELEVATION'}
+              {materials.phase === MATERIALS_PHASE.T_C_O_CONVERGENCE          && '◈ LACAZE · T·C·O CONVERGENCE'}
             </span>
-            <span style={{ color: WEAK, fontSize: 6 }}>
-              {materials.leadTime?.label} · Fs {Math.round(materials.fs * 100)}%
-            </span>
+            <span style={{ color: WEAK, fontSize: 6 }}>Fs {Math.round(materials.fs * 100)}%</span>
           </div>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-            {materials.phase === MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK && (
-              <>
-                <span style={{ color: '#007FFF', fontSize: 6 }}>M {materials.mediaScore} · O {materials.ownershipScore}</span>
-                <span style={{ color: '#007FFF', fontSize: 6, letterSpacing: '0.08em' }}>POLICY ACTION IMMINENT</span>
-              </>
+            {materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE && (
+              <span style={{ color: '#007FFF', fontSize: 6 }}>M {materials.mediaScore} · O {materials.ownershipScore}</span>
             )}
-            {materials.phase === MATERIALS_PHASE.DEMAND_PIPELINE && (
-              <>
-                <span style={{ color: MID, fontSize: 6 }}>O {materials.ownershipScore}</span>
-                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>EDGAR MINING / MATERIALS FLOW</span>
-              </>
+            {materials.phase === MATERIALS_PHASE.OWNERSHIP_ELEVATION && (
+              <span style={{ color: MID, fontSize: 6 }}>O {materials.ownershipScore}</span>
             )}
-            {materials.phase === MATERIALS_PHASE.SUPPLY_CHAIN_REPOSITIONING && (
-              <>
-                <span style={{ color: MID, fontSize: 6 }}>T {materials.technologyScore} · C {materials.capitalScore} · O {materials.ownershipScore}</span>
-                <span style={{ color: LIME, fontSize: 6, letterSpacing: '0.08em' }}>NON-CHINA SOURCING WINDOW</span>
-              </>
+            {materials.phase === MATERIALS_PHASE.T_C_O_CONVERGENCE && (
+              <span style={{ color: MID, fontSize: 6 }}>T {materials.technologyScore} · C {materials.capitalScore} · O {materials.ownershipScore}</span>
             )}
           </div>
         </div>

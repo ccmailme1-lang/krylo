@@ -2,26 +2,21 @@
 // Derived from Amanda Lacaze, CEO Lynas Rare Earths — world's only major
 // rare earth producer outside China.
 //
-// Phase A: T + C + O all > 55 → SUPPLY_CHAIN_REPOSITIONING (12–24 mo lead)
-//          Western governments + manufacturers accelerating non-China sourcing
-// Phase B: MEDIA + OWNERSHIP both > 60 → GEOPOLITICAL_SUPPLY_RISK (3–12 mo)
-//          Policy action imminent: export controls, subsidies, emergency procurement
-// Phase C: OWNERSHIP > 65 → DEMAND_PIPELINE (12–24 mo)
-//          EDGAR deal flow in mining/materials/defense; rare earth demand follows
+// Phase A: T + C + O all > 55 → T_C_O_CONVERGENCE
+// Phase B: MEDIA + OWNERSHIP both > 60 → MEDIA_OWNERSHIP_CONVERGENCE
+// Phase C: OWNERSHIP > 65 → OWNERSHIP_ELEVATION
 //
 // Phase priority: B > C > A. Fs = mean(T_conf, C_conf, O_conf).
+//
+// WO-1745 cleanup: leadTime removed (conclusions belong to SYNTH).
+// Phase names renamed from conclusion labels to observable state labels.
 
+// WO-1745: observable state labels only — no conclusion-labeled phases
 export const MATERIALS_PHASE = {
-  NONE:                       'NONE',
-  SUPPLY_CHAIN_REPOSITIONING: 'SUPPLY_CHAIN_REPOSITIONING', // Phase A
-  DEMAND_PIPELINE:            'DEMAND_PIPELINE',             // Phase C
-  GEOPOLITICAL_SUPPLY_RISK:   'GEOPOLITICAL_SUPPLY_RISK',   // Phase B
-};
-
-export const MATERIALS_LEAD_TIME = {
-  SUPPLY_CHAIN_REPOSITIONING: { min: 12, max: 24, label: '12–24 MO' },
-  GEOPOLITICAL_SUPPLY_RISK:   { min: 3,  max: 12, label: '3–12 MO'  },
-  DEMAND_PIPELINE:            { min: 12, max: 24, label: '12–24 MO' },
+  NONE:                      'NONE',
+  T_C_O_CONVERGENCE:         'T_C_O_CONVERGENCE',         // Phase A: T+C+O all >55
+  MEDIA_OWNERSHIP_CONVERGENCE: 'MEDIA_OWNERSHIP_CONVERGENCE', // Phase B: M+O both >60
+  OWNERSHIP_ELEVATION:       'OWNERSHIP_ELEVATION',       // Phase C: O>65
 };
 
 const TRIPLE_THRESHOLD = 55;  // Phase A: T + C + O all exceed
@@ -41,7 +36,6 @@ const NULL_RESULT = {
   mediaScore: 0,
   fs: 0,
   fsQualified: false,
-  leadTime: null,
   ts: 0,
 };
 
@@ -84,9 +78,9 @@ export function detectCriticalMaterials(signals) {
 
   // Priority: B > C > A
   let phase = MATERIALS_PHASE.NONE;
-  if (phaseB)      phase = MATERIALS_PHASE.GEOPOLITICAL_SUPPLY_RISK;
-  else if (phaseC) phase = MATERIALS_PHASE.DEMAND_PIPELINE;
-  else if (phaseA) phase = MATERIALS_PHASE.SUPPLY_CHAIN_REPOSITIONING;
+  if (phaseB)      phase = MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE;
+  else if (phaseC) phase = MATERIALS_PHASE.OWNERSHIP_ELEVATION;
+  else if (phaseA) phase = MATERIALS_PHASE.T_C_O_CONVERGENCE;
 
   const triggered   = phase !== MATERIALS_PHASE.NONE;
   const fsQualified = fs >= FS_GATE;
@@ -103,7 +97,6 @@ export function detectCriticalMaterials(signals) {
     mediaScore:      mScore,
     fs,
     fsQualified,
-    leadTime: triggered ? MATERIALS_LEAD_TIME[phase] : null,
     ts: Date.now(),
   };
 }
