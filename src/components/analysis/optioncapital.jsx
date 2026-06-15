@@ -77,7 +77,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
       </div>
 
       {/* SVG Chart */}
-      <svg viewBox="0 0 120 75" style={{ width: '100%', display: 'block', marginBottom: 10 }}>
+      <svg viewBox="0 0 120 75" style={{ width: '80%', display: 'block', marginBottom: 10 }}>
         {/* Grid lines */}
         {ticks.map(t => (
           <g key={t}>
@@ -122,7 +122,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
           fontFamily={MONO} fontSize="4.5"
           fill={LIME} letterSpacing="-0.02em"
           style={{ fontVariantNumeric: 'tabular-nums' }}
-        >{value}</text>
+        >{value}%</text>
         <text x={value > 80 ? dotX - 3 : dotX + 3} y={dotY - 4 + 4.5} textAnchor={value > 80 ? 'end' : 'start'} fontFamily={MONO} fontSize="2.8" fill="rgba(102,255,0,0.4)" letterSpacing="0.1em">PROJECTION</text>
       </svg>
 
@@ -142,14 +142,51 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
       </div>
 
       {/* TARGET slider */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>TARGET</span>
-        <div ref={trackRef} onMouseDown={e => { e.preventDefault(); setDragging(true); updateFromX(e.clientX); }}
-          style={{ flex: 1, position: 'relative', height: 1, background: 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
-          <div style={{ position: 'absolute', left: 0, width: `${value}%`, height: '100%', background: 'rgba(102,255,0,0.4)' }} />
-          <div style={{ position: 'absolute', left: `${value}%`, top: '50%', transform: 'translate(-50%,-50%)', width: 8, height: 8, background: LIME, cursor: dragging ? 'grabbing' : 'grab' }} />
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>TARGET</span>
+          <div style={{ flex: 1, position: 'relative' }}>
+            {/* Track */}
+            <div ref={trackRef} onMouseDown={e => { e.preventDefault(); setDragging(true); updateFromX(e.clientX); }}
+              style={{ position: 'relative', height: 2, background: 'rgba(255,255,255,0.12)', cursor: 'pointer' }}>
+              <div style={{ position: 'absolute', left: 0, width: `${value}%`, height: '100%', background: 'rgba(102,255,0,0.4)' }} />
+              <div style={{ position: 'absolute', left: `${value}%`, top: '50%', transform: 'translate(-50%,-50%)', width: 8, height: 8, background: LIME, cursor: dragging ? 'grabbing' : 'grab' }} />
+            </div>
+            {/* Ticks */}
+            <div style={{ position: 'relative', height: 5, marginTop: 2 }}>
+              {[0, 25, 50, 75, 100].map(t => (
+                <div key={t} style={{ position: 'absolute', left: `${t}%`, transform: 'translateX(-50%)' }}>
+                  <div style={{ width: 1, height: 4, background: 'rgba(255,255,255,0.22)' }} />
+                </div>
+              ))}
+            </div>
+            {/* Tick labels — capital envelope unit */}
+            <div style={{ position: 'relative', height: 10 }}>
+              {[
+                { pos: 0,   label: '$0',     anchor: 'left',   shift: '0%'   },
+                { pos: 25,  label: '$1K',    anchor: 'center', shift: '25%'  },
+                { pos: 50,  label: '$10K',   anchor: 'center', shift: '50%'  },
+                { pos: 75,  label: '$100K',  anchor: 'center', shift: '75%'  },
+                { pos: 100, label: '$150K+', anchor: 'right',  shift: '100%' },
+              ].map(({ pos, label, anchor, shift }) => (
+                <span key={pos} style={{
+                  position: 'absolute',
+                  left: anchor === 'right' ? undefined : shift,
+                  right: anchor === 'right' ? '0%' : undefined,
+                  transform: anchor === 'center' ? 'translateX(-50%)' : 'none',
+                  fontFamily: MONO, fontSize: 5, letterSpacing: '0.06em',
+                  color: 'rgba(255,255,255,0.22)',
+                  whiteSpace: 'nowrap',
+                }}>{label}</span>
+              ))}
+            </div>
+            {/* Unit label */}
+            <div style={{ fontFamily: MONO, fontSize: 5, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.1)', marginTop: 2 }}>
+              CAPITAL ENVELOPE
+            </div>
+          </div>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.06em', flexShrink: 0, fontVariantNumeric: 'tabular-nums', minWidth: 32, textAlign: 'right' }}>{value}%</span>
         </div>
-        <span style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.06em', flexShrink: 0, fontVariantNumeric: 'tabular-nums', minWidth: 24, textAlign: 'right' }}>{value}</span>
       </div>
 
       {/* Horizon Mix — read-only, engine-derived */}
@@ -174,9 +211,9 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
       {/* Bay engine resolved output */}
       {resolvedThreshold != null && (
         <div style={{ marginTop: 8, fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: resolveScore != null && resolveScore < 0.60 ? 'rgba(102,255,0,0.35)' : 'rgba(102,255,0,0.55)' }}>
-          ↓ RESOLVED AT {resolvedThreshold}
+          ↓ RESOLVED AT {resolvedThreshold}%
           {closestResolved != null && (
-            <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>(REQUESTED {closestResolved})</span>
+            <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>(REQUESTED {closestResolved}%)</span>
           )}
         </div>
       )}

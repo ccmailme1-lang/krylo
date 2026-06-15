@@ -902,7 +902,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
             {/* SLOT 3 — HORIZON */}
             {activeSituation && (
-              <ChainSlot label="OVER">
+              <ChainSlot label="HORIZON">
                 <StaggeredChips
                   chips={HORIZON_ORDER}
                   selected={horizon}

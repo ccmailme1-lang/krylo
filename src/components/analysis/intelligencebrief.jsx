@@ -6,6 +6,8 @@ import ActionMatrix          from './actionmatrix.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
+import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE } from '../../engine/consultingexport.js';
+import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -120,10 +122,71 @@ function Divider() {
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function IntelligenceBrief() {
   const [premiumLocked, setPremiumLocked] = useState(true);
-  const sessions  = useAnalysisStore(s => s.sessions);
-  const activeId  = useAnalysisStore(s => s.activeSessionId);
-  const session   = activeId ? sessions[activeId] : null;
-  const [sysTime, setSysTime] = useState(() => new Date().toTimeString().slice(0, 8));
+  const sessions               = useAnalysisStore(s => s.sessions);
+  const activeId               = useAnalysisStore(s => s.activeSessionId);
+  const pendingAcquisition     = useAnalysisStore(s => s.pendingAcquisition);
+  const createSession          = useAnalysisStore(s => s.createSession);
+  const setPendingAcquisition  = useAnalysisStore(s => s.setPendingAcquisition);
+  const session                = activeId ? sessions[activeId] : null;
+  const [sysTime, setSysTime]  = useState(() => new Date().toTimeString().slice(0, 8));
+  const [exported, setExported] = useState(false);
+  const [importState, setImportState] = useState(null); // { status, message, meta }
+  const fileInputRef = useRef(null);
+
+  const fs = pendingAcquisition?.fidelityScore
+          ?? session?.tensor?.fidelityScore
+          ?? session?.tensor?.confidence
+          ?? 0;
+  const exportUnlocked = canExport(fs);
+  const isImported     = session?.tensor?.isImported ?? false;
+
+  function handleExport() {
+    if (!exportUnlocked || !session) return;
+    const brief   = buildBrief(session);
+    const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs);
+    triggerDownload(payload);
+    setExported(true);
+    setTimeout(() => setExported(false), 2000);
+  }
+
+  async function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const { json, error: parseError } = await parseImportFile(file);
+    if (parseError) {
+      setImportState({ status: 'error', message: 'PARSE FAILURE — invalid file' });
+      return;
+    }
+
+    const validation = validateImport(json);
+    if (!validation.valid) {
+      const msg = {
+        INVALID_SCHEMA:  'SCHEMA MISMATCH — not a Krylo export',
+        MISSING_FIELDS:  'CORRUPT EXPORT — required fields missing',
+        FS_BELOW_GATE:   `Fs ${Math.round((validation.fs ?? 0) * 100)}% — below import gate (70%)`,
+        PARSE_FAILURE:   'PARSE FAILURE',
+      }[validation.error] ?? 'IMPORT REJECTED';
+      setImportState({ status: 'error', message: msg });
+      return;
+    }
+
+    const { lens, query, tensor } = reconstructSession(json);
+    const acquisition             = reconstructAcquisition(json);
+    const newId                   = crypto.randomUUID();
+
+    createSession(newId, lens, query, tensor);
+    setPendingAcquisition(acquisition);
+
+    setImportState({
+      status:       'success',
+      versionMatch: validation.versionMatch,
+      staleDays:    validation.staleDays,
+      stateType:    validation.stateType,
+      timeFrozen:   validation.timeFrozen,
+    });
+  }
 
   useEffect(() => {
     const t = setInterval(() => setSysTime(new Date().toTimeString().slice(0, 8)), 1000);
@@ -189,6 +252,49 @@ export default function IntelligenceBrief() {
 
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
+
+        {/* IMPORTED ARTIFACT BANNER */}
+        {isImported && importState?.status === 'success' && (
+          <div style={{
+            marginBottom: 14, padding: '8px 12px',
+            border: `1px solid rgba(0,127,255,0.3)`,
+            background: 'rgba(0,127,255,0.05)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+              <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: BLUE }}>
+                ◈ IMPORTED ARTIFACT · {importState.stateType?.toUpperCase() ?? 'ANALYTICAL'}
+              </span>
+              {!importState.versionMatch && (
+                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.12em' }}>
+                  ⚠ VERSION DRIFT
+                </span>
+              )}
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.1em' }}>
+              FROZEN {importState.timeFrozen ? new Date(importState.timeFrozen).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '—'}
+              {importState.staleDays != null && importState.staleDays > 7 && (
+                <span style={{ color: 'rgba(0,127,255,0.5)', marginLeft: 10 }}>
+                  · {importState.staleDays}d SINCE EXPORT — VERIFY AGAINST LIVE SIGNALS
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* IMPORT ERROR BANNER */}
+        {importState?.status === 'error' && (
+          <div style={{
+            marginBottom: 14, padding: '7px 12px',
+            border: '1px solid rgba(255,60,60,0.3)',
+            background: 'rgba(255,60,60,0.04)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,80,80,0.8)' }}>
+              ✗ IMPORT REJECTED — {importState.message}
+            </span>
+            <button onClick={() => setImportState(null)} style={{ background: 'none', border: 'none', color: DIM, cursor: 'pointer', fontFamily: MONO, fontSize: 8 }}>✕</button>
+          </div>
+        )}
 
         {/* 00 · HEADER */}
         <Panel seq="00" label="Header & Classification">
@@ -309,6 +415,65 @@ export default function IntelligenceBrief() {
             <span style={{ fontFamily: MONO, fontSize: 7, color, letterSpacing: '0.18em' }}>{value}</span>
           </div>
         ))}
+      </div>
+
+      {/* ── WO-1751 CONSULTING EXPORT / IMPORT ────────────────────────────── */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json"
+        style={{ display: 'none' }}
+        onChange={handleImportFile}
+      />
+      <div style={{
+        flexShrink: 0, padding: '8px 20px',
+        borderTop: `1px solid ${exportUnlocked ? 'rgba(102,255,0,0.18)' : 'rgba(255,255,255,0.05)'}`,
+        background: exportUnlocked ? 'rgba(102,255,0,0.03)' : 'transparent',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        position: 'relative', zIndex: 1,
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
+            CONSULTING I/O · WO-1751
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
+            {exportUnlocked
+              ? `Fs ${Math.round(fs * 100)}% — PROVENANCE-TRACED JSON READY`
+              : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              background: 'transparent',
+              border: '1px solid rgba(0,127,255,0.3)',
+              color: BLUE,
+              padding: '5px 14px',
+              transition: 'all 200ms ease',
+            }}
+          >
+            IMPORT BRIEF
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={!exportUnlocked}
+            style={{
+              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+              textTransform: 'uppercase', cursor: exportUnlocked ? 'pointer' : 'not-allowed',
+              background: 'transparent',
+              border: `1px solid ${exportUnlocked ? 'rgba(102,255,0,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              color: exportUnlocked ? LIME : DIM,
+              padding: '5px 14px',
+              opacity: exportUnlocked ? 1 : 0.4,
+              transition: 'all 200ms ease',
+            }}
+          >
+            {exported ? '✓ EXPORTED' : 'EXPORT BRIEF'}
+          </button>
+        </div>
       </div>
 
       {/* ── RECOMMENDED ACTIONS MATRIX ────────────────────────────────────── */}
