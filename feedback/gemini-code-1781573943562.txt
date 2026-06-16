@@ -1,0 +1,11 @@
+Participant Name,Firm/Organization,Practice/Title,UX: Task Completion,UX: Ease of Use,UX: Friction Points,Content: Clarity,Content: Missing Details,CRO: Hesitation Reason,Sentiment: NPS
+Paul Lancaster Adams,Ogletree Deakins,Labor & Employment,Passed,High,Manual bay binding requires too many clicks,Excellent,None,Form validation is rigid,9
+Danielle Benecke,Baker McKenzie,Machine Learning,Passed with manual override,Medium,Default schemas focus on legacy corporate models,Good,Alternative entity frameworks,High friction on advanced inputs,8
+Emma Chalwin,Workday,Chief Marketing Officer,Passed,High,Console density requires acclimatization,Exceptional,None,None - clear process,10
+Colin Fleming,ServiceNow,Chief Marketing Officer,Passed,High,Desires auto-suggest over hard manual locking,Excellent,More visual trend lines,Data prep requirement is high,9
+Ladidi K. Bako-Aiyegbusi,Nigeria Ministry of Health,Nutrition Director,Passed via Health Gate,Medium,Ingress requires highly explicit terms,Good,Regional health taxonomy variation,Input error safety margins,8
+Charlotte Slente,Danish Refugee Council,Secretary-General,Passed via Health Gate,Medium,Stage 1 confidence variances,Clear,Non-US institutional funding mapping,Complex schema requirements,7
+Shaikha Khaled Al Bahar,National Bank of Kuwait,Deputy Group CEO,Passed,High,None - architecture is solid,Exceptional,None,None - highly deterministic,10
+Tan Su Shan,DBS,Group CEO,Passed,High,Dropdown toggle flow can be optimized,Exceptional,Real-time macro stream indicators,Rigid entry criteria,10
+Drieke Leenknegt,Vans,Chief Marketing Officer,Passed,Medium,Interface feels intimidating initially,Good,More consumer-centric modules,High initial learning curve,8
+Jason Bunge,Hasbro,Chief Marketing Officer,Passed,Medium,Manual domain mapping slows discovery,Good,None,Interface validation gates,8
