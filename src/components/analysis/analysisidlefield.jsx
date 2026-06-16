@@ -14,15 +14,14 @@ import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
 import { arbitrate }                  from '../../engine/aiae.js';
 import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
-import OptionCapital                    from './optioncapital.jsx';
 import { transformIntentToConstraints } from '../../engine/baylogic.js';
 import { computeStructuralFriction }   from '../../engine/structuralfriction.js';
-import CoachWell                        from './coachwell.jsx';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
 const DANGER       = '#FF3300';
+const simBtnStyle  = { flex: 1, padding: '8px 0', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.45)', cursor: 'pointer', fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.22em', textTransform: 'uppercase' };
 const BG           = '#05070a';
 const INPUT_BG     = '#050505';
 const BORDER       = 'rgba(255,255,255,0.08)';
@@ -452,6 +451,10 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [selectedFloor,   setSelectedFloor]   = useState(null);
   const [horizon,         setHorizon]         = useState(null);
   const [focused,         setFocused]         = useState(false);
+  const [plusOpen,        setPlusOpen]        = useState(false);
+  const [volatilityShock, setVolatilityShock] = useState(false);
+  const [simRunning,      setSimRunning]      = useState(false);
+  const [regimeKey,       setRegimeKey]       = useState('Sovereign_Wealth');
   const [missingField,    setMissingField]    = useState(null);
   const [advancedOpen,    setAdvancedOpen]    = useState(false);
   const [rules,           setRules]           = useState([]);
@@ -504,6 +507,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
   useEffect(() => { projectedStateRef.current = projectedState; }, [projectedState]);
   useEffect(() => () => clearTimeout(processingTimer.current), []);
 
+
+  const queryDebounceRef   = useRef(null);
+  const centerTextareaRef  = useRef(null);
 
   // Intake scroll indicators
   const intakeRef = useRef(null);
@@ -646,6 +652,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
   }
 
   function handleExecute() {
+    // flush uncontrolled textarea value before reading seedQuery
+    if (centerTextareaRef.current) {
+      clearTimeout(queryDebounceRef.current);
+      setSeedQuery(centerTextareaRef.current.value);
+    }
     if (!activeLens) { setMissingField('BASE'); return; }
     setMissingField(null);
     if (selectedFloor != null) trackFloor(selectedFloor);
@@ -681,6 +692,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
       intentEntropy:      geometry.intentEntropy,
       seedQuery:          seedQuery.trim(),
       floor:              selectedFloor ?? 0,
+      intentMagnitude,
+      volatilityShock,
     };
 
     tensor.horizonMix         = frictionResult.horizonMix;
@@ -722,6 +735,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
     setActiveSession(null);
     setActiveSituation(null);
     setSeedQuery('');
+    if (centerTextareaRef.current) centerTextareaRef.current.value = '';
     setSelectedFloor(null);
     setHorizon(DEFAULT_HORIZON);
     setRules([]);
@@ -729,6 +743,12 @@ export default function AnalysisIdleField({ activeCones = null }) {
     signalShownRef.current = false;
     setMissingField(null);
     setOptCapResetKey(k => k + 1);
+  }
+
+  function handleIntentChart(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    setIntentMagnitude(Math.max(0, Math.min(100, Math.round((x / rect.width) * 100))));
   }
 
   function handleReturnToLive() {
@@ -763,251 +783,294 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
       <div style={{ width: '100%', height: '100%', background: BG, color: '#fff', overflow: 'hidden', fontFamily: MONO, position: 'relative', display: 'flex' }}>
 
-        {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
+        {/* ── SIMULATION CONTROL PANEL ─────────────────────────────────── */}
         <aside style={{
-          width: hasSession ? 220 : 340, flexShrink: 0,
+          width: hasSession ? 220 : 360, flexShrink: 0,
           borderRight: `1px solid ${BORDER}`,
           background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
           display: 'flex', flexDirection: 'column',
           zIndex: 20, transition: 'width 0.4s ease', overflow: 'hidden',
         }}>
 
-          {/* Header */}
-          <div style={{ height: 64, flexShrink: 0, borderBottom: `1px solid ${BORDER_MED}`, padding: '0 24px', display: 'flex', alignItems: 'center' }}>
-            {hasSession ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, overflow: 'hidden', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: MONO, fontSize: FS_SMALL, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.3)' }}>SESSION ACTIVE</span>
-                  <button onClick={resetSession} style={{ fontFamily: MONO, fontSize: FS_CHIP, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.6)', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(102,255,0,0.3)', padding: '0 0 1px 0', cursor: 'pointer' }}>
-                    new query
-                  </button>
+          {/* ── HEADER ── */}
+          <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER_MED}`, padding: '12px 20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.3)', transform: 'rotate(45deg)', flexShrink: 0 }} />
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: FS_HEADER, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>KRYLO</div>
+                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', marginTop: 3 }}>SIMULATION MODULE // NORTH-SOUTH PANEL</div>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: FS_CHIP, color: LIME, letterSpacing: '0.15em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {activeSession?.query?.toUpperCase() ?? '—'}
-                </span>
               </div>
-            ) : (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 24, height: 24, border: '1px solid rgba(255,255,255,0.3)', transform: 'rotate(45deg)', flexShrink: 0 }} />
-                  <span style={{ fontFamily: MONO, fontSize: FS_HEADER, letterSpacing: '0.25em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.9)' }}>KRYLO</span>
-                </div>
-                {(activeSituation || seedQuery.trim() || selectedFloor) && (
-                  <button onClick={resetSession} style={{ fontFamily: MONO, fontSize: FS_CHIP, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.6)', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(102,255,0,0.3)', padding: '0 0 1px 0', cursor: 'pointer' }}>
-                    reset
-                  </button>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <div style={{ width: 5, height: 5, borderRadius: '50%', background: LIME, boxShadow: `0 0 6px ${LIME}` }} />
+                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em', color: LIME }}>SYS_STATUS: ACTIVE</span>
               </div>
+            </div>
+            {hasSession && (
+              <button onClick={resetSession} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.6)', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(102,255,0,0.3)', padding: '0 0 1px', cursor: 'pointer', marginTop: 8, display: 'block' }}>
+                ← new query
+              </button>
             )}
           </div>
 
-          {/* Token search box */}
-          {!hasSession && (
-            <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_MED}` }}>
-              <TokenBox
-                activeSituation={activeSituation}
-                selectedFloor={selectedFloor}
-                horizon={horizon}
-                seedQuery={seedQuery}
-                onRemoveSituation={removeSituationToken}
-                onRemoveFloor={removeFloorToken}
-                onRemoveHorizon={removeHorizonToken}
-                onQueryChange={v => { setSeedQuery(v); if (missingField === 'TARGET') setMissingField(null); }}
-                onFocus={() => setFocused(true)}
-                onBlur={handleQueryBlur}
-              />
-              {(activeSituation || seedQuery.trim()) && (
-                <button
-                  onClick={removeSituationToken}
-                  style={{
-                    marginTop: 6, padding: 0, background: 'transparent', border: 'none',
-                    fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em',
-                    color: 'rgba(255,255,255,0.2)', cursor: 'pointer',
-                    textTransform: 'uppercase',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
-                  onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.2)'}
-                >
-                  clear form
-                </button>
-              )}
+          {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
+          <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
             </div>
-          )}
+            {/* Chart — responds to slider; no pointer events needed */}
+            {(() => {
+              const im  = intentMagnitude ?? 50;
+              const ws  = bayResult.score ?? 0.3;
+              // Curve Y is driven by intentMagnitude — visibly shifts as user drags
+              const str = ws * 0.4 + (im / 100) * 0.6;   // 0→1 combined strength
+              const y0  = Math.round(140 - Math.max(8, Math.min(124, str * 30 + 8)));
+              const yq1 = Math.round(140 - Math.max(8, Math.min(124, str * 60 + (im * 0.25) + 8)));
+              const ym  = Math.round(140 - Math.max(8, Math.min(124, str * 90 + (im * 0.35) + 8)));
+              const y1  = Math.round(140 - Math.max(8, Math.min(124, str * 110 + (im * 0.22) + 8)));
+              // Crosshair sits ON the curve at x=im
+              const cx  = Math.round(Math.min(305, Math.max(10, im * 3.2)));
+              // Interpolate Y on curve at cx fraction
+              const t   = im / 100;
+              const cy  = Math.round(y0 + (ym - y0) * t * 2 * (1 - t) + (y1 - y0) * t * t);
+              const safecy = Math.max(10, Math.min(124, cy));
+              return (
+                <svg viewBox="0 0 320 140" width="100%" style={{ display: 'block', background: '#0b0e11', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 2, pointerEvents: 'none' }}>
+                  <line x1="160" y1="0" x2="160" y2="140" stroke="#14191c" strokeWidth="1" strokeDasharray="2,2" />
+                  <line x1="0" y1="70" x2="320" y2="70" stroke="#14191c" strokeWidth="1" strokeDasharray="2,2" />
+                  <path d={`M 0,${y0} Q 80,${yq1} 160,${ym} T 320,${y1}`} fill="none" stroke="#66FF00" strokeWidth="2" />
+                  <line x1={cx} y1="0" x2={cx} y2="140" stroke="#66FF00" strokeWidth="0.8" opacity="0.5" />
+                  <circle cx={cx} cy={safecy} r="5" fill="none" stroke="#66FF00" strokeWidth="1.5" />
+                  <text x={Math.min(280, cx + 8)} y={Math.max(16, safecy - 6)} fill="#66FF00" fontSize="8" fontFamily="monospace">{im}% PROJECTION</text>
+                  <text x="4" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace">0</text>
+                  <text x="307" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace" textAnchor="end">100</text>
+                  <text x="160" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace" textAnchor="middle">RAW INTENT SIGNAL</text>
+                </svg>
+              );
+            })()}
+            {/* Native range slider — guaranteed drag control */}
+            <style>{`
+              .intent-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; outline: none; cursor: ew-resize; border-radius: 2px; margin-top: 8px; }
+              .intent-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #66FF00; cursor: ew-resize; box-shadow: 0 0 6px rgba(102,255,0,0.5); }
+              .intent-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: #66FF00; cursor: ew-resize; border: none; box-shadow: 0 0 6px rgba(102,255,0,0.5); }
+            `}</style>
+            <input
+              type="range" min="0" max="100" value={intentMagnitude}
+              onChange={e => setIntentMagnitude(Number(e.target.value))}
+              className="intent-slider"
+              style={{ background: `linear-gradient(to right, #66FF00 ${intentMagnitude}%, #14191c ${intentMagnitude}%)` }}
+            />
+            {/* Data strip */}
+            <div style={{ display: 'flex', marginTop: 8, paddingTop: 8, borderTop: `1px solid ${BORDER_FAINT}` }}>
+              {[
+                ['ENVELOPE', selectedFloor != null ? `$${selectedFloor >= 1000 ? Math.round(selectedFloor / 1000) + 'K' : selectedFloor}` : '—'],
+                ['HORIZON', horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'],
+                ['VOLATILITY', volatilityShock ? 'HIGH_TURB' : projectedState.stateId >= 3 ? 'TURBULENT' : 'NOMINAL'],
+              ].map(([label, val], i) => (
+                <div key={label} style={{ flex: 1, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? `1px solid ${BORDER_FAINT}` : 'none', marginLeft: i > 0 ? 10 : 0 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.22)' }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: label === 'VOLATILITY' && (volatilityShock || projectedState.stateId >= 3) ? '#007FFF' : '#ffffff', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-          {/* WO-1706 — Option Capital: daily runway metric */}
-          <OptionCapital
-            resetTrigger={optCapResetKey}
-            capital={selectedFloor}
-            onIntentChange={(mag) => { removeSituationToken(); if (mag != null) setIntentMagnitude(mag); }}
-            resolvedThreshold={bayResult.resolvedThreshold}
-            closestResolved={bayResult.closestResolved}
-            resolveScore={bayResult.score}
-            horizonMix={frictionResult.horizonMix}
-          />
+          {/* ── SECTION 2: HORIZON DRIFT SCRUBBER ── */}
+          <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+            {(() => {
+              const hIdx = horizon ? HORIZON_ORDER.indexOf(horizon) : -1;
+              const pct  = hIdx >= 0 ? (hIdx / (HORIZON_ORDER.length - 1)) * 100 : 0;
+              return (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON DRIFT SCRUBBER (t + Δ)</div>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
+                  </div>
+                  {/* Range slider */}
+                  <style>{`
+                    .hz-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 3px; outline: none; cursor: pointer; border-radius: 2px; }
+                    .hz-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: ${horizon ? '#ffffff' : '#3a3d4a'}; border: 2px solid ${horizon ? '#66FF00' : '#2d3748'}; cursor: pointer; }
+                    .hz-slider::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: ${horizon ? '#ffffff' : '#3a3d4a'}; border: 2px solid ${horizon ? '#66FF00' : '#2d3748'}; cursor: pointer; border: none; }
+                  `}</style>
+                  <input
+                    type="range" min="0" max={HORIZON_ORDER.length - 1} step="1"
+                    value={hIdx >= 0 ? hIdx : 0}
+                    onChange={e => setHorizon(HORIZON_ORDER[Number(e.target.value)])}
+                    className="hz-slider"
+                    style={{ background: `linear-gradient(to right, #66FF00 ${pct}%, #14191c ${pct}%)` }}
+                  />
+                  {/* Tick labels */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                    {HORIZON_ORDER.map((h, i) => (
+                      <span key={h} style={{ fontFamily: MONO, fontSize: 7, color: h === horizon ? LIME : '#3a3d4a', letterSpacing: '0.04em' }}>
+                        {HORIZON_LABELS[h] ?? h}
+                      </span>
+                    ))}
+                  </div>
+                  {/* OPERATIONAL / STRATEGIC bars */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7, marginTop: 14 }}>
+                    {[
+                      ['OPERATIONAL (ws)', bayResult.score ?? 0, LIME],
+                      ['STRATEGIC (wv)', frictionResult.score ?? 0, '#007FFF'],
+                    ].map(([label, val, clr]) => (
+                      <div key={label}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginBottom: 3 }}>
+                          <span>{label}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)' }}>{Math.round(val * 100)}%</span>
+                        </div>
+                        <div style={{ height: 2, background: '#14191c', borderRadius: 1 }}>
+                          <div style={{ height: '100%', width: `${val * 100}%`, background: clr, borderRadius: 1, transition: 'width 400ms ease' }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
 
-          {/* Scrollable intake body */}
-          <div style={{ flex: 1, position: 'relative', minHeight: 0, overflow: 'hidden' }}>
-            {/* Scroll up indicator */}
-            {intakeScroll.up && (
-              <div onClick={() => intakeRef.current?.scrollTo({ top: 0, behavior: 'smooth' })} style={{
-                position: 'absolute', top: 0, left: 0, right: 0, height: 24,
-                background: `linear-gradient(to bottom, ${BG}, transparent)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                zIndex: 4, cursor: 'pointer',
-              }}>
-                <span style={{ fontFamily: MONO, fontSize: 13, color: LIME }}>▴</span>
-              </div>
-            )}
-            {/* Scroll down indicator */}
-            {intakeScroll.down && (
-              <div onClick={() => intakeRef.current?.scrollTo({ top: intakeRef.current.scrollHeight, behavior: 'smooth' })} style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0, height: 28,
-                background: `linear-gradient(to top, ${BG}, transparent)`,
-                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                paddingBottom: 5, zIndex: 4, cursor: 'pointer',
-              }}>
-                <span style={{ fontFamily: MONO, fontSize: 13, color: LIME }}>▾</span>
-              </div>
-            )}
-          <div
-            ref={intakeRef}
-            onScroll={checkIntakeScroll}
-            className="intake-scroll"
-            style={{
-              position: 'absolute', inset: 0,
-              overflowY: 'auto', padding: '32px 24px 24px',
-              opacity: hasSession ? 0 : 1, pointerEvents: hasSession ? 'none' : 'auto',
-              transition: 'opacity 0.3s ease',
+          {/* ── SECTION 3: VOLATILITY SHOCK OVERRIDE ── */}
+          <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. VOLATILITY SHOCK OVERRIDE</div>
+            <div style={{
+              background: '#0b0e11',
+              border: `1px ${volatilityShock ? 'dashed' : 'solid'} ${volatilityShock ? 'rgba(0,127,255,0.4)' : 'rgba(255,255,255,0.07)'}`,
+              borderRadius: 4, padding: '8px 12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              transition: 'border-color 200ms',
             }}>
-
-            {/* SLOT 1 — SITUATION */}
-            <div style={{ marginBottom: 24 }} className={missingField === 'BASE' ? 'vector-incomplete' : ''}>
-              {missingField === 'BASE' && (
-                <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: LIME, letterSpacing: '0.28em', marginBottom: 10, opacity: 0.8 }}>
-                  SELECT YOUR SITUATION TO CONTINUE
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14 }}>⚡</span>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.6)' }}>
+                    FORCE TURBULENT STATE ENGINE
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
+                    Bypasses parameters; forces wc to 0.60 ceiling
+                  </div>
                 </div>
-              )}
-              <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
-                I'M FOCUSED ON
               </div>
-              <StaggeredChips
-                chips={rankedSituations}
-                selected={activeSituation?.lens}
-                onSelect={selectSituation}
-                getKey={s => s.lens}
-                getLabel={s => s.label}
-                isSelected={(s, sel) => s.lens === sel}
-              />
+              <div
+                onClick={() => setVolatilityShock(v => !v)}
+                style={{
+                  width: 40, height: 22, borderRadius: 11, cursor: 'pointer', flexShrink: 0,
+                  background: volatilityShock ? 'rgba(0,127,255,0.25)' : 'rgba(255,255,255,0.07)',
+                  border: volatilityShock ? '1px solid rgba(0,127,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                  position: 'relative', transition: 'all 200ms',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 3, left: volatilityShock ? 19 : 3,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.35)',
+                  transition: 'left 200ms',
+                }} />
+              </div>
             </div>
+          </div>
 
-            {/* SLOT 3 — HORIZON */}
-            {activeSituation && (
-              <ChainSlot label="HORIZON">
-                <StaggeredChips
-                  chips={HORIZON_ORDER}
-                  selected={horizon}
-                  onSelect={h => setHorizon(horizon === h ? null : h)}
-                  getKey={h => h}
-                  getLabel={h => HORIZON_LABELS[h] ?? h}
-                  isSelected={(h, sel) => h === sel}
+          {/* ── SECTION 4: FORENSIC MATRIX FIELDS ── */}
+          <div style={{ flex: 1, padding: '10px 20px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>4. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
+            <div style={{ flex: 1, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden', minHeight: 90 }}>
+              <svg viewBox="0 0 320 160" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
+                {/* Triangular mesh overlay */}
+                <g stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none">
+                  <path d="M 80,140 L 160,60 L 240,140 Z" />
+                  <path d="M 80,120 L 160,40 L 240,120 Z" />
+                  <path d="M 40,160 L 160,20 L 280,160 Z" opacity="0.35" />
+                </g>
+                {/* Lime cluster — positions shift with intentMagnitude */}
+                {[
+                  [100,95,1.5],[118,88,2],[88,108,1],
+                  [132,100,1.5],[148,82,2.5],[112,115,1],
+                  [165,90,1.5],[152,100,2],[175,85,1],
+                ].map(([bx, by, r], i) => {
+                  const shift = ((intentMagnitude - 50) / 50) * 18;
+                  return <circle key={i} cx={Math.round(bx + shift * (i % 3 - 1))} cy={Math.round(by - shift * 0.4)} r={r} fill="#66FF00" opacity="0.6" />;
+                })}
+                {/* Blue cluster — shifts opposite direction when volatilityShock active */}
+                {[
+                  [200,68,2],[228,58,1.5],[186,85,2],
+                  [245,74,1],[215,92,2],[258,62,1.5],
+                  [240,95,1.5],[282,88,1],[318,78,2],
+                ].map(([bx, by, r], i) => {
+                  const pull = volatilityShock ? 22 : 0;
+                  const shift = ((intentMagnitude - 50) / 50) * 12;
+                  return <circle key={i} cx={Math.round(bx - shift + pull * (i % 2 === 0 ? -0.3 : 0.3))} cy={Math.round(by + pull * 0.2)} r={r} fill="#007FFF" opacity={volatilityShock ? 0.95 : 0.75} />;
+                })}
+                {/* Connection line — stretches with intent */}
+                <path
+                  d={`M ${Math.round(152 + (intentMagnitude - 50) * 0.3)},82 Q ${Math.round(178 + (intentMagnitude - 50) * 0.2)},52 ${Math.round(200 + (intentMagnitude - 50) * 0.1)},68`}
+                  fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.75" strokeDasharray="2,2"
                 />
-              </ChainSlot>
-            )}
-
-            {/* SLOT 4 — CONTEXT (optional) */}
-            {activeSituation && horizon && (
-              <ChainSlot label="SPECIFICALLY">
-                <input
-                  value={seedQuery}
-                  onChange={e => setSeedQuery(e.target.value)}
-                  onFocus={() => setFocused(true)}
-                  onBlur={handleQueryBlur}
-                  placeholder="any detail that sharpens the signal..."
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'transparent',
-                    border: 'none', borderBottom: `1px solid ${seedQuery.trim() ? LIME : 'rgba(255,255,255,0.12)'}`,
-                    padding: '6px 0', fontFamily: MONO, fontSize: FS_CHIP,
-                    color: '#ffffff', outline: 'none', letterSpacing: '0.06em',
-                    transition: 'border-color 200ms',
-                  }}
-                />
-                {signalVisible && activeLens && <div style={{ marginTop: 16 }}><CalibrationSignal lens={activeLens} /></div>}
-              </ChainSlot>
-            )}
-
-            {/* PROJECTION CONSTRAINTS */}
-            <div style={{ marginBottom: 16 }}>
-              <button onClick={() => { setAdvancedOpen(p => { if (!p) trackAdvanced(activeLens); return !p; }); }} style={{
-                fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em',
-                background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-                <span style={{ color: LIME, fontSize: 13 }}>{advancedOpen ? '▾' : '▸'}</span>
-                PROJECTION CONSTRAINTS
-              </button>
-              {advancedOpen && (
-                <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {rules.length === 0 && (
-                    <div style={{ fontFamily: MONO, fontSize: FS_CHIP, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.14em', padding: '8px 0' }}>
-                      NULL LATTICE — PERMEABLE
-                    </div>
-                  )}
-                  {rules.map(rule => (
-                    <div key={rule.id} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: `1px solid rgba(255,255,255,0.05)`, paddingBottom: 8, paddingTop: 4 }}>
-                      <button onClick={() => removeRule(rule.id)} style={{ fontFamily: MONO, fontSize: FS_CHIP, color: DANGER, background: 'transparent', border: 'none', cursor: 'pointer', padding: '0 4px', flexShrink: 0 }}>[X]</button>
-                      <select value={rule.key}      onChange={e => updateRule(rule.id, 'key',      e.target.value)} style={chipSelect}>
-                        {KEY_OPS.map(o => <option key={o} style={{ background: '#000' }}>{o}</option>)}
-                      </select>
-                      <select value={rule.operator} onChange={e => updateRule(rule.id, 'operator', e.target.value)} style={chipSelect}>
-                        {OP_OPS.map(o => <option key={o} style={{ background: '#000' }}>{o}</option>)}
-                      </select>
-                      <input value={rule.value} onChange={e => updateRule(rule.id, 'value', e.target.value)} placeholder="VALUE"
-                        style={{ fontFamily: MONO, fontSize: FS_CHIP, flex: 1, background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '4px 6px', color: '#ffffff', outline: 'none', letterSpacing: '0.1em', minWidth: 0 }} />
-                    </div>
-                  ))}
-                  <button onClick={addRule} style={{ fontFamily: MONO, fontSize: FS_HINT, letterSpacing: '0.2em', color: LIME, background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', textDecoration: 'underline', padding: '8px 0', marginTop: 4 }}>
-                    + ADD CONSTRAINT
-                  </button>
-                </div>
-              )}
+                {/* Live packet dots */}
+                {packets.slice(0, 4).map((p, i) => (
+                  <circle key={p.id ?? i} cx={60 + (i * 53 + projectedState.stateId * 11) % 200} cy={50 + (i * 37) % 90} r="2" fill="#66FF00" opacity="0.4" />
+                ))}
+                <text x="6" y="155" fill="#2a3038" fontSize="7" fontFamily="monospace">SLAB LAYER // TOPOGRAPHIC VERTEX MAPPING ACTIVE</text>
+              </svg>
             </div>
+          </div>
 
-          </div>{/* end inner scroll div */}
-          </div>{/* end scroll wrapper */}
-
-          {/* Sticky footer */}
-          {!isLive ? (
-            <div style={{ flexShrink: 0, padding: '12px 20px', borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+          {/* ── SIMULATION CONTROLS FOOTER ── */}
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_MED}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {!isLive ? (
               <button onClick={handleReturnToLive} className="aif-btn-live" style={{
-                width: '100%', height: 44, border: '1px solid rgba(102,255,0,0.2)',
+                width: '100%', height: 38, border: '1px solid rgba(102,255,0,0.2)',
                 color: 'rgba(102,255,0,0.7)', letterSpacing: '0.18em', background: 'transparent',
                 cursor: 'pointer', fontFamily: MONO, fontSize: FS_EXECUTE,
               }}>RETURN TO LIVE</button>
-            </div>
-          ) : !hasSession ? (
-            <div style={{ padding: '16px 24px', borderTop: `1px solid rgba(255,255,255,0.05)`, flexShrink: 0 }}>
-              {missingField === 'BASE' && (
-                <div style={{ fontFamily: MONO, fontSize: FS_SMALL, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.22em', marginBottom: 10, textAlign: 'center' }}>
-                  SELECT YOUR SITUATION TO CONTINUE
+            ) : hasSession ? (
+              <>
+                <button
+                  onClick={handleExecute}
+                  disabled={processing}
+                  style={{
+                    width: '100%', padding: '11px 0',
+                    background: processing ? 'rgba(102,255,0,0.06)' : 'transparent',
+                    color: LIME,
+                    border: `1px solid ${processing ? 'rgba(102,255,0,0.2)' : 'rgba(102,255,0,0.4)'}`,
+                    cursor: processing ? 'default' : 'pointer',
+                    fontFamily: MONO, fontSize: FS_EXECUTE, fontWeight: 400,
+                    letterSpacing: '0.22em', textTransform: 'uppercase',
+                    opacity: processing ? 0.5 : 1,
+                    transition: 'opacity 200ms',
+                  }}
+                >{processing ? 'ANALYZING...' : '⟳ REANALYZE WITH CURRENT SETTINGS'}</button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
+                  <button style={simBtnStyle}>SAVE STATE</button>
+                  <button style={simBtnStyle}>EXPORT SCALAR</button>
                 </div>
-              )}
-              <button onClick={handleExecute} disabled={processing} style={{
-                width: '100%', padding: '15px 0',
-                border: canExecute ? 'none' : '1px solid rgba(255,255,255,0.1)',
-                background: processing ? 'rgba(102,255,0,0.12)' : canExecute ? LIME : 'transparent',
-                color: processing ? LIME : canExecute ? '#000000' : 'rgba(255,255,255,0.22)',
-                fontFamily: MONO, fontSize: FS_EXECUTE, fontWeight: 700,
-                letterSpacing: '0.3em', textTransform: 'uppercase',
-                cursor: canExecute && !processing ? 'pointer' : 'default',
-                transition: 'background 300ms, color 300ms',
-                animation: processing ? 'processing-pulse 1.1s ease-in-out infinite' : 'none',
-              }}
-              onMouseEnter={e => { if (canExecute && !processing) e.currentTarget.style.background = '#ffffff'; }}
-              onMouseLeave={e => { if (canExecute && !processing) e.currentTarget.style.background = LIME; }}
-              >{processing ? 'ANALYZING...' : canExecute ? 'FIND MY PLAN' : 'COMPLETE YOUR PROFILE'}</button>
-            </div>
-          ) : null}
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={handleExecute}
+                  disabled={processing}
+                  style={{
+                    width: '100%', padding: '11px 0',
+                    background: processing ? 'rgba(102,255,0,0.06)' : 'transparent',
+                    color: LIME,
+                    border: `1px solid ${processing ? 'rgba(102,255,0,0.2)' : 'rgba(102,255,0,0.4)'}`,
+                    cursor: processing ? 'default' : 'pointer',
+                    fontFamily: MONO, fontSize: 9, fontWeight: 400,
+                    letterSpacing: '0.14em', textTransform: 'uppercase',
+                    opacity: processing ? 0.5 : 1,
+                    transition: 'opacity 200ms',
+                  }}
+                >{processing ? 'ANALYZING...' : 'INITIALIZE STRESS SIMULATION'}</button>
+                <div style={{ display: 'flex', gap: 4 }}>
+                  <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
+                  <button style={simBtnStyle}>SAVE STATE</button>
+                  <button style={simBtnStyle}>EXPORT SCALAR</button>
+                </div>
+              </>
+            )}
+          </div>
 
         </aside>
 
@@ -1031,7 +1094,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_TELEMETRY, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
               <span>Validation Engine</span>
-              <span>v3.7.2</span>
+              <span>v3.8.0</span>
             </div>
           </div>
 
@@ -1066,32 +1129,151 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </>
           )}
 
-          {/* TARGET ACQUISITION scope zone — idle only */}
+          {/* SIGNAL QUERY — idle only */}
           {!hasSession && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none' }}>
-              <div style={{ width: 520, height: 340, background: 'rgba(3,4,6,0.92)', border: '1px solid rgba(102,255,0,0.10)', position: 'relative', display: 'flex', flexDirection: 'column', pointerEvents: 'auto' }}>
-                {[
-                  { top: -1,    left: -1,  borderLeft:  '2px solid rgba(102,255,0,0.35)', borderTop:    '2px solid rgba(102,255,0,0.35)' },
-                  { top: -1,    right: -1, borderRight: '2px solid rgba(102,255,0,0.35)', borderTop:    '2px solid rgba(102,255,0,0.35)' },
-                  { bottom: -1, left: -1,  borderLeft:  '2px solid rgba(102,255,0,0.35)', borderBottom: '2px solid rgba(102,255,0,0.35)' },
-                  { bottom: -1, right: -1, borderRight: '2px solid rgba(102,255,0,0.35)', borderBottom: '2px solid rgba(102,255,0,0.35)' },
-                ].map((s, i) => <div key={i} style={{ position: 'absolute', width: 20, height: 20, ...s }} />)}
-                <div style={{ height: 36, padding: '0 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${BORDER_FAINT}`, flexShrink: 0 }}>
-                  <span style={{ fontSize: FS_TELEMETRY, letterSpacing: '0.4em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)' }}>KRYLO</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {projectedState.convergenceScore > 0 && (
-                      <span style={{ fontSize: FS_TELEMETRY, color: 'rgba(102,255,0,0.6)', fontVariantNumeric: 'tabular-nums' }}>CS {projectedState.convergenceScore.toFixed(3)}</span>
-                    )}
-                    <span style={{ width: 4, height: 4, borderRadius: '50%', background: scopeDot, display: 'inline-block' }} />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none', gap: 16, padding: '0 24px' }}>
+              <div style={{
+                width: 600, background: 'rgba(10,10,10,0.96)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: 20, overflow: 'hidden',
+                display: 'flex', flexDirection: 'column',
+                pointerEvents: 'auto',
+                boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
+              }}>
+                <textarea
+                  ref={centerTextareaRef}
+                  defaultValue=""
+                  onChange={e => {
+                    const v = e.target.value;
+                    clearTimeout(queryDebounceRef.current);
+                    queryDebounceRef.current = setTimeout(() => {
+                      setSeedQuery(v);
+                      if (missingField === 'TARGET') setMissingField(null);
+                    }, 150);
+                  }}
+                  onFocus={() => setFocused(true)}
+                  onBlur={e => { setSeedQuery(e.target.value); handleQueryBlur(); }}
+                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleExecute(); }}
+                  placeholder="build your signal query..."
+                  rows={5}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: 'transparent', border: 'none', resize: 'none',
+                    fontFamily: MONO, fontSize: 14, lineHeight: 1.9,
+                    color: 'rgba(255,255,255,0.88)',
+                    padding: '24px 24px 12px',
+                    caretColor: LIME, outline: 'none',
+                  }}
+                />
+                {/* Bottom bar */}
+                <div style={{ padding: '12px 16px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                  {/* Left controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {/* + button with dropdown */}
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={() => setPlusOpen(p => !p)}
+                        style={{
+                          width: 32, height: 32, borderRadius: '50%',
+                          background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
+                          color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 18, lineHeight: 1, padding: 0,
+                        }}
+                      >+</button>
+                      {plusOpen && (
+                        <div style={{
+                          position: 'absolute', bottom: 42, left: 0,
+                          background: '#111', border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: 12, overflow: 'hidden',
+                          minWidth: 220, zIndex: 50,
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
+                        }}>
+                          {[
+                            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>, label: 'Upload document' },
+                            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6m-3-3v6"/></svg>, label: 'Import from file' },
+                          ].map(({ icon, label }) => (
+                            <button key={label} onClick={() => setPlusOpen(false)} style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '14px 16px', background: 'transparent', border: 'none',
+                              color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left',
+                              fontFamily: MONO, fontSize: 11, letterSpacing: '0.05em',
+                              borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <span style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{icon}</span>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {/* Lens pill */}
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      padding: '5px 12px', borderRadius: 999,
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      background: 'rgba(255,255,255,0.04)',
+                    }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
+                        {activeSituation?.lens ?? 'SIGNAL'}
+                      </span>
+                      {projectedState.convergenceScore > 0 && (
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.1em', fontVariantNumeric: 'tabular-nums' }}>
+                          CS {projectedState.convergenceScore.toFixed(2)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Right controls */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Mic */}
+                    <button style={{
+                      width: 32, height: 32, background: 'transparent', border: 'none',
+                      color: 'rgba(255,255,255,0.28)', cursor: 'pointer', padding: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                        <rect x="9" y="2" width="6" height="11" rx="3"/>
+                        <path d="M5 10a7 7 0 0 0 14 0"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                        <line x1="8" y1="22" x2="16" y2="22"/>
+                      </svg>
+                    </button>
+                    {/* Submit — always lime */}
+                    <button
+                      onClick={handleExecute}
+                      style={{
+                        width: 36, height: 36, borderRadius: '50%',
+                        background: LIME, border: 'none', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="12" y1="19" x2="12" y2="5"/>
+                        <polyline points="5 12 12 5 19 12"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
-                <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-                  <CoachWell
-                    activeSituation={activeSituation}
-                    seedQuery={seedQuery}
-                    selectedFloor={selectedFloor}
-                  />
+              </div>
+
+              {/* Situation chips below search box */}
+              <div style={{ width: 600, pointerEvents: 'auto' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
+                  I'M FOCUSED ON
                 </div>
+                <StaggeredChips
+                  chips={rankedSituations}
+                  selected={activeSituation?.lens}
+                  onSelect={selectSituation}
+                  getKey={s => s.lens}
+                  getLabel={s => s.label}
+                  isSelected={(s, sel) => s.lens === sel}
+                />
               </div>
             </div>
           )}
