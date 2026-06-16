@@ -976,43 +976,61 @@ export default function AnalysisIdleField({ activeCones = null }) {
           <div style={{ flex: 1, padding: '10px 20px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
             <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>4. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
             <div style={{ flex: 1, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden', minHeight: 90 }}>
-              <svg viewBox="0 0 320 160" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
-                {/* Triangular mesh overlay */}
-                <g stroke="rgba(255,255,255,0.06)" strokeWidth="1" fill="none">
-                  <path d="M 80,140 L 160,60 L 240,140 Z" />
-                  <path d="M 80,120 L 160,40 L 240,120 Z" />
-                  <path d="M 40,160 L 160,20 L 280,160 Z" opacity="0.35" />
-                </g>
-                {/* Lime cluster — positions shift with intentMagnitude */}
-                {[
-                  [100,95,1.5],[118,88,2],[88,108,1],
-                  [132,100,1.5],[148,82,2.5],[112,115,1],
-                  [165,90,1.5],[152,100,2],[175,85,1],
-                ].map(([bx, by, r], i) => {
-                  const shift = ((intentMagnitude - 50) / 50) * 18;
-                  return <circle key={i} cx={Math.round(bx + shift * (i % 3 - 1))} cy={Math.round(by - shift * 0.4)} r={r} fill="#66FF00" opacity="0.6" />;
-                })}
-                {/* Blue cluster — shifts opposite direction when volatilityShock active */}
-                {[
-                  [200,68,2],[228,58,1.5],[186,85,2],
-                  [245,74,1],[215,92,2],[258,62,1.5],
-                  [240,95,1.5],[282,88,1],[318,78,2],
-                ].map(([bx, by, r], i) => {
-                  const pull = volatilityShock ? 22 : 0;
-                  const shift = ((intentMagnitude - 50) / 50) * 12;
-                  return <circle key={i} cx={Math.round(bx - shift + pull * (i % 2 === 0 ? -0.3 : 0.3))} cy={Math.round(by + pull * 0.2)} r={r} fill="#007FFF" opacity={volatilityShock ? 0.95 : 0.75} />;
-                })}
-                {/* Connection line — stretches with intent */}
-                <path
-                  d={`M ${Math.round(152 + (intentMagnitude - 50) * 0.3)},82 Q ${Math.round(178 + (intentMagnitude - 50) * 0.2)},52 ${Math.round(200 + (intentMagnitude - 50) * 0.1)},68`}
-                  fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="0.75" strokeDasharray="2,2"
-                />
-                {/* Live packet dots */}
-                {packets.slice(0, 4).map((p, i) => (
-                  <circle key={p.id ?? i} cx={60 + (i * 53 + projectedState.stateId * 11) % 200} cy={50 + (i * 37) % 90} r="2" fill="#66FF00" opacity="0.4" />
-                ))}
-                <text x="6" y="155" fill="#2a3038" fontSize="7" fontFamily="monospace">SLAB LAYER // TOPOGRAPHIC VERTEX MAPPING ACTIVE</text>
-              </svg>
+              {(() => {
+                // 6 domain anchors — fixed positions on 320×160 SVG
+                // value (0–1) from activeCones drives r and opacity directly
+                const DOMAIN_ANCHORS = [
+                  { key: 'financial', label: 'CAPITAL',   cx: 80,  cy: 58  },
+                  { key: 'operating', label: 'TECH',      cx: 160, cy: 32  },
+                  { key: 'knowledge', label: 'KNOW',      cx: 240, cy: 58  },
+                  { key: 'time',      label: 'LABOR',     cx: 80,  cy: 118 },
+                  { key: 'personal',  label: 'MEDIA',     cx: 160, cy: 132 },
+                  { key: 'market',    label: 'MARKET',    cx: 240, cy: 118 },
+                ];
+                const cones = activeCones ?? {};
+                const intentShift = ((intentMagnitude - 50) / 50) * 14; // ±14px at extremes
+                const shockShift  = volatilityShock ? 8 : 0;
+
+                return (
+                  <svg viewBox="0 0 320 160" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
+                    {/* Mesh edges between adjacent domain pairs */}
+                    <g stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" fill="none">
+                      {[[0,1],[1,2],[3,4],[4,5],[0,3],[1,4],[2,5],[0,4],[1,5],[1,3]].map(([a,b],i) => {
+                        const A = DOMAIN_ANCHORS[a], B = DOMAIN_ANCHORS[b];
+                        const va = cones[A.key]?.value ?? 0, vb = cones[B.key]?.value ?? 0;
+                        const combined = (va + vb) / 2;
+                        return <line key={i} x1={A.cx} y1={A.cy} x2={B.cx} y2={B.cy} opacity={0.04 + combined * 0.18} />;
+                      })}
+                    </g>
+                    {/* Domain nodes — r and opacity are direct functions of cone.value */}
+                    {DOMAIN_ANCHORS.map(({ key, label, cx, cy }) => {
+                      const cone  = cones[key] ?? { value: 0, color: 'rgba(255,255,255,0.2)' };
+                      const v     = Math.max(0, Math.min(1, cone.value));       // clamp 0–1
+                      const r     = 2 + v * 8;                                  // 2px–10px
+                      const op    = 0.3 + v * 0.7;                             // 0.30–1.00
+                      const color = cone.color ?? '#66FF00';
+                      // intent magnitude shifts X; volatility shock adds Y jitter keyed to node index
+                      const nx = Math.round(cx + intentShift * (cx < 160 ? -0.5 : cx > 160 ? 0.5 : 0));
+                      const ny = Math.round(cy + (volatilityShock ? shockShift * ((cy > 80 ? 1 : -1)) : 0));
+                      return (
+                        <g key={key}>
+                          <circle cx={nx} cy={ny} r={Math.round(r * 10) / 10} fill={color} opacity={op} />
+                          <text x={nx} y={ny + Math.round(r) + 8} textAnchor="middle"
+                            fill={color} fontSize="5.5" fontFamily="monospace"
+                            opacity={Math.round(op * 10) / 10} letterSpacing="0.08em">
+                            {label}
+                          </text>
+                          <text x={nx + Math.round(r) + 3} y={ny + 2} textAnchor="start"
+                            fill="rgba(255,255,255,0.35)" fontSize="5" fontFamily="monospace">
+                            {Math.round(v * 100)}
+                          </text>
+                        </g>
+                      );
+                    })}
+                    <text x="6" y="155" fill="#1c2128" fontSize="6.5" fontFamily="monospace" letterSpacing="0.06em">SLAB // 6-DOMAIN FIELD</text>
+                  </svg>
+                );
+              })()}
             </div>
           </div>
 
