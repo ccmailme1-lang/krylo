@@ -7,9 +7,22 @@ const DIM    = 'rgba(255,255,255,0.25)';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+// Boundaries mirror the LOW(<1.0×)/MOD(≈1.0×)/HIGH(>1.0×) axis in leveragefield.jsx
+function classifyLeverageTier(deRatio) {
+  if (deRatio < 0.9) return 'LOW';
+  if (deRatio > 1.1) return 'HIGH';
+  return 'MOD';
+}
+
 function extractNumbers(text) {
   // Strip age-context numbers before extraction — "81 year old" must not become $81
-  const cleaned = (text ?? '').replace(/\b\d+\s*-?\s*years?\s*-?\s*old\b/gi, '');
+  let cleaned = (text ?? '').replace(/\b\d+\s*-?\s*years?\s*-?\s*old\b/gi, '');
+  // Strip duration/rate suffixes before extraction — "18mo"/"18-month" must not become $18M
+  // (bare "m" in "mo" was matching the existing k/m currency-suffix check), "200bp" must not become $200
+  cleaned = cleaned.replace(/\b\d+\s*-?\s*(?:mo(?:nths?)?|wks?|weeks?|yrs?|years?|days?|bps?)\b/gi, '');
+  cleaned = cleaned.replace(/\b\d+(?:\.\d+)?\s*%/g, '');
+  // Strip digits fused to a letter label — "P4" (deliverable format), "Q3" — these are not currency
+  cleaned = cleaned.replace(/\b[A-Z]\d+\b/g, '');
   const raw = cleaned.match(/\$?\d[\d,]*(?:\.\d+)?[kKmM]?/g) ?? [];
   return raw.map(m => {
     const n = parseFloat(m.replace(/[$,]/g, ''));
@@ -234,7 +247,7 @@ function synthAuto(session, numbers, query) {
         { id:'c2', label:'SHOP FULL COVERAGE QUOTES',   impact:0.58, rationale:`Full coverage on a $${fmtN(price)} vehicle adds $150–$300/mo to true cost of ownership. Get quotes before signing — insurance is a locked cost for the loan term and lender requires full coverage.`,            tag:'COST'      },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'HIGH', deRatio: parseFloat((loan / (down || 1)).toFixed(1)), permissionless: true, industryNorm: 1.8 },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / (down || 1)).toFixed(1))), deRatio: parseFloat((loan / (down || 1)).toFixed(1)), permissionless: true, industryNorm: 1.8 },
   };
 }
 
@@ -319,7 +332,7 @@ function synthRealEstate(session, numbers, query) {
         { id:'c2', label:'MODEL 5-YEAR BREAK-EVEN',         impact:0.62, rationale:`Closing costs require 4–6 years to break even vs renting. If job mobility or relocation is possible within 5 years, the purchase economics weaken materially.`,                                               tag:'PLANNING'  },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'HIGH', deRatio: parseFloat((loan / Math.max(down, 1)).toFixed(1)), permissionless: true, industryNorm: 3.0 },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / Math.max(down, 1)).toFixed(1))), deRatio: parseFloat((loan / Math.max(down, 1)).toFixed(1)), permissionless: true, industryNorm: 3.0 },
   };
 }
 
@@ -400,7 +413,7 @@ function synthCareer(session, numbers, query) {
         { id:'c2', label:'TRACK YOUR MARKET RATE',    impact:0.60, rationale:`Set a recurring 6-month calendar reminder to pull fresh market comps. Comp stagnates when you stop looking — knowing the market is your single biggest negotiating advantage.`,                            tag:'AWARENESS'   },
       ],
     },
-    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: 'MOD', deRatio: 1.0, permissionless: false, industryNorm: 1.0 },
+    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(1.0), deRatio: 1.0, permissionless: false, industryNorm: 1.0 },
   };
 }
 
@@ -486,7 +499,7 @@ function synthRetirement(session, numbers, query) {
         { id:'c2', label:'AUDIT ESTATE DOCUMENTS',       impact:0.61, rationale:`Will, beneficiary designations, power of attorney — annual review required. Outdated beneficiary designations override wills in most states. One of the highest-impact zero-cost actions.`, tag:'PROTECTION' },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'MOD', deRatio: parseFloat((gap / Math.max(savings, 1)).toFixed(1)), permissionless: true, industryNorm: 0.8 },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((gap / Math.max(savings, 1)).toFixed(1))), deRatio: parseFloat((gap / Math.max(savings, 1)).toFixed(1)), permissionless: true, industryNorm: 0.8 },
   };
 }
 
@@ -568,7 +581,7 @@ function synthExpenseReduction(session, numbers, query) {
         { id:'c2', label:'OPTIMIZE PRESCRIPTIONS',   impact:0.69, rationale:`Check GoodRx or RxSaver for every medication. Brand-to-generic switch cuts costs 80%+. Apply for Medicare Extra Help (LIS) if income qualifies — reduces Part D costs to near zero.`,                          tag:'PRESCRIPTIONS' },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'LOW', deRatio: 0.1, permissionless: true, industryNorm: 0.5 },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(0.1), deRatio: 0.1, permissionless: true, industryNorm: 0.5 },
   };
 }
 
@@ -648,7 +661,7 @@ function synthGeneral(session, numbers, query) {
         { id:'c2', label:'IDENTIFY YOUR UNKNOWNS',  impact:0.50, rationale:`A gap in information is more dangerous than a gap in capital. List what you don't know before deciding.`,                                 tag:'AWARENESS' },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'LOW', deRatio: 0.5, permissionless: false, industryNorm: 1.0 },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(0.5), deRatio: 0.5, permissionless: false, industryNorm: 1.0 },
   };
 }
 
@@ -734,7 +747,7 @@ function synthHealth(session, numbers, query) {
         { id:'c2', label:'MAP STATE DISABILITY PROGRAMS',  impact:0.60, rationale:`States maintain additional programs beyond federal coverage. State DD councils and Disability Rights Advocates maintain searchable program databases.`, tag:'ACCESS'     },
       ],
     },
-    leverage: { typeY: 0, typeLabel: 'CODE', tierLabel: 'HIGH', deRatio: 0.0, permissionless: true, industryNorm: 0.0 },
+    leverage: { typeY: 1, typeLabel: 'CODE', tierLabel: classifyLeverageTier(0.0), deRatio: 0.0, permissionless: true, industryNorm: 0.0 },
   };
 }
 

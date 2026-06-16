@@ -5,5 +5,9 @@
 export function getDisplayEntity(rawQuery, limit = 60) {
   if (!rawQuery) return 'NO SIGNAL DETECTED';
   const trimmed = rawQuery.trim();
-  return trimmed.length > limit ? `${trimmed.substring(0, limit).trimEnd()}...` : trimmed;
+  if (trimmed.length <= limit) return trimmed;
+  const cut       = trimmed.slice(0, limit);
+  const lastSpace = cut.lastIndexOf(' ');
+  const safeCut   = lastSpace > 0 ? cut.slice(0, lastSpace) : cut;
+  return `${safeCut.trimEnd()}...`;
 }
