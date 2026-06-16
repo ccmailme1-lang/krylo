@@ -31,7 +31,29 @@ BUG-001-unit-contamination.md, 2026-06-16. Re-running the corpus before this
 fix would have produced misleading capital-context data alongside the
 routing data.
 
+## Scoped (2026-06-16)
+
+Full scope written up at `specs/WO-1761-domain-coverage-gap.md`, based on
+the broader 30-query corpus this doc called for (`.batchtest3.mjs`). Turns
+out to be three distinct problems, not one:
+
+- **(a) True coverage gaps** — 17/25 new-persona queries, no domain matches
+  at all. Confirmed not one shape (not just gig-income) — needs a real
+  taxonomy decision, not a one-off keyword patch. Still needs Founder
+  input, as this doc originally said.
+- **(b) Substring/keyword contamination** — confirmed bug, not a coverage
+  gap: `detectDomain()`'s AUTO regex has no word boundary and matches
+  "car" inside "card"/"cards." A credit-card-debt query got routed to the
+  car-buying synthesizer. Cheap, mechanical fix, no taxonomy judgment
+  needed — can ship independently.
+- **(c) Content-model mismatch on correct routing** — even a *correct*
+  keyword match (e.g. "mortgage" in a reverse-mortgage query) routes into a
+  synthesizer that assumes the wrong transaction shape, sometimes
+  producing genuinely broken output (a confirmed `$68 purchase, $480,000
+  down (705882%), Financed: $-479,932` from a reverse-mortgage query).
+  Harder than (a) or (b) — needs its own design pass.
+
 ## Not started
 
-No code written. Needs Founder/product input on whether a new domain is the
-right shape before any routing keywords are added.
+No code written for any of (a)/(b)/(c). Scope only — see spec file for full
+breakdown and recommendation.
