@@ -786,11 +786,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
         {/* ── SIMULATION CONTROL PANEL ─────────────────────────────────── */}
         <aside style={{
-          width: hasSession ? 220 : 360, flexShrink: 0,
+          width: 242, flexShrink: 0,
           borderRight: `1px solid ${BORDER}`,
           background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
           display: 'flex', flexDirection: 'column',
-          zIndex: 20, transition: 'width 0.4s ease', overflow: 'hidden',
+          zIndex: 20, overflow: 'hidden',
         }}>
 
           {/* ── HEADER ── */}
@@ -886,7 +886,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON DRIFT SCRUBBER (t + Δ)</div>
+                    <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON SCRUBBER (t + Δ)</div>
                     <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
                   </div>
                   {/* Range slider */}
