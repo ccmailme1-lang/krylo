@@ -46,6 +46,22 @@ still bind the wrong one to the wrong field. That refactor is a bigger
 change (touches every synthesizer's call site) and is not release-blocking
 the way the unit collision was — left for a future WO if it recurs.
 
+## Independent re-verification (2026-06-16, post-commit)
+
+Second batch of 20 differently-phrased queries (`.batchtest2.mjs`, same
+co-living/18mo/15%-rev-vol/$45k-debt scenario, 20 new variants) run against
+the committed fix. Full-page dollar-figure scan (not just labeled fields) on
+all 20 outputs: zero instances of `$18,000,000` or `$4`-from-`P4`. The only
+repeated dollar figures found were (a) the user's own query text echoed
+verbatim in UI headers (contains literal `$15k`/`$45k`) and (b) a static
+`$123` CAC mock figure (WO-1031) identical across all 20 runs and unrelated
+to query content. Confirms the fix generalizes beyond the original repro
+set, not just the literal strings already in the bug file.
+
+BUG-001A and BUG-001B reproduced exactly as documented (20/20
+`Anchor:OPEN`/`Domain:GENERAL`, 20/20 `Confidence:0.71`/`D/E:0.5×LOW`) —
+expected, matches WO-1761/WO-1762 filings, not a new finding.
+
 ## Scope widened (same day)
 
 Not REAL_ESTATE-specific. `extractNumbers()` is shared infrastructure called
