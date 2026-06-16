@@ -1006,7 +1006,7 @@ export default function App() {
 
       {navMode === 'history' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <HistoryBay />
+          <HistoryBay onRerunNavigate={() => setNavMode('analysis')} />
         </div>
       )}
 
