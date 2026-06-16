@@ -657,12 +657,13 @@ export default function AnalysisIdleField({ activeCones = null }) {
       clearTimeout(queryDebounceRef.current);
       setSeedQuery(centerTextareaRef.current.value);
     }
-    if (!activeLens) { setMissingField('BASE'); return; }
+    // Allow simulator to run without a selected lens — fall back to OPEN
+    const effectiveLens = activeLens ?? 'OPEN';
     setMissingField(null);
     if (selectedFloor != null) trackFloor(selectedFloor);
-    trackRules(activeLens, rules);
+    trackRules(effectiveLens, rules);
     if (signalShownRef.current) {
-      emitTelemetry({ type: 'calibration_signal_executed_after', lens: activeLens, timestamp: Date.now() });
+      emitTelemetry({ type: 'calibration_signal_executed_after', lens: effectiveLens, timestamp: Date.now() });
     }
     setSignalVisible(false);
     signalShownRef.current = false;
@@ -670,17 +671,17 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
     const ts         = Date.now();
     const id         = `session_${ts}`;
-    const preset     = LENS_PRESETS[activeLens] ?? LENS_PRESETS.OPEN;
+    const preset     = LENS_PRESETS[effectiveLens] ?? LENS_PRESETS.OPEN;
     const geometry   = preset.scaffold.geometry;
-    const domainList = LENS_DOMAIN_MAP[activeLens] ?? [];
+    const domainList = LENS_DOMAIN_MAP[effectiveLens] ?? [];
     const parsed     = parseIntent(seedQuery.trim());
     const horizonRes = resolveHorizon(horizon, 'OPERATOR');
 
-    const domain = LENS_BROKER_DOMAIN_MAP[activeLens] ?? 'GENERAL';
+    const domain = LENS_BROKER_DOMAIN_MAP[effectiveLens] ?? 'GENERAL';
 
     const tensor = {
-      lens:               activeLens,
-      kernel_state_hash:  hashKernelState(activeLens, ts),
+      lens:               effectiveLens,
+      kernel_state_hash:  hashKernelState(effectiveLens, ts),
       domains:            domainList,
       domain,
       intent:             parsed.normalized_verb,
@@ -722,11 +723,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
       }
     }
 
-    emitTelemetry({ type: 'session_open', sessionId: id, source: 'analysis-field', query: seedQuery.trim(), anchor: activeLens, kernel_state_hash: tensor.kernel_state_hash, timestamp: ts });
+    emitTelemetry({ type: 'session_open', sessionId: id, source: 'analysis-field', query: seedQuery.trim(), anchor: effectiveLens, kernel_state_hash: tensor.kernel_state_hash, timestamp: ts });
 
     clearTimeout(processingTimer.current);
     processingTimer.current = setTimeout(() => {
-      createSession(id, activeLens, seedQuery.trim(), tensor);
+      createSession(id, effectiveLens, seedQuery.trim(), tensor);
       setProcessing(false);
     }, 900);
   }
@@ -1062,7 +1063,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                     opacity: processing ? 0.5 : 1,
                     transition: 'opacity 200ms',
                   }}
-                >{processing ? 'ANALYZING...' : 'INITIALIZE STRESS SIMULATION'}</button>
+                >{processing ? 'ANALYZING...' : 'STRESS SIMULATION'}</button>
                 <div style={{ display: 'flex', gap: 4 }}>
                   <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
                   <button style={simBtnStyle}>SAVE STATE</button>
