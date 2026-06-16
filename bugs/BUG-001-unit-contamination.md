@@ -1,6 +1,6 @@
 # BUG-001 — Non-dollar units parsed as dollar amounts
 
-STATUS: SPLIT — see below. BUG-001C (this file) FIXED. 001A/001B spun out.
+STATUS: CLOSED. BUG-001C (this file) FIXED + verified 3x (70 queries, 0 regressions). 001A/001B spun out, remain open as WO-1761/WO-1762.
 FILED: 2026-06-16, widened same day
 WO: WO-1756
 RELATED: WO-1724 (Ingress Keyword Contamination — same bug class, different vector)
@@ -61,6 +61,25 @@ set, not just the literal strings already in the bug file.
 BUG-001A and BUG-001B reproduced exactly as documented (20/20
 `Anchor:OPEN`/`Domain:GENERAL`, 20/20 `Confidence:0.71`/`D/E:0.5×LOW`) —
 expected, matches WO-1761/WO-1762 filings, not a new finding.
+
+## Third re-verification (2026-06-16, post-commit)
+
+Third batch of 20 queries (`.batchtest5.mjs`), this time deliberately varying
+the month-duration value itself — 6/9/12/15/18/24/30/36mo — combined with
+dollar amounts in different sentence positions (including repeated `P4`
+labels). Same full-page dollar-figure scan as the second batch. Zero
+inflation across all 8 duration values and all orderings — `capCtx` matched
+every stated dollar figure exactly. The fix generalizes across duration
+magnitude, not just the literal `18mo` repro.
+
+Combined across all three independent batches: 70 queries, 0 regressions.
+BUG-001C verification considered closed.
+
+## STATUS: CLOSED (verification complete, 2026-06-16)
+
+BUG-001C fixed and verified three times over (70 queries, 0 regressions).
+BUG-001A (WO-1761) and BUG-001B (WO-1762) remain open BACKLOG items, tracked
+in their own files (BUG-005, BUG-006) — not closed by this verification.
 
 ## Scope widened (same day)
 
