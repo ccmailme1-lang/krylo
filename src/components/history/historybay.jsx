@@ -87,6 +87,16 @@ function formatTs(ts) {
          d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 }
 
+function formatDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatTimeOnly(ts) {
+  if (!ts) return '—';
+  return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
 function formatTime(ts) {
   if (!ts) return '—';
   return new Date(ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }) + 'Z';
@@ -431,94 +441,102 @@ function TypeBox({ code }) {
   );
 }
 
+// ── Shared grid column template ───────────────────────────────────────────────
+const GRID_COLS = '48px 72px 52px 1fr 110px 80px 96px';
+const CELL = { fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+
+// cols: array of { label, key } — key null = not sortable
+function ColHeaders({ cols, sort, onSort }) {
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: GRID_COLS, gap: '0 16px',
+      padding: '0 0 7px', borderBottom: '1px solid rgba(255,255,255,0.05)', marginBottom: 2,
+    }}>
+      {cols.map(({ label, key }) => {
+        const active = sort && key && sort.key === key;
+        const sortable = !!key;
+        return (
+          <span
+            key={label}
+            onClick={sortable ? () => onSort(key) : undefined}
+            style={{
+              ...CELL, fontSize: 9, letterSpacing: '0.18em',
+              color: active ? LIME : 'rgba(255,255,255,0.18)',
+              cursor: sortable ? 'pointer' : 'default',
+              userSelect: 'none', display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            {label}
+            {sortable && (
+              <span style={{ opacity: active ? 1 : 0.3 }}>
+                {active ? (sort.dir === 'asc' ? '▲' : '▼') : '▽'}
+              </span>
+            )}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── History Row ───────────────────────────────────────────────────────────────
 
 function HistoryRow({ entry, index, active, onHover, onRerun }) {
-  const srcLabel = SOURCE_LABEL[entry.source] ?? entry.source.toUpperCase();
+  const srcLabel = SOURCE_LABEL[entry.source] ?? (entry.source ?? 'UNK').toUpperCase();
   const typeCode = srcLabel.slice(0, 3);
   return (
     <div
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       style={{
-        display: 'flex', alignItems: 'flex-start', gap: 12,
-        padding: '10px 0',
-        borderBottom: `1px solid ${BORDER}`,
-        borderLeft: active ? `2px solid ${LIME}` : '2px solid transparent',
-        paddingLeft: active ? 10 : 0,
+        display: 'grid', gridTemplateColumns: GRID_COLS, gap: '0 16px',
+        alignItems: 'center', padding: '8px 0',
         background: active ? 'rgba(102,255,0,0.03)' : 'transparent',
-        transition: 'background 150ms, border-color 150ms',
+        transition: 'background 150ms',
         cursor: 'default',
       }}
     >
       <TypeBox code={typeCode} />
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Serif query title */}
-        <div style={{
-          fontFamily: SERIF, fontSize: 13,
-          color: active ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)',
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          marginBottom: 4, transition: 'color 150ms',
-        }}>
-          {entry.query}
-        </div>
-
-        {/* Mono meta row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.08em' }}>
-            {formatTs(entry.ts)}
-          </span>
-          <span style={{
-            fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em',
-            color: entry.complete ? LIME : 'rgba(255,255,255,0.25)',
-          }}>
-            {entry.complete ? 'COMPLETE' : 'INCOMPLETE'}
-          </span>
-          {entry.driftCount > 0 && (
-            <span style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em',
-              color: '#007FFF', border: '1px solid rgba(0,127,255,0.25)', padding: '1px 5px',
-            }}>
-              DRIFT {entry.driftCount}
-            </span>
-          )}
-        </div>
-
-        {/* Traversal chain */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 5, flexWrap: 'wrap' }}>
-          {LIFECYCLE.map((step, i) => {
-            const hit = entry.traversal.includes(step);
-            return (
-              <React.Fragment key={step}>
-                <span style={{
-                  fontFamily: MONO, fontSize: 6, letterSpacing: '0.08em',
-                  color: hit ? 'rgba(102,255,0,0.7)' : 'rgba(255,255,255,0.12)',
-                }}>
-                  {LABELS[step]}
-                </span>
-                {i < LIFECYCLE.length - 1 && (
-                  <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 6 }}>→</span>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </div>
+      <span style={{ ...CELL, color: 'rgba(255,255,255,0.38)' }}>{formatDate(entry.ts)}</span>
+      <span style={{ ...CELL, color: 'rgba(255,255,255,0.25)' }}>{formatTimeOnly(entry.ts)}</span>
+      <span style={{ fontFamily: SERIF, fontSize: 13, color: active ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', transition: 'color 150ms' }}>
+        {entry.query}
+      </span>
+      {/* traversal */}
+      <div style={{ display: 'flex', gap: 2, alignItems: 'center', overflow: 'hidden' }}>
+        {LIFECYCLE.map((step, i) => {
+          const hit = entry.traversal.includes(step);
+          return (
+            <React.Fragment key={step}>
+              <span style={{ fontFamily: MONO, fontSize: 6, color: hit ? 'rgba(102,255,0,0.65)' : 'rgba(255,255,255,0.1)', whiteSpace: 'nowrap' }}>
+                {LABELS[step]}
+              </span>
+              {i < LIFECYCLE.length - 1 && <span style={{ color: 'rgba(255,255,255,0.06)', fontSize: 6 }}>›</span>}
+            </React.Fragment>
+          );
+        })}
       </div>
-
-      {/* RE-RUN on hover */}
-      {active && (
-        <button
-          onClick={() => onRerun(entry)}
-          style={{
+      {/* drift */}
+      <div>
+        {entry.driftCount > 0 && (
+          <span style={{ ...CELL, fontSize: 7, color: '#007FFF', border: '1px solid rgba(0,127,255,0.25)', padding: '1px 5px' }}>
+            DRIFT {entry.driftCount}
+          </span>
+        )}
+      </div>
+      {/* status + rerun */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ ...CELL, color: LIME, letterSpacing: '0.1em' }}>
+          {entry.complete ? 'COMPLETE' : 'INCOMPLETE'}
+        </span>
+        {active && (
+          <button onClick={() => onRerun(entry)} style={{
             fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
             background: 'transparent', border: `1px solid ${LIME}`,
-            color: LIME, padding: '5px 12px', cursor: 'pointer', flexShrink: 0, alignSelf: 'center',
-          }}
-        >
-          RE-RUN
-        </button>
-      )}
+            color: LIME, padding: '3px 8px', cursor: 'pointer', flexShrink: 0,
+          }}>RE-RUN</button>
+        )}
+      </div>
     </div>
   );
 }
@@ -556,13 +574,13 @@ export default function HistoryBay({ onRerunNavigate }) {
   const visibleHistory = sortRows(
     history.filter(e => inRange(e.ts, rangeKey, customRange)),
     histSort,
-    { ts: e => e.ts ?? 0, query: e => (e.query ?? '').toLowerCase(), status: e => e.complete ? 1 : 0 },
+    { ts: e => e.ts ?? 0, date: e => { const d = new Date(e.ts ?? 0); return d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate(); }, time: e => { const d = new Date(e.ts ?? 0); return d.getHours() * 60 + d.getMinutes(); }, type: e => (SOURCE_LABEL[e.source] ?? (e.source ?? '')).toUpperCase(), query: e => (e.query ?? '').toLowerCase(), status: e => e.complete ? 1 : 0 },
   );
 
   const visibleTransactions = sortRows(
     transactions.filter(t => inRange(t.ts, rangeKey, customRange)),
     txSort,
-    { ts: t => t.ts ?? 0, type: t => t.type, status: t => t.status },
+    { ts: t => t.ts ?? 0, date: t => { const d = new Date(t.ts ?? 0); return d.getFullYear() * 10000 + d.getMonth() * 100 + d.getDate(); }, time: t => { const d = new Date(t.ts ?? 0); return d.getHours() * 60 + d.getMinutes(); }, type: t => t.type, status: t => t.status },
   );
 
   return (
@@ -585,8 +603,29 @@ export default function HistoryBay({ onRerunNavigate }) {
           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 4 }}>
             INVESTIGATION HISTORY
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em' }}>
+          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', marginBottom: 16 }}>
             {visibleHistory.length} SESSION{visibleHistory.length !== 1 ? 'S' : ''} · AUDIT TRAIL
+          </div>
+          {/* Big stats */}
+          <div style={{ display: 'flex', alignItems: 'stretch' }}>
+            {[
+              { value: visibleHistory.length,                                                                                            label: 'SESSIONS'     },
+              { value: visibleTransactions.length,                                                                                       label: 'TRANSACTIONS' },
+              { value: [...visibleHistory.filter(e => e.complete), ...visibleTransactions.filter(t => t.status === 'COMPLETE')].length,  label: 'COMPLETE'     },
+              { value: visibleHistory.reduce((acc, e) => acc + (e.driftCount ?? 0), 0),                                                 label: 'DRIFT EVENTS' },
+            ].map(({ value, label }, i) => (
+              <React.Fragment key={label}>
+                {i > 0 && <span style={{ display: 'inline-block', width: 1, height: 36, background: LIME, alignSelf: 'flex-start', margin: '0 32px' }} />}
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 36, fontWeight: 400, color: 'rgba(255,255,255,0.88)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                    {String(value).padStart(2, '0')}
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
+                    {label}
+                  </div>
+                </div>
+              </React.Fragment>
+            ))}
           </div>
         </div>
         {/* Align with right export panel */}
@@ -614,9 +653,9 @@ export default function HistoryBay({ onRerunNavigate }) {
           />
         </div>
 
-        {/* Main list — centered */}
+        {/* Main list */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px' }}>
-          <div style={{ maxWidth: 680, margin: '0 auto' }}>
+          <div>
 
           {visibleHistory.length === 0 ? (
             <div style={{ paddingTop: 16, display: 'flex', alignItems: 'baseline', gap: 20 }}>
@@ -632,6 +671,19 @@ export default function HistoryBay({ onRerunNavigate }) {
             </div>
           ) : (
             <div>
+              <ColHeaders
+                cols={[
+                  { label: 'TYPE',      key: 'type' },
+                  { label: 'DATE',      key: 'date' },
+                  { label: 'TIME',      key: 'time' },
+                  { label: 'QUERY',     key: null   },
+                  { label: 'TRAVERSAL', key: null   },
+                  { label: 'DRIFT',     key: null   },
+                  { label: 'STATUS',    key: null   },
+                ]}
+                sort={histSort}
+                onSort={k => setHistSort(s => nextSortState(s, k))}
+              />
               {visibleHistory.map((entry, i) => (
                 <HistoryRow
                   key={entry.sessionId}
@@ -656,51 +708,36 @@ export default function HistoryBay({ onRerunNavigate }) {
               </div>
             ) : (
               <>
+                <ColHeaders
+                  cols={[
+                    { label: 'TYPE',    key: 'type' },
+                    { label: 'DATE',    key: 'date' },
+                    { label: 'TIME',    key: 'time' },
+                    { label: 'SUBJECT', key: null   },
+                    { label: 'CONTEXT', key: null   },
+                    { label: 'HORIZON', key: null   },
+                    { label: 'STATUS',  key: null   },
+                  ]}
+                  sort={txSort}
+                  onSort={k => setTxSort(s => nextSortState(s, k))}
+                />
                 {visibleTransactions.map((item, i) => {
                   const typeCode = item.type.slice(0, 3);
-                  const statusColor =
-                    item.status === 'COMPLETE' ? LIME :
-                    item.status === 'ACTIVE'   ? LIME :
-                    item.status === 'APPLIED'  ? 'rgba(255,255,255,0.45)' :
-                    'rgba(255,255,255,0.25)';
+                  const statusColor = LIME;
                   return (
                     <div key={i} style={{
-                      display: 'flex', alignItems: 'flex-start', gap: 12,
-                      padding: '10px 0', borderBottom: `1px solid ${BORDER}`,
-                      borderLeft: '2px solid transparent',
+                      display: 'grid', gridTemplateColumns: GRID_COLS, gap: '0 16px',
+                      alignItems: 'center', padding: '8px 0',
                     }}>
                       <TypeBox code={typeCode} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{
-                          fontFamily: SERIF, fontSize: 13,
-                          color: 'rgba(255,255,255,0.72)',
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                          marginBottom: 4,
-                        }}>
-                          {item.subject}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.08em' }}>
-                            {formatTime(item.ts)}
-                          </span>
-                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>
-                            {item.type}
-                          </span>
-                          {item.context !== '—' && (
-                            <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}>
-                              {item.context}
-                            </span>
-                          )}
-                          {item.horizon !== '—' && (
-                            <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}>
-                              {item.horizon}
-                            </span>
-                          )}
-                          <span style={{ fontFamily: MONO, fontSize: 8, color: statusColor, letterSpacing: '0.1em', marginLeft: 'auto' }}>
-                            {item.status}
-                          </span>
-                        </div>
-                      </div>
+                      <span style={{ ...CELL, color: 'rgba(255,255,255,0.38)' }}>{formatDate(item.ts)}</span>
+                      <span style={{ ...CELL, color: 'rgba(255,255,255,0.25)' }}>{formatTimeOnly(item.ts)}</span>
+                      <span style={{ fontFamily: SERIF, fontSize: 13, color: 'rgba(255,255,255,0.72)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {item.subject}
+                      </span>
+                      <span style={{ ...CELL, color: 'rgba(255,255,255,0.35)' }}>{item.context !== '—' ? item.context : ''}</span>
+                      <span style={{ ...CELL, color: 'rgba(255,255,255,0.25)' }}>{item.horizon !== '—' ? item.horizon : ''}</span>
+                      <span style={{ ...CELL, color: statusColor, letterSpacing: '0.1em' }}>{item.status}</span>
                     </div>
                   );
                 })}

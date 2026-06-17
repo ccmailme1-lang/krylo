@@ -32,6 +32,7 @@ import AnalysisSubstrate  from './components/analysis/analysissubstrate.jsx';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
+import CommunityView        from './components/community/communityview.jsx';
 import ArtifactsBay      from './components/artifacts/artifactsbay.jsx';
 import ConceptBDashboard from './components/microsignals/conceptbdashboard.jsx';
 import HistoryBay        from './components/history/historybay.jsx';
@@ -1004,16 +1005,14 @@ export default function App() {
 
       {/* ── History Bay ───────────────────────────────────────── */}
 
-      {navMode === 'history' && (
-        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <HistoryBay onRerunNavigate={() => setNavMode('analysis')} />
-        </div>
-      )}
+      <div style={{ display: navMode === 'history' ? 'block' : 'none', position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
+        <HistoryBay onRerunNavigate={() => setNavMode('analysis')} />
+      </div>
 
-      {/* ── Community Chat Board ─────────────────────────────── */}
+      {/* ── Community View ────────────────────────────────────── */}
       {navMode === 'community' && (
-        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <CommunityChatboard />
+        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#0d0d14', overflow: 'hidden' }}>
+          <CommunityView />
         </div>
       )}
 

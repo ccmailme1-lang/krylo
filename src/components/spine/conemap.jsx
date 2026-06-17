@@ -1994,13 +1994,10 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const hudRef     = useRef([]);
   const [hudList, setHudList] = useState([]);
   useEffect(() => {
-    let frame;
-    function tick() {
+    const id = setInterval(() => {
       setHudList(hudRef.current ? [...hudRef.current] : []);
-      frame = requestAnimationFrame(tick);
-    }
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+    }, 100);
+    return () => clearInterval(id);
   }, []);
 
   const [localClick, setLocalClick] = useState(null);

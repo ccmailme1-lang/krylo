@@ -5,7 +5,15 @@ import { computeIntegrity } from './integrityStack';
 // Steps 2, 3, 4: headline fetch + parse → ETR format
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY ?? '';
-const NEWS_URL     = `https://newsapi.org/v2/top-headlines?country=us&pageSize=25&apiKey=${NEWS_API_KEY}`;
+const KSI_QUERY   = 'business OR market OR technology OR career OR financial OR economy OR labor OR trade OR investment OR startup';
+const NEWS_URL     = `https://newsapi.org/v2/top-headlines?country=us&pageSize=40&q=${encodeURIComponent(KSI_QUERY)}&apiKey=${NEWS_API_KEY}`;
+
+const NOISE_CATS = new Set(['CAT-04', 'CAT-05']);
+const MIN_FS     = 0.40;
+
+export function filterHeadlines(etrs) {
+  return etrs.filter(e => !NOISE_CATS.has(e.category_id) && (e.fs ?? 0) >= MIN_FS);
+}
 
 // ── Sentiment Keywords ────────────────────────────────────────────────────────
 const POSITIVE_KW = [
@@ -93,7 +101,7 @@ export async function fetchHeadlines() {
   const json = await res.json();
   if (json.status !== 'ok') throw new Error(`NewsAPI error: ${json.message ?? json.status}`);
   const articles = json.articles ?? [];
-  return articles.map((a, i) => parseHeadline(a, i));
+  return filterHeadlines(articles.map((a, i) => parseHeadline(a, i)));
 }
 
 // ── Ingest Bridge — WO-255 Step 5 ────────────────────────────────────────────

@@ -795,18 +795,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── HEADER ── */}
           <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER_MED}`, padding: '12px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 16, height: 16, border: '1px solid rgba(255,255,255,0.3)', transform: 'rotate(45deg)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: FS_HEADER, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.9)', lineHeight: 1 }}>KRYLO</div>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.2)', marginTop: 3 }}>SIMULATION MODULE // NORTH-SOUTH PANEL</div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 5, height: 5, borderRadius: '50%', background: LIME, boxShadow: `0 0 6px ${LIME}` }} />
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em', color: LIME }}>SYS_STATUS: ACTIVE</span>
-              </div>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em', lineHeight: '1.8' }}>
+              <div style={{ color: 'rgba(255,255,255,0.2)' }}>SIMULATION MODULE // NORTH-SOUTH PANEL</div>
+              <div style={{ color: LIME }}>● SYS_STATUS: ACTIVE</div>
             </div>
             {hasSession && (
               <button onClick={resetSession} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.6)', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(102,255,0,0.3)', padding: '0 0 1px', cursor: 'pointer', marginTop: 8, display: 'block' }}>
