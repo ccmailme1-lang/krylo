@@ -1,6 +1,6 @@
 # WO-1761 — Domain Coverage Gap (Gig-Income / Alt-Asset) — SCOPE
 
-STATUS: SCOPED, not built. Spun out of BUG-001A / BUG-005.
+STATUS: (a) BACKLOG — taxonomy decision required. (b) COMPLETE — 2026-06-16. (c) BACKLOG — design decision required.
 EVIDENCE: `.batchtest3.mjs` (30-query diversity batch, 2026-06-16) + live
 reverse-mortgage and debt-consolidation repros confirmed via raw-output grep.
 
@@ -41,12 +41,37 @@ a debt question that has nothing to do with vehicles.
 
 This is the same bug class as WO-1724 (ARK substring match in keyword
 ingress) but in `querysynthesis.js`'s own router, not `normalizer.js`. Fix
-shape: audit all 7 domain regexes for unbounded short tokens (`car`, `home`
-already has a partial guard, `ira` risks matching "**ira**te" or names like
-"M**ira**", `bath` risks matching "**bath**room" fine but also potentially
-other compounds) and add `\b` word boundaries where missing. Low risk,
-mechanical, no taxonomy judgment required — this could ship independently
-of (a)/(c).
+shape: audit all 7 domain regexes for unbounded short tokens and add `\b`
+word boundaries where missing. Low risk, mechanical, no taxonomy judgment
+required — this could ship independently of (a)/(c).
+
+**Confirmed vectors (updated 2026-06-16, batch IDs 81–100 — formatted pass):**
+
+| Token fired | Source word(s) | Domain contaminated | Notes |
+|-------------|----------------|---------------------|-------|
+| `car`       | "card/cards"   | AUTO                | Prior batch (original finding) |
+| `ira`       | "irate"        | RETIREMENT/INVESTOR | 19/20 queries — all with "irate" |
+| `ford`      | "afford/affordable" | AUTO           | 19/20 queries — query 81 clean (no "affordable") |
+| `rent`      | "parent/parents" | REAL_ESTATE      | Starts at ID 87, not 97 (earlier than first reported) |
+| `rent`      | "current/currently" | REAL_ESTATE   | cu-r-RENT suffix — IDs 82,86,88,91,98 |
+| `rent`      | "transparent"  | REAL_ESTATE         | transpa-RENT suffix — IDs 84,89,93,98 |
+
+**Key diagnostic — query 84:** `"Transparent appraisal of an affordable car for an irate migrant."`
+Contains zero instances of the word "rent" yet fires `rent` in the trigger list.
+Source confirmed: `transparent` ends in the substring "rent". This is the clearest
+proof of the word-boundary failure mode.
+
+**Key diagnostic — query 97:** fires `rent` THREE times.
+Sources: "rent" (literal) + "parent" (pa-RENT) + "current" (cu-r-RENT).
+Nine total triggers — highest contamination density in the batch.
+
+**`ira` double-fire** in queries 92, 95, 97: both "IRA" (legitimate) and "irate"
+(contamination) present in same query, producing duplicate token.
+
+**Fix shape (unchanged):** `\b` word boundaries on all short tokens in
+`detectDomain()` regexes. The `rent` vector now has four confirmed source words
+(`parent`, `transparent`, `current`, `renting`) — all resolved by a single
+boundary guard on `\brent\b`.
 
 ### (c) Content-model mismatch on correct routing — found, not yet scoped to fix
 
@@ -91,6 +116,53 @@ whether domains gain sub-routing by transaction type or whether a shared
 numeric-plausibility-floor guard (mirroring AUTO's `>=1000` filter) is
 applied universally first as a cheaper partial mitigation.
 
+## Additional findings — batch IDs 161–180 (2026-06-16)
+
+### `marketing` → `market` substring confirmed
+
+Query 169 fires both `market` AND `marketing` as separate tokens from the
+word "marketing" — "marketing" contains "market" as a prefix. Same
+word-boundary failure class as the other vectors in section (b). Fix:
+add `\bmarket\b` to the boundary guard pass.
+
+| Token fired | Source word   | Domain contaminated | Notes |
+|-------------|---------------|---------------------|-------|
+| `market`    | "marketing"   | MARKET/CAPITAL      | Confirmed Q169 — fires alongside `marketing` as two separate tokens |
+
+### Proper noun bleed — filed as WO-1764
+
+"Google" fires as a domain trigger in all 20 queries in batch 161–180.
+Not a substring issue — clean proper noun. Logged separately in
+`specs/WO-1764-proper-noun-bleed.md`. Fix shape: `PROPER_NOUN_EXCLUSIONS`
+set in `detectDomain()` before keyword scoring.
+
+### `health` from `terminally ill` — working correctly
+
+Queries 162, 164, 172 fire `health` via "terminally ill." This is the
+protected entity detector functioning as designed. First confirmed true
+positive in the batch series.
+
+## Additional findings — batch IDs 101–120 (2026-06-16)
+
+### `veteran` — domain-priority conflict, not a substring bug
+
+"Veteran" fires as its own keyword in every query in the 101–120 batch. It
+is a clean word (no substring contaminants). The issue is domain destination:
+veteran benefits (VA, GI Bill, disability ratings, VA home loans, TAP
+transition) has no matching synthesizer and falls to HEALTH or GENERAL — both
+wrong. Founder confirmed: VETERAN needs to be its own domain. Filed as
+WO-1763.
+
+### `parent` fires as its own keyword
+
+In queries 108, 110, 111, 113, 114, 115, 119, 120 — "parent" appears as a
+standalone trigger token in addition to contributing `rent` via the pa-RENT
+substring. Something in the keyword set is matching "parent" directly, likely
+a caregiver/pediatric HEALTH signal. Correct in a medical context; false
+positive in car/rent/appraisal queries. Needs a keyword audit to identify
+which regex is matching it and whether a domain guard is needed.
+
 ## Not started
 
 No code written for (a), (b), or (c). This document is scope only.
+WO-1763 (VETERAN domain) filed separately.

@@ -123,11 +123,11 @@ export function detectDomain(query, lens) {
   // Query keywords — content beats lens label
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
-  if (/car|vehicle|suv|truck|auto|lease|buick|ford|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
+  if (/\bcar\b|vehicle|suv|truck|auto|lease|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
   // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
   if (
-    /\bhouse\b|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing/.test(q) ||
-    (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|market/.test(q))
+    /\bhouse\b|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
+    (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|\bmarket\b/.test(q))
   ) return 'REAL_ESTATE';
   // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
   // QA-101: retired + expense/distress signals
@@ -140,7 +140,7 @@ export function detectDomain(query, lens) {
   // QA-103: senior + medicare cost signals; or medicare premiums alone
   if (/medicare\s+premiums?/.test(q)) return 'EXPENSE_REDUCTION';
   if (/\bsenior\b/.test(q) && /medicare|medicaid|premiums?|copay|out.of.pocket|healthcare cost/.test(q)) return 'EXPENSE_REDUCTION';
-  if (/retire|401k|ira|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
+  if (/retire|401k|\bira\b|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
   if (/job|career|salary|offer|negotiat|hire|compensation|raise|role/.test(q)) return 'CAREER';
 
   // Lens fallback

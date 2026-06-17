@@ -973,19 +973,19 @@ export default function AnalysisIdleField({ activeCones = null }) {
           </div>
 
           {/* ── SECTION 4: FORENSIC MATRIX FIELDS ── */}
-          <div style={{ flex: 1, padding: '10px 20px', display: 'flex', flexDirection: 'column', minHeight: 0, overflow: 'hidden' }}>
+          <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column' }}>
             <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>4. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
-            <div style={{ flex: 1, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden', minHeight: 90 }}>
+            <div style={{ height: 180, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden' }}>
               {(() => {
                 // 6 domain anchors — fixed positions on 320×160 SVG
                 // value (0–1) from activeCones drives r and opacity directly
                 const DOMAIN_ANCHORS = [
-                  { key: 'financial', label: 'CAPITAL',   cx: 80,  cy: 58  },
+                  { key: 'financial', label: 'CAPITAL',   cx: 100, cy: 58  },
                   { key: 'operating', label: 'TECH',      cx: 160, cy: 32  },
-                  { key: 'knowledge', label: 'KNOW',      cx: 240, cy: 58  },
-                  { key: 'time',      label: 'LABOR',     cx: 80,  cy: 118 },
+                  { key: 'knowledge', label: 'KNOW',      cx: 220, cy: 58  },
+                  { key: 'time',      label: 'LABOR',     cx: 100, cy: 118 },
                   { key: 'personal',  label: 'MEDIA',     cx: 160, cy: 132 },
-                  { key: 'market',    label: 'MARKET',    cx: 240, cy: 118 },
+                  { key: 'market',    label: 'OWNERSHIP', cx: 220, cy: 118 },
                 ];
                 const cones = activeCones ?? {};
                 const intentShift = ((intentMagnitude - 50) / 50) * 14; // ±14px at extremes
