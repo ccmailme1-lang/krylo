@@ -108,7 +108,7 @@ export function IntegrityBadge({ node, onOpenScorecard }) {
       }}>
         {isPending ? '⟳  AUDIT IN PROGRESS' : riskLabel}
         {onOpenScorecard && !isPending && (
-          <span style={{ marginLeft: '6px', color: 'rgba(255,255,255,0.2)', fontSize: '7px' }}>
+          <span style={{ marginLeft: '6px', color: 'rgba(255,255,255,0.2)', fontSize: '9px' }}>
             TAP FOR SCORECARD →
           </span>
         )}

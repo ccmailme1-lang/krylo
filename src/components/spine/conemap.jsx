@@ -1486,7 +1486,7 @@ function FlowArc({ flow, posA, apexA, posB, apexB, domainA, domainB, ttl = 3000,
           </div>
           <div style={{
             fontFamily:    "'IBM Plex Mono', monospace",
-            fontSize:      '7px',
+            fontSize:      '9px',
             letterSpacing: '0.18em',
             color:         'rgba(0,127,255,0.7)',
             whiteSpace:    'nowrap',

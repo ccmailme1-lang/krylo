@@ -47,7 +47,7 @@ export default function OracleLens({ pliData = null }) {
           pointerEvents:   'none',
           whiteSpace:      'nowrap',
         }}>
-          <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.35)', marginBottom: '6px', letterSpacing: '0.15em' }}>
+          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', marginBottom: '6px', letterSpacing: '0.15em' }}>
             ORACLE LENS · PLI
           </div>
           <div style={{ marginBottom: '4px' }}>

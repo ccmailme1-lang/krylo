@@ -945,7 +945,7 @@ function CoreLabelGroup({ nodeIndex, primaryNode, stateRef, offsetsRef }) {
       <Html center distanceFactor={12} style={{ pointerEvents: 'none' }}>
         <div style={{
           fontFamily:    'IBM Plex Mono, monospace',
-          fontSize:      '7px',
+          fontSize:      '9px',
           color:         'rgba(102,255,0,0.88)',
           letterSpacing: '0.12em',
           whiteSpace:    'nowrap',

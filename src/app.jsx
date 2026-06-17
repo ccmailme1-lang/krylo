@@ -654,10 +654,10 @@ export default function App() {
   const { signals: hnSignals }     = usehnsignals(activeQuery);
   const { signals: frameSignals }  = useframeingest(activeQuery);
 
-  // WO-1719/1720/1721 — Shared pool feeds: dispatch directly to surfaceRouter on poll
-  useFredSignals();
-  useEdgarSignals();
-  useKalshiSignals();
+  // WO-1719/1720/1721 — Shared pool feeds: dispatch to surfaceRouter + feed mergedRecords
+  const { signals: fredSignals }   = useFredSignals();
+  const { signals: edgarSignals }  = useEdgarSignals();
+  const { signals: kalshiSignals } = useKalshiSignals();
 
   // X-RAY dedicated signal hooks — isolated from activeQuery
   const { signals: xrayIngest } = useingest(xrayQuery);
@@ -696,9 +696,11 @@ export default function App() {
 
   const mergedRecords = useMemo(() => {
     const map = new Map();
-    [...poolSignals, ...hnSignals, ...frameSignals, ...ingestSignals, ...records, ...liveInjectSignals].forEach(r => map.set(r.id, r));
+    [...poolSignals, ...hnSignals, ...frameSignals, ...ingestSignals, ...records, ...liveInjectSignals,
+     ...fredSignals, ...edgarSignals, ...kalshiSignals].forEach(r => map.set(r.id, r));
     return Array.from(map.values());
-  }, [poolSignals, records, ingestSignals, hnSignals, frameSignals, liveInjectSignals]);
+  }, [poolSignals, records, ingestSignals, hnSignals, frameSignals, liveInjectSignals,
+      fredSignals, edgarSignals, kalshiSignals]);
 
   const activeSession = activeSessionId ? (sessions[activeSessionId] ?? null) : null;
   const canonical     = useOracleMapper(activeSession);
@@ -721,13 +723,16 @@ export default function App() {
     () => mergedRecords.length
       ? mergedRecords.map(r => {
           // signal_score scale differs by source: rotation 0–1, seed ETRs 0–100
-          const score = r.fs ?? (typeof r.signal_score === 'number'
-            ? (r.signal_score > 1 ? r.signal_score / 100 : r.signal_score)
-            : 0);
+          // FRED/EDGAR/Kalshi use r.signal (0–100); pool records use r.signal_score
+          const score = typeof r.signal === 'number'
+            ? r.signal / 100
+            : r.fs ?? (typeof r.signal_score === 'number'
+              ? (r.signal_score > 1 ? r.signal_score / 100 : r.signal_score)
+              : 0);
           return {
           text:     r.truth_statement ?? r.title ?? r.id,
           source:   r.source_type ?? 'spine',
-          domain:   r.cone_domain ?? null,
+          domain:   r.cone_domain ?? r.domain ?? null,
           strength: Math.round(score * 5),
           id:       r.id,
           fs:       score,

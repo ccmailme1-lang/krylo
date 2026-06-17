@@ -53,7 +53,7 @@ export default function RevenueSignal({ position = [0, 0, 0], ltv = null, cac = 
         textTransform: 'uppercase',
         boxShadow:     shadow,
       }}>
-        <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', marginBottom: '2px' }}>
+        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em', marginBottom: '2px' }}>
           REVENUE SIGNAL
         </div>
         {label}
