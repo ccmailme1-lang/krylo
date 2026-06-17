@@ -94,16 +94,194 @@ function formatTime(ts) {
 
 // RANGE_PRESETS — shared date-range filter for both tables on this page
 const RANGE_PRESETS = {
-  today: { label: 'Today',        ms: 1  * DAY },
-  '7d':  { label: 'Last 7 Days',  ms: 7  * DAY },
-  '30d': { label: 'Last 30 Days', ms: 30 * DAY },
-  all:   { label: 'All Time',     ms: Infinity },
+  today: { label: 'TODAY',       ms: 1  * DAY },
+  '7d':  { label: 'LAST 7D',    ms: 7  * DAY },
+  '30d': { label: 'LAST 30D',   ms: 30 * DAY },
+  all:   { label: 'ALL TIME',   ms: Infinity },
 };
 
-function inRange(ts, rangeKey) {
+// customRange = { start: epoch ms (start of day), end: epoch ms (end of day) } | null
+function inRange(ts, rangeKey, customRange) {
+  if (customRange) {
+    const t = ts ?? 0;
+    return t >= customRange.start && t <= customRange.end;
+  }
   const preset = RANGE_PRESETS[rangeKey];
   if (!preset || preset.ms === Infinity) return true;
   return (ts ?? 0) >= Date.now() - preset.ms;
+}
+
+// ── Calendar helpers ──────────────────────────────────────────────────────────
+
+function startOfDay(d)  { const x = new Date(d); x.setHours(0,0,0,0);       return x.getTime(); }
+function endOfDay(d)    { const x = new Date(d); x.setHours(23,59,59,999);   return x.getTime(); }
+function sameDay(a, b)  { if (!a || !b) return false; const da = new Date(a), db = new Date(b); return da.getFullYear()===db.getFullYear()&&da.getMonth()===db.getMonth()&&da.getDate()===db.getDate(); }
+
+const MONTH_NAMES = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const DAY_NAMES   = ['M','T','W','T','F','S','S'];
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month + 1, 0).getDate();
+}
+function getFirstDayOfWeek(year, month) {
+  // 0=Sun…6=Sat → convert to Mon-based: Mon=0…Sun=6
+  const d = new Date(year, month, 1).getDay();
+  return (d + 6) % 7;
+}
+
+function CalendarPanel({ rangeKey, setRangeKey, customRange, setCustomRange }) {
+  const today = new Date();
+  const [viewYear,  setViewYear]  = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [pickStart, setPickStart] = useState(null); // epoch ms of first click
+  const [hovDay,    setHovDay]    = useState(null); // epoch ms of hovered day
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear(y => y - 1); setViewMonth(11); }
+    else setViewMonth(m => m - 1);
+  };
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear(y => y + 1); setViewMonth(0); }
+    else setViewMonth(m => m + 1);
+  };
+
+  const daysInMonth  = getDaysInMonth(viewYear, viewMonth);
+  const firstDayOfWeek = getFirstDayOfWeek(viewYear, viewMonth);
+
+  const handleDayClick = (dayMs) => {
+    if (!pickStart) {
+      setPickStart(dayMs);
+      setCustomRange(null);
+    } else {
+      const s = Math.min(pickStart, dayMs);
+      const e = Math.max(pickStart, dayMs);
+      setCustomRange({ start: startOfDay(s), end: endOfDay(e) });
+      setPickStart(null);
+      setRangeKey(null);
+    }
+  };
+
+  const selectPreset = (key) => {
+    setRangeKey(key);
+    setCustomRange(null);
+    setPickStart(null);
+  };
+
+  // Determine range highlight bounds for rendering
+  const rangeStart = customRange?.start ?? (pickStart && hovDay ? Math.min(pickStart, hovDay) : pickStart);
+  const rangeEnd   = customRange?.end   ?? (pickStart && hovDay ? Math.max(pickStart, hovDay) : null);
+
+  const cells = [];
+  for (let i = 0; i < firstDayOfWeek; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push(new Date(viewYear, viewMonth, d).getTime());
+  }
+
+  const isToday   = (ms) => ms && sameDay(ms, today.getTime());
+  const isStart   = (ms) => ms && (sameDay(ms, rangeStart) || sameDay(ms, pickStart));
+  const isEnd     = (ms) => ms && rangeEnd && sameDay(ms, rangeEnd);
+  const inSelRange = (ms) => ms && rangeStart && rangeEnd && ms >= startOfDay(rangeStart) && ms <= endOfDay(rangeEnd);
+  const isPicking = !!pickStart;
+
+  const rangeLabel = (() => {
+    if (customRange) {
+      const fmt = (ms) => new Date(ms).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      return `${fmt(customRange.start)} → ${fmt(customRange.end)}`;
+    }
+    if (pickStart) return 'SELECT END DATE';
+    return null;
+  })();
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%', padding:'16px 14px', gap:0 }}>
+
+      {/* Preset pills */}
+      <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginBottom:16 }}>
+        {Object.entries(RANGE_PRESETS).map(([key, p]) => {
+          const active = !customRange && !pickStart && rangeKey === key;
+          return (
+            <button key={key} onClick={() => selectPreset(key)} style={{
+              fontFamily: MONO, fontSize: 7, letterSpacing:'0.16em',
+              background: 'transparent',
+              border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.1)'}`,
+              color: active ? LIME : 'rgba(255,255,255,0.35)',
+              padding:'4px 8px', cursor:'pointer',
+            }}>{p.label}</button>
+          );
+        })}
+      </div>
+
+      {/* Month nav */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <button onClick={prevMonth} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer', fontFamily:MONO, fontSize:10, padding:'0 4px' }}>‹</button>
+        <span style={{ fontFamily:MONO, fontSize:8, letterSpacing:'0.2em', color:'rgba(255,255,255,0.55)' }}>
+          {MONTH_NAMES[viewMonth]} {viewYear}
+        </span>
+        <button onClick={nextMonth} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer', fontFamily:MONO, fontSize:10, padding:'0 4px' }}>›</button>
+      </div>
+
+      {/* Day-of-week headers */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', marginBottom:4 }}>
+        {DAY_NAMES.map((d,i) => (
+          <div key={i} style={{ textAlign:'center', fontFamily:MONO, fontSize:6, letterSpacing:'0.1em', color:'rgba(255,255,255,0.22)', paddingBottom:4 }}>{d}</div>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:'2px 0' }}>
+        {cells.map((ms, i) => {
+          if (!ms) return <div key={i} />;
+          const start   = isStart(ms);
+          const end     = isEnd(ms);
+          const inRange = inSelRange(ms);
+          const todayDay = isToday(ms);
+          const future  = ms > endOfDay(today.getTime());
+          return (
+            <div
+              key={i}
+              onClick={() => !future && handleDayClick(ms)}
+              onMouseEnter={() => isPicking && setHovDay(ms)}
+              onMouseLeave={() => isPicking && setHovDay(null)}
+              style={{
+                textAlign:'center', padding:'4px 0', cursor: future ? 'default' : 'pointer',
+                background: (start || end) ? LIME : inRange ? 'rgba(102,255,0,0.08)' : 'transparent',
+                borderRadius: 1,
+              }}
+            >
+              <span style={{
+                fontFamily: MONO, fontSize: 8,
+                color: (start || end) ? '#000' : inRange ? 'rgba(102,255,0,0.8)' : future ? 'rgba(255,255,255,0.12)' : todayDay ? LIME : 'rgba(255,255,255,0.45)',
+                fontWeight: todayDay && !(start||end) ? 'bold' : 'normal',
+              }}>
+                {new Date(ms).getDate()}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Range label / instruction */}
+      <div style={{ marginTop:12, paddingTop:10, borderTop:'1px solid rgba(255,255,255,0.06)' }}>
+        {rangeLabel ? (
+          <div style={{ fontFamily:MONO, fontSize:7, letterSpacing:'0.12em', color: customRange ? LIME : 'rgba(255,255,255,0.35)' }}>
+            {rangeLabel}
+          </div>
+        ) : (
+          <div style={{ fontFamily:MONO, fontSize:7, letterSpacing:'0.12em', color:'rgba(255,255,255,0.18)' }}>
+            CLICK A DAY TO START
+          </div>
+        )}
+        {customRange && (
+          <button onClick={() => { setCustomRange(null); setRangeKey('7d'); }} style={{
+            marginTop:8, fontFamily:MONO, fontSize:6, letterSpacing:'0.14em',
+            background:'transparent', border:'1px solid rgba(255,255,255,0.1)',
+            color:'rgba(255,255,255,0.3)', padding:'3px 8px', cursor:'pointer',
+          }}>CLEAR</button>
+        )}
+      </div>
+
+    </div>
+  );
 }
 
 // Generic column sort — toggles asc/desc on repeat clicks of the same key
@@ -236,102 +414,111 @@ function TraversalChain({ traversal }) {
   );
 }
 
+// ── Type icon box ─────────────────────────────────────────────────────────────
+
+function TypeBox({ code }) {
+  return (
+    <div style={{
+      width: 38, height: 38, flexShrink: 0,
+      border: `1px solid rgba(255,255,255,0.08)`,
+      background: 'rgba(255,255,255,0.03)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+    }}>
+      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.08em' }}>
+        {code}
+      </span>
+    </div>
+  );
+}
+
 // ── History Row ───────────────────────────────────────────────────────────────
 
 function HistoryRow({ entry, index, active, onHover, onRerun }) {
   const srcLabel = SOURCE_LABEL[entry.source] ?? entry.source.toUpperCase();
+  const typeCode = srcLabel.slice(0, 3);
   return (
     <div
       onMouseEnter={() => onHover(true)}
       onMouseLeave={() => onHover(false)}
       style={{
+        display: 'flex', alignItems: 'flex-start', gap: 12,
         padding: '10px 0',
         borderBottom: `1px solid ${BORDER}`,
-        background: active ? 'rgba(255,255,255,0.02)' : 'transparent',
-        transition: 'background 150ms',
+        borderLeft: active ? `2px solid ${LIME}` : '2px solid transparent',
+        paddingLeft: active ? 10 : 0,
+        background: active ? 'rgba(102,255,0,0.03)' : 'transparent',
+        transition: 'background 150ms, border-color 150ms',
         cursor: 'default',
       }}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 110px 90px', alignItems: 'baseline', gap: 12 }}>
-        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)' }}>
-          {String(index + 1).padStart(2, '0')}
-        </span>
+      <TypeBox code={typeCode} />
 
-        <span style={{
-          fontFamily: SERIF, fontSize: 12,
-          color: active ? '#ffffff' : 'rgba(255,255,255,0.7)',
-          transition: 'color 150ms',
+      <div style={{ flex: 1, minWidth: 0 }}>
+        {/* Serif query title */}
+        <div style={{
+          fontFamily: SERIF, fontSize: 13,
+          color: active ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          marginBottom: 4, transition: 'color 150ms',
         }}>
           {entry.query}
-        </span>
+        </div>
 
-        <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
-          {formatTs(entry.ts)}
-        </span>
+        {/* Mono meta row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.08em' }}>
+            {formatTs(entry.ts)}
+          </span>
+          <span style={{
+            fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em',
+            color: entry.complete ? LIME : 'rgba(255,255,255,0.25)',
+          }}>
+            {entry.complete ? 'COMPLETE' : 'INCOMPLETE'}
+          </span>
+          {entry.driftCount > 0 && (
+            <span style={{
+              fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em',
+              color: '#007FFF', border: '1px solid rgba(0,127,255,0.25)', padding: '1px 5px',
+            }}>
+              DRIFT {entry.driftCount}
+            </span>
+          )}
+        </div>
 
-        <span style={{
-          fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em', textAlign: 'right',
-          color: entry.complete ? LIME : 'rgba(255,255,255,0.3)',
-        }} title={entry.complete ? 'Pipeline complete' : 'Pipeline incomplete'}>
-          {entry.complete ? 'COMPLETE' : 'INCOMPLETE'}
-        </span>
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, paddingLeft: 40, flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        {/* Traversal chain */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 5, flexWrap: 'wrap' }}>
           {LIFECYCLE.map((step, i) => {
             const hit = entry.traversal.includes(step);
             return (
               <React.Fragment key={step}>
                 <span style={{
                   fontFamily: MONO, fontSize: 6, letterSpacing: '0.08em',
-                  color: hit ? LIME : 'rgba(255,255,255,0.13)',
-                  whiteSpace: 'nowrap',
+                  color: hit ? 'rgba(102,255,0,0.7)' : 'rgba(255,255,255,0.12)',
                 }}>
                   {LABELS[step]}
                 </span>
                 {i < LIFECYCLE.length - 1 && (
-                  <span style={{ color: 'rgba(255,255,255,0.1)', fontSize: 6 }}>→</span>
+                  <span style={{ color: 'rgba(255,255,255,0.08)', fontSize: 6 }}>→</span>
                 )}
               </React.Fragment>
             );
           })}
         </div>
-
-        <span style={{
-          fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
-          color: 'rgba(102,255,0,0.7)', padding: '2px 8px',
-          border: `1px solid rgba(102,255,0,0.2)`,
-          whiteSpace: 'nowrap',
-        }}>
-          {srcLabel}
-        </span>
-
-        {entry.driftCount > 0 && (
-          <span style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em',
-            color: '#007FFF',
-            padding: '1px 5px', border: '1px solid rgba(0,127,255,0.3)',
-          }} title={`${entry.driftCount} drift violation${entry.driftCount !== 1 ? 's' : ''}`}>
-            DRIFT {entry.driftCount}
-          </span>
-        )}
-
-        {active && (
-          <button
-            onClick={() => onRerun(entry)}
-            style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
-              background: '#000000', border: `1px solid ${LIME}`,
-              color: LIME, padding: '4px 12px',
-              cursor: 'pointer', marginLeft: 'auto',
-            }}
-          >
-            RE-RUN
-          </button>
-        )}
       </div>
+
+      {/* RE-RUN on hover */}
+      {active && (
+        <button
+          onClick={() => onRerun(entry)}
+          style={{
+            fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
+            background: 'transparent', border: `1px solid ${LIME}`,
+            color: LIME, padding: '5px 12px', cursor: 'pointer', flexShrink: 0, alignSelf: 'center',
+          }}
+        >
+          RE-RUN
+        </button>
+      )}
     </div>
   );
 }
@@ -339,11 +526,12 @@ function HistoryRow({ entry, index, active, onHover, onRerun }) {
 // ── HistoryBay ────────────────────────────────────────────────────────────────
 
 export default function HistoryBay({ onRerunNavigate }) {
-  const [hoveredIdx, setHovered] = useState(null);
-  const [history, setHistory]    = useState(() => buildHistory(getTelemetryLog()));
-  const [rangeKey, setRangeKey]  = useState('7d');
-  const [histSort, setHistSort]  = useState({ key: 'ts', dir: 'desc' });
-  const [txSort,   setTxSort]    = useState({ key: 'ts', dir: 'desc' });
+  const [hoveredIdx,   setHovered]     = useState(null);
+  const [history,      setHistory]     = useState(() => buildHistory(getTelemetryLog()));
+  const [rangeKey,     setRangeKey]    = useState('7d');
+  const [customRange,  setCustomRange] = useState(null);
+  const [histSort,     setHistSort]    = useState({ key: 'ts', dir: 'desc' });
+  const [txSort,       setTxSort]      = useState({ key: 'ts', dir: 'desc' });
 
   const setSwipeIndex  = useUIStore(s => s.setSwipeIndex);
   const createSession  = useAnalysisStore(s => s.createSession);
@@ -366,13 +554,13 @@ export default function HistoryBay({ onRerunNavigate }) {
   }, [createSession, setSwipeIndex, onRerunNavigate]);
 
   const visibleHistory = sortRows(
-    history.filter(e => inRange(e.ts, rangeKey)),
+    history.filter(e => inRange(e.ts, rangeKey, customRange)),
     histSort,
     { ts: e => e.ts ?? 0, query: e => (e.query ?? '').toLowerCase(), status: e => e.complete ? 1 : 0 },
   );
 
   const visibleTransactions = sortRows(
-    transactions.filter(t => inRange(t.ts, rangeKey)),
+    transactions.filter(t => inRange(t.ts, rangeKey, customRange)),
     txSort,
     { ts: t => t.ts ?? 0, type: t => t.type, status: t => t.status },
   );
@@ -384,163 +572,185 @@ export default function HistoryBay({ onRerunNavigate }) {
       background: '#000000', fontFamily: MONO,
     }}>
 
-      {/* Header — centered 900 well, same bumpers as the front page */}
+      {/* Header — columns mirror body layout */}
       <div style={{
-        padding: '16px 24px 12px',
         borderBottom: `1px solid ${BORDER}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center',
         flexShrink: 0,
-        width: '100%', maxWidth: 900, margin: '0 auto',
       }}>
-        <div>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
+        {/* Align with calendar left panel */}
+        <div style={{ width: 296, flexShrink: 0 }} />
+        {/* Align with center records panel */}
+        <div style={{ flex: 1, padding: '16px 24px 12px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 4 }}>
             INVESTIGATION HISTORY
           </div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.14em' }}>
-            TELEMETRY AUDIT TRAIL — {visibleHistory.length} SESSION{visibleHistory.length !== 1 ? 'S' : ''}
+          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em' }}>
+            {visibleHistory.length} SESSION{visibleHistory.length !== 1 ? 'S' : ''} · AUDIT TRAIL
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <select
-            value={rangeKey}
-            onChange={e => setRangeKey(e.target.value)}
-            style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em',
-              background: '#000000', color: 'rgba(255,255,255,0.5)',
-              border: `1px solid ${BORDER}`, padding: '3px 6px', cursor: 'pointer',
-            }}
-          >
-            {Object.entries(RANGE_PRESETS).map(([key, p]) => (
-              <option key={key} value={key}>{p.label.toUpperCase()}</option>
-            ))}
-          </select>
+        {/* Align with right export panel */}
+        <div style={{ width: 264, flexShrink: 0, padding: '16px 18px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
           <div style={{ fontSize: 6, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.18em' }}>
             LIVE · 2s
           </div>
         </div>
       </div>
 
-      {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px', width: '100%', maxWidth: 900, margin: '0 auto' }}>
+      {/* Body row */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
-        {visibleHistory.length === 0 ? (
-          <div style={{ paddingTop: 16, display: 'flex', alignItems: 'baseline', gap: 20 }}>
-            <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.22em' }}>
-              NO TELEMETRY RECORDED
-            </div>
-            <span
-              onClick={() => setSwipeIndex(0)}
-              style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: LIME, cursor: 'pointer', opacity: 0.7 }}
-            >
-              GO TO ANALYSIS →
-            </span>
-          </div>
-        ) : (
-          <div style={{ maxWidth: 900 }}>
-            <SortHeader
-              gridTemplateColumns="28px 1fr 110px 90px"
-              sort={histSort}
-              onSort={key => setHistSort(s => nextSortState(s, key))}
-              columns={[
-                { label: '#' },
-                { label: 'QUERY', key: 'query' },
-                { label: 'TIMESTAMP', key: 'ts' },
-                { label: 'STATUS', key: 'status', align: 'right' },
-              ]}
-            />
-            {visibleHistory.map((entry, i) => (
-              <HistoryRow
-                key={entry.sessionId}
-                entry={entry}
-                index={i}
-                active={hoveredIdx === i}
-                onHover={v => setHovered(v ? i : null)}
-                onRerun={handleRerun}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Transaction History */}
-        <div style={{ marginTop: 32, paddingTop: 16, borderTop: `1px solid ${BORDER}`, maxWidth: 900 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 12 }}>
-            TRANSACTION HISTORY
-          </div>
-          {visibleTransactions.length === 0 ? (
-            <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.18em', paddingTop: 12 }}>
-              NO TRANSACTIONS RECORDED
-            </div>
-          ) : (
-            <>
-              <SortHeader
-                gridTemplateColumns="64px 110px 1fr 72px"
-                sort={txSort}
-                onSort={key => setTxSort(s => nextSortState(s, key))}
-                columns={[
-                  { label: 'TIME', key: 'ts' },
-                  { label: 'TYPE', key: 'type' },
-                  { label: 'MESSAGE' },
-                  { label: 'STATUS', key: 'status', align: 'right' },
-                ]}
-              />
-              {visibleTransactions.map((item, i) => {
-                const typeColor =
-                  item.type === 'SEARCH'         ? LIME :
-                  item.type === 'ORACLE'         ? LIME :
-                  item.type === 'MODEL'          ? '#007FFF' :
-                  item.type === 'PROFILE UPDATE' ? '#8A2BE2' :
-                  item.type === 'LENS CHANGE'    ? '#8A2BE2' :
-                  item.type === 'SYSTEM'         ? 'rgba(255,255,255,0.35)' :
-                  'rgba(255,255,255,0.35)';
-                return (
-                  <div key={i} style={{ padding: '11px 0', borderBottom: `1px solid ${BORDER}` }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '64px 110px 1fr 72px', alignItems: 'baseline', gap: 12 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.22)' }}>{formatTime(item.ts)}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 7, color: typeColor, letterSpacing: '0.12em' }}>{item.type}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.75)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.subject}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', textAlign: 'right' }}>{item.status}</div>
-                    </div>
-                    {(item.context !== '—' || item.horizon !== '—') && (
-                      <div style={{ display: 'flex', gap: 16, marginTop: 4, paddingLeft: 176 }}>
-                        {item.context !== '—' && (
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>
-                            {item.context}
-                          </span>
-                        )}
-                        {item.horizon !== '—' && (
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>
-                            {item.horizon}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </>
-          )}
+        {/* Left panel — calendar date filter */}
+        <div style={{
+          width: 296, flexShrink: 0,
+          borderRight: `1px solid ${BORDER}`,
+          overflowY: 'auto',
+        }}>
+          <CalendarPanel
+            rangeKey={rangeKey}
+            setRangeKey={setRangeKey}
+            customRange={customRange}
+            setCustomRange={setCustomRange}
+          />
         </div>
 
-        {/* Export */}
-        <div style={{ marginTop: 32, paddingTop: 16, borderTop: `1px solid ${BORDER}`, maxWidth: 900, paddingBottom: 8 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 8 }}>
-            EXPORT TRANSACTION HISTORY
+        {/* Main list — centered */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '0 24px 24px' }}>
+          <div style={{ maxWidth: 680, margin: '0 auto' }}>
+
+          {visibleHistory.length === 0 ? (
+            <div style={{ paddingTop: 16, display: 'flex', alignItems: 'baseline', gap: 20 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.22em' }}>
+                NO TELEMETRY RECORDED
+              </div>
+              <span
+                onClick={() => setSwipeIndex(0)}
+                style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: LIME, cursor: 'pointer', opacity: 0.7 }}
+              >
+                GO TO ANALYSIS →
+              </span>
+            </div>
+          ) : (
+            <div>
+              {visibleHistory.map((entry, i) => (
+                <HistoryRow
+                  key={entry.sessionId}
+                  entry={entry}
+                  index={i}
+                  active={hoveredIdx === i}
+                  onHover={v => setHovered(v ? i : null)}
+                  onRerun={handleRerun}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Transaction History */}
+          <div style={{ marginTop: 32, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 14 }}>
+              TRANSACTION HISTORY
+            </div>
+            {visibleTransactions.length === 0 ? (
+              <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.18em', paddingTop: 12 }}>
+                NO TRANSACTIONS RECORDED
+              </div>
+            ) : (
+              <>
+                {visibleTransactions.map((item, i) => {
+                  const typeCode = item.type.slice(0, 3);
+                  const statusColor =
+                    item.status === 'COMPLETE' ? LIME :
+                    item.status === 'ACTIVE'   ? LIME :
+                    item.status === 'APPLIED'  ? 'rgba(255,255,255,0.45)' :
+                    'rgba(255,255,255,0.25)';
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'flex-start', gap: 12,
+                      padding: '10px 0', borderBottom: `1px solid ${BORDER}`,
+                      borderLeft: '2px solid transparent',
+                    }}>
+                      <TypeBox code={typeCode} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{
+                          fontFamily: SERIF, fontSize: 13,
+                          color: 'rgba(255,255,255,0.72)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          marginBottom: 4,
+                        }}>
+                          {item.subject}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.08em' }}>
+                            {formatTime(item.ts)}
+                          </span>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.1em' }}>
+                            {item.type}
+                          </span>
+                          {item.context !== '—' && (
+                            <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}>
+                              {item.context}
+                            </span>
+                          )}
+                          {item.horizon !== '—' && (
+                            <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.1em' }}>
+                              {item.horizon}
+                            </span>
+                          )}
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: statusColor, letterSpacing: '0.1em', marginLeft: 'auto' }}>
+                            {item.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginBottom: 12, maxWidth: 480 }}>
-            Includes transactions currently in view — {RANGE_PRESETS[rangeKey].label.toLowerCase()}, {visibleTransactions.length} record{visibleTransactions.length !== 1 ? 's' : ''}.
+
+        </div>{/* /centering wrapper */}
+        </div>{/* /main list */}
+
+        {/* Right panel — Export utility */}
+        <div style={{
+          width: 264, flexShrink: 0,
+          borderLeft: `1px solid ${BORDER}`,
+          overflowY: 'auto', display: 'flex', flexDirection: 'column',
+        }}>
+          <div style={{ padding: '16px 18px 14px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+              Export & Save
+            </div>
           </div>
-          <button
-            onClick={() => downloadTransactionsCSV(visibleTransactions)}
-            disabled={visibleTransactions.length === 0}
-            style={{
-              fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em',
-              background: 'transparent', border: `1px solid ${LIME}`,
-              color: LIME, padding: '8px 18px', cursor: visibleTransactions.length === 0 ? 'default' : 'pointer',
-              opacity: visibleTransactions.length === 0 ? 0.4 : 1,
-            }}
-          >
-            ⬇ EXPORT CSV
-          </button>
+
+          <div style={{ padding: '16px 18px 24px' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.16em', marginBottom: 10 }}>
+              EXPORT TRANSACTIONS
+            </div>
+            <div style={{ fontFamily: SERIF, fontSize: 12, color: 'rgba(255,255,255,0.38)', lineHeight: 1.65, marginBottom: 16 }}>
+              {visibleTransactions.length} record{visibleTransactions.length !== 1 ? 's' : ''} in view.
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => downloadTransactionsCSV(visibleTransactions)}
+                disabled={visibleTransactions.length === 0}
+                style={{
+                  flex: 1, fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+                  background: 'transparent', border: `1px solid rgba(102,255,0,0.35)`,
+                  color: LIME, padding: '9px 0', cursor: visibleTransactions.length === 0 ? 'default' : 'pointer',
+                  opacity: visibleTransactions.length === 0 ? 0.35 : 1,
+                }}
+              >⬇ EXPORT</button>
+              <button
+                onClick={() => { if (navigator.share) { navigator.share({ title: 'KRYLO History', text: `${visibleTransactions.length} transactions` }); } else { navigator.clipboard?.writeText(window.location.href); } }}
+                style={{
+                  flex: 1, fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+                  background: 'transparent', border: `1px solid ${BORDER}`,
+                  color: 'rgba(255,255,255,0.55)', padding: '9px 0', cursor: 'pointer',
+                }}
+              >SHARE ↗</button>
+            </div>
+          </div>
         </div>
 
       </div>
