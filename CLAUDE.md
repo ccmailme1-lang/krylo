@@ -1,6 +1,12 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
+LAST BUILD SESSION: 2026-06-17
+BASELINE: baseline_community_story_grid
+SHA: 9b53f35
+DEPLOYED: krylo.org ✓
+──────────────────────────────────────────────
+
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
 
 
