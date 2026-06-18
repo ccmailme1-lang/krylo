@@ -87,7 +87,9 @@ function detectDomain(text) {
   const scores = {};
 
   for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
-    scores[domain] = keywords.filter(kw => lower.includes(kw)).length;
+    scores[domain] = keywords.filter(kw =>
+      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + kw + '\\b').test(lower)
+    ).length;
   }
 
   const best = Object.entries(scores).sort((a, b) => b[1] - a[1]);
@@ -110,7 +112,9 @@ function extractSignals(text) {
   const matched = [];
 
   for (const [signal, keywords] of Object.entries(SIGNAL_KEYWORD_MAP)) {
-    const hits = keywords.filter(kw => lower.includes(kw)).length;
+    const hits = keywords.filter(kw =>
+      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + kw + '\\b').test(lower)
+    ).length;
     if (hits > 0) matched.push({ signal, hits });
   }
 
