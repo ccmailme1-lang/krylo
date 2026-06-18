@@ -157,10 +157,15 @@ function resolvePrimary(q, lens) {
   if (/\bsenior\b/.test(q) && /medicare|medicaid|premiums?|copay|out.of.pocket|healthcare cost/.test(q)) return 'EXPENSE_REDUCTION';
   if (/retire|401k|\bira\b|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
   if (/job|career|salary|offer|negotiat|hire|compensation|raise|role/.test(q)) return 'CAREER';
+  // ── Persona entity gates (before lens fallback) ────────────────────────────
+  if (/\bbrady\b|tb12|athlete.entrepre|athlete.brand|athlete.enterprise|athletic.brand|performance.wellness|athlete.business|sport.*business|legacy.venture|sports.enterprise/.test(q)) return 'ATHLETE_ENTERPRISE';
+  if (/kris.jenner|kardashian|\bskims\b|kylie.cosmetics|good.american|spin.?off.brand|family.brand|momager|brand.spin.?off|celebrity.brand.empire|cpg.empire/.test(q)) return 'BRAND_SPINOFF';
+  if (/rich.paul|\bklutch\b|athlete.representation|cultural.enterprise|sports.agency.*media|influence.mapping|cultural.longevity/.test(q)) return 'CULTURAL_INFLUENCE';
+  if (/\bthiel\b|zero.to.one|important.truth|founders.fund|\bpalantir\b|\banduril\b|cultural.resistance|contrarian.frontier/.test(q)) return 'CONTRARIAN_FRONTIER';
   // Lens fallback
   if (lens === 'REALTOR')    return 'REAL_ESTATE';
   if (lens === 'RETIREMENT') return 'RETIREMENT';
-  if (lens === 'ATHLETE')    return 'CAREER';
+  if (lens === 'ATHLETE')    return 'ATHLETE_ENTERPRISE';
   if (lens === 'INVESTOR')   return 'INVESTOR';
   if (lens === 'HEALTH')     return 'HEALTH';
   return 'GENERAL';
