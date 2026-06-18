@@ -111,16 +111,35 @@ function fmtN(n) { return Math.round(n).toLocaleString(); }
 
 // ── Domain detection ───────────────────────────────────────────────────────────
 
-export function detectDomain(query, lens) {
-  const q = (query ?? '').toLowerCase();
+// Company names, esports/creator handles, and brand terms that must not
+// influence domain routing — their presence says nothing about domain.
+const PROPER_NOUN_EXCLUSIONS = /\b(google|microsoft|apple|amazon|netflix|spotify|twitter|facebook|instagram|tiktok|youtube|twitch|zywoo|ropz|peanut|pewdiepie|ishowspeed|xqc|ninja|valorant|fortnite|navi|fnatic|faze|vitality|g2\s+esports|100\s*thieves)\b/gi;
 
-  // Protected entity gate — medical/disability signals lock domain unconditionally.
-  // Runs before all keyword matching to prevent vocabulary contamination (e.g.,
-  // "home & community access" firing REAL_ESTATE when hypotonia is present).
-  const protectedDomain = detectProtectedDomain(query);
-  if (protectedDomain) return protectedDomain;
+// Keyword patterns for co-activity scoring — parallel to routing rules but
+// produces hit counts per domain rather than a single winner.
+// Used by classifyAmbiguity() to detect SOFT multi-domain states.
+const DOMAIN_SCORE_PATTERNS = {
+  STARTUP_FINANCE: [/startup/, /runway/, /burn rate/, /payroll/, /seed round/, /series [ab]/, /raise capital/, /venture/, /bootstrap/],
+  AUTO:            [/\bcar\b/, /vehicle/, /suv/, /truck/, /\bauto\b/, /\blease\b/, /\bford\b/, /toyota/, /honda/, /tesla/, /bmw/, /mercedes/, /audi/, /chevy/, /chevrolet/, /kia/, /hyundai/, /dodge/, /jeep/, /rivian/],
+  REAL_ESTATE:     [/\bhouse\b/, /mortgage/, /property/, /condo/, /apartment/, /real estate/, /sq ft/, /bedroom/, /bath/, /listing/, /\brent\b/],
+  RETIREMENT:      [/retire/, /401k/, /\bira\b/, /pension/, /social security/, /withdrawal/, /nest egg/],
+  CAREER:          [/\bjob\b/, /career/, /salary/, /\boffer\b/, /negotiat/, /hire/, /compensation/, /\braise\b/, /\brole\b/, /\bplayer\b/, /streamer/, /creator/, /esports/],
+  EXPENSE_REDUCTION: [/fixed income/, /expense/, /\bbill\b/, /medicare/, /medicaid/, /struggling/, /\bsenior\b/],
+  HEALTH:          [/disability/, /therapy/, /adaptive/, /nonprofit/, /donation/, /grant/, /\bhealth\b/],
+};
 
-  // Query keywords — content beats lens label
+function scoreDomains(q) {
+  const scores = {};
+  for (const [domain, patterns] of Object.entries(DOMAIN_SCORE_PATTERNS)) {
+    const hits = patterns.filter(re => re.test(q)).length;
+    if (hits > 0) scores[domain] = hits;
+  }
+  return scores;
+}
+
+// resolvePrimary — existing priority-ordered routing logic (compound conditions
+// preserved). Returns a string domain label. Called inside detectDomain().
+function resolvePrimary(q, lens) {
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
   if (/\bcar\b|vehicle|suv|truck|auto|lease|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
@@ -130,27 +149,73 @@ export function detectDomain(query, lens) {
     (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|\bmarket\b/.test(q))
   ) return 'REAL_ESTATE';
   // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
-  // QA-101: retired + expense/distress signals
   if (/\bretired\b/.test(q) && /fixed income|expenses? down|reduce.*expense|lower.*bill|cut.*cost|monthly.*down|expenses? lower|struggling/.test(q)) return 'EXPENSE_REDUCTION';
-  // fixed income + senior demographic
   if (/fixed income/.test(q) && /senior|grandmother|grandfather|grandma|grandpa|elderly/.test(q)) return 'EXPENSE_REDUCTION';
-  // QA-102: social security as current income source + any distress/cost signal
   if (/\b(?:living on|on)\s+(?:a\s+)?(?:fixed income|social security)\b/.test(q)) return 'EXPENSE_REDUCTION';
   if (/social security/.test(q) && /struggling|afford|expenses?|bills?|reduce|lower|cut|tight|fixed/.test(q)) return 'EXPENSE_REDUCTION';
-  // QA-103: senior + medicare cost signals; or medicare premiums alone
   if (/medicare\s+premiums?/.test(q)) return 'EXPENSE_REDUCTION';
   if (/\bsenior\b/.test(q) && /medicare|medicaid|premiums?|copay|out.of.pocket|healthcare cost/.test(q)) return 'EXPENSE_REDUCTION';
   if (/retire|401k|\bira\b|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
   if (/job|career|salary|offer|negotiat|hire|compensation|raise|role/.test(q)) return 'CAREER';
-
   // Lens fallback
   if (lens === 'REALTOR')    return 'REAL_ESTATE';
   if (lens === 'RETIREMENT') return 'RETIREMENT';
   if (lens === 'ATHLETE')    return 'CAREER';
   if (lens === 'INVESTOR')   return 'INVESTOR';
   if (lens === 'HEALTH')     return 'HEALTH';
-
   return 'GENERAL';
+}
+
+// detectDomain — returns a DomainVector instead of a plain string.
+// primary:             the authoritative domain (from priority rules)
+// weights:             normalized score per domain (co-activity map)
+// state:               HARD | SOFT | HOLD  (from WO-1766 ambiguity gate)
+// entropy:             Shannon H over the distribution
+// coActive:            domains within SOFT_BAND of winner
+// resolutionEligible:  false on HOLD
+export function detectDomain(query, lens) {
+  const q = (query ?? '').toLowerCase().replace(PROPER_NOUN_EXCLUSIONS, '');
+
+  // Protected entity gate — medical/disability signals lock domain unconditionally.
+  // Wrapped as synthetic HARD vector — compound condition cannot be contaminated.
+  const protectedDomain = detectProtectedDomain(query);
+  if (protectedDomain) {
+    return { primary: protectedDomain, weights: { [protectedDomain]: 1.0 }, state: 'HARD', entropy: 0, coActive: [], resolutionEligible: true };
+  }
+
+  const primary = resolvePrimary(q, lens);
+  const scores  = scoreDomains(q);
+
+  // Ensure primary is represented in scoring (priority rules may fire on compound
+  // conditions that the simple keyword scorer misses)
+  if (primary !== 'GENERAL') {
+    scores[primary] = Math.max(scores[primary] ?? 0, 1);
+  }
+
+  const ambiguity = classifyAmbiguity(scores);
+
+  const total = Object.values(scores).reduce((s, v) => s + v, 0) || 1;
+  const weights = {};
+  for (const [d, v] of Object.entries(scores)) {
+    if (v > 0) weights[d] = parseFloat((v / total).toFixed(3));
+  }
+
+  return {
+    primary,
+    weights,
+    state:               ambiguity.state,
+    entropy:             ambiguity.entropy,
+    coActive:            ambiguity.coActive,
+    resolutionEligible:  ambiguity.resolutionEligible,
+  };
+}
+
+// synthesizerFor — maps a DomainVector to a synthesizer function.
+// HARD + SOFT: primary synthesizer (v1 — SOFT blending is a future WO concern).
+// HOLD:        returns null — caller must use fallback.
+export function synthesizerFor(vector) {
+  if (!vector || !vector.resolutionEligible) return null;
+  return SYNTH_MAP[vector.primary] ?? synthGeneral;
 }
 
 // ── Domain synthesizers ────────────────────────────────────────────────────────
@@ -751,6 +816,367 @@ function synthHealth(session, numbers, query) {
   };
 }
 
+// ── INVESTOR synthesizer ───────────────────────────────────────────────────────
+
+function synthInvestor(session, numbers, query) {
+  const q      = (query ?? '').toLowerCase();
+  const shortQ = query.length > 50 ? query.slice(0, 50) + '…' : query;
+  const capital = numbers[0] || null;
+
+  // Intent classification
+  const isMacro     = /structur|divergen|overvalued|bubble|non.consensus|contrarian|\bshort\b|\bput\b|hedge|rotation|unwind|crowded|thesis|mispriced|macro|multiple|narrative|systemic/.test(q);
+  const isPortfolio = /portfolio|allocat|rebalanc|diversif|\bcash\b|weight|\bhold\b|exposure|mix/.test(q);
+  const isTactical  = /\bbuy\b|\bsell\b|position|timing|entry|exit|momentum|breakout|\btrade\b/.test(q);
+
+  // Confidence from query specificity
+  const confidence = isMacro && capital ? 0.84
+                   : isMacro            ? 0.79
+                   : isTactical         ? 0.75
+                   : isPortfolio        ? 0.76
+                   :                      0.68;
+
+  // Information-edge leverage: derived from non-consensus signal density
+  const ncHits  = (q.match(/\b(contrarian|non.consensus|mispriced|undervalued|overvalued|divergen|crowded|structural|thesis)\b/g) ?? []).length;
+  const deRatio = parseFloat(Math.min(2.0, 0.3 + ncHits * 0.25).toFixed(1));
+  const tierLabel = classifyLeverageTier(deRatio);
+
+  // ── Macro / structural divergence ─────────────────────────────────────────
+  if (isMacro) {
+    const fade = /crowded|\bshort\b|\bput\b|fade|overvalued|bubble|unwind/.test(q);
+
+    return {
+      stateLabel:     fade ? 'CROWDED TRADE DETECTED' : 'STRUCTURAL DIVERGENCE',
+      confidence,
+      primaryInsight: capital
+        ? `Structural divergence thesis active. $${fmtN(capital)} positioned where narrative multiple expansion is decoupling from underlying cash flow. The crowd prices continuation — this position prices correction.`
+        : `Structural divergence thesis active. Narrative multiple expansion decoupling from underlying fundamentals. Non-consensus window: crowd prices continuation, signal prices mean reversion.`,
+      momentum:    { value: fade ? '-12%' : '+8%', h1: fade ? '-4%' : '+2%', h24: fade ? '-12%' : '+8%' },
+      trajPoints:  fade
+        ? [0.82,0.80,0.78,0.74,0.70,0.64,0.57,0.50,0.44,0.38,0.32,0.28]
+        : [0.28,0.34,0.41,0.48,0.54,0.60,0.65,0.69,0.73,0.76,0.78,0.79],
+      attentionStack: [
+        { rank:1, signal:'Narrative / FCF Spread',        category:'Capital / Structural',  trend: fade ? '↑' : '↗', momentum: fade ? 'Widening' : 'Compressing', mColor:LIME, conf:0.86 },
+        { rank:2, signal:'Institutional Concentration',   category:'Ownership / Crowding',  trend:'↑',  momentum:'Elevated',    mColor:BLUE, conf:0.77 },
+        { rank:3, signal:'Media Saturation',              category:'Media / Attention',     trend:'↑',  momentum:'Peak Signal', mColor:BLUE, conf:0.72 },
+        { rank:4, signal:'Capital Flow Velocity',         category:'Capital / Rotation',    trend:'↘',  momentum:'Slowing',     mColor:DIM,  conf:0.61 },
+      ],
+      keyDrivers: [
+        { label:'Narrative vs cash-flow spread',          delta:'Widening',              pos:!fade },
+        { label:'Institutional concentration',            delta:'Elevated — crowded',    pos:false },
+        { label:'Media coverage density',                 delta:'Peak — saturation risk', pos:false },
+        { label:'Non-consensus positioning window',       delta:deRatio > 1.0 ? 'Open' : 'Forming', pos:deRatio > 1.0 },
+      ],
+      recommendedAction: fade
+        ? `Map the unwind sequence: what triggers rotation, not whether rotation comes. The signal is no longer "if" — it is "when institutional exit begins." Theta drag is the primary risk before that inflection.`
+        : `Build the position in tranches. Structural divergence can persist longer than models predict. Define maximum drawdown tolerance before entering — the thesis will be tested before it resolves.`,
+      timeHorizon:  '6–18 months',
+      impactLevel:  'High',
+      bluf: fade
+        ? `Crowded trade: institutional concentration elevated, media saturation at peak, capital flow velocity declining. The structural case is intact — the execution risk is timing. Premature entry carries theta drag before the inflection.`
+        : `Structural divergence: narrative multiple expansion decoupling from underlying cash flow. Non-consensus window active. The crowd has priced a continuation that fundamentals do not support.`,
+      purpose: `Structural divergence analysis for: "${shortQ}". Covers narrative/FCF spread, institutional crowding, non-consensus positioning, and execution risk.`,
+      fiveWs: [
+        { w:'WHO',   answer:`Investor positioning against consensus. Counterparty: the crowd buying the narrative.` },
+        { w:'WHAT',  answer:`${fade ? 'Short/defensive position against crowded narrative trade.' : 'Long position in structurally undervalued asset vs consensus.'}${capital ? ` Capital: $${fmtN(capital)}.` : ''}` },
+        { w:'WHEN',  answer:`Structural divergence plays require 6–18 month conviction window. Thesis resolves when institutional capital rotates — not before.` },
+        { w:'WHERE', answer:`Primary risk: theta drag during consensus persistence phase. Secondary: forced liquidation if sized beyond drawdown tolerance.` },
+        { w:'WHY',   answer:`Narrative multiples disconnect from cash-flow reality during capital saturation events. The divergence resolves — the question is timing.` },
+      ],
+      evidence: [
+        `Institutional concentration in narrative trades is a leading indicator of rotation risk, not trailing.`,
+        `Media saturation (coverage peak) historically precedes fundamental inflection by 3–9 months.`,
+        `FCF-anchored assets outperform post-rotation. Cash-flow positive with real revenue is the surviving category.`,
+        `Non-consensus positions with defined thesis duration and drawdown tolerance outperform when sized correctly.`,
+      ],
+      assumptions: [
+        `Structural divergence confirmed — narrative premium over FCF is measurable and widening.`,
+        `Position sized to survive 18-month drawdown without forced liquidation.`,
+      ],
+      assessment: fade
+        ? `Crowded trade has three phases: saturation (current), theta drag (next), inflection (unwind). You are in phase 1 awaiting phase 3. The risk is not the thesis — it is surviving phase 2. Size for maximum theta drag of 18 months before re-evaluating.`
+        : `Structural divergence positions succeed when: (1) thesis is correct, (2) position size survives the saturation phase, (3) exit is planned before the crowd arrives. All three must be pre-committed.`,
+      threats: [
+        { label:'Theta drag — thesis correct but early',    level:'HIGH',   color:LIME },
+        { label:'Narrative extension beyond model horizon', level:'HIGH',   color:LIME },
+        { label:'Forced liquidation at drawdown threshold', level:'MEDIUM', color:BLUE },
+        { label:'Catalyst failure — rotation never fires',  level:'LOW',    color:DIM  },
+      ],
+      opportunities: [
+        { label:`Tranche entry: 3 tranches over 6 months — reduces theta drag by spreading across the saturation phase.` },
+        { label:`FCF-positive hedges: pair the thesis with cash-flow assets that benefit from rotation. Net theta drag near zero.` },
+        { label:`Catalyst mapping: identify 2–3 specific events that would accelerate the inflection.` },
+      ],
+      alternativeView: `Structural divergence can be a permanent regime shift. New market structures (passive flows, zero-rate muscle memory) may sustain narrative premiums longer than historical precedent.`,
+      outlook: [
+        { prob:0.58, label:`Thesis resolves within 18 months — rotation into FCF-anchored assets`,              color:LIME },
+        { prob:0.28, label:`Extended saturation — thesis valid but theta drag requires position trim`,          color:BLUE },
+        { prob:0.14, label:`Regime shift — narrative premium structural, not cyclical, mean-reversion fails`,  color:DIM  },
+      ],
+      actions: {
+        IMMEDIATE: [
+          { id:'a1', label:'DEFINE DRAWDOWN LIMIT',   impact:0.94, rationale:`Set the maximum loss you absorb before re-evaluating the thesis — not the position. Pre-commitment is the only protection against forced emotional liquidation.${capital ? ` On $${fmtN(capital)}: target max draw $${fmtN(capital * 0.20)}.` : ''}`, tag:'RISK'      },
+          { id:'a2', label:'MAP ROTATION CATALYSTS',  impact:0.86, rationale:`Identify 2–3 specific events that would accelerate the inflection: earnings miss at 30× multiple, credit spread widening, 13F institutional rotation signal. Without catalysts, you are waiting for fog to lift.`,                tag:'SIGNAL'    },
+        ],
+        SHORT_TERM: [
+          { id:'b1', label:'TRANCHE THE ENTRY',        impact:0.80, rationale:`Enter in 3 tranches over 6 months. Tranche 1 today, Tranche 2 at first confirmation signal, Tranche 3 at rotation onset. Reduces theta drag cost by spreading entry across the saturation phase.`,                                tag:'EXECUTION' },
+          { id:'b2', label:'IDENTIFY FCF ANCHORS',     impact:0.72, rationale:`Pair the short/defensive position with FCF-positive assets that benefit from rotation. The hedge pays while the primary thesis waits — net theta drag near zero in most structures.`,                                           tag:'STRUCTURE' },
+        ],
+        STRUCTURAL: [
+          { id:'c1', label:'SET 18-MONTH REVIEW',      impact:0.76, rationale:`If thesis has not resolved in 18 months, re-evaluate from scratch — not incrementally. Sunk cost is the most dangerous force in non-consensus positioning. Calendar the review now.`,                                           tag:'DISCIPLINE' },
+          { id:'c2', label:'TRACK CONSENSUS MIGRATION',impact:0.65, rationale:`Monitor when your thesis starts appearing in mainstream financial media. When the crowd finds the trade, the non-consensus edge evaporates. That is your exit signal, not a validation.`,                                     tag:'AWARENESS'  },
+        ],
+      },
+      leverage: { typeY: 0, typeLabel: 'CODE', tierLabel, deRatio, permissionless: true, industryNorm: 0.3 },
+    };
+  }
+
+  // ── Portfolio allocation ───────────────────────────────────────────────────
+  if (isPortfolio) {
+    const pSize = capital || 100000;
+
+    return {
+      stateLabel:     'PORTFOLIO PRESSURE',
+      confidence,
+      primaryInsight: capital
+        ? `Portfolio of $${fmtN(pSize)} under macro rotation pressure. Concentration risk and FCF quality are the primary structural vulnerabilities.`
+        : `Portfolio allocation analysis. Concentration risk and FCF quality are the primary structural vulnerabilities in the current environment.`,
+      momentum:    { value: '+5%', h1: '+1%', h24: '+5%' },
+      trajPoints:  [0.40,0.45,0.50,0.54,0.58,0.62,0.65,0.68,0.71,0.73,0.75,0.76],
+      attentionStack: [
+        { rank:1, signal:'Concentration Risk',     category:'Portfolio / Exposure', trend:'↑', momentum:'Building',   mColor:LIME, conf:0.82 },
+        { rank:2, signal:'FCF Quality',            category:'Equity / Fundamentals',trend:'↗', momentum:'Key Filter', mColor:LIME, conf:0.77 },
+        { rank:3, signal:'Duration Exposure',      category:'Rates / Fixed Income', trend:'↑', momentum:'Elevated',   mColor:BLUE, conf:0.72 },
+        { rank:4, signal:'Liquidity Buffer',       category:'Cash / Deployment',   trend:'↘', momentum:'Declining',  mColor:DIM,  conf:0.65 },
+      ],
+      keyDrivers: [
+        { label:'Sector concentration',            delta:'Primary risk',                               pos:false },
+        { label:'FCF quality of holdings',         delta:'Key filter — audit first',                  pos:true  },
+        { label:'Liquidity buffer',                delta:capital ? `$${fmtN(pSize * 0.10)} target` : '10% target', pos:true },
+        { label:'Duration sensitivity',            delta:'Review required',                            pos:false },
+      ],
+      recommendedAction: `Audit top-5 positions for FCF coverage. Any position with negative FCF and > 20× revenue multiple is narrative-dependent — size the exit scenario before the rotation prices it for you.`,
+      timeHorizon:  '3–12 months',
+      impactLevel:  'High',
+      bluf: capital
+        ? `$${fmtN(pSize)} under rotation pressure. The risk is not market level — it is concentration in narrative-driven positions without FCF support. Structural rebalancing before the rotation is cheaper than reactive rebalancing during it.`
+        : `Portfolio under rotation pressure. Concentration in narrative-driven positions without FCF support is the structural vulnerability. Proactive rebalancing is cheaper than reactive.`,
+      purpose: `Portfolio allocation analysis for: "${shortQ}". Covers concentration risk, FCF quality, duration, and liquidity positioning.`,
+      fiveWs: [
+        { w:'WHO',   answer:`Investor managing a portfolio with potential concentration in narrative-driven sectors.` },
+        { w:'WHAT',  answer:`Portfolio rotation risk assessment.${capital ? ` Portfolio: $${fmtN(pSize)}.` : ''} Primary risk: FCF-negative positions at elevated multiples.` },
+        { w:'WHEN',  answer:`Pre-rotation positioning is the window. Post-rotation rebalancing occurs at worse prices and under pressure.` },
+        { w:'WHERE', answer:`Concentration risk resides in the top-3 holdings. Duration risk in long-dated fixed income or rate-sensitive equities.` },
+        { w:'WHY',   answer:`Macro rotation events compress narrative multiples across sectors simultaneously — diversification within narrative-driven sectors provides no protection.` },
+      ],
+      evidence: [
+        `Top-3 positions > 40% of portfolio amplifies rotation drawdowns vs broad market.`,
+        `FCF-positive equities outperform FCF-negative by avg 23% in the 12 months following multiple compression events.`,
+        `Liquidity buffer (10% cash) prevents forced selling at the rotation inflection — the most expensive moment to sell.`,
+        `Duration exposure in long bonds amplifies losses in rate-rising environments — current regime risk is asymmetric.`,
+      ],
+      assumptions: [
+        `Portfolio is equity-heavy with some fixed-income exposure.`,
+        `Investment horizon 3–12 months with liquidity requirements.`,
+      ],
+      assessment: `Priority sequence for rotation resilience: (1) reduce FCF-negative narrative positions, (2) build 10% liquidity buffer, (3) shorten duration toward intermediate maturities, (4) increase FCF-positive position weight. Sequence matters — liquidity before repositioning, not simultaneously.`,
+      threats: [
+        { label:'Narrative-multiple concentration',         level:'HIGH',   color:LIME },
+        { label:'Duration risk in rate-sensitive holdings', level:'HIGH',   color:LIME },
+        { label:'Insufficient liquidity buffer',           level:'MEDIUM', color:BLUE },
+        { label:'Forced selling at inflection',            level:'LOW',    color:DIM  },
+      ],
+      opportunities: [
+        { label:`FCF rotation plays: 3–5 positions that receive capital inflow when narrative multiples compress.` },
+        { label:`Liquidity buffer: 10% cash at inflection is worth more than 10% in crowded names.` },
+        { label:`Duration shortening: reduce rate sensitivity without eliminating fixed-income exposure.` },
+      ],
+      alternativeView: `Staying fully invested with stops outperforms tactical rebalancing in trending markets. Depends on the ability to execute stops without emotional override at inflection.`,
+      outlook: [
+        { prob:0.62, label:`Proactive rebalancing preserves 15–25% vs reactive response to rotation`,           color:LIME },
+        { prob:0.25, label:`Rotation is mild — concentrated positions recover, rebalancing cost exceeds benefit`, color:BLUE },
+        { prob:0.13, label:`Severe rotation — only pre-positioned portfolios survive intact`,                   color:DIM  },
+      ],
+      actions: {
+        IMMEDIATE: [
+          { id:'a1', label:'AUDIT FCF COVERAGE',          impact:0.92, rationale:`For each top-5 position: trailing 12-month free cash flow. Any position at > 20× revenue with negative FCF is narrative-dependent. Know the number before the market tests it.`,                                                          tag:'RISK'        },
+          { id:'a2', label:'CALCULATE CONCENTRATION',     impact:0.84, rationale:`Top-3 positions as % of portfolio. If > 40%, you have concentration risk that sector diversification will not protect. The number must exist before you can manage it.`,                                                                    tag:'EXPOSURE'    },
+        ],
+        SHORT_TERM: [
+          { id:'b1', label:'BUILD LIQUIDITY BUFFER',      impact:0.79, rationale:`Rotate 10% of portfolio to cash or equivalents. Not a bear call — a deployment buffer. The most valuable capital is available capital at the inflection.${capital ? ` Target: $${fmtN(pSize * 0.10)}.` : ''}`,                        tag:'LIQUIDITY'   },
+          { id:'b2', label:'SHORTEN DURATION',            impact:0.72, rationale:`Reduce long-dated bond or rate-sensitive equity exposure. Rate regime uncertainty is asymmetric — compression hurts more than extension helps in the current environment.`,                                                              tag:'RATES'       },
+        ],
+        STRUCTURAL: [
+          { id:'c1', label:'BUILD ROTATION BENEFICIARY LIST', impact:0.80, rationale:`Identify 3–5 FCF-positive positions that receive rotation capital when narrative multiples compress. Pre-build the list — you need to move quickly at inflection, not build the list under pressure.`,                            tag:'POSITIONING' },
+          { id:'c2', label:'SET CONCENTRATION LIMITS',    impact:0.67, rationale:`Define maximum single-position size as a rule. If any position exceeds the limit, trim regardless of conviction. Limits exist precisely when conviction is highest — that is when they matter most.`,                                tag:'DISCIPLINE'  },
+        ],
+      },
+      leverage: { typeY: 0, typeLabel: 'CODE', tierLabel, deRatio, permissionless: true, industryNorm: 0.3 },
+    };
+  }
+
+  // ── Tactical / timing ──────────────────────────────────────────────────────
+  if (isTactical) {
+    return {
+      stateLabel:     'TACTICAL SETUP ACTIVE',
+      confidence,
+      primaryInsight: capital
+        ? `Tactical setup with $${fmtN(capital)} in play. Entry discipline, stop placement, and exit thesis are the three controllable variables — the market controls everything else.`
+        : `Tactical setup active. Entry discipline, stop placement, and exit thesis are the three controllable variables — the market controls everything else.`,
+      momentum:    { value: '+11%', h1: '+3%', h24: '+11%' },
+      trajPoints:  [0.30,0.38,0.46,0.53,0.59,0.64,0.69,0.72,0.75,0.77,0.78,0.75],
+      attentionStack: [
+        { rank:1, signal:'Entry Discipline',   category:'Timing / Execution',   trend:'→', momentum:'Narrow Window', mColor:LIME, conf:0.80 },
+        { rank:2, signal:'Stop Placement',     category:'Risk / Protection',    trend:'↑', momentum:'Critical',      mColor:LIME, conf:0.76 },
+        { rank:3, signal:'Exit Thesis',        category:'Execution / Plan',     trend:'?', momentum:'Must Be Set',   mColor:DIM,  conf:0.65 },
+        { rank:4, signal:'Position Sizing',    category:'Risk / Sizing',        trend:'?', momentum:'Size from Stop', mColor:DIM,  conf:0.60 },
+      ],
+      keyDrivers: [
+        { label:'Entry price discipline',     delta:'Primary variable',                                             pos:true        },
+        { label:'Stop defined in dollars',    delta:capital ? `$${fmtN(capital * 0.10)} max loss` : 'Define first', pos:capital != null },
+        { label:'Exit thesis pre-committed',  delta:'Required before entry',                                        pos:false       },
+        { label:'Size from stop, not upside', delta:'Only valid sizing method',                                     pos:true        },
+      ],
+      recommendedAction: capital
+        ? `Define the stop before entering: maximum loss = $${fmtN(capital * 0.10)} (10%). Size from the stop, not from the upside. "What do I lose if wrong" must be answered before "what do I gain if right."`
+        : `Define the stop in dollar terms before entering. Size from the stop. "What do I lose if wrong" must be answered before "what do I gain if right."`,
+      timeHorizon:  '1–90 days',
+      impactLevel:  'High',
+      bluf: capital
+        ? `$${fmtN(capital)} tactical position. Entry, stop, and exit thesis are the three controllable variables. Pre-commit all three before execution — reactive management of any of them is the primary source of tactical losses.`
+        : `Tactical position. Entry, stop, and exit thesis are the three controllable variables. Pre-commit all three before execution.`,
+      purpose: `Tactical entry/exit analysis for: "${shortQ}". Covers entry timing, position sizing, stop placement, and exit thesis.`,
+      fiveWs: [
+        { w:'WHO',   answer:`Active investor taking a defined position with a thesis and pre-committed execution plan.` },
+        { w:'WHAT',  answer:`Tactical position.${capital ? ` Capital: $${fmtN(capital)}.` : ''} Success depends on execution process, not just directional thesis.` },
+        { w:'WHEN',  answer:`Entry window is the critical constraint. Early = maximum theta drag. Late = compressed upside. Define the window first.` },
+        { w:'WHERE', answer:`Primary risk: stop placement. Too tight = whipsawed out. Too loose = unacceptable loss if thesis fails.` },
+        { w:'WHY',   answer:`Tactical success rate is determined by process consistency across many trades, not individual trade outcome. Process outperforms intuition at scale.` },
+      ],
+      evidence: [
+        `Sizing from maximum acceptable loss (not upside) is the primary driver of long-term tactical expectancy.`,
+        `Pre-committed exit thesis removes emotion from the exit decision — the highest-cost decision point in any trade.`,
+        `Tactical traders who pre-commit stops outperform reactive stop managers by 18–35% risk-adjusted over 20+ trade samples.`,
+      ],
+      assumptions: [
+        `Directional thesis has been evaluated independently of this analysis.`,
+        `Risk tolerance supports maximum-loss scenario without forced liquidation.`,
+      ],
+      assessment: `Tactical execution checklist: (1) entry price range set, (2) stop defined in dollar terms, (3) exit thesis stated in one testable sentence, (4) position size calculated from stop. All four must exist before entry. Missing any one converts a tactical trade into an unmanaged position.`,
+      threats: [
+        { label:'No defined stop — unlimited downside',    level:'HIGH',   color:LIME },
+        { label:'Sizing from conviction, not stop',        level:'HIGH',   color:LIME },
+        { label:'Entry without pre-committed exit thesis', level:'MEDIUM', color:BLUE },
+        { label:'Emotional stop override at drawdown',     level:'MEDIUM', color:BLUE },
+      ],
+      opportunities: [
+        { label:`Size from the stop: (max loss $) ÷ (entry price − stop price) = position size in units.` },
+        { label:`Pre-commit exit: write "I exit when ___" before entry. Review it when you want to break it.` },
+        { label:`Scale out: partial exit at first target locks gains while preserving asymmetric upside.` },
+      ],
+      alternativeView: `Wide stops + large size work in trending markets. Tight stops + small size outperform in range-bound regimes. Regime identification before sizing is not optional.`,
+      outlook: [
+        { prob:0.65, label:`Defined process produces positive expectancy across 20+ trade sample`,        color:LIME },
+        { prob:0.25, label:`Correct direction, poor execution — timing or sizing erodes theoretical P/L`, color:BLUE },
+        { prob:0.10, label:`Thesis fails — stop triggers, loss contained by pre-commitment`,              color:DIM  },
+      ],
+      actions: {
+        IMMEDIATE: [
+          { id:'a1', label:'DEFINE STOP IN DOLLARS',   impact:0.95, rationale:`Not percentage — absolute loss. "I exit if I lose $X" is a plan.${capital ? ` On $${fmtN(capital)}: max loss target $${fmtN(capital * 0.10)}.` : ''} Write it before touching the order ticket.`, tag:'RISK'       },
+          { id:'a2', label:'SIZE FROM THE STOP',       impact:0.88, rationale:`Position size = (max loss $) ÷ (entry price − stop price). This is the only mathematically valid sizing method. Never size from conviction — conviction is not a number.`,                         tag:'SIZING'     },
+        ],
+        SHORT_TERM: [
+          { id:'b1', label:'COMMIT THE EXIT THESIS',   impact:0.81, rationale:`One sentence: "I exit when ___." Must be testable, not emotional. "Price reaches $X." "Catalyst fails in 30 days." "Earnings disprove thesis." Write it now.`,                                  tag:'DISCIPLINE' },
+          { id:'b2', label:'SET THE ENTRY WINDOW',     impact:0.72, rationale:`Define the price range where the setup is valid. If price exits the range before you enter, the setup is invalidated — do not chase. The next setup is always worth more than a chased trade.`, tag:'EXECUTION'  },
+        ],
+        STRUCTURAL: [
+          { id:'c1', label:'TRACK EXPECTANCY',         impact:0.78, rationale:`Log every trade: entry, exit, P/L, process adherence. Positive expectancy (avg win × win rate > avg loss × loss rate) is the only metric that matters over a 20+ trade sample.`,               tag:'PROCESS'   },
+          { id:'c2', label:'REVIEW STOP-OUTS ONLY',    impact:0.62, rationale:`Only trades where process broke down are worth detailed review. Winning trades with no process and losing trades with correct process are both irrelevant to improvement.`,                      tag:'LEARNING'  },
+        ],
+      },
+      leverage: { typeY: 0, typeLabel: 'CODE', tierLabel, deRatio, permissionless: true, industryNorm: 0.3 },
+    };
+  }
+
+  // ── Default INVESTOR output ────────────────────────────────────────────────
+  return {
+    stateLabel:     'INVESTOR SIGNAL ACTIVE',
+    confidence,
+    primaryInsight: capital
+      ? `$${fmtN(capital)} investor positioning. Current environment: elevated narrative premiums, rotation signals forming. FCF-anchored assets and non-consensus positioning are the two highest-expected-value categories.`
+      : `INVESTOR lens active. Elevated narrative premiums, early rotation signals. Structural gap between price and cash-flow fundamentals is the primary analytical frame.`,
+    momentum:    { value: '+7%', h1: '+2%', h24: '+7%' },
+    trajPoints:  [0.28,0.35,0.42,0.48,0.54,0.59,0.63,0.67,0.70,0.72,0.74,0.75],
+    attentionStack: [
+      { rank:1, signal:'Narrative / FCF Gap',   category:'Capital / Valuation', trend:'↑', momentum:'Widening',  mColor:LIME, conf:0.78 },
+      { rank:2, signal:'Credit Spread',         category:'Capital / Stress',    trend:'↗', momentum:'Watching',  mColor:BLUE, conf:0.72 },
+      { rank:3, signal:'Deal Flow Velocity',    category:'Ownership / Capital', trend:'↑', momentum:'Elevated',  mColor:LIME, conf:0.68 },
+      { rank:4, signal:'Yield Curve Posture',   category:'Rates / Macro',       trend:'→', momentum:'Neutral',   mColor:DIM,  conf:0.61 },
+    ],
+    keyDrivers: [
+      { label:'Narrative premium vs FCF',       delta:'Widening',                                          pos:false       },
+      { label:'Private deal flow velocity',     delta:'Elevated',                                          pos:true        },
+      { label:'Credit spread trajectory',       delta:'Watch zone',                                        pos:false       },
+      { label:'Capital deployed',               delta:capital ? `$${fmtN(capital)}` : 'Not set',           pos:capital != null },
+    ],
+    recommendedAction: `Identify 3 positions: one FCF-anchored (rotation beneficiary), one non-consensus (pre-crowd thesis), one optionality play (asymmetric upside). Build the watchlist before the environment forces the decision.`,
+    timeHorizon:  '3–18 months',
+    impactLevel:  'High',
+    bluf: capital
+      ? `$${fmtN(capital)} in elevated narrative premium environment. FCF-anchored assets and non-consensus positioning are the two highest-expected-value categories for the current setup.`
+      : `INVESTOR signal active. Elevated narrative premiums, early rotation signals. FCF-anchored + non-consensus positioning is the dominant expected-value frame.`,
+    purpose: `Investor-lens analysis for: "${shortQ}". Covers narrative/FCF gap, macro environment, and positioning framework.`,
+    fiveWs: [
+      { w:'WHO',   answer:`Investor operating in an elevated-narrative-premium environment with rotation risk forming.` },
+      { w:'WHAT',  answer:`Market environment assessment.${capital ? ` Capital: $${fmtN(capital)}.` : ''} Primary tension: narrative price vs cash-flow anchor.` },
+      { w:'WHEN',  answer:`Structural divergence environments resolve in 6–18 months. Pre-positioning before resolution is cheaper than reacting after.` },
+      { w:'WHERE', answer:`Highest risk: FCF-negative positions at elevated multiples. Highest opportunity: FCF-positive positions ignored by narrative capital.` },
+      { w:'WHY',   answer:`Capital allocation in elevated-premium environments is asymmetric: upside is narrative-dependent, downside is structural. Know which side you are on.` },
+    ],
+    evidence: [
+      `Narrative premium environments (> 25× revenue, negative FCF) have historically mean-reverted within 18 months of credit spread widening.`,
+      `Non-consensus positions with FCF support outperform consensus by avg 31% risk-adjusted in rotation years.`,
+      `Private deal flow velocity (EDGAR Form D) is a leading indicator of public market capital rotation — elevated private activity signals late-cycle risk.`,
+    ],
+    assumptions: [
+      `Investor has 3–18 month horizon and can absorb drawdowns during the saturation phase.`,
+      `Directional thesis based on fundamental analysis, not price momentum alone.`,
+    ],
+    assessment: `Current environment rewards two behaviors: (1) holding FCF-anchored assets that receive rotation capital, and (2) positioning non-consensus theses with defined duration before the crowd arrives. Narrative-following at this stage of the premium cycle carries the highest risk-adjusted cost.`,
+    threats: [
+      { label:'Narrative premium extension beyond model',  level:'HIGH',   color:LIME },
+      { label:'Forced exit before thesis resolution',      level:'MEDIUM', color:BLUE },
+      { label:'Concentration in correlated positions',     level:'MEDIUM', color:BLUE },
+      { label:'Liquidity crunch at rotation inflection',   level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`FCF-positive anchors: assets where real cash flow supports price without narrative premium.` },
+      { label:`Non-consensus watchlist: 5 positions where the thesis is correct but not yet consensus — pre-position.` },
+      { label:`Liquidity reserve: 10–15% cash to deploy at inflection is structurally more valuable than marginal exposure in crowded names.` },
+    ],
+    alternativeView: `Narrative-driven markets can sustain premiums longer than structural models predict. Passive flow dominance and zero-rate muscle memory may extend the current cycle.`,
+    outlook: [
+      { prob:0.58, label:`FCF-anchored + non-consensus positioning outperforms consensus by 25%+ over 18 months`,         color:LIME },
+      { prob:0.28, label:`Narrative cycle extends — non-consensus positions underperform short-term before resolution`,   color:BLUE },
+      { prob:0.14, label:`Regime shift — narrative premium structural, historical mean-reversion model does not apply`,  color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'BUILD FCF WATCHLIST',           impact:0.90, rationale:`Screen for 5 positions with positive trailing FCF and < 15× revenue multiple. These are your rotation beneficiaries. Build the list now so you can move quickly when capital rotates.`,                                 tag:'POSITIONING' },
+        { id:'a2', label:'AUDIT NARRATIVE EXPOSURE',      impact:0.84, rationale:`List every position with negative FCF or > 20× revenue multiple. This is your rotation risk inventory. Know the size before the environment forces you to.`,                                                          tag:'RISK'        },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'BUILD ONE NON-CONSENSUS TRADE', impact:0.80, rationale:`One thesis the crowd has not priced: (1) fundamentals support it, (2) not in mainstream coverage, (3) defined 12-month thesis duration. Enter before consensus — not after.`,                                          tag:'ALPHA'       },
+        { id:'b2', label:'SET LIQUIDITY BUFFER',          impact:0.73, rationale:`Reserve 10–15% of investable capital as a deployment buffer — not a bear call. The most powerful capital is available capital at the inflection.${capital ? ` Target: $${fmtN(capital * 0.12)}.` : ''}`,           tag:'LIQUIDITY'   },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'MAP THESIS DURATION',           impact:0.77, rationale:`For each position: "this thesis resolves by [date]." If not resolved by that date, re-evaluate from scratch. Time-boxing is the primary guard against sunk-cost rationalization.`,                                   tag:'DISCIPLINE'  },
+        { id:'c2', label:'TRACK CONSENSUS MIGRATION',     impact:0.64, rationale:`For non-consensus positions: when your thesis starts appearing in mainstream financial media, that is your exit signal — not validation. The non-consensus edge evaporates when the crowd arrives.`,                 tag:'SIGNAL'      },
+      ],
+    },
+    leverage: { typeY: 0, typeLabel: 'CODE', tierLabel, deRatio, permissionless: true, industryNorm: 0.3 },
+  };
+}
+
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
@@ -759,7 +1185,7 @@ const SYNTH_MAP = {
   CAREER:            synthCareer,
   RETIREMENT:        synthRetirement,
   EXPENSE_REDUCTION: synthExpenseReduction,
-  INVESTOR:          synthGeneral,
+  INVESTOR:          synthInvestor,
   HEALTH:            synthHealth,
   GENERAL:           synthGeneral,
 };
@@ -768,14 +1194,17 @@ const SYNTH_MAP = {
 
 import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
 import { detectProtectedDomain } from './ingress.js';
+import { classifyAmbiguity } from './domainambiguitygate.js';
 
 export function synthesizeQuery(session) {
   if (!session) return null;
-  const query        = session.query ?? '';
-  const numbers      = extractNumbers(query);
-  const domain       = detectDomain(query, session.lens);
-  const fn           = SYNTH_MAP[domain] ?? synthGeneral;
-  const result       = fn(session, numbers, query);
-  const contractLens = resolveContractLens(domain, session.lens);
-  return { ...result, queryDomain: domain, actions: applyEditorialGate(result.actions, contractLens) };
+  const query   = session.query ?? '';
+  const numbers = extractNumbers(query);
+  const vector  = detectDomain(query, session.lens);
+  // HOLD state falls back to synthGeneral — preserves UI stability in v1.
+  // v2 may surface a true "insufficient signal" state using vector.state.
+  const fn      = synthesizerFor(vector) ?? synthGeneral;
+  const result  = fn(session, numbers, query);
+  const contractLens = resolveContractLens(vector.primary, session.lens);
+  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens) };
 }
