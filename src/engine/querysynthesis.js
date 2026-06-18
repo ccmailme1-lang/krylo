@@ -164,6 +164,13 @@ function resolvePrimary(q, lens) {
   if (/kris.jenner|kardashian|\bskims\b|kylie.cosmetics|good.american|spin.?off.brand|family.brand|momager|brand.spin.?off|celebrity.brand.empire|cpg.empire/.test(q)) return 'BRAND_SPINOFF';
   if (/rich.paul|\bklutch\b|athlete.representation|cultural.enterprise|sports.agency.*media|influence.mapping|cultural.longevity/.test(q)) return 'CULTURAL_INFLUENCE';
   if (/\bthiel\b|zero.to.one|important.truth|founders.fund|\bpalantir\b|\banduril\b|cultural.resistance|contrarian.frontier/.test(q)) return 'CONTRARIAN_FRONTIER';
+  // ── Cohort gates (tech billionaire analysis 2026-06-18) ─────────────────────
+  if (/\btsmc\b|lithography|semiconductor fab|silicon yield|chip supply|sovereign chip|sovereign hardware|chip shortage|fab capacity|asml|node transition|\bnand\b|wafer|foundry|euvl|chip.?maker|chipmaker|chip manufacturing|hardware supply chain/.test(q)) return 'SOVEREIGN_HARDWARE';
+  if (/\bgpu\b|datacenter thermal|compute cluster|ai cluster|ai infrastructure|space logistics|satellite routing|sovereign airspace|vertical.*integrat|multi.planetary|industrial ai|blue origin|starlink|kuiper|industrial flywheel|rocket|launch window/.test(q)) return 'INDUSTRIAL_FLYWHEEL';
+  if (/social graph|attention retention|dau|mau|user acquisition velocity|viral coefficient|network effect|closed network|platform lifecycle|engagement loop|feed algorithm|social platform|zuckerberg|meta platform|tencent|wechat|snapchat|whatsapp growth/.test(q)) return 'SOCIAL_GRAPH';
+  if (/\bsequoia\b|\bkleiner\b|\ba16z\b|andreessen|crowded exit|vc rotation|anti.consensus thesis|private market liquidity|lp distribution|secondary market|venture inversion|fund rotation|vc thesis|portfolio exit|exit window|venture capital thesis/.test(q)) return 'VC_INVERSION';
+  if (/virtual economy|in.game economy|steam marketplace|digital asset marketplace|virtual currency|token velocity|cultural ip|ip franchise|game economy|virtual token|platform economics|gaming economy|virtual goods|digital goods market/.test(q)) return 'VIRTUAL_ECONOMY';
+  if (/gates foundation|bill gates philanthropy|philanthropic capital|global health funding|endowment deploy|foundation grant|impact capital|non.market intervention|charitable capital|global health initiative|malaria|polio|education reform.*capital|philanthropic deploy/.test(q)) return 'PHILANTHROPIC_CAPITAL';
   // Lens fallback
   if (lens === 'REALTOR')    return 'REAL_ESTATE';
   if (lens === 'RETIREMENT') return 'RETIREMENT';
@@ -182,6 +189,12 @@ function resolvePrimary(q, lens) {
 // resolutionEligible:  false on HOLD
 export function detectDomain(query, lens) {
   const q = (query ?? '').toLowerCase().replace(PROPER_NOUN_EXCLUSIONS, '');
+
+  // Philanthropic capital gate fires before protected entity gate — capital deployment
+  // queries referencing "global health" or "foundation" must not bleed into HEALTH domain.
+  if (/gates foundation|bill gates philanthropy|philanthropic capital|endowment deploy|foundation grant|impact capital|non.market intervention|charitable capital|global health initiative|philanthropic deploy|global health funding/.test(q)) {
+    return { primary: 'PHILANTHROPIC_CAPITAL', weights: { PHILANTHROPIC_CAPITAL: 1.0 }, state: 'HARD', entropy: 0, coActive: [], resolutionEligible: true };
+  }
 
   // Protected entity gate — medical/disability signals lock domain unconditionally.
   // Wrapped as synthetic HARD vector — compound condition cannot be contaminated.
@@ -1563,6 +1576,525 @@ function synthContrarianFrontier(session, numbers, query) {
 
 // ── Domain router ──────────────────────────────────────────────────────────────
 
+// ── WO-1811: Sovereign Hardware Frontier Synthesizer ─────────────────────────
+
+function synthSovereignHardware(session, numbers, query) {
+  const q = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const lithographyMoat =
+    /asml|euv|euvl|extreme ultraviolet|tsmc|3nm|2nm|angstrom|node transition/.test(q) ? 'CONTESTED' :
+    /china chip|export control|entity list|chip act|chips act|sanctions.*semi/.test(q)   ? 'SANCTIONED' :
+    'STABLE';
+
+  const supplyPressure =
+    /shortage|supply crunch|lead time|allocation|rationing|backlog|constrained/.test(q) ? 'HIGH' :
+    /easing|improving|recovery|normalizing/.test(q) ? 'LOW' : 'MODERATE';
+
+  const geoRisk =
+    /taiwan|china|prc|trade war|tariff|export ban|entity list|sanctions|restrict/.test(q) ? 'ELEVATED' :
+    /ally|friend.shore|reshoring|domestic fab|intel fab|arizona fab/.test(q) ? 'MITIGATING' : 'WATCH';
+
+  const isLithography = /asml|euv|lithography|node|fab|foundry|tsmc|samsung fab|intel fab|yield/.test(q);
+  const isSupplyChain  = /supply chain|shortage|allocation|lead time|chokepoint|trade barrier|tariff|export/.test(q);
+  const isSovereign    = /sovereign|chips act|reshoring|domestic.*fab|geopolit|friend.shore|national security.*chip/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isLithography) {
+    stateLabel     = `LITHOGRAPHY_MOAT_${lithographyMoat}`;
+    primaryInsight = lithographyMoat === 'CONTESTED'
+      ? 'Advanced lithography (sub-3nm) remains a 2-3 player global monopoly. ASML EUVL export restrictions are the structural chokepoint — whoever controls the machines controls the node transition timeline.'
+      : lithographyMoat === 'SANCTIONED'
+      ? 'Semiconductor export controls are active. Sanctioned entities face multi-year fab catch-up timelines. Sovereign hardware moat is widening for compliant foundries.'
+      : 'Lithography moat stable. No active restrictions detected. Monitor ASML allocation queue and TSMC capacity commitments.';
+  } else if (isSupplyChain) {
+    stateLabel     = `SUPPLY_PRESSURE_${supplyPressure}`;
+    primaryInsight = supplyPressure === 'HIGH'
+      ? 'Hardware supply constraint is active. Lead times are extending — this pressure propagates downstream to consumer electronics, automotive, and enterprise hardware within 6–18 months.'
+      : `Supply pressure: ${supplyPressure}. No acute shortage signal. Monitor fab capacity utilization and DRAM/NAND spot pricing as leading indicators.`;
+  } else if (isSovereign) {
+    stateLabel     = `SOVEREIGN_RESHORING_${geoRisk}`;
+    primaryInsight = geoRisk === 'ELEVATED'
+      ? 'Geopolitical hardware risk is elevated. Taiwan Strait exposure and export control escalation are compressing the window for offshore fab dependency. Reshoring premium is structural, not cyclical.'
+      : geoRisk === 'MITIGATING'
+      ? 'Sovereign reshoring signals active. Domestic fab investment is building but 5–7 year capex cycle means supply relief is not near-term. Structural gap persists.'
+      : 'Sovereign hardware risk at WATCH level. No acute geopolitical escalation. Monitor Taiwan Strait and China entity list additions.';
+  } else {
+    stateLabel     = 'SOVEREIGN_HARDWARE_SIGNAL_ACTIVE';
+    primaryInsight = `Hardware frontier signal: lithography moat ${lithographyMoat}, supply pressure ${supplyPressure}, geo risk ${geoRisk}. Downstream consumer impact: 6–18 month lag from fab constraint to retail price.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.6);
+  return {
+    stateLabel,
+    confidence:    geoRisk === 'ELEVATED' ? 0.88 : 0.74,
+    primaryInsight,
+    momentum:      supplyPressure === 'HIGH' ? 'tightening' : 'stable',
+    trajPoints:    [72, 68, 65],
+    attentionStack:['TECHNOLOGY','CAPITAL','OWNERSHIP'],
+    keyDrivers:    ['lithography_moat','supply_pressure','geo_risk','fab_capacity'],
+    recommendedAction: supplyPressure === 'HIGH'
+      ? 'Map your hardware dependency. Identify which components have single-source risk. Alternative supplier qualification now — not after the shortage hits your supply chain.'
+      : 'Monitor TSMC capacity utilization and ASML order book quarterly. Lead indicators move 12–18 months before consumer price impact.',
+    timeHorizon:   '12–36 months',
+    impactLevel:   geoRisk === 'ELEVATED' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Sovereign hardware: lithography ${lithographyMoat}, supply ${supplyPressure}, geo risk ${geoRisk}. Downstream consumer price impact follows fab constraint by 6–18 months.`,
+    purpose:       'Sovereign hardware frontier analysis',
+    fiveWs:        { who:'Semiconductor supply chain (TSMC, ASML, Samsung, Intel)', what:'Hardware production boundary and sovereign lithography moat', when:'Ongoing geopolitical realignment cycle', where:'Taiwan, South Korea, US domestic fab buildout', why:'Sovereign hardware independence = national security and consumer price stability' },
+    evidence:      [{ source:'TECHNOLOGY', finding:`Lithography moat: ${lithographyMoat}` }, { source:'CAPITAL', finding:`Supply pressure: ${supplyPressure}` }, { source:'OWNERSHIP', finding:`Geo risk: ${geoRisk}` }],
+    assumptions:   ['TSMC remains primary advanced node foundry', 'ASML retains EUVL monopoly', 'Export control regime remains active'],
+    assessment:    `Lithography moat ${lithographyMoat} — supply pressure ${supplyPressure} — geo risk ${geoRisk}. Every consumer electronics price and AI infrastructure timeline flows through this chokepoint.`,
+    threats:       [{ label:`Taiwan Strait escalation compresses reshoring timeline` }, { label:`ASML export ban expands — allied fab capacity gap widens` }],
+    opportunities: [{ label:'Chips Act beneficiaries: Intel Arizona, TSMC Phoenix, Samsung Taylor — domestic allocation premium' }, { label:`Friend-shore supply chains building — Malaysia, Japan, India expansion` }],
+    alternativeView:'China domestic semiconductor progress (SMIC, Huawei HiSilicon) may reduce sanctioned-entity lag faster than current export control models project.',
+    outlook: [
+      { prob:0.55, label:'Sovereign hardware moat holds — reshoring builds slowly, prices elevated 18–36mo', color:LIME },
+      { prob:0.29, label:'Geopolitical escalation — Taiwan Strait disruption triggers acute shortage', color:BLUE },
+      { prob:0.16, label:'Soft landing — supply normalizes, geo risk recedes, domestic fab absorbs demand', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'MAP HARDWARE DEPENDENCY', impact:0.91, rationale:'Which components in your stack have single-source fab risk? Identify now — lead times mean you have no options after the shortage begins.', tag:'RISK' }],
+      SHORT_TERM: [{ id:'b1', label:'MONITOR FAB UTILIZATION', impact:0.82, rationale:'TSMC utilization rate and ASML order book are the 12-month leading indicators. Both are public. Set quarterly checkpoints.', tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'QUALIFY ALTERNATIVE SOURCES', impact:0.76, rationale:'Second-source qualification for critical components takes 6–12 months minimum. Start before you need it.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.6, permissionless:false, industryNorm:0.5 },
+    lithography_moat:  lithographyMoat,
+    supply_pressure:   supplyPressure,
+    geo_risk:          geoRisk,
+  };
+}
+
+// ── WO-1808: Industrial Flywheel Synthesizer ──────────────────────────────────
+
+function synthIndustrialFlywheel(session, numbers, query) {
+  const q = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const infraDomain =
+    /satellite|starlink|kuiper|blue origin|spacex|launch|orbital|airspace|regulatory.*space|faa.*space/.test(q) ? 'SPACE' :
+    /gpu|datacenter|compute|thermal|cooling|ai cluster|h100|b200|nvlink|inference|training cluster/.test(q)     ? 'COMPUTE' :
+    /supply chain|logistics|automation|fulfillment|warehouse|last mile|industrial ai|amazon.*warehouse/.test(q)  ? 'LOGISTICS' :
+    'GENERAL';
+
+  const flywheelVelocity =
+    /accelerating|scaling|expanding|new region|capacity addition|orders|backlog|demand exceeds/.test(q) ? 'ACCELERATING' :
+    /slowing|constrained|bottleneck|delayed|regulatory hold|permit|approval pending/.test(q)             ? 'CONSTRAINED' : 'BUILDING';
+
+  const sovereignFriction =
+    /faa|regulatory|airspace|export|clearance|permit|national security review|cfius|spectrum|launch license/.test(q) ? 'HIGH' :
+    /approved|cleared|licensed|permitted/.test(q) ? 'LOW' : 'MODERATE';
+
+  const isSpace   = infraDomain === 'SPACE';
+  const isCompute = infraDomain === 'COMPUTE';
+  const isLogist  = infraDomain === 'LOGISTICS';
+
+  let stateLabel, primaryInsight;
+  if (isSpace) {
+    stateLabel     = sovereignFriction === 'HIGH' ? 'SOVEREIGN_AIRSPACE_FRICTION' : `SPACE_INFRASTRUCTURE_${flywheelVelocity}`;
+    primaryInsight = sovereignFriction === 'HIGH'
+      ? 'Regulatory friction is the primary constraint on space infrastructure deployment. FAA launch licensing and spectrum allocation are sovereign chokepoints — physical build capacity is not the bottleneck.'
+      : `Space infrastructure flywheel: ${flywheelVelocity}. Satellite constellation deployment velocity drives downstream connectivity economics — internet latency, IoT density, autonomous vehicle infrastructure.`;
+  } else if (isCompute) {
+    stateLabel     = `COMPUTE_INFRASTRUCTURE_${flywheelVelocity}`;
+    primaryInsight = flywheelVelocity === 'CONSTRAINED'
+      ? 'Compute infrastructure is bottlenecked. Thermal dissipation and power density constraints inside datacenter fabrics are the physical ceiling — not software or algorithm limitations. Cooling architecture is the untracked variable.'
+      : `AI compute flywheel ${flywheelVelocity}. GPU cluster expansion is the demand signal — hyperscaler capex commitments lead inference pricing by 18–24 months. Monitor NVIDIA allocation queue and power purchase agreements.`;
+  } else if (isLogist) {
+    stateLabel     = `LOGISTICS_FLYWHEEL_${flywheelVelocity}`;
+    primaryInsight = `Industrial logistics flywheel: ${flywheelVelocity}. Automation density in fulfillment centers is the margin variable — each robotics integration cycle compresses last-mile cost by 15–25%. AI route optimization is the next compression layer.`;
+  } else {
+    stateLabel     = 'INDUSTRIAL_FLYWHEEL_SIGNAL_ACTIVE';
+    primaryInsight = `Industrial frontier signal active. Domain: ${infraDomain}. Flywheel velocity: ${flywheelVelocity}. Sovereign friction: ${sovereignFriction}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.8);
+  return {
+    stateLabel,
+    confidence:    flywheelVelocity === 'ACCELERATING' ? 0.86 : 0.72,
+    primaryInsight,
+    momentum:      flywheelVelocity === 'ACCELERATING' ? 'accelerating' : flywheelVelocity === 'CONSTRAINED' ? 'stalled' : 'building',
+    trajPoints:    [78, 74, 71],
+    attentionStack:['TECHNOLOGY','CAPITAL','LABOR'],
+    keyDrivers:    ['infra_domain','flywheel_velocity','sovereign_friction'],
+    recommendedAction: sovereignFriction === 'HIGH'
+      ? 'Regulatory timeline is the critical path. Map the approval sequence — FAA, FCC, CFIUS — and model the delay cost. Physical infrastructure is ready; the constraint is institutional.'
+      : `Monitor ${infraDomain === 'COMPUTE' ? 'hyperscaler capex commitments and power purchase agreements' : infraDomain === 'SPACE' ? 'launch manifest and spectrum allocation filings' : 'robotics adoption rate and fulfillment automation capex'} as leading indicators.`,
+    timeHorizon:   '18–48 months',
+    impactLevel:   sovereignFriction === 'HIGH' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Industrial flywheel — domain: ${infraDomain}, velocity: ${flywheelVelocity}, sovereign friction: ${sovereignFriction}.`,
+    purpose:       'Industrial frontier infrastructure synthesis',
+    fiveWs:        { who:'Musk (SpaceX/Tesla), Huang (Nvidia), Bezos (Amazon/Blue Origin)', what:'Physical infrastructure flywheel at sovereign scale', when:'Active build cycle', where:'Space, datacenter, logistics', why:'Physical infrastructure precedence determines AI and connectivity economics for next decade' },
+    evidence:      [{ source:'TECHNOLOGY', finding:`Infrastructure domain: ${infraDomain}` }, { source:'CAPITAL', finding:`Flywheel velocity: ${flywheelVelocity}` }],
+    assumptions:   ['Physical infrastructure is the rate-limiting layer for AI and connectivity', 'Sovereign regulatory friction is persistent, not transient'],
+    assessment:    `${infraDomain} infrastructure flywheel ${flywheelVelocity} — sovereign friction ${sovereignFriction}. Physical build capacity ≠ deployment velocity when regulatory clearance is the bottleneck.`,
+    threats:       [{ label:`Sovereign friction: regulatory clearance is the critical path, not engineering` }, { label:`Thermal/power density limits compute expansion in existing datacenter footprint` }],
+    opportunities: [{ label:`${infraDomain === 'COMPUTE' ? 'Next-gen cooling architecture unlocks compute density premium' : infraDomain === 'SPACE' ? 'Constellation density drives connectivity economics for underserved markets' : 'Robotics density compounds margin — first-mover lock-in is durable'}` }],
+    alternativeView:'Sovereign regulatory friction may be temporary — first-mover infrastructure advantages are permanent once deployed.',
+    outlook: [
+      { prob:0.52, label:`Flywheel ${flywheelVelocity === 'ACCELERATING' ? 'sustains' : 'builds'} — infrastructure deployment leads economics by 18–24mo`, color:LIME },
+      { prob:0.31, label:'Sovereign friction extends — regulatory clearance delays compress deployment window', color:BLUE },
+      { prob:0.17, label:'Physical constraint (thermal/power/spectrum) caps flywheel before economic model closes', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:`TRACK ${infraDomain} LEADING INDICATORS`, impact:0.88, rationale:`${infraDomain === 'COMPUTE' ? 'GPU allocation queue and PPA signings move 18mo before inference pricing.' : infraDomain === 'SPACE' ? 'Launch manifest and spectrum filings are public — track monthly.' : 'Robotics capex announcements lead fulfillment automation by 12–18mo.'}`, tag:'SIGNAL' }],
+      SHORT_TERM: [{ id:'b1', label:'MAP REGULATORY CRITICAL PATH', impact:0.80, rationale:'Identify the longest-pole regulatory approval in your domain. That timeline IS the deployment timeline.', tag:'RISK' }],
+      STRUCTURAL: [{ id:'c1', label:'POSITION ON INFRASTRUCTURE PRECEDENCE', impact:0.74, rationale:'The entity that owns the infrastructure layer sets the economics for everyone above it. Precedence in physical infrastructure is durable.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.8, permissionless:false, industryNorm:0.6 },
+    infra_domain:       infraDomain,
+    flywheel_velocity:  flywheelVelocity,
+    sovereign_friction: sovereignFriction,
+  };
+}
+
+// ── WO-1810: Social Graph Attention Synthesizer ───────────────────────────────
+
+function synthSocialGraph(session, numbers, query) {
+  const q = query.toLowerCase();
+
+  const platformPhase =
+    /losing users|declining|exodus|death spiral|losing relevance|peak.*platform|users leaving/.test(q) ? 'DECLINE' :
+    /growing|expanding|new users|acquisition surge|viral growth|breakout/.test(q)                       ? 'GROWTH'  :
+    /mature|stable|plateau|flat growth|monetizing/.test(q)                                              ? 'MATURE'  : 'GROWTH';
+
+  const retentionSignal =
+    /algorithm change|feed change|engagement drop|session length|time on platform|dau drop/.test(q) ? 'DEGRADING' :
+    /sticky|habit|daily active|strong retention|engagement up/.test(q)                              ? 'STRONG'   : 'STABLE';
+
+  const sovereignRisk =
+    /ban|block|tiktok|sovereign|government.*restrict|data sovereignty|privacy law|gdpr|india.*ban|brazil.*ban|regulation/.test(q) ? 'ELEVATED' :
+    /compliant|approved|cleared|data local/.test(q) ? 'LOW' : 'WATCH';
+
+  const isAttention = /attention|retention|engagement|session|dau|mau|time on|habit loop|feed/.test(q);
+  const isNetwork   = /network effect|viral|acquisition|growth|user base|moat|switching cost/.test(q);
+  const isSovereign = /ban|sovereign|privacy|gdpr|regulation|government|data local|restrict/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isSovereign) {
+    stateLabel     = `SOVEREIGN_PRIVACY_RISK_${sovereignRisk}`;
+    primaryInsight = sovereignRisk === 'ELEVATED'
+      ? 'Sovereign privacy friction is active. Closed network data sovereignty requirements are compressing the addressable market. Government-mandated data localization or platform bans structurally separate user graphs.'
+      : 'Sovereign risk at WATCH. Monitor data localization legislation pipeline — the TikTok precedent has established a template for platform bans that other governments are actively studying.';
+  } else if (isAttention) {
+    stateLabel     = `ATTENTION_RETENTION_${retentionSignal}`;
+    primaryInsight = retentionSignal === 'DEGRADING'
+      ? 'Attention retention is degrading. Algorithm changes or competing platforms are compressing session depth. This is the earliest signal of platform lifecycle transition — DAU/MAU ratio moves before revenue.'
+      : `Attention signal: ${retentionSignal}. ${platformPhase === 'MATURE' ? 'Platform is in monetization phase — retention is stable but growth is priced in. Watch for engagement-monetization tradeoff compression.' : 'Retention holding. Monitor session length and DAU/MAU ratio for early degradation signal.'}`;
+  } else if (isNetwork) {
+    stateLabel     = `NETWORK_EFFECT_${platformPhase}`;
+    primaryInsight = platformPhase === 'DECLINE'
+      ? 'Network effect is reversing. Once user loss begins in a social graph, the exit velocity accelerates — the same mechanism that built the moat now accelerates the unwind. The inflection is non-linear.'
+      : `Network effect in ${platformPhase} phase. ${platformPhase === 'GROWTH' ? 'Viral coefficient is the primary metric — measure new-user-to-referral conversion rate. That ratio is the growth moat.' : 'Moat is durable but monetization pressure is the risk — ad load increases compress engagement.'}`;
+  } else {
+    stateLabel     = 'SOCIAL_GRAPH_SIGNAL_ACTIVE';
+    primaryInsight = `Social graph signal: platform phase ${platformPhase}, retention ${retentionSignal}, sovereign risk ${sovereignRisk}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.3);
+  return {
+    stateLabel,
+    confidence:    sovereignRisk === 'ELEVATED' ? 0.84 : 0.76,
+    primaryInsight,
+    momentum:      platformPhase === 'GROWTH' ? 'accelerating' : platformPhase === 'DECLINE' ? 'decelerating' : 'stable',
+    trajPoints:    [76, 73, 70],
+    attentionStack:['MEDIA','TECHNOLOGY','CAPITAL'],
+    keyDrivers:    ['platform_phase','retention_signal','sovereign_risk','network_effect'],
+    recommendedAction: sovereignRisk === 'ELEVATED'
+      ? 'Audit your platform exposure. If your audience or business is concentrated on a platform with sovereign risk, begin distribution diversification now — before a ban compresses your timeline to zero.'
+      : platformPhase === 'DECLINE'
+      ? 'Platform exit signal active. Audience migration to challenger platforms is non-linear — early movers retain audience relationships that late movers lose permanently.'
+      : 'Monitor DAU/MAU ratio and session length monthly. These move 6–9 months before revenue impact.',
+    timeHorizon:   '6–24 months',
+    impactLevel:   sovereignRisk === 'ELEVATED' || platformPhase === 'DECLINE' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Social graph — platform ${platformPhase}, retention ${retentionSignal}, sovereign risk ${sovereignRisk}. DAU/MAU and session depth are the 6-month leading indicators.`,
+    purpose:       'Social graph attention synthesis',
+    fiveWs:        { who:'Platform operators, content creators, advertisers, small businesses', what:'Attention retention and platform lifecycle dynamics', when:'Active platform lifecycle phase', where:'Meta, Tencent, Snap, WhatsApp ecosystem', why:'Platform lifecycle determines ad cost, audience reach, and distribution economics for downstream users' },
+    evidence:      [{ source:'MEDIA', finding:`Platform phase: ${platformPhase}` }, { source:'TECHNOLOGY', finding:`Retention signal: ${retentionSignal}` }, { source:'CAPITAL', finding:`Sovereign risk: ${sovereignRisk}` }],
+    assumptions:   ['Network effects are the primary moat', 'Sovereign privacy regulation follows TikTok precedent', 'Algorithm changes are the earliest retention signal'],
+    assessment:    `Platform ${platformPhase} — retention ${retentionSignal} — sovereign risk ${sovereignRisk}. The attention economy is a winner-take-most market; lifecycle transitions are non-linear.`,
+    threats:       [{ label:`Sovereign ban risk: ${sovereignRisk} — closed-network data localization compresses market` }, { label:`Retention degradation signals platform lifecycle transition` }],
+    opportunities: [{ label:'Platform transition creates audience migration window — early movers capture displaced users' }, { label:'Sovereign friction on incumbents creates challenger platform openings' }],
+    alternativeView:'Closed-network sovereign privacy requirements may entrench regional platforms rather than fracturing global ones — localization as moat.',
+    outlook: [
+      { prob:0.53, label:`Platform ${platformPhase} continues — attention moat holds through monetization cycle`, color:LIME },
+      { prob:0.30, label:'Sovereign friction escalates — data localization or ban compresses addressable market', color:BLUE },
+      { prob:0.17, label:'Retention inflection — algorithm-driven engagement decline triggers non-linear exit', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'AUDIT PLATFORM CONCENTRATION', impact:0.89, rationale:'What % of your audience/revenue depends on a single platform? If >60%, sovereign or lifecycle risk is an unhedged single point of failure.', tag:'RISK' }],
+      SHORT_TERM: [{ id:'b1', label:'TRACK DAU/MAU RATIO', impact:0.81, rationale:'The ratio of daily to monthly actives is the earliest engagement signal — it moves 6–9 months before revenue. Public for listed platforms; proxy via engagement metrics for private ones.', tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'BUILD DISTRIBUTION REDUNDANCY', impact:0.73, rationale:'Email list, owned community, multi-platform presence. The goal is not to predict which platform wins — it is to not need to.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:1, typeLabel:'MEDIA', tierLabel, deRatio:0.3, permissionless:true, industryNorm:0.35 },
+    platform_phase:   platformPhase,
+    retention_signal: retentionSignal,
+    sovereign_risk:   sovereignRisk,
+  };
+}
+
+// ── WO-1809: VC Inversion Protocol ────────────────────────────────────────────
+
+function synthVCInversion(session, numbers, query) {
+  const q = query.toLowerCase();
+
+  const crowdingLevel =
+    /crowded|overvalued|everyone is in|consensus bet|popular trade|consensus.*long|priced in|crowded trade/.test(q) ? 'HIGH' :
+    /contrarian|nobody sees|early|pre.crowd|undiscovered|unrecognized/.test(q) ? 'LOW' : 'MODERATE';
+
+  const exitSignal =
+    /exit|ipo|spac|secondary|distribution|lp.*return|fund.*return|liquidity event|lock.?up/.test(q) ? 'ACTIVE' :
+    /extension|delay|hold|no exit|deferral|continuation fund/.test(q) ? 'DEFERRED' : 'BUILDING';
+
+  const thesisState =
+    /thesis.*broken|wrong|failed|didn't work|pivot|write.?down|down round/.test(q) ? 'INVALIDATED' :
+    /thesis.*intact|compounding|working|on track|validating/.test(q)               ? 'INTACT' : 'TESTING';
+
+  const isInversion   = /crowded|rotation|exit.*wave|everyone.*in|consensus.*long|smart money.*leaving/.test(q);
+  const isAntiConsens = /anti.consensus|nobody sees|contrarian.*vc|pre.crowd|undiscovered thesis|wrong frame/.test(q);
+  const isLiquidity   = /ipo|exit|secondary|distribution|spac|lp.*capital|liquidity|lock.?up|portfolio.*exit/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isInversion) {
+    stateLabel     = `CROWDED_TRADE_${crowdingLevel}`;
+    primaryInsight = crowdingLevel === 'HIGH'
+      ? 'VC crowding signal: HIGH. Smart money consensus has formed — the thesis is priced in and late-stage multiple compression is the primary risk. The exit window for early positions is narrowing as crowding peaks.'
+      : `Crowding at ${crowdingLevel}. The non-consensus window is still open — thesis has not yet attracted consensus capital. This is the Doerr entry zone: before the crowd validates, after the signal has formed.`;
+  } else if (isAntiConsens) {
+    stateLabel     = `ANTI_CONSENSUS_THESIS_${thesisState}`;
+    primaryInsight = thesisState === 'INTACT'
+      ? 'Anti-consensus thesis is intact and still non-consensus. The structural divergence between smart money positioning and mainstream narrative is the alpha window. Track the gap closure rate — when the gap closes, so does the edge.'
+      : thesisState === 'INVALIDATED'
+      ? 'Thesis invalidated. Anti-consensus position has resolved — not by the crowd arriving but by the thesis breaking. Mark and exit. Capital redeployment to the next non-consensus setup.'
+      : 'Thesis in testing phase. Early signals present but not yet sufficient for conviction. Monitor for 2–3 confirming data points before scaling position.';
+  } else if (isLiquidity) {
+    stateLabel     = `PRIVATE_MARKET_LIQUIDITY_${exitSignal}`;
+    primaryInsight = exitSignal === 'ACTIVE'
+      ? 'Exit liquidity window is active. IPO/secondary market conditions are supporting distributions. LP capital is returning — this creates reinvestment pressure and the next fund cycle begins. Watch for crowding in the follow-on vintage.'
+      : exitSignal === 'DEFERRED'
+      ? 'Exit window deferred. Continuation funds and secondary sales are the pressure valve. Private market illiquidity premium is compressing for extended hold assets — LP distribution expectations are unmet.'
+      : 'Exit pipeline building. Monitor IPO filing cadence and secondary market bid/ask spreads for private late-stage — these are the 6-month leading indicators for distribution activity.';
+  } else {
+    stateLabel     = 'VC_INVERSION_SIGNAL_ACTIVE';
+    primaryInsight = `VC inversion signal: crowding ${crowdingLevel}, exit ${exitSignal}, thesis ${thesisState}. The edge in private markets is thesis conviction before consensus — and exit discipline before crowding peaks.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.5);
+  return {
+    stateLabel,
+    confidence:    crowdingLevel === 'HIGH' ? 0.83 : 0.71,
+    primaryInsight,
+    momentum:      exitSignal === 'ACTIVE' ? 'resolving' : crowdingLevel === 'HIGH' ? 'peaking' : 'building',
+    trajPoints:    [74, 70, 67],
+    attentionStack:['CAPITAL','OWNERSHIP','KNOWLEDGE'],
+    keyDrivers:    ['crowding_level','exit_signal','thesis_state','consensus_gap'],
+    recommendedAction: crowdingLevel === 'HIGH'
+      ? 'Crowding peak is the exit signal, not the entry. Map your position in the consensus adoption curve. If mainstream financial media is covering your thesis, you are late — not early.'
+      : exitSignal === 'DEFERRED'
+      ? 'Deferred exits create secondary market opportunities. Identify LP sellers in quality portfolios at illiquidity discount — the secondary bid is the contrarian entry.'
+      : 'Define your thesis in one sentence. If you cannot state the non-consensus element clearly, the edge is not yet formed. Clarity precedes conviction.',
+    timeHorizon:   '12–36 months',
+    impactLevel:   crowdingLevel === 'HIGH' || exitSignal === 'DEFERRED' ? 'HIGH' : 'MEDIUM',
+    bluf:          `VC inversion: crowding ${crowdingLevel}, exit ${exitSignal}, thesis ${thesisState}. Consensus arrival is the exit signal — not the validation.`,
+    purpose:       'VC inversion protocol — private market thesis and exit timing',
+    fiveWs:        { who:'VC funds, LP investors, founders in VC-backed companies, secondary market participants', what:'Consensus formation and exit timing in private markets', when:'Active fund cycle', where:'Venture capital, growth equity, private secondaries', why:'The edge in private markets is pre-consensus positioning and disciplined exit before crowding peaks' },
+    evidence:      [{ source:'CAPITAL', finding:`Crowding level: ${crowdingLevel}` }, { source:'OWNERSHIP', finding:`Exit signal: ${exitSignal}` }, { source:'KNOWLEDGE', finding:`Thesis state: ${thesisState}` }],
+    assumptions:   ['Private market consensus follows public market narrative by 6–12 months', 'Exit windows are cyclical and crowd-dependent', 'Anti-consensus thesis has a defined resolution horizon'],
+    assessment:    `Crowding ${crowdingLevel} — exit ${exitSignal} — thesis ${thesisState}. The VC edge evaporates at consensus. Entry discipline and exit discipline are the same variable.`,
+    threats:       [{ label:`Crowding peak compresses multiples before exit window opens` }, { label:`Extended hold periods compress IRR below LP hurdle rate` }],
+    opportunities: [{ label:'Pre-consensus positioning before Sequoia/Kleiner lead rounds establish price' }, { label:'Secondary market illiquidity discount on deferred-exit portfolios' }],
+    alternativeView:'Consensus capital in VC is self-fulfilling at early stages — Sequoia/a16z co-investment is itself a market signal that validates thesis, not dilutes edge.',
+    outlook: [
+      { prob:0.50, label:'Non-consensus thesis validates — crowd arrives, exit window opens at multiple peak', color:LIME },
+      { prob:0.32, label:'Thesis in testing phase — additional validation cycles before consensus capital arrives', color:BLUE },
+      { prob:0.18, label:'Thesis invalidated or crowding peaks before exit — multiple compression on the way out', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'WRITE THE THESIS IN ONE SENTENCE', impact:0.90, rationale:'If you cannot state the non-consensus element in one sentence, the edge is not formed. Formation precedes capital allocation.', tag:'DISCIPLINE' }],
+      SHORT_TERM: [{ id:'b1', label:'TRACK CONSENSUS GAP CLOSURE', impact:0.82, rationale:'Monitor mainstream financial media coverage of your thesis. The moment it appears in FT/WSJ/Bloomberg as "hot sector," the consensus gap is closing. That is your exit timeline, not entry.', tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'MAP EXIT WINDOW AGAINST CROWDING CYCLE', impact:0.75, rationale:'The exit window peaks 6–18 months after consensus capital floods in. Model the crowding curve to set your distribution timeline — not based on fund life, but on market structure.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:0, typeLabel:'CODE', tierLabel, deRatio:0.5, permissionless:false, industryNorm:0.4 },
+    crowding_level: crowdingLevel,
+    exit_signal:    exitSignal,
+    thesis_state:   thesisState,
+  };
+}
+
+// ── WO-1807: Virtual Economy Synthesizer ─────────────────────────────────────
+
+function synthVirtualEconomy(session, numbers, query) {
+  const q = query.toLowerCase();
+
+  const tokenVelocity =
+    /high volume|active trading|rapid exchange|liquid|high velocity|active marketplace/.test(q) ? 'HIGH' :
+    /stagnant|low volume|illiquid|nobody trading|dead marketplace/.test(q)                       ? 'LOW' : 'MODERATE';
+
+  const ipLifecycle =
+    /declining|aging ip|losing relevance|fading franchise|sequel fatigue|oversaturated/.test(q) ? 'DECLINING' :
+    /new release|fresh ip|breakout|launch|expansion|new franchise/.test(q)                       ? 'EXPANDING' : 'MATURE';
+
+  const currencyRisk =
+    /inflation|devaluation|hyperinflation|gold farming|bot|exploit|currency dupe|economic exploit/.test(q) ? 'HIGH' :
+    /stable|balanced|healthy economy|controlled inflation/.test(q) ? 'LOW' : 'MODERATE';
+
+  const isVelocity = /velocity|trading|volume|exchange|marketplace|liquidity|token/.test(q);
+  const isIP       = /ip|franchise|cultural|licensing|sequel|expansion|brand|content/.test(q);
+  const isCurrency = /currency|inflation|exploit|bot|gold farm|devaluation|economy balance/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isCurrency) {
+    stateLabel     = `VIRTUAL_CURRENCY_RISK_${currencyRisk}`;
+    primaryInsight = currencyRisk === 'HIGH'
+      ? 'Virtual economy currency instability detected. Hyperinflation or exploit-driven supply shock destroys player trust faster than any gameplay failure. Currency health is the foundation of virtual economy durability.'
+      : `Currency risk: ${currencyRisk}. Virtual economy stability requires controlled inflation mechanics — too tight kills engagement, too loose breaks the marketplace. Monitor supply/demand balance at item-tier level.`;
+  } else if (isIP) {
+    stateLabel     = `CULTURAL_IP_${ipLifecycle}`;
+    primaryInsight = ipLifecycle === 'DECLINING'
+      ? 'Cultural IP is in decline phase. Franchise fatigue is compressing new-player acquisition — existing players monetize at lower lifetime value when the IP loses cultural relevance. The window for IP extension is closing.'
+      : ipLifecycle === 'EXPANDING'
+      ? 'IP expansion phase active. New franchise launches or sequels drive user acquisition spikes that compress CAC temporarily. Monetization architecture during expansion determines long-tail LTV.'
+      : 'IP in mature phase. Cultural relevance is stable but not growing. The moat is existing player base and switching cost — monitor churn rate and competitive title launches.';
+  } else if (isVelocity) {
+    stateLabel     = `TOKEN_VELOCITY_${tokenVelocity}`;
+    primaryInsight = tokenVelocity === 'HIGH'
+      ? 'Virtual economy token velocity is high — active marketplace signals healthy player engagement and item demand. High velocity is a leading indicator of platform stickiness.'
+      : tokenVelocity === 'LOW'
+      ? 'Token velocity is low — marketplace illiquidity signals disengagement or currency oversupply. Low velocity precedes player churn by 2–4 months. Examine supply mechanics and drop rate.'
+      : 'Token velocity moderate. Virtual economy is functional. Watch for velocity compression as the primary churn leading indicator.';
+  } else {
+    stateLabel     = 'VIRTUAL_ECONOMY_SIGNAL_ACTIVE';
+    primaryInsight = `Virtual economy signal: token velocity ${tokenVelocity}, IP lifecycle ${ipLifecycle}, currency risk ${currencyRisk}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.2);
+  return {
+    stateLabel,
+    confidence:    tokenVelocity === 'HIGH' && ipLifecycle !== 'DECLINING' ? 0.80 : 0.68,
+    primaryInsight,
+    momentum:      ipLifecycle === 'EXPANDING' ? 'accelerating' : ipLifecycle === 'DECLINING' ? 'decelerating' : 'stable',
+    trajPoints:    [70, 67, 64],
+    attentionStack:['MEDIA','TECHNOLOGY','CAPITAL'],
+    keyDrivers:    ['token_velocity','ip_lifecycle','currency_risk','marketplace_health'],
+    recommendedAction: currencyRisk === 'HIGH'
+      ? 'Virtual economy stability is the product. Audit supply mechanics and exploit vectors immediately — player trust in the economy is harder to rebuild than any feature.'
+      : ipLifecycle === 'DECLINING'
+      ? 'IP extension or sequel announcement is the only lever for declining cultural relevance. The window for reactivation narrows with each quarter of decline.'
+      : 'Track token velocity and marketplace activity monthly. Low velocity precedes player churn by 2–4 months — the earliest warning in a virtual economy.',
+    timeHorizon:   '3–18 months',
+    impactLevel:   currencyRisk === 'HIGH' || ipLifecycle === 'DECLINING' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Virtual economy: token velocity ${tokenVelocity}, IP ${ipLifecycle}, currency risk ${currencyRisk}. Low marketplace velocity precedes churn by 2–4 months.`,
+    purpose:       'Virtual economy synthesis — gaming platform and digital marketplace dynamics',
+    fiveWs:        { who:'Game developers, platform operators, content creators in gaming, virtual marketplace participants', what:'Virtual economy token velocity, IP lifecycle, and currency stability', when:'Active platform lifecycle', where:'Steam, Tencent Games, NetEase, Nexon, Smilegate platforms', why:'Virtual economy health determines player retention, LTV, and platform durability' },
+    evidence:      [{ source:'MEDIA', finding:`IP lifecycle: ${ipLifecycle}` }, { source:'TECHNOLOGY', finding:`Token velocity: ${tokenVelocity}` }, { source:'CAPITAL', finding:`Currency risk: ${currencyRisk}` }],
+    assumptions:   ['Virtual economy health is the primary retention driver', 'IP cultural relevance drives new-player acquisition', 'Token velocity is the earliest churn signal'],
+    assessment:    `Token velocity ${tokenVelocity} — IP ${ipLifecycle} — currency risk ${currencyRisk}. Virtual economy durability = currency stability × IP relevance × marketplace liquidity.`,
+    threats:       [{ label:`Currency exploit or hyperinflation destroys marketplace trust` }, { label:`IP franchise fatigue compresses new-player acquisition — churn accelerates` }],
+    opportunities: [{ label:'New franchise launch creates user acquisition spike with compressed CAC' }, { label:'Cross-platform asset portability opens new marketplace liquidity pools' }],
+    alternativeView:'Virtual economies with strong player-driven market dynamics (EVE Online model) may be more resilient to developer missteps than developer-controlled economies.',
+    outlook: [
+      { prob:0.51, label:'Virtual economy stable — token velocity holds, IP relevance maintained', color:LIME },
+      { prob:0.30, label:'IP fatigue or velocity compression — churn begins before developer response', color:BLUE },
+      { prob:0.19, label:'Currency instability or exploit — economy requires reset, player trust damaged', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'MEASURE TOKEN VELOCITY', impact:0.87, rationale:'Marketplace transaction volume per active player per week. If this number is declining, you are 2–4 months from visible churn.', tag:'SIGNAL' }],
+      SHORT_TERM: [{ id:'b1', label:'AUDIT SUPPLY MECHANICS', impact:0.79, rationale:'Every virtual economy dies from supply-side failures first. Map your drop rates, crafting recipes, and sink mechanics. Is the economy balanced or accumulating?', tag:'RISK' }],
+      STRUCTURAL: [{ id:'c1', label:'IP EXTENSION PIPELINE', impact:0.71, rationale:'Cultural IP has a lifecycle. What is the next expansion, sequel, or crossover that reactivates the franchise? Plan 18–24 months out — development cycles do not allow reactive IP management.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:1, typeLabel:'MEDIA', tierLabel, deRatio:0.2, permissionless:true, industryNorm:0.3 },
+    token_velocity: tokenVelocity,
+    ip_lifecycle:   ipLifecycle,
+    currency_risk:  currencyRisk,
+  };
+}
+
+// ── WO-1806: Philanthropic Capital Router ─────────────────────────────────────
+
+function synthPhilanthropicCapital(session, numbers, query) {
+  const q = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const deploymentScale =
+    /billion|endowment|large.*grant|major.*foundation|institutional.*philanthropy|9.*figure|10.*figure/.test(q) ? 'INSTITUTIONAL' :
+    /million|mid.size|regional foundation|family foundation/.test(q)                                             ? 'MEDIUM' : 'SMALL';
+
+  const interventionType =
+    /global health|malaria|polio|vaccine|hiv|tuberculosis|infectious disease/.test(q)              ? 'GLOBAL_HEALTH' :
+    /education|school|college access|learning|curriculum|teacher|literacy/.test(q)                  ? 'EDUCATION' :
+    /climate|clean energy|carbon|emission|environment/.test(q)                                       ? 'CLIMATE' :
+    /poverty|economic mobility|income|housing|food security/.test(q)                                 ? 'ECONOMIC_MOBILITY' : 'GENERAL';
+
+  const grantCyclePhase =
+    /rfp|application|open.*grant|accepting proposals|deadline|submission/.test(q) ? 'OPEN' :
+    /closed|awarded|distributed|funded/.test(q)                                   ? 'AWARDED' : 'BUILDING';
+
+  const isCapitalDeploy = /capital deploy|how to access|funding.*available|grant.*window|endowment.*cycle/.test(q);
+  const isStructural    = /structural.*change|system.*change|policy|advocacy|systemic|root cause/.test(q);
+  const isPhilanthropic = /foundation|philanthropy|philanthropic|gates|charitable|impact/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isCapitalDeploy) {
+    stateLabel     = `GRANT_CYCLE_${grantCyclePhase}`;
+    primaryInsight = grantCyclePhase === 'OPEN'
+      ? `Grant cycle is open for ${interventionType.replace(/_/g,' ')} interventions. Non-market capital deployment window is active. Institutional philanthropies operate on 12–24 month grant cycles — positioning requires thesis alignment before the cycle opens.`
+      : grantCyclePhase === 'AWARDED'
+      ? 'Current grant cycle is closed. Next cycle positioning begins now — foundation priorities shift slowly but announcement cadence is predictable. Align thesis to stated strategic priorities before the next RFP opens.'
+      : `Grant cycle building. ${deploymentScale} scale philanthropy typically publishes priorities 6–12 months before RFP. Monitor foundation annual reports and strategic initiative announcements.`;
+  } else if (isStructural) {
+    stateLabel     = 'NON_MARKET_STRUCTURAL_INTERVENTION';
+    primaryInsight = `Structural intervention signal: ${interventionType.replace(/_/g,' ')}. Non-market capital operates on different time horizons than market capital — 10–20 year commitment windows are standard. The leverage is policy change and institutional capacity building, not financial return.`;
+  } else if (isPhilanthropic) {
+    stateLabel     = `PHILANTHROPIC_CAPITAL_${deploymentScale}`;
+    primaryInsight = deploymentScale === 'INSTITUTIONAL'
+      ? `Institutional philanthropy signal (${interventionType.replace(/_/g,' ')}). Gates Foundation model: concentrated bets at scale, outcome-driven, operational involvement in grantee execution. Not a passive check — a strategic co-investor in systems change.`
+      : `${deploymentScale} scale philanthropic capital in ${interventionType.replace(/_/g,' ')}. Map the institutional players in this domain — their strategic priorities define the grant environment for the next 3–5 years.`;
+  } else {
+    stateLabel     = 'PHILANTHROPIC_CAPITAL_SIGNAL_ACTIVE';
+    primaryInsight = `Philanthropic capital signal: intervention type ${interventionType.replace(/_/g,' ')}, scale ${deploymentScale}, grant cycle ${grantCyclePhase}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.1);
+  return {
+    stateLabel,
+    confidence:    deploymentScale === 'INSTITUTIONAL' ? 0.82 : 0.70,
+    primaryInsight,
+    momentum:      grantCyclePhase === 'OPEN' ? 'active' : 'building',
+    trajPoints:    [72, 70, 68],
+    attentionStack:['KNOWLEDGE','CAPITAL','LABOR'],
+    keyDrivers:    ['intervention_type','deployment_scale','grant_cycle_phase'],
+    recommendedAction: grantCyclePhase === 'OPEN'
+      ? `Grant window is open. Align your proposal to ${interventionType.replace(/_/g,' ')} strategic priorities. Institutional philanthropies fund thesis alignment, not just program quality — know the funder's theory of change before submitting.`
+      : 'Position for next grant cycle. Study foundation annual reports and published strategic priorities — these change slowly and signal 12–18 months before RFPs open.',
+    timeHorizon:   '12–36 months',
+    impactLevel:   deploymentScale === 'INSTITUTIONAL' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Philanthropic capital: ${interventionType.replace(/_/g,' ')}, scale ${deploymentScale}, cycle ${grantCyclePhase}. Non-market capital operates on 10–20yr horizons — grant cycle positioning starts 12–18mo before RFP.`,
+    purpose:       'Philanthropic capital routing and non-market structural intervention analysis',
+    fiveWs:        { who:'Nonprofits, social enterprises, researchers, policy advocates, community organizations', what:'Non-market capital deployment and grant cycle timing', when:'Foundation grant cycle phases', where:'Global health, education, climate, economic mobility', why:'Philanthropic capital fills market failures — knowing cycle timing and funder priorities is the access variable' },
+    evidence:      [{ source:'KNOWLEDGE', finding:`Intervention type: ${interventionType.replace(/_/g,' ')}` }, { source:'CAPITAL', finding:`Deployment scale: ${deploymentScale}` }],
+    assumptions:   ['Institutional philanthropy priorities are published and predictable', 'Grant cycles are 12–24 months', 'Thesis alignment precedes program quality in funder decisions'],
+    assessment:    `Philanthropic capital in ${interventionType.replace(/_/g,' ')} at ${deploymentScale} scale — cycle ${grantCyclePhase}. Non-market capital access requires funder thesis alignment, not just program quality.`,
+    threats:       [{ label:'Strategic priority shift at major foundation resets multi-year positioning' }, { label:'Grant cycle closure without submission locks out capital for 12–24 months' }],
+    opportunities: [{ label:`${grantCyclePhase === 'OPEN' ? 'Active grant window — submission opportunity now' : 'Next cycle positioning window open — foundation priorities stable 12–18mo'}` }, { label:'Co-funding leverage — institutional philanthropy signals legitimacy for public and other private capital' }],
+    alternativeView:'Outcome-based philanthropy (pay-for-success, impact bonds) is shifting the funder-grantee relationship from grant to quasi-investment — thesis alignment requirements are increasing.',
+    outlook: [
+      { prob:0.56, label:'Grant cycle alignment achieved — capital deployed within 12–18 months', color:LIME },
+      { prob:0.28, label:'Priority shift at major funder — repositioning required for next cycle', color:BLUE },
+      { prob:0.16, label:'Structural intervention requires policy change beyond capital — timeline extends 5–10yr', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'MAP FUNDER PRIORITIES', impact:0.88, rationale:'Read the last 3 annual reports of every foundation in your domain. Their stated strategic priorities change slowly — this is your positioning map.', tag:'POSITIONING' }],
+      SHORT_TERM: [{ id:'b1', label:'TRACK RFP CALENDAR', impact:0.79, rationale:`${interventionType.replace(/_/g,' ')} grant cycles are predictable. Build a 12-month forward calendar of RFP openings in your domain. Late submissions are not accepted.`, tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'BUILD INSTITUTIONAL RELATIONSHIPS', impact:0.72, rationale:'Philanthropic capital flows to known quantities. Program officers fund proposals they understand from applicants they trust. Relationship building is a 2–3 year lead-time investment.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:3, typeLabel:'LABOR', tierLabel, deRatio:0.1, permissionless:false, industryNorm:0.2 },
+    intervention_type:   interventionType,
+    deployment_scale:    deploymentScale,
+    grant_cycle_phase:   grantCyclePhase,
+  };
+}
+
+// ── Domain router ──────────────────────────────────────────────────────────────
+
 const SYNTH_MAP = {
   AUTO:                synthAuto,
   REAL_ESTATE:         synthRealEstate,
@@ -1575,7 +2107,13 @@ const SYNTH_MAP = {
   ATHLETE_ENTERPRISE:  synthAthleteEnterprise,
   BRAND_SPINOFF:       synthBrandSpinoff,
   CULTURAL_INFLUENCE:  synthCulturalInfluence,
-  CONTRARIAN_FRONTIER: synthContrarianFrontier,
+  CONTRARIAN_FRONTIER:    synthContrarianFrontier,
+  SOVEREIGN_HARDWARE:     synthSovereignHardware,
+  INDUSTRIAL_FLYWHEEL:    synthIndustrialFlywheel,
+  SOCIAL_GRAPH:           synthSocialGraph,
+  VC_INVERSION:           synthVCInversion,
+  VIRTUAL_ECONOMY:        synthVirtualEconomy,
+  PHILANTHROPIC_CAPITAL:  synthPhilanthropicCapital,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
