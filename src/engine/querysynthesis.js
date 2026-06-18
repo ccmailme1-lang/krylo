@@ -1,6 +1,8 @@
 // querysynthesis.js — Dynamic content synthesis from session query + lens
 // Reads session, detects domain, returns full content object for all result components
 
+import { computeBEV } from './brandequity.js';
+
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
 const DIM    = 'rgba(255,255,255,0.25)';
@@ -1182,17 +1184,398 @@ function synthInvestor(session, numbers, query) {
   };
 }
 
+// ── WO-1805: Athlete-to-Enterprise Transition Model (Brady Protocol) ──────────
+
+function synthAthleteEnterprise(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+  const bev     = computeBEV({
+    brand_velocity:    /declining|retiring|retired|post.career|fading/.test(q) ? 'DECLINING' : /stalling|plateau/.test(q) ? 'STALLING' : 'HIGH',
+    moat_durability:   /methodology|science|proprietary|tb12 method/.test(q) ? 0.80 : /challenger|whoop|momentous|athletic greens/.test(q) ? 0.50 : 0.65,
+    dilution_risk:     /too many|overextend|spread thin|multiple ventures/.test(q) ? 'HIGH' : 'LOW',
+    concentration_risk:/brady|personal brand|tom brady|the athlete/.test(q) ? 'HIGH' : 'MODERATE',
+  });
+
+  const transitionPhase =
+    /active|playing|current athlete/.test(q)       ? 'PHASE_1_ACTIVE' :
+    /retir|transition|stepping away/.test(q)        ? 'PHASE_2_TRANSITION' :
+    /independent|stand alone|own merit/.test(q)     ? 'PHASE_3_DECOUPLING' :
+    /legacy|heritage|classic|nostalgia/.test(q)     ? 'PHASE_4_LEGACY' :
+    /commodity|price compete|challenger win/.test(q)? 'PHASE_5_COMMODITY' :
+    'PHASE_2_TRANSITION';
+
+  const crl =
+    /whoop|momentous|athletic greens|hims|levels|challenger/.test(q) ? 'HIGH' :
+    /competitor|alternative|rival brand/.test(q) ? 'MODERATE' : 'LOW';
+
+  const legacyRisk =
+    bev.bev_score < 0.40 ? 'LIABILITY' :
+    ['PHASE_4_LEGACY','PHASE_5_COMMODITY'].includes(transitionPhase) && bev.bev_score < 0.65 ? 'LIABILITY' :
+    transitionPhase === 'PHASE_4_LEGACY' ? 'NEUTRAL' : 'ASSET';
+
+  const isTransition = /retir|transition|stepping away|phase|arc/.test(q);
+  const isCompetitor = /competitor|whoop|momentous|athletic greens|challenger|migration/.test(q);
+  const isLegacy     = /legacy|heritage|nostalgia|identity|liability/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isCompetitor) {
+    stateLabel     = crl === 'HIGH' ? 'COMPETITOR_REPLACEMENT_ACCELERATING' : 'COMPETITOR_REPLACEMENT_WATCH';
+    primaryInsight = crl === 'HIGH'
+      ? 'Challenger brands are capturing TB12 audience segments with equivalent methodology at lower price points. Brand velocity premium is narrowing.'
+      : 'Competitor signals are present. TB12 methodology moat remains the durable differentiator — monitor market share by product category.';
+  } else if (isLegacy) {
+    stateLabel     = legacyRisk === 'LIABILITY' ? 'LEGACY_LIABILITY_FORMING' : 'LEGACY_ASSET_HOLDING';
+    primaryInsight = legacyRisk === 'LIABILITY'
+      ? 'Athletic identity is shifting from credibility amplifier to credibility ceiling. New audience acquisition requires enterprise-first positioning.'
+      : 'Athletic heritage is still an asset. Performance methodology provides differentiation that outlasts the athletic career.';
+  } else if (isTransition) {
+    stateLabel     = transitionPhase;
+    primaryInsight = `Enterprise arc position: ${transitionPhase.replace(/_/g,' ')}. ${transitionPhase === 'PHASE_2_TRANSITION' ? 'Critical window — TB12 must demonstrate product-market fit independent of active athletic performance.' : 'Brand continuity depends on methodology moat, not career continuity.'}`;
+  } else {
+    stateLabel     = 'TB12_ENTERPRISE_SIGNAL_ACTIVE';
+    primaryInsight = `TB12 BEV score: ${(bev.bev_score * 100).toFixed(0)}. ${bev.stress_flag ? 'Brand equity under stress — competitor positioning and legacy transition risk converging.' : 'Methodology moat holding. Enterprise stability above stress threshold.'}`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.4);
+  return {
+    stateLabel,
+    confidence:    bev.bev_score,
+    primaryInsight,
+    momentum:      bev.stress_flag ? 'declining' : 'stable',
+    trajPoints:    [bev.bev_score * 100, bev.bev_score * 95, bev.bev_score * 90],
+    attentionStack:['MEDIA','CAPITAL','TECHNOLOGY'],
+    keyDrivers:    ['bev_score','transition_phase','competitor_replacement_rate','methodology_moat'],
+    recommendedAction: legacyRisk === 'LIABILITY'
+      ? 'Audit brand dependency on Brady active presence. Accelerate product-methodology decoupling.'
+      : 'Defend methodology moat against challenger brands. Measure enterprise attribution independent of athlete identity.',
+    timeHorizon:   '12–36 months',
+    impactLevel:   bev.bev_score > 0.65 ? 'HIGH' : 'MEDIUM',
+    bluf:          `TB12 enterprise ${bev.stress_flag ? 'is under stress' : 'is stable'} — BEV ${(bev.bev_score*100).toFixed(0)}, transition: ${transitionPhase.replace(/_/g,' ')}, competitor replacement: ${crl}.`,
+    purpose:       'Athlete-to-enterprise transition analysis (Brady Protocol)',
+    fiveWs:        { who:'TB12 / Tom Brady', what:'Athlete brand enterprise transition', when:'Post-career window', where:'Performance wellness sector', why:'Enterprise longevity beyond athletic identity' },
+    evidence:      [{ source:'MEDIA', finding:`Brand velocity: ${bev.bev_score > 0.65 ? 'HIGH' : 'DECLINING'}` },{ source:'CAPITAL', finding:`Methodology moat durability: ${bev.at_risk_ratio < 0.40 ? 'STRONG' : 'MODERATE'}` }],
+    assumptions:   ['TB12 methodology is not fully replicable by competitors without Brady IP license','Performance wellness category continues growth trajectory'],
+    assessment:    `BEV ${(bev.bev_score*100).toFixed(0)} — ${legacyRisk} legacy posture. Competitor replacement: ${crl}. Transition phase: ${transitionPhase.replace(/_/g,' ')}.`,
+    threats:       [{ label:`Challenger brands eroding premium — CRL: ${crl}` },{ label:`Legacy identity ceiling on new audience acquisition` }],
+    opportunities: [{ label:`Methodology IP licensing independent of athlete identity` },{ label:`Clinical/science positioning creates B2B enterprise layer` }],
+    alternativeView:'Athletic identity premium may sustain longer than structural models predict if Brady maintains cultural relevance post-career.',
+    outlook: [
+      { prob:0.52, label:'TB12 methodology moat holds — enterprise stable through legacy phase', color:LIME },
+      { prob:0.31, label:'Competitor replacement accelerates — brand premium narrows to loyal segment', color:BLUE },
+      { prob:0.17, label:'Legacy liability forms — new audience acquisition halts, enterprise commoditizes', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'AUDIT METHODOLOGY MOAT', impact:0.88, rationale:'Map which TB12 claims are proprietary vs. replicable. This is the enterprise defense layer.', tag:'POSITIONING' }],
+      SHORT_TERM: [{ id:'b1', label:'MEASURE ATTRIBUTION SPLIT', impact:0.80, rationale:'What % of TB12 revenue can be attributed to methodology vs. Brady identity? Track this quarterly.', tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'ENTERPRISE-FIRST POSITIONING', impact:0.74, rationale:'Begin migrating brand voice from athlete-founder to enterprise-authority. The methodology is the moat — not the jersey number.', tag:'POSITIONING' }],
+    },
+    leverage: { typeY:3, typeLabel:'CAPITAL', tierLabel, deRatio:0.4, permissionless:false, industryNorm:0.5 },
+    bev_score:                  bev.bev_score,
+    transition_phase:           transitionPhase,
+    competitor_replacement_rate:crl,
+    methodology_moat:           bev.at_risk_ratio < 0.25 ? 'STRONG' : bev.at_risk_ratio < 0.45 ? 'MODERATE' : 'ERODING',
+    legacy_risk:                legacyRisk,
+    time_to_phase_shift:        transitionPhase === 'PHASE_2_TRANSITION' ? 18 : transitionPhase === 'PHASE_3_DECOUPLING' ? 36 : 12,
+  };
+}
+
+// ── WO-1804: Brand Spin-off Multiplier Synthesizer (Jenner Protocol) ──────────
+
+function synthBrandSpinoff(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+  const bev     = computeBEV({
+    brand_velocity:    /declining|oversaturated|too much|fading/.test(q) ? 'DECLINING' : /stalling/.test(q) ? 'STALLING' : 'HIGH',
+    moat_durability:   /skims|kylie cosmetics|good american|independent brand/.test(q) ? 0.75 : 0.60,
+    dilution_risk:     /too many|dilut|oversaturated|spread thin|fifth brand|sixth/.test(q) ? 'HIGH' : /launching|new brand|spin.?off/.test(q) ? 'MODERATE' : 'LOW',
+    concentration_risk:/kim|kylie|khloe|kourtney|one member|single/.test(q) ? 'HIGH' : 'MODERATE',
+  });
+
+  const activeSpinoffCount =
+    ((/skims/.test(q) ? 1 : 0) + (/kylie cosmetics|kylie/.test(q) ? 1 : 0) +
+     (/good american/.test(q) ? 1 : 0) + (/khy|kourt|lemme/.test(q) ? 1 : 0));
+
+  const som = bev.bev_score > 0.70 ? 1.3 : bev.bev_score > 0.50 ? 0.95 : 0.72;
+
+  const frc =
+    /reputational|scandal|controversy|event|crisis|fallout/.test(q) ? 0.85 :
+    /independent|decoupled|stand alone/.test(q) ? 0.30 : 0.60;
+
+  const umbrellaSaturation =
+    bev.dilution_risk === 'HIGH' ? 'CRITICAL' :
+    activeSpinoffCount >= 3 && bev.bev_score < 0.65 ? 'ELEVATED' :
+    activeSpinoffCount >= 2 ? 'WATCH' : 'LOW';
+
+  const isSpinoff  = /spin.?off|new brand|launch|multiply|portfolio/.test(q);
+  const isFamilial = /family|member|reputational|scandal|crisis|kim|kylie|khloe|frc|cascade/.test(q);
+  const isUmbrella = /umbrella|dilut|saturat|too many|brand equity/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isSpinoff) {
+    stateLabel     = som >= 1.0 ? 'SPINOFF_MULTIPLIER_ACTIVE' : 'SPINOFF_DILUTING';
+    primaryInsight = som >= 1.0
+      ? `Spin-off multiplier: ${som.toFixed(2)}× — each new brand is compounding umbrella equity. Velocity still absorbing new launches.`
+      : `Spin-off multiplier below 1.0 (${som.toFixed(2)}×) — launch cadence is diluting the umbrella. Marginal brand value is declining.`;
+  } else if (isFamilial) {
+    stateLabel     = frc > 0.70 ? 'FAMILIAL_RISK_ELEVATED' : 'FAMILIAL_COUPLING_MODERATE';
+    primaryInsight = frc > 0.70
+      ? `Familial risk coefficient: ${frc.toFixed(2)} — individual member reputational events propagate across the enterprise. Blended exposure: ${(bev.at_risk_ratio * frc).toFixed(2)}.`
+      : `Portfolio coupling is moderate. Individual spin-offs have sufficient independence to absorb single-member reputational events.`;
+  } else if (isUmbrella) {
+    stateLabel     = `UMBRELLA_SATURATION_${umbrellaSaturation}`;
+    primaryInsight = umbrellaSaturation === 'CRITICAL'
+      ? 'Umbrella saturation threshold breached. Marginal value of additional spin-offs is negative — attention velocity cannot absorb new launches without compressing existing brand equity.'
+      : `Umbrella saturation: ${umbrellaSaturation}. Monitor launch cadence against attention absorption capacity.`;
+  } else {
+    stateLabel     = 'JENNER_PORTFOLIO_SIGNAL_ACTIVE';
+    primaryInsight = `Family brand BEV: ${(bev.bev_score*100).toFixed(0)}. Spin-off multiplier: ${som.toFixed(2)}×. Umbrella saturation: ${umbrellaSaturation}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.3);
+  return {
+    stateLabel,
+    confidence:    bev.bev_score,
+    primaryInsight,
+    momentum:      som >= 1.0 ? 'accelerating' : 'decelerating',
+    trajPoints:    [bev.bev_score*100, bev.bev_score*95, bev.bev_score*88],
+    attentionStack:['MEDIA','CAPITAL','OWNERSHIP'],
+    keyDrivers:    ['bev_score','spinoff_multiplier','familial_risk_coefficient','umbrella_saturation_risk'],
+    recommendedAction: umbrellaSaturation === 'CRITICAL'
+      ? 'Pause new spin-off launches. Consolidate existing portfolio equity before saturation compounds.'
+      : frc > 0.70 ? 'Accelerate structural independence of top-performing spin-offs to reduce FRC exposure.' : 'Maintain cadence while BEV holds above stress threshold.',
+    timeHorizon:   '6–24 months',
+    impactLevel:   bev.stress_flag ? 'HIGH' : 'MEDIUM',
+    bluf:          `Jenner portfolio BEV ${(bev.bev_score*100).toFixed(0)} — SOM ${som.toFixed(2)}×, FRC ${frc.toFixed(2)}, umbrella saturation ${umbrellaSaturation}.`,
+    purpose:       'Brand spin-off multiplier analysis (Jenner Protocol)',
+    fiveWs:        { who:'Kris Jenner / KKW / Jenner-Kardashian', what:'Umbrella brand × spin-off portfolio dynamics', when:'Active portfolio phase', where:'Consumer/CPG/lifestyle sector', why:'Spin-off compounding vs. dilution threshold' },
+    evidence:      [{ source:'MEDIA', finding:`Umbrella brand velocity: ${bev.bev_score > 0.65 ? 'HIGH' : 'DECLINING'}` },{ source:'CAPITAL', finding:`Spin-off multiplier: ${som.toFixed(2)}×` }],
+    assumptions:   ['Jenner orchestration layer remains active','Spin-off brands maintain separate consumer identities'],
+    assessment:    `SOM ${som.toFixed(2)}× — ${som >= 1.0 ? 'compounding' : 'diluting'}. FRC ${frc.toFixed(2)} — ${frc > 0.70 ? 'high familial coupling' : 'moderate independence'}. Umbrella saturation: ${umbrellaSaturation}.`,
+    threats:       [{ label:`Familial risk propagation — FRC ${frc.toFixed(2)}` },{ label:`Umbrella saturation: ${umbrellaSaturation}` }],
+    opportunities: [{ label:'Structural independence of spin-offs reduces FRC and enables enterprise pricing' },{ label:'International market expansion extends spin-off multiplier lifecycle' }],
+    alternativeView:'The Jenner ecosystem may operate at higher saturation thresholds than traditional CPG brands due to social media attention regeneration.',
+    outlook: [
+      { prob:0.55, label:'SOM holds above 1.0 — portfolio compounds through next launch cycle',  color:LIME },
+      { prob:0.29, label:'Saturation approaches — next 1–2 launches compress per-brand equity',  color:BLUE },
+      { prob:0.16, label:'FRC event triggers cascade — umbrella brand absorbs reputational cost', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'MEASURE SPIN-OFF ATTRIBUTION', impact:0.87, rationale:'Which % of each spin-off revenue is attributable to umbrella brand vs. stand-alone product merit? This ratio is your FRC vulnerability.', tag:'SIGNAL' }],
+      SHORT_TERM: [{ id:'b1', label:'MAP UMBRELLA ABSORPTION CAPACITY', impact:0.79, rationale:`Can umbrella attention support ${activeSpinoffCount + 1} simultaneous brands? Track weekly velocity per brand against total umbrella impression volume.`, tag:'POSITIONING' }],
+      STRUCTURAL: [{ id:'c1', label:'STRUCTURAL INDEPENDENCE PROTOCOL', impact:0.71, rationale:'Top-performing spin-offs (SKIMS, Kylie Cosmetics) should build consumer relationships independent of umbrella. This is the FRC hedge.', tag:'RISK' }],
+    },
+    leverage: { typeY:1, typeLabel:'MEDIA', tierLabel, deRatio:0.3, permissionless:true, industryNorm:0.4 },
+    bev_score:                bev.bev_score,
+    spinoff_multiplier:       som,
+    familial_risk_coefficient:frc,
+    umbrella_saturation_risk: umbrellaSaturation,
+    active_spinoff_count:     activeSpinoffCount || 3,
+    at_risk_per_member_event: parseFloat((bev.at_risk_ratio * frc).toFixed(3)),
+  };
+}
+
+// ── WO-1803: Cultural Influence Scaling Engine (Rich Paul Protocol) ───────────
+
+function synthCulturalInfluence(session, numbers, query) {
+  const q   = query.toLowerCase();
+  const bev = computeBEV({
+    brand_velocity:    /declining|saturat|fading|mainstream/.test(q) ? 'DECLINING' : /stalling|plateau/.test(q) ? 'STALLING' : 'HIGH',
+    moat_durability:   /klutch brand|agency independent|beyond lebron|without lebron/.test(q) ? 0.70 : /lebron|one athlete|dependent/.test(q) ? 0.45 : 0.62,
+    dilution_risk:     /oversaturated|mass market|too mainstream|celebrity agency/.test(q) ? 'HIGH' : 'LOW',
+    concentration_risk:/lebron|one client|top client|single athlete/.test(q) ? 'HIGH' : 'MODERATE',
+  });
+
+  const cls =
+    bev.bev_score > 0.75 ? 12 :
+    bev.bev_score > 0.55 ? 7  : 3;
+
+  const influenceConvergence =
+    /media deal|content deal|brand deal|enterprise|all three|synergy/.test(q)    ? 'REINFORCING' :
+    /agency only|representation only|just an agent|traditional agency/.test(q)   ? 'DECOUPLING'  :
+    'REINFORCING';
+
+  const saturationRisk =
+    bev.stress_flag                                      ? 'CRITICAL'  :
+    bev.bev_score < 0.60                                ? 'ELEVATED'  :
+    /mainstream|mass market|saturat/.test(q)            ? 'WATCH'     : 'LOW';
+
+  const klutchPremiumDurability =
+    saturationRisk === 'CRITICAL' ? 'ERODING' :
+    influenceConvergence === 'DECOUPLING' ? 'WATCH' : 'DURABLE';
+
+  const isSaturation  = /saturat|mass market|mainstream|eroding premium/.test(q);
+  const isConvergence = /synergy|converge|media.*brand|representation.*enterprise|three leg/.test(q);
+  const isLongevity   = /longevity|how long|years|sustain|durable/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isSaturation) {
+    stateLabel     = saturationRisk === 'CRITICAL' ? 'SATURATION_CRITICAL' : `SATURATION_${saturationRisk}`;
+    primaryInsight = saturationRisk === 'CRITICAL'
+      ? 'Cultural longevity window is closing. KLUTCH representation premium is eroding as the model migrates toward mass-market recognition. Niche cultural edge commoditizing.'
+      : `Saturation risk: ${saturationRisk}. Cultural longevity estimate: ${cls} years. Monitor mainstream adoption velocity against premium durability.`;
+  } else if (isConvergence) {
+    stateLabel     = `INFLUENCE_CONVERGENCE_${influenceConvergence}`;
+    primaryInsight = influenceConvergence === 'REINFORCING'
+      ? 'All three KLUTCH legs (representation × media × enterprise branding) are reinforcing. Synergy score is compounding — each deal amplifies the others.'
+      : 'KLUTCH model is decoupling — representation is operating independently from media and enterprise dimensions. Synergy premium eroding.';
+  } else if (isLongevity) {
+    stateLabel     = 'CULTURAL_LONGEVITY_SIGNAL';
+    primaryInsight = `Cultural longevity score: ${cls} years. BEV ${(bev.bev_score*100).toFixed(0)} — ${klutchPremiumDurability} premium. Current cultural resistance to mainstream saturation remains ${saturationRisk === 'LOW' ? 'intact' : 'under pressure'}.`;
+  } else {
+    stateLabel     = 'KLUTCH_CULTURAL_SIGNAL_ACTIVE';
+    primaryInsight = `KLUTCH BEV: ${(bev.bev_score*100).toFixed(0)}. Influence convergence: ${influenceConvergence}. Cultural longevity: ${cls}yr. Premium durability: ${klutchPremiumDurability}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.5);
+  return {
+    stateLabel,
+    confidence:    bev.bev_score,
+    primaryInsight,
+    momentum:      influenceConvergence === 'REINFORCING' ? 'accelerating' : 'decelerating',
+    trajPoints:    [bev.bev_score*100, bev.bev_score*96, bev.bev_score*91],
+    attentionStack:['MEDIA','LABOR','CAPITAL'],
+    keyDrivers:    ['bev_score','cultural_longevity_score','influence_convergence','saturation_risk'],
+    recommendedAction: saturationRisk === 'CRITICAL'
+      ? 'Activate next-generation athlete roster to extend cultural relevance beyond current stars. The KLUTCH model is replicable only if the talent pipeline stays ahead of saturation.'
+      : 'Maintain three-leg integration. Any decoupling of representation from media/enterprise compresses the premium.',
+    timeHorizon:   '18–48 months',
+    impactLevel:   saturationRisk === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
+    bluf:          `KLUTCH cultural model BEV ${(bev.bev_score*100).toFixed(0)} — longevity ${cls}yr, convergence ${influenceConvergence}, saturation ${saturationRisk}.`,
+    purpose:       'Cultural influence scaling analysis (Rich Paul Protocol)',
+    fiveWs:        { who:'Rich Paul / KLUTCH Sports', what:'Cultural enterprise scaling via athlete representation', when:'Active expansion phase', where:'NBA/NFL/global sports + entertainment', why:'Premium durability against saturation and agency commoditization' },
+    evidence:      [{ source:'MEDIA', finding:`Cultural velocity: ${bev.bev_score > 0.65 ? 'HIGH' : 'DECLINING'}` },{ source:'LABOR', finding:`Athlete representation convergence: ${influenceConvergence}` }],
+    assumptions:   ['KLUTCH brand survives beyond any single athlete career','Media and enterprise legs maintain independent revenue'],
+    assessment:    `Cultural longevity ${cls}yr, influence convergence ${influenceConvergence}, KLUTCH premium ${klutchPremiumDurability}.`,
+    threats:       [{ label:`Mass-market saturation in ${cls} years — niche edge commoditizing` },{ label:`Concentration risk: ${bev.concentration_risk ?? 'MODERATE'} — top athlete dependency` }],
+    opportunities: [{ label:'Next-gen athlete signing extends cultural longevity clock' },{ label:'International expansion (global football, cricket) opens new cultural moats' }],
+    alternativeView:'The KLUTCH model may be more durable than predicted if Rich Paul himself becomes the cultural brand, independent of any individual athlete client.',
+    outlook: [
+      { prob:0.54, label:`KLUTCH premium holds ${cls}yr — cultural moat intact`, color:LIME },
+      { prob:0.30, label:'Saturation accelerates — agency commoditization compresses premium', color:BLUE },
+      { prob:0.16, label:'Convergence decouples — KLUTCH reverts to traditional agency model', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'MAP THREE-LEG ATTRIBUTION', impact:0.85, rationale:'What % of KLUTCH revenue comes from each leg? If representation > 70%, the cultural enterprise thesis has not yet materialized.', tag:'SIGNAL' }],
+      SHORT_TERM: [{ id:'b1', label:'NEXT-GEN ROSTER EXPANSION', impact:0.78, rationale:'Cultural longevity requires a constant pipeline of culturally resonant athletes. The moment the roster ages, the saturation clock accelerates.', tag:'POSITIONING' }],
+      STRUCTURAL: [{ id:'c1', label:'KLUTCH BRAND INDEPENDENCE', impact:0.70, rationale:'Build the KLUTCH brand identity independent of LeBron. The model is the moat — not the roster.', tag:'RISK' }],
+    },
+    leverage: { typeY:1, typeLabel:'MEDIA', tierLabel, deRatio:0.5, permissionless:true, industryNorm:0.45 },
+    bev_score:               bev.bev_score,
+    cultural_longevity_score:cls,
+    influence_convergence:   influenceConvergence,
+    saturation_risk:         saturationRisk,
+    klutch_premium_durability:klutchPremiumDurability,
+  };
+}
+
+// ── WO-1802: Contrarian Frontier Synthesizer (Thiel Protocol) ─────────────────
+// Note: computeBEV() is NOT used — Thiel's framework is analytical, not brand-driven.
+
+function synthContrarianFrontier(session, numbers, query) {
+  const q = query.toLowerCase();
+
+  const ncDelta     = /non.consensus|diverging|crowd wrong|mispriced|contrarian/.test(q) ? 0.82 : 0.55;
+  const weakSlope   = /weak signal|early|pre.crowd|nobody sees|before mainstream/.test(q) ? 0.78 : 0.50;
+  const importantTruthScore = parseFloat((ncDelta * weakSlope).toFixed(3));
+
+  const culturalResistance =
+    /institutional pushback|fighting back|establishment resist|hostile|banned|deplatform/.test(q) ? 'INTACT' :
+    /starting to accept|mainstream adopting|consensus forming|everyone agrees now/.test(q) ? 'CAPITULATING' :
+    'SOFTENING';
+
+  const frontierWindow =
+    /technology|tech frontier|ai|biotech|defense tech|space|hard tech/.test(q) &&
+    /early|pre.crowd|pre.consensus|nobody sees/.test(q) ? 'open' :
+    /mainstream|consensus|everyone knows|priced in/.test(q) ? 'closed' : 'open';
+
+  const convictionDuration =
+    importantTruthScore > 0.70 ? 36 :
+    importantTruthScore > 0.50 ? 18 : 9;
+
+  const isImportantTruth = /important truth|n=1|zero to one|contrarian thesis|mispriced|right when wrong/.test(q);
+  const isCultural       = /cultural resistance|institutional|establishment|pushback|hostility/.test(q);
+  const isFrontier       = /frontier|technology|hard tech|ai|biotech|defense|space|early stage/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isImportantTruth) {
+    stateLabel     = importantTruthScore > 0.60 ? 'IMPORTANT_TRUTH_DETECTED' : 'TRUTH_BECOMING_CONSENSUS';
+    primaryInsight = importantTruthScore > 0.60
+      ? `Important truth signal: ${importantTruthScore.toFixed(2)}. Non-consensus × weak signal cross-fire active — thesis is pre-crowd and establishment-opposed. The Thiel edge is intact.`
+      : `Truth score ${importantTruthScore.toFixed(2)} — consensus is arriving. The window is narrowing. Non-consensus premium erodes as mainstream adoption accelerates.`;
+  } else if (isCultural) {
+    stateLabel     = `CULTURAL_RESISTANCE_${culturalResistance}`;
+    primaryInsight = culturalResistance === 'INTACT'
+      ? 'Institutional resistance is active — the establishment is fighting this thesis. High resistance = the non-consensus edge is intact. The crowd has not yet capitulated.'
+      : culturalResistance === 'CAPITULATING'
+      ? 'Establishment is adopting the thesis. Cultural resistance is evaporating — this is the exit signal, not the entry signal.'
+      : 'Cultural resistance is softening. Monitor consensus migration rate. When mainstream coverage begins, the Thiel edge is in the final phase.';
+  } else if (isFrontier) {
+    stateLabel     = `FRONTIER_WINDOW_${frontierWindow.toUpperCase()}`;
+    primaryInsight = frontierWindow === 'open'
+      ? `Frontier opportunity window: OPEN. Technology + capital convergence is pre-crowd. This is the Thiel entry zone — before institutional capital arrives and prices in the thesis.`
+      : 'Frontier window is closed. Institutional capital has arrived and priced in the thesis. The non-consensus entry advantage is gone.';
+  } else {
+    stateLabel     = 'CONTRARIAN_SIGNAL_ACTIVE';
+    primaryInsight = `Contrarian frontier signal: important truth score ${importantTruthScore.toFixed(2)}, cultural resistance ${culturalResistance}, frontier ${frontierWindow}. Conviction duration: ${convictionDuration} months.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.2);
+  return {
+    stateLabel,
+    confidence:    importantTruthScore,
+    primaryInsight,
+    momentum:      culturalResistance === 'INTACT' ? 'building' : 'resolving',
+    trajPoints:    [importantTruthScore*100, importantTruthScore*90, importantTruthScore*78],
+    attentionStack:['TECHNOLOGY','CAPITAL','KNOWLEDGE'],
+    keyDrivers:    ['important_truth_score','cultural_resistance','frontier_window','conviction_duration'],
+    recommendedAction: culturalResistance === 'INTACT'
+      ? 'Position pre-crowd while institutional resistance is still active. This is the maximum non-consensus advantage window.'
+      : 'Evaluate exit timing. Cultural resistance softening means the thesis is becoming consensus — the Thiel premium evaporates at mainstream adoption.',
+    timeHorizon:   `${convictionDuration} months`,
+    impactLevel:   importantTruthScore > 0.60 ? 'HIGH' : 'MEDIUM',
+    bluf:          `Contrarian signal: IT score ${importantTruthScore.toFixed(2)}, cultural resistance ${culturalResistance}, frontier ${frontierWindow}, conviction ${convictionDuration}mo.`,
+    purpose:       'Contrarian frontier analysis (Thiel Protocol)',
+    fiveWs:        { who:'Peter Thiel / Founders Fund', what:'Important truth detection at technological frontier', when:'Pre-consensus window', where:'Hard tech / deep tech / defense', why:'Non-consensus edge evaporates at mainstream adoption' },
+    evidence:      [{ source:'KNOWLEDGE', finding:`Important truth score: ${importantTruthScore.toFixed(2)}` },{ source:'TECHNOLOGY', finding:`Frontier window: ${frontierWindow}` },{ source:'CAPITAL', finding:`Cultural resistance: ${culturalResistance}` }],
+    assumptions:   ['Thiel thesis requires pre-crowd positioning — timing is the primary variable','Cultural resistance from establishment is the signal that the edge is intact'],
+    assessment:    `IT score ${importantTruthScore.toFixed(2)} — ${importantTruthScore > 0.60 ? 'strong non-consensus signal' : 'consensus arriving'}. Cultural resistance: ${culturalResistance}. Frontier: ${frontierWindow}.`,
+    threats:       [{ label:`Consensus arrival — mainstream adoption collapses non-consensus premium` },{ label:`Cultural resistance softening — ${convictionDuration}mo conviction window` }],
+    opportunities: [{ label:'Pre-crowd positioning while institutional capital is absent' },{ label:'Thiel Fellowship model: Gen Z founders in non-traditional geographies' }],
+    alternativeView:'Narrative-driven consensus can sustain longer than structural models predict. Cultural resistance may be institutional inertia rather than signal quality.',
+    outlook: [
+      { prob:0.49, label:`Non-consensus thesis compounds — cultural resistance holds ${convictionDuration}mo`, color:LIME },
+      { prob:0.32, label:'Consensus arrives — institutional capital prices in thesis, edge narrows',         color:BLUE },
+      { prob:0.19, label:'Thesis is wrong — non-consensus signal was noise, establishment was correct',       color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE:  [{ id:'a1', label:'VERIFY NON-CONSENSUS THESIS', impact:0.92, rationale:'Write out the important truth in one sentence. If you cannot state it without jargon, the thesis is not yet formed. Formation precedes positioning.', tag:'POSITIONING' }],
+      SHORT_TERM: [{ id:'b1', label:'MONITOR CULTURAL RESISTANCE', impact:0.83, rationale:'Track when mainstream financial media first covers this thesis. That is the exit signal — not the entry. The non-consensus edge evaporates at coverage.', tag:'SIGNAL' }],
+      STRUCTURAL: [{ id:'c1', label:'BUILD CONVICTION DURATION', impact:0.75, rationale:`Thesis duration: ${convictionDuration} months. If thesis has not resolved by then, re-evaluate from first principles — not sunk cost.`, tag:'DISCIPLINE' }],
+    },
+    leverage: { typeY:0, typeLabel:'CODE', tierLabel, deRatio:0.2, permissionless:true, industryNorm:0.2 },
+    important_truth_score:   importantTruthScore,
+    cultural_resistance:     culturalResistance,
+    establishment_consensus: culturalResistance === 'INTACT' ? 'HIGH' : culturalResistance === 'SOFTENING' ? 'MEDIUM' : 'LOW',
+    frontier_window:         frontierWindow,
+    conviction_duration:     convictionDuration,
+  };
+}
+
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
-  AUTO:              synthAuto,
-  REAL_ESTATE:       synthRealEstate,
-  CAREER:            synthCareer,
-  RETIREMENT:        synthRetirement,
-  EXPENSE_REDUCTION: synthExpenseReduction,
-  INVESTOR:          synthInvestor,
-  HEALTH:            synthHealth,
-  GENERAL:           synthGeneral,
+  AUTO:                synthAuto,
+  REAL_ESTATE:         synthRealEstate,
+  CAREER:              synthCareer,
+  RETIREMENT:          synthRetirement,
+  EXPENSE_REDUCTION:   synthExpenseReduction,
+  INVESTOR:            synthInvestor,
+  HEALTH:              synthHealth,
+  GENERAL:             synthGeneral,
+  ATHLETE_ENTERPRISE:  synthAthleteEnterprise,
+  BRAND_SPINOFF:       synthBrandSpinoff,
+  CULTURAL_INFLUENCE:  synthCulturalInfluence,
+  CONTRARIAN_FRONTIER: synthContrarianFrontier,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
