@@ -1,9 +1,9 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-17
-BASELINE: baseline_community_story_grid
-SHA: 9b53f35
+LAST BUILD SESSION: 2026-06-19
+BASELINE: baseline_bay_memory_system
+SHA: db8c5b5
 DEPLOYED: krylo.org ✓
 ──────────────────────────────────────────────
 
