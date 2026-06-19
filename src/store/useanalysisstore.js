@@ -1,5 +1,7 @@
 // WO-1106-A — Semantic & Inference State
+// WO-1812 — createSession inherits defaultLens from profile
 import { create } from 'zustand';
+import { loadProfile } from '../engine/userprofile.js';
 
 // Stable action skeleton — IDs assigned at session construction, never at render.
 function buildActionSkeleton() {
@@ -20,25 +22,28 @@ export const useAnalysisStore = create((set) => ({
   setPendingAcquisition: (envelope) => set({ pendingAcquisition: envelope }),
   clearPendingAcquisition: ()       => set({ pendingAcquisition: null }),
 
-  createSession: (id, lens, query = '', tensor = {}) => set((state) => ({
-    sessions: {
-      ...state.sessions,
-      [id]: {
-        id,
-        lens,
-        query,
-        tensor,
-        targets:    [],
-        signals:    [],
-        artifacts:  [],
-        narratives: [],
-        inferences: [],
-        actions:    buildActionSkeleton(),
-        metadata:   { created: Date.now(), updated: Date.now() },
+  createSession: (id, lens, query = '', tensor = {}) => set((state) => {
+    const resolvedLens = lens || loadProfile().defaultLens || 'GENERAL';
+    return ({
+      sessions: {
+        ...state.sessions,
+        [id]: {
+          id,
+          lens: resolvedLens,
+          query,
+          tensor,
+          targets:    [],
+          signals:    [],
+          artifacts:  [],
+          narratives: [],
+          inferences: [],
+          actions:    buildActionSkeleton(),
+          metadata:   { created: Date.now(), updated: Date.now() },
+        },
       },
-    },
-    activeSessionId: id,
-  })),
+      activeSessionId: id,
+    });
+  }),
 
   setActiveSession: (id) => set({ activeSessionId: id }),
 

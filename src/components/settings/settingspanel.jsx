@@ -1,50 +1,28 @@
-// WO-1323 — Settings Panel: bottom nav item always.
-import React, { useState } from 'react';
+// WO-1323 — Settings Panel
+// WO-1812 — Profile read/write wired
+import React, { useState, useCallback } from 'react';
+import { loadProfile, saveProfile, resetProfile } from '../../engine/userprofile.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const LIME   = '#66FF00';
 const BORDER = 'rgba(26,26,26,1)';
 
-const SECTIONS = [
-  {
-    id: 'account',
-    label: 'ACCOUNT',
-    rows: [
-      { label: 'Email',       value: '—',          type: 'display' },
-      { label: 'Plan',        value: 'FREE TIER',  type: 'display' },
-      { label: 'Member Since',value: '2026',       type: 'display' },
-    ],
-  },
-  {
-    id: 'lens',
-    label: 'DEFAULT LENS',
-    rows: [
-      { label: 'Active Lens', value: 'RETIREMENT', type: 'select', options: ['INVESTOR','REALTOR','ATHLETE','SALES','LEGAL','RETIREMENT'] },
-    ],
-  },
-  {
-    id: 'signal',
-    label: 'SIGNAL SETTINGS',
-    rows: [
-      { label: 'Fidelity Threshold', value: '70',  type: 'display' },
-      { label: 'Signal Window',      value: '72H', type: 'display' },
-      { label: 'Auto-Advance to Oracle', value: 'ON', type: 'toggle' },
-    ],
-  },
-  {
-    id: 'system',
-    label: 'SYSTEM',
-    rows: [
-      { label: 'Version',     value: 'KRYLO 0.4.22', type: 'display' },
-      { label: 'Build',       value: '2026-05-22',   type: 'display' },
-      { label: 'Environment', value: 'DEVELOPMENT',  type: 'display' },
-    ],
-  },
-];
+const LENS_OPTIONS = ['INVESTOR','REALTOR','ATHLETE','SALES','LEGAL','RETIREMENT','GENERAL'];
 
-function SettingsRow({ row }) {
-  const [toggled, setToggled] = useState(row.value === 'ON');
-  const [selected, setSelected] = useState(row.value);
+function SettingsRow({ label, value, type, options, onChange }) {
+  const [toggled, setToggled]   = useState(value === true || value === 'ON');
+  const [selected, setSelected] = useState(value);
+
+  const handleToggle = () => {
+    const next = !toggled;
+    setToggled(next);
+    onChange?.(next);
+  };
+
+  const handleSelect = (e) => {
+    setSelected(e.target.value);
+    onChange?.(e.target.value);
+  };
 
   return (
     <div style={{
@@ -52,18 +30,18 @@ function SettingsRow({ row }) {
       padding: '12px 0', borderBottom: `1px solid rgba(255,255,255,0.04)`,
     }}>
       <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em' }}>
-        {row.label}
+        {label}
       </span>
 
-      {row.type === 'display' && (
+      {type === 'display' && (
         <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.08em' }}>
-          {row.value}
+          {value}
         </span>
       )}
 
-      {row.type === 'toggle' && (
+      {type === 'toggle' && (
         <div
-          onClick={() => setToggled(t => !t)}
+          onClick={handleToggle}
           style={{
             width: 36, height: 18, borderRadius: 9,
             background: toggled ? LIME : 'rgba(255,255,255,0.1)',
@@ -80,10 +58,10 @@ function SettingsRow({ row }) {
         </div>
       )}
 
-      {row.type === 'select' && (
+      {type === 'select' && (
         <select
           value={selected}
-          onChange={e => setSelected(e.target.value)}
+          onChange={handleSelect}
           style={{
             fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em',
             background: 'transparent', color: LIME,
@@ -91,7 +69,7 @@ function SettingsRow({ row }) {
             padding: '3px 8px', cursor: 'pointer', outline: 'none',
           }}
         >
-          {row.options.map(o => (
+          {options.map(o => (
             <option key={o} value={o} style={{ background: '#000', color: '#fff' }}>{o}</option>
           ))}
         </select>
@@ -101,6 +79,18 @@ function SettingsRow({ row }) {
 }
 
 export default function SettingsPanel() {
+  const [profile, setProfile] = useState(() => loadProfile());
+
+  const update = useCallback((key, value) => {
+    const next = saveProfile({ [key]: value });
+    setProfile(next);
+  }, []);
+
+  const handleReset = () => {
+    const fresh = resetProfile();
+    setProfile(fresh);
+  };
+
   return (
     <div style={{
       position: 'absolute', inset: 0,
@@ -124,18 +114,82 @@ export default function SettingsPanel() {
 
       {/* Sections */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 24px 40px' }}>
-        {SECTIONS.map(section => (
-          <div key={section.id} style={{ marginTop: 28 }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
-              {section.label}
-            </div>
-            {section.rows.map(row => (
-              <SettingsRow key={row.label} row={row} />
-            ))}
-          </div>
-        ))}
-      </div>
 
+        {/* ACCOUNT */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            ACCOUNT
+          </div>
+          <SettingsRow label="Email"        value="—"         type="display" />
+          <SettingsRow label="Plan"         value="FREE TIER" type="display" />
+          <SettingsRow label="Member Since" value="2026"      type="display" />
+        </div>
+
+        {/* DEFAULT LENS */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            DEFAULT LENS
+          </div>
+          <SettingsRow
+            label="Active Lens"
+            value={profile.defaultLens}
+            type="select"
+            options={LENS_OPTIONS}
+            onChange={v => update('defaultLens', v)}
+          />
+        </div>
+
+        {/* SIGNAL SETTINGS */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            SIGNAL SETTINGS
+          </div>
+          <SettingsRow label="Fidelity Threshold"    value={String(profile.signalSensitivityThreshold)} type="display" />
+          <SettingsRow label="Signal Window"         value={profile.signalWindow}                       type="display" />
+          <SettingsRow
+            label="Auto-Advance to Oracle"
+            value={profile.autoAdvance}
+            type="toggle"
+            onChange={v => update('autoAdvance', v)}
+          />
+        </div>
+
+        {/* SYSTEM */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            SYSTEM
+          </div>
+          <SettingsRow label="Version"     value="KRYLO 0.4.22" type="display" />
+          <SettingsRow label="Build"       value="2026-06-18"   type="display" />
+          <SettingsRow label="Environment" value="DEVELOPMENT"  type="display" />
+        </div>
+
+        {/* PROFILE */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            PROFILE
+          </div>
+          <SettingsRow
+            label="Last Updated"
+            value={profile.metadata?.updatedAt ? new Date(profile.metadata.updatedAt).toLocaleDateString() : '—'}
+            type="display"
+          />
+          <div style={{ paddingTop: 16 }}>
+            <button
+              onClick={handleReset}
+              style={{
+                fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em',
+                color: 'rgba(255,80,80,0.7)', background: 'transparent',
+                border: '1px solid rgba(255,80,80,0.3)', padding: '6px 14px',
+                cursor: 'pointer',
+              }}
+            >
+              RESET PROFILE
+            </button>
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }
