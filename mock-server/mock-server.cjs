@@ -942,6 +942,10 @@ function appendFrameLog(frameBase64, domainId, eventCount) {
 
   // Rotate log at max
   try {
+    // Guard: wipe if file exceeds safe read size (base64 frames balloon quickly)
+    if (fs.existsSync(FRAMES_LOG) && fs.statSync(FRAMES_LOG).size > 20 * 1024 * 1024) {
+      fs.writeFileSync(FRAMES_LOG, '');
+    }
     const lines = fs.existsSync(FRAMES_LOG)
       ? fs.readFileSync(FRAMES_LOG, 'utf8').trim().split('\n').filter(Boolean)
       : [];
