@@ -140,7 +140,6 @@ Start at 1813. Work backwards. This is the only open list.
 1775 — Creator HoldCo Synthesizer (Beast Industries Protocol)
 1769 — Refinitiv / High-Freq Feed Procurement
 1768-A — Macro Timing Proxy v1 (APPROVED — 10-day sprint)
-1768 — INVESTOR Synthesizer — Macro Divergence Signal Layer (COMPLETE — synthInvestor() wired; WO-1768-A = macro timing overlay, BACKLOG)
 1754 — Lens-Specific Entry Vocabulary Layer
 1750 — EEG v2 DAG Runtime
 1742 — Narrative Permission Signal
