@@ -526,7 +526,7 @@ export default function TargetPacket() {
                   {item.momentum}
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, letterSpacing: '0.05em' }}>
-                  {item.conf.toFixed(2)}
+                  {typeof item.conf === 'number' ? item.conf.toFixed(2) : '—'}
                 </span>
               </div>
             ))}

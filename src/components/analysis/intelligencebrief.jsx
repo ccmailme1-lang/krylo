@@ -343,7 +343,7 @@ export default function IntelligenceBrief() {
           {/* 5 Ws */}
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
             <tbody>
-              {brief.fiveWs.map(({ w, answer }) => (
+              {(Array.isArray(brief.fiveWs) ? brief.fiveWs : []).map(({ w, answer }) => (
                 <tr key={w} style={{ borderBottom: `1px solid rgba(102,255,0,0.07)` }}>
                   <td style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.2em', padding: '7px 12px 7px 0', verticalAlign: 'top', whiteSpace: 'nowrap', width: 48 }}>{w}</td>
                   <td style={{ fontFamily: SERIF, fontSize: 11, color: MID, lineHeight: 1.6, padding: '7px 0' }}>{answer}</td>

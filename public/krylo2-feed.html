@@ -455,47 +455,56 @@ body {
 #bay-replace-modal {
     display: none;
     position: fixed; inset: 0; z-index: 99999;
-    background: rgba(0,0,0,0.85);
+    background: rgba(0,0,0,0.55);
     align-items: center; justify-content: center;
 }
 #bay-replace-modal.open { display: flex; }
 #bay-replace-modal .brm-box {
-    background: #0a0a0a;
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 28px 32px;
-    max-width: 340px; width: 90%;
-    display: flex; flex-direction: column; gap: 18px;
+    background: #000;
+    border: 0.5px solid rgba(255,255,255,0.12);
+    padding: 20px 24px;
+    max-width: 260px; width: 90%;
+    display: flex; flex-direction: column; gap: 14px;
     font-family: 'IBM Plex Mono', monospace;
 }
-#bay-replace-modal .brm-warning {
-    font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase;
+#bay-replace-modal .brm-label {
+    font-size: 8px; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; text-transform: uppercase;
 }
-#bay-replace-modal .brm-title {
-    font-size: 13px; color: #fff; font-weight: 500; line-height: 1.5;
-}
-#bay-replace-modal .brm-name {
-    font-size: 10px; color: #66FF00; letter-spacing: 0.06em;
-}
-#bay-replace-modal .brm-consequence {
-    font-size: 10px; color: rgba(255,80,80,0.85); line-height: 1.6; letter-spacing: 0.04em;
+#bay-replace-modal .brm-body {
+    font-size: 10px; color: rgba(255,255,255,0.6); line-height: 1.7; letter-spacing: 0.03em;
 }
 #bay-replace-modal .brm-actions {
-    display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px;
+    display: flex; gap: 20px; justify-content: flex-end;
 }
 #bay-replace-modal .brm-cancel {
-    padding: 8px 20px;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
-    color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
-    letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+    background: none; border: none; padding: 0;
+    color: rgba(255,255,255,0.3); font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px; letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
 }
-#bay-replace-modal .brm-cancel:hover { background: rgba(255,255,255,0.14); }
+#bay-replace-modal .brm-cancel:hover { color: rgba(255,255,255,0.6); }
 #bay-replace-modal .brm-replace {
-    padding: 8px 16px;
-    background: transparent; border: 1px solid rgba(255,60,60,0.5);
-    color: rgba(255,80,80,0.85); font-family: 'IBM Plex Mono', monospace; font-size: 10px;
-    letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+    background: none; border: none; padding: 0;
+    color: rgba(255,255,255,0.85); font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px; letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
 }
-#bay-replace-modal .brm-replace:hover { border-color: rgba(255,60,60,0.9); color: rgb(255,80,80); }
+#bay-replace-modal .brm-replace:hover { color: #fff; }
+#bay-disk-alert {
+    display: none;
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9998; pointer-events: none;
+    background: #000; border: 0.5px solid rgba(255,255,255,0.12);
+    padding: 16px 20px; max-width: 240px; width: 90%;
+    font-family: 'IBM Plex Mono', monospace;
+}
+#bay-disk-alert.open { display: block; }
+#bay-disk-alert .bda-label {
+    font-size: 8px; color: rgba(255,255,255,0.22); letter-spacing: 0.1em;
+    text-transform: uppercase; margin-bottom: 10px;
+}
+#bay-disk-alert .bda-body {
+    font-size: 10px; color: rgba(255,255,255,0.52); line-height: 1.7; letter-spacing: 0.03em;
+}
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2325,6 +2334,10 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
         </div>
 
         <div class="sf-section-label">System</div>
+        <div class="sf-row">
+            <span class="sf-row-key">System Alerts</span>
+            <div class="sf-toggle on" id="sf-alerts-toggle" onclick="toggleSuppressAlerts(this)"><div class="sf-toggle-knob"></div></div>
+        </div>
         <div class="sf-row"><span class="sf-row-key">Version</span><span class="sf-row-val">KRYLO 0.4.22</span></div>
         <div class="sf-row"><span class="sf-row-key">Build</span><span class="sf-row-val">2026-05-22</span></div>
         <div class="sf-row"><span class="sf-row-key">Environment</span><span class="sf-row-val">DEVELOPMENT</span></div>
@@ -2694,6 +2707,7 @@ var _saveMode = false;
 
 function onBayClick(bay) {
     if (_saveMode) {
+        _hideDiskAlert();
         if (_bayOccupied(bay)) {
             var proj = _bayProject(bay);
             var savedName = proj && proj.name ? proj.name : 'Bay ' + bay;
@@ -2727,11 +2741,34 @@ function onBayDown(bay) {
 function onBayUp() {
     if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer = null; }
 }
+var _diskAlertTimer = null;
+function _showDiskAlert() {
+    if (localStorage.getItem('krylo_suppress_alerts') === '1') return;
+    var el = document.getElementById('bay-disk-alert');
+    if (!el) return;
+    var anyOccupied = [1,2,3].some(function(b){ return _bayOccupied(b); });
+    el.querySelector('.bda-body').textContent = anyOccupied
+        ? 'Select a bay to save. Occupied bays will be replaced.'
+        : 'Select a bay to save your current session.';
+    el.classList.add('open');
+    if (_diskAlertTimer) clearTimeout(_diskAlertTimer);
+    _diskAlertTimer = setTimeout(_hideDiskAlert, 4000);
+}
+function _hideDiskAlert() {
+    var el = document.getElementById('bay-disk-alert');
+    if (el) el.classList.remove('open');
+    _diskAlertTimer = null;
+}
+function toggleSuppressAlerts(el) {
+    el.classList.toggle('on');
+    localStorage.setItem('krylo_suppress_alerts', el.classList.contains('on') ? '0' : '1');
+}
 function triggerSaveAs() {
     var nb=document.getElementById('nav-bays');
     if(!nb) return;
-    if(nb.style.display==='flex'){ nb.style.display='none'; return; }
+    if(nb.style.display==='flex'){ nb.style.display='none'; _hideDiskAlert(); return; }
     _refreshBays(); nb.style.display='flex';
+    _showDiskAlert();
 }
 document.addEventListener('keydown', function(e) {
     if(e.key==='Escape') { _closeSaveAs(); _closeBayReplaceModal(); }
@@ -3470,15 +3507,18 @@ function handleConsoleKey(e) {
 </script>
 
 
+<div id="bay-disk-alert">
+    <div class="bda-label">System Alert</div>
+    <div class="bda-body"></div>
+</div>
+
 <div id="bay-replace-modal">
     <div class="brm-box">
-        <div class="brm-warning">Bay <span id="brm-bay-num"></span> — Saved Work Detected</div>
-        <div class="brm-title">You are about to replace an existing session.</div>
-        <div class="brm-name" id="brm-saved-name"></div>
-        <div class="brm-consequence">This will permanently erase all saved work in this bay.<br>This action cannot be undone.</div>
+        <div class="brm-label">System · Bay <span id="brm-bay-num"></span></div>
+        <div class="brm-body">Saved work exists in this bay.<br>Saving here will replace it.</div>
         <div class="brm-actions">
-            <button class="brm-cancel" onclick="_closeBayReplaceModal()">CANCEL</button>
-            <button class="brm-replace" onclick="_confirmBayReplace()">REPLACE</button>
+            <button class="brm-cancel" onclick="_closeBayReplaceModal()">Cancel</button>
+            <button class="brm-replace" onclick="_confirmBayReplace()">Replace</button>
         </div>
     </div>
 </div>
