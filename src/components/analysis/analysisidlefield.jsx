@@ -67,8 +67,8 @@ function SectionLabel({ children }) {
   );
 }
 
-function CalibrationSignal({ lens }) {
-  const signal = CALIBRATION_SIGNALS[lens];
+function CalibrationSignal({ lens, signalKey }) {
+  const signal = CALIBRATION_SIGNALS[signalKey ?? lens];
   if (!signal || signal.confidence < CONFIDENCE_THRESHOLD) return null;
   return (
     <div style={{ borderLeft: `2px solid ${LIME}`, paddingLeft: 12, marginBottom: 32, opacity: 0, animation: 'signal-fade-in 300ms ease forwards' }}>
@@ -452,8 +452,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [horizon,         setHorizon]         = useState(null);
   const [focused,         setFocused]         = useState(false);
   const [plusOpen,        setPlusOpen]        = useState(false);
-  const [volatilityShock, setVolatilityShock] = useState(false);
-  const [simRunning,      setSimRunning]      = useState(false);
+  const [volatilityShock,   setVolatilityShock]   = useState(false);
+  const [excludeSimulator,  setExcludeSimulator]  = useState(false);
+  const [simRunning,        setSimRunning]         = useState(false);
   const [regimeKey,       setRegimeKey]       = useState('Sovereign_Wealth');
   const [missingField,    setMissingField]    = useState(null);
   const [advancedOpen,    setAdvancedOpen]    = useState(false);
@@ -806,6 +807,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
             )}
           </div>
 
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+
           {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
           <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -923,49 +926,9 @@ export default function AnalysisIdleField({ activeCones = null }) {
             })()}
           </div>
 
-          {/* ── SECTION 3: VOLATILITY SHOCK OVERRIDE ── */}
-          <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. VOLATILITY SHOCK OVERRIDE</div>
-            <div style={{
-              background: '#0b0e11',
-              border: `1px ${volatilityShock ? 'dashed' : 'solid'} ${volatilityShock ? 'rgba(0,127,255,0.4)' : 'rgba(255,255,255,0.07)'}`,
-              borderRadius: 4, padding: '8px 12px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              transition: 'border-color 200ms',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14 }}>⚡</span>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.6)' }}>
-                    FORCE TURBULENT STATE ENGINE
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
-                    Bypasses parameters; forces wc to 0.60 ceiling
-                  </div>
-                </div>
-              </div>
-              <div
-                onClick={() => setVolatilityShock(v => !v)}
-                style={{
-                  width: 40, height: 22, borderRadius: 11, cursor: 'pointer', flexShrink: 0,
-                  background: volatilityShock ? 'rgba(0,127,255,0.25)' : 'rgba(255,255,255,0.07)',
-                  border: volatilityShock ? '1px solid rgba(0,127,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
-                  position: 'relative', transition: 'all 200ms',
-                }}
-              >
-                <div style={{
-                  position: 'absolute', top: 3, left: volatilityShock ? 19 : 3,
-                  width: 14, height: 14, borderRadius: '50%',
-                  background: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.35)',
-                  transition: 'left 200ms',
-                }} />
-              </div>
-            </div>
-          </div>
-
-          {/* ── SECTION 4: FORENSIC MATRIX FIELDS ── */}
-          <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>4. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
+          {/* ── SECTION 3: FORENSIC MATRIX FIELDS ── */}
+          <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
             <div style={{ height: 180, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden' }}>
               {(() => {
                 // 6 domain anchors — fixed positions on 320×160 SVG
@@ -1025,6 +988,48 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           </div>
 
+          {/* ── VOLATILITY SHOCK OVERRIDE ── */}
+          <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>VOLATILITY SHOCK OVERRIDE</div>
+            <div style={{
+              background: '#0b0e11',
+              border: `1px ${volatilityShock ? 'dashed' : 'solid'} ${volatilityShock ? 'rgba(0,127,255,0.4)' : 'rgba(255,255,255,0.07)'}`,
+              borderRadius: 4, padding: '8px 12px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              transition: 'border-color 200ms',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 14 }}>⚡</span>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.6)' }}>
+                    FORCE TURBULENT STATE ENGINE
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
+                    Bypasses parameters; forces wc to 0.60 ceiling
+                  </div>
+                </div>
+              </div>
+              <div
+                onClick={() => setVolatilityShock(v => !v)}
+                style={{
+                  width: 40, height: 22, borderRadius: 11, cursor: 'pointer', flexShrink: 0,
+                  background: volatilityShock ? 'rgba(0,127,255,0.25)' : 'rgba(255,255,255,0.07)',
+                  border: volatilityShock ? '1px solid rgba(0,127,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
+                  position: 'relative', transition: 'all 200ms',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 3, left: volatilityShock ? 19 : 3,
+                  width: 14, height: 14, borderRadius: '50%',
+                  background: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.35)',
+                  transition: 'left 200ms',
+                }} />
+              </div>
+            </div>
+          </div>
+
+          </div>{/* end scroll wrapper */}
+
           {/* ── SIMULATION CONTROLS FOOTER ── */}
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_MED}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {!isLive ? (
@@ -1034,51 +1039,17 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 cursor: 'pointer', fontFamily: MONO, fontSize: FS_EXECUTE,
               }}>RETURN TO LIVE</button>
             ) : hasSession ? (
-              <>
-                <button
-                  onClick={handleExecute}
-                  disabled={processing}
-                  style={{
-                    width: '100%', padding: '11px 0',
-                    background: processing ? 'rgba(102,255,0,0.06)' : 'transparent',
-                    color: LIME,
-                    border: `1px solid ${processing ? 'rgba(102,255,0,0.2)' : 'rgba(102,255,0,0.4)'}`,
-                    cursor: processing ? 'default' : 'pointer',
-                    fontFamily: MONO, fontSize: FS_EXECUTE, fontWeight: 400,
-                    letterSpacing: '0.22em', textTransform: 'uppercase',
-                    opacity: processing ? 0.5 : 1,
-                    transition: 'opacity 200ms',
-                  }}
-                >{processing ? 'ANALYZING...' : '⟳ REANALYZE WITH CURRENT SETTINGS'}</button>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
-                  <button style={simBtnStyle}>SAVE STATE</button>
-                  <button style={simBtnStyle}>EXPORT SCALAR</button>
-                </div>
-              </>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
+                <button style={simBtnStyle}>SAVE STATE</button>
+                <button style={simBtnStyle}>EXPORT SCALAR</button>
+              </div>
             ) : (
-              <>
-                <button
-                  onClick={handleExecute}
-                  disabled={processing}
-                  style={{
-                    width: '100%', padding: '11px 0',
-                    background: processing ? 'rgba(102,255,0,0.06)' : 'transparent',
-                    color: LIME,
-                    border: `1px solid ${processing ? 'rgba(102,255,0,0.2)' : 'rgba(102,255,0,0.4)'}`,
-                    cursor: processing ? 'default' : 'pointer',
-                    fontFamily: MONO, fontSize: 9, fontWeight: 400,
-                    letterSpacing: '0.14em', textTransform: 'uppercase',
-                    opacity: processing ? 0.5 : 1,
-                    transition: 'opacity 200ms',
-                  }}
-                >{processing ? 'ANALYZING...' : 'STRESS SIMULATION'}</button>
-                <div style={{ display: 'flex', gap: 4 }}>
-                  <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
-                  <button style={simBtnStyle}>SAVE STATE</button>
-                  <button style={simBtnStyle}>EXPORT SCALAR</button>
-                </div>
-              </>
+              <div style={{ display: 'flex', gap: 4 }}>
+                <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
+                <button style={simBtnStyle}>SAVE STATE</button>
+                <button style={simBtnStyle}>EXPORT SCALAR</button>
+              </div>
             )}
           </div>
 
@@ -1237,6 +1208,18 @@ export default function AnalysisIdleField({ activeCones = null }) {
                       )}
                     </div>
                   </div>
+                  {/* Exclude simulator */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
+                    <input
+                      type="checkbox"
+                      checked={excludeSimulator}
+                      onChange={e => setExcludeSimulator(e.target.checked)}
+                      style={{ accentColor: LIME, width: 12, height: 12, cursor: 'pointer' }}
+                    />
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
+                      Exclude simulator
+                    </span>
+                  </label>
                   {/* Right controls */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     {/* Mic */}

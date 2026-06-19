@@ -7,7 +7,7 @@ export const SITUATIONS = [
   { label: 'BUYING A HOME',        lens: 'REALTOR'    },
   { label: 'PLANNING RETIREMENT',  lens: 'RETIREMENT' },
   { label: 'GROWING INCOME',       lens: 'INVESTOR'   },
-  { label: 'CAREER MOVE',          lens: 'ATHLETE'    },
+  { label: 'CAREER MOVE',          lens: 'TRANSITION', secondaryLens: 'INVESTOR', lensWeight: 0.65, secondaryWeight: 0.35, signalKey: 'CAREER_MOVE' },
   { label: 'PROTECTING MY FAMILY', lens: 'FAMILY'     },
   { label: 'STARTING OUT',         lens: 'STUDENT'    },
   { label: 'STARTING OVER',        lens: 'TRANSITION' },
@@ -99,7 +99,8 @@ export const CALIBRATION_SIGNALS = {
   ATHLETE:    { observation: "Career transitions in this profile most often hinged on timing, not preparation.",                                 confidence: 0.82 },
   FAMILY:     { observation: "Families in this situation most often discovered insurance gaps before asset gaps.",                               confidence: 0.77 },
   STUDENT:    { observation: "People starting out most often found debt clarity was the prerequisite to everything else.",                       confidence: 0.85 },
-  TRANSITION: { observation: "People restructuring most often found income stability mattered more than asset division.",                        confidence: 0.79 },
+  TRANSITION:  { observation: "People restructuring most often found income stability mattered more than asset division.",                        confidence: 0.79 },
+  CAREER_MOVE: { observation: "Career moves in this range most often stalled on timing and liquidity, not on the opportunity itself.",              confidence: 0.83 },
   HEALTH:     { observation: "Most people in this situation found coverage gaps before addressing cost exposure.",                               confidence: 0.71 },
   SALES:      { observation: "Builders in early stages most often found cash runway was the first constraint, not market fit.",                  confidence: 0.66 },
   OPEN:       { observation: "Most users in open mode found a more specific lens after their first run.",                                       confidence: 0.60 },
@@ -116,3 +117,14 @@ export const KEY_OPS = [
 export const OP_OPS = [
   'contains', 'is between', 'equals', 'does not contain', 'is greater than', 'is less than', 'is',
 ];
+
+// Resolves weighted domain list for situations with a secondary lens.
+// Falls back to primary lens domains for situations without weights.
+export function resolveWeightedDomains(situation) {
+  if (!situation) return [];
+  const primary = LENS_DOMAIN_MAP[situation.lens] ?? [];
+  if (!situation.secondaryLens) return primary;
+  const secondary = LENS_DOMAIN_MAP[situation.secondaryLens] ?? [];
+  const merged = [...new Set([...primary, ...secondary])];
+  return merged;
+}
