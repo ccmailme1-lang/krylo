@@ -452,6 +452,50 @@ body {
 }
 .bay-sq.occupied           { background: #000 !important; color: #66FF00 !important; border: 0.5px solid #66FF00 !important; animation: none !important; }
 .bay-sq.selected           { background: #66FF00 !important; color: #000 !important; border: none !important; }
+#bay-replace-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.85);
+    align-items: center; justify-content: center;
+}
+#bay-replace-modal.open { display: flex; }
+#bay-replace-modal .brm-box {
+    background: #0a0a0a;
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 28px 32px;
+    max-width: 340px; width: 90%;
+    display: flex; flex-direction: column; gap: 18px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+#bay-replace-modal .brm-warning {
+    font-size: 9px; color: rgba(255,255,255,0.4); letter-spacing: 0.08em; text-transform: uppercase;
+}
+#bay-replace-modal .brm-title {
+    font-size: 13px; color: #fff; font-weight: 500; line-height: 1.5;
+}
+#bay-replace-modal .brm-name {
+    font-size: 10px; color: #66FF00; letter-spacing: 0.06em;
+}
+#bay-replace-modal .brm-consequence {
+    font-size: 10px; color: rgba(255,80,80,0.85); line-height: 1.6; letter-spacing: 0.04em;
+}
+#bay-replace-modal .brm-actions {
+    display: flex; gap: 10px; justify-content: flex-end; margin-top: 4px;
+}
+#bay-replace-modal .brm-cancel {
+    padding: 8px 20px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+}
+#bay-replace-modal .brm-cancel:hover { background: rgba(255,255,255,0.14); }
+#bay-replace-modal .brm-replace {
+    padding: 8px 16px;
+    background: transparent; border: 1px solid rgba(255,60,60,0.5);
+    color: rgba(255,80,80,0.85); font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    letter-spacing: 0.08em; cursor: pointer; text-transform: uppercase;
+}
+#bay-replace-modal .brm-replace:hover { border-color: rgba(255,60,60,0.9); color: rgb(255,80,80); }
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2650,10 +2694,19 @@ var _saveMode = false;
 
 function onBayClick(bay) {
     if (_saveMode) {
-        _saveMode = false;
-        window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
-        var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
-        _flash3(el, 3);
+        if (_bayOccupied(bay)) {
+            var proj = _bayProject(bay);
+            var savedName = proj && proj.name ? proj.name : 'Bay ' + bay;
+            _pendingReplaceBay = bay;
+            document.getElementById('brm-bay-num').textContent = bay;
+            document.getElementById('brm-saved-name').textContent = savedName;
+            document.getElementById('bay-replace-modal').classList.add('open');
+        } else {
+            _saveMode = false;
+            window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
+            var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
+            _flash3(el, 3);
+        }
     } else {
         _selectedBay = (_selectedBay === bay) ? null : bay;
         _refreshBays();
@@ -2681,8 +2734,26 @@ function triggerSaveAs() {
     _refreshBays(); nb.style.display='flex';
 }
 document.addEventListener('keydown', function(e) {
-    if(e.key==='Escape') _closeSaveAs();
+    if(e.key==='Escape') { _closeSaveAs(); _closeBayReplaceModal(); }
 });
+
+var _pendingReplaceBay = null;
+
+function _closeBayReplaceModal() {
+    document.getElementById('bay-replace-modal').classList.remove('open');
+    _pendingReplaceBay = null;
+    _saveMode = false;
+    _refreshBays();
+}
+
+function _confirmBayReplace() {
+    var bay = _pendingReplaceBay;
+    _closeBayReplaceModal();
+    if (!bay) return;
+    window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
+    var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
+    _flash3(el, 3);
+}
 
 /* ── Hero Headline Rotation ──────────────────────────────── */
 (function() {
@@ -3398,5 +3469,18 @@ function handleConsoleKey(e) {
 }
 </script>
 
+
+<div id="bay-replace-modal">
+    <div class="brm-box">
+        <div class="brm-warning">Bay <span id="brm-bay-num"></span> — Saved Work Detected</div>
+        <div class="brm-title">You are about to replace an existing session.</div>
+        <div class="brm-name" id="brm-saved-name"></div>
+        <div class="brm-consequence">This will permanently erase all saved work in this bay.<br>This action cannot be undone.</div>
+        <div class="brm-actions">
+            <button class="brm-cancel" onclick="_closeBayReplaceModal()">CANCEL</button>
+            <button class="brm-replace" onclick="_confirmBayReplace()">REPLACE</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
