@@ -442,16 +442,16 @@ body {
 @keyframes bay-confirm { 0%{background:#fff;} 100%{background:inherit;} }
 .bay-sq {
     width: 10px; height: 10px;
-    background: rgba(255,255,255,0.85);
+    background: rgba(255,255,255,0.15);
+    border: 0.5px solid rgba(255,255,255,0.15);
     display: flex; align-items: center; justify-content: center;
     font-family: 'IBM Plex Mono', monospace;
-    font-size: 6px; color: #000;
+    font-size: 6px; color: rgba(255,255,255,0.3);
     cursor: pointer; letter-spacing: 0.04em;
     user-select: none;
 }
-.bay-sq.occupied           { background: #66FF00 !important; color: #000 !important; animation: none !important; }
-.bay-sq.selected           { background: transparent; color: #fff; border: 0.5px solid #fff; }
-.bay-sq.occupied.selected  { background: transparent; color: #66FF00; border: 0.5px solid #66FF00; }
+.bay-sq.occupied           { background: #000 !important; color: #66FF00 !important; border: 0.5px solid #66FF00 !important; animation: none !important; }
+.bay-sq.selected           { background: #66FF00 !important; color: #000 !important; border: none !important; }
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2135,6 +2135,19 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     </div>
     <div class="nav-right">
         <div class="nav-live">Live</div>
+        <div class="nav-save-group" data-no-relay>
+            <svg onclick="triggerSaveAs()" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" style="width:14px;height:14px;opacity:0.5;flex-shrink:0;cursor:pointer;">
+                <rect x="2" y="2" width="14" height="14" rx="1"/>
+                <rect x="5" y="2" width="8" height="5"/>
+                <rect x="11" y="3" width="1.5" height="3" fill="currentColor" stroke="none"/>
+                <rect x="4" y="10" width="10" height="4"/>
+            </svg>
+            <div id="nav-bays" style="display:none;gap:4px;align-items:center;">
+                <div class="bay-sq" data-bay="1" onclick="onBayClick(1)" onmousedown="onBayDown(1)" onmouseup="onBayUp()" onmouseleave="onBayUp()">1</div>
+                <div class="bay-sq" data-bay="2" onclick="onBayClick(2)" onmousedown="onBayDown(2)" onmouseup="onBayUp()" onmouseleave="onBayUp()">2</div>
+                <div class="bay-sq" data-bay="3" onclick="onBayClick(3)" onmousedown="onBayDown(3)" onmouseup="onBayUp()" onmouseleave="onBayUp()">3</div>
+            </div>
+        </div>
 <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5">
             <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
         </svg>
@@ -2210,19 +2223,6 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     <div class="lnav-item" onclick="setMode('history')">
         <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><polyline points="9,5 9,9 12,11"/></svg>
         <span class="lnav-label">History</span>
-    </div>
-    <div class="lnav-item" onclick="triggerSaveAs()" data-no-relay>
-        <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
-            <rect x="2" y="2" width="14" height="14" rx="1"/>
-            <rect x="5" y="2" width="8" height="5"/>
-            <rect x="11" y="3" width="1.5" height="3" fill="currentColor" stroke="none"/>
-            <rect x="4" y="10" width="10" height="4"/>
-        </svg>
-        <div id="nav-bays" style="display:none;flex-direction:row;gap:4px;align-items:center;justify-content:center;">
-            <div class="bay-sq" data-bay="1" onclick="onBayClick(1)" onmousedown="onBayDown(1)" onmouseup="onBayUp()" onmouseleave="onBayUp()">1</div>
-            <div class="bay-sq" data-bay="2" onclick="onBayClick(2)" onmousedown="onBayDown(2)" onmouseup="onBayUp()" onmouseleave="onBayUp()">2</div>
-            <div class="bay-sq" data-bay="3" onclick="onBayClick(3)" onmousedown="onBayDown(3)" onmouseup="onBayUp()" onmouseleave="onBayUp()">3</div>
-        </div>
     </div>
     <div class="lnav-spacer"></div>
     <div class="lnav-settings" id="lnav-settings-btn" onclick="window.parent.postMessage({type:'toggle-signal-panel'},'*')" >
@@ -2633,8 +2633,12 @@ function _refreshBays() {
     [1,2,3].forEach(function(b){
         var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+b+'"]');
         if(!el) return;
-        el.classList.toggle('occupied', _bayOccupied(b));
-        el.classList.toggle('selected', _selectedBay===b);
+        var occ = _bayOccupied(b);
+        el.classList.toggle('occupied', occ && !_saveMode);
+        el.classList.toggle('eligible', _saveMode);
+        el.classList.toggle('selected', !_saveMode && _selectedBay===b);
+        var proj = _bayProject(b);
+        el.title = occ && proj && proj.name ? proj.name : '';
     });
 }
 function _closeSaveAs() {
@@ -2642,10 +2646,18 @@ function _closeSaveAs() {
 }
 var _pressTimer = null;
 var _selectedBay = null;
+var _saveMode = false;
 
 function onBayClick(bay) {
-    _selectedBay = (_selectedBay === bay) ? null : bay;
-    _refreshBays();
+    if (_saveMode) {
+        _saveMode = false;
+        window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
+        var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
+        _flash3(el, 3);
+    } else {
+        _selectedBay = (_selectedBay === bay) ? null : bay;
+        _refreshBays();
+    }
 }
 function _flash3(el, n) {
     if(!el||n<=0){ _refreshBays(); return; }
@@ -2655,9 +2667,8 @@ function _flash3(el, n) {
 function onBayDown(bay) {
     _pressTimer = setTimeout(function() {
         _pressTimer = null;
-        window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
-        var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
-        _flash3(el, 3);
+        _saveMode = true;
+        _refreshBays();
     }, 600);
 }
 function onBayUp() {
