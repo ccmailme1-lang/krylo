@@ -602,7 +602,7 @@ function Row({ label, children }) {
 
 /* ── Root ── */
 export default function CommunityView() {
-  const [activeId, setActiveId] = useState(3);
+  const [activeId, setActiveId] = useState(null);
   return (
     <div style={{
       position:'absolute', inset:0,

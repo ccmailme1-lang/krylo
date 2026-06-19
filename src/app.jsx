@@ -38,6 +38,7 @@ import ConceptBDashboard from './components/microsignals/conceptbdashboard.jsx';
 import HistoryBay        from './components/history/historybay.jsx';
 import Workstation       from './components/bays/workstation.jsx';
 import SettingsPanel     from './components/settings/settingspanel.jsx';
+import { saveProject }   from './engine/projectregistry.js';
 import ConsoleDashboard  from './components/resonance/consoledashboard.jsx';
 import CoachWellConsole  from './components/analysis/coachwell.jsx';
 import BayVisor          from './components/resonance/bayvisor.jsx';
@@ -787,6 +788,29 @@ export default function App() {
   // krylo-nav: left nav mode switch from iframe
   useEffect(() => {
     function onNavMessage(ev) {
+      if (ev.data?.type === 'krylo-load-project') {
+        const proj = ev.data.project;
+        if (proj) {
+          const id = createSession(proj.lens || 'GENERAL');
+          setNavMode('analysis');
+        }
+        return;
+      }
+      if (ev.data?.type === 'krylo-save-as') {
+        const name = ev.data.name?.trim();
+        const bay  = ev.data.bay ?? 1;
+        if (name) {
+          saveProject(name, {
+            lens:      activeSession?.lens ?? '',
+            domain:    activeSession?.tensor?.domain ?? null,
+            situation: activeSession?.tensor?.situation ?? null,
+            floor:     activeSession?.tensor?.floor ?? null,
+            horizon:   activeSession?.tensor?.horizon ?? null,
+            query:     activeSession?.query ?? '',
+          }, bay);
+        }
+        return;
+      }
       if (ev.data?.type !== 'krylo-nav') return;
       if (ev.data.mode) {
         setNavMode(ev.data.mode);
@@ -801,7 +825,7 @@ export default function App() {
     }
     window.addEventListener('message', onNavMessage);
     return () => window.removeEventListener('message', onNavMessage);
-  }, []);
+  }, [activeSession]);
 
   // krylo-reset: logo tap — global state reset + iframe reload
   useEffect(() => {
@@ -1035,6 +1059,7 @@ export default function App() {
           <SettingsPanel />
         </div>
       )}
+
 
       {/* ── Leverage Oracle Bay — WO-1362 ─────────────────────── */}
       {navMode === 'leverage' && (

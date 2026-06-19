@@ -405,6 +405,54 @@ body {
     color:white;
 }
 .lnav-spacer { flex:1; }
+
+/* ── Nav Save Group ────────────────────────────────────────── */
+.nav-save-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+/* ── Save As Input ─────────────────────────────────────────── */
+#save-as-input-wrap {
+    display: none;
+    position: fixed;
+    left: 80px;
+    bottom: 88px;
+    z-index: 200;
+    flex-direction: row;
+    gap: 5px;
+}
+#save-as-input-wrap.open { display: flex; }
+.lnav-save-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0 8px;
+    width: 100%;
+}
+.lnav-bays {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+@keyframes bay-blink   { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+@keyframes bay-confirm { 0%{background:#fff;} 100%{background:inherit;} }
+.bay-sq {
+    width: 10px; height: 10px;
+    background: rgba(255,255,255,0.85);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 6px; color: #000;
+    cursor: pointer; letter-spacing: 0.04em;
+    user-select: none;
+    animation: bay-blink 1.2s ease-in-out infinite;
+}
+.bay-sq.occupied           { background: #66FF00; color: #000; animation: none; }
+.bay-sq.selected           { background: transparent; color: #fff; border: 0.5px solid #fff; }
+.bay-sq.occupied.selected  { background: transparent; color: #66FF00; border: 0.5px solid #66FF00; }
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2088,7 +2136,20 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     </div>
     <div class="nav-right">
         <div class="nav-live">Live</div>
-        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5">
+        <div class="nav-save-group" data-no-relay>
+            <svg onclick="triggerSaveAs()" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" style="width:14px;height:14px;opacity:0.5;flex-shrink:0;cursor:pointer;">
+                <rect x="2" y="2" width="14" height="14" rx="1"/>
+                <rect x="5" y="2" width="8" height="5"/>
+                <rect x="11" y="3" width="1.5" height="3" fill="currentColor" stroke="none"/>
+                <rect x="4" y="10" width="10" height="4"/>
+            </svg>
+            <div id="nav-bays" style="display:none;gap:4px;align-items:center;">
+                <div class="bay-sq" data-bay="1" onclick="onBayClick(1)" onmousedown="onBayDown(1)" onmouseup="onBayUp()" onmouseleave="onBayUp()">1</div>
+                <div class="bay-sq" data-bay="2" onclick="onBayClick(2)" onmousedown="onBayDown(2)" onmouseup="onBayUp()" onmouseleave="onBayUp()">2</div>
+                <div class="bay-sq" data-bay="3" onclick="onBayClick(3)" onmousedown="onBayDown(3)" onmouseup="onBayUp()" onmouseleave="onBayUp()">3</div>
+            </div>
+        </div>
+<svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5">
             <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
         </svg>
         <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" onclick="setMode('settings')" style="cursor:pointer;" data-no-relay>
@@ -2177,6 +2238,14 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
           <line x1="9" y1="12" x2="9" y2="16" stroke="currentColor" stroke-width="1.3"/>
         </svg>
     </div>
+</div>
+
+
+<!-- Bay Selector -->
+<div id="save-as-input-wrap">
+    <div class="bay-sq" data-bay="1" onclick="onBayClick(1)">1</div>
+    <div class="bay-sq" data-bay="2" onclick="onBayClick(2)">2</div>
+    <div class="bay-sq" data-bay="3" onclick="onBayClick(3)">3</div>
 </div>
 
 <!-- Settings Flyout -->
@@ -2546,8 +2615,64 @@ function setMode(name) {
         window.parent.postMessage({ type: 'krylo-nav', mode: 'community' }, '*');
     } else if (name === 'settings') {
         window.parent.postMessage({ type: 'krylo-nav', mode: 'settings' }, '*');
+    } else if (name === 'projects') {
+        window.parent.postMessage({ type: 'krylo-nav', mode: 'projects' }, '*');
     }
 }
+
+var _loadedBay = null;
+
+function _bayOccupied(bay) {
+    try { return JSON.parse(localStorage.getItem('krylo_projects')||'[]').some(function(p){return p.bay===bay;}); }
+    catch(e){ return false; }
+}
+function _bayProject(bay) {
+    try { return JSON.parse(localStorage.getItem('krylo_projects')||'[]').find(function(p){return p.bay===bay;})||null; }
+    catch(e){ return null; }
+}
+function _refreshBays() {
+    [1,2,3].forEach(function(b){
+        var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+b+'"]');
+        if(!el) return;
+        el.classList.toggle('occupied', _bayOccupied(b));
+        el.classList.toggle('selected', _selectedBay===b);
+    });
+}
+function _closeSaveAs() {
+    document.getElementById('save-as-input-wrap').classList.remove('open');
+}
+var _pressTimer = null;
+var _selectedBay = null;
+
+function onBayClick(bay) {
+    _selectedBay = (_selectedBay === bay) ? null : bay;
+    _refreshBays();
+}
+function _flash3(el, n) {
+    if(!el||n<=0){ _refreshBays(); return; }
+    el.style.background='#fff'; el.style.color='#000';
+    setTimeout(function(){ el.style.background=''; el.style.color=''; setTimeout(function(){ _flash3(el,n-1); },180); },200);
+}
+function onBayDown(bay) {
+    _pressTimer = setTimeout(function() {
+        _pressTimer = null;
+        window.parent.postMessage({type:'krylo-save-as', name:'Bay '+bay, bay:bay},'*');
+        var el = document.querySelector('#nav-bays .bay-sq[data-bay="'+bay+'"]');
+        _flash3(el, 3);
+    }, 600);
+}
+function onBayUp() {
+    if(_pressTimer){ clearTimeout(_pressTimer); _pressTimer = null; }
+}
+function triggerSaveAs() {
+    var nb=document.getElementById('nav-bays');
+    if(!nb) return;
+    if(nb.style.display==='flex'){ nb.style.display='none'; return; }
+    _refreshBays(); nb.style.display='flex';
+}
+document.addEventListener('keydown', function(e) {
+    if(e.key==='Escape') _closeSaveAs();
+});
 
 /* ── Hero Headline Rotation ──────────────────────────────── */
 (function() {
