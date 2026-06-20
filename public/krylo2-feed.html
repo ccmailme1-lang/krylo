@@ -513,35 +513,35 @@ body {
 #session-modal.open { display: flex; }
 #session-modal .sm-box {
     position: relative; z-index: 1;
-    background: #000; border: 1px solid #66FF00;
-    width: 340px; font-family: 'IBM Plex Mono', monospace;
-    display: flex; flex-direction: column;
+    background: #111; border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 6px; width: 340px; font-family: 'IBM Plex Mono', monospace;
+    display: flex; flex-direction: column; overflow: hidden;
 }
 #session-modal .sm-titlebar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 9px 14px; border-bottom: 1px solid rgba(102,255,0,0.25);
+    padding: 9px 14px; border-bottom: 0.5px solid rgba(255,255,255,0.1);
 }
 #session-modal .sm-title {
-    font-size: 8px; color: #66FF00; letter-spacing: 0.12em; text-transform: uppercase;
+    font-size: 8px; color: rgba(255,255,255,0.5); letter-spacing: 0.12em; text-transform: uppercase;
 }
 #session-modal .sm-close {
     background: none; border: none; padding: 0; cursor: pointer;
-    color: rgba(102,255,0,0.6); font-size: 13px; line-height: 1; font-family: inherit;
+    color: rgba(255,255,255,0.3); font-size: 13px; line-height: 1; font-family: inherit;
 }
-#session-modal .sm-close:hover { color: #66FF00; }
+#session-modal .sm-close:hover { color: #fff; }
 #session-modal .sm-pathbar {
     display: flex; align-items: center; gap: 4px;
-    padding: 6px 14px; border-bottom: 1px solid rgba(102,255,0,0.15);
-    font-size: 9px; color: rgba(102,255,0,0.6); letter-spacing: 0.06em;
+    padding: 6px 14px; border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    font-size: 9px; color: rgba(255,255,255,0.35); letter-spacing: 0.06em;
 }
 #session-modal .sm-pathbar .sm-crumb-link {
-    color: rgba(102,255,0,0.8); cursor: pointer;
+    color: #66FF00; cursor: pointer;
 }
-#session-modal .sm-pathbar .sm-crumb-link:hover { color: #66FF00; }
+#session-modal .sm-pathbar .sm-crumb-link:hover { color: #fff; }
 #session-modal .sm-colheads {
     display: flex; padding: 5px 14px;
-    border-bottom: 1px solid rgba(102,255,0,0.12);
-    font-size: 7px; color: rgba(102,255,0,0.4); letter-spacing: 0.1em; text-transform: uppercase;
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    font-size: 7px; color: rgba(255,255,255,0.25); letter-spacing: 0.1em; text-transform: uppercase;
 }
 #session-modal .sm-colhead-name { flex: 1; }
 #session-modal .sm-colhead-date { width: 60px; text-align: right; }
@@ -550,41 +550,66 @@ body {
     display: flex; flex-direction: column;
 }
 #session-modal .sm-empty {
-    padding: 16px 14px; font-size: 9px; color: rgba(102,255,0,0.4); letter-spacing: 0.06em;
+    padding: 16px 14px; font-size: 9px; color: rgba(255,255,255,0.25); letter-spacing: 0.06em;
 }
 #session-modal .sm-row-item {
     display: flex; align-items: center; gap: 8px;
     padding: 7px 14px; cursor: pointer;
-    border-bottom: 1px solid rgba(102,255,0,0.08);
+    border-bottom: 0.5px solid rgba(255,255,255,0.06);
+    position: relative;
 }
 #session-modal .sm-row-item:last-child { border-bottom: none; }
-#session-modal .sm-row-item:hover { background: rgba(102,255,0,0.06); }
+#session-modal .sm-row-item:hover { background: rgba(255,255,255,0.04); }
 #session-modal .sm-row-icon {
-    font-size: 9px; color: rgba(102,255,0,0.5); width: 10px; flex-shrink: 0;
+    font-size: 9px; color: #66FF00; width: 10px; flex-shrink: 0;
 }
 #session-modal .sm-row-name {
-    flex: 1; font-size: 10px; color: #66FF00; letter-spacing: 0.03em;
+    flex: 1; font-size: 10px; color: rgba(255,255,255,0.85); letter-spacing: 0.03em;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-#session-modal .sm-row-meta {
-    font-size: 8px; color: rgba(102,255,0,0.45); letter-spacing: 0.04em; width: 60px; text-align: right;
+#session-modal .sm-row-name-input {
+    flex: 1; background: transparent; border: none; border-bottom: 0.5px solid #66FF00;
+    color: #fff; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; padding: 0; outline: none; letter-spacing: 0.03em;
 }
+#session-modal .sm-row-item:hover .sm-row-name { color: #fff; }
+#session-modal .sm-row-meta {
+    font-size: 8px; color: rgba(255,255,255,0.3); letter-spacing: 0.04em; width: 60px; text-align: right;
+}
+#session-modal .sm-row-del {
+    display: none; background: none; border: none; padding: 0 0 0 8px;
+    color: rgba(255,80,80,0.5); font-size: 11px; cursor: pointer; flex-shrink: 0; line-height: 1;
+}
+#session-modal .sm-row-item:hover .sm-row-del,
+#session-modal .sm-row-item.selected .sm-row-del { display: block; }
+#session-modal .sm-row-del:hover { color: rgba(255,80,80,0.9); }
+#session-modal .sm-confirm {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: #111; border: 0.5px solid rgba(255,80,80,0.4);
+    display: flex; gap: 10px; align-items: center; padding: 4px 10px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 8px; letter-spacing: 0.1em;
+    z-index: 10;
+}
+#session-modal .sm-confirm-msg { color: rgba(255,255,255,0.4); text-transform: uppercase; }
+#session-modal .sm-confirm-yes { background: none; border: none; color: rgba(255,80,80,0.8); cursor: pointer; font-family: inherit; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0; }
+#session-modal .sm-confirm-yes:hover { color: rgba(255,80,80,1); }
+#session-modal .sm-confirm-no  { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-family: inherit; font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase; padding: 0; }
 #session-modal .sm-footer {
-    border-top: 1px solid rgba(102,255,0,0.25);
+    border-top: 0.5px solid rgba(255,255,255,0.1);
     padding: 10px 14px; display: flex; gap: 8px; align-items: center;
 }
 #session-modal .sm-input {
-    flex: 1; background: transparent; border: none; border-bottom: 1px solid rgba(102,255,0,0.4);
-    color: #66FF00; font-family: 'IBM Plex Mono', monospace;
+    flex: 1; background: transparent; border: none; border-bottom: 0.5px solid rgba(255,255,255,0.2);
+    color: #fff; font-family: 'IBM Plex Mono', monospace;
     font-size: 10px; padding: 4px 0; outline: none; letter-spacing: 0.03em;
 }
-#session-modal .sm-input::placeholder { color: rgba(102,255,0,0.3); }
+#session-modal .sm-input::placeholder { color: rgba(255,255,255,0.2); }
 #session-modal .sm-save-btn {
     background: none; border: none; padding: 0; cursor: pointer;
-    color: #66FF00; font-family: 'IBM Plex Mono', monospace;
+    color: rgba(255,255,255,0.5); font-family: 'IBM Plex Mono', monospace;
     font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0;
 }
-#session-modal .sm-save-btn:hover { color: #fff; }
+#session-modal .sm-save-btn:hover { color: #66FF00; }
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2268,6 +2293,8 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     </div>
     <div class="nav-right">
         <div class="nav-live">Live</div>
+        <button data-no-relay onclick="window.parent.postMessage({type:'krylo-undo'},'*')" style="background:none;border:none;padding:0 4px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:13px;line-height:1;transition:color 120ms;" onmouseover="this.style.color='#66FF00'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">↩</button>
+        <button data-no-relay onclick="window.parent.postMessage({type:'krylo-redo'},'*')" style="background:none;border:none;padding:0 4px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:13px;line-height:1;transition:color 120ms;" onmouseover="this.style.color='#66FF00'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">↪</button>
         <button id="nav-ab" data-no-relay onclick="cycleABSlot()" style="display:flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;user-select:none;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.2);padding:2px 7px;outline:none;">
             <span id="nav-ab-a" style="color:#ffffff;transition:color 120ms;">A</span>
             <span style="color:rgba(255,255,255,0.2);">/</span>
@@ -2884,7 +2911,7 @@ function _renderExplorer() {
         } else {
             listEl.innerHTML = names.map(function(f) {
                 var safe = f.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-                var esc = f.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                var esc  = f.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
                 return '<div class="sm-row-item" onclick="_enterFolder(\''+esc+'\')">'
                     + '<span class="sm-row-icon">▸</span>'
                     + '<span class="sm-row-name">'+safe+'</span>'
@@ -2900,14 +2927,16 @@ function _renderExplorer() {
             listEl.innerHTML = '<div class="sm-empty">Empty folder</div>';
         } else {
             listEl.innerHTML = items.map(function(p) {
-                var d = (p.ts && !isNaN(new Date(p.ts).getTime())) ? new Date(p.ts) : null;
+                var ts = p.updatedAt || p.createdAt || p.ts || null;
+                var d  = (ts && !isNaN(new Date(ts).getTime())) ? new Date(ts) : null;
                 var ds = d ? (d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2) : '—';
-                var n = p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-                var esc = p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-                return '<div class="sm-row-item" id="sm-item-'+p.bay+'" onclick="_selectSession(\''+esc+'\','+p.bay+')">'
+                var n  = p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+                var sid = (p.id || p.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                return '<div class="sm-row-item" id="sm-item-'+encodeURIComponent(p.id||p.name)+'" onclick="_selectSession(\''+sid+'\')">'
                     + '<span class="sm-row-icon">—</span>'
-                    + '<span class="sm-row-name">'+n+'</span>'
+                    + '<span class="sm-row-name" id="sm-name-'+encodeURIComponent(p.id||p.name)+'" ondblclick="event.stopPropagation();_startRename(\''+sid+'\')">'+n+'</span>'
                     + '<span class="sm-row-meta">'+ds+'</span>'
+                    + '<button class="sm-row-del" onclick="event.stopPropagation();_confirmDelete(\''+sid+'\')" title="Delete">×</button>'
                     + '</div>';
             }).join('');
         }
@@ -2918,44 +2947,90 @@ function _enterFolder(name) {
     _sessionSelected = null;
     _renderExplorer();
 }
-function _selectSession(name, bay) {
-    _sessionSelected = { name: name, bay: bay };
+function _selectSession(id) {
+    var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
+    var p = projects.find(function(x){ return x.id === id || x.name === id; });
+    if (!p) return;
+    _sessionSelected = p;
     document.querySelectorAll('#sm-list .sm-row-item').forEach(function(el){ el.style.background = ''; });
-    var el = document.getElementById('sm-item-'+bay);
-    if (el) el.style.background = 'rgba(255,255,255,0.06)';
-    document.getElementById('sm-name-input').value = name;
+    var el = document.getElementById('sm-item-'+encodeURIComponent(p.id||p.name));
+    if (el) el.style.background = 'rgba(102,255,0,0.08)';
+    document.getElementById('sm-name-input').value = p.name;
     _setOpenBtn(true);
 }
 function _setOpenBtn(active) {
     var btn = document.getElementById('sm-open-btn');
     if (!btn) return;
-    btn.style.color = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)';
+    btn.style.color  = active ? '#66FF00' : 'rgba(255,255,255,0.2)';
     btn.style.cursor = active ? 'pointer' : 'default';
 }
 function _openSelectedSession() {
     if (!_sessionSelected) return;
-    window.parent.postMessage({ type: 'krylo-load', name: _sessionSelected.name, bay: _sessionSelected.bay }, '*');
+    window.parent.postMessage({ type: 'krylo-load-project', project: _sessionSelected }, '*');
     _closeSessionModal();
 }
 function _saveSession() {
     var name = (document.getElementById('sm-name-input').value || '').trim();
     if (!name) return;
-    var folder = _sessionFolder || 'My Sessions';
+    var folder   = _sessionFolder || 'My Sessions';
     var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
-    var idx = projects.findIndex(function(p){ return p.name === name && (p.folder||'My Sessions') === folder; });
-    var entry = { name: name, folder: folder, ts: Date.now(), bay: idx >= 0 ? projects[idx].bay : projects.length + 1 };
-    if (idx >= 0) projects[idx] = entry; else projects.push(entry);
-    localStorage.setItem('krylo_projects', JSON.stringify(projects));
-    window.parent.postMessage({ type: 'krylo-save-as', name: entry.name, bay: entry.bay }, '*');
+    var existing = projects.find(function(p){ return p.name === name; });
+    var bay = existing ? existing.bay : projects.length + 1;
+    window.parent.postMessage({ type: 'krylo-save-as', name: name, bay: bay, folder: folder }, '*');
     document.getElementById('sm-name-input').value = '';
+    setTimeout(_renderExplorer, 250);
+}
+
+function _confirmDelete(id) {
+    var el = document.getElementById('sm-item-'+encodeURIComponent(id));
+    if (!el) return;
+    if (el.querySelector('.sm-confirm')) return;
+    var conf = document.createElement('div');
+    conf.className = 'sm-confirm';
+    conf.innerHTML = '<span class="sm-confirm-msg">Delete?</span>'
+        + '<button class="sm-confirm-yes" onclick="event.stopPropagation();_deleteSession(\''+id.replace(/\\/g,'\\\\').replace(/'/g,"\\'")+'\')"">Yes</button>'
+        + '<button class="sm-confirm-no" onclick="event.stopPropagation();this.parentNode.remove()">No</button>';
+    el.appendChild(conf);
+}
+
+function _deleteSession(id) {
+    var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
+    var next = projects.filter(function(p){ return p.id !== id && p.name !== id; });
+    localStorage.setItem('krylo_projects', JSON.stringify(next));
+    if (_sessionSelected && (_sessionSelected.id === id || _sessionSelected.name === id)) {
+        _sessionSelected = null;
+        _setOpenBtn(false);
+        document.getElementById('sm-name-input').value = '';
+    }
     _renderExplorer();
 }
-function _loadSession(name) {
+
+function _startRename(id) {
+    var nameEl = document.getElementById('sm-name-'+encodeURIComponent(id));
+    if (!nameEl) return;
+    var current = nameEl.textContent;
+    var input = document.createElement('input');
+    input.className = 'sm-row-name-input';
+    input.value = current;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); _commitRename(id, input.value.trim()); }
+        if (e.key === 'Escape') { _renderExplorer(); }
+    });
+    input.addEventListener('blur', function() { _renderExplorer(); });
+}
+
+function _commitRename(id, newName) {
+    if (!newName) { _renderExplorer(); return; }
     var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
-    var p = projects.find(function(x){ return x.name === name; });
-    if (!p) return;
-    window.parent.postMessage({ type: 'krylo-load', name: p.name, bay: p.bay }, '*');
-    _closeSessionModal();
+    var idx = projects.findIndex(function(p){ return p.id === id || p.name === id; });
+    if (idx < 0) { _renderExplorer(); return; }
+    projects[idx].name = newName;
+    projects[idx].updatedAt = Date.now();
+    localStorage.setItem('krylo_projects', JSON.stringify(projects));
+    _renderExplorer();
 }
 
 var _pendingReplaceBay = null;

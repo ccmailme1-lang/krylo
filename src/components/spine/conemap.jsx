@@ -807,31 +807,6 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         );
       })()}
 
-      {/* WO-1347 — Per-bay controls (loaded bays only) */}
-      {bay?.assignment && bayId && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 1, marginBottom: 12 }}>
-          {[
-            { label: 'XRAY',    active: bay.xrayOpen,    action: () => toggleXray(bayId) },
-            { label: 'FREEZE',  active: bay.frozen,      action: () => toggleFreeze(bayId) },
-            { label: 'COMPARE', active: bay.compareFlag, action: () => toggleCompare(bayId) },
-            { label: 'CLEAR',   active: false,           action: () => clearBay(bayId), danger: true },
-          ].map(({ label, active, action, danger }) => (
-            <button key={label} onClick={action} style={{
-              width: '100%', textAlign: 'left',
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 9, letterSpacing: '0.22em',
-              padding: '6px 10px',
-              background: active ? `${LIME}12` : 'transparent',
-              border: `1px solid ${active ? LIME : danger ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.08)'}`,
-              color: active ? LIME : danger ? 'rgba(255,80,80,0.7)' : 'rgba(255,255,255,0.45)',
-              cursor: 'pointer',
-              transition: 'all 120ms',
-            }}>
-              {label}{active ? ' ·' : ''}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* Tab switcher */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 10, pointerEvents: 'auto' }}>

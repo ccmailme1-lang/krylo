@@ -788,10 +788,13 @@ export default function App() {
   // krylo-nav: left nav mode switch from iframe
   useEffect(() => {
     function onNavMessage(ev) {
+      if (ev.data?.type === 'krylo-undo') { window.dispatchEvent(new CustomEvent('krylo-undo')); return; }
+      if (ev.data?.type === 'krylo-redo') { window.dispatchEvent(new CustomEvent('krylo-redo')); return; }
       if (ev.data?.type === 'krylo-load-project') {
         const proj = ev.data.project;
         if (proj) {
-          const id = createSession(proj.lens || 'GENERAL');
+          createSession(proj.lens || 'GENERAL');
+          if (proj.query) { setquery(proj.query); setAnalysisQuery(proj.query); }
           setNavMode('analysis');
         }
         return;
@@ -807,6 +810,7 @@ export default function App() {
             floor:     activeSession?.tensor?.floor ?? null,
             horizon:   activeSession?.tensor?.horizon ?? null,
             query:     activeSession?.query ?? '',
+            folder:    ev.data.folder ?? 'My Sessions',
           }, bay);
         }
         return;

@@ -827,6 +827,22 @@ export default function AnalysisIdleField({ activeCones = null }) {
     setUndoIdx(newIdx);
   }
 
+  // Nav arrow CustomEvent bridge
+  const handleUndoRef = useRef(handleUndo);
+  const handleRedoRef = useRef(handleRedo);
+  useEffect(() => { handleUndoRef.current = handleUndo; }, [undoIdx]);
+  useEffect(() => { handleRedoRef.current = handleRedo; }, [undoIdx]);
+  useEffect(() => {
+    const onUndo = () => handleUndoRef.current();
+    const onRedo = () => handleRedoRef.current();
+    window.addEventListener('krylo-undo', onUndo);
+    window.addEventListener('krylo-redo', onRedo);
+    return () => {
+      window.removeEventListener('krylo-undo', onUndo);
+      window.removeEventListener('krylo-redo', onRedo);
+    };
+  }, []);
+
   // ── A/B slot ──────────────────────────────────────────────────────────────
   function handleSaveState() {
     setSlotContent(prev => ({ ...prev, [activeSlot]: captureSnap() }));
@@ -1129,39 +1145,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           )}
 
-          {/* ── A/B + UNDO/REDO BAR ── */}
-          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_FAINT}`, padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
-            <button
-              onClick={handleUndo} disabled={undoIdx <= 0}
-              onMouseEnter={e => { if (undoIdx > 0) e.currentTarget.style.color = LIME; }}
-              onMouseLeave={e => { e.currentTarget.style.color = undoIdx > 0 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)'; }}
-              style={{ background: 'none', border: 'none', fontFamily: MONO, fontSize: 14, lineHeight: 1, padding: '0 10px 0 0', color: undoIdx > 0 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)', cursor: undoIdx > 0 ? 'pointer' : 'default', transition: 'color 120ms' }}
-            >↩</button>
-            <button
-              onClick={handleRedo} disabled={undoIdx >= undoStackRef.current.length - 1}
-              onMouseEnter={e => { if (undoIdx < undoStackRef.current.length - 1) e.currentTarget.style.color = LIME; }}
-              onMouseLeave={e => { e.currentTarget.style.color = undoIdx < undoStackRef.current.length - 1 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)'; }}
-              style={{ background: 'none', border: 'none', fontFamily: MONO, fontSize: 14, lineHeight: 1, padding: 0, color: undoIdx < undoStackRef.current.length - 1 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)', cursor: undoIdx < undoStackRef.current.length - 1 ? 'pointer' : 'default', transition: 'color 120ms' }}
-            >↪</button>
-            <div style={{ flex: 1 }} />
-            {['A', 'B'].map((slot, i) => (
-              <button
-                key={slot}
-                onClick={() => selectSlot(slot)}
-                onMouseEnter={e => { if (activeSlot !== slot) e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}
-                onMouseLeave={e => { e.currentTarget.style.color = activeSlot === slot ? '#ffffff' : 'rgba(255,255,255,0.25)'; }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: activeSlot === slot ? '#ffffff' : 'rgba(255,255,255,0.25)', fontWeight: activeSlot === slot ? 600 : 400, padding: i === 0 ? '0 1px 0 0' : '0 0 0 1px', transition: 'color 120ms' }}
-              >{slot}</button>
-            ))}
-            <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.2)', padding: '0 3px' }}>/</span>
-            <span style={{ display: 'inline-block', width: 8 }} />
-            <button
-              onClick={handleCopySlot}
-              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}
-              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)'; }}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', padding: 0, transition: 'color 120ms' }}
-            >Copy</button>
-          </div>
 
         </aside>
 
