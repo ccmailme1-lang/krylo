@@ -790,6 +790,12 @@ export default function App() {
     function onNavMessage(ev) {
       if (ev.data?.type === 'krylo-undo') { window.dispatchEvent(new CustomEvent('krylo-undo')); return; }
       if (ev.data?.type === 'krylo-redo') { window.dispatchEvent(new CustomEvent('krylo-redo')); return; }
+      if (ev.data?.type === 'krylo-ribbon-select') {
+        const { label, routing_target, velocity, systemic_state, leakage_risk, node_id } = ev.data;
+        if (label) { setquery(label); setAnalysisQuery(label); }
+        window.dispatchEvent(new CustomEvent('krylo-ribbon-select', { detail: ev.data }));
+        return;
+      }
       if (ev.data?.type === 'krylo-load-project') {
         const proj = ev.data.project;
         if (proj) {

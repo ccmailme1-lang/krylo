@@ -2272,6 +2272,101 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     white-space:nowrap;
 }
 
+/* WO-1815 — Opportunity Ribbon */
+:root { --leakage-orange: #FFFF00; }
+
+.opportunity-ribbon {
+    position:fixed;
+    top:49px;
+    left:calc(80px + 0.2vw);
+    width:calc(100% - 80px - 256px - 0.4vw);
+    overflow:hidden;
+    background:rgba(0,0,0,0.85);
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    z-index:499;
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+}
+.ribbon-track {
+    display:flex;
+    gap:40px;
+    width:max-content;
+    animation:ribbon-scroll 36s linear infinite;
+}
+.opportunity-ribbon:hover .ribbon-track { animation-play-state:paused; }
+@keyframes ribbon-scroll {
+    0%   { transform:translateX(0); }
+    100% { transform:translateX(-50%); }
+}
+.ribbon-node {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-shrink:0;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.04em;
+    padding:5px 14px;
+    border:1px solid rgba(255,255,255,0.07);
+    border-radius:2px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:border-color 0.15s;
+}
+.ribbon-node:hover { border-color:rgba(255,255,255,0.22); }
+.ribbon-node:active { border-color:rgba(255,255,255,0.4); }
+.ribbon-node-domain {
+    color:rgba(255,255,255,0.28);
+    font-size:8px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+}
+.ribbon-node-sep {
+    color:rgba(255,255,255,0.15);
+    font-size:10px;
+}
+.ribbon-node-label { color:rgba(255,255,255,0.78); }
+.ribbon-node-score { font-weight:600; font-size:12px; }
+.ribbon-node-dir   { font-size:10px; }
+.ribbon-node-state {
+    font-size:8px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    opacity:0.8;
+}
+.ribbon-node-intervals {
+    font-size:8px;
+    color:rgba(255,255,255,0.3);
+    letter-spacing:0.05em;
+    display:flex;
+    gap:6px;
+}
+.ribbon-node-intervals span { display:flex; flex-direction:column; align-items:center; gap:1px; }
+.ribbon-node-intervals .iv-label { color:rgba(255,255,255,0.2); font-size:7px; }
+.ribbon-node-leakage {
+    font-size:8px;
+    color:var(--leakage-orange);
+    letter-spacing:0.08em;
+    display:none;
+}
+.ribbon-node-leakage.warn { display:block; }
+.ribbon-node-premium {
+    font-family:'IBM Plex Mono',monospace;
+    font-size:7px;
+    letter-spacing:0.14em;
+    color:#8A2BE2;
+    border:1px solid rgba(138,43,226,0.28);
+    padding:1px 5px;
+    border-radius:2px;
+    flex-shrink:0;
+}
+/* state color bindings (locked 2026-05-09) */
+.rs-ACCELERATING { color:#66FF00; }
+.rs-TURBULENT    { color:#007FFF; }
+.rs-STABLE       { color:rgba(255,255,255,0.4); }
+.rs-DECELERATING { color:rgba(255,255,255,0.22); }
+
 </style>
 </head>
 <body>
@@ -2316,6 +2411,11 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
         </svg>
     </div>
 </nav>
+
+<!-- WO-1815: Opportunity Ribbon — topmost content, premium enabled -->
+<div class="opportunity-ribbon" id="opportunity-ribbon">
+    <div class="ribbon-track" id="ribbon-track"></div>
+</div>
 
 <script>
 var activeABSlot = 'A';
@@ -2934,7 +3034,7 @@ function _renderExplorer() {
                 var sid = (p.id || p.name).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
                 return '<div class="sm-row-item" id="sm-item-'+encodeURIComponent(p.id||p.name)+'" onclick="_selectSession(\''+sid+'\')">'
                     + '<span class="sm-row-icon">—</span>'
-                    + '<span class="sm-row-name" id="sm-name-'+encodeURIComponent(p.id||p.name)+'" ondblclick="event.stopPropagation();_startRename(\''+sid+'\')">'+n+'</span>'
+                    + '<span class="sm-row-name" id="sm-name-'+encodeURIComponent(p.id||p.name)+'">'+n+'</span>'
                     + '<span class="sm-row-meta">'+ds+'</span>'
                     + '<button class="sm-row-del" onclick="event.stopPropagation();_confirmDelete(\''+sid+'\')" title="Delete">×</button>'
                     + '</div>';
@@ -3764,6 +3864,94 @@ function handleConsoleKey(e) {
   if (e.key === 'Escape') { closeConsole(); return; }
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { submitConsole(); }
 }
+
+// WO-1815 — Opportunity Ribbon
+(function() {
+  var RIBBON_NODES = [
+    {
+      node_id: 'PI_094',
+      domain: 'PHYSICAL INTELLIGENCE',
+      label: 'Automation Labor Displacement',
+      routing_target: 'WO-1795',
+      velocity: { current_score: 84, direction: 'UP', intervals: { '1d': 3, '7d': 14, '30d': 38, '90d': 52 } },
+      systemic_state: 'ACCELERATING',
+      leakage_risk: 0.12,
+    },
+    {
+      node_id: 'SC_112',
+      domain: 'SOVEREIGN CAPITAL',
+      label: 'Vendor Platform Decoupling',
+      routing_target: 'WO-1801',
+      velocity: { current_score: 62, direction: 'UP', intervals: { '1d': 1, '7d': 2, '30d': 9, '90d': 11 } },
+      systemic_state: 'STABLE',
+      leakage_risk: 0.04,
+    },
+    {
+      node_id: 'PC_401',
+      domain: 'PRIVATE CREDIT',
+      label: 'Mid-Market Liquidity Gaps',
+      routing_target: 'WO-1800',
+      velocity: { current_score: 79, direction: 'TURB', intervals: { '1d': 9, '7d': 21, '30d': 44, '90d': 68 } },
+      systemic_state: 'TURBULENT',
+      leakage_risk: 0.41,
+    },
+  ];
+
+  var DIR_GLYPH = { UP: '↑', DOWN: '↓', TURB: '~', FLAT: '→' };
+
+  function buildNode(n) {
+    var dir   = DIR_GLYPH[n.velocity.direction] || n.velocity.direction;
+    var state = n.systemic_state;
+    var ivs   = n.velocity.intervals;
+    var leak  = n.leakage_risk >= 0.3;
+
+    return '<div class="ribbon-node" data-node-id="' + n.node_id + '" data-routing="' + n.routing_target + '" onclick="_ribbonSelect(this)">'
+      + '<span class="ribbon-node-domain">' + n.domain + '</span>'
+      + '<span class="ribbon-node-sep">·</span>'
+      + '<span class="ribbon-node-label">' + n.label + '</span>'
+      + '<span class="ribbon-node-sep">·</span>'
+      + '<span class="ribbon-node-score rs-' + state + '">' + n.velocity.current_score + '</span>'
+      + '<span class="ribbon-node-dir rs-' + state + '">' + dir + '</span>'
+      + '<span class="ribbon-node-state rs-' + state + '">' + state + '</span>'
+      + '<span class="ribbon-node-sep">·</span>'
+      + '<span class="ribbon-node-intervals">'
+      +   '<span><span class="iv-label">1D</span>+' + ivs['1d'] + '</span>'
+      +   '<span><span class="iv-label">7D</span>+' + ivs['7d'] + '</span>'
+      +   '<span><span class="iv-label">30D</span>+' + ivs['30d'] + '</span>'
+      +   '<span><span class="iv-label">90D</span>+' + ivs['90d'] + '</span>'
+      + '</span>'
+      + (leak ? '<span class="ribbon-node-leakage warn">⚠ LEAKAGE</span>' : '')
+      + '<span class="ribbon-node-premium">PREMIUM</span>'
+      + '</div>';
+  }
+
+  function initRibbon() {
+    var track = document.getElementById('ribbon-track');
+    if (!track) return;
+    // duplicate nodes for seamless loop
+    var html = RIBBON_NODES.map(buildNode).join('') + RIBBON_NODES.map(buildNode).join('');
+    track.innerHTML = html;
+  }
+
+  window._ribbonSelect = function(el) {
+    var nodeId  = el.getAttribute('data-node-id');
+    var routing = el.getAttribute('data-routing');
+    var node    = RIBBON_NODES.find(function(n) { return n.node_id === nodeId; });
+    if (!node) return;
+    window.parent.postMessage({
+      type:           'krylo-ribbon-select',
+      node_id:        node.node_id,
+      domain:         node.domain,
+      label:          node.label,
+      routing_target: node.routing_target,
+      velocity:       node.velocity,
+      systemic_state: node.systemic_state,
+      leakage_risk:   node.leakage_risk,
+    }, '*');
+  };
+
+  document.addEventListener('DOMContentLoaded', initRibbon);
+})();
 </script>
 
 
