@@ -144,7 +144,9 @@ function scoreDomains(q) {
 function resolvePrimary(q, lens) {
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
-  if (/\bcar\b|vehicle|suv|truck|auto|lease|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|audi|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
+  // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
+  if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
+  if (/\bcar\b|vehicle|suv|truck|auto|lease|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|\baudi\b|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
   // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
   if (
     /\bhouse\b|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
@@ -171,6 +173,16 @@ function resolvePrimary(q, lens) {
   if (/\bsequoia\b|\bkleiner\b|\ba16z\b|andreessen|crowded exit|vc rotation|anti.consensus thesis|private market liquidity|lp distribution|secondary market|venture inversion|fund rotation|vc thesis|portfolio exit|exit window|venture capital thesis/.test(q)) return 'VC_INVERSION';
   if (/virtual economy|in.game economy|steam marketplace|digital asset marketplace|virtual currency|token velocity|cultural ip|ip franchise|game economy|virtual token|platform economics|gaming economy|virtual goods|digital goods market/.test(q)) return 'VIRTUAL_ECONOMY';
   if (/gates foundation|bill gates philanthropy|philanthropic capital|global health funding|endowment deploy|foundation grant|impact capital|non.market intervention|charitable capital|global health initiative|malaria|polio|education reform.*capital|philanthropic deploy/.test(q)) return 'PHILANTHROPIC_CAPITAL';
+  // ── WO-1775/1776: Beast Industries Protocol ──────────────────────────────────
+  if (/holdco|creator.*hold|holding.*company.*creator|beast.*industries|mrbeast|mr.*beast|creator.*enterprise|creator.*structur|creator.*subsidiary|platform.*dependency.*risk|ip.*holdco|holdco.*ip/.test(q)) return 'CREATOR_HOLDCO';
+  if (/operational.*carry|carry.*risk|carry.*cost|carry.*load|crew.*cost|crew.*overhead|production.*overhead|burn.*rate.*creator|creator.*burn|fixed.*cost.*creator|creator.*fixed|output.*carry|carry.*obligation/.test(q)) return 'OPERATIONAL_CARRY_RISK';
+  // ── WO-1777/1778: Mallah Protocol ────────────────────────────────────────────
+  if (/non.institutional.*alpha|non.consensus.*alpha|retail.*alpha|individual.*alpha|asymmetric.*information.*retail|off.consensus|pre.consensus.*position|consensus.*gap|non.wall.street|individual.*investor.*edge|local.*knowledge.*invest/.test(q)) return 'NON_INSTITUTIONAL_ALPHA';
+  if (/commercial.*distress|distressed.*commercial|foreclosure.*commercial|motivated.*seller.*commercial|note.*purchase|non.performing.*loan|commercial.*reo|distress.*liquidity|fire.*sale.*commercial|bankrupt.*asset|chapter.*11.*asset|distressed.*acquisition/.test(q)) return 'COMMERCIAL_DISTRESS';
+  // ── WO-1785/1786: Vaynerchuk Protocol ────────────────────────────────────────
+  if (/relevance.*warfare|attention.*warfare|relevance.*decay|losing.*relevance|stay.*relevant|relevance.*competition|attention.*competition|platform.*relevance|content.*relevance|native.*content.*strategy|algorithm.*relevance/.test(q)) return 'RELEVANCE_WARFARE';
+  // ── WO-1796: White/TKO Protocol ──────────────────────────────────────────────
+  if (/boxing.*disrupt|combat.*sport.*disrupt|ppv.*disrupt|fight.*streaming|boxing.*streaming|ufc.*streaming|tko.*streaming|dana.*white|tko.*group|boxing.*platform|combat.*sport.*platform|influencer.*boxing|celebrity.*boxing|boxer.*free.*agent|fighter.*leverage|boxing.*rights|combat.*rights/.test(q)) return 'BOXING_DISRUPTION';
   // Lens fallback
   if (lens === 'REALTOR')    return 'REAL_ESTATE';
   if (lens === 'RETIREMENT') return 'RETIREMENT';
@@ -2093,6 +2105,929 @@ function synthPhilanthropicCapital(session, numbers, query) {
   };
 }
 
+// ── WO-1775: Creator HoldCo Synthesizer (Beast Industries Protocol) ──────────
+
+function synthCreatorHoldco(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const platformDependency =
+    /youtube only|single platform|one platform|all.*youtube|youtube revenue/.test(q) ? 'CRITICAL' :
+    /diversif|multi.platform|tiktok.*youtube|youtube.*tiktok|instagram.*youtube/.test(q) ? 'MODERATE' :
+    'HIGH';
+
+  const ipControl =
+    /own.*ip|ip rights|intellectual property|licensing|brand.*own|proprietary/.test(q) ? 'STRONG' :
+    /partner|collab|deal|rev.*share|split/.test(q) ? 'PARTIAL' : 'WEAK';
+
+  const holdcoMaturity =
+    /holdco|holding company|subsidiary|enterprise|multiple brands|brand portfolio/.test(q) ? 'STRUCTURED' :
+    /transition|building|early|first brand|new venture/.test(q) ? 'FORMING' : 'CREATOR_STAGE';
+
+  const revMix =
+    /ads.*merch|merch.*ads|sponsorship.*product|diversif.*revenue|multiple.*stream/.test(q) ? 'DIVERSIFIED' :
+    /ads only|adsense|ad revenue|single.*revenue/.test(q) ? 'AD_DEPENDENT' : 'MIXED';
+
+  const isHoldco    = /holdco|holding|subsidiary|enterprise structure|portfolio/.test(q);
+  const isPlatform  = /platform|youtube|tiktok|algorithm|demonetiz|ban|strike/.test(q);
+  const isIP        = /ip|intellectual property|licensing|own.*brand|brand.*value/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isHoldco) {
+    stateLabel     = holdcoMaturity === 'STRUCTURED' ? 'HOLDCO_STRUCTURED' : holdcoMaturity === 'FORMING' ? 'HOLDCO_FORMING' : 'CREATOR_STAGE_PRE_HOLDCO';
+    primaryInsight = holdcoMaturity === 'STRUCTURED'
+      ? 'Creator HoldCo architecture is active. Subsidiary layer is providing IP isolation and revenue diversification from platform dependency.'
+      : 'HoldCo formation in progress. Priority: IP assignment to holding entity before revenue scales — post-hoc restructuring is significantly more expensive.';
+  } else if (isPlatform) {
+    stateLabel     = platformDependency === 'CRITICAL' ? 'PLATFORM_DEPENDENCY_CRITICAL' : 'PLATFORM_DEPENDENCY_ELEVATED';
+    primaryInsight = platformDependency === 'CRITICAL'
+      ? 'Single-platform dependency is an existential structural risk. A demonetization or algorithm shift eliminates the entire revenue base simultaneously.'
+      : 'Platform diversification is underway but concentration risk remains. Each platform has independent algorithm and policy exposure.';
+  } else if (isIP) {
+    stateLabel     = ipControl === 'STRONG' ? 'IP_CONTROL_STRONG' : ipControl === 'PARTIAL' ? 'IP_CONTROL_PARTIAL' : 'IP_CONTROL_WEAK';
+    primaryInsight = ipControl === 'STRONG'
+      ? 'IP ownership is the durable enterprise asset. Owned IP survives platform transitions — licensed IP does not.'
+      : 'IP control gaps exist. Revenue sharing arrangements dilute enterprise value. IP consolidation into HoldCo is the priority structural move.';
+  } else {
+    stateLabel     = 'CREATOR_HOLDCO_SIGNAL_ACTIVE';
+    primaryInsight = `Creator HoldCo signal: platform dependency=${platformDependency}, IP control=${ipControl}, revenue mix=${revMix}, maturity=${holdcoMaturity}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.2);
+  return {
+    stateLabel,
+    confidence:    ipControl === 'STRONG' ? 0.82 : 0.65,
+    primaryInsight,
+    momentum:      { value: revMix === 'DIVERSIFIED' ? '+22%' : '+8%', h1: '+3%', h24: '+9%' },
+    trajPoints:    [0.30,0.36,0.42,0.48,0.54,0.60,0.65,0.70,0.74,0.77,0.80,0.82],
+    attentionStack: [
+      { rank:1, signal:'Platform Dependency Risk',  category:'Creator / Platform',    trend:'↑', momentum:'Elevated',     mColor:LIME, conf:0.84 },
+      { rank:2, signal:'IP Control Ratio',          category:'Enterprise / Legal',    trend:'→', momentum:'Stable',       mColor:BLUE, conf:0.71 },
+      { rank:3, signal:'Revenue Diversification',   category:'Creator / Finance',     trend:'↗', momentum:'Improving',    mColor:LIME, conf:0.63 },
+      { rank:4, signal:'HoldCo Structural Maturity',category:'Enterprise / Structure',trend:'↗', momentum:'Building',     mColor:DIM,  conf:0.55 },
+    ],
+    keyDrivers: [
+      { label:'Platform concentration',   delta: platformDependency === 'CRITICAL' ? 'CRITICAL' : 'ELEVATED', pos:false },
+      { label:'IP ownership rate',        delta: ipControl === 'STRONG' ? 'HIGH' : 'PARTIAL',                 pos: ipControl === 'STRONG' },
+      { label:'Revenue stream count',     delta: revMix === 'DIVERSIFIED' ? '3+' : '1–2',                    pos: revMix === 'DIVERSIFIED' },
+      { label:'HoldCo maturity',          delta: holdcoMaturity,                                              pos: holdcoMaturity === 'STRUCTURED' },
+    ],
+    recommendedAction: holdcoMaturity === 'STRUCTURED'
+      ? 'Map subsidiary IP assignment. Ensure all brand IP is held at HoldCo level — not creator personal entity.'
+      : 'Form HoldCo before next revenue threshold. Assign all IP and brand assets into holding entity. Creator personal entity should hold equity, not assets.',
+    timeHorizon:   '6–18 months',
+    impactLevel:   platformDependency === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Creator enterprise at ${holdcoMaturity} stage. Platform dependency: ${platformDependency}. IP control: ${ipControl}. Revenue mix: ${revMix}. HoldCo formation is the structural priority before next revenue scale.`,
+    purpose:       'Creator HoldCo structure analysis (Beast Industries Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:'Creator enterprise building toward HoldCo architecture.' },
+      { w:'WHAT',  answer:`Platform dependency: ${platformDependency}. IP control: ${ipControl}. HoldCo maturity: ${holdcoMaturity}.` },
+      { w:'WHEN',  answer:'HoldCo formation is most efficient at $1M–$5M ARR. Post-scale restructuring costs 3–5× more.' },
+      { w:'WHERE', answer:`Structural risk concentration: ${platformDependency === 'CRITICAL' ? 'single platform revenue' : 'IP ownership gaps'}.` },
+      { w:'WHY',   answer:'Platform policy changes, demonetization, and algorithm shifts eliminate single-platform revenue overnight. HoldCo structure is the only durable defense.' },
+    ],
+    evidence: [
+      'Creator enterprises with HoldCo structure survive platform disruptions at 4× the rate of single-entity creators.',
+      'IP held at the creator personal entity level cannot be licensed without personal tax exposure — HoldCo isolates this.',
+      `Platform demonetization events (algorithm, policy) eliminate 100% of ad revenue in <48 hours for single-platform creators.`,
+    ],
+    assumptions: [
+      'Creator has or is building >$500K annual revenue — below this threshold, HoldCo overhead may exceed benefit.',
+      'IP is proprietary and not subject to existing licensing agreements that would complicate assignment.',
+    ],
+    assessment: `Platform dependency at ${platformDependency} with ${ipControl} IP control creates ${platformDependency === 'CRITICAL' && ipControl === 'WEAK' ? 'maximum' : 'elevated'} enterprise fragility. HoldCo formation with IP assignment is the load-bearing structural move.`,
+    threats: [
+      { label:'Single-platform demonetization or ban',     level:'HIGH',   color:LIME },
+      { label:'IP owned at personal entity — not HoldCo', level:'HIGH',   color:LIME },
+      { label:'Revenue concentration in ad-only model',   level:'MEDIUM', color:BLUE },
+      { label:'Founder identity = brand (no decoupling)',  level:'MEDIUM', color:BLUE },
+    ],
+    opportunities: [
+      { label:'HoldCo with subsidiary brands — each brand has independent risk exposure and licensing potential.' },
+      { label:`IP licensing layer: owned IP can generate revenue independent of platform algorithm.${capital ? ` Scale target: $${(capital * 0.15 / 1e6).toFixed(1)}M licensing revenue.` : ''}` },
+      { label:'Platform-agnostic audience (email, SMS, owned community) eliminates single-point-of-failure dependency.' },
+    ],
+    alternativeView: 'Lean creator structures (single entity, ad-primary) outperform HoldCo in early phase due to lower overhead. The structural argument strengthens above $2M ARR.',
+    outlook: [
+      { prob:0.61, label:'HoldCo with IP consolidation creates defensible enterprise value beyond platform revenue', color:LIME },
+      { prob:0.27, label:'Platform dependency persists — creator enterprise value remains platform-correlated',       color:BLUE },
+      { prob:0.12, label:'Platform disruption event before HoldCo formation — restructuring required under pressure', color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'AUDIT IP OWNERSHIP',          impact:0.92, rationale:'List every brand asset, channel name, trademark, and content format. Determine which entity owns each. This is the HoldCo formation input — you cannot assign what you have not inventoried.', tag:'STRUCTURE' },
+        { id:'a2', label:'MAP PLATFORM REVENUE SPLIT',  impact:0.85, rationale:'Calculate what % of total revenue depends on each platform. Any platform above 60% is a single point of failure. This number drives the urgency of diversification.', tag:'RISK' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'FORM HOLDCO ENTITY',          impact:0.88, rationale:'Establish the holding company before the next revenue threshold. Assign brand IP, trademarks, and channel ownership to HoldCo. Creator personal entity holds equity — not assets.', tag:'STRUCTURE' },
+        { id:'b2', label:'LAUNCH PLATFORM-2 PRESENCE',  impact:0.74, rationale:'Establish presence on a second major platform with its own native content strategy. Not reposts — native content. Each platform requires its own algorithm relationship.', tag:'DISTRIBUTION' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD OWNED AUDIENCE CHANNEL', impact:0.79, rationale:'Email list or SMS channel owned by the HoldCo — not a platform. This is the only audience asset that survives a platform ban. Every creator enterprise needs one.', tag:'RESILIENCE' },
+        { id:'c2', label:'CREATE IP LICENSING LAYER',   impact:0.66, rationale:'Structure at least one revenue stream that requires no platform: licensing, white-label, methodology, or brand collab. This decouples revenue from algorithm exposure.', tag:'DIVERSIFICATION' },
+      ],
+    },
+    leverage:            { typeY:1, typeLabel:'CODE', tierLabel, deRatio:0.2, permissionless:true, industryNorm:0.3 },
+    platform_dependency: platformDependency,
+    ip_control:          ipControl,
+    holdco_maturity:     holdcoMaturity,
+    revenue_mix:         revMix,
+  };
+}
+
+// ── WO-1776: Operational Carry Risk Modeler (Beast Industries Protocol) ───────
+
+function synthOperationalCarryRisk(session, numbers, query) {
+  const q        = query.toLowerCase();
+  const revenue  = numbers[0] ?? null;
+  const overhead = numbers[1] ?? null;
+
+  const crewSize =
+    /large.*crew|100.*people|200.*staff|massive.*operation|big.*team/.test(q) ? 'LARGE' :
+    /small.*team|10.*people|lean.*team|minimal.*crew/.test(q) ? 'SMALL' : 'MEDIUM';
+
+  const productionIntensity =
+    /daily.*video|daily.*content|every.*day|high.*frequency|constant.*produc/.test(q) ? 'HIGH' :
+    /weekly|once.*week|twice.*week/.test(q) ? 'MEDIUM' : 'LOW';
+
+  const carryRisk =
+    crewSize === 'LARGE' && productionIntensity === 'HIGH' ? 'CRITICAL' :
+    crewSize === 'LARGE' || productionIntensity === 'HIGH' ? 'ELEVATED' :
+    crewSize === 'MEDIUM' ? 'MODERATE' : 'LOW';
+
+  const yieldSignal =
+    /revenue.*per.*video|revenue.*per.*piece|yield|monetiz.*ratio|rpv/.test(q) ? 'TRACKED' : 'UNTRACKED';
+
+  const isCarry     = /carry|overhead|burn|cost.*load|monthly.*cost|crew.*cost|staff.*cost/.test(q);
+  const isProduction= /production|content.*cost|video.*cost|filming|studio|equipment/.test(q);
+  const isScale     = /scale|grow|expand|hire|add.*team|add.*staff/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isCarry) {
+    stateLabel     = `CARRY_RISK_${carryRisk}`;
+    primaryInsight = carryRisk === 'CRITICAL'
+      ? 'Operational carry load is at critical levels. Fixed costs require sustained output velocity to break even — any production pause creates immediate cash flow deficit.'
+      : `Carry risk at ${carryRisk}. Fixed cost layer must be covered before variable revenue is captured. Map the minimum viable output to service the overhead.`;
+  } else if (isProduction) {
+    stateLabel     = productionIntensity === 'HIGH' ? 'PRODUCTION_COST_ELEVATED' : 'PRODUCTION_COST_MANAGEABLE';
+    primaryInsight = productionIntensity === 'HIGH'
+      ? 'High-frequency production creates compounding carry costs. Each unit of scale adds fixed overhead before variable revenue follows.'
+      : 'Production cost structure is manageable. Yield per piece is the key metric — revenue per video must exceed production cost per video with margin.';
+  } else if (isScale) {
+    stateLabel     = carryRisk === 'LOW' ? 'SCALE_ELIGIBLE' : 'SCALE_CARRY_CONSTRAINT';
+    primaryInsight = carryRisk === 'LOW'
+      ? 'Carry structure is lean enough to absorb scale. Growth investment is additive rather than compounding fixed obligations.'
+      : 'Scaling into elevated carry risk compounds the exposure. Revenue per unit of output must be stress-tested at the scaled overhead level before committing.';
+  } else {
+    stateLabel     = 'OPERATIONAL_CARRY_SIGNAL_ACTIVE';
+    primaryInsight = `Carry risk: ${carryRisk}. Crew size: ${crewSize}. Production intensity: ${productionIntensity}. Yield tracking: ${yieldSignal}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.3);
+  return {
+    stateLabel,
+    confidence:    carryRisk === 'LOW' ? 0.80 : carryRisk === 'MODERATE' ? 0.72 : 0.65,
+    primaryInsight,
+    momentum:      { value: carryRisk === 'CRITICAL' ? '-18%' : '+5%', h1: '-2%', h24: carryRisk === 'CRITICAL' ? '-8%' : '+3%' },
+    trajPoints:    [0.65,0.62,0.60,0.58,0.55,0.52,0.50,0.48,0.47,0.46,0.45,0.44],
+    attentionStack: [
+      { rank:1, signal:'Fixed Carry Load',          category:'Operations / Finance',  trend:'↑', momentum:'Increasing',  mColor:LIME, conf:0.86 },
+      { rank:2, signal:'Revenue per Output Unit',   category:'Creator / Yield',       trend:'→', momentum:'Flat',        mColor:BLUE, conf:0.74 },
+      { rank:3, signal:'Crew Size vs Output',       category:'Operations / Scale',    trend:'↑', momentum:'Expanding',   mColor:LIME, conf:0.66 },
+      { rank:4, signal:'Production Cost Velocity',  category:'Creator / Operations',  trend:'↗', momentum:'Accelerating',mColor:DIM,  conf:0.51 },
+    ],
+    keyDrivers: [
+      { label:'Carry risk level',         delta: carryRisk,                                                         pos: carryRisk === 'LOW' },
+      { label:'Crew size tier',           delta: crewSize,                                                          pos: crewSize === 'SMALL' },
+      { label:'Production intensity',     delta: productionIntensity,                                               pos: productionIntensity === 'LOW' },
+      { label:'Yield tracking',           delta: yieldSignal,                                                       pos: yieldSignal === 'TRACKED' },
+    ],
+    recommendedAction: carryRisk === 'CRITICAL'
+      ? 'Audit every fixed cost line immediately. Map minimum viable output to service overhead. Any item not directly tied to revenue generation is deferrable.'
+      : 'Build a carry dashboard: fixed monthly obligations vs. minimum output required to cover them. This is your operational floor — everything above it is margin.',
+    timeHorizon:   '30–90 days',
+    impactLevel:   carryRisk === 'CRITICAL' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Operational carry risk at ${carryRisk}. ${crewSize} crew at ${productionIntensity} production intensity. ${revenue ? `Revenue base: $${(revenue/1e3).toFixed(0)}K.` : ''} Fixed cost structure must be modeled against minimum viable output before any scale decision.`,
+    purpose:       'Operational carry risk analysis (Beast Industries Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:'Creator enterprise with production overhead and team carry obligations.' },
+      { w:'WHAT',  answer:`${crewSize} crew, ${productionIntensity} production intensity, carry risk: ${carryRisk}.` },
+      { w:'WHEN',  answer:'Carry risk compounds fastest during scale-up. Fixed cost commitments precede revenue response by 60–90 days.' },
+      { w:'WHERE', answer:'Primary exposure: crew salaries + production infrastructure. Secondary: equipment, facilities, software stack.' },
+      { w:'WHY',   answer:'High-volume creator operations carry significant fixed costs. A single algorithm shift or platform disruption can make that overhead unserviceable overnight.' },
+    ],
+    evidence: [
+      'Creator enterprises with >50 FTEs require minimum 6-figure monthly output to break even on carry alone.',
+      'Revenue per video declines as production volume increases beyond algorithm-optimal cadence for the niche.',
+      `Fixed cost commitments (crew, facilities) have 30–90 day lag before they can be reduced — creating a cash flow window of vulnerability.`,
+    ],
+    assumptions: [
+      'Revenue is ad-primary or diversified but platform-dependent.',
+      'Fixed costs (crew, production) cannot be rapidly reduced — standard employment commitments apply.',
+    ],
+    assessment: `Carry risk ${carryRisk} with ${crewSize} crew at ${productionIntensity} production cadence. ${carryRisk === 'CRITICAL' ? 'Immediate cost audit required — carry load at current output creates insufficient margin buffer for any revenue disruption.' : 'Carry structure is manageable but must be stress-tested against a 30% revenue reduction scenario.'}`,
+    threats: [
+      { label:'Platform revenue disruption with fixed carry obligations',     level:'HIGH',   color:LIME },
+      { label:'Scale investment committing overhead before revenue follows',  level:'HIGH',   color:LIME },
+      { label:'Crew size growth outpacing yield-per-video improvement',       level:'MEDIUM', color:BLUE },
+      { label:'Equipment/facility leases creating multi-year fixed exposure', level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:'Yield-per-piece optimization: better-performing videos reduce required volume to meet carry.' },
+      { label:`Variable cost model: contractors over FTEs where output is variable — reduces fixed carry exposure.${revenue ? ` Current implied carry floor: $${(revenue * 0.4 / 12 / 1e3).toFixed(0)}K/mo.` : ''}` },
+      { label:'Revenue diversification reduces the minimum output required to service carry obligations.' },
+    ],
+    alternativeView: 'Large fixed-cost operations create scale moats — competitors cannot replicate the output volume without matching the overhead commitment. Carry risk is also a competitive barrier.',
+    outlook: [
+      { prob:0.55, label:'Carry optimization + yield improvement creates positive margin at current scale', color:LIME },
+      { prob:0.30, label:'Revenue disruption event triggers carry crisis — rapid cost reduction required',  color:BLUE },
+      { prob:0.15, label:'Scale investment outpaces revenue growth — carry unsustainable at new overhead',  color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'MAP CARRY FLOOR',            impact:0.91, rationale:'Calculate total fixed monthly obligations (crew + facilities + equipment). This is your operational floor — the minimum revenue required to keep the machine running. Know this number exactly.', tag:'OPERATIONS' },
+        { id:'a2', label:'CALCULATE YIELD PER PIECE',  impact:0.84, rationale:'Revenue per video / production cost per video = your yield ratio. This is the single most important metric in the model. A ratio below 1.5× creates insufficient margin for downside scenarios.', tag:'YIELD' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'STRESS TEST AT -30% REVENUE',impact:0.80, rationale:'Model what happens to carry if revenue drops 30%. How many months of runway? What is the first cost to cut? This scenario is not pessimistic — it is the algorithm-disruption baseline.', tag:'RISK' },
+        { id:'b2', label:'CONVERT FIXED TO VARIABLE',  impact:0.71, rationale:'Identify 20–30% of fixed cost that can be converted to contractor/project basis. Variable cost reduces carry floor and increases resilience to revenue volatility.', tag:'STRUCTURE' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD CARRY RESERVE',         impact:0.77, rationale:'Maintain 3 months of carry obligations in liquid reserve. This is the buffer between a platform disruption and a forced reduction event. Non-negotiable at elevated carry risk.', tag:'RESILIENCE' },
+        { id:'c2', label:'REVENUE FLOOR DIVERSIFICATION',impact:0.63, rationale:'Build one revenue stream that is not output-dependent (licensing, community, sponsorship retainers). This partial decoupling of revenue from production volume reduces the carry cliff.', tag:'DIVERSIFICATION' },
+      ],
+    },
+    leverage:             { typeY:0, typeLabel:'CODE', tierLabel, deRatio:0.3, permissionless:true, industryNorm:0.4 },
+    carry_risk:           carryRisk,
+    crew_size:            crewSize,
+    production_intensity: productionIntensity,
+    yield_tracking:       yieldSignal,
+  };
+}
+
+// ── WO-1777: Non-Institutional Alpha Synthesizer (Mallah Protocol) ────────────
+
+function synthNonInstitutionalAlpha(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const alphaSource =
+    /local.*market|regional|niche|neighborhood|community|small.*market/.test(q) ? 'LOCAL_KNOWLEDGE' :
+    /timing|early|first mover|before.*crowd|ahead.*consensus/.test(q) ? 'TIMING_EDGE' :
+    /relationship|network|access|direct.*deal|off.*market|off-market/.test(q) ? 'RELATIONSHIP_ACCESS' :
+    /research|analysis|deep.*dive|understated|overlooked|mispriced/.test(q) ? 'ANALYTICAL_EDGE' :
+    'GENERAL_EDGE';
+
+  const consensusGap =
+    /no.*coverage|nobody.*watching|ignored|overlooked|under.*radar|no.*institutional|retail/.test(q) ? 'WIDE' :
+    /some.*coverage|limited.*coverage|thin.*coverage/.test(q) ? 'MODERATE' : 'NARROW';
+
+  const timeHorizonQ =
+    /long.*term|multi.*year|years?|decade/.test(q) ? 'LONG' :
+    /short.*term|month|quarter|near.*term/.test(q) ? 'SHORT' : 'MEDIUM';
+
+  const isAlpha   = /alpha|edge|advantage|non.consensus|outperform|beat.*market/.test(q);
+  const isAccess  = /off.market|direct.*deal|relationship|access|network/.test(q);
+  const isTiming  = /early|first|ahead|before.*crowd|timing/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isAlpha) {
+    stateLabel     = consensusGap === 'WIDE' ? 'ALPHA_WINDOW_OPEN' : consensusGap === 'MODERATE' ? 'ALPHA_WINDOW_NARROWING' : 'ALPHA_COMMODITIZED';
+    primaryInsight = consensusGap === 'WIDE'
+      ? `Non-consensus window is open. Alpha source: ${alphaSource.replace(/_/g,' ')}. Institutional attention is absent — the edge is maximum before consensus arrives.`
+      : consensusGap === 'MODERATE'
+      ? `Alpha window is narrowing. Institutional attention is entering. The non-consensus edge compresses as coverage increases.`
+      : 'Consensus has arrived. Non-institutional alpha from this position is near zero — the crowd has priced it. Exit or reposition to the next non-consensus thesis.';
+  } else if (isAccess) {
+    stateLabel     = 'RELATIONSHIP_ACCESS_ALPHA';
+    primaryInsight = 'Off-market access is the most durable non-institutional alpha source. Institutional capital cannot access relationship-sourced deals at scale — this is a structural moat for individual operators.';
+  } else if (isTiming) {
+    stateLabel     = 'TIMING_EDGE_ACTIVE';
+    primaryInsight = 'Timing alpha is the highest-velocity edge. Non-consensus early positioning captures maximum appreciation before institutional capital compresses the return.';
+  } else {
+    stateLabel     = 'NON_INSTITUTIONAL_ALPHA_SCAN';
+    primaryInsight = `Alpha source: ${alphaSource.replace(/_/g,' ')}. Consensus gap: ${consensusGap}. Time horizon: ${timeHorizonQ}. Non-institutional edge is ${consensusGap === 'WIDE' ? 'maximum' : consensusGap === 'MODERATE' ? 'present but compressing' : 'negligible'}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.5);
+  return {
+    stateLabel,
+    confidence:    consensusGap === 'WIDE' ? 0.78 : consensusGap === 'MODERATE' ? 0.65 : 0.48,
+    primaryInsight,
+    momentum:      { value: consensusGap === 'WIDE' ? '+31%' : '+12%', h1: '+4%', h24: '+14%' },
+    trajPoints:    [0.28,0.34,0.40,0.47,0.54,0.60,0.66,0.71,0.75,0.78,0.80,0.81],
+    attentionStack: [
+      { rank:1, signal:'Consensus Gap Width',         category:'Alpha / Market',        trend:'↗', momentum:'Compressing', mColor:LIME, conf:0.82 },
+      { rank:2, signal:'Institutional Attention',     category:'Capital / Coverage',    trend:'↑', momentum:'Arriving',    mColor:BLUE, conf:0.74 },
+      { rank:3, signal:'Non-Consensus Signal Purity', category:'Alpha / Signal',        trend:'→', momentum:'Stable',      mColor:LIME, conf:0.66 },
+      { rank:4, signal:'Time-to-Consensus',           category:'Alpha / Timing',        trend:'↘', momentum:'Shrinking',   mColor:DIM,  conf:0.52 },
+    ],
+    keyDrivers: [
+      { label:'Alpha source type',      delta: alphaSource.replace(/_/g,' '),                               pos: true },
+      { label:'Consensus gap',          delta: consensusGap,                                                pos: consensusGap === 'WIDE' },
+      { label:'Institutional coverage', delta: consensusGap === 'WIDE' ? 'ABSENT' : 'PRESENT',             pos: consensusGap === 'WIDE' },
+      { label:'Time horizon',           delta: timeHorizonQ,                                                pos: timeHorizonQ === 'LONG' },
+    ],
+    recommendedAction: consensusGap === 'WIDE'
+      ? 'Position before consensus arrives. Non-institutional alpha is maximum when institutional coverage is absent — the window closes as coverage begins.'
+      : consensusGap === 'MODERATE'
+      ? 'Evaluate exit or thesis extension. Consensus is arriving — determine if the remaining appreciation justifies the compressing edge.'
+      : 'Exit the consensus position. Redeploy into the next non-consensus thesis — this position no longer carries non-institutional alpha.',
+    timeHorizon:   timeHorizonQ === 'LONG' ? '2–5 years' : timeHorizonQ === 'MEDIUM' ? '6–18 months' : '30–90 days',
+    impactLevel:   consensusGap === 'WIDE' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Non-institutional alpha: ${alphaSource.replace(/_/g,' ')} with ${consensusGap} consensus gap. ${consensusGap === 'WIDE' ? 'Window is open — pre-consensus positioning is the action.' : 'Window is narrowing — evaluate exit vs. thesis extension.'}${capital ? ` Capital available: $${(capital/1e3).toFixed(0)}K.` : ''}`,
+    purpose:       'Non-institutional alpha identification (Mallah Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:'Non-institutional capital operating outside Wall Street consensus.' },
+      { w:'WHAT',  answer:`Alpha source: ${alphaSource.replace(/_/g,' ')}. Consensus gap: ${consensusGap}.` },
+      { w:'WHEN',  answer:`${consensusGap === 'WIDE' ? 'Now — maximum alpha window before institutional coverage.' : 'Window compressing — evaluate position urgency.'}` },
+      { w:'WHERE', answer:`Edge source: ${alphaSource === 'LOCAL_KNOWLEDGE' ? 'local market knowledge inaccessible to institutional capital' : alphaSource === 'RELATIONSHIP_ACCESS' ? 'off-market relationship access' : alphaSource === 'TIMING_EDGE' ? 'pre-consensus timing' : 'analytical depth on overlooked signal'}.` },
+      { w:'WHY',   answer:'Institutional capital is structurally prevented from accessing certain edges — minimum check size, regulatory restrictions, attention economics. Non-institutional operators can access these edges; institutions cannot.' },
+    ],
+    evidence: [
+      'Non-consensus positions with wide coverage gaps outperform consensus positions by avg 31% risk-adjusted in 12–18 month windows.',
+      'Off-market deal access eliminates the auction premium that compresses returns for all institutional buyers.',
+      `Local knowledge alpha is most durable — institutional capital cannot replicate ground-level insight at scale.`,
+    ],
+    assumptions: [
+      'Non-institutional operator has genuine edge from one of: local knowledge, relationship access, timing, or analytical depth.',
+      'Position can be held for the full thesis duration without forced liquidation.',
+    ],
+    assessment: `${alphaSource.replace(/_/g,' ')} edge with ${consensusGap} consensus gap on ${timeHorizonQ} horizon. ${consensusGap === 'WIDE' ? 'This is maximum alpha window — position size and duration are the primary decisions.' : 'Alpha is present but compressing. Risk/reward requires fresh evaluation before extending.'}`,
+    threats: [
+      { label:'Institutional capital arrival compresses the non-consensus edge',   level: consensusGap === 'NARROW' ? 'HIGH' : 'MEDIUM', color:LIME },
+      { label:'Thesis duration exceeds edge window — holding past alpha peak',    level:'MEDIUM', color:BLUE },
+      { label:'Concentration in single non-consensus position',                   level:'MEDIUM', color:BLUE },
+      { label:'Forced liquidity before thesis resolves',                          level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`Wide consensus gap = maximum non-institutional alpha. Position before the coverage begins.${capital ? ` Capital deployment target: $${(capital * 0.3 / 1e3).toFixed(0)}K.` : ''}` },
+      { label:'Build a non-consensus watchlist: 5 positions with wide gaps and defined thesis durations.' },
+      { label:'Exit signal = mainstream financial media coverage. The non-consensus edge evaporates on arrival.' },
+    ],
+    alternativeView: 'Non-consensus positions can be wrong for structural rather than timing reasons. Wide coverage gaps sometimes reflect genuine absence of value rather than undiscovered value.',
+    outlook: [
+      { prob:0.58, label:'Non-institutional alpha captures 25%+ outperformance before consensus arrives', color:LIME },
+      { prob:0.27, label:'Consensus arrives faster than modeled — edge compression reduces total return',  color:BLUE },
+      { prob:0.15, label:'Non-consensus thesis is incorrect — gap reflects structural absence of value',   color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'MAP CONSENSUS GAP',           impact:0.89, rationale:`Verify the gap is real: search institutional coverage, analyst reports, major financial media. ${consensusGap === 'WIDE' ? 'Gap confirmed wide — position before coverage begins.' : 'Gap is narrowing — evaluate with urgency.'}`, tag:'ALPHA' },
+        { id:'a2', label:'DEFINE THESIS DURATION',      impact:0.82, rationale:'Non-institutional alpha has a window. Determine "this thesis resolves by [date]." If institutional coverage arrives before that date, it is your exit signal — not validation.', tag:'DISCIPLINE' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'BUILD NON-CONSENSUS POSITION',impact:0.85, rationale:`Size the position relative to conviction and duration. ${capital ? `Capital available: $${(capital/1e3).toFixed(0)}K — allocate 20–30% to a single non-consensus thesis maximum.` : 'Size relative to conviction — non-consensus positions require patience before resolution.'}`, tag:'POSITIONING' },
+        { id:'b2', label:'SET CONSENSUS ARRIVAL ALERT', impact:0.71, rationale:'Monitor for first major institutional coverage or mainstream media mention. That is your exit signal — not your validation. The non-consensus edge disappears when the crowd arrives.', tag:'SIGNAL' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD ALPHA SOURCE PIPELINE',  impact:0.75, rationale:'The most durable non-institutional edge is a repeatable source: local network, industry access, analytical framework. One non-consensus win does not compound — the source does.', tag:'SYSTEM' },
+        { id:'c2', label:'TRACK ALPHA CONVERSION RATE',  impact:0.60, rationale:'Log every non-consensus thesis and outcome. Over time this builds a calibration dataset — which edge sources actually produce alpha vs. which produce the illusion of edge.', tag:'CALIBRATION' },
+      ],
+    },
+    leverage:       { typeY:2, typeLabel:'CODE', tierLabel, deRatio:0.5, permissionless:true, industryNorm:0.4 },
+    alpha_source:   alphaSource,
+    consensus_gap:  consensusGap,
+    time_horizon_q: timeHorizonQ,
+  };
+}
+
+// ── WO-1778: Commercial Distress Liquidity Map (Mallah Protocol) ──────────────
+
+function synthCommercialDistressLiquidity(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const distressType =
+    /foreclosure|bank.*own|reo|bank.*repo/.test(q)                               ? 'FORECLOSURE' :
+    /bankrupt|chapter 11|chapter 7|insolvent|receiver/.test(q)                   ? 'BANKRUPTCY' :
+    /distressed.*sale|fire.*sale|motivated.*seller|must.*sell|urgent.*sale/.test(q)? 'MOTIVATED_SELLER' :
+    /note|loan.*sale|debt.*sale|non.performing/.test(q)                           ? 'NOTE_PURCHASE' :
+    'GENERAL_DISTRESS';
+
+  const liquidityWindow =
+    /auction|deadline|court.*date|scheduled|30.*day|60.*day|immediate/.test(q) ? 'ACUTE' :
+    /listing|on.*market|available|asking/.test(q) ? 'OPEN' : 'UNCERTAIN';
+
+  const assetClass =
+    /commercial|office|retail.*space|shopping|warehouse|industrial|multifamily/.test(q) ? 'COMMERCIAL' :
+    /residential|house|condo|sfr|single.*family/.test(q) ? 'RESIDENTIAL' :
+    /business|company|operating|going.*concern/.test(q) ? 'OPERATING_BUSINESS' : 'MIXED';
+
+  const discountSignal =
+    /\b([3-9]\d|[1-9]\d{2})\s*(?:percent|%)\s*(?:off|below|discount)|\bbelow.*value|deeply.*discount|significant.*discount/.test(q) ? 'DEEP' :
+    /discount|below.*market|under.*value|under.*ask/.test(q) ? 'MODERATE' : 'UNKNOWN';
+
+  const isForeclosure   = /foreclosure|reo|bank.*own/.test(q);
+  const isLiquidity     = /liquidity|liquid|cash|capital|buyer|purchase|acquire|buy/.test(q);
+  const isDistressMap   = /map|identify|find|locate|scan|where|search/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isForeclosure) {
+    stateLabel     = liquidityWindow === 'ACUTE' ? 'FORECLOSURE_WINDOW_ACUTE' : 'FORECLOSURE_OPPORTUNITY_OPEN';
+    primaryInsight = liquidityWindow === 'ACUTE'
+      ? 'Foreclosure timeline is acute. Court dates and auction schedules are hard deadlines — capital must be positioned before the window closes.'
+      : 'Foreclosure opportunity window is open. REO and pre-foreclosure inventory represents the most accessible institutional-grade distress discount for non-institutional capital.';
+  } else if (isLiquidity) {
+    stateLabel     = `LIQUIDITY_${liquidityWindow}_${assetClass}`;
+    primaryInsight = `${assetClass.replace(/_/g,' ')} distress liquidity event. Window: ${liquidityWindow}. Discount signal: ${discountSignal}. Non-institutional capital has access advantage over institutional buyers in this asset class — minimum check size and approval velocity favor individual operators.`;
+  } else if (isDistressMap) {
+    stateLabel     = 'DISTRESS_MAP_ACTIVE';
+    primaryInsight = `Distress scan active. Type: ${distressType.replace(/_/g,' ')}. Asset class: ${assetClass.replace(/_/g,' ')}. Liquidity window: ${liquidityWindow}. Build the map around motivated sellers — time pressure is the primary discount driver.`;
+  } else {
+    stateLabel     = 'COMMERCIAL_DISTRESS_SIGNAL_ACTIVE';
+    primaryInsight = `Commercial distress signal: ${distressType.replace(/_/g,' ')} in ${assetClass.replace(/_/g,' ')}. Liquidity window: ${liquidityWindow}. Discount: ${discountSignal}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.6);
+  return {
+    stateLabel,
+    confidence:    liquidityWindow === 'ACUTE' ? 0.76 : 0.68,
+    primaryInsight,
+    momentum:      { value: '+28%', h1: '+6%', h24: '+18%' },
+    trajPoints:    [0.22,0.28,0.35,0.42,0.50,0.57,0.63,0.68,0.72,0.75,0.77,0.78],
+    attentionStack: [
+      { rank:1, signal:'Distress Discount Depth',     category:'Capital / Distress',    trend:'↑', momentum:'Widening',    mColor:LIME, conf:0.84 },
+      { rank:2, signal:'Liquidity Window Duration',   category:'Market / Timing',       trend:'↘', momentum:'Compressing', mColor:BLUE, conf:0.76 },
+      { rank:3, signal:'Competing Capital Presence',  category:'Market / Competition',  trend:'→', momentum:'Low',         mColor:LIME, conf:0.65 },
+      { rank:4, signal:'Asset Class Distress Rate',   category:'Market / Supply',       trend:'↗', momentum:'Increasing',  mColor:DIM,  conf:0.54 },
+    ],
+    keyDrivers: [
+      { label:'Distress type',      delta: distressType.replace(/_/g,' '),     pos: true },
+      { label:'Liquidity window',   delta: liquidityWindow,                    pos: liquidityWindow === 'ACUTE' },
+      { label:'Asset class',        delta: assetClass.replace(/_/g,' '),       pos: true },
+      { label:'Discount signal',    delta: discountSignal,                     pos: discountSignal === 'DEEP' },
+    ],
+    recommendedAction: liquidityWindow === 'ACUTE'
+      ? 'Capital must be positioned immediately. Acute distress windows close on court-mandated schedules — due diligence must compress to match the timeline.'
+      : 'Build the distress inventory map now. Identify 10–15 motivated sellers in the target asset class. Capital readiness is the advantage — sellers under pressure will transact with ready buyers at discount.',
+    timeHorizon:   liquidityWindow === 'ACUTE' ? '7–30 days' : '30–90 days',
+    impactLevel:   discountSignal === 'DEEP' ? 'HIGH' : 'MEDIUM',
+    bluf:          `${distressType.replace(/_/g,' ')} distress in ${assetClass.replace(/_/g,' ')}. Liquidity window: ${liquidityWindow}. Discount: ${discountSignal}. ${liquidityWindow === 'ACUTE' ? 'Capital must be positioned before hard deadline.' : 'Build inventory map and position capital for seller-time-pressure window.'}${capital ? ` Capital available: $${(capital/1e3).toFixed(0)}K.` : ''}`,
+    purpose:       'Commercial distress liquidity mapping (Mallah Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:`${distressType.replace(/_/g,' ')} seller under time or financial pressure.` },
+      { w:'WHAT',  answer:`${assetClass.replace(/_/g,' ')} asset at ${discountSignal.toLowerCase()} discount. Distress type: ${distressType.replace(/_/g,' ')}.` },
+      { w:'WHEN',  answer:`Liquidity window: ${liquidityWindow}. ${liquidityWindow === 'ACUTE' ? 'Hard deadline — court or auction date drives urgency.' : 'Open window but discount compresses as time pressure resolves.'}` },
+      { w:'WHERE', answer:`Asset class: ${assetClass.replace(/_/g,' ')}. Non-institutional capital has access advantage — institutional minimum check size prevents entry at this scale.` },
+      { w:'WHY',   answer:'Motivated sellers under time pressure transact at discounts unavailable in normal market conditions. The discount is compensation for speed and certainty of close.' },
+    ],
+    evidence: [
+      'Foreclosure auctions average 15–35% below market value — premium paid for certainty and speed, not credit quality.',
+      'Motivated sellers under 30-day time pressure accept 10–20% below their own asking price to secure a certain close.',
+      'Non-institutional operators close distressed transactions at 2–3× the velocity of institutional buyers — approval velocity is the competitive advantage.',
+    ],
+    assumptions: [
+      'Capital is liquid and can be deployed within the distress window timeline.',
+      'Due diligence can be compressed without eliminating critical title and lien verification.',
+    ],
+    assessment: `${distressType.replace(/_/g,' ')} in ${assetClass.replace(/_/g,' ')} with ${liquidityWindow} window and ${discountSignal} discount signal. ${liquidityWindow === 'ACUTE' ? 'Time-critical: capital readiness is the only competitive variable.' : 'Build inventory, position capital, move at seller pressure peak.'}`,
+    threats: [
+      { label:'Title defects or undisclosed liens in distressed assets',                level:'HIGH',   color:LIME },
+      { label:'Compressed due diligence missing material condition issues',             level:'HIGH',   color:LIME },
+      { label:'Window closes before capital can be positioned and verified',            level:'MEDIUM', color:BLUE },
+      { label:'Competing cash buyers eliminating discount at auction',                  level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`${discountSignal === 'DEEP' ? 'Deep discount' : 'Moderate discount'} acquisition below replacement cost — immediate equity creation at close.${capital ? ` At $${(capital/1e3).toFixed(0)}K capital: targets $${(capital * 0.7 / 1e3).toFixed(0)}K–$${(capital * 1.4 / 1e3).toFixed(0)}K asset value range.` : ''}` },
+      { label:'Non-institutional velocity advantage: close in 7–14 days vs. institutional 60–90 days — sellers under pressure choose speed.' },
+      { label:'Distress inventory map: 10–15 motivated seller relationships built now creates a repeatable deal flow pipeline.' },
+    ],
+    alternativeView: 'Distressed assets carry embedded problems — deferred maintenance, legal complexity, or tenant issues that consume the discount. Discount does not equal value without full due diligence.',
+    outlook: [
+      { prob:0.60, label:'Distress acquisition at deep discount creates 20%+ equity on entry + restructuring upside', color:LIME },
+      { prob:0.28, label:'Hidden liabilities consume the discount — net return approaches market-rate acquisition',    color:BLUE },
+      { prob:0.12, label:'Competing capital eliminates discount at auction — deal not executable at target terms',     color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'TITLE + LIEN SEARCH',         impact:0.95, rationale:'Before any distressed acquisition: full title search + lien verification. This is non-deferrable. Foreclosure assets carry undisclosed junior liens that survive the sale in some jurisdictions.', tag:'DILIGENCE' },
+        { id:'a2', label:'CAPITAL READINESS AUDIT',     impact:0.90, rationale:`Verify liquid capital position for immediate deployment. ${capital ? `$${(capital/1e3).toFixed(0)}K available — confirm it is liquid and can close within the window.` : 'Confirm capital is liquid and deployable within distress window timeline.'}`, tag:'CAPITAL' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'BUILD DISTRESS INVENTORY',    impact:0.82, rationale:'Map 10–15 distressed assets in target class. Include seller time pressure, discount estimate, title status. This is your deal flow — a single distress transaction is a trade; a map is a business.', tag:'PIPELINE' },
+        { id:'b2', label:'COMPRESS DUE DILIGENCE',      impact:0.77, rationale:'Build a 72-hour due diligence protocol: title, inspection, lien, zoning. Sellers under pressure choose buyers who can close in 7 days over buyers who need 60. Speed is the non-institutional edge.', tag:'PROCESS' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD DISTRESSED SELLER NETWORK', impact:0.74, rationale:'Attorneys (bankruptcy, foreclosure), accountants, and commercial brokers see distress before it hits market. One relationship in each channel creates deal flow 30–60 days ahead of public availability.', tag:'ACCESS' },
+        { id:'c2', label:'STRUCTURE CAPITAL FOR VELOCITY',  impact:0.65, rationale:'A HELOC, business line, or pre-arranged capital facility that can deploy in <7 days is worth more than a larger capital base with slow deployment. Distress windows do not wait for wire approvals.', tag:'STRUCTURE' },
+      ],
+    },
+    leverage:         { typeY:3, typeLabel:'CAPITAL', tierLabel, deRatio:0.6, permissionless:false, industryNorm:0.7 },
+    distress_type:    distressType,
+    liquidity_window: liquidityWindow,
+    asset_class:      assetClass,
+    discount_signal:  discountSignal,
+  };
+}
+
+// ── WO-1785: Relevance Warfare Synthesizer (Vaynerchuk Protocol) ──────────────
+
+function synthRelevanceWarfare(session, numbers, query) {
+  const q = query.toLowerCase();
+
+  const platform =
+    /tiktok/.test(q)    ? 'TIKTOK' :
+    /instagram|reels/.test(q) ? 'INSTAGRAM' :
+    /linkedin/.test(q)  ? 'LINKEDIN' :
+    /twitter|x\.com|\bx\b/.test(q) ? 'X' :
+    /youtube/.test(q)   ? 'YOUTUBE' :
+    /facebook/.test(q)  ? 'FACEBOOK' : 'MULTI_PLATFORM';
+
+  const relevanceDecay =
+    /losing.*relevance|losing.*attention|falling.*behind|outdated|old.*content|irrelevant|dying/.test(q) ? 'ACTIVE_DECAY' :
+    /relevance|staying.*relevant|maintain.*relevance|keep.*relevant/.test(q) ? 'MAINTENANCE_MODE' :
+    /grow|expand|new.*audience|reach/.test(q) ? 'GROWTH_MODE' : 'UNKNOWN';
+
+  const attentionEdge =
+    /native.*content|platform.*native|built.*for.*platform|algorithm.*friend/.test(q) ? 'NATIVE_CONTENT' :
+    /volume|output|posting|consistent|daily|frequency/.test(q) ? 'VOLUME_EDGE' :
+    /speed|first|fast|rapid|immediate|real.*time/.test(q) ? 'SPEED_EDGE' : 'UNDEFINED';
+
+  const competitor =
+    /competitor|rival|competition|others.*doing|everyone.*posting|brand.*fight/.test(q) ? 'PRESENT' : 'ABSENT';
+
+  const isDecay     = /decay|losing|behind|irrelevant|outdated|fading/.test(q);
+  const isAttention = /attention|capture|reach|audience|views|impressions/.test(q);
+  const isStrategy  = /strategy|plan|approach|how.*compete|how.*win|how.*grow/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isDecay) {
+    stateLabel     = 'RELEVANCE_DECAY_DETECTED';
+    primaryInsight = "Relevance decay is active. Attention is a zero-sum competition — every platform's algorithm replaces non-native content with native content. The decay accelerates as competitors post native and you post repurposed.";
+  } else if (isAttention) {
+    stateLabel     = `ATTENTION_${platform}_${attentionEdge === 'UNDEFINED' ? 'CAPTURE_MODE' : attentionEdge}`;
+    primaryInsight = platform === 'MULTI_PLATFORM'
+      ? 'Multi-platform attention strategy requires native content per platform — not cross-posting. Each algorithm is independent. What wins on LinkedIn loses on TikTok.'
+      : `${platform} attention capture. ${attentionEdge === 'NATIVE_CONTENT' ? 'Native content advantage is active.' : attentionEdge === 'VOLUME_EDGE' ? 'Volume edge requires output consistency — missing a day costs more than the content produces.' : 'Speed edge: first-mover attention on trending signals outperforms polished-but-late content.'}`;
+  } else if (isStrategy) {
+    stateLabel     = 'RELEVANCE_WARFARE_STRATEGY';
+    primaryInsight = 'Relevance warfare is won by native content volume at platform speed. Brands that treat content as production lose to individuals who treat content as conversation. Document, do not produce.';
+  } else {
+    stateLabel     = 'RELEVANCE_WARFARE_SIGNAL_ACTIVE';
+    primaryInsight = `Platform: ${platform}. Relevance state: ${relevanceDecay}. Attention edge: ${attentionEdge}. Competitor presence: ${competitor}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.1);
+  return {
+    stateLabel,
+    confidence:    relevanceDecay === 'ACTIVE_DECAY' ? 0.84 : 0.72,
+    primaryInsight,
+    momentum:      { value: relevanceDecay === 'ACTIVE_DECAY' ? '-24%' : '+16%', h1: relevanceDecay === 'ACTIVE_DECAY' ? '-6%' : '+3%', h24: relevanceDecay === 'ACTIVE_DECAY' ? '-14%' : '+10%' },
+    trajPoints:    relevanceDecay === 'ACTIVE_DECAY'
+      ? [0.80,0.74,0.68,0.62,0.56,0.50,0.44,0.39,0.34,0.30,0.27,0.24]
+      : [0.30,0.36,0.43,0.50,0.57,0.62,0.67,0.71,0.74,0.77,0.79,0.81],
+    attentionStack: [
+      { rank:1, signal:'Platform Relevance Score',   category:`${platform} / Algorithm`,   trend: relevanceDecay === 'ACTIVE_DECAY' ? '↓' : '↑', momentum: relevanceDecay === 'ACTIVE_DECAY' ? 'Declining' : 'Building',  mColor:LIME, conf:0.86 },
+      { rank:2, signal:'Native Content Ratio',       category:'Content / Platform',        trend:'↗', momentum:'Improving',   mColor:BLUE, conf:0.74 },
+      { rank:3, signal:'Competitor Output Volume',   category:`${platform} / Competition`, trend:'↑', momentum:'Accelerating',mColor:LIME, conf:0.65 },
+      { rank:4, signal:'Audience Attention Velocity',category:'Audience / Engagement',     trend:'→', momentum:'Flat',        mColor:DIM,  conf:0.51 },
+    ],
+    keyDrivers: [
+      { label:'Relevance state',        delta: relevanceDecay.replace(/_/g,' '),   pos: relevanceDecay !== 'ACTIVE_DECAY' },
+      { label:'Platform',               delta: platform,                            pos: true },
+      { label:'Attention edge',         delta: attentionEdge.replace(/_/g,' '),    pos: attentionEdge !== 'UNDEFINED' },
+      { label:'Competitor presence',    delta: competitor,                          pos: competitor === 'ABSENT' },
+    ],
+    recommendedAction: relevanceDecay === 'ACTIVE_DECAY'
+      ? 'Post native content on the platform today. Not tomorrow. Not after the strategy session. Today. Relevance decay compounds daily — every day of silence is lost ground that takes 5 days to recover.'
+      : `Double output volume on ${platform === 'MULTI_PLATFORM' ? 'your highest-engagement platform' : platform}. Native content at 2× current volume is the fastest relevance acceleration mechanism.`,
+    timeHorizon:   '30–90 days',
+    impactLevel:   relevanceDecay === 'ACTIVE_DECAY' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Relevance state: ${relevanceDecay.replace(/_/g,' ')} on ${platform}. ${relevanceDecay === 'ACTIVE_DECAY' ? 'Decay is compounding — each day of non-native posting widens the gap to competitors who are posting natively.' : 'Relevance window is open — volume and native content are the execution levers.'}`,
+    purpose:       'Relevance warfare analysis (Vaynerchuk Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:`${platform === 'MULTI_PLATFORM' ? 'Multi-platform' : platform} operator competing for finite audience attention.` },
+      { w:'WHAT',  answer:`Relevance state: ${relevanceDecay.replace(/_/g,' ')}. Attention edge: ${attentionEdge.replace(/_/g,' ')}.` },
+      { w:'WHEN',  answer:'Attention is competed for in real time. Posting cadence gaps create algorithm suppression that compounds over 72–96 hours.' },
+      { w:'WHERE', answer:`${platform === 'MULTI_PLATFORM' ? 'All platforms require native content — cross-posting is a relevance tax, not a shortcut.' : `${platform} algorithm rewards native-format, consistent-cadence content above all other signals.`}` },
+      { w:'WHY',   answer:'Relevance is a zero-sum competition for finite attention. Every platform algorithm allocates distribution to accounts that earn it through native engagement. Non-native content is algorithmically suppressed regardless of production quality.' },
+    ],
+    evidence: [
+      'Native content outperforms repurposed/cross-posted content by 3–7× on reach per post across all major platforms.',
+      'Accounts that break a daily/near-daily posting cadence see 40–60% reach suppression lasting 5–7 days.',
+      "Document-don't-produce content (raw, real-time) outperforms produced content on TikTok and Instagram Reels by 2–4× engagement rate.",
+    ],
+    assumptions: [
+      'Operator has capacity to produce native content at 1+ pieces per day without sacrificing core business execution.',
+      'Platform algorithm weighting toward native content continues — current trend is stable across all major platforms.',
+    ],
+    assessment: `${platform} relevance at ${relevanceDecay.replace(/_/g,' ')} state. ${relevanceDecay === 'ACTIVE_DECAY' ? 'Every day of inaction compounds decay. Native content today beats perfect content next week.' : 'Relevance window is open. Volume + native format are the two execution levers with highest return.'}`,
+    threats: [
+      { label:'Relevance decay compounds — 1 day of silence = 5 days to recover',       level: relevanceDecay === 'ACTIVE_DECAY' ? 'HIGH' : 'MEDIUM', color:LIME },
+      { label:'Competitor native content volume capturing your audience attention share', level:'HIGH',   color:LIME },
+      { label:'Algorithm change penalizing current content format',                      level:'MEDIUM', color:BLUE },
+      { label:'Production bottleneck slowing native content output',                     level:'MEDIUM', color:BLUE },
+    ],
+    opportunities: [
+      { label:'Document-don\'t-produce: raw behind-the-scenes content requires no production budget and outperforms produced content on engagement rate.' },
+      { label:`${platform === 'LINKEDIN' ? 'LinkedIn text-first posts outperform all other formats by 2× on professional audiences.' : platform === 'TIKTOK' ? 'TikTok rewards pattern interrupts in first 2 seconds — hook engineering is the highest-leverage content skill.' : 'Native format + consistent cadence outperforms all other strategies on this platform.'}` },
+      { label:'Comment and reply volume signals relevance to the algorithm — responding to every comment in the first hour of posting is a distribution multiplier.' },
+    ],
+    alternativeView: 'High-quality, lower-frequency content can outperform high-volume native content on platforms that reward depth (YouTube long-form, LinkedIn thought leadership). Volume without quality produces diminishing returns.',
+    outlook: [
+      { prob:0.62, label:'Native content volume + cadence restores relevance within 30 days', color:LIME },
+      { prob:0.26, label:'Relevance gap requires 90+ days to close — audience attention has migrated', color:BLUE },
+      { prob:0.12, label:'Platform algorithm shift renders current strategy obsolete — full format pivot required', color:DIM },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:`POST NATIVE ${platform === 'MULTI_PLATFORM' ? 'CONTENT' : `ON ${platform}`} TODAY`, impact:0.95, rationale:'Not tomorrow. Not after the strategy session. Today. One native post today breaks the decay cycle and resets the algorithm suppression timer. Document what you are doing right now.', tag:'EXECUTION' },
+        { id:'a2', label:'AUDIT CONTENT FORMAT',        impact:0.82, rationale:`Review last 10 posts. What % were native format vs. repurposed? What was the engagement delta? Native content consistently outperforms repurposed by 3–7×. This audit shows you where the relevance tax is being paid.`, tag:'AUDIT' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'2× OUTPUT VOLUME',            impact:0.85, rationale:`Double your current posting cadence for 30 days. Volume is the fastest relevance recovery mechanism. ${platform === 'TIKTOK' ? '3–5 videos/day.' : platform === 'LINKEDIN' ? '1–2 posts/day.' : '1–3 posts/day.'}`, tag:'VOLUME' },
+        { id:'b2', label:'BUILD CONTENT SYSTEM',        impact:0.77, rationale:'Content at volume requires a system — a list of 30 topics always ready, a filming habit that runs parallel to real work, a posting schedule. Content strategy without a production system is theater.', tag:'SYSTEM' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'OWN THE ALGORITHM SIGNAL',    impact:0.73, rationale:`${platform === 'TIKTOK' ? 'Hook in first 2 seconds. Loop or payoff at 15 seconds. Comment bait at end.' : platform === 'LINKEDIN' ? 'First 2 lines before "see more" must stop the scroll. Personal story > corporate statement.' : 'Native format + engagement velocity in first hour are the two algorithm signals that matter most.'}`, tag:'ALGORITHM' },
+        { id:'c2', label:'TRACK RELEVANCE WEEKLY',      impact:0.61, rationale:'Average reach per post, follower growth rate, engagement rate — tracked weekly, not monthly. Relevance warfare requires real-time feedback loops, not quarterly reviews.', tag:'MEASUREMENT' },
+      ],
+    },
+    leverage:         { typeY:0, typeLabel:'CODE', tierLabel, deRatio:0.1, permissionless:true, industryNorm:0.2 },
+    platform,
+    relevance_decay:  relevanceDecay,
+    attention_edge:   attentionEdge,
+    competitor,
+  };
+}
+
+// ── WO-1786: Content-to-Commerce Conversion Engine (Vaynerchuk Protocol) ──────
+
+function synthContentToCommerce(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const contentType =
+    /video|youtube|tiktok|reel|short/.test(q) ? 'VIDEO' :
+    /podcast|audio|show/.test(q) ? 'PODCAST' :
+    /newsletter|email|substack|written/.test(q) ? 'NEWSLETTER' :
+    /social|post|instagram|twitter|x\b/.test(q) ? 'SOCIAL' : 'MULTI_FORMAT';
+
+  const commerceType =
+    /merch|merchandise|product|physical/.test(q) ? 'PHYSICAL_PRODUCT' :
+    /course|coaching|consult|service|digital.*product/.test(q) ? 'DIGITAL_PRODUCT' :
+    /affiliate|commission|referral/.test(q) ? 'AFFILIATE' :
+    /brand.*deal|sponsor|partnership/.test(q) ? 'BRAND_DEAL' :
+    /community|membership|subscription/.test(q) ? 'COMMUNITY' : 'UNDEFINED';
+
+  const conversionGap =
+    /not.*converting|low.*conversion|audience.*not.*buying|views.*not.*sales|traffic.*no.*revenue/.test(q) ? 'ACTIVE' :
+    /improve.*conversion|increase.*sales|more.*revenue|monetiz/.test(q) ? 'OPTIMIZATION_MODE' :
+    'BASELINE';
+
+  const audienceSize =
+    /million|1m|2m|5m|10m/.test(q) ? 'LARGE' :
+    /hundred.*thousand|500k|200k|100k/.test(q) ? 'MEDIUM' :
+    /thousand|10k|20k|50k/.test(q) ? 'SMALL' : 'UNKNOWN';
+
+  const isConversion = /convert|sales|revenue|monetiz|sell|commerce/.test(q);
+  const isAudience   = /audience|follower|subscriber|viewer/.test(q);
+  const isFunnel     = /funnel|journey|path|flow|step/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (conversionGap === 'ACTIVE') {
+    stateLabel     = 'CONTENT_COMMERCE_GAP_ACTIVE';
+    primaryInsight = 'Content is not converting to commerce. The gap is almost always one of three things: no clear call-to-action, offer misalignment with audience identity, or no bridge from content context to purchase context. The content is working — the bridge is broken.';
+  } else if (isConversion) {
+    stateLabel     = `COMMERCE_${commerceType === 'UNDEFINED' ? 'GENERAL' : commerceType}_MODE`;
+    primaryInsight = commerceType === 'PHYSICAL_PRODUCT'
+      ? 'Physical product from content audience requires identity alignment — the product must feel like it was made for exactly who the content speaks to, not a product looking for an audience.'
+      : commerceType === 'DIGITAL_PRODUCT'
+      ? 'Digital product conversion from content is the highest-margin content-to-commerce path. Audience already trusts the expertise — the product packages it at a price the algorithm cannot deliver.'
+      : commerceType === 'BRAND_DEAL'
+      ? 'Brand deal conversion is audience-trust extraction. The deal value is proportional to how specifically the audience matches the brand target — niche, high-trust audiences command premiums over massive, diluted audiences.'
+      : `${commerceType.replace(/_/g,' ')} commerce model from ${contentType} content. Conversion path requires explicit bridge between content context and commerce action.`;
+  } else if (isAudience) {
+    stateLabel     = `AUDIENCE_${audienceSize}_CONVERSION_POTENTIAL`;
+    primaryInsight = audienceSize === 'LARGE'
+      ? 'Large audience with low conversion rate is more valuable than small audience with high conversion rate at scale — the absolute number of buyers matters. But trust depth determines the ceiling.'
+      : 'Smaller, high-trust audiences convert at 5–10× the rate of large, low-trust audiences. Niche authority is more valuable per-follower than mass reach without depth.';
+  } else {
+    stateLabel     = 'CONTENT_COMMERCE_SIGNAL_ACTIVE';
+    primaryInsight = `Content type: ${contentType}. Commerce model: ${commerceType.replace(/_/g,' ')}. Audience size: ${audienceSize}. Conversion gap: ${conversionGap.replace(/_/g,' ')}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.15);
+  return {
+    stateLabel,
+    confidence:    conversionGap === 'ACTIVE' ? 0.82 : 0.70,
+    primaryInsight,
+    momentum:      { value: conversionGap === 'ACTIVE' ? '-12%' : '+19%', h1: conversionGap === 'ACTIVE' ? '-3%' : '+4%', h24: conversionGap === 'ACTIVE' ? '-8%' : '+12%' },
+    trajPoints:    [0.32,0.38,0.44,0.50,0.56,0.61,0.65,0.69,0.72,0.74,0.76,0.77],
+    attentionStack: [
+      { rank:1, signal:'Content-Commerce Bridge Strength', category:'Content / Commerce',   trend: conversionGap === 'ACTIVE' ? '↓' : '↗', momentum: conversionGap === 'ACTIVE' ? 'Weakening' : 'Strengthening', mColor:LIME, conf:0.83 },
+      { rank:2, signal:'Audience Trust Depth',             category:'Audience / Commerce',  trend:'→', momentum:'Stable',          mColor:BLUE, conf:0.76 },
+      { rank:3, signal:'Offer-Audience Alignment',         category:'Product / Audience',   trend:'→', momentum:'Stable',          mColor:LIME, conf:0.67 },
+      { rank:4, signal:'CTA Placement Velocity',           category:'Content / Conversion', trend:'↗', momentum:'Improving',       mColor:DIM,  conf:0.53 },
+    ],
+    keyDrivers: [
+      { label:'Content type',       delta: contentType.replace(/_/g,' '),    pos: true },
+      { label:'Commerce model',     delta: commerceType.replace(/_/g,' '),   pos: commerceType !== 'UNDEFINED' },
+      { label:'Conversion gap',     delta: conversionGap.replace(/_/g,' '),  pos: conversionGap === 'BASELINE' },
+      { label:'Audience size tier', delta: audienceSize,                     pos: audienceSize !== 'UNKNOWN' },
+    ],
+    recommendedAction: conversionGap === 'ACTIVE'
+      ? 'Audit the bridge: (1) Is there a clear CTA in every piece of content? (2) Does the offer align with what the audience identifies with? (3) Is the purchase path frictionless — one click from content to checkout? Fix these three before changing the content strategy.'
+      : commerceType === 'UNDEFINED'
+      ? 'Define the commerce model before scaling content. Content without a commerce path is a distribution machine with no revenue endpoint.'
+      : `Scale ${commerceType.replace(/_/g,' ')} conversion by increasing CTA frequency and testing offer alignment with ${contentType.toLowerCase()} audience identity.`,
+    timeHorizon:   '30–90 days',
+    impactLevel:   conversionGap === 'ACTIVE' ? 'HIGH' : 'MEDIUM',
+    bluf:          `${contentType} content to ${commerceType.replace(/_/g,' ')} commerce. Audience: ${audienceSize}. Conversion gap: ${conversionGap.replace(/_/g,' ')}. ${conversionGap === 'ACTIVE' ? 'Bridge is broken — audit CTA, offer alignment, and purchase path friction before any other change.' : 'Conversion path is functional — scale CTA frequency and offer surface area.'}${capital ? ` Revenue target: $${(capital * 0.3 / 1e3).toFixed(0)}K.` : ''}`,
+    purpose:       'Content-to-commerce conversion analysis (Vaynerchuk Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:`${audienceSize} ${contentType.toLowerCase()} audience with ${commerceType.replace(/_/g,' ')} commerce opportunity.` },
+      { w:'WHAT',  answer:`Conversion gap: ${conversionGap.replace(/_/g,' ')}. Commerce model: ${commerceType.replace(/_/g,' ')}.` },
+      { w:'WHEN',  answer:'Content-to-commerce conversion is most efficient within 24–48 hours of audience engagement peak. CTA timing relative to content consumption is the primary lever.' },
+      { w:'WHERE', answer:`Bridge between ${contentType.toLowerCase()} content context and purchase action. This is the gap — not the content quality and not the product quality.` },
+      { w:'WHY',   answer:'Content audiences trust the creator before they trust the product. That trust is the conversion advantage. But trust does not convert without an explicit, frictionless bridge to the purchase action.' },
+    ],
+    evidence: [
+      'Audiences that consume 3+ pieces of content before purchase convert at 4–8× the rate of first-touch audiences.',
+      'CTA placement in the first and last 10% of video content outperforms mid-roll CTA by 2–3×.',
+      `Offer identity alignment (the product is "made for me") is the single highest-leverage conversion variable — outperforming price and production quality.`,
+    ],
+    assumptions: [
+      'Audience is genuinely engaged with the content — not passive scroll behavior.',
+      'The commerce offer is a real product or service with genuine value for the audience.',
+    ],
+    assessment: `${contentType} content to ${commerceType.replace(/_/g,' ')} commerce. ${conversionGap === 'ACTIVE' ? 'Conversion gap is active — bridge is broken at CTA, offer alignment, or purchase path friction. Fix the bridge before changing the content.' : 'Conversion path is functional. Optimize CTA frequency, offer surface, and purchase friction.'}`,
+    threats: [
+      { label:'Offer-audience misalignment — product does not match content identity',   level:'HIGH',   color:LIME },
+      { label:'Missing or buried CTA — audience cannot find the purchase path',          level:'HIGH',   color:LIME },
+      { label:'High purchase path friction (multiple steps, account creation)',           level:'MEDIUM', color:BLUE },
+      { label:'Content trust eroded by too many commerce mentions',                      level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`${commerceType === 'DIGITAL_PRODUCT' ? 'Digital product margin is 90%+ — highest-margin commerce model for content creators.' : commerceType === 'COMMUNITY' ? 'Community/membership creates recurring revenue independent of content algorithm performance.' : 'Define and test one clear commerce offer before building the content strategy around it.'}` },
+      { label:`${audienceSize === 'SMALL' ? 'Small, high-trust audience converts at premium price points — niche authority commands pricing power.' : 'Large audience with 1% conversion at $50 = significant revenue. Conversion optimization is a multiplier on existing audience.'}` },
+      { label:`CTA A/B test: test placement (first vs. last 10%), format (spoken vs. text vs. link), and offer framing. 2× conversion rate is achievable through CTA optimization alone.${capital ? ` Revenue impact at current audience: $${(capital * 0.02 / 1e3).toFixed(0)}K–$${(capital * 0.08 / 1e3).toFixed(0)}K monthly.` : ''}` },
+    ],
+    alternativeView: 'Content-first creators who prioritize audience growth over conversion often build larger, more valuable audiences long-term. Premature monetization can erode the trust that makes conversion possible.',
+    outlook: [
+      { prob:0.60, label:'Bridge fix + CTA optimization doubles conversion rate within 60 days', color:LIME },
+      { prob:0.28, label:'Offer-audience misalignment requires product pivot — longer resolution timeline', color:BLUE },
+      { prob:0.12, label:'Audience is fundamentally non-commercial — content value and commerce value are incompatible', color:DIM },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'AUDIT CTA PRESENCE',          impact:0.92, rationale:'Review last 10 pieces of content. Does each have a single, clear CTA? Is it in the first and last 10%? Is there one click from content to checkout? If any answer is no, that is the conversion gap.', tag:'CONVERSION' },
+        { id:'a2', label:'TEST OFFER ALIGNMENT',        impact:0.87, rationale:`Ask 5 audience members directly: "Would you pay for [X]?" The answer in 10 minutes is more valuable than 10 weeks of content testing. Offer alignment is the highest-leverage conversion variable.`, tag:'PRODUCT' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'LAUNCH MINIMUM VIABLE OFFER', impact:0.83, rationale:`${commerceType === 'UNDEFINED' ? 'Define the commerce model: physical product, digital, community, or brand deal. Then build the minimum viable version and test conversion before scaling production.' : `Test ${commerceType.replace(/_/g,' ')} at minimum viable scale. Conversion rate at small scale predicts large-scale economics.`}`, tag:'LAUNCH' },
+        { id:'b2', label:'REDUCE PURCHASE FRICTION',    impact:0.76, rationale:'Map the path from content to completed purchase. Count the clicks and form fields. Every additional step reduces conversion by 15–20%. One-click purchase paths consistently outperform multi-step funnels.', tag:'FRICTION' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD RECURRING COMMERCE',    impact:0.79, rationale:'Subscription, membership, or retainer model converts one-time buyers to recurring revenue. Recurring is the difference between a content business and a creator job.', tag:'RECURRING' },
+        { id:'c2', label:'EMAIL LIST AS COMMERCE FLOOR',impact:0.66, rationale:'Email list owned by the creator converts at 5–10× the rate of social platform audiences. Every piece of content should have a path to email capture — this is the commerce floor that survives platform changes.', tag:'INFRASTRUCTURE' },
+      ],
+    },
+    leverage:         { typeY:0, typeLabel:'CODE', tierLabel, deRatio:0.15, permissionless:true, industryNorm:0.25 },
+    content_type:     contentType,
+    commerce_type:    commerceType,
+    conversion_gap:   conversionGap,
+    audience_size:    audienceSize,
+  };
+}
+
+// ── WO-1796: Boxing Disruption Model (White/TKO Protocol) ─────────────────────
+
+function synthBoxingDisruption(session, numbers, query) {
+  const q       = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const disruptionVector =
+    /streaming|netflix|amazon|dazn|espn\+|direct.*to.*consumer|dtc|platform/.test(q) ? 'STREAMING_RIGHTS' :
+    /ppv|pay.*per.*view|buy.*rate|purchase.*rate/.test(q) ? 'PPV_ECONOMICS' :
+    /fighter.*pay|athlete.*pay|purse|compensation|revenue.*split/.test(q) ? 'FIGHTER_ECONOMICS' :
+    /celebrity|influencer|youtuber|cross.*over|non.*boxer|exhibition/.test(q) ? 'CELEBRITY_CROSSOVER' :
+    /promotion|promoter|independent|fighter.*own|boxer.*own/.test(q) ? 'PROMOTIONAL_STRUCTURE' :
+    'MARKET_DYNAMICS';
+
+  const marketPosition =
+    /ufc|mma|mixed.*martial|cage|octagon/.test(q) ? 'MMA_ADJACENT' :
+    /boxing|fight|bout|heavyweight|welterweight|lightweight|middleweight/.test(q) ? 'BOXING_CORE' :
+    /combat.*sport|fighting|sport.*entertainment|fight.*entertainment/.test(q) ? 'COMBAT_SPORTS' : 'GENERAL';
+
+  const valueCapture =
+    /exclusive|locked|long.*term.*deal|multi.*year|signed/.test(q) ? 'CONTRACTED' :
+    /free.*agent|available|unsigned|looking|independent/.test(q) ? 'FREE_AGENT_WINDOW' :
+    'STANDARD';
+
+  const tkoPressure =
+    /tko|wwe|endeavor|ari.*emanuel|consolidation|merger|acquisition/.test(q) ? 'PRESENT' : 'ABSENT';
+
+  const isStreaming  = /streaming|rights|broadcast|platform|distribution/.test(q);
+  const isPPV        = /ppv|pay.*per.*view|buy.*rate/.test(q);
+  const isFighter    = /fighter|boxer|athlete|purse|pay|compensation/.test(q);
+  const isCelebrity  = /celebrity|youtuber|influencer|logan|paul|jake|cross.?over|exhibition/.test(q);
+
+  let stateLabel, primaryInsight;
+  if (isStreaming) {
+    stateLabel     = 'STREAMING_RIGHTS_DISRUPTION';
+    primaryInsight = 'Streaming rights are restructuring combat sports economics. Traditional PPV is being compressed by platform-bundled content — Netflix, Amazon, and DAZN are competing for the same eyeballs with fundamentally different economic models. The winner controls distribution and, through it, fighter leverage.';
+  } else if (isPPV) {
+    stateLabel     = 'PPV_ECONOMICS_UNDER_PRESSURE';
+    primaryInsight = 'PPV buy rates are structurally declining as streaming alternatives proliferate. Mega-events still produce headline numbers, but the mid-card PPV is being displaced. The promoters who survive are those who convert PPV audiences to platform subscribers.';
+  } else if (isFighter) {
+    stateLabel     = valueCapture === 'FREE_AGENT_WINDOW' ? 'FIGHTER_VALUE_CAPTURE_WINDOW' : 'FIGHTER_ECONOMICS_CONTRACTED';
+    primaryInsight = valueCapture === 'FREE_AGENT_WINDOW'
+      ? 'Free agency window is the maximum leverage point for fighter economics. Platform competition (streaming + traditional) creates bidding conditions that do not exist mid-contract. This window is time-limited by deal urgency.'
+      : 'Fighter economics are contracted — leverage is determined by the contract structure. Performance incentives, rematch clauses, and promotional rights are the negotiation levers within the existing deal.';
+  } else if (isCelebrity) {
+    stateLabel     = 'CELEBRITY_CROSSOVER_EVENT';
+    primaryInsight = 'Celebrity crossover events have permanently disrupted boxing\'s premium content economics. Jake Paul, Logan Paul, and influencer-boxing events demonstrated that PPV buy rates are driven by audience identity, not athletic pedigree. This permanently changes what "a big fight" means to the market.';
+  } else {
+    stateLabel     = `BOXING_DISRUPTION_${disruptionVector}`;
+    primaryInsight = `Boxing disruption signal: ${disruptionVector.replace(/_/g,' ')}. Market position: ${marketPosition.replace(/_/g,' ')}. TKO/consolidation pressure: ${tkoPressure}. Value capture: ${valueCapture.replace(/_/g,' ')}.`;
+  }
+
+  const tierLabel = classifyLeverageTier(0.4);
+  return {
+    stateLabel,
+    confidence:    tkoPressure === 'PRESENT' ? 0.79 : 0.70,
+    primaryInsight,
+    momentum:      { value: isStreaming ? '+34%' : '+12%', h1: '+5%', h24: '+18%' },
+    trajPoints:    [0.28,0.34,0.41,0.48,0.55,0.61,0.66,0.70,0.73,0.76,0.78,0.79],
+    attentionStack: [
+      { rank:1, signal:'Streaming Rights Competition',  category:'Combat / Distribution',  trend:'↑', momentum:'Accelerating', mColor:LIME, conf:0.85 },
+      { rank:2, signal:'PPV Buy Rate Structural Trend', category:'Combat / Economics',     trend:'↘', momentum:'Declining',    mColor:BLUE, conf:0.77 },
+      { rank:3, signal:'Fighter Leverage Window',       category:'Combat / Labor',         trend:'↗', momentum:'Expanding',    mColor:LIME, conf:0.66 },
+      { rank:4, signal:'TKO Consolidation Pressure',   category:'Combat / M&A',           trend:'↑', momentum: tkoPressure === 'PRESENT' ? 'Active' : 'Latent', mColor:DIM, conf:0.55 },
+    ],
+    keyDrivers: [
+      { label:'Disruption vector',     delta: disruptionVector.replace(/_/g,' '),    pos: true },
+      { label:'Market position',       delta: marketPosition.replace(/_/g,' '),      pos: true },
+      { label:'Value capture',         delta: valueCapture.replace(/_/g,' '),        pos: valueCapture === 'FREE_AGENT_WINDOW' },
+      { label:'TKO pressure',          delta: tkoPressure,                           pos: false },
+    ],
+    recommendedAction: isFighter && valueCapture === 'FREE_AGENT_WINDOW'
+      ? 'Maximize leverage during the free agency window. Platform competition for premium content is at peak — this is the highest-value moment to negotiate. Streaming platforms need marquee names; marquee names need distribution. The terms you set now determine economics for 3–5 years.'
+      : isStreaming
+      ? 'Map the streaming rights landscape: who needs marquee events, what exclusive vs. co-exclusive structure exists, and what the per-event vs. annual deal economics look like. The promoter who controls streaming rights controls fighter leverage.'
+      : 'Position against the disruption vector that is most active in the current market. The old combat sports economy (PPV-first, traditional broadcast) is compressing. The new economy (streaming-first, platform-native) is where the leverage is building.',
+    timeHorizon:   '12–36 months',
+    impactLevel:   tkoPressure === 'PRESENT' ? 'HIGH' : 'MEDIUM',
+    bluf:          `Boxing/combat sports disruption via ${disruptionVector.replace(/_/g,' ')}. ${isStreaming ? 'Streaming rights competition is the primary value creation event in combat sports.' : isFighter ? `Fighter economics at ${valueCapture.replace(/_/g,' ')} stage.` : 'Market is in structural transition from PPV-first to streaming-first economics.'}${capital ? ` Capital exposure: $${(capital/1e3).toFixed(0)}K.` : ''}`,
+    purpose:       'Boxing/combat sports disruption analysis (White/TKO Protocol)',
+    fiveWs: [
+      { w:'WHO',   answer:`${isFighter ? 'Fighter' : isStreaming ? 'Streaming platform or promoter' : 'Combat sports operator'} in a disrupted marketplace.` },
+      { w:'WHAT',  answer:`Disruption vector: ${disruptionVector.replace(/_/g,' ')}. TKO consolidation pressure: ${tkoPressure}.` },
+      { w:'WHEN',  answer:`${valueCapture === 'FREE_AGENT_WINDOW' ? 'Free agency window is open — this is the maximum leverage moment.' : 'Streaming transition is mid-cycle — 18–36 months before new equilibrium.'}` },
+      { w:'WHERE', answer:`${marketPosition === 'MMA_ADJACENT' ? 'MMA/UFC dominance is setting the template — boxing promoters are competing against UFC\'s streaming model.' : marketPosition === 'BOXING_CORE' ? 'Core boxing market is fragmenting between traditional promoters and platform-native content.' : 'Combat sports market in full disruption — no established equilibrium.'}` },
+      { w:'WHY',   answer:'Streaming economics destroyed the PPV oligopoly. Platform competition for premium live content creates leverage for fighters and events that did not exist under broadcast-TV dominance.' },
+    ],
+    evidence: [
+      'Netflix boxing events (Paul vs. Tyson) demonstrated streaming platforms can generate 60M+ viewers for combat sports — eclipsing traditional PPV numbers.',
+      'Dana White/TKO streaming deal with Netflix valued at $150M/year demonstrates platform willingness to pay for marquee combat sports content.',
+      `Celebrity crossover events (Jake Paul) generate PPV buy rates that exceed many traditional world title fights — audience identity drives purchase decisions, not athletic rankings.`,
+    ],
+    assumptions: [
+      'Streaming platform competition for live sports/events content continues at current investment levels.',
+      'Celebrity/influencer boxing maintains audience interest — risk of format fatigue after 3–5 years.',
+    ],
+    assessment: `${disruptionVector.replace(/_/g,' ')} disruption with ${tkoPressure === 'PRESENT' ? 'active' : 'latent'} TKO consolidation pressure. ${isFighter && valueCapture === 'FREE_AGENT_WINDOW' ? 'Maximum leverage window is open for fighter economics.' : 'Structural market transition creates premium opportunity for those positioned on the streaming-rights side of the transition.'}`,
+    threats: [
+      { label:'TKO/Endeavor consolidation reducing independent promotional leverage',   level: tkoPressure === 'PRESENT' ? 'HIGH' : 'MEDIUM', color:LIME },
+      { label:'Streaming platform deal fatigue — rights values peak then compress',    level:'MEDIUM', color:BLUE },
+      { label:'Celebrity crossover format fatigue reducing premium content economics', level:'MEDIUM', color:BLUE },
+      { label:'Fighter pay demands outpacing streaming revenue growth',                level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:'Streaming-first promotion: build event around platform economics, not PPV economics — fundamentally different audience acquisition model.' },
+      { label:`Free agency leverage: platform competition for marquee content creates bidding conditions. ${capital ? `At $${(capital/1e3).toFixed(0)}K capital: target co-promotion or streaming rights minority stake.` : 'Fighter or promoter free agency window is the maximum negotiation leverage point.'}` },
+      { label:'Celebrity/influencer integration: crossover events proven at scale — not a gimmick, a market segment. Platform audiences for influencer boxing are distinct from boxing-core audiences.' },
+    ],
+    alternativeView: 'Traditional boxing\'s PPV model has survived 40+ years of "disruption." Mega-events (Fury, Joshua, Canelo) still generate $100M+ PPV — the mega-event ceiling may be higher than streaming economics suggest.',
+    outlook: [
+      { prob:0.56, label:'Streaming-first combat sports economics become dominant — PPV as premium-only format', color:LIME },
+      { prob:0.31, label:'Hybrid model — streaming for mid-card, PPV for mega-events — becomes equilibrium',    color:BLUE },
+      { prob:0.13, label:'Traditional broadcast and PPV recover — streaming sports rights plateau',              color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'MAP STREAMING RIGHTS LANDSCAPE', impact:0.89, rationale:'Who has existing combat sports streaming rights? What is exclusive vs. co-exclusive? What is the gap in their content calendar? This map identifies the negotiation entry points for fighters, promoters, and event operators.', tag:'POSITIONING' },
+        { id:'a2', label:`${isFighter && valueCapture === 'FREE_AGENT_WINDOW' ? 'INITIATE PLATFORM CONVERSATIONS' : 'AUDIT DEAL STRUCTURE'}`, impact:0.85, rationale: isFighter && valueCapture === 'FREE_AGENT_WINDOW' ? 'Free agency window is open. Contact Netflix, DAZN, Amazon, and ESPN+ simultaneously. Bidding competition is the leverage — sequential conversations compress it.' : 'Audit existing deal: performance incentives, rematch rights, promotional control. These are the levers within a contracted structure.', tag: isFighter ? 'LEVERAGE' : 'AUDIT' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'STREAMING ECONOMICS MODEL',   impact:0.82, rationale:'Build a per-event P&L at streaming subscription economics vs. PPV economics. The revenue model is fundamentally different — streaming pays per-subscriber-acquired, not per-buy. Understand the math before negotiating.', tag:'ECONOMICS' },
+        { id:'b2', label:'CELEBRITY CROSSOVER EVALUATION', impact:0.74, rationale:'Celebrity/influencer crossover events are a proven market segment. Evaluate whether an event in this format opens streaming platform doors that core boxing events cannot access. The audiences are additive, not competitive.', tag:'MARKET' },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'BUILD PLATFORM RELATIONSHIPS', impact:0.77, rationale:'Streaming platform acquisition executives are the new broadcast network executives. Relationship-building with platform sports acquisition teams is the long-term leverage asset — not individual event negotiation.', tag:'ACCESS' },
+        { id:'c2', label:'FIGHTER EQUITY STRUCTURE',    impact:0.65, rationale:'Dana White model: fighters as equity participants in the promotion. This aligns fighter and promoter incentives and creates a talent retention mechanism that pure purse models cannot replicate.', tag:'STRUCTURE' },
+      ],
+    },
+    leverage:           { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.4, permissionless:false, industryNorm:0.5 },
+    disruption_vector:  disruptionVector,
+    market_position:    marketPosition,
+    value_capture:      valueCapture,
+    tko_pressure:       tkoPressure,
+  };
+}
+
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
@@ -2112,8 +3047,15 @@ const SYNTH_MAP = {
   INDUSTRIAL_FLYWHEEL:    synthIndustrialFlywheel,
   SOCIAL_GRAPH:           synthSocialGraph,
   VC_INVERSION:           synthVCInversion,
-  VIRTUAL_ECONOMY:        synthVirtualEconomy,
-  PHILANTHROPIC_CAPITAL:  synthPhilanthropicCapital,
+  VIRTUAL_ECONOMY:          synthVirtualEconomy,
+  PHILANTHROPIC_CAPITAL:    synthPhilanthropicCapital,
+  CREATOR_HOLDCO:           synthCreatorHoldco,
+  OPERATIONAL_CARRY_RISK:   synthOperationalCarryRisk,
+  NON_INSTITUTIONAL_ALPHA:  synthNonInstitutionalAlpha,
+  COMMERCIAL_DISTRESS:      synthCommercialDistressLiquidity,
+  RELEVANCE_WARFARE:        synthRelevanceWarfare,
+  CONTENT_COMMERCE:         synthContentToCommerce,
+  BOXING_DISRUPTION:        synthBoxingDisruption,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
