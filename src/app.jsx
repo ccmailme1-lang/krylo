@@ -712,7 +712,7 @@ export default function App() {
     const sessionId = `session_${timestamp}`;
     createSession(sessionId, '10K View', q, { source, node_id, domain, routing_target });
     emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
-    setNavMode('oracle');
+    setNavMode('analysis');
   }, [createSession]);
 
   // WO-1092 Phase A — route merged records into surface subscriptions
