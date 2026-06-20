@@ -1,53 +1,112 @@
 // WO-1038 — AS-DIFF (Pairwise Leverage Comparator)
+// WO-1827 — Three-Tier Resolver Extension (domain / entity / product)
 // Counterfactual comparison of two Signal Units.
 // LM = PLI_A − PLI_B adjusted by constraint/amplifier intersection.
 // Dominant Axis method: TRAJECTORY · TIME · MAGNITUDE
 //
-// SignalUnit shape (from WO-1032/1034 pipeline):
-//   { schema, signal, pli, math? }
-//   schema   — 7-point universal schema  (WO-1034)
-//   signal   — ETR signal data
-//   pli      — parse7PointSchema() result (WO-1034)
-//   math     — Stage 02 trajectory object (WO-1032, optional)
+// SignalUnit shape (WO-1827 extended):
+//   { schema, signal, pli, math?, tier, entity, parent, domain }
+//   tier     — 'domain' | 'entity' | 'product'
+//   entity   — company name, null for domain-tier
+//   parent   — entity name when tier = 'product'
+//   domain   — canonical domain (required at all tiers)
+
+// ── Ontology Gap Tracker — Option B self-correcting ontology (WO-1827) ──────────
+// Records every unresolved pair to sessionStorage. WO-1813 reads via getOntologyGaps().
+// Pairs are order-normalized (A_B === B_A) so frequency reflects demand, not direction.
+
+const GAP_STORE_KEY = 'krylo_ontology_gaps_v1';
+
+function recordOntologyGap(domainA, domainB) {
+  try {
+    const store = JSON.parse(sessionStorage.getItem(GAP_STORE_KEY) ?? '{}');
+    const key   = [domainA, domainB].sort().join('_');
+    store[key]  = (store[key] ?? 0) + 1;
+    sessionStorage.setItem(GAP_STORE_KEY, JSON.stringify(store));
+  } catch {}
+}
+
+export function getOntologyGaps() {
+  try { return JSON.parse(sessionStorage.getItem(GAP_STORE_KEY) ?? '{}'); }
+  catch { return {}; }
+}
 
 // ── Shared projection spaces — domain pair → canonical decision space ──────────
 
-// Defines where two domain-different signals are projected for comparison.
+// Canonical 6-domain pairs (WO-1827). Keys are uppercase canonical domain names.
+// Legacy lens-vocabulary keys retained below — they cannot collide (uppercase vs lowercase).
 const SPACE_RESOLVER = {
-  finance_real_estate:  'cash_flow',
-  real_estate_finance:  'cash_flow',
-  finance_career:       'capital_allocation',
-  career_finance:       'capital_allocation',
-  sports_career:        'competitive_positioning',
-  career_sports:        'competitive_positioning',
-  sports_finance:       'market_valuation',
-  finance_sports:       'market_valuation',
-  legal_finance:        'risk_adjusted_exposure',
-  finance_legal:        'risk_adjusted_exposure',
-  legal_career:         'path_dependency',
-  career_legal:         'path_dependency',
-  health_career:        'timeline_pressure',
-  career_health:        'timeline_pressure',
-  health_legal:         'reversibility',
-  legal_health:         'reversibility',
-  real_estate_career:   'long_term_compounding',
-  career_real_estate:   'long_term_compounding',
-  sports_legal:         'competitive_positioning',
-  legal_sports:         'competitive_positioning',
+  // ── Canonical domain pairs (WO-1827) ────────────────────────────────────────
+  TECHNOLOGY_CAPITAL:    'market_valuation',
+  CAPITAL_TECHNOLOGY:    'market_valuation',
+  TECHNOLOGY_LABOR:      'competitive_positioning',
+  LABOR_TECHNOLOGY:      'competitive_positioning',
+  TECHNOLOGY_KNOWLEDGE:  'innovation_throughput',
+  KNOWLEDGE_TECHNOLOGY:  'innovation_throughput',
+  CAPITAL_LABOR:         'capital_allocation',
+  LABOR_CAPITAL:         'capital_allocation',
+  CAPITAL_MEDIA:         'narrative_premium',
+  MEDIA_CAPITAL:         'narrative_premium',
+  CAPITAL_OWNERSHIP:     'asset_concentration',
+  OWNERSHIP_CAPITAL:     'asset_concentration',
+  KNOWLEDGE_LABOR:       'path_dependency',
+  LABOR_KNOWLEDGE:       'path_dependency',
+  MEDIA_OWNERSHIP:       'brand_equity',
+  OWNERSHIP_MEDIA:       'brand_equity',
+  // Remaining canonical pairs fall through to 'direct'
+
+  // ── Legacy lens-vocabulary pairs (WO-1038 — retained during transition) ─────
+  finance_real_estate:   'cash_flow',
+  real_estate_finance:   'cash_flow',
+  finance_career:        'capital_allocation',
+  career_finance:        'capital_allocation',
+  sports_career:         'competitive_positioning',
+  career_sports:         'competitive_positioning',
+  sports_finance:        'market_valuation',
+  finance_sports:        'market_valuation',
+  legal_finance:         'risk_adjusted_exposure',
+  finance_legal:         'risk_adjusted_exposure',
+  legal_career:          'path_dependency',
+  career_legal:          'path_dependency',
+  health_career:         'timeline_pressure',
+  career_health:         'timeline_pressure',
+  health_legal:          'reversibility',
+  legal_health:          'reversibility',
+  real_estate_career:    'long_term_compounding',
+  career_real_estate:    'long_term_compounding',
+  sports_legal:          'competitive_positioning',
+  legal_sports:          'competitive_positioning',
 };
 
-// Quality of fit for each domain in a given shared space (1.0 = native, 0.0 = incompatible)
+// Quality of fit per domain per shared space (1.0 = native fit, 0.0 = incompatible).
+// Canonical entries use uppercase domain names. Legacy entries use lowercase lens names.
 const SPACE_QUALITY = {
-  cash_flow:             { finance: 1.00, real_estate: 0.85, career: 0.60, sports: 0.45, legal: 0.70, health: 0.40, general: 0.55 },
-  capital_allocation:    { finance: 0.90, real_estate: 0.70, career: 0.85, sports: 0.50, legal: 0.60, health: 0.45, general: 0.55 },
-  competitive_positioning:{ sports: 1.00, career: 0.80, finance: 0.65, real_estate: 0.55, legal: 0.60, health: 0.50, general: 0.55 },
-  market_valuation:      { sports: 0.85, finance: 0.95, real_estate: 0.75, career: 0.55, legal: 0.60, health: 0.40, general: 0.55 },
-  risk_adjusted_exposure:{ legal: 1.00, finance: 0.90, real_estate: 0.70, career: 0.65, sports: 0.55, health: 0.60, general: 0.55 },
-  path_dependency:       { legal: 0.85, career: 0.90, finance: 0.65, real_estate: 0.70, sports: 0.60, health: 0.70, general: 0.55 },
-  timeline_pressure:     { health: 0.90, career: 0.85, legal: 0.70, finance: 0.60, sports: 0.80, real_estate: 0.55, general: 0.55 },
-  reversibility:         { health: 0.80, legal: 0.85, real_estate: 0.90, finance: 0.75, career: 0.80, sports: 0.60, general: 0.55 },
-  long_term_compounding: { real_estate: 0.90, career: 0.85, finance: 0.80, legal: 0.65, health: 0.60, sports: 0.55, general: 0.55 },
-  direct:                { finance: 1.00, legal: 1.00, real_estate: 1.00, sports: 1.00, career: 1.00, health: 1.00, general: 1.00 },
+  // ── Canonical spaces (WO-1827) ───────────────────────────────────────────────
+  market_valuation:       { TECHNOLOGY: 0.95, CAPITAL: 0.90, OWNERSHIP: 0.65, KNOWLEDGE: 0.60, MEDIA: 0.70, LABOR: 0.55,
+                            sports: 0.85, finance: 0.95, real_estate: 0.75, career: 0.55, legal: 0.60, health: 0.40, general: 0.55 },
+  competitive_positioning:{ TECHNOLOGY: 0.85, LABOR: 0.90, KNOWLEDGE: 0.75, CAPITAL: 0.70, MEDIA: 0.60, OWNERSHIP: 0.55,
+                            sports: 1.00, career: 0.80, finance: 0.65, real_estate: 0.55, legal: 0.60, health: 0.50, general: 0.55 },
+  innovation_throughput:  { TECHNOLOGY: 0.95, KNOWLEDGE: 0.90, LABOR: 0.70, CAPITAL: 0.65, MEDIA: 0.55, OWNERSHIP: 0.50 },
+  capital_allocation:     { CAPITAL: 0.95, LABOR: 0.80, TECHNOLOGY: 0.75, OWNERSHIP: 0.70, KNOWLEDGE: 0.65, MEDIA: 0.55,
+                            finance: 0.90, real_estate: 0.70, career: 0.85, sports: 0.50, legal: 0.60, health: 0.45, general: 0.55 },
+  narrative_premium:      { MEDIA: 0.95, CAPITAL: 0.85, TECHNOLOGY: 0.70, KNOWLEDGE: 0.65, OWNERSHIP: 0.60, LABOR: 0.55 },
+  asset_concentration:    { OWNERSHIP: 0.95, CAPITAL: 0.90, MEDIA: 0.60, KNOWLEDGE: 0.60, TECHNOLOGY: 0.65, LABOR: 0.55 },
+  path_dependency:        { KNOWLEDGE: 0.90, LABOR: 0.85, TECHNOLOGY: 0.70, CAPITAL: 0.65, OWNERSHIP: 0.65, MEDIA: 0.55,
+                            legal: 0.85, career: 0.90, finance: 0.65, real_estate: 0.70, sports: 0.60, health: 0.70, general: 0.55 },
+  brand_equity:           { MEDIA: 0.90, OWNERSHIP: 0.90, CAPITAL: 0.75, TECHNOLOGY: 0.70, LABOR: 0.60, KNOWLEDGE: 0.60 },
+  direct:                 { TECHNOLOGY: 1.00, CAPITAL: 1.00, KNOWLEDGE: 1.00, LABOR: 1.00, MEDIA: 1.00, OWNERSHIP: 1.00,
+                            finance: 1.00, legal: 1.00, real_estate: 1.00, sports: 1.00, career: 1.00, health: 1.00, general: 1.00 },
+  // 'unresolved' — canonical pairs with no defined space. Moderate penalty (0.65) + non-zero
+  // divergence surfaces in output. Distinguishes "intentionally direct" from "unmapped."
+  unresolved:             { TECHNOLOGY: 0.65, CAPITAL: 0.65, KNOWLEDGE: 0.65, LABOR: 0.65, MEDIA: 0.65, OWNERSHIP: 0.65,
+                            finance: 0.65, legal: 0.65, real_estate: 0.65, sports: 0.65, career: 0.65, health: 0.65, general: 0.65 },
+
+  // ── Legacy-only spaces (WO-1038) ─────────────────────────────────────────────
+  cash_flow:              { finance: 1.00, real_estate: 0.85, career: 0.60, sports: 0.45, legal: 0.70, health: 0.40, general: 0.55 },
+  risk_adjusted_exposure: { legal: 1.00, finance: 0.90, real_estate: 0.70, career: 0.65, sports: 0.55, health: 0.60, general: 0.55 },
+  timeline_pressure:      { health: 0.90, career: 0.85, legal: 0.70, finance: 0.60, sports: 0.80, real_estate: 0.55, general: 0.55 },
+  reversibility:          { health: 0.80, legal: 0.85, real_estate: 0.90, finance: 0.75, career: 0.80, sports: 0.60, general: 0.55 },
+  long_term_compounding:  { real_estate: 0.90, career: 0.85, finance: 0.80, legal: 0.65, health: 0.60, sports: 0.55, general: 0.55 },
 };
 
 // Divergence threshold above which the incomparability flag fires
@@ -55,10 +114,16 @@ const INCOMPARABILITY_THRESHOLD = 0.88;
 
 // ── Space resolver ─────────────────────────────────────────────────────────────
 
-function resolveSharedSpace(domainA, domainB) {
+function resolveSharedSpace(unitA, unitB) {
+  // Same entity, different products → always direct (intra-entity comparison)
+  if (unitA.entity && unitA.entity === unitB.entity) return 'direct';
+
+  const domainA = (unitA.domain ?? 'general').toUpperCase();
+  const domainB = (unitB.domain ?? 'general').toUpperCase();
   if (domainA === domainB) return 'direct';
+
   const key = `${domainA}_${domainB}`;
-  return SPACE_RESOLVER[key] ?? 'direct';
+  return SPACE_RESOLVER[key] ?? 'unresolved';
 }
 
 // ── As-If projection ──────────────────────────────────────────────────────────
@@ -171,10 +236,21 @@ function checkIncomparability(qualityA, qualityB, sharedSpace) {
 // ── Main comparator ────────────────────────────────────────────────────────────
 
 /**
- * buildSignalUnit — helper to construct a SignalUnit from pipeline output
+ * buildSignalUnit — construct a SignalUnit from pipeline output.
+ * meta: { tier, entity, parent, domain } — WO-1827 three-tier extension.
+ * domain is required at all tiers; falls back to schema.domain for domain-tier units.
  */
-export function buildSignalUnit(schema, signal, pliResult, mathObject = null) {
-  return { schema, signal, pli: pliResult, math: mathObject };
+export function buildSignalUnit(schema, signal, pliResult, mathObject = null, meta = {}) {
+  return {
+    schema,
+    signal,
+    pli:    pliResult,
+    math:   mathObject,
+    tier:   meta.tier   ?? 'domain',
+    entity: meta.entity ?? null,
+    parent: meta.parent ?? null,
+    domain: meta.domain ?? schema?.domain ?? 'general',
+  };
 }
 
 /**
@@ -187,11 +263,14 @@ export function buildSignalUnit(schema, signal, pliResult, mathObject = null) {
  * @returns {Object}      — asDiffResult
  */
 export function compareSignals(unitA, unitB) {
-  const domainA = unitA.schema.domain ?? 'general';
-  const domainB = unitB.schema.domain ?? 'general';
+  // domain: prefer unit.domain (WO-1827 field), fall back to schema for legacy units
+  const domainA = (unitA.domain ?? unitA.schema?.domain ?? 'general').toUpperCase();
+  const domainB = (unitB.domain ?? unitB.schema?.domain ?? 'general').toUpperCase();
 
-  // Shared projection space
-  const sharedSpace = resolveSharedSpace(domainA, domainB);
+  // Shared projection space — tier-aware (WO-1827)
+  const sharedSpace   = resolveSharedSpace(unitA, unitB);
+  const ontologyGap   = sharedSpace === 'unresolved';
+  if (ontologyGap) recordOntologyGap(domainA, domainB);
 
   // As-If projection
   const projA = projectPLI(unitA.pli, domainA, sharedSpace);
@@ -220,6 +299,7 @@ export function compareSignals(unitA, unitB) {
 
   return {
     winner,
+    ontology_gap:           ontologyGap,
     leverage_margin:        parseFloat(lm.adjusted.toFixed(4)),
     leverage_margin_raw:    parseFloat(lm.raw.toFixed(4)),
     dominant_axis:          axisResult.dominant_axis,

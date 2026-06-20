@@ -449,7 +449,9 @@ export default function IntelligenceBrief() {
             console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
           }}
           onSetTrigger={({ domain, peakPosition }) => {
-            console.log('[EQ] Set Trigger →', domain, 'position', peakPosition);
+            window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
+              detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
+            }));
           }}
         />
 

@@ -8,14 +8,13 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useHappyPathEngine, EQ_DOMAINS } from '../../engine/happypathdisplacementengine.js';
+import { HIGH_CONVERGENCE_FLOOR as HIGH_FLOOR } from '../../engine/signalconstants.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
 const PURPLE = '#8A2BE2';
 const SLATE  = '#3a3d4a';
 const MONO   = "'IBM Plex Mono', monospace";
-
-const HIGH_FLOOR = 75;
 const CW = 800; // canvas internal width (CSS scales to container)
 const CH = 200; // canvas internal height
 
