@@ -122,18 +122,18 @@ SEQUENCE: Numbering must follow the Active Registry.
 RULE:     No code is written without a WO and explicit "Go."
 
 OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-20)
-Start at 1825. Work backwards. This is the only open list.
+Start at 1826. Work backwards. This is the only open list.
 
-NEXT BUILD: WO-1815 — Opportunity Ribbon (approved, highest value-add)
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
+1826 — Happy Path Displacement Engine (continuous re-evaluation — feeds WO-1762 canvas)
 1825 — Decision Lineage (resolution record + calibration scoring)
 1824 — Thesis Monitoring Layer (drift watching against active convictions)
 1823 — Conviction Record Object (persistent decision object + commitment gesture)
 1822 — Investor Decision Architecture (five-moment cycle — ships before 1823/1824/1825)
-1821 — Happy Path Qualification Spec (load-bearing — ships before 1820)
-1820 — Unicorn Alert System (watch condition → fire when Happy Path qualifies)
-1815 — Opportunity Ribbon (APPROVED — NEXT BUILD)
+1821 — Happy Path Qualification Spec (load-bearing — ships before 1820/1826)
+1820 — Unicorn Alert System (two entry points: Action Plan + EQ canvas peak right-click)
+1815 — Opportunity Ribbon (COMPLETE — SHA: 01613f1)
 1813 — Project Registry (saved sessions — depends on WO-1812)
 1812 — User Profile Layer (ships first — session inherits from profile)
 1801 — Sovereign Capital Synthesizer (Alwaleed Protocol)

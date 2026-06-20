@@ -72,12 +72,22 @@ There is no "approaching" or "nearly qualified" state. The system does not teleg
 
 ## UX
 
-### Setting an alert
-- Accessible directly from the Action Plan panel
+### Setting an alert — two entry points
+
+**Entry Point 1: Action Plan panel**
 - One gesture: "Watch for unicorn" button
 - Micro-form: select domains to watch, set persistence window (default: 72h)
 - Optional: tie to current query/thesis
 - Confirmation: "Alert set. Watching CAPITAL + TECHNOLOGY. Will notify when unicorn qualification is met."
+
+**Entry Point 2: EQ Canvas peak (WO-1762)**
+- Right-click / long-press on any peak in the parabolic EQ canvas
+- Trigger configuration opens for that specific peak
+- Event selector: emergence / qualification / displacement / decay / multi-peak convergence
+- Pre-populated with the peak's domain configuration — no manual domain selection needed
+- More surgical than Action Plan entry — watches a specific domain configuration, not the field globally
+
+Canvas-sourced triggers are the higher-value entry point. The investor has already investigated the peak in hover mode, seen it building, and is now committing to watch it. The context is richer than a generic "watch for unicorn."
 
 ### When it fires
 - In-app notification (Phase A minimum)
