@@ -706,12 +706,12 @@ export default function App() {
   const activeSession = activeSessionId ? (sessions[activeSessionId] ?? null) : null;
   const canonical     = useOracleMapper(activeSession);
 
-  const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now() }) => {
+  const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now(), node_id, domain, routing_target } = {}) => {
     const q = (query ?? '').trim();
     if (!q) return;
     const sessionId = `session_${timestamp}`;
-    createSession(sessionId, '10K View', q, { source });
-    emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp });
+    createSession(sessionId, '10K View', q, { source, node_id, domain, routing_target });
+    emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
     setNavMode('oracle');
   }, [createSession]);
 
@@ -792,7 +792,11 @@ export default function App() {
       if (ev.data?.type === 'krylo-redo') { window.dispatchEvent(new CustomEvent('krylo-redo')); return; }
       if (ev.data?.type === 'krylo-ribbon-select') {
         const { label, routing_target, velocity, systemic_state, leakage_risk, node_id } = ev.data;
-        if (label) { setquery(label); setAnalysisQuery(label); }
+        if (label) {
+          setquery(label);
+          setAnalysisQuery(label);
+          handleSessionBootstrap({ query: label, source: 'ribbon', node_id, domain: ev.data.domain, routing_target });
+        }
         window.dispatchEvent(new CustomEvent('krylo-ribbon-select', { detail: ev.data }));
         return;
       }

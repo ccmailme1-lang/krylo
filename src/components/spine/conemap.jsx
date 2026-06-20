@@ -1089,7 +1089,7 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
 function ThresholdBands() {
   // Asymmetric: extend left further, cap right shorter so the right-edge
   // labels project clear of the inspection panel's screen x-range.
-  const WL = 7.875; // 7.5 + 5% left push
+  const WL = 8.27; // 7.5 + 10% left push (two 5% increments)
   const WR = 4.5;
   // True unit mapping — must match SignalCone: coneHeight = pow(score/100, 1.4) * CONE_HEIGHT_SCALE
   const yOf = s => Math.pow(s / 100, 1.4) * CONE_HEIGHT_SCALE;

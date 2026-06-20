@@ -235,35 +235,29 @@ export default function ActionMatrix() {
         const hp  = arb?.topK?.[0] ?? null;
         const alt = arb?.topK?.slice(1) ?? [];
         const gap = hp && alt.length > 0 ? ((hp.score - alt[0].score) * 100).toFixed(0) : null;
-        if (!hp) return null;
         return (
-          <div style={{ flexShrink: 0, padding: '10px 28px', borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.012)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
-              <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
-              <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
-                <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
-                <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
-                <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
-                <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
-              </svg>
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.012)' }}>
+            {hp && (
+              <div style={{ padding: '10px 28px' }}>
+                <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'RANK',   value: `#${hp.dominanceRank ?? 1}`,           lime: false },
+                    { label: 'TYPE',   value: hp.type?.toUpperCase() ?? '—',          lime: true  },
+                    { label: 'SCORE',  value: `${(hp.score * 100).toFixed(0)} / 100`, lime: true  },
+                    { label: 'DELTA',  value: gap ? `↑ ${gap} pts above next` : '—', lime: false },
+                    { label: 'ENGINE', value: 'LEV-02 ARBITRATED',                    lime: true  },
+                  ].map(({ label, value, lime }) => (
+                    <span key={label} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)' }}>
+                      {label} <span style={{ color: lime ? LIME : 'rgba(255,255,255,0.6)' }}>{value}</span>
+                    </span>
+                  ))}
+                </div>
+                {hp.content && (
+                  <div style={{ fontFamily: SERIF, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginTop: 6, borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
+                    {hp.content}
+                  </div>
+                )}
             </div>
-            <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-              {[
-                { label: 'RANK',   value: `#${hp.dominanceRank ?? 1}`,           lime: false },
-                { label: 'TYPE',   value: hp.type?.toUpperCase() ?? '—',          lime: true  },
-                { label: 'SCORE',  value: `${(hp.score * 100).toFixed(0)} / 100`, lime: true  },
-                { label: 'DELTA',  value: gap ? `↑ ${gap} pts above next` : '—', lime: false },
-                { label: 'ENGINE', value: 'LEV-02 ARBITRATED',                    lime: true  },
-              ].map(({ label, value, lime }) => (
-                <span key={label} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)' }}>
-                  {label} <span style={{ color: lime ? LIME : 'rgba(255,255,255,0.6)' }}>{value}</span>
-                </span>
-              ))}
-            </div>
-            {hp.content && (
-              <div style={{ fontFamily: SERIF, fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginTop: 6, borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
-                {hp.content}
-              </div>
             )}
           </div>
         );

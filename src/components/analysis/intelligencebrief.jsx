@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import ActionMatrix          from './actionmatrix.jsx';
+import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
@@ -260,6 +261,28 @@ export default function IntelligenceBrief() {
           <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.2em' }}>SIGNAL LOCK</span>
           <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.12em' }}>{sysTime} EST</span>
         </div>
+      </div>
+
+      {/* ── HAPPY PATH + EQ CANVAS — leadoff, directly under Oracle Kernel ── */}
+      <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 20px' }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
+          <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
+            <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
+            <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
+            <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
+            <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
+          </svg>
+        </div>
+        <EQCanvas
+          isPremium={true}
+          onCommitThesis={({ domain, engineState }) => {
+            console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
+          }}
+          onSetTrigger={({ domain, peakPosition }) => {
+            console.log('[EQ] Set Trigger →', domain, 'position', peakPosition);
+          }}
+        />
       </div>
 
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
