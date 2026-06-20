@@ -115,9 +115,40 @@ The engine emits events that the alert system (WO-1820) can watch:
 
 ---
 
+## Bay Linkage (LOCKED — 2026-06-20)
+
+Bays operate in two modes:
+
+**Mode 1 — Default (Domain Monitor):**
+Each bay maps 1:1 to a canonical Krylo domain. Runs automatically. No user action required.
+
+```
+Bay 1 → TECHNOLOGY
+Bay 2 → CAPITAL
+Bay 3 → KNOWLEDGE
+Bay 4 → LABOR
+Bay 5 → MEDIA
+Bay 6 → OWNERSHIP
+```
+
+EQ canvas peak triggers (WO-1820) activate the corresponding domain bay directly. A CAPITAL peak trigger → Bay 2 activates, monitoring CAPITAL domain convergence.
+
+**Mode 2 — Custom (Independent Monitor):**
+User assigns a specific entity to a bay. The bay breaks from its canonical domain and becomes exclusively an entity-level monitoring device. It no longer shows domain aggregate signals — only that entity's signal state.
+
+Rules:
+- Custom assignment overrides domain monitor completely — no blending
+- The EQ canvas always shows domain-level signals regardless of bay customization
+- Customized bay is independent of the canvas domain positions
+- Removing the custom assignment returns the bay to its canonical domain (Mode 1)
+- Peak triggers from the canvas still fire to the domain level — customized bays receive entity-level alerts only
+
+---
+
 ## Open Items Before Build
 
 1. Displacement margin threshold — requires live signal calibration
 2. Hysteresis buffer window — 15–30min range, needs confirmation
 3. Whether challengers are surfaced in the canvas hover mode (currently spec says yes — visible in transient mode only)
-4. Bay linkage — open question: does peak qualification activate corresponding domain bay? Decision deferred.
+4. Displacement margin threshold — requires live signal calibration
+5. Hysteresis buffer window — 15–30min range, needs confirmation

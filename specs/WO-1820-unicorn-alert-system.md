@@ -102,6 +102,26 @@ Canvas-sourced triggers are the higher-value entry point. The investor has alrea
 
 ---
 
+## Bay Customization Edge Case (LOCKED — 2026-06-20)
+
+When a user has customized a bay to a specific entity AND a domain peak trigger fires for that same canonical domain:
+
+**Example:**
+- Bay 2 customized to "Apple Inc." (independent entity monitor)
+- CAPITAL peak trigger fires from the EQ canvas
+- Bay 2 is now running two parallel signals: Apple entity monitor + CAPITAL domain alert
+
+**Rules:**
+- Both alerts fire independently — they are not merged or suppressed
+- The CAPITAL domain alert is labeled `DOMAIN · CAPITAL` in the notification
+- The Apple entity alert is labeled `ENTITY · APPLE INC.` — never confused with the domain alert
+- The investor sees both — they are distinct signals with distinct contexts
+
+**UX requirement:**
+Alert labels must always carry their signal type prefix (`DOMAIN ·` or `ENTITY ·`) so the investor can never mistake a domain convergence alert for an entity-level event. This is non-negotiable — conflating the two corrupts the investor's read.
+
+---
+
 ## What This Is Not
 
 - Not a price alert. Not triggered by asset movement.

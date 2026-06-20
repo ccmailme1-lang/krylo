@@ -138,6 +138,25 @@ Triggers are peak-specific — not global. The investor watches a specific domai
 
 ---
 
+## Bay Linkage (LOCKED — 2026-06-20)
+
+The EQ canvas x-axis positions map directly to the 6 canonical domain bays in their default state:
+
+```
+x-position 1 → TECHNOLOGY → Bay 1
+x-position 2 → CAPITAL    → Bay 2
+x-position 3 → KNOWLEDGE  → Bay 3
+x-position 4 → LABOR      → Bay 4
+x-position 5 → MEDIA      → Bay 5
+x-position 6 → OWNERSHIP  → Bay 6
+```
+
+When a bay is in custom mode (user-assigned entity), the EQ canvas is unaffected — it always shows domain-level signals. The canvas domain positions remain fixed. The customized bay operates independently.
+
+Peak trigger set on canvas position 2 (CAPITAL) → Bay 2 receives the alert in domain monitor mode. If Bay 2 has been customized, the domain alert still fires at the domain level — the custom entity alert is separate.
+
+---
+
 ## Open Items Before Build
 
 1. Mobile spec — layout TBD (canvas collapses to sparkline on small viewport?)
