@@ -265,28 +265,35 @@ export default function IntelligenceBrief() {
 
       {/* ── HAPPY PATH + EQ CANVAS — leadoff, directly under Oracle Kernel ── */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 20px' }}>
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
-          <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
-            <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
-            <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
-            <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
-            <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
-          </svg>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
+              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
+              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
+              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
+              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
+            </svg>
+          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              background: 'transparent',
+              border: '1px solid rgba(0,127,255,0.3)',
+              color: BLUE,
+              padding: '5px 14px',
+              transition: 'all 200ms ease',
+            }}
+          >
+            EXPORT BRIEF
+          </button>
         </div>
-        <EQCanvas
-          isPremium={true}
-          onCommitThesis={({ domain, engineState }) => {
-            console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
-          }}
-          onSetTrigger={({ domain, peakPosition }) => {
-            console.log('[EQ] Set Trigger →', domain, 'position', peakPosition);
-          }}
-        />
       </div>
 
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
+      <div style={{ flex: 3, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
 
         {/* IMPORTED ARTIFACT BANNER */}
         {isImported && importState?.status === 'success' && (
@@ -435,11 +442,22 @@ export default function IntelligenceBrief() {
           </div>
         </Panel>
 
+        {/* ── CONVERGENCE FIELD · EQ — supplement, follows brief body ── */}
+        <EQCanvas
+          isPremium={true}
+          onCommitThesis={({ domain, engineState }) => {
+            console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
+          }}
+          onSetTrigger={({ domain, peakPosition }) => {
+            console.log('[EQ] Set Trigger →', domain, 'position', peakPosition);
+          }}
+        />
+
       </div>
 
       {/* ── TELEMETRY STATUS BAR ──────────────────────────────────────────── */}
       <div style={{
-        flexShrink: 0, padding: '6px 20px',
+        flexShrink: 0, padding: '3px 20px',
         borderTop: `1px solid rgba(102,255,0,0.12)`,
         borderBottom: `1px solid rgba(102,255,0,0.12)`,
         background: 'transparent',
@@ -463,7 +481,7 @@ export default function IntelligenceBrief() {
         ))}
       </div>
 
-      {/* ── WO-1751 CONSULTING EXPORT / IMPORT ────────────────────────────── */}
+      {/* ── SCROLLABLE SECTION BELOW CONVERGENCE FIELD ───────────────────── */}
       <input
         ref={fileInputRef}
         type="file"
@@ -471,64 +489,37 @@ export default function IntelligenceBrief() {
         style={{ display: 'none' }}
         onChange={handleImportFile}
       />
-      <div style={{
-        flexShrink: 0, padding: '8px 20px',
-        borderTop: `1px solid ${exportUnlocked ? 'rgba(102,255,0,0.18)' : 'rgba(255,255,255,0.05)'}`,
-        background: exportUnlocked ? 'rgba(102,255,0,0.03)' : 'transparent',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        position: 'relative', zIndex: 1,
-      }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
-            CONSULTING I/O · WO-1752
-          </span>
-          <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
-            {exportUnlocked
-              ? `Fs ${Math.round(fs * 100)}% — PROVENANCE-TRACED JSON READY`
-              : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
-          </span>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
-              textTransform: 'uppercase', cursor: 'pointer',
-              background: 'transparent',
-              border: '1px solid rgba(0,127,255,0.3)',
-              color: BLUE,
-              padding: '5px 14px',
-              transition: 'all 200ms ease',
-            }}
-          >
-            IMPORT BRIEF
-          </button>
-          <button
-            onClick={handleExport}
-            disabled={!exportUnlocked}
-            style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
-              textTransform: 'uppercase', cursor: exportUnlocked ? 'pointer' : 'not-allowed',
-              background: 'transparent',
-              border: `1px solid ${exportUnlocked ? 'rgba(102,255,0,0.4)' : 'rgba(255,255,255,0.1)'}`,
-              color: exportUnlocked ? LIME : DIM,
-              padding: '5px 14px',
-              opacity: exportUnlocked ? 1 : 0.4,
-              transition: 'all 200ms ease',
-            }}
-          >
-            {exported ? '✓ EXPORTED' : 'EXPORT BRIEF'}
-          </button>
-        </div>
-      </div>
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
 
-      {/* ── RECOMMENDED ACTIONS MATRIX ────────────────────────────────────── */}
-      <div style={{ flexShrink: 0, height: 300, position: 'relative', zIndex: 1, opacity: 0.65 }}>
-        <ActionMatrix />
-      </div>
+        {/* WO-1751 CONSULTING EXPORT / IMPORT */}
+        <div style={{
+          padding: '8px 20px',
+          borderTop: `1px solid ${exportUnlocked ? 'rgba(102,255,0,0.18)' : 'rgba(255,255,255,0.05)'}`,
+          background: exportUnlocked ? 'rgba(102,255,0,0.03)' : 'transparent',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'relative', zIndex: 1,
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
+              CONSULTING I/O · WO-1752
+            </span>
+            <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
+              {exportUnlocked
+                ? `Fs ${Math.round(fs * 100)}% — PROVENANCE-TRACED JSON READY`
+                : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
+            </span>
+          </div>
+        </div>
 
-      {/* ── BOTTOM CLASSIFICATION BANNER ──────────────────────────────────── */}
-      <ClassificationBanner text={brief.classification} />
+        {/* RECOMMENDED ACTIONS MATRIX */}
+        <div style={{ height: 300, position: 'relative', zIndex: 1, opacity: 0.65 }}>
+          <ActionMatrix />
+        </div>
+
+        {/* BOTTOM CLASSIFICATION BANNER */}
+        <ClassificationBanner text={brief.classification} />
+
+      </div>
 
     </div>
   );

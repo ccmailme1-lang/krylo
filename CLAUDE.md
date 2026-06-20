@@ -126,6 +126,7 @@ Start at 1826. Work backwards. This is the only open list.
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
+1827 — AS-DIFF Three-Tier Resolver (domain/entity/product comparands — resolver only, core math untouched)
 1826 — Happy Path Displacement Engine (continuous re-evaluation — feeds WO-1762 canvas)
 1825 — Decision Lineage (resolution record + calibration scoring)
 1824 — Thesis Monitoring Layer (drift watching against active convictions)
@@ -133,7 +134,7 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1822 — Investor Decision Architecture (five-moment cycle — ships before 1823/1824/1825)
 1821 — Happy Path Qualification Spec (load-bearing — ships before 1820/1826)
 1820 — Unicorn Alert System (two entry points: Action Plan + EQ canvas peak right-click)
-1815 — Opportunity Ribbon (COMPLETE — SHA: 01613f1)
+1815 — Opportunity Ribbon (COMPLETE — SHA: 798cd1e — top of funnel, session bootstrap + provenance, feeds WO-1822)
 1813 — Project Registry (saved sessions — depends on WO-1812)
 1812 — User Profile Layer (ships first — session inherits from profile)
 1801 — Sovereign Capital Synthesizer (Alwaleed Protocol)

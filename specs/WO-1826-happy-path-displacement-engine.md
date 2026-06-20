@@ -145,10 +145,24 @@ Rules:
 
 ---
 
+## Data Source Contract (LOCKED — 2026-06-20)
+
+The HP engine reads from the **domain pressure store directly**.
+
+It has NO dependency on:
+- Cone state, cone height, or cone visual rendering
+- Bay state or bay assignment
+- surfacerouter.js event routing
+- Any derived or rendered artifact
+
+Cones and the HP engine are parallel consumers of the same domain pressure source. Neither reads from the other. A cone going dark, changing state, or being reassigned has zero effect on the HP map.
+
+When live data replaces `initSignals()`, the replacement is a direct subscription to the normalized domain pressure readings — the same 0–100 signal output that feeds cones, before any cone-level processing occurs.
+
+---
+
 ## Open Items Before Build
 
 1. Displacement margin threshold — requires live signal calibration
 2. Hysteresis buffer window — 15–30min range, needs confirmation
 3. Whether challengers are surfaced in the canvas hover mode (currently spec says yes — visible in transient mode only)
-4. Displacement margin threshold — requires live signal calibration
-5. Hysteresis buffer window — 15–30min range, needs confirmation
