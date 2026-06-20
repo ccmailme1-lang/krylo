@@ -455,6 +455,15 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [volatilityShock,   setVolatilityShock]   = useState(false);
   const [excludeSimulator,  setExcludeSimulator]  = useState(false);
   const [simRunning,        setSimRunning]         = useState(false);
+  const [activeSlot,        setActiveSlot]         = useState('A');
+  const [slotContent,       setSlotContent]        = useState({ A: false, B: false, C: false });
+  const [slotWarning,       setSlotWarning]        = useState(null);
+  const slotWarningTimer = useRef(null);
+  const undoStackRef      = useRef([]);
+  const [undoIdx,         setUndoIdx]         = useState(-1);
+  const isApplyingSnap    = useRef(false);
+  const [saveExploreOpen, setSaveExploreOpen] = useState(false);
+  const [saveFileName,    setSaveFileName]    = useState('');
   const [regimeKey,       setRegimeKey]       = useState('Sovereign_Wealth');
   const [missingField,    setMissingField]    = useState(null);
   const [advancedOpen,    setAdvancedOpen]    = useState(false);
@@ -507,6 +516,12 @@ export default function AnalysisIdleField({ activeCones = null }) {
   useEffect(() => { fieldParamsRef.current    = fieldParams;    }, [fieldParams]);
   useEffect(() => { projectedStateRef.current = projectedState; }, [projectedState]);
   useEffect(() => () => clearTimeout(processingTimer.current), []);
+
+  useEffect(() => {
+    const onDisk = () => setSaveExploreOpen(true);
+    window.addEventListener('krylo-disk-click', onDisk);
+    return () => window.removeEventListener('krylo-disk-click', onDisk);
+  }, []);
 
 
   const queryDebounceRef   = useRef(null);
@@ -608,6 +623,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
     const next = activeSituation?.lens === sit.lens ? null : sit;
     if (next) trackLens(next.lens);
     setActiveSituation(next);
+    pushHistory({ activeSituation: next });
     setSignalVisible(false);
     signalShownRef.current = false;
     if (next) {
@@ -625,12 +641,14 @@ export default function AnalysisIdleField({ activeCones = null }) {
   function removeSituationToken() {
     setActiveSituation(null); setSelectedFloor(null); setHorizon(null);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
+    pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, seedQuery: '' });
   }
-  function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); }
-  function removeHorizonToken() { setHorizon(null); }
+  function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); pushHistory({ selectedFloor: null, horizon: null }); }
+  function removeHorizonToken() { setHorizon(null); pushHistory({ horizon: null }); }
 
   function handleQueryBlur() {
     setFocused(false);
+    pushHistory();
     if (!seedQuery.trim() || !activeLens) return;
     const signal = CALIBRATION_SIGNALS[activeLens];
     if (!signal || signal.confidence < CONFIDENCE_THRESHOLD) return;
@@ -753,11 +771,83 @@ export default function AnalysisIdleField({ activeCones = null }) {
     setIntentMagnitude(Math.max(0, Math.min(100, Math.round((x / rect.width) * 100))));
   }
 
+  function selectSlot(slot) {
+    if (slot === activeSlot) return;
+    setActiveSlot(slot);
+    if (slotContent[slot]) applySnapshot(slotContent[slot]);
+  }
+
   function handleReturnToLive() {
     setIsPlaying(false);
     clearInterval(playRef.current);
     seek(Math.max(0, history.length - 1));
     load(100);
+  }
+
+  // ── Undo / redo ───────────────────────────────────────────────────────────
+  function captureSnap(overrides = {}) {
+    return { activeSituation, selectedFloor, horizon, intentMagnitude, volatilityShock, rules, seedQuery, ...overrides };
+  }
+
+  function applySnapshot(snap) {
+    if (!snap) return;
+    isApplyingSnap.current = true;
+    setActiveSituation(snap.activeSituation ?? null);
+    setSelectedFloor(snap.selectedFloor ?? null);
+    setHorizon(snap.horizon ?? null);
+    setIntentMagnitude(snap.intentMagnitude ?? 50);
+    setVolatilityShock(snap.volatilityShock ?? false);
+    setRules(snap.rules ?? []);
+    setSeedQuery(snap.seedQuery ?? '');
+    if (centerTextareaRef.current) centerTextareaRef.current.value = snap.seedQuery ?? '';
+    requestAnimationFrame(() => { isApplyingSnap.current = false; });
+  }
+
+  function pushHistory(overrides = {}) {
+    if (isApplyingSnap.current) return;
+    const snap = captureSnap(overrides);
+    setUndoIdx(prev => {
+      const next = prev + 1;
+      undoStackRef.current = [...undoStackRef.current.slice(0, next), snap];
+      return next;
+    });
+  }
+
+  function handleUndo() {
+    if (undoIdx <= 0) return;
+    const newIdx = undoIdx - 1;
+    applySnapshot(undoStackRef.current[newIdx]);
+    setUndoIdx(newIdx);
+  }
+
+  function handleRedo() {
+    if (undoIdx >= undoStackRef.current.length - 1) return;
+    const newIdx = undoIdx + 1;
+    applySnapshot(undoStackRef.current[newIdx]);
+    setUndoIdx(newIdx);
+  }
+
+  // ── A/B slot ──────────────────────────────────────────────────────────────
+  function handleSaveState() {
+    setSlotContent(prev => ({ ...prev, [activeSlot]: captureSnap() }));
+  }
+
+  function handleCopySlot() {
+    const other = activeSlot === 'A' ? 'B' : 'A';
+    setSlotContent(prev => ({ ...prev, [other]: prev[activeSlot] }));
+  }
+
+  function handleExportJSON() {
+    const data = slotContent[activeSlot] ?? captureSnap();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `${saveFileName.trim() || `krylo-slot-${activeSlot}`}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setSaveExploreOpen(false);
+    setSaveFileName('');
   }
 
   const chipSelect = {
@@ -778,6 +868,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
         @keyframes results-enter  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes processing-pulse { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
         @keyframes slot-enter     { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes slide-from-left  { from { transform:translateX(-100%); } to { transform:translateX(0); } }
+        @keyframes slide-from-right { from { transform:translateX(100%);  } to { transform:translateX(0); } }
         .attractor-active  { animation: attractor-pulse   2.4s linear infinite; }
         .vector-incomplete { animation: vector-incomplete 0.9s ease-in-out infinite; }
         .aif-btn-live:hover { background: rgba(102,255,0,0.04); border-color: rgba(102,255,0,0.5); color: ${LIME}; }
@@ -806,8 +898,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
               </button>
             )}
           </div>
-
-          <div style={{ flex: 1, overflowY: 'auto' }}>
 
           {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
           <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
@@ -1028,29 +1118,49 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           </div>
 
-          </div>{/* end scroll wrapper */}
-
           {/* ── SIMULATION CONTROLS FOOTER ── */}
-          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_MED}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {!isLive ? (
+          {!isLive && (
+            <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_MED}`, padding: '12px 16px' }}>
               <button onClick={handleReturnToLive} className="aif-btn-live" style={{
                 width: '100%', height: 38, border: '1px solid rgba(102,255,0,0.2)',
                 color: 'rgba(102,255,0,0.7)', letterSpacing: '0.18em', background: 'transparent',
                 cursor: 'pointer', fontFamily: MONO, fontSize: FS_EXECUTE,
               }}>RETURN TO LIVE</button>
-            ) : hasSession ? (
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
-                <button style={simBtnStyle}>SAVE STATE</button>
-                <button style={simBtnStyle}>EXPORT SCALAR</button>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 4 }}>
-                <button onClick={resetSession} style={simBtnStyle}>RESET MODEL</button>
-                <button style={simBtnStyle}>SAVE STATE</button>
-                <button style={simBtnStyle}>EXPORT SCALAR</button>
-              </div>
-            )}
+            </div>
+          )}
+
+          {/* ── A/B + UNDO/REDO BAR ── */}
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_FAINT}`, padding: '8px 16px', display: 'flex', alignItems: 'center' }}>
+            <button
+              onClick={handleUndo} disabled={undoIdx <= 0}
+              onMouseEnter={e => { if (undoIdx > 0) e.currentTarget.style.color = LIME; }}
+              onMouseLeave={e => { e.currentTarget.style.color = undoIdx > 0 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)'; }}
+              style={{ background: 'none', border: 'none', fontFamily: MONO, fontSize: 14, lineHeight: 1, padding: '0 10px 0 0', color: undoIdx > 0 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)', cursor: undoIdx > 0 ? 'pointer' : 'default', transition: 'color 120ms' }}
+            >↩</button>
+            <button
+              onClick={handleRedo} disabled={undoIdx >= undoStackRef.current.length - 1}
+              onMouseEnter={e => { if (undoIdx < undoStackRef.current.length - 1) e.currentTarget.style.color = LIME; }}
+              onMouseLeave={e => { e.currentTarget.style.color = undoIdx < undoStackRef.current.length - 1 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)'; }}
+              style={{ background: 'none', border: 'none', fontFamily: MONO, fontSize: 14, lineHeight: 1, padding: 0, color: undoIdx < undoStackRef.current.length - 1 ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.15)', cursor: undoIdx < undoStackRef.current.length - 1 ? 'pointer' : 'default', transition: 'color 120ms' }}
+            >↪</button>
+            <div style={{ flex: 1 }} />
+            {['A', 'B'].map((slot, i) => (
+              <button
+                key={slot}
+                onClick={() => selectSlot(slot)}
+                onMouseEnter={e => { if (activeSlot !== slot) e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = activeSlot === slot ? '#ffffff' : 'rgba(255,255,255,0.25)'; }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: activeSlot === slot ? '#ffffff' : 'rgba(255,255,255,0.25)', fontWeight: activeSlot === slot ? 600 : 400, padding: i === 0 ? '0 1px 0 0' : '0 0 0 1px', transition: 'color 120ms' }}
+              >{slot}</button>
+            ))}
+            <span style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.2)', padding: '0 3px' }}>/</span>
+            <span style={{ display: 'inline-block', width: 8 }} />
+            <button
+              onClick={handleCopySlot}
+              onMouseEnter={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.65)'; }}
+              onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.35)'; }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', padding: 0, transition: 'color 120ms' }}
+            >Copy</button>
           </div>
 
         </aside>
@@ -1302,6 +1412,66 @@ export default function AnalysisIdleField({ activeCones = null }) {
           </div>
 
         </main>
+
+        {/* ── SAVE EXPLORE PANEL ── */}
+        {saveExploreOpen && (
+          <div style={{
+            position: 'absolute', top: 0, bottom: 0,
+            [activeSlot === 'A' ? 'left' : 'right']: 0,
+            width: 280,
+            background: '#0a0c0f',
+            borderLeft:  activeSlot === 'B' ? `1px solid ${BORDER}` : 'none',
+            borderRight: activeSlot === 'A' ? `1px solid ${BORDER}` : 'none',
+            zIndex: 60,
+            display: 'flex', flexDirection: 'column',
+            animation: `${activeSlot === 'A' ? 'slide-from-left' : 'slide-from-right'} 200ms ease`,
+          }}>
+            <div style={{ flexShrink: 0, padding: '16px 20px', borderBottom: `1px solid ${BORDER_FAINT}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: LIME }}>SAVE — SLOT {activeSlot}</div>
+              <button onClick={() => setSaveExploreOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16, lineHeight: 1, padding: 0, fontFamily: MONO }}>×</button>
+            </div>
+            <div style={{ flex: 1, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>FILE NAME</div>
+                <input
+                  value={saveFileName}
+                  onChange={e => setSaveFileName(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleExportJSON(); }}
+                  placeholder={`krylo-slot-${activeSlot}`}
+                  autoFocus
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    background: '#0b0e11', border: `1px solid ${BORDER}`,
+                    color: '#fff', fontFamily: MONO, fontSize: 10,
+                    padding: '8px 12px', outline: 'none', letterSpacing: '0.06em',
+                  }}
+                />
+                <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.18)', marginTop: 6, letterSpacing: '0.1em' }}>.json</div>
+              </div>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>CONTENTS</div>
+                <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, letterSpacing: '0.04em' }}>
+                  {slotContent[activeSlot] ? (
+                    <>
+                      <div>LENS: {slotContent[activeSlot].activeSituation?.lens ?? '—'}</div>
+                      <div>INTENT: {slotContent[activeSlot].intentMagnitude ?? '—'}</div>
+                      <div>HORIZON: {slotContent[activeSlot].horizon ?? '—'}</div>
+                    </>
+                  ) : (
+                    <div style={{ color: 'rgba(255,255,255,0.2)' }}>No saved state in slot {activeSlot}</div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div style={{ flexShrink: 0, padding: '16px 20px', borderTop: `1px solid ${BORDER_FAINT}` }}>
+              <button
+                onClick={handleExportJSON}
+                style={{ width: '100%', padding: '10px 0', background: LIME, border: 'none', color: '#000', fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', cursor: 'pointer', textTransform: 'uppercase' }}
+              >Save as JSON</button>
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   );

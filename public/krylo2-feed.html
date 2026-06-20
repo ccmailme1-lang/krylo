@@ -505,6 +505,86 @@ body {
 #bay-disk-alert .bda-body {
     font-size: 10px; color: rgba(255,255,255,0.52); line-height: 1.7; letter-spacing: 0.03em;
 }
+#session-modal {
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,0.65);
+    align-items: center; justify-content: center;
+}
+#session-modal.open { display: flex; }
+#session-modal .sm-box {
+    position: relative; z-index: 1;
+    background: #000; border: 1px solid #66FF00;
+    width: 340px; font-family: 'IBM Plex Mono', monospace;
+    display: flex; flex-direction: column;
+}
+#session-modal .sm-titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px; border-bottom: 1px solid rgba(102,255,0,0.25);
+}
+#session-modal .sm-title {
+    font-size: 8px; color: #66FF00; letter-spacing: 0.12em; text-transform: uppercase;
+}
+#session-modal .sm-close {
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: rgba(102,255,0,0.6); font-size: 13px; line-height: 1; font-family: inherit;
+}
+#session-modal .sm-close:hover { color: #66FF00; }
+#session-modal .sm-pathbar {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 14px; border-bottom: 1px solid rgba(102,255,0,0.15);
+    font-size: 9px; color: rgba(102,255,0,0.6); letter-spacing: 0.06em;
+}
+#session-modal .sm-pathbar .sm-crumb-link {
+    color: rgba(102,255,0,0.8); cursor: pointer;
+}
+#session-modal .sm-pathbar .sm-crumb-link:hover { color: #66FF00; }
+#session-modal .sm-colheads {
+    display: flex; padding: 5px 14px;
+    border-bottom: 1px solid rgba(102,255,0,0.12);
+    font-size: 7px; color: rgba(102,255,0,0.4); letter-spacing: 0.1em; text-transform: uppercase;
+}
+#session-modal .sm-colhead-name { flex: 1; }
+#session-modal .sm-colhead-date { width: 60px; text-align: right; }
+#session-modal .sm-list {
+    min-height: 120px; max-height: 200px; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+#session-modal .sm-empty {
+    padding: 16px 14px; font-size: 9px; color: rgba(102,255,0,0.4); letter-spacing: 0.06em;
+}
+#session-modal .sm-row-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; cursor: pointer;
+    border-bottom: 1px solid rgba(102,255,0,0.08);
+}
+#session-modal .sm-row-item:last-child { border-bottom: none; }
+#session-modal .sm-row-item:hover { background: rgba(102,255,0,0.06); }
+#session-modal .sm-row-icon {
+    font-size: 9px; color: rgba(102,255,0,0.5); width: 10px; flex-shrink: 0;
+}
+#session-modal .sm-row-name {
+    flex: 1; font-size: 10px; color: #66FF00; letter-spacing: 0.03em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#session-modal .sm-row-meta {
+    font-size: 8px; color: rgba(102,255,0,0.45); letter-spacing: 0.04em; width: 60px; text-align: right;
+}
+#session-modal .sm-footer {
+    border-top: 1px solid rgba(102,255,0,0.25);
+    padding: 10px 14px; display: flex; gap: 8px; align-items: center;
+}
+#session-modal .sm-input {
+    flex: 1; background: transparent; border: none; border-bottom: 1px solid rgba(102,255,0,0.4);
+    color: #66FF00; font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; padding: 4px 0; outline: none; letter-spacing: 0.03em;
+}
+#session-modal .sm-input::placeholder { color: rgba(102,255,0,0.3); }
+#session-modal .sm-save-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    color: #66FF00; font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0;
+}
+#session-modal .sm-save-btn:hover { color: #fff; }
 .lnav-settings {
     display:flex;
     flex-direction:column;
@@ -2188,6 +2268,11 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     </div>
     <div class="nav-right">
         <div class="nav-live">Live</div>
+        <button id="nav-ab" data-no-relay onclick="cycleABSlot()" style="display:flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;user-select:none;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.2);padding:2px 7px;outline:none;">
+            <span id="nav-ab-a" style="color:#ffffff;transition:color 120ms;">A</span>
+            <span style="color:rgba(255,255,255,0.2);">/</span>
+            <span id="nav-ab-b" style="color:rgba(255,255,255,0.28);transition:color 120ms;">B</span>
+        </button>
         <div class="nav-save-group" data-no-relay>
             <svg onclick="triggerSaveAs()" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" style="width:14px;height:14px;opacity:0.5;flex-shrink:0;cursor:pointer;">
                 <rect x="2" y="2" width="14" height="14" rx="1"/>
@@ -2195,11 +2280,6 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
                 <rect x="11" y="3" width="1.5" height="3" fill="currentColor" stroke="none"/>
                 <rect x="4" y="10" width="10" height="4"/>
             </svg>
-            <div id="nav-bays" style="display:none;gap:4px;align-items:center;">
-                <div class="bay-sq" data-bay="1" onclick="onBayClick(1)" onmousedown="onBayDown(1)" onmouseup="onBayUp()" onmouseleave="onBayUp()">1</div>
-                <div class="bay-sq" data-bay="2" onclick="onBayClick(2)" onmousedown="onBayDown(2)" onmouseup="onBayUp()" onmouseleave="onBayUp()">2</div>
-                <div class="bay-sq" data-bay="3" onclick="onBayClick(3)" onmousedown="onBayDown(3)" onmouseup="onBayUp()" onmouseleave="onBayUp()">3</div>
-            </div>
         </div>
 <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5">
             <circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
@@ -2210,6 +2290,16 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     </div>
 </nav>
 
+<script>
+var activeABSlot = 'A';
+function cycleABSlot() {
+    activeABSlot = activeABSlot === 'A' ? 'B' : 'A';
+    var a = document.getElementById('nav-ab-a');
+    var b = document.getElementById('nav-ab-b');
+    if (a) a.style.color = activeABSlot === 'A' ? '#ffffff' : 'rgba(255,255,255,0.28)';
+    if (b) b.style.color = activeABSlot === 'B' ? '#ffffff' : 'rgba(255,255,255,0.28)';
+}
+</script>
 <script>
 (function(){
     function tick(){
@@ -2293,12 +2383,6 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
 </div>
 
 
-<!-- Bay Selector -->
-<div id="save-as-input-wrap">
-    <div class="bay-sq" data-bay="1" onclick="onBayClick(1)">1</div>
-    <div class="bay-sq" data-bay="2" onclick="onBayClick(2)">2</div>
-    <div class="bay-sq" data-bay="3" onclick="onBayClick(3)">3</div>
-</div>
 
 <!-- Settings Flyout -->
 <div class="settings-flyout" id="settings-flyout">
@@ -2699,7 +2783,8 @@ function _refreshBays() {
     });
 }
 function _closeSaveAs() {
-    document.getElementById('save-as-input-wrap').classList.remove('open');
+    var el = document.getElementById('save-as-input-wrap');
+    if (el) el.classList.remove('open');
 }
 var _pressTimer = null;
 var _selectedBay = null;
@@ -2763,16 +2848,115 @@ function toggleSuppressAlerts(el) {
     el.classList.toggle('on');
     localStorage.setItem('krylo_suppress_alerts', el.classList.contains('on') ? '0' : '1');
 }
-function triggerSaveAs() {
-    var nb=document.getElementById('nav-bays');
-    if(!nb) return;
-    if(nb.style.display==='flex'){ nb.style.display='none'; _hideDiskAlert(); return; }
-    _refreshBays(); nb.style.display='flex';
-    _showDiskAlert();
-}
+function triggerSaveAs() { _openSessionModal(); }
 document.addEventListener('keydown', function(e) {
-    if(e.key==='Escape') { _closeSaveAs(); _closeBayReplaceModal(); }
+    if(e.key==='Escape') { _closeSaveAs(); _closeBayReplaceModal(); _closeSessionModal(); }
 });
+var _sessionFolder = null;
+var _sessionSelected = null;
+
+function _openSessionModal() {
+    _sessionFolder = null;
+    _sessionSelected = null;
+    document.getElementById('sm-name-input').value = '';
+    _renderExplorer();
+    document.getElementById('session-modal').classList.add('open');
+}
+function _closeSessionModal() {
+    document.getElementById('session-modal').classList.remove('open');
+}
+function _renderExplorer() {
+    var pathEl = document.getElementById('sm-pathbar');
+    var listEl = document.getElementById('sm-list');
+    var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
+    _setOpenBtn(false);
+    if (_sessionFolder === null) {
+        pathEl.innerHTML = '<span>/ sessions</span>';
+        var folders = {};
+        projects.forEach(function(p) {
+            var f = p.folder || 'My Sessions';
+            if (!folders[f]) folders[f] = 0;
+            folders[f]++;
+        });
+        var names = Object.keys(folders);
+        if (!names.length) {
+            listEl.innerHTML = '<div class="sm-empty">No saved sessions</div>';
+        } else {
+            listEl.innerHTML = names.map(function(f) {
+                var safe = f.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+                var esc = f.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                return '<div class="sm-row-item" onclick="_enterFolder(\''+esc+'\')">'
+                    + '<span class="sm-row-icon">▸</span>'
+                    + '<span class="sm-row-name">'+safe+'</span>'
+                    + '<span class="sm-row-meta">'+folders[f]+' item'+(folders[f]!==1?'s':'')+'</span>'
+                    + '</div>';
+            }).join('');
+        }
+    } else {
+        var safef = _sessionFolder.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+        pathEl.innerHTML = '/ <span class="sm-crumb-link" onclick="_enterFolder(null)">sessions</span> / <span>'+safef+'</span>';
+        var items = projects.filter(function(p){ return (p.folder||'My Sessions') === _sessionFolder; });
+        if (!items.length) {
+            listEl.innerHTML = '<div class="sm-empty">Empty folder</div>';
+        } else {
+            listEl.innerHTML = items.map(function(p) {
+                var d = (p.ts && !isNaN(new Date(p.ts).getTime())) ? new Date(p.ts) : null;
+                var ds = d ? (d.getMonth()+1)+'/'+d.getDate()+'/'+String(d.getFullYear()).slice(2) : '—';
+                var n = p.name.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+                var esc = p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                return '<div class="sm-row-item" id="sm-item-'+p.bay+'" onclick="_selectSession(\''+esc+'\','+p.bay+')">'
+                    + '<span class="sm-row-icon">—</span>'
+                    + '<span class="sm-row-name">'+n+'</span>'
+                    + '<span class="sm-row-meta">'+ds+'</span>'
+                    + '</div>';
+            }).join('');
+        }
+    }
+}
+function _enterFolder(name) {
+    _sessionFolder = name;
+    _sessionSelected = null;
+    _renderExplorer();
+}
+function _selectSession(name, bay) {
+    _sessionSelected = { name: name, bay: bay };
+    document.querySelectorAll('#sm-list .sm-row-item').forEach(function(el){ el.style.background = ''; });
+    var el = document.getElementById('sm-item-'+bay);
+    if (el) el.style.background = 'rgba(255,255,255,0.06)';
+    document.getElementById('sm-name-input').value = name;
+    _setOpenBtn(true);
+}
+function _setOpenBtn(active) {
+    var btn = document.getElementById('sm-open-btn');
+    if (!btn) return;
+    btn.style.color = active ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)';
+    btn.style.cursor = active ? 'pointer' : 'default';
+}
+function _openSelectedSession() {
+    if (!_sessionSelected) return;
+    window.parent.postMessage({ type: 'krylo-load', name: _sessionSelected.name, bay: _sessionSelected.bay }, '*');
+    _closeSessionModal();
+}
+function _saveSession() {
+    var name = (document.getElementById('sm-name-input').value || '').trim();
+    if (!name) return;
+    var folder = _sessionFolder || 'My Sessions';
+    var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
+    var idx = projects.findIndex(function(p){ return p.name === name && (p.folder||'My Sessions') === folder; });
+    var entry = { name: name, folder: folder, ts: Date.now(), bay: idx >= 0 ? projects[idx].bay : projects.length + 1 };
+    if (idx >= 0) projects[idx] = entry; else projects.push(entry);
+    localStorage.setItem('krylo_projects', JSON.stringify(projects));
+    window.parent.postMessage({ type: 'krylo-save-as', name: entry.name, bay: entry.bay }, '*');
+    document.getElementById('sm-name-input').value = '';
+    _renderExplorer();
+}
+function _loadSession(name) {
+    var projects = JSON.parse(localStorage.getItem('krylo_projects')||'[]');
+    var p = projects.find(function(x){ return x.name === name; });
+    if (!p) return;
+    window.parent.postMessage({ type: 'krylo-load', name: p.name, bay: p.bay }, '*');
+    _closeSessionModal();
+}
 
 var _pendingReplaceBay = null;
 
@@ -2971,6 +3155,7 @@ function clearGhost() {
 
 document.addEventListener('keydown', (e) => {
     if (!ctaActive) return;
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) return;
     if (!ctaCleared) clearGhost();
     if (e.key === 'Enter') {
         submitQuery(ctaUserInput);
@@ -3519,6 +3704,28 @@ function handleConsoleKey(e) {
         <div class="brm-actions">
             <button class="brm-cancel" onclick="_closeBayReplaceModal()">Cancel</button>
             <button class="brm-replace" onclick="_confirmBayReplace()">Replace</button>
+        </div>
+    </div>
+</div>
+
+<div id="session-modal">
+    <div class="sm-box">
+        <div class="sm-titlebar">
+            <span class="sm-title">Sessions</span>
+            <button class="sm-close" onclick="_closeSessionModal()">×</button>
+        </div>
+        <div class="sm-pathbar" id="sm-pathbar">
+            <span>/ sessions</span>
+        </div>
+        <div class="sm-colheads">
+            <span class="sm-colhead-name">Name</span>
+            <span class="sm-colhead-date">Modified</span>
+        </div>
+        <div id="sm-list" class="sm-list"></div>
+        <div class="sm-footer">
+            <input id="sm-name-input" class="sm-input" type="text" placeholder="session name" maxlength="40"/>
+            <button id="sm-open-btn" class="sm-save-btn" onclick="_openSelectedSession()" style="color:rgba(255,255,255,0.25);cursor:default;">Open</button>
+            <button class="sm-save-btn" onclick="_saveSession()">Save</button>
         </div>
     </div>
 </div>

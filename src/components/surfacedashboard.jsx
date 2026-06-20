@@ -149,6 +149,18 @@ export default function SurfaceDashboard({ activeNav = 'surface', onNav, onBack,
               LIVE
             </span>
             <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em' }}>SEUCHEMENS</span>
+            <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 10, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', userSelect: 'none' }}
+              onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}
+            >A / B</span>
+            <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" style={{ cursor: 'pointer' }}
+              onClick={() => window.dispatchEvent(new CustomEvent('krylo-disk-click'))}
+              onMouseEnter={e => e.currentTarget.setAttribute('stroke','rgba(255,255,255,0.7)')}
+              onMouseLeave={e => e.currentTarget.setAttribute('stroke','rgba(255,255,255,0.3)')}>
+              <path d="M3 2h9l3 3v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+              <rect x="6" y="2" width="4" height="4"/>
+              <rect x="5" y="10" width="8" height="5" rx="0.5"/>
+            </svg>
             <svg viewBox="0 0 18 18" width="14" height="14" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5">
               <circle cx="9" cy="6" r="3"/><path d="M3 16c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
             </svg>

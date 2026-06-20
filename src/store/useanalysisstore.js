@@ -104,4 +104,5 @@ export const useAnalysisStore = create((set) => ({
       },
     };
   }),
+
 }));
