@@ -1,7 +1,8 @@
 // querysynthesis.js — Dynamic content synthesis from session query + lens
 // Reads session, detects domain, returns full content object for all result components
 
-import { computeBEV } from './brandequity.js';
+import { computeBEV }   from './brandequity.js';
+import { processTick }  from './ewmaGate.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -183,6 +184,21 @@ function resolvePrimary(q, lens) {
   if (/relevance.*warfare|attention.*warfare|relevance.*decay|losing.*relevance|stay.*relevant|relevance.*competition|attention.*competition|platform.*relevance|content.*relevance|native.*content.*strategy|algorithm.*relevance/.test(q)) return 'RELEVANCE_WARFARE';
   // ── WO-1796: White/TKO Protocol ──────────────────────────────────────────────
   if (/boxing.*disrupt|combat.*sport.*disrupt|ppv.*disrupt|fight.*streaming|boxing.*streaming|ufc.*streaming|tko.*streaming|dana.*white|tko.*group|boxing.*platform|combat.*sport.*platform|influencer.*boxing|celebrity.*boxing|boxer.*free.*agent|fighter.*leverage|boxing.*rights|combat.*rights/.test(q)) return 'BOXING_DISRUPTION';
+  // ── WO-1795: Labor Volatility (White/TKO Protocol) ───────────────────────────
+  if (/labor.*volatility|fighter.*pay.*dispute|fighter.*compensation.*reform|fighter.*union|fighter.*collective.*bargain|ufc.*labor|tko.*labor|combat.*labor|athlete.*labor.*volatility|fighter.*pay.*reform/.test(q)) return 'LABOR_VOLATILITY';
+  // ── WO-1798: Brand-Equity-to-Enterprise-Stability ────────────────────────────
+  if (/brand.*equity.*enterprise|brand.*enterprise.*stability|brand.*to.*enterprise|brand.*enterprise.*value|brand.*stability.*signal|brand.*value.*enterprise/.test(q)) return 'BRAND_EQUITY_STABILITY';
+  // ── WO-1799/1800/1801: Dimon / Alwaleed Protocol ─────────────────────────────
+  if (/structural.*resilience|bank.*resilience|financial.*resilience|balance.*sheet.*strength|institutional.*durability|capital.*buffer.*resilience|stress.*test.*resil|jpmorgan.*resilience|dimon.*resilience/.test(q)) return 'STRUCTURAL_RESILIENCE';
+  if (/private.*credit|credit.*fracture|direct.*lending|shadow.*banking.*risk|private.*debt.*market|non.bank.*lending|private.*lending.*risk|credit.*market.*fracture/.test(q)) return 'PRIVATE_CREDIT';
+  if (/sovereign.*capital|sovereign.*wealth|\bswf\b|sovereign.*fund|state.*capital|national.*wealth.*fund|sovereign.*deploy|alwaleed|kingdom.*holding|sovereign.*invest/.test(q)) return 'SOVEREIGN_CAPITAL';
+  // ── WO-1727/1729/1730/1731/1732/1733: Protocol synthesizers ──────────────────
+  if (/startup.*market.*readiness|market.*readiness.*startup|launch.*window.*startup|pmf.*timing|product.*market.*fit.*window|ycombinator|yc.*batch|yc.*timing|startup.*timing.*market|market.*entry.*timing.*startup/.test(q)) return 'STARTUP_READINESS';
+  if (/long.*duration.*convergence|decade.*convergence|10x.*convergence|long.duration.*bet|generational.*convergence|moonshot.*convergence|decade.*bet.*signal|long.*horizon.*convergence/.test(q)) return 'LONG_DURATION_CONVERGENCE';
+  if (/\bcoworking\b|co.working|flexible.*office|flex.*office|flexible.*space.*demand|hot.*desk|shared.*workspace|flexible.*lease|wework.*demand|space.*demand.*flexible|neumann.*space/.test(q)) return 'FLEXIBLE_SPACE';
+  if (/fintech.*infrastructure|payment.*infrastructure|payment.*rails|financial.*api|embedded.*finance|banking.*api|payment.*network.*build|stripe.*model|financial.*plumbing|developer.*payment|collison.*protocol/.test(q)) return 'FINTECH_INFRA';
+  if (/forward.*compute|compute.*demand.*signal|gpu.*demand|ai.*compute.*demand|inference.*demand|training.*compute.*demand|compute.*supply.*gap|gpu.*supply.*gap|huang.*protocol|nvidia.*demand.*signal/.test(q)) return 'FORWARD_COMPUTE';
+  if (/attention.*saturation|marketing.*saturation|purple.*cow|permission.*marketing|godin.*protocol|attention.*economy.*saturation|media.*saturation.*signal|relevance.*saturation|saturation.*signal/.test(q)) return 'ATTENTION_SATURATION';
   // Lens fallback
   if (lens === 'REALTOR')    return 'REAL_ESTATE';
   if (lens === 'RETIREMENT') return 'RETIREMENT';
@@ -3028,6 +3044,699 @@ function synthBoxingDisruption(session, numbers, query) {
   };
 }
 
+// ── WO-1795: Labor Volatility Synthesizer (White/TKO Protocol) ────────────────
+
+function synthLaborVolatility(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const laborVector =
+    /union|collective.*bargain|organize|labor.*org/.test(q) ? 'UNIONIZATION_PRESSURE' :
+    /pay.*dispute|compensation.*reform|revenue.*share|purse.*split/.test(q) ? 'PAY_STRUCTURE' :
+    /free.*agent|unsigned|contract.*expired|holdout/.test(q) ? 'FREE_AGENCY_WINDOW' :
+    /strike|work.*stoppage|boycott|walkout/.test(q) ? 'WORK_STOPPAGE_RISK' :
+    'GENERAL_LABOR';
+
+  const industryContext =
+    /ufc|mma|mixed.*martial/.test(q) ? 'MMA' :
+    /boxing|boxer|fight/.test(q) ? 'BOXING' :
+    /nfl|nba|mlb|nhl|esport/.test(q) ? 'MAJOR_LEAGUE' :
+    'COMBAT_SPORTS';
+
+  let stateLabel, primaryInsight;
+  if (laborVector === 'UNIONIZATION_PRESSURE') {
+    stateLabel     = 'UNIONIZATION_SIGNAL_ACTIVE';
+    primaryInsight = 'Unionization pressure is rising in combat sports. Fighter collective action has historically been suppressed by the monopsony structure of major promotions. When critical mass forms around a credible union effort, it structurally reprices fighter compensation across the entire market — not just the organizing promotion.';
+  } else if (laborVector === 'FREE_AGENCY_WINDOW') {
+    stateLabel     = 'FREE_AGENCY_LEVERAGE_PEAK';
+    primaryInsight = 'Free agency creates a brief window of maximum fighter leverage. Platform competition (streaming, rival promotions) creates bidding conditions that compress rapidly once a deal closes. This window is time-limited by deal urgency and competitor depth.';
+  } else if (laborVector === 'WORK_STOPPAGE_RISK') {
+    stateLabel     = 'WORK_STOPPAGE_PROBABILITY_ELEVATED';
+    primaryInsight = 'Work stoppage signals are present. In combat sports, event cancellations have outsized economic consequences — no recurring schedule, no insurance-pool economics. A credible stoppage threat reprices event rights, sponsorship guarantees, and venue contracts simultaneously.';
+  } else {
+    stateLabel     = `LABOR_VOLATILITY_${laborVector}`;
+    primaryInsight = `Labor volatility signal: ${laborVector.replace(/_/g,' ')}. Industry context: ${industryContext}. Fighter economics are structurally compressed at the base — volatility surfaces at contract events, not between them.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'LABOR VOLATILITY',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'lv1', label:'LABOR VECTOR',      value: laborVector.replace(/_/g,' '),      type:'tag' },
+      { id:'lv2', label:'INDUSTRY CONTEXT',  value: industryContext,                   type:'tag' },
+      { id:'lv3', label:'LEVERAGE WINDOW',   value: laborVector === 'FREE_AGENCY_WINDOW' ? 'OPEN' : 'CONDITIONAL', type:'status' },
+      { id:'lv4', label:'COLLECTIVE ACTION', value: laborVector === 'UNIONIZATION_PRESSURE' ? 'BUILDING' : 'LATENT', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MAP LABOR CONCENTRATION', impact:0.82, rationale:'Identify which promotions hold the greatest share of top-ranked fighters. Concentration = structural risk when labor organizes.', tag:'STRUCTURE' },
+      secondary:  { id:'a2', label:'TRACK CONTRACT EXPIRY CADENCE', impact:0.71, rationale:'Free agency windows cluster by promotion cycle. The window is widest when multiple top fighters hit free agency simultaneously.', tag:'TIMING' },
+      conviction: [
+        { id:'c1', label:'MODEL REVENUE SHARE SCENARIOS', impact:0.79, rationale:'UFC/boxing revenue-share structures are opaque. Modeling alternative splits (MMA fighters propose 50%) reveals the economic exposure for promoters if labor wins.', tag:'FINANCIAL' },
+        { id:'c2', label:'MONITOR THIRD-PARTY ACTOR ENTRY', impact:0.65, rationale:'Rival promotions and streaming platforms are the silent beneficiaries of labor volatility. Their entry as alternative employers is the forcing function that makes union leverage credible.', tag:'SIGNAL' },
+      ],
+    },
+    leverage:       { typeY:2, typeLabel:'LABOR', tierLabel, deRatio:0.45, permissionless:false, industryNorm:0.55 },
+    labor_vector:   laborVector,
+    industry_context: industryContext,
+  };
+}
+
+// ── WO-1798: Brand-Equity-to-Enterprise-Stability ─────────────────────────────
+
+function synthBrandEquityStability(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const brandSignal =
+    /brand.*decline|brand.*erosion|reputation.*risk|brand.*damage/.test(q) ? 'BRAND_EROSION' :
+    /brand.*premium|brand.*strength|brand.*equity.*grow|brand.*value.*rise/.test(q) ? 'BRAND_APPRECIATION' :
+    /brand.*crisis|pr.*crisis|scandal|boycott.*brand/.test(q) ? 'BRAND_CRISIS' :
+    /brand.*acquisition|brand.*licensing|brand.*extension/.test(q) ? 'BRAND_EXTENSION' :
+    'BRAND_STABILITY';
+
+  const enterpriseSignal =
+    /enterprise.*value|ev.*ebitda|valuation.*multiple|acquisition.*target/.test(q) ? 'VALUATION_LINK' :
+    /stock.*price|market.*cap|equity.*value/.test(q) ? 'EQUITY_IMPACT' :
+    /credit.*rating|bond.*spread|debt.*cost/.test(q) ? 'CREDIT_IMPACT' :
+    'GENERAL_ENTERPRISE';
+
+  let stateLabel, primaryInsight;
+  if (brandSignal === 'BRAND_CRISIS') {
+    stateLabel     = 'BRAND_CRISIS_ENTERPRISE_EXPOSURE';
+    primaryInsight = 'Brand crisis events create asymmetric enterprise value destruction. The transmission mechanism: brand damage → revenue forecast revision → multiple compression → equity repricing. The compression happens faster than fundamental earnings allow — this is a signal event, not a fundamental event.';
+  } else if (brandSignal === 'BRAND_EROSION') {
+    stateLabel     = 'BRAND_EROSION_STABILITY_RISK';
+    primaryInsight = 'Chronic brand erosion signals enterprise durability risk. Unlike crisis events, erosion unfolds over 12–36 months and is typically invisible in quarterly earnings until it crosses a customer retention threshold. The leading indicators are NPS trajectory, search share, and organic mention velocity.';
+  } else if (brandSignal === 'BRAND_APPRECIATION') {
+    stateLabel     = 'BRAND_PREMIUM_ENTERPRISE_SIGNAL';
+    primaryInsight = 'Brand equity appreciation is a leading indicator of enterprise stability. Companies with strengthening brand equity command acquisition premium, access cheaper debt, and retain talent more efficiently. Brand strength is the cheapest form of enterprise insurance.';
+  } else {
+    stateLabel     = `BRAND_EQUITY_${brandSignal}`;
+    primaryInsight = `Brand-enterprise signal: ${brandSignal.replace(/_/g,' ')}. Enterprise exposure: ${enterpriseSignal.replace(/_/g,' ')}. Brand equity is an upstream variable — it precedes financial statement impact by one to three reporting cycles.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'BRAND EQUITY STABILITY',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'be1', label:'BRAND SIGNAL',      value: brandSignal.replace(/_/g,' '),      type:'tag' },
+      { id:'be2', label:'ENTERPRISE VECTOR', value: enterpriseSignal.replace(/_/g,' '), type:'tag' },
+      { id:'be3', label:'TRANSMISSION LAG',  value: '1–3 QUARTERS',                    type:'duration' },
+      { id:'be4', label:'DETECTION WINDOW',  value: brandSignal === 'BRAND_CRISIS' ? 'IMMEDIATE' : 'LEADING', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'TRACK NPS + SEARCH SHARE VELOCITY', impact:0.85, rationale:'NPS trajectory and organic search share are the highest-signal leading indicators of brand equity direction. Both move before revenue does.', tag:'SIGNAL' },
+      secondary:  { id:'a2', label:'MAP MULTIPLE SENSITIVITY TO BRAND', impact:0.73, rationale:'Quantify how much of the current enterprise multiple is attributable to brand premium. This determines downside exposure in a brand-damage scenario.', tag:'VALUATION' },
+      conviction: [
+        { id:'c1', label:'BUILD BRAND-REVENUE CORRELATION MODEL', impact:0.78, rationale:'Establish the historical correlation between brand sentiment inflections and next-quarter revenue for this company. The lag coefficient determines signal utility.', tag:'FINANCIAL' },
+        { id:'c2', label:'MONITOR CATEGORY BRAND DYNAMICS', impact:0.64, rationale:'Brand equity is relative. A company can improve in absolute terms while losing ground to competitors. Category-level brand share is the corrective metric.', tag:'COMPETITIVE' },
+      ],
+    },
+    leverage:       { typeY:2, typeLabel:'BRAND', tierLabel, deRatio:0.35, permissionless:false, industryNorm:0.5 },
+    brand_signal:   brandSignal,
+    enterprise_signal: enterpriseSignal,
+  };
+}
+
+// ── WO-1799: Structural Resilience Synthesizer (Dimon Protocol) ───────────────
+
+function synthStructuralResilience(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const resilienceVector =
+    /capital.*ratio|tier.*1|cet1|capital.*adequacy|buffer/.test(q) ? 'CAPITAL_BUFFER' :
+    /liquidity|lcr|nsfr|deposit.*stability|funding.*mix/.test(q) ? 'LIQUIDITY_POSITION' :
+    /stress.*test|scenario.*test|adverse.*scenario|fed.*stress/.test(q) ? 'STRESS_TEST_POSTURE' :
+    /credit.*quality|npl|non.*perform|loan.*loss|provision/.test(q) ? 'CREDIT_QUALITY' :
+    /interest.*rate.*risk|duration.*risk|rate.*sensitivity|net.*interest.*margin/.test(q) ? 'RATE_SENSITIVITY' :
+    'GENERAL_RESILIENCE';
+
+  const institutionType =
+    /jpmorgan|jp.*morgan|chase|dimon/.test(q) ? 'JPMORGAN' :
+    /bank.*america|wells.*fargo|citi|goldman|morgan.*stanley/.test(q) ? 'MAJOR_BANK' :
+    /regional.*bank|community.*bank|svb|signature|silvergate/.test(q) ? 'REGIONAL_BANK' :
+    /insurance|insurer/.test(q) ? 'INSURANCE' :
+    'FINANCIAL_INSTITUTION';
+
+  let stateLabel, primaryInsight;
+  if (resilienceVector === 'CAPITAL_BUFFER') {
+    stateLabel     = 'CAPITAL_BUFFER_RESILIENCE_SIGNAL';
+    primaryInsight = 'Capital buffer analysis is the structural foundation of institutional durability. CET1 ratios above regulatory minimums create the optionality to absorb unexpected losses without balance sheet restructuring. Buffer thickness — not its existence — determines crisis survivability.';
+  } else if (resilienceVector === 'LIQUIDITY_POSITION') {
+    stateLabel     = 'LIQUIDITY_RESILIENCE_SCAN';
+    primaryInsight = 'Liquidity resilience is the short-duration stress signal. LCR and NSFR ratios indicate the ability to survive a 30-day and 1-year funding stress respectively. SVB\'s failure was a liquidity event before it became a solvency event — the sequencing matters.';
+  } else if (resilienceVector === 'STRESS_TEST_POSTURE') {
+    stateLabel     = 'STRESS_TEST_POSTURE_ACTIVE';
+    primaryInsight = 'Fed stress test results are the closest thing to a regulatory X-ray of institutional resilience. The severely adverse scenario results reveal which institutions carry hidden duration risk, credit concentration, or capital fragility invisible in normal disclosures.';
+  } else if (resilienceVector === 'RATE_SENSITIVITY') {
+    stateLabel     = 'RATE_SENSITIVITY_EXPOSURE';
+    primaryInsight = 'Rate sensitivity is the current regime\'s primary stress vector. Net interest margin compression and duration mismatch define institutional vulnerability when rates move faster than asset portfolios reprice. The institutions that survive rate cycles are those that actively managed duration through the previous low-rate era.';
+  } else {
+    stateLabel     = `STRUCTURAL_RESILIENCE_${resilienceVector}`;
+    primaryInsight = `Structural resilience signal: ${resilienceVector.replace(/_/g,' ')}. Institution type: ${institutionType.replace(/_/g,' ')}. Balance sheet strength is the load-bearing variable — all other signals are downstream of it.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'STRUCTURAL RESILIENCE',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'sr1', label:'RESILIENCE VECTOR',   value: resilienceVector.replace(/_/g,' '),   type:'tag' },
+      { id:'sr2', label:'INSTITUTION TYPE',    value: institutionType.replace(/_/g,' '),    type:'tag' },
+      { id:'sr3', label:'BUFFER THRESHOLD',    value: resilienceVector === 'CAPITAL_BUFFER' ? 'CET1 ≥ 12%' : 'CONTEXT-DEPENDENT', type:'benchmark' },
+      { id:'sr4', label:'CRISIS SEQUENCING',   value: 'LIQUIDITY → SOLVENCY',               type:'framework' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'RUN CAPITAL RATIO COMPARABLES', impact:0.88, rationale:'CET1 ratio trajectory across peer institutions reveals which are building buffer vs. consuming it. Direction matters more than level.', tag:'CAPITAL' },
+      secondary:  { id:'a2', label:'MAP DEPOSIT CONCENTRATION', impact:0.76, rationale:'SVB demonstrated that deposit concentration (uninsured, single-sector) is the hidden liquidity risk. Standard LCR reporting does not reveal concentration until it is too late.', tag:'LIQUIDITY' },
+      conviction: [
+        { id:'c1', label:'STRESS SCENARIO MODELING', impact:0.83, rationale:'Model the institution against a -300bp NIM compression + 3% credit loss scenario simultaneously. Institutions that can absorb both without capital breach are structurally resilient.', tag:'MODELING' },
+        { id:'c2', label:'TRACK UNREALIZED LOSS TRAJECTORY', impact:0.71, rationale:'AOCI (accumulated other comprehensive income) losses on HTM/AFS portfolios are the leading indicator of rate-sensitivity exposure. Rising unrealized losses signal future capital pressure.', tag:'SIGNAL' },
+      ],
+    },
+    leverage:        { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.3, permissionless:false, industryNorm:0.45 },
+    resilience_vector: resilienceVector,
+    institution_type:  institutionType,
+  };
+}
+
+// ── WO-1800: Private Credit Fracture Map (Dimon Protocol) ─────────────────────
+
+function synthPrivateCredit(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const fractureVector =
+    /covenant.*lite|cov.*lite|weak.*covenant|covenant.*erosion/.test(q) ? 'COVENANT_EROSION' :
+    /valuation.*marks|mark.*to.*market|gp.*marks|valuation.*lag/.test(q) ? 'VALUATION_LAG' :
+    /liquidity.*risk|redemption.*risk|gate|illiquid/.test(q) ? 'LIQUIDITY_MISMATCH' :
+    /default.*rate|distress|delinquency|pik.*interest|payment.*in.*kind/.test(q) ? 'DEFAULT_PRESSURE' :
+    /concentration|single.*borrower|sector.*exposure/.test(q) ? 'CONCENTRATION_RISK' :
+    'STRUCTURAL_RISK';
+
+  const marketContext =
+    /direct.*lending|bdcs?|business.*development/.test(q) ? 'DIRECT_LENDING' :
+    /mezzanine|mezz|subordinated|junior.*debt/.test(q) ? 'MEZZANINE' :
+    /distressed|special.*situation|credit.*opport/.test(q) ? 'DISTRESSED' :
+    /infrastructure.*debt|real.*asset.*credit/.test(q) ? 'INFRASTRUCTURE_CREDIT' :
+    'PRIVATE_CREDIT_GENERAL';
+
+  let stateLabel, primaryInsight;
+  if (fractureVector === 'VALUATION_LAG') {
+    stateLabel     = 'PRIVATE_CREDIT_VALUATION_LAG_RISK';
+    primaryInsight = 'GP-marked valuations in private credit lag public market reality by one to two quarters. This creates a structural information asymmetry between LPs and GPs at the moment of stress. When public credit markets dislocate, private credit portfolios appear stable — until they mark. The gap between mark and reality is the hidden risk.';
+  } else if (fractureVector === 'DEFAULT_PRESSURE') {
+    stateLabel     = 'PRIVATE_CREDIT_DEFAULT_CYCLE_ENTERING';
+    primaryInsight = 'PIK (payment-in-kind) election rates and delinquency in direct lending portfolios are the earliest default signal. PIK elections indicate borrowers are managing cash flow stress by capitalizing interest — the credit equivalent of pushing debt forward. Rising PIK rates precede formal defaults by 6–18 months.';
+  } else if (fractureVector === 'COVENANT_EROSION') {
+    stateLabel     = 'COVENANT_LITE_VULNERABILITY_SIGNAL';
+    primaryInsight = 'Covenant-lite structures remove the early warning system from credit agreements. When the next credit stress arrives, lenders lose the maintenance covenant triggers that historically created renegotiation windows before default. Cov-lite = fewer intervention points = higher loss severity when default occurs.';
+  } else if (fractureVector === 'LIQUIDITY_MISMATCH') {
+    stateLabel     = 'LIQUIDITY_MISMATCH_FRACTURE_RISK';
+    primaryInsight = 'Liquidity mismatch in semi-liquid private credit vehicles is the systemic risk that regulators have flagged. When retail investors can redeem quarterly but underlying loans have 3–7 year maturities, a redemption wave creates a forced-selling dynamic with no liquid secondary market to absorb it.';
+  } else {
+    stateLabel     = `PRIVATE_CREDIT_${fractureVector}`;
+    primaryInsight = `Private credit fracture signal: ${fractureVector.replace(/_/g,' ')}. Market context: ${marketContext.replace(/_/g,' ')}. Private credit has absorbed two-thirds of leveraged lending growth since 2015 — systemic risk now lives off-balance-sheet, invisible to traditional bank regulation.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'PRIVATE CREDIT FRACTURE',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'pc1', label:'FRACTURE VECTOR',  value: fractureVector.replace(/_/g,' '),  type:'tag' },
+      { id:'pc2', label:'MARKET CONTEXT',   value: marketContext.replace(/_/g,' '),   type:'tag' },
+      { id:'pc3', label:'VALUATION LAG',    value: '1–2 QUARTERS',                   type:'duration' },
+      { id:'pc4', label:'PIK SIGNAL',       value: fractureVector === 'DEFAULT_PRESSURE' ? 'MONITOR' : 'BASELINE', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'TRACK PIK ELECTION RATES', impact:0.87, rationale:'Rising PIK elections in direct lending portfolios are the 6–18 month leading indicator of default cycles. This data point is available in BDC quarterly filings.', tag:'SIGNAL' },
+      secondary:  { id:'a2', label:'MAP VALUATION DISPERSION VS. PUBLIC COMPS', impact:0.75, rationale:'Compare GP marks on private credits to equivalent-rated public bonds. Widening dispersion signals valuation lag accumulation — a correction is building.', tag:'VALUATION' },
+      conviction: [
+        { id:'c1', label:'STRESS-TEST LIQUIDITY MISMATCH', impact:0.81, rationale:'Model redemption scenarios against underlying loan maturity schedules. Identify at what redemption rate the vehicle begins forced-selling illiquid positions.', tag:'RISK' },
+        { id:'c2', label:'MONITOR DIRECT LENDING BDC DISCOUNTS', impact:0.68, rationale:'BDC market discount to NAV is a real-time market signal of private credit stress — public markets pricing in default risk before GP marks reflect it.', tag:'MONITORING' },
+      ],
+    },
+    leverage:       { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.55, permissionless:false, industryNorm:0.65 },
+    fracture_vector: fractureVector,
+    market_context:  marketContext,
+  };
+}
+
+// ── WO-1801: Sovereign Capital Synthesizer (Alwaleed Protocol) ────────────────
+
+function synthSovereignCapital(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const deploymentVector =
+    /direct.*invest|equity.*stake|strategic.*equity|minority.*stake/.test(q) ? 'DIRECT_EQUITY' :
+    /infrastructure|port|airport|energy.*infra|grid/.test(q) ? 'INFRASTRUCTURE' :
+    /tech.*invest|venture|growth.*equity|startup/.test(q) ? 'TECH_VENTURE' :
+    /real.*estate|property|land|trophy.*asset/.test(q) ? 'REAL_ASSETS' :
+    /geopolit|strategic.*asset|national.*interest|belt.*road/.test(q) ? 'GEOPOLITICAL' :
+    'DIVERSIFIED_DEPLOYMENT';
+
+  const fundOrigin =
+    /saudi|pif|mbs|crown.*prince|aramco/.test(q) ? 'PIF_SAUDI' :
+    /alwaleed|kingdom.*holding/.test(q) ? 'KINGDOM_HOLDING' :
+    /abu.*dhabi|adia|mubadala|adq/.test(q) ? 'UAE_ABU_DHABI' :
+    /norway|nbim|gpfg|oil.*fund/.test(q) ? 'NORWAY_GPFG' :
+    /singapore|gic|temasek/.test(q) ? 'SINGAPORE' :
+    /qatar|qia/.test(q) ? 'QATAR_QIA' :
+    'SOVEREIGN_GENERAL';
+
+  let stateLabel, primaryInsight;
+  if (deploymentVector === 'GEOPOLITICAL') {
+    stateLabel     = 'SOVEREIGN_GEOPOLITICAL_DEPLOYMENT';
+    primaryInsight = 'Sovereign capital with geopolitical deployment intent follows a different logic than financial return maximization. Assets are acquired for strategic positioning — supply chain control, technology access, soft-power extension. The return calculation is multi-dimensional and cannot be modeled as pure IRR.';
+  } else if (deploymentVector === 'TECH_VENTURE') {
+    stateLabel     = 'SOVEREIGN_TECH_VENTURE_WAVE';
+    primaryInsight = 'SWF deployment into tech ventures represents the largest single source of late-stage growth capital globally. PIF, ADIA, and GIC collectively deploy more capital than the top 10 US growth equity firms. Their entry into a sector validates demand at institutional scale and compresses future funding windows.';
+  } else if (deploymentVector === 'DIRECT_EQUITY') {
+    stateLabel     = 'SOVEREIGN_DIRECT_EQUITY_SIGNAL';
+    primaryInsight = 'Direct sovereign equity stakes in public companies are the highest-conviction SWF signal. Unlike fund investments, direct stakes require board-level conviction and typically represent 5–15 year holding horizons. When sovereign capital takes a direct stake, it is signaling a structural view — not a trade.';
+  } else {
+    stateLabel     = `SOVEREIGN_CAPITAL_${deploymentVector}`;
+    primaryInsight = `Sovereign capital deployment signal: ${deploymentVector.replace(/_/g,' ')}. Fund origin: ${fundOrigin.replace(/_/g,' ')}. Sovereign wealth funds collectively manage $12T+ — their deployment patterns set the structural floor for asset class valuations in targeted sectors.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 100000000 ? 'INSTITUTIONAL' : capital >= 10000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'SOVEREIGN CAPITAL',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'sc1', label:'DEPLOYMENT VECTOR', value: deploymentVector.replace(/_/g,' '), type:'tag' },
+      { id:'sc2', label:'FUND ORIGIN',       value: fundOrigin.replace(/_/g,' '),       type:'tag' },
+      { id:'sc3', label:'HOLDING HORIZON',   value: '5–15 YEARS',                       type:'duration' },
+      { id:'sc4', label:'CAPITAL SCALE',     value: '$12T+ AUM GLOBALLY',               type:'benchmark' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MAP SECTOR CONCENTRATION BY SWF', impact:0.86, rationale:'Which sectors are receiving disproportionate sovereign capital? Concentration signals structural conviction — these sectors get a valuation floor that private capital alone cannot sustain.', tag:'MAPPING' },
+      secondary:  { id:'a2', label:'TRACK DIRECT STAKE ANNOUNCEMENTS', impact:0.77, rationale:'Direct equity stake announcements from PIF, ADIA, or GIC are the highest-signal sovereign capital events. Track them by sector and geography to identify structural deployment themes.', tag:'SIGNAL' },
+      conviction: [
+        { id:'c1', label:'GEOPOLITICAL RETURN MODEL', impact:0.80, rationale:'Build a framework for evaluating sovereign investments on strategic + financial return dimensions separately. Pure IRR analysis misses the geopolitical optionality that drives SWF decision-making.', tag:'FRAMEWORK' },
+        { id:'c2', label:'MONITOR REPATRIATION RISK', impact:0.66, rationale:'Political transitions in sovereign fund home countries can trigger unexpected repatriation mandates. This is the tail risk in sovereign capital — it exits on political, not financial, logic.', tag:'RISK' },
+      ],
+    },
+    leverage:          { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.2, permissionless:false, industryNorm:0.3 },
+    deployment_vector: deploymentVector,
+    fund_origin:       fundOrigin,
+  };
+}
+
+// ── WO-1727: Startup Market Readiness Synthesizer (YC Protocol) ───────────────
+
+function synthStartupReadiness(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const readinessVector =
+    /pmf|product.*market.*fit|fit.*signal|retention.*signal|cohort.*retention/.test(q) ? 'PMF_SIGNAL' :
+    /launch.*window|timing.*launch|market.*timing|when.*launch/.test(q) ? 'LAUNCH_TIMING' :
+    /competitive.*window|competitor.*move|first.*mover|market.*entry/.test(q) ? 'COMPETITIVE_WINDOW' :
+    /fundraise|raise.*round|investor.*timing|venture.*round|seed/.test(q) ? 'FUNDRAISE_TIMING' :
+    /yc|ycombinator|batch|accelerator/.test(q) ? 'BATCH_CONTEXT' :
+    'GENERAL_READINESS';
+
+  const marketSignal =
+    /b2b|enterprise|saas.*b2b/.test(q) ? 'B2B' :
+    /consumer|b2c|marketplace/.test(q) ? 'B2C' :
+    /developer|api.*product|infrastructure/.test(q) ? 'DEVELOPER' :
+    /climate|deep.*tech|bio|hardware/.test(q) ? 'DEEP_TECH' :
+    'GENERAL';
+
+  let stateLabel, primaryInsight;
+  if (readinessVector === 'PMF_SIGNAL') {
+    stateLabel     = 'PMF_DETECTION_ACTIVE';
+    primaryInsight = 'Product-market fit detection is the highest-signal startup diagnostic. PMF manifests before revenue in engagement metrics: D7/D30 retention, organic referral rate, and usage depth. The YC heuristic — "users are pulling the product from you" — is measurable. A startup with genuine PMF signal should launch faster, not slower.';
+  } else if (readinessVector === 'LAUNCH_TIMING') {
+    stateLabel     = 'LAUNCH_WINDOW_SCAN';
+    primaryInsight = 'Launch timing is a compression trade-off: market readiness vs. product readiness. The optimal window is when demand is building but category leaders have not yet consolidated. Waiting for product perfection is the most common startup timing error — the market window closes independently of product completion.';
+  } else if (readinessVector === 'COMPETITIVE_WINDOW') {
+    stateLabel     = 'COMPETITIVE_WINDOW_ASSESSMENT';
+    primaryInsight = 'Competitive entry windows are time-bounded by the velocity of category formation. In fast-moving categories, the window from "market emerging" to "leaders established" compresses to 18–36 months. Once the top two players control 60%+ of search intent in a category, organic entry becomes structurally expensive.';
+  } else {
+    stateLabel     = `STARTUP_READINESS_${readinessVector}`;
+    primaryInsight = `Market readiness signal: ${readinessVector.replace(/_/g,' ')}. Market context: ${marketSignal}. The YC protocol: build something users want, launch fast, measure retention. Everything else is downstream of these three.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 1000000 ? 'SEED_PLUS' : capital >= 100000 ? 'PRE_SEED' : 'BOOTSTRAPPED') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'STARTUP MARKET READINESS',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'mr1', label:'READINESS VECTOR',  value: readinessVector.replace(/_/g,' '), type:'tag' },
+      { id:'mr2', label:'MARKET CONTEXT',    value: marketSignal,                      type:'tag' },
+      { id:'mr3', label:'WINDOW HORIZON',    value: '18–36 MONTHS',                    type:'duration' },
+      { id:'mr4', label:'PMF GATE',          value: readinessVector === 'PMF_SIGNAL' ? 'ACTIVE' : 'UPSTREAM', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MEASURE D30 RETENTION BASELINE', impact:0.91, rationale:'D30 retention is the canonical PMF metric. B2C: >25% is strong. B2B: >80% monthly retention. If you don\'t know these numbers you don\'t know if you have PMF.', tag:'METRIC' },
+      secondary:  { id:'a2', label:'MAP CATEGORY LEADER CONSOLIDATION', impact:0.74, rationale:'Quantify how consolidated the target category is. Search share, funding concentration, and TAM coverage by existing players determine entry difficulty.', tag:'COMPETITIVE' },
+      conviction: [
+        { id:'c1', label:'RUN LAUNCH TIMING DECISION MATRIX', impact:0.82, rationale:'Frame the launch timing trade-off explicitly: what is the cost of launching 6 months early vs. 6 months late? Asymmetry usually favors earlier. Missing the window is permanent; shipping imperfect is recoverable.', tag:'DECISION' },
+        { id:'c2', label:'TRACK ORGANIC REFERRAL RATE', impact:0.69, rationale:'Organic referral (users bringing users without incentive) is the most reliable PMF signal because it cannot be manufactured by growth spend. A rising referral rate before paid acquisition means the product is working.', tag:'SIGNAL' },
+      ],
+    },
+    leverage:         { typeY:1, typeLabel:'KNOWLEDGE', tierLabel, deRatio:0.6, permissionless:true, industryNorm:0.4 },
+    readiness_vector: readinessVector,
+    market_signal:    marketSignal,
+  };
+}
+
+// ── WO-1729: Long-Duration Convergence Synthesizer (Page-Brin Protocol) ───────
+
+function synthLongDurationConvergence(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const convergenceType =
+    /ai|artificial.*intellig|machine.*learn|neural/.test(q) ? 'AI_INFRASTRUCTURE' :
+    /climate|energy.*transition|renewable|grid|decarboniz/.test(q) ? 'ENERGY_TRANSITION' :
+    /biotech|genomic|longevity|health.*tech|therapeut/.test(q) ? 'BIOTECHNOLOGY' :
+    /space|satellite|launch|orbit|mars/.test(q) ? 'SPACE_INFRASTRUCTURE' :
+    /quantum|quantum.*computing|qubit/.test(q) ? 'QUANTUM_COMPUTING' :
+    /autonomous|self.*driving|robotics|humanoid/.test(q) ? 'AUTONOMOUS_SYSTEMS' :
+    'GENERATIONAL_BET';
+
+  const horizonSignal =
+    /10.*year|decade|10x|2030|2035|generational/.test(q) ? 'DECADE_SCALE' :
+    /5.*year|mid.*term|medium.*term|2028|2029/.test(q) ? 'MEDIUM_TERM' :
+    /moonshot|long.*shot|asymmetric|convex/.test(q) ? 'MOONSHOT' :
+    'LONG_DURATION';
+
+  let stateLabel, primaryInsight;
+  if (convergenceType === 'AI_INFRASTRUCTURE') {
+    stateLabel     = 'AI_INFRASTRUCTURE_DECADE_CONVERGENCE';
+    primaryInsight = 'AI infrastructure is a decade-scale convergence — not a cycle. The compute, data, and talent infrastructure being built from 2022–2030 determines who owns the next 20 years of enterprise productivity. The Page-Brin insight: index the world first, monetize later. The infrastructure builders win before the applications are visible.';
+  } else if (convergenceType === 'ENERGY_TRANSITION') {
+    stateLabel     = 'ENERGY_TRANSITION_DECADE_CONVERGENCE';
+    primaryInsight = 'Energy transition is the largest long-duration capital deployment opportunity since electrification. The compounding mechanism: cost curves on solar/wind/storage continue declining independently of policy — the economics are now self-reinforcing. Policy accelerates the timeline; removing policy doesn\'t reverse the cost curve.';
+  } else if (convergenceType === 'BIOTECHNOLOGY') {
+    stateLabel     = 'BIOTECH_DECADE_CONVERGENCE';
+    primaryInsight = 'Biotechnology convergence is entering its compounding phase. The GLP-1 weight-loss drug class demonstrated that biology can achieve what decades of behavioral intervention could not. This is the signal pattern: a biological mechanism that produces outcomes unachievable by prior means. Each such mechanism creates a platform, not a product.';
+  } else {
+    stateLabel     = `LONG_DURATION_${convergenceType}`;
+    primaryInsight = `Long-duration convergence signal: ${convergenceType.replace(/_/g,' ')}. Horizon: ${horizonSignal.replace(/_/g,' ')}. The Page-Brin protocol: identify the infrastructure layer of the next decade, build at scale before the use cases are obvious, and hold through the adoption S-curve.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'LONG-DURATION CONVERGENCE',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'ld1', label:'CONVERGENCE TYPE',  value: convergenceType.replace(/_/g,' '),  type:'tag' },
+      { id:'ld2', label:'HORIZON SIGNAL',    value: horizonSignal.replace(/_/g,' '),    type:'tag' },
+      { id:'ld3', label:'CONVICTION WINDOW', value: '5–15 YEARS',                       type:'duration' },
+      { id:'ld4', label:'COMPOUNDING STAGE', value: 'INFRASTRUCTURE PHASE',             type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MAP INFRASTRUCTURE LAYER OWNERSHIP', impact:0.89, rationale:'In every decade-scale convergence, the infrastructure layer owners capture disproportionate value before applications are visible. Identify who owns the compute/grid/platform/network for this convergence.', tag:'STRUCTURE' },
+      secondary:  { id:'a2', label:'TRACK COST CURVE TRAJECTORY', impact:0.78, rationale:'Self-reinforcing cost curves (solar, genome sequencing, AI training) are the mechanism that makes decade-scale bets non-speculative. If the cost curve is declining at 30%+ per year, the demand curve is inevitable.', tag:'SIGNAL' },
+      conviction: [
+        { id:'c1', label:'MODEL S-CURVE ADOPTION POSITION', impact:0.84, rationale:'Identify where this convergence sits on the adoption S-curve. Pre-inflection (< 5% penetration in addressable market) is the maximum asymmetry window. Post-inflection risk is multiple compression as visibility improves.', tag:'TIMING' },
+        { id:'c2', label:'STRESS-TEST AGAINST SUBSTITUTION', impact:0.67, rationale:'What would have to be true for a competing convergence to displace this one? Substitution analysis prevents decade-scale commitment to a losing platform bet.', tag:'RISK' },
+      ],
+    },
+    leverage:          { typeY:2, typeLabel:'CAPITAL', tierLabel, deRatio:0.25, permissionless:false, industryNorm:0.35 },
+    convergence_type:  convergenceType,
+    horizon_signal:    horizonSignal,
+  };
+}
+
+// ── WO-1730: Flexible Space Demand Synthesizer (Neumann Protocol) ─────────────
+
+function synthFlexibleSpace(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const demandVector =
+    /remote.*work|hybrid.*work|work.*from.*home|distributed.*team/.test(q) ? 'REMOTE_HYBRID_DEMAND' :
+    /startup.*space|startup.*office|early.*stage.*office|pre.*series/.test(q) ? 'STARTUP_DEMAND' :
+    /enterprise.*flex|large.*company.*flex|corporate.*flex|enterprise.*cowork/.test(q) ? 'ENTERPRISE_FLEX' :
+    /wework|iw.*group|regus|industrious|coworking.*operator/.test(q) ? 'OPERATOR_DYNAMICS' :
+    /lease.*flex|short.*term.*lease|month.*to.*month|flex.*lease/.test(q) ? 'LEASE_STRUCTURE' :
+    'GENERAL_FLEX_DEMAND';
+
+  const marketContext =
+    /new.*york|nyc|manhattan/.test(q) ? 'NYC' :
+    /san.*francisco|sf|bay.*area/.test(q) ? 'SF_BAY' :
+    /london|uk|europe/.test(q) ? 'LONDON_EU' :
+    /los.*angeles|la/.test(q) ? 'LA' :
+    /austin|miami|nashville|sunbelt/.test(q) ? 'SUNBELT' :
+    'MULTI_MARKET';
+
+  let stateLabel, primaryInsight;
+  if (demandVector === 'ENTERPRISE_FLEX') {
+    stateLabel     = 'ENTERPRISE_FLEX_DEMAND_SIGNAL';
+    primaryInsight = 'Enterprise flex demand is the structural shift that WeWork\'s collapse obscured. Large corporations are using flex space not as a WeWork alternative but as a lease optionality tool — converting fixed long-term obligations to variable cost. IWG and Industrious are the beneficiaries because they have the financial structure that WeWork lacked.';
+  } else if (demandVector === 'REMOTE_HYBRID_DEMAND') {
+    stateLabel     = 'HYBRID_WORK_FLEX_DEMAND_ACTIVE';
+    primaryInsight = 'Hybrid work has created a structural reconfiguration of office demand. The demand is not dead — it is distributed. Companies are replacing one large HQ lease with a network of flex memberships and satellite locations. Total square footage is declining but flex utilization is rising. This is a distribution shift, not a demand collapse.';
+  } else if (demandVector === 'OPERATOR_DYNAMICS') {
+    stateLabel     = 'FLEX_OPERATOR_MARKET_SCAN';
+    primaryInsight = 'The flex office operator market has consolidated around asset-light models (Industrious/management contracts) and capital-efficient operators (IWG/Regus global network). WeWork\'s bankruptcy cleared the market of the distortive effect of below-cost pricing. The survivors are operating on fundamentally different unit economics.';
+  } else {
+    stateLabel     = `FLEXIBLE_SPACE_${demandVector}`;
+    primaryInsight = `Flexible space demand signal: ${demandVector.replace(/_/g,' ')}. Market context: ${marketContext}. The Neumann insight: proximity to people and spontaneous collaboration are genuine human needs that remote work cannot fulfill. Flex captures this without locking occupants into decade-long leases.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'FLEXIBLE SPACE DEMAND',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'fs1', label:'DEMAND VECTOR',    value: demandVector.replace(/_/g,' '),   type:'tag' },
+      { id:'fs2', label:'MARKET CONTEXT',   value: marketContext,                    type:'tag' },
+      { id:'fs3', label:'UTILIZATION TREND',value: 'RISING',                         type:'status' },
+      { id:'fs4', label:'LEASE STRUCTURE',  value: 'VARIABLE COST MODEL',            type:'framework' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'TRACK ENTERPRISE FLEX PENETRATION RATE', impact:0.83, rationale:'Enterprise flex as % of total commercial real estate portfolio is the growth indicator. Current penetration (~5%) suggests substantial runway before flex becomes the dominant office format.', tag:'SIGNAL' },
+      secondary:  { id:'a2', label:'COMPARE OPERATOR UNIT ECONOMICS', impact:0.72, rationale:'Management contract model (Industrious) vs. master lease model (legacy WeWork) have fundamentally different risk profiles. Operator unit economics determine which companies survive the next real estate cycle.', tag:'FINANCIAL' },
+      conviction: [
+        { id:'c1', label:'MODEL SUBLEASE MARKET AS SIGNAL', impact:0.77, rationale:'Sublease availability is the leading indicator of large company office demand. Rising sublease = corporations reducing footprint. Falling sublease = demand recovery. Sublease moves before net absorption in official CBRE/JLL data.', tag:'LEADING_INDICATOR' },
+        { id:'c2', label:'MAP SUNBELT FLEX EXPANSION VELOCITY', impact:0.64, rationale:'Sunbelt markets (Austin, Miami, Nashville) are absorbing flex capacity faster than coastal markets. This geographic demand shift changes the optimal operator footprint strategy.', tag:'GEOGRAPHIC' },
+      ],
+    },
+    leverage:       { typeY:5, typeLabel:'OWNERSHIP', tierLabel, deRatio:0.65, permissionless:false, industryNorm:0.6 },
+    demand_vector:  demandVector,
+    market_context: marketContext,
+  };
+}
+
+// ── WO-1731: Fintech Infrastructure Synthesizer (Collison Protocol) ───────────
+
+function synthFintechInfra(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const infraVector =
+    /payment.*rail|rail.*infrastructure|interbank|swift|ach|real.*time.*payment|rtp/.test(q) ? 'PAYMENT_RAILS' :
+    /embedded.*finance|banking.*as.*service|baas|embedded.*banking/.test(q) ? 'EMBEDDED_FINANCE' :
+    /developer.*api|financial.*api|api.*first|stripe.*model/.test(q) ? 'DEVELOPER_API' :
+    /stablecoin|crypto.*payment|blockchain.*payment|cbdc/.test(q) ? 'CRYPTO_RAILS' :
+    /cross.*border|international.*payment|remittance|fx.*settlement/.test(q) ? 'CROSS_BORDER' :
+    /compliance|kyc|aml|fraud.*detection|identity.*verif/.test(q) ? 'COMPLIANCE_LAYER' :
+    'GENERAL_FINTECH_INFRA';
+
+  const marketLayer =
+    /infrastructure|plumbing|backend|middleware/.test(q) ? 'INFRASTRUCTURE_LAYER' :
+    /consumer|retail.*banking|neobank|challenger.*bank/.test(q) ? 'CONSUMER_LAYER' :
+    /b2b|enterprise.*finance|treasury|corporate/.test(q) ? 'ENTERPRISE_LAYER' :
+    'PLATFORM_LAYER';
+
+  let stateLabel, primaryInsight;
+  if (infraVector === 'PAYMENT_RAILS') {
+    stateLabel     = 'PAYMENT_RAILS_INFRASTRUCTURE_SIGNAL';
+    primaryInsight = 'Payment rail modernization is a decade-long infrastructure replacement cycle. ACH was built for a 1970s banking system. The US FedNow launch and global real-time payment network buildout represent the first fundamental rail upgrade in 50 years. Companies that own the transition layer — routing, reconciliation, API abstraction — capture the value of the upgrade without the regulatory exposure of the banks.';
+  } else if (infraVector === 'DEVELOPER_API') {
+    stateLabel     = 'DEVELOPER_FINTECH_API_EXPANSION';
+    primaryInsight = 'The Collison protocol: financial infrastructure should have the same developer experience as web infrastructure. Stripe\'s insight was that payment complexity was a developer problem, not a financial problem. API-first financial services companies are compounding on Stripe\'s proof-of-concept — every financial workflow that can be accessed via API is a future category.';
+  } else if (infraVector === 'EMBEDDED_FINANCE') {
+    stateLabel     = 'EMBEDDED_FINANCE_WAVE_ACTIVE';
+    primaryInsight = 'Embedded finance is the productization of banking-as-a-service. When Shopify offers merchant lending, or Uber offers driver banking, they are using the Collison infrastructure pattern — financial services at the point of need, not at the bank branch. The infrastructure winners are the BaaS providers and ledger-layer companies that enable non-bank companies to offer financial products.';
+  } else {
+    stateLabel     = `FINTECH_INFRA_${infraVector}`;
+    primaryInsight = `Fintech infrastructure signal: ${infraVector.replace(/_/g,' ')}. Market layer: ${marketLayer.replace(/_/g,' ')}. Financial infrastructure follows the same pattern as internet infrastructure: the protocol layer captures durable value, application layers cycle.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'FINTECH INFRASTRUCTURE',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'fi1', label:'INFRA VECTOR',    value: infraVector.replace(/_/g,' '),    type:'tag' },
+      { id:'fi2', label:'MARKET LAYER',    value: marketLayer.replace(/_/g,' '),    type:'tag' },
+      { id:'fi3', label:'CYCLE DURATION',  value: '10–20 YEARS',                   type:'duration' },
+      { id:'fi4', label:'API DENSITY',     value: infraVector === 'DEVELOPER_API' ? 'HIGH' : 'MODERATE', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MAP API ECOSYSTEM DEPENDENCY GRAPH', impact:0.87, rationale:'Identify which fintech companies are upstream vs. downstream in the API dependency chain. Infrastructure layer companies have pricing power that application layer companies do not — they become the toll road.', tag:'STRUCTURE' },
+      secondary:  { id:'a2', label:'TRACK DEVELOPER ADOPTION VELOCITY', impact:0.75, rationale:'Developer adoption (GitHub stars, API call volume, sandbox registrations) is the leading indicator of fintech infrastructure market share — it moves 12–18 months before revenue.', tag:'SIGNAL' },
+      conviction: [
+        { id:'c1', label:'MODEL SWITCHING COST ARCHITECTURE', impact:0.82, rationale:'Fintech infrastructure switching costs compound with integration depth. Every additional financial product a company builds on a platform raises switching cost. Map integration depth as a moat metric.', tag:'MOAT' },
+        { id:'c2', label:'REGULATORY ARBITRAGE SCAN', impact:0.68, rationale:'Banking charter vs. BaaS model has regulatory arbitrage implications. BaaS companies face increasing regulatory scrutiny as they absorb bank-like functions. This is the ceiling on the non-bank fintech infrastructure model.', tag:'RISK' },
+      ],
+    },
+    leverage:       { typeY:1, typeLabel:'TECHNOLOGY', tierLabel, deRatio:0.4, permissionless:true, industryNorm:0.45 },
+    infra_vector:   infraVector,
+    market_layer:   marketLayer,
+  };
+}
+
+// ── WO-1732: Forward Compute Demand Synthesizer (Huang Protocol) ──────────────
+
+function synthForwardCompute(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const computeVector =
+    /gpu.*supply|gpu.*shortage|h100|a100|blackwell|hopper|nvidia.*supply/.test(q) ? 'GPU_SUPPLY' :
+    /inference.*demand|inference.*cost|inference.*scaling|model.*inference/.test(q) ? 'INFERENCE_DEMAND' :
+    /training.*compute|training.*cost|pre.*training|foundation.*model.*training/.test(q) ? 'TRAINING_COMPUTE' :
+    /data.*center|hyperscaler|cloud.*gpu|gpu.*cloud|colo|rack/.test(q) ? 'DATACENTER_BUILD' :
+    /energy.*compute|power.*ai|electricity.*ai|compute.*power/.test(q) ? 'ENERGY_CONSTRAINT' :
+    /custom.*chip|asic|tpu|maia|trainium|gaudi/.test(q) ? 'CUSTOM_SILICON' :
+    'GENERAL_COMPUTE';
+
+  const supplyDemandBalance =
+    /shortage|constrained|backlog|wait.*list|allocation/.test(q) ? 'DEMAND_EXCEEDS_SUPPLY' :
+    /oversupply|glut|excess.*capacity|inventory/.test(q) ? 'SUPPLY_EXCEEDS_DEMAND' :
+    'BALANCED';
+
+  let stateLabel, primaryInsight;
+  if (computeVector === 'GPU_SUPPLY') {
+    stateLabel     = 'GPU_SUPPLY_SIGNAL_ACTIVE';
+    primaryInsight = 'GPU supply is the rate-limiting variable for AI infrastructure deployment. H100/B200 allocation cycles determine which hyperscalers, startups, and sovereigns can train competitive foundation models. The Huang Protocol: whoever controls GPU supply controls AI timeline. Supply shortage is not a temporary disruption — it is the structural condition for the next 3–5 years as wafer capacity catches up to demand.';
+  } else if (computeVector === 'INFERENCE_DEMAND') {
+    stateLabel     = 'INFERENCE_DEMAND_CURVE_ACTIVE';
+    primaryInsight = 'Inference demand is the next phase of the compute buildout. Training created initial GPU demand; inference deployment will dwarf it. Every user of an AI product generates ongoing inference compute requirement. As AI applications scale from millions to billions of users, inference compute demand creates a structural, recurring revenue stream for GPU manufacturers and cloud providers.';
+  } else if (computeVector === 'ENERGY_CONSTRAINT') {
+    stateLabel     = 'COMPUTE_ENERGY_CONSTRAINT_SIGNAL';
+    primaryInsight = 'Energy availability is becoming the binding constraint on AI compute expansion. Data center power demand is outpacing grid buildout in every major market. The Huang Protocol extension: future compute leadership will be won by whoever secures dedicated power generation — nuclear, gas, or renewable — because the grid cannot absorb the demand at training scale.';
+  } else if (computeVector === 'CUSTOM_SILICON') {
+    stateLabel     = 'CUSTOM_SILICON_DISRUPTION_SIGNAL';
+    primaryInsight = 'Custom silicon (Google TPU, Amazon Trainium, Microsoft Maia) represents hyperscaler vertical integration of the compute stack. If successful at scale, custom silicon reduces GPU dependency and reprices NVIDIA\'s leverage. Current custom silicon trails NVIDIA by 2–3 performance generations but is advancing rapidly on cost-per-inference.';
+  } else {
+    stateLabel     = `FORWARD_COMPUTE_${computeVector}`;
+    primaryInsight = `Forward compute demand signal: ${computeVector.replace(/_/g,' ')}. Supply-demand balance: ${supplyDemandBalance.replace(/_/g,' ')}. Compute demand is not cyclical — it is structurally compounding with AI adoption. Every new AI capability creates downstream inference demand that does not mean-revert.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 10000000 ? 'INSTITUTIONAL' : capital >= 1000000 ? 'ACCREDITED' : 'RETAIL') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'FORWARD COMPUTE DEMAND',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'fc1', label:'COMPUTE VECTOR',     value: computeVector.replace(/_/g,' '),        type:'tag' },
+      { id:'fc2', label:'SUPPLY/DEMAND',      value: supplyDemandBalance.replace(/_/g,' '),  type:'tag' },
+      { id:'fc3', label:'DEMAND HORIZON',     value: '3–7 YEARS STRUCTURAL',                 type:'duration' },
+      { id:'fc4', label:'BINDING CONSTRAINT', value: computeVector === 'ENERGY_CONSTRAINT' ? 'POWER' : 'SILICON', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'MAP GPU ALLOCATION CONCENTRATION', impact:0.92, rationale:'Track which organizations are securing H100/B200 allocations by volume. GPU allocation is the leading indicator of who will lead AI capability development — 12–18 months before model releases reveal the outcome.', tag:'SIGNAL' },
+      secondary:  { id:'a2', label:'TRACK INFERENCE COST CURVE', impact:0.81, rationale:'Inference cost per token is declining at 10x per 18 months historically. Modeling the cost curve determines when AI features become economically viable at consumer scale — the demand activation threshold.', tag:'ECONOMICS' },
+      conviction: [
+        { id:'c1', label:'MODEL POWER DENSITY CONSTRAINT', impact:0.86, rationale:'Data center power density (kW per rack) is the physical ceiling on compute scaling. Current AI racks at 50–100kW are approaching grid connection limits. Model the power constraint timeline for each major compute geography.', tag:'INFRASTRUCTURE' },
+        { id:'c2', label:'TRACK CUSTOM SILICON BENCHMARK PROGRESSION', impact:0.72, rationale:'The pace at which Google/Amazon/Microsoft custom silicon closes the performance gap with NVIDIA H-series determines the GPU dependency timeline. Quarterly benchmark tracking is the signal to watch.', tag:'COMPETITIVE' },
+      ],
+    },
+    leverage:        { typeY:1, typeLabel:'TECHNOLOGY', tierLabel, deRatio:0.3, permissionless:false, industryNorm:0.35 },
+    compute_vector:  computeVector,
+    supply_demand:   supplyDemandBalance,
+  };
+}
+
+// ── WO-1733: Attention Saturation Synthesizer (Godin Protocol) ────────────────
+
+function synthAttentionSaturation(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const saturationVector =
+    /permission.*market|opt.*in|subscriber|email.*list|newsletter/.test(q) ? 'PERMISSION_MARKETING' :
+    /purple.*cow|remarkable|stand.*out|differentiat|category.*of.*one/.test(q) ? 'DIFFERENTIATION_SIGNAL' :
+    /ad.*saturation|paid.*attention|cpc.*rising|cpm.*rising|ad.*cost/.test(q) ? 'PAID_ATTENTION_COST' :
+    /organic.*reach|algorithmic.*reach|reach.*declining|platform.*reach/.test(q) ? 'ORGANIC_REACH_COMPRESSION' :
+    /brand.*trust|credibility|authority|thought.*leader/.test(q) ? 'AUTHORITY_SIGNAL' :
+    'GENERAL_SATURATION';
+
+  const channelContext =
+    /email|newsletter|substack/.test(q) ? 'EMAIL' :
+    /social.*media|instagram|tiktok|twitter|x\.com/.test(q) ? 'SOCIAL' :
+    /search|seo|google.*search|organic.*search/.test(q) ? 'SEARCH' :
+    /podcast|audio/.test(q) ? 'AUDIO' :
+    /content.*market|blog|article|long.*form/.test(q) ? 'CONTENT' :
+    'MULTI_CHANNEL';
+
+  let stateLabel, primaryInsight;
+  if (saturationVector === 'PERMISSION_MARKETING') {
+    stateLabel     = 'PERMISSION_MARKETING_SIGNAL_ACTIVE';
+    primaryInsight = 'Permission marketing is the Godin antidote to attention saturation. Interruption marketing (ads, cold outreach) becomes structurally less effective as saturation increases — more noise requires louder noise. Permission (opted-in audiences who want to hear from you) appreciates in value as the attention economy saturates. An email list of 10,000 opted-in subscribers outperforms a social following of 100,000 algorithm-dependent followers.';
+  } else if (saturationVector === 'PAID_ATTENTION_COST') {
+    stateLabel     = 'PAID_ATTENTION_COST_ESCALATION';
+    primaryInsight = 'CPC/CPM escalation is the measurable signal of attention saturation. When paid attention costs rise faster than conversion rates, the paid channel economics invert — the CAC floor rises above LTV for all but the highest-margin products. This is the forcing function that drives category leaders toward owned audience and permission assets.';
+  } else if (saturationVector === 'ORGANIC_REACH_COMPRESSION') {
+    stateLabel     = 'ORGANIC_REACH_COMPRESSION_SIGNAL';
+    primaryInsight = 'Platform algorithmic reach compression is structural, not cyclical. Facebook organic reach declined from 16% (2012) to under 2% (2022). Every major social platform follows the same curve: open organic access → advertiser monetization → organic compression → forced paid promotion. The only escape is owning the channel (email, SMS, podcast, community).';
+  } else if (saturationVector === 'DIFFERENTIATION_SIGNAL') {
+    stateLabel     = 'PURPLE_COW_DIFFERENTIATION_WINDOW';
+    primaryInsight = 'The Purple Cow principle: in a saturated attention environment, the only marketing that works is the product being remarkable — something worth remarking on. Remarkable is not louder. Remarkable is different enough that people choose to spread it. At peak saturation, conventional marketing budgets produce diminishing returns; unconventional product design produces compounding word-of-mouth.';
+  } else {
+    stateLabel     = `ATTENTION_SATURATION_${saturationVector}`;
+    primaryInsight = `Attention saturation signal: ${saturationVector.replace(/_/g,' ')}. Channel context: ${channelContext}. The Godin Protocol: in a world of infinite messages, scarcity is attention, and the only sustainable strategy is earning it — not buying it.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 1000000 ? 'INSTITUTIONAL' : capital >= 100000 ? 'GROWTH' : 'EARLY_STAGE') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'ATTENTION SATURATION',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'as1', label:'SATURATION VECTOR',  value: saturationVector.replace(/_/g,' '),  type:'tag' },
+      { id:'as2', label:'CHANNEL CONTEXT',    value: channelContext,                      type:'tag' },
+      { id:'as3', label:'PERMISSION ASSET',   value: saturationVector === 'PERMISSION_MARKETING' ? 'PRIMARY SIGNAL' : 'UPSTREAM', type:'status' },
+      { id:'as4', label:'REACH TRAJECTORY',   value: saturationVector === 'ORGANIC_REACH_COMPRESSION' ? 'DECLINING' : 'CHANNEL-DEPENDENT', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'AUDIT OWNED AUDIENCE ASSETS', impact:0.88, rationale:'Inventory all permission assets: email list size + open rate, SMS subscribers, podcast listeners, community members. These are the only assets that appreciate as platform reach compresses. Measure them independently of social following.', tag:'AUDIT' },
+      secondary:  { id:'a2', label:'TRACK CAC TREND VS. LTV FLOOR', impact:0.76, rationale:'When CAC rises faster than LTV, paid attention is no longer viable for customer acquisition at scale. The breakeven signal indicates when the channel requires renegotiation or abandonment.', tag:'ECONOMICS' },
+      conviction: [
+        { id:'c1', label:'BUILD PERMISSION ASSET ACCUMULATION PLAN', impact:0.83, rationale:'Permission assets compound over time — an email subscriber from 2019 has more historical engagement data than one from 2025. The earlier the accumulation starts, the more durable the asset becomes. Build now, before saturation makes acquisition costs prohibitive.', tag:'STRATEGY' },
+        { id:'c2', label:'MODEL ORGANIC REACH COMPRESSION TIMELINE', impact:0.67, rationale:'All social platforms compress organic reach over time. Modeling the compression curve for each channel (based on Facebook/Instagram historical patterns) predicts when paid dependency becomes mandatory and at what cost.', tag:'FORECAST' },
+      ],
+    },
+    leverage:          { typeY:3, typeLabel:'MEDIA', tierLabel, deRatio:0.7, permissionless:true, industryNorm:0.55 },
+    saturation_vector: saturationVector,
+    channel_context:   channelContext,
+  };
+}
+
 // ── Domain router ──────────────────────────────────────────────────────────────
 
 const SYNTH_MAP = {
@@ -3056,6 +3765,17 @@ const SYNTH_MAP = {
   RELEVANCE_WARFARE:        synthRelevanceWarfare,
   CONTENT_COMMERCE:         synthContentToCommerce,
   BOXING_DISRUPTION:        synthBoxingDisruption,
+  LABOR_VOLATILITY:         synthLaborVolatility,
+  BRAND_EQUITY_STABILITY:   synthBrandEquityStability,
+  STRUCTURAL_RESILIENCE:    synthStructuralResilience,
+  PRIVATE_CREDIT:           synthPrivateCredit,
+  SOVEREIGN_CAPITAL:        synthSovereignCapital,
+  STARTUP_READINESS:        synthStartupReadiness,
+  LONG_DURATION_CONVERGENCE: synthLongDurationConvergence,
+  FLEXIBLE_SPACE:           synthFlexibleSpace,
+  FINTECH_INFRA:            synthFintechInfra,
+  FORWARD_COMPUTE:          synthForwardCompute,
+  ATTENTION_SATURATION:     synthAttentionSaturation,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
@@ -3074,5 +3794,13 @@ export function synthesizeQuery(session) {
   const fn      = synthesizerFor(vector) ?? synthGeneral;
   const result  = fn(session, numbers, query);
   const contractLens = resolveContractLens(vector.primary, session.lens);
-  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens) };
+
+  // Gate: classification confidence (0–1) keyed by domain.
+  // true = phase transition detected — safe to write to HP ledger.
+  const gateSignal = processTick(
+    vector.primary,
+    vector.weights?.[vector.primary] ?? 0.5,
+  );
+
+  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal };
 }

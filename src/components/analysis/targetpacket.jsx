@@ -542,7 +542,6 @@ export default function TargetPacket() {
         {/* Right: Recommended Action */}
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
-          overflow: 'hidden',
           position: 'relative',
         }}>
           <>
@@ -556,8 +555,7 @@ export default function TargetPacket() {
                   <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, letterSpacing: '0.2em' }}>▴</span>
                 </div>
               )}
-              {actionScroll.down && (
-                <div style={{
+              <div style={{
                   position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
                   height: 32, pointerEvents: 'none',
                   background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
@@ -565,7 +563,6 @@ export default function TargetPacket() {
                 }}>
                   <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, letterSpacing: '0.2em' }}>▾</span>
                 </div>
-              )}
 
               {/* AltToggle drawer */}
               {showAlts && (
