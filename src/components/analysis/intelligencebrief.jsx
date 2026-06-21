@@ -152,7 +152,7 @@ export default function IntelligenceBrief() {
   function handleExport() {
     if (!exportUnlocked || !session) return;
     const brief   = buildBrief(session);
-    const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs);
+    const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs, hp);
     triggerDownload(payload);
     setExported(true);
     setTimeout(() => setExported(false), 2000);
@@ -222,15 +222,32 @@ export default function IntelligenceBrief() {
 
   const [hpOpen, setHpOpen]       = useState(false);
   const [hpLog, setHpLog]         = useState([]);
+  const [hpHeld, setHpHeld]       = useState(false);
+  const hpHoldTimer               = useRef(null);
   const hpAnchorRef               = useRef(null);
   const scrollBodyRef             = useRef(null);
+  const hpSnapshot                = useRef(null);
   const synthesis                 = useMemo(() => synthesizeQuery(session), [session]);
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
   const hp                        = engineState?.happyPath ?? null;
   const convictions               = useConvictionStore();
 
-  useEffect(() => { if (!hp?.qualified) { setHpOpen(false); setHpLog([]); } }, [hp?.qualified]);
+  useEffect(() => {
+    if (hp?.qualified) {
+      hpSnapshot.current = hp;
+      setHpHeld(true);
+      clearTimeout(hpHoldTimer.current);
+      if (!hpOpen) {
+        hpHoldTimer.current = setTimeout(() => setHpHeld(false), 5000);
+      }
+    } else {
+      if (!hpOpen) {
+        setHpHeld(false);
+        setHpLog([]);
+      }
+    }
+  }, [hp?.qualified, hpOpen]);
 
   useEffect(() => {
     if (!hp?.qualified) return;
@@ -308,21 +325,29 @@ export default function IntelligenceBrief() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ transform: 'rotate(2deg)', position: 'relative', top: 1, animation: hp?.qualified ? 'hp-pulse 1.8s ease-in-out infinite' : 'none' }}>
-              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity="1"/>
-              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.9' : '0.72'}/>
-              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.72' : '0.48'}/>
-              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.55' : '0.28'}/>
+              style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
+              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
+              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
+              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
+              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
             </svg>
-            {hp?.qualified && (
-              <span
+            {(hp?.qualified || hpHeld) && (
+              <div
                 onClick={() => { setHpOpen(true); setTimeout(() => { if (scrollBodyRef.current && hpAnchorRef.current) scrollBodyRef.current.scrollTop = hpAnchorRef.current.offsetTop - 12; }, 80); }}
                 style={{
-                  fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
-                  textTransform: 'uppercase', cursor: 'pointer',
-                  color: '#ffffff', animation: 'hp-pulse 1.8s ease-in-out infinite',
+                  cursor: 'pointer', padding: '4px 6px', display: 'flex', alignItems: 'center',
+                  animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
+                  opacity: hp?.qualified ? 1 : 0.5,
                 }}
-              >HP · READY</span>
+              >
+                <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
+                  <path d="M2 2 H10 L14 6 V18 H2 Z" stroke={PURPLE} strokeWidth="1" fill="none"/>
+                  <path d="M10 2 V6 H14" stroke={PURPLE} strokeWidth="1" fill="none"/>
+                  <line x1="4.5" y1="9"  x2="11.5" y2="9"  stroke={PURPLE} strokeWidth="0.9"/>
+                  <line x1="4.5" y1="12" x2="11.5" y2="12" stroke={PURPLE} strokeWidth="0.9"/>
+                  <line x1="4.5" y1="15" x2="9"    y2="15" stroke={PURPLE} strokeWidth="0.9"/>
+                </svg>
+              </div>
             )}
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -514,18 +539,18 @@ export default function IntelligenceBrief() {
         )}
 
         {/* ── Happy Path Identified — workspace ───────────────────────── */}
-        {hp?.qualified && hpOpen && (
+        {hpOpen && hpSnapshot.current && (
           <div ref={hpAnchorRef} style={{ flexShrink: 0, borderTop: `1px solid rgba(138,43,226,0.2)` }}>
             <div style={{ border: `1px solid rgba(138,43,226,0.3)`, background: 'rgba(138,43,226,0.04)', padding: '14px 18px', margin: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hp.domains.join(' · ')}</span>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
               </div>
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 {[
                   { label: 'CONVERGENCE', value: 'HIGH — sustained' },
-                  { label: 'VELOCITY',    value: hp.velocity },
-                  { label: 'SCORE',       value: `${hp.peakScore.toFixed(0)} / 100` },
+                  { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
+                  { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
                   { label: 'COUNTER',     value: 'None above threshold' },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -551,26 +576,6 @@ export default function IntelligenceBrief() {
                   ))}
                 </div>
               )}
-              <button
-                onClick={() => {
-                  const id = convictions.commit({
-                    sessionId:    activeId,
-                    thesis:       synthesis?.recommendedAction ?? null,
-                    timeHorizon:  synthesis?.timeHorizon ?? null,
-                    domains:      hp.domains,
-                    peakScore:    hp.peakScore,
-                    velocity:     hp.velocity,
-                    domainStates: engineState?.domainStates ?? {},
-                  });
-                  emitTelemetry({ type: 'commit_thesis', sessionId: activeId, convictionId: id, timestamp: Date.now() });
-                }}
-                style={{
-                  alignSelf: 'flex-start', marginTop: 2,
-                  fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', textTransform: 'uppercase',
-                  background: 'transparent', cursor: 'pointer',
-                  border: `1px solid ${PURPLE}`, color: PURPLE, padding: '7px 18px',
-                }}
-              >COMMIT THESIS</button>
             </div>
 
             {convictions.active.length > 0 && (
@@ -694,7 +699,7 @@ export default function IntelligenceBrief() {
 
             {/* ── HP Update Log ─────────────────────────────────────────── */}
             <div style={{ margin: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 8 }}>
+              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
                 HP UPDATE LOG
               </div>
               {hpLog.length === 0 ? (
@@ -708,10 +713,10 @@ export default function IntelligenceBrief() {
                       <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
                         {new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: entry.type === 'state_event' ? 'rgba(138,43,226,0.5)' : 'rgba(255,255,255,0.25)' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
                         {entry.label}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.08em' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
                         {entry.detail}
                       </span>
                     </div>

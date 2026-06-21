@@ -155,7 +155,7 @@ function buildDomainState(session, pendingAcquisition) {
 
 // ── Main export builder ───────────────────────────────────────────────────────
 
-export function buildExportPayload(brief, session, fs) {
+export function buildExportPayload(brief, session, fs, hp = null) {
   const acquisition = session?.pendingAcquisition ?? null;
 
   const payload = {
@@ -214,6 +214,15 @@ export function buildExportPayload(brief, session, fs) {
     signal_snapshot:     buildSignalSnapshot(session, acquisition, fs),
     evidence_graph:      buildEvidenceGraph(session, acquisition),
     domains:             buildDomainState(session, acquisition),
+    ...(hp?.qualified ? {
+      happy_path: {
+        qualified:  true,
+        domains:    hp.domains ?? [],
+        peak_score: typeof hp.peakScore === 'number' ? parseFloat(hp.peakScore.toFixed(2)) : null,
+        velocity:   hp.velocity ?? null,
+        since:      hp.since ?? null,
+      },
+    } : {}),
   };
 
   payload.meta.artifact_hash = computeArtifactHash(payload);
