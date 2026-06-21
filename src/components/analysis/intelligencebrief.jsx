@@ -331,24 +331,26 @@ export default function IntelligenceBrief() {
               <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
               <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
             </svg>
-            {(hp?.qualified || hpHeld) && (
-              <div
-                onClick={() => { setHpOpen(true); setTimeout(() => { if (scrollBodyRef.current && hpAnchorRef.current) scrollBodyRef.current.scrollTop = hpAnchorRef.current.offsetTop - 12; }, 80); }}
-                style={{
-                  cursor: 'pointer', padding: '4px 6px', display: 'flex', alignItems: 'center',
-                  animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
-                  opacity: hp?.qualified ? 1 : 0.5,
-                }}
-              >
-                <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
-                  <path d="M2 2 H10 L14 6 V18 H2 Z" stroke={PURPLE} strokeWidth="1" fill="none"/>
-                  <path d="M10 2 V6 H14" stroke={PURPLE} strokeWidth="1" fill="none"/>
-                  <line x1="4.5" y1="9"  x2="11.5" y2="9"  stroke={PURPLE} strokeWidth="0.9"/>
-                  <line x1="4.5" y1="12" x2="11.5" y2="12" stroke={PURPLE} strokeWidth="0.9"/>
-                  <line x1="4.5" y1="15" x2="9"    y2="15" stroke={PURPLE} strokeWidth="0.9"/>
-                </svg>
-              </div>
-            )}
+            <div
+              onClick={() => { if (!(hp?.qualified || hpHeld)) return; setHpOpen(true); setTimeout(() => { if (scrollBodyRef.current && hpAnchorRef.current) scrollBodyRef.current.scrollTop = hpAnchorRef.current.offsetTop - 12; }, 80); }}
+              style={{
+                cursor: hp?.qualified || hpHeld ? 'pointer' : 'default',
+                padding: '4px 6px', display: 'flex', alignItems: 'center',
+                animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
+                opacity: hp?.qualified ? 1 : hpHeld ? 0.5 : 0,
+                visibility: hp?.qualified || hpHeld ? 'visible' : 'hidden',
+                marginLeft: '5%',
+                pointerEvents: hp?.qualified || hpHeld ? 'auto' : 'none',
+              }}
+            >
+              <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
+                <path d="M2 2 H10 L14 6 V18 H2 Z" stroke={PURPLE} strokeWidth="1" fill="none"/>
+                <path d="M10 2 V6 H14" stroke={PURPLE} strokeWidth="1" fill="none"/>
+                <line x1="4.5" y1="9"  x2="11.5" y2="9"  stroke={PURPLE} strokeWidth="0.9"/>
+                <line x1="4.5" y1="12" x2="11.5" y2="12" stroke={PURPLE} strokeWidth="0.9"/>
+                <line x1="4.5" y1="15" x2="9"    y2="15" stroke={PURPLE} strokeWidth="0.9"/>
+              </svg>
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button

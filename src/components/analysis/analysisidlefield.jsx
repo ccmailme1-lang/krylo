@@ -1134,6 +1134,26 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           </div>
 
+          {/* ── RE-ANALYZE ── only after search execute */}
+          {hasSession && <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px 0', flexShrink: 0 }}>
+            <button
+              onClick={resetSession}
+              title="Re-analyze"
+              style={{
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                padding: 10, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                opacity: 0.75, transition: 'opacity 150ms, filter 150ms',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.filter = 'drop-shadow(0 0 6px #66FF00)'; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = '0.75'; e.currentTarget.style.filter = 'none'; }}
+            >
+              <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#66FF00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+            </button>
+          </div>}
+
           {/* ── SIMULATION CONTROLS FOOTER ── */}
           {!isLive && (
             <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER_MED}`, padding: '12px 16px' }}>
