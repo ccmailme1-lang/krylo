@@ -1,11 +1,14 @@
 // WO-1341 — Intelligence Brief: Premium HUD Surface
 // Houston Mission Control / Presidential Situation Room aesthetic
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
+import { useHappyPathEngine, useUnicornAlerts } from '../../engine/happypathdisplacementengine.js';
+import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../engine/convictionstore.js';
+import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
@@ -18,6 +21,7 @@ const BORDER = 'rgba(255,255,255,0.08)';
 const DIM    = 'rgba(255,255,255,0.25)';
 const MID    = 'rgba(255,255,255,0.5)';
 const BRT    = 'rgba(255,255,255,0.88)';
+const PURPLE   = '#8A2BE2';
 const LIME_DIM = 'rgba(102,255,0,0.25)';
 const LIME_MID = 'rgba(102,255,0,0.5)';
 
@@ -216,13 +220,48 @@ export default function IntelligenceBrief() {
 
   const brief = buildBrief(session);
 
+  const [hpOpen, setHpOpen]       = useState(false);
+  const [hpLog, setHpLog]         = useState([]);
+  const hpAnchorRef               = useRef(null);
+  const scrollBodyRef             = useRef(null);
+  const synthesis                 = useMemo(() => synthesizeQuery(session), [session]);
+  const { engineState }           = useHappyPathEngine();
+  const { alerts, clearAlerts }   = useUnicornAlerts(5);
+  const hp                        = engineState?.happyPath ?? null;
+  const convictions               = useConvictionStore();
+
+  useEffect(() => { if (!hp?.qualified) { setHpOpen(false); setHpLog([]); } }, [hp?.qualified]);
+
+  useEffect(() => {
+    if (!hp?.qualified) return;
+    setHpLog(prev => {
+      if (prev.some(e => e.key === 'hp_qualified')) return prev;
+      return [...prev, {
+        key: 'hp_qualified', type: 'state_event', ts: Date.now(),
+        label: 'HP QUALIFIED', detail: `${hp.domains?.join(' · ') ?? '—'} · score ${hp.peakScore?.toFixed(0) ?? '—'}`,
+      }];
+    });
+  }, [hp?.qualified]);
+
+  useEffect(() => {
+    if (!hp?.qualified || !alerts.length) return;
+    const a = alerts[alerts.length - 1];
+    setHpLog(prev => [...prev, {
+      key: `signal_${a?.id ?? Date.now()}`, type: 'signal_event', ts: a?.ts ?? Date.now(),
+      label: 'DOMAIN ALERT', detail: a?.label ?? '—',
+    }]);
+  }, [alerts.length]);
+  const monitorMap                = useThesisMonitor(convictions.active, engineState?.domainStates, hp);
+  const calibration               = useMemo(() => computeCalibration(convictions.resolved), [convictions.resolved]);
+
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
       {/* Keyframes */}
       <style>{`
-        @keyframes ib-blink { 0%,100%{opacity:1} 50%{opacity:0.15} }
-        @keyframes ib-scan  { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
+        @keyframes ib-blink  { 0%,100%{opacity:1} 50%{opacity:0.15} }
+        @keyframes ib-scan   { 0%{transform:translateY(0)} 100%{transform:translateY(4px)} }
+        @keyframes hp-pulse  { 0%,100%{opacity:1} 50%{opacity:0.55} }
       `}</style>
 
       {/* Background layers */}
@@ -266,34 +305,45 @@ export default function IntelligenceBrief() {
       {/* ── HAPPY PATH + EQ CANVAS — leadoff, directly under Oracle Kernel ── */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
-            <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
-              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
-              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
-              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
-              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
+            <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
+              style={{ transform: 'rotate(2deg)', position: 'relative', top: 1, animation: hp?.qualified ? 'hp-pulse 1.8s ease-in-out infinite' : 'none' }}>
+              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity="1"/>
+              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.9' : '0.72'}/>
+              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.72' : '0.48'}/>
+              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill={hp?.qualified ? PURPLE : '#66FF00'} fillOpacity={hp?.qualified ? '0.55' : '0.28'}/>
             </svg>
+            {hp?.qualified && (
+              <span
+                onClick={() => { setHpOpen(true); setTimeout(() => { if (scrollBodyRef.current && hpAnchorRef.current) scrollBodyRef.current.scrollTop = hpAnchorRef.current.offsetTop - 12; }, 80); }}
+                style={{
+                  fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+                  textTransform: 'uppercase', cursor: 'pointer',
+                  color: '#ffffff', animation: 'hp-pulse 1.8s ease-in-out infinite',
+                }}
+              >HP · READY</span>
+            )}
           </div>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
-              textTransform: 'uppercase', cursor: 'pointer',
-              background: 'transparent',
-              border: '1px solid rgba(0,127,255,0.3)',
-              color: BLUE,
-              padding: '5px 14px',
-              transition: 'all 200ms ease',
-            }}
-          >
-            EXPORT BRIEF
-          </button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+                textTransform: 'uppercase', cursor: 'pointer',
+                background: 'transparent',
+                border: '1px solid rgba(0,127,255,0.3)',
+                color: BLUE,
+                padding: '5px 14px',
+                transition: 'all 200ms ease',
+              }}
+            >EXPORT BRIEF</button>
+          </div>
         </div>
       </div>
 
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
-      <div style={{ flex: 3, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
+      <div ref={scrollBodyRef} style={{ flex: 3, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
 
         {/* IMPORTED ARTIFACT BANNER */}
         {isImported && importState?.status === 'success' && (
@@ -442,18 +492,251 @@ export default function IntelligenceBrief() {
           </div>
         </Panel>
 
-        {/* ── CONVERGENCE FIELD · EQ — supplement, follows brief body ── */}
-        <EQCanvas
-          isPremium={true}
-          onCommitThesis={({ domain, engineState }) => {
-            console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
-          }}
-          onSetTrigger={({ domain, peakPosition }) => {
-            window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
-              detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
-            }));
-          }}
-        />
+        {/* ── Happy Path — Access Latch ───────────────────────────────── */}
+        {hp?.qualified && !hpOpen && (
+          <div
+            onClick={() => setHpOpen(true)}
+            style={{
+              margin: '12px 20px',
+              border: `1px solid ${PURPLE}`,
+              background: 'rgba(138,43,226,0.06)',
+              padding: '14px 18px',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              transition: 'background 120ms ease',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(138,43,226,0.13)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(138,43,226,0.06)'}
+          >
+            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: PURPLE }}>HP · QUALIFIED</span>
+            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: PURPLE, opacity: 0.7 }}>OPEN</span>
+          </div>
+        )}
+
+        {/* ── Happy Path Identified — workspace ───────────────────────── */}
+        {hp?.qualified && hpOpen && (
+          <div ref={hpAnchorRef} style={{ flexShrink: 0, borderTop: `1px solid rgba(138,43,226,0.2)` }}>
+            <div style={{ border: `1px solid rgba(138,43,226,0.3)`, background: 'rgba(138,43,226,0.04)', padding: '14px 18px', margin: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hp.domains.join(' · ')}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'CONVERGENCE', value: 'HIGH — sustained' },
+                  { label: 'VELOCITY',    value: hp.velocity },
+                  { label: 'SCORE',       value: `${hp.peakScore.toFixed(0)} / 100` },
+                  { label: 'COUNTER',     value: 'None above threshold' },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontFamily: SERIF, fontSize: 10, color: 'rgba(138,43,226,0.55)', lineHeight: 1.55, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
+                Invalidated by: velocity reversal in any qualifying domain · counter-signal breach · convergence below floor.
+              </div>
+              {alerts.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+                  </div>
+                  {alerts.map(a => (
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 7, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  const id = convictions.commit({
+                    sessionId:    activeId,
+                    thesis:       synthesis?.recommendedAction ?? null,
+                    timeHorizon:  synthesis?.timeHorizon ?? null,
+                    domains:      hp.domains,
+                    peakScore:    hp.peakScore,
+                    velocity:     hp.velocity,
+                    domainStates: engineState?.domainStates ?? {},
+                  });
+                  emitTelemetry({ type: 'commit_thesis', sessionId: activeId, convictionId: id, timestamp: Date.now() });
+                }}
+                style={{
+                  alignSelf: 'flex-start', marginTop: 2,
+                  fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', textTransform: 'uppercase',
+                  background: 'transparent', cursor: 'pointer',
+                  border: `1px solid ${PURPLE}`, color: PURPLE, padding: '7px 18px',
+                }}
+              >COMMIT THESIS</button>
+            </div>
+
+            {convictions.active.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px 12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
+                  Active Convictions · {convictions.active.length}
+                </div>
+                {convictions.active.map(c => {
+                  const mAlerts    = monitorMap[c.id] ?? [];
+                  const highAlerts = mAlerts.filter(a => a.severity === 'high');
+                  const borderColor = highAlerts.length > 0 ? 'rgba(255,80,80,0.5)'
+                    : mAlerts.some(a => a.severity === 'medium') ? 'rgba(138,43,226,0.6)' : 'rgba(138,43,226,0.4)';
+                  return (
+                    <div key={c.id} style={{ borderLeft: `2px solid ${borderColor}`, paddingLeft: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
+                          {new Date(c.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </span>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
+                      </div>
+                      {c.thesis && (
+                        <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, letterSpacing: '0.03em' }}>
+                          {c.thesis.length > 120 ? c.thesis.slice(0, 117) + '…' : c.thesis}
+                        </div>
+                      )}
+                      {mAlerts.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: 5 }}>
+                          {mAlerts.map((a, i) => (
+                            <div key={i} style={{ fontFamily: MONO, fontSize: 7, lineHeight: 1.5, letterSpacing: '0.03em',
+                              color: a.severity === 'high' ? 'rgba(255,80,80,0.85)' : a.severity === 'medium' ? 'rgba(255,255,255,0.55)' : 'rgba(102,255,0,0.5)',
+                            }}>{a.message}</div>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {['confirmed', 'denied', 'timed_out'].map(res => (
+                          <button key={res} onClick={() => convictions.resolve(c.id, res)} style={{
+                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                            background: 'transparent', cursor: 'pointer', padding: '3px 8px',
+                            border: `1px solid rgba(138,43,226,0.25)`, color: 'rgba(138,43,226,0.45)',
+                          }}>{res.replace('_', ' ')}</button>
+                        ))}
+                        <button onClick={() => convictions.dismiss(c.id)} style={{
+                          fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          background: 'transparent', cursor: 'pointer', padding: '3px 8px',
+                          border: `1px solid rgba(255,255,255,0.08)`, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto',
+                        }}>DISMISS</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {convictions.resolved.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 20px 16px', borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                    Decision Lineage · {convictions.resolved.length}
+                  </span>
+                  {calibration.total >= 5 && (
+                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: LIME }}>
+                      {Math.round(calibration.overallAccuracy * 100)}% ACCURACY
+                    </span>
+                  )}
+                </div>
+                {(calibration.overallAccuracy !== null || calibration.hpAccuracy !== null || calibration.domainAccuracy.length > 0) && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 12px', borderLeft: `2px solid rgba(102,255,0,0.2)` }}>
+                    {calibration.overallAccuracy !== null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{calibration.confirmed}C · {calibration.denied}D · {calibration.timedOut}T</span>
+                      </div>
+                    )}
+                    {calibration.hpAccuracy !== null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.08em' }}>{Math.round(calibration.hpAccuracy * 100)}%</span>
+                      </div>
+                    )}
+                    {calibration.domainAccuracy.map(g => (
+                      <div key={g.domains.join('+')} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{Math.round(g.accuracy * 100)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {calibration.overallAccuracy === null && calibration.hpAccuracy === null && calibration.domainAccuracy.length === 0 && (
+                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', lineHeight: 1.6 }}>
+                    Calibration metrics appear after more convictions are resolved.
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {convictions.resolved.map(r => {
+                    const resColor = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
+                    const hadHP    = r.peakScore >= 75 && r.domains.length >= 2;
+                    return (
+                      <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
+                            {new Date(r.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </span>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 5, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
+                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
+                        {r.thesis && (
+                          <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                            {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── HP Update Log ─────────────────────────────────────────── */}
+            <div style={{ margin: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(255,255,255,0.2)', textTransform: 'uppercase', marginBottom: 8 }}>
+                HP UPDATE LOG
+              </div>
+              {hpLog.length === 0 ? (
+                <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.14em' }}>
+                  [ awaiting signal ]
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {hpLog.map(entry => (
+                    <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
+                        {new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: entry.type === 'state_event' ? 'rgba(138,43,226,0.5)' : 'rgba(255,255,255,0.25)' }}>
+                        {entry.label}
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.08em' }}>
+                        {entry.detail}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* ── CONVERGENCE FIELD · EQ — gated to Happy Path qualification ── */}
+        {hp?.qualified && (
+          <EQCanvas
+            isPremium={true}
+            onCommitThesis={({ domain, engineState }) => {
+              console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
+            }}
+            onSetTrigger={({ domain, peakPosition }) => {
+              window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
+                detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
+              }));
+            }}
+          />
+        )}
 
       </div>
 
