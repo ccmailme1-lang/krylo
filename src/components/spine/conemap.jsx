@@ -587,7 +587,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         top:           48,
         bottom:        190,
         right:         16,
-        width:         240,
+        width:         'calc(240px + 1vw)',
         padding:       '14px 16px',
         background:    'rgba(0,0,0,0.68)',
         border:        `1px solid ${accent}22`,
@@ -709,23 +709,18 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
           <span style={{ fontSize: 13, color: bay?.assignment ? LIME : '#ffffff', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
             {bay?.assignment?.title ?? (cone.domain ?? '').toUpperCase()}
           </span>
-          <div style={{ display: 'flex', flexDirection: 'row', gap: 8, flexShrink: 0, alignItems: 'center' }}>
-            <button
-              onClick={() => {
-                if (panelSearch) {
-                  const v = panelInput.trim();
-                  if (v) { assignToBay(bayId, { id: v, title: v, source: 'search' }); setPanelSearch(false); setPanelInput(''); setPanelResult(null); }
-                } else {
-                  setPanelSearch(true); setPanelInput(''); setPanelResult(null);
-                }
-              }}
-              style={{ background: 'none', border: 'none', color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: 'pointer' }}
-            >+</button>
-            <button
-              onClick={() => { setPanelSearch(false); setPanelInput(''); setPanelResult(null); }}
-              style={{ background: 'none', border: 'none', color: panelSearch ? LIME : 'rgba(255,255,255,0.15)', fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: panelSearch ? 'pointer' : 'default', transition: 'color 150ms' }}
-            >−</button>
-          </div>
+          <button
+            onClick={() => {
+              if (panelSearch) {
+                const v = panelInput.trim();
+                if (v) { assignToBay(bayId, { id: v, title: v, source: 'search' }); }
+                setPanelSearch(false); setPanelInput(''); setPanelResult(null);
+              } else {
+                setPanelSearch(true); setPanelInput(''); setPanelResult(null);
+              }
+            }}
+            style={{ background: 'none', border: 'none', color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: 'pointer', flexShrink: 0 }}
+          >{panelSearch ? '−' : '+'}</button>
         </div>
       )}
 
