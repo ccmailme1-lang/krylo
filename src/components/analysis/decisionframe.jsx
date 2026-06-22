@@ -1,5 +1,5 @@
 // WO-1839 — Opportunity Framing Layer
-// Translates signal finding → decision-ready frame for specific authority type.
+// WO-1840 — Intent Multiplicity Gating Layer (distribution gate, replaces scalar threshold)
 // Phase A: static templates only. Zero inference. Zero generation. Zero signal addition.
 // Architectural rule: this component re-expresses findings. It never adds to them.
 
@@ -10,7 +10,8 @@ const DIM    = 'rgba(255,255,255,0.25)';
 const MID    = 'rgba(255,255,255,0.5)';
 const BRT    = 'rgba(255,255,255,0.85)';
 
-const HP_FLOOR = 75;
+const HP_PRIMARY  = 75;  // full validated render
+const HP_FALLBACK = 65;  // muted fallback render — distribution gate, not scalar patch
 
 // Phase A — frozen static templates. Text is verbatim. No interpolation.
 const DECISION_TEMPLATES = {
@@ -42,7 +43,6 @@ const DECISION_TEMPLATES = {
 };
 
 // LENS_PRIORITY — tie-break when conviction scores are equal.
-// CAPITAL_ALLOCATOR defaults when all else is unresolved.
 const LENS_PRIORITY = [
   'CAPITAL_ALLOCATOR',
   'RISK_MANAGER',
@@ -51,12 +51,13 @@ const LENS_PRIORITY = [
   'DEFENDER',
 ];
 
-// FRAME_RESOLUTION_POLICY — meta-handler, not a template.
-// Consumes LensProfile[], selects primary, collapses secondaries.
-// Returns null when HP gate fails or no valid lens exists.
+// resolveFrames — two-tier distribution gate.
+// Primary tier (hpScore >= HP_PRIMARY): full validated render.
+// Fallback tier (HP_FALLBACK <= hpScore < HP_PRIMARY): muted render, pointerEvents off.
+// Below HP_FALLBACK: null — gate suppresses entirely.
 function resolveFrames(lensProfiles, hpScore) {
   if (!Array.isArray(lensProfiles) || lensProfiles.length === 0) return null;
-  if (typeof hpScore !== 'number' || hpScore < HP_FLOOR)          return null;
+  if (typeof hpScore !== 'number' || hpScore < HP_FALLBACK)        return null;
 
   const valid = lensProfiles.filter(p => DECISION_TEMPLATES[p.lensId]);
   if (valid.length === 0) return null;
@@ -68,19 +69,20 @@ function resolveFrames(lensProfiles, hpScore) {
 
   const [top, ...rest] = sorted;
   return {
-    primary:                { ...top,  ...DECISION_TEMPLATES[top.lensId]  },
+    primary:                { ...top, ...DECISION_TEMPLATES[top.lensId] },
     secondaries:            rest.map(p => ({ ...p, ...DECISION_TEMPLATES[p.lensId] })),
     resolutionPolicyApplied: rest.length > 0,
+    isFallback:             hpScore < HP_PRIMARY,
   };
 }
 
-function FrameRow({ label, value }) {
+function FrameRow({ label, value, dimValue }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingBottom: 10, borderBottom: `1px solid ${BORDER}` }}>
       <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
         {label}
       </span>
-      <span style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.06em', lineHeight: 1.5 }}>
+      <span style={{ fontFamily: MONO, fontSize: 10, color: dimValue ? DIM : BRT, letterSpacing: '0.06em', lineHeight: 1.5 }}>
         {value}
       </span>
     </div>
@@ -91,10 +93,15 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
   const frames = resolveFrames(lensProfiles, hpScore);
   if (!frames) return null;
 
-  const { primary, secondaries, resolutionPolicyApplied } = frames;
+  const { primary, secondaries, resolutionPolicyApplied, isFallback } = frames;
 
   return (
-    <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
+    <div style={{
+      flexShrink: 0,
+      borderTop: `1px solid ${BORDER}`,
+      opacity: isFallback ? 0.5 : 1,
+      pointerEvents: isFallback ? 'none' : 'auto',
+    }}>
 
       {/* Section label */}
       <div style={{
@@ -102,14 +109,17 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
         padding: '8px 20px', borderBottom: `1px solid ${BORDER}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
-            Decision Translation Layer
+          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: isFallback ? LIME : DIM, textTransform: 'uppercase' }}>
+            {isFallback ? 'PRELIMINARY SIGNAL // LOW CONFIDENCE CONVERGENCE' : 'Decision Translation Layer'}
           </span>
           <span style={{
-            fontFamily: MONO, fontSize: 7, color: '#000', background: LIME,
-            padding: '1px 6px', letterSpacing: '0.1em',
+            fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em',
+            padding: '1px 6px',
+            ...(isFallback
+              ? { color: DIM, border: `1px solid rgba(255,255,255,0.1)`, background: 'transparent' }
+              : { color: '#000', background: LIME }),
           }}>
-            {primary.lensId.replace('_', ' ')}
+            {primary.lensId.replace(/_/g, ' ')}
           </span>
         </div>
         {resolutionPolicyApplied && (
@@ -121,13 +131,13 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
 
       {/* Primary frame */}
       <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <FrameRow label="Stake"  value={primary.stake}  />
-        <FrameRow label="Move"   value={primary.move}   />
+        <FrameRow label="Stake" value={primary.stake}  dimValue={isFallback} />
+        <FrameRow label="Move"  value={primary.move}   dimValue={isFallback} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
             Window
           </span>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.06em' }}>
+          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: isFallback ? MID : LIME }}>
             {primary.window}
           </span>
         </div>
@@ -147,7 +157,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
                 border: `1px solid ${BORDER}`,
               }}>
                 <span style={{ fontFamily: MONO, fontSize: 7, color: MID, letterSpacing: '0.18em', flexShrink: 0 }}>
-                  {s.lensId.replace('_', ' ')}
+                  {s.lensId.replace(/_/g, ' ')}
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.4 }}>
                   {s.move}

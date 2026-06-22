@@ -13,14 +13,20 @@ const VALID_LENS_IDS = new Set([
 
 // Static persona → primary decision context mapping
 const PERSONA_MAP = {
-  INVESTOR:   { primary: 'CAPITAL_ALLOCATOR', secondary: 'GROWTH_SEEKER'  },
-  REALTOR:    { primary: 'CAPITAL_ALLOCATOR', secondary: 'OPERATOR'        },
-  ATHLETE:    { primary: 'DEFENDER',          secondary: 'GROWTH_SEEKER'   },
-  SALES:      { primary: 'GROWTH_SEEKER',     secondary: 'OPERATOR'        },
-  LEGAL:      { primary: 'RISK_MANAGER',      secondary: 'DEFENDER'        },
+  INVESTOR:   { primary: 'CAPITAL_ALLOCATOR', secondary: 'GROWTH_SEEKER'    },
+  REALTOR:    { primary: 'CAPITAL_ALLOCATOR', secondary: 'OPERATOR'          },
+  ATHLETE:    { primary: 'DEFENDER',          secondary: 'GROWTH_SEEKER'     },
+  SALES:      { primary: 'GROWTH_SEEKER',     secondary: 'OPERATOR'          },
+  LEGAL:      { primary: 'RISK_MANAGER',      secondary: 'DEFENDER'          },
   RETIREMENT: { primary: 'RISK_MANAGER',      secondary: 'CAPITAL_ALLOCATOR' },
-  GENERAL:    { primary: 'OPERATOR',          secondary: null               },
-  OPEN:       { primary: 'OPERATOR',          secondary: null               },
+  EXPENSE:    { primary: 'OPERATOR',          secondary: 'RISK_MANAGER'      },
+  TRANSITION: { primary: 'GROWTH_SEEKER',     secondary: 'RISK_MANAGER'      },
+  RESTART:    { primary: 'GROWTH_SEEKER',     secondary: 'RISK_MANAGER'      },
+  FAMILY:     { primary: 'RISK_MANAGER',      secondary: 'OPERATOR'          },
+  HEALTH:     { primary: 'RISK_MANAGER',      secondary: 'OPERATOR'          },
+  STUDENT:    { primary: 'GROWTH_SEEKER',     secondary: 'CAPITAL_ALLOCATOR' },
+  GENERAL:    { primary: 'OPERATOR',          secondary: null                },
+  OPEN:       { primary: 'OPERATOR',          secondary: null                },
 };
 
 // Query signal patterns — shift toward a specific context when detected
