@@ -8,7 +8,7 @@ import { useState, useEffect, useRef } from 'react';
 import { surfaceRouter } from '../engine/surfacerouter.js';
 
 const POLL_MS    = 900_000; // 15-min refresh — Form D filings are not real-time
-const EDGAR_BASE = 'https://efts.sec.gov/LATEST/search-index';
+const EDGAR_BASE = '/api/edgar';
 
 // ── Normalization ─────────────────────────────────────────────────────────────
 // Filing volume: 0–50 filings in window → 0–100 pressure score

@@ -270,6 +270,40 @@ function handleNotFound(_req, res) {
   send(res, 404, { error: 'Not found' });
 }
 
+// ── FRED proxy — server-side fetch bypasses browser CORS ─────────────────────
+function handleFredProxy(req, res) {
+  const qs      = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const options = {
+    hostname: 'api.stlouisfed.org',
+    path:     '/fred/series/observations' + qs,
+    method:   'GET',
+    headers:  { 'Accept': 'application/json' },
+  };
+  const proxy = https.request(options, upstream => {
+    res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json' });
+    upstream.pipe(res);
+  });
+  proxy.on('error', err => send(res, 502, { error: 'FRED upstream: ' + err.message }));
+  proxy.end();
+}
+
+// ── EDGAR proxy — server-side fetch bypasses browser CORS ────────────────────
+function handleEdgarProxy(req, res) {
+  const qs      = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const options = {
+    hostname: 'efts.sec.gov',
+    path:     '/LATEST/search-index' + qs,
+    method:   'GET',
+    headers:  { 'Accept': 'application/json', 'User-Agent': 'krylo-signal-engine/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json' });
+    upstream.pipe(res);
+  });
+  proxy.on('error', err => send(res, 502, { error: 'EDGAR upstream: ' + err.message }));
+  proxy.end();
+}
+
 // ── WO-1043: Router ───────────────────────────────────────────────────────────
 
 function routeRequest(req, res) {
@@ -282,6 +316,8 @@ function routeRequest(req, res) {
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
+  if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   handleNotFound(req, res);
 }
 

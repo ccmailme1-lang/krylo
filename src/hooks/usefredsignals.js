@@ -7,7 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import { surfaceRouter } from '../engine/surfacerouter.js';
 
 const POLL_MS   = 300_000; // 5-min refresh — matches SURFACE_TTL.oracle
-const FRED_BASE = 'https://api.stlouisfed.org/fred/series/observations';
+const FRED_BASE = '/api/fred';
 // Free API key required: https://fred.stlouisfed.org/docs/api/api_key.html
 // Set VITE_FRED_API_KEY in .env
 const API_KEY   = import.meta.env.VITE_FRED_API_KEY ?? null;
