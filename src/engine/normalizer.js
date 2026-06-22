@@ -3,6 +3,8 @@
 // Role: structured mapping + validation ONLY. Not an interpreter.
 // Signals are derived exclusively from lookup tables. No free-text reasoning.
 
+const escRx = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // PROJECTION_MODE is exported so CHL can assert this module's contract at runtime.
 export const PROJECTION_MODE = 'DETERMINISTIC_LOOKUP_ONLY';
 
@@ -88,7 +90,7 @@ function detectDomain(text) {
 
   for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
     scores[domain] = keywords.filter(kw =>
-      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + kw + '\\b').test(lower)
+      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + escRx(kw) + '\\b').test(lower)
     ).length;
   }
 
@@ -113,7 +115,7 @@ function extractSignals(text) {
 
   for (const [signal, keywords] of Object.entries(SIGNAL_KEYWORD_MAP)) {
     const hits = keywords.filter(kw =>
-      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + kw + '\\b').test(lower)
+      kw.includes(' ') ? lower.includes(kw) : new RegExp('\\b' + escRx(kw) + '\\b').test(lower)
     ).length;
     if (hits > 0) matched.push({ signal, hits });
   }
