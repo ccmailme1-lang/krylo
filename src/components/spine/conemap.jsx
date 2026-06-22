@@ -999,19 +999,19 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
           to   { transform: translateX(-50%) rotate(360deg); }
         }
       `}</style>
-      <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(102,255,0,0.07)' }}>
-        <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', marginBottom: 10 }}>SCAN SWEEP</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ position: 'relative', width: 56, height: 56, flexShrink: 0 }}>
+      <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(102,255,0,0.07)' }}>
+        <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>SCAN SWEEP</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ position: 'relative', width: 42, height: 42, flexShrink: 0 }}>
             {[0,1,2].map(r => (
               <div key={r} style={{
                 position: 'absolute', borderRadius: '50%',
-                border: '1px solid rgba(102,255,0,0.12)', inset: r * 9,
+                border: '1px solid rgba(102,255,0,0.12)', inset: r * 7,
               }} />
             ))}
             <div style={{
               position: 'absolute', left: '50%', top: '50%',
-              width: 1, height: 22,
+              width: 1, height: 16,
               background: `linear-gradient(to bottom, ${LIME}, transparent)`,
               transformOrigin: 'top center',
               animation: 'scanRotate 3.0s linear infinite',
@@ -1019,7 +1019,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             }} />
             <div style={{
               position: 'absolute', left: '50%', top: '50%',
-              width: 4, height: 4, borderRadius: '50%', background: LIME,
+              width: 3, height: 3, borderRadius: '50%', background: LIME,
               transform: 'translate(-50%,-50%)', opacity: 0.85,
             }} />
           </div>
