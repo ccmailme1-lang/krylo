@@ -14,6 +14,24 @@ import { pool, migrate } from './db.js';
 // WO-1042 — fixed port, no override
 const PORT = 4000;
 
+// ── Proxy response cache ──────────────────────────────────────────────────────
+// TTL matched to hook poll intervals: FRED = 5min, EDGAR = 15min.
+// Prevents redundant upstream calls when multiple clients poll simultaneously.
+const PROXY_CACHE     = new Map();
+const FRED_TTL_MS     = 300_000;
+const EDGAR_TTL_MS    = 900_000;
+
+function getCached(key, ttlMs) {
+  const entry = PROXY_CACHE.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > ttlMs) { PROXY_CACHE.delete(key); return null; }
+  return entry;
+}
+
+function setCached(key, statusCode, body) {
+  PROXY_CACHE.set(key, { statusCode, body, ts: Date.now() });
+}
+
 // ── WO-1041: Middleware ───────────────────────────────────────────────────────
 
 function applyCORS(res) {
@@ -270,9 +288,16 @@ function handleNotFound(_req, res) {
   send(res, 404, { error: 'Not found' });
 }
 
-// ── FRED proxy — server-side fetch bypasses browser CORS ─────────────────────
+// ── FRED proxy — server-side fetch, cached ───────────────────────────────────
 function handleFredProxy(req, res) {
-  const qs      = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const key   = 'fred:' + qs;
+  const hit   = getCached(key, FRED_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
   const options = {
     hostname: 'api.stlouisfed.org',
     path:     '/fred/series/observations' + qs,
@@ -280,16 +305,28 @@ function handleFredProxy(req, res) {
     headers:  { 'Accept': 'application/json' },
   };
   const proxy = https.request(options, upstream => {
-    res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json' });
-    upstream.pipe(res);
+    let body = '';
+    upstream.on('data', chunk => { body += chunk; });
+    upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body);
+    });
   });
   proxy.on('error', err => send(res, 502, { error: 'FRED upstream: ' + err.message }));
   proxy.end();
 }
 
-// ── EDGAR proxy — server-side fetch bypasses browser CORS ────────────────────
+// ── EDGAR proxy — server-side fetch, cached ──────────────────────────────────
 function handleEdgarProxy(req, res) {
-  const qs      = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const key   = 'edgar:' + qs;
+  const hit   = getCached(key, EDGAR_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
   const options = {
     hostname: 'efts.sec.gov',
     path:     '/LATEST/search-index' + qs,
@@ -297,8 +334,13 @@ function handleEdgarProxy(req, res) {
     headers:  { 'Accept': 'application/json', 'User-Agent': 'krylo-signal-engine/1.0' },
   };
   const proxy = https.request(options, upstream => {
-    res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json' });
-    upstream.pipe(res);
+    let body = '';
+    upstream.on('data', chunk => { body += chunk; });
+    upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body);
+    });
   });
   proxy.on('error', err => send(res, 502, { error: 'EDGAR upstream: ' + err.message }));
   proxy.end();
