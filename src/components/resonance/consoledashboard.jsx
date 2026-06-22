@@ -11,12 +11,12 @@ const MID     = 'rgba(255,255,255,0.50)';
 const BRT     = 'rgba(255,255,255,0.85)';
 
 const domains = [
-  { id: "B01", name: "FINANCIAL",  type: "CAPITAL"      },
-  { id: "B02", name: "OPERATING",  type: "EXECUTION"    },
-  { id: "B03", name: "TIME",       type: "TEMPORAL"     },
-  { id: "B04", name: "PERSONAL",   type: "IDENTITY"     },
-  { id: "B05", name: "MARKET",     type: "SIGNAL"       },
-  { id: "B06", name: "KNOWLEDGE",  type: "INTELLIGENCE" },
+  { id: "C01", name: "FINANCIAL",  type: "CAPITAL"      },
+  { id: "C02", name: "OPERATING",  type: "EXECUTION"    },
+  { id: "C03", name: "TIME",       type: "TEMPORAL"     },
+  { id: "C04", name: "PERSONAL",   type: "IDENTITY"     },
+  { id: "C05", name: "MARKET",     type: "SIGNAL"       },
+  { id: "C06", name: "KNOWLEDGE",  type: "INTELLIGENCE" },
 ];
 
 /* ── CORNER RETICLES ─────────────────────────────────────────────────────── */

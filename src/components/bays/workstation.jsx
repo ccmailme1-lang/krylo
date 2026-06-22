@@ -12,15 +12,15 @@ const MODES = ["default", "graph", "alerts", "color"];
 
 export default function Workstation({ liveSignals = [] }) {
   const [mode, setMode] = useState({
-    B01: "default",
-    B02: "default",
-    B03: "default",
-    B04: "default",
-    B05: "default",
-    B06: "default"
+    C01: "default",
+    C02: "default",
+    C03: "default",
+    C04: "default",
+    C05: "default",
+    C06: "default"
   });
 
-  const [focus, setFocus] = useState("B01");
+  const [focus, setFocus] = useState("C01");
 
   const activeCones = useMemo(() => buildActiveCones(liveSignals), [liveSignals]);
   const bays        = useBayStore(s => s.bays);

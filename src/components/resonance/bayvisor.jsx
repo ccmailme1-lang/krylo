@@ -22,21 +22,21 @@ const COLLAPSED_H = 21;
 const EXPANDED_H  = 201;
 
 const DOMAIN_METRIC = {
-  B01: { label: 'FREE CASH FLOW', value: '+4.2K', unit: '$'  },
-  B02: { label: 'TIME ROI',       value: '3.1',   unit: 'x'  },
-  B03: { label: 'TIME ROI',       value: '2.8',   unit: 'x'  },
-  B04: { label: 'CAC / CLV',      value: '0.18',  unit: ''   },
-  B05: { label: 'RISK ADJ ROE',   value: '14.2',  unit: '%'  },
-  B06: { label: 'COMPOSITE',      value: '—',     unit: ''   },
+  C01: { label: 'FREE CASH FLOW', value: '+4.2K', unit: '$'  },
+  C02: { label: 'TIME ROI',       value: '3.1',   unit: 'x'  },
+  C03: { label: 'TIME ROI',       value: '2.8',   unit: 'x'  },
+  C04: { label: 'CAC / CLV',      value: '0.18',  unit: ''   },
+  C05: { label: 'RISK ADJ ROE',   value: '14.2',  unit: '%'  },
+  C06: { label: 'COMPOSITE',      value: '—',     unit: ''   },
 };
 
 const domains = [
-  { id: "B01", name: "FINANCIAL",  type: "CAPITAL"      },
-  { id: "B02", name: "OPERATING",  type: "EXECUTION"    },
-  { id: "B03", name: "TIME",       type: "TEMPORAL"     },
-  { id: "B04", name: "PERSONAL",   type: "IDENTITY"     },
-  { id: "B05", name: "MARKET",     type: "SIGNAL"       },
-  { id: "B06", name: "KNOWLEDGE",  type: "INTELLIGENCE" },
+  { id: "C01", name: "FINANCIAL",  type: "CAPITAL"      },
+  { id: "C02", name: "OPERATING",  type: "EXECUTION"    },
+  { id: "C03", name: "TIME",       type: "TEMPORAL"     },
+  { id: "C04", name: "PERSONAL",   type: "IDENTITY"     },
+  { id: "C05", name: "MARKET",     type: "SIGNAL"       },
+  { id: "C06", name: "KNOWLEDGE",  type: "INTELLIGENCE" },
 ];
 
 /* ── CORNER RETICLES ─────────────────────────────────────────────────────── */
@@ -521,7 +521,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       <Reticles color={reticleColor} />
 
       {/* ── COLLAPSED HEADER ── */}
-      {/* B01: 13px lime | FINANCIAL: 13px white88% | CAPITAL: 11px white50% */}
+      {/* C01: 13px lime | FINANCIAL: 13px white88% | CAPITAL: 11px white50% */}
       <div onClick={onToggle} style={{
         height: COLLAPSED_H, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -549,7 +549,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} bayNum={bayNum} />
 
       {/* ── FOOTER ── */}
-      {/* [<] 16px lime · MODULE NAME 13px lime · [>] 16px lime | B01·SYNCED 11px lime */}
+      {/* [<] 16px lime · MODULE NAME 13px lime · [>] 16px lime | C01·SYNCED 11px lime */}
       <div style={{
         height: 26, flexShrink: 0,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',

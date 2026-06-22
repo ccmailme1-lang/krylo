@@ -6,12 +6,12 @@
 const BAU_KEY = 'krylo_bau_telemetry';
 
 const BAY_CONE_MAP = {
-  B01: 'cone_financial',
-  B02: 'cone_operating',
-  B03: 'cone_time',
-  B04: 'cone_personal',
-  B05: 'cone_market',
-  B06: 'cone_knowledge',
+  C01: 'cone_financial',
+  C02: 'cone_operating',
+  C03: 'cone_time',
+  C04: 'cone_personal',
+  C05: 'cone_market',
+  C06: 'cone_knowledge',
 };
 
 // Valid deterministic hash: 64-char hex

@@ -1,12 +1,12 @@
 // Shared cone source of truth — consumed by Workstation and ConsoleDashboard
 
 export const BAY_MAP = {
-  B01: 'financial',
-  B02: 'operating',
-  B03: 'time',
-  B04: 'personal',
-  B05: 'market',
-  B06: 'knowledge',
+  C01: 'financial',
+  C02: 'operating',
+  C03: 'time',
+  C04: 'personal',
+  C05: 'market',
+  C06: 'knowledge',
 };
 
 const SIG_TO_CONE = {
