@@ -216,7 +216,7 @@ function resolvePrimary(q, lens) {
 // coActive:            domains within SOFT_BAND of winner
 // resolutionEligible:  false on HOLD
 export function detectDomain(query, lens) {
-  const q = (query ?? '').toLowerCase().replace(PROPER_NOUN_EXCLUSIONS, '');
+  const q = (query ?? '').toLowerCase().replace(PROPER_NOUN_EXCLUSIONS, '').replace(/\s*\+\s*/g, ' ');
 
   // Philanthropic capital gate fires before protected entity gate — capital deployment
   // queries referencing "global health" or "foundation" must not bleed into HEALTH domain.

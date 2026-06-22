@@ -464,7 +464,7 @@ export default function IntelligenceBrief() {
           {brief.evidence.map((e, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, flexShrink: 0, marginTop: 1 }}>▸</span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.6, letterSpacing: '0.03em' }}>{e}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.6, letterSpacing: '0.03em' }}>{typeof e === 'object' && e !== null ? `[${e.source}] ${e.finding}` : e}</span>
             </div>
           ))}
           <Divider />
