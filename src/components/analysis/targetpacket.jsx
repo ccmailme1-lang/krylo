@@ -7,6 +7,8 @@ import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
 import LeverageField         from './leveragefield.jsx';
 import { getDisplayEntity }  from '../../utils/formatters.js';
+import { routeLens }         from '../../engine/lensrouter.js';
+import DecisionFrameCard     from './decisionframe.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -345,7 +347,9 @@ export default function TargetPacket() {
     ? ((happyPath.score - alternatives[0].score) * 100).toFixed(0)
     : null;
 
-  const revelationStep = 3;
+  const revelationStep  = 3;
+  const lensProfiles    = useMemo(() => routeLens(session), [session]);
+  const hpScore         = Math.round(confScore * 100);
 
   // WO-1716: Domain Clamp — user-controlled bay assignment
   const assignToBay    = useBayStore(s => s.assignToBay);
@@ -725,6 +729,9 @@ export default function TargetPacket() {
         </div>
 
       </div>
+
+      {/* ── DECISION TRANSLATION LAYER — WO-1839 ──────────────────────────── */}
+      <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} />
 
       {/* ── OLP VECTOR BLOCK ───────────────────────────────────────────────── */}
       {envelope && (
