@@ -698,12 +698,17 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
       {/* ── CONE TAB ── */}
       {topTab === 'cone' && <>
-      {/* Merged header: domain inline, [+] on same line */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: bay?.assignment ? 4 : 8 }}>
-        <span style={{ color: accent, fontSize: 8, letterSpacing: '0.22em', opacity: 0.85 }}>
-          {cone?.domain ? `INSPECTION // ${cone.domain.toUpperCase()}` : 'INSPECTION · ACTIVE'}{isReplay && <span style={{ color: LIME, marginLeft: 10 }}>REPLAY T-{hoursBack}H</span>}
-        </span>
-        {bay && (
+      {/* Header */}
+      <div style={{ color: accent, fontSize: 8, letterSpacing: '0.22em', opacity: 0.85, marginBottom: 6 }}>
+        INSPECTION · ACTIVE{isReplay && <span style={{ color: LIME, marginLeft: 10 }}>REPLAY T-{hoursBack}H</span>}
+      </div>
+
+      {/* Title row: entity/domain + [+] */}
+      {bay && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <span style={{ fontSize: 13, color: bay?.assignment ? LIME : '#ffffff', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace" }}>
+            {bay?.assignment?.title ?? (cone.domain ?? '').toUpperCase()}
+          </span>
           <button
             onClick={() => {
               if (panelSearch) {
@@ -716,11 +721,6 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             }}
             style={{ background: 'none', border: 'none', color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 14, lineHeight: 1, padding: 0, cursor: 'pointer', flexShrink: 0 }}
           >{panelSearch ? '−' : '+'}</button>
-        )}
-      </div>
-      {bay?.assignment && (
-        <div style={{ fontSize: 13, color: LIME, letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: "'IBM Plex Mono', monospace", marginBottom: 8 }}>
-          {bay.assignment.title}
         </div>
       )}
 
