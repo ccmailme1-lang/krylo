@@ -617,7 +617,7 @@ export default function HistoryBay({ onRerunNavigate }) {
               <React.Fragment key={label}>
                 {i > 0 && <span style={{ display: 'inline-block', width: 1, height: 36, background: LIME, alignSelf: 'flex-start', margin: '0 32px' }} />}
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: 36, fontWeight: 400, color: 'rgba(255,255,255,0.88)', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                  <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif", fontSize: 36, fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                     {String(value).padStart(2, '0')}
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
