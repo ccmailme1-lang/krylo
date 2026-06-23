@@ -583,15 +583,18 @@ export default function TargetPacket() {
                     >✕</span>
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {alternatives.map(c => (
-                      <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{c.type.toUpperCase()}</span>
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G·~ PROXY_UNTIL_WO1848</span>
+                    {alternatives.map(c => {
+                      const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
+                      return (
+                        <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{c.type.toUpperCase()}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
-                        <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -618,8 +621,10 @@ export default function TargetPacket() {
                           W: {winLabel}
                         </span>
                       </div>
-                      {/* Hypothesis items — ordered by W (global Phase A), G is proxy until WO-1848 */}
-                      {alternatives.map(c => (
+                      {/* Hypothesis items — W axis live; G is SV_cluster_count_proxy until WO-1848 */}
+                      {alternatives.map(c => {
+                        const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
+                        return (
                         <div key={c.id} data-test="hypothesis_item" data-id={c.id}
                           style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
@@ -627,12 +632,12 @@ export default function TargetPacket() {
                               {c.type.toUpperCase()} · W:{winLabel}
                             </span>
                             <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
-                              G·~ PROXY
+                              G:{gProxy} PROXY_UNTIL_WO1848
                             </span>
                           </div>
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
-                      ))}
+                      ); })}
                       {paretoExtra.length > 0 && (
                         <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} unattested paths</div>
                       )}
