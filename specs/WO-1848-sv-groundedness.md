@@ -45,6 +45,17 @@ An SV (Signal Vector) is a raw structural signal unit:
 - two SVs with identical origin + feature vector = same SV (deduplication only, not weighting)
 - no SV carries authority or priority at identity level
 
+### 1.3 Source-identity firewall (non-negotiable)
+
+```
+SV source definition must not retroactively redefine identity semantics
+```
+
+Meaning: when the SV vector source is specified (resolving the build gate), that specification
+may only define **where SVs come from** — it may not alter what an SV *is*. Identity semantics
+are locked at this spec layer, not at ingestion time. If a proposed source definition requires
+changing §1.1 or §1.2, the source definition is wrong — not the identity layer.
+
 ### 1.3 What SV identity is NOT
 
 - not a confidence score
