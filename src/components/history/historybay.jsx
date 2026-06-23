@@ -620,7 +620,7 @@ export default function HistoryBay({ onRerunNavigate }) {
                   <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif", fontSize: 36, fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1, letterSpacing: '-0.02em' }}>
                     {String(value).padStart(2, '0')}
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
                     {label}
                   </div>
                 </div>
