@@ -132,11 +132,18 @@ export default function IntelligenceBrief() {
   const pendingAcquisition     = useAnalysisStore(s => s.pendingAcquisition);
   const createSession          = useAnalysisStore(s => s.createSession);
   const setPendingAcquisition  = useAnalysisStore(s => s.setPendingAcquisition);
-  const session                = activeId ? sessions[activeId] : null;
+  const liveSession            = activeId ? sessions[activeId] : null;
+  const staleSessionRef        = useRef(null);
+  const [fadeIn, setFadeIn]    = useState(true);
+  const prevActiveId           = useRef(activeId);
   const [sysTime, setSysTime]  = useState(() => new Date().toTimeString().slice(0, 8));
   const [exported, setExported] = useState(false);
   const [importState, setImportState] = useState(null); // { status, message, meta }
   const fileInputRef = useRef(null);
+
+  if (liveSession) staleSessionRef.current = liveSession;
+  const session    = liveSession ?? staleSessionRef.current ?? null;
+  const isExpired  = !liveSession && staleSessionRef.current != null;
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore
@@ -322,8 +329,8 @@ export default function IntelligenceBrief() {
       {/* ── HAPPY PATH + EQ CANVAS — leadoff, directly under Oracle Kernel ── */}
       <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HP · HAPPY PATH</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)', whiteSpace: 'nowrap' }}>HP · HAPPY PATH</span>
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
               style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
               <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>

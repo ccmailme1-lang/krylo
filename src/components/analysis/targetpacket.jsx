@@ -605,9 +605,15 @@ export default function TargetPacket() {
               <div ref={actionPanelRef} onScroll={checkActionScroll} style={{ flex: 1, minHeight: 0, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
                 {alternatives.length > 0 && (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
-                      Alternatives · {arbitration?.passed}/{arbitration?.total} survived · {arbitration?.dominated} eliminated
-                    </div>
+                    {(() => {
+                      const rate     = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
+                      const winLabel = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                      return (
+                        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                          ASSEMBLANCE · {alternatives.length} PATHS · WINDOW: {winLabel}
+                        </div>
+                      );
+                    })()}
                     {alternatives.map(c => (
                       <div key={c.id} data-test="ranked_item" data-id={c.id} style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
