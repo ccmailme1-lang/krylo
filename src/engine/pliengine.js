@@ -235,7 +235,12 @@ export function parse7PointSchema(schema, signal = {}) {
   const velocity = computeVelocity(signal, schema.decision_type);
   const win      = computeWindow(schema, signal);
   const coverage = computeCoverage(signal, schema.dependencies);
-  const components = { gap, velocity, window: win, coverage };
+
+  const MAX_EMITTERS  = 6;
+  const diffusion     = Math.round(Math.min(signal.source_count ?? 1, MAX_EMITTERS) / MAX_EMITTERS * 100);
+  const elasticity    = Math.round(gap * (1 - coverage) * 100);
+
+  const components = { gap, velocity, window: win, coverage, diffusion, elasticity };
 
   // PLI scalar
   const pliRaw    = (gap * velocity * win) / coverage;

@@ -924,6 +924,26 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         );
       })()}
 
+      {(() => {
+        const MAX_EMITTERS = 6;
+        const pillar       = (cone.domain ?? '').toLowerCase();
+        const activeSources = rawDomains.filter(d => DOMAIN_TO_PILLAR[d.domain] === pillar && (d.pressure ?? 0) > 0).length;
+        const D = Math.round((activeSources / MAX_EMITTERS) * 100);
+        const E = Math.round((1 - (cone.pressure ?? 0) / 100) * (cone.volatility ?? 0) * 100);
+        return (
+          <div style={{ paddingTop: 8, marginBottom: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ opacity: 0.55 }}>DIFFUSION</span>
+              <span style={{ color: LIME }}>{D}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ opacity: 0.55 }}>ELASTICITY</span>
+              <span style={{ color: LIME }}>{E}</span>
+            </div>
+          </div>
+        );
+      })()}
+
       <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
           <span>COMPOSITION</span>

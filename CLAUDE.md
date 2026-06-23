@@ -1,9 +1,9 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-20
-BASELINE: baseline_bay_memory_system
-SHA: db8c5b5
+LAST BUILD SESSION: 2026-06-21
+BASELINE: baseline_reanalyze_hp_icon_fix
+SHA: 804cdcd
 DEPLOYED: krylo.org ✓
 ──────────────────────────────────────────────
 
@@ -126,6 +126,14 @@ Start at 1826. Work backwards. This is the only open list.
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
+1835 — CEO Competitive Edge Delivery — C-suite persona consumes intelligence through private roundtables and high-level summaries; Krylo must deliver a competitive positioning signal in executive summary format; long-term edge proof distinct from CFO ROI calculator
+1834 — CFO ROI Proof Layer — CFO's core objection is unquantifiable software benefits; Krylo must surface its own signal accuracy and decision outcome tracking to prove ROI before spend is approved
+1833 — Decision Cadence Bridge — VP/COO-level users operate on quarterly approval cycles; Krylo signals move in real time; gap: no mechanism to hold, stage, or schedule a signal for a future decision window
+1832 — Executive Assistant Export Path — EA is the gateway to C-suite; export wall at Fs 0% blocks her primary function; brief must be deliverable at qualification, not gated behind conviction threshold
+1831 — Manufacturing Operations Lens — COO-level capital and labor pressure signals; system adoption timing; board-ready brief output; gap: internal disruption cost modeling not yet supported
+1830 — Healthcare Integration Scoping — regulated surface (HIPAA, HL7, FHIR); architecture decision required before any connector WO; define data boundary, compliance posture, and signal normalization path for institutional health systems
+1829 — Guided Entry Path — when profile indicates low tool familiarity, limited time, or integration barriers; surface one signal, one action, one outcome at entry; full console deferred until value proven
+1828 — Lens Routing Engine — read full user profile (role, goals, challenges, reporting line) at ingress to assign correct lens; job title alone is insufficient; INVESTOR/CAREER/REALTOR must derive from decision context not persona label
 1827 — AS-DIFF Three-Tier Resolver (COMPLETE — asdiff.js: canonical SPACE_RESOLVER, SPACE_QUALITY merged, buildSignalUnit extended, resolveSharedSpace tier-aware)
 1826 — Happy Path Displacement Engine (COMPLETE — happypathdisplacementengine.js — hysteresis, 5 events, challenger hold)
 1825 — Decision Lineage (COMPLETE — computeCalibration in convictionstore.js, lineage panel + calibration metrics in targetpacket.jsx)
@@ -171,6 +179,26 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1027 — Feedback Rituals Infrastructure
 
 MASTER WO REGISTRY — archived. Completed WOs live in the codebase. See git log for history.
+
+11a. WO HARDENING PROTOCOL (NON-NEGOTIABLE — 2026-06-23)
+
+Every WO must pass the Bottle Test before review or build.
+TEMPLATE: specs/WO-HARDENING-TEMPLATE.md — copy it, fill every field.
+TBD in File Map or Formula = BLOCKED. Do not build.
+
+9 required sections: Single Responsibility · Boundary Declaration · Zero Drift ·
+Strategic Leverage Statement · Output Gravity · Formula/Contract · File Map · Bottle Test · Definition of Done.
+
+BOTTLE TEST — all 5 must be YES:
+    1. Reduces ambiguity?
+    2. Single dominant output?
+    3. All boundaries defined?
+    4. No undefined dependencies?
+    5. Does not increase expressive flexibility in core?
+
+POSITIONING (LOCKED 2026-06-23): "We don't predict. We detect."
+Any WO that predicts, recommends, or generalizes instead of detecting structural asymmetry
+does not advance the core mission. Flag it before building.
 
     #FDFDFD (Platinum White) — SAB proposed. NOT approved.
     #00FFAA (Signal Mint) — SAB proposed. NOT approved.
