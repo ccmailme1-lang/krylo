@@ -1304,22 +1304,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
                         </div>
                       )}
                     </div>
-                    {/* Lens pill */}
-                    <div style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '5px 12px', borderRadius: 999,
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      background: 'rgba(255,255,255,0.04)',
-                    }}>
-                      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase' }}>
-                        {activeSituation?.lens ?? 'SIGNAL'}
-                      </span>
-                      {projectedState.convergenceScore > 0 && (
-                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.1em', fontVariantNumeric: 'tabular-nums' }}>
-                          CS {projectedState.convergenceScore.toFixed(2)}
-                        </span>
-                      )}
-                    </div>
                   </div>
                   {/* Exclude simulator */}
                   <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
