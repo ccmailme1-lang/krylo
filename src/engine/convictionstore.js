@@ -17,20 +17,23 @@ function persist(records) {
   catch {}
 }
 
-function makeRecord({ sessionId, thesis, timeHorizon, domains, peakScore, velocity, domainStates }) {
+function makeRecord({ sessionId, thesis, timeHorizon, domains, peakScore, velocity, domainStates, hypothesisId, windowStateAtCommit }) {
   return {
-    id:           crypto.randomUUID(),
-    sessionId:    sessionId ?? null,
-    thesis:       thesis ?? null,
-    timeHorizon:  timeHorizon ?? null,
-    domains:      domains ?? [],
-    peakScore:    peakScore ?? 0,
-    velocity:     velocity ?? 'FLAT',
-    domainStates: domainStates ?? {},   // signal field snapshot at commit
-    committedAt:  Date.now(),
-    status:       'active',
-    resolution:   null,   // 'confirmed' | 'denied' | 'timed_out'
-    resolvedAt:   null,
+    id:                   crypto.randomUUID(),
+    sessionId:            sessionId ?? null,
+    thesis:               thesis ?? null,
+    timeHorizon:          timeHorizon ?? null,
+    domains:              domains ?? [],
+    peakScore:            peakScore ?? 0,
+    velocity:             velocity ?? 'FLAT',
+    domainStates:         domainStates ?? {},   // signal field snapshot at commit
+    // WO-1852 — CommitEvent fields (index-free hypothesis binding)
+    hypothesisId:         hypothesisId ?? null,         // stable structural key, null = unbound
+    windowStateAtCommit:  windowStateAtCommit ?? null,  // W axis state at moment of commit
+    committedAt:          Date.now(),
+    status:               'active',
+    resolution:           null,   // 'confirmed' | 'denied' | 'timed_out'
+    resolvedAt:           null,
   };
 }
 

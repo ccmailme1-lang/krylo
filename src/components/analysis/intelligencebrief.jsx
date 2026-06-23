@@ -138,6 +138,8 @@ export default function IntelligenceBrief() {
   const [exported, setExported] = useState(false);
   const [importState, setImportState] = useState(null); // { status, message, meta }
   const fileInputRef = useRef(null);
+  // WO-1852 — hypothesis binding state (index-free, explicit only)
+  const [pendingHypothesisId, setPendingHypothesisId] = useState('');
 
   if (liveSession) staleSessionRef.current = liveSession;
   const session    = liveSession ?? staleSessionRef.current ?? null;
@@ -739,17 +741,55 @@ export default function IntelligenceBrief() {
 
         {/* ── CONVERGENCE FIELD · EQ — gated to Happy Path qualification ── */}
         {hp?.qualified && (
-          <EQCanvas
-            isPremium={true}
-            onCommitThesis={({ domain, engineState }) => {
-              console.log('[EQ] Commit Thesis →', domain, engineState?.happyPath);
-            }}
-            onSetTrigger={({ domain, peakPosition }) => {
-              window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
-                detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
-              }));
-            }}
-          />
+          <>
+            {/* WO-1852 — Hypothesis bind input: explicit index-free ID entry */}
+            <div style={{ padding: '6px 20px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
+              <input
+                value={pendingHypothesisId}
+                onChange={e => setPendingHypothesisId(e.target.value.trim())}
+                placeholder="enter hypothesis id"
+                style={{
+                  flex: 1, background: 'transparent', border: 'none',
+                  borderBottom: `1px solid ${pendingHypothesisId ? LIME : 'rgba(255,255,255,0.12)'}`,
+                  fontFamily: MONO, fontSize: 8, color: pendingHypothesisId ? LIME : DIM,
+                  letterSpacing: '0.08em', padding: '2px 0', outline: 'none',
+                }}
+              />
+              {pendingHypothesisId && (
+                <span
+                  onClick={() => setPendingHypothesisId('')}
+                  style={{ fontFamily: MONO, fontSize: 8, color: DIM, cursor: 'pointer' }}
+                >✕</span>
+              )}
+            </div>
+            <EQCanvas
+              isPremium={true}
+              onCommitThesis={({ domain, engineState: es }) => {
+                const arb       = es?.arbitration ?? session?.tensor?.arbitration;
+                const rate      = arb?.total > 0 ? (arb.passed / arb.total) : 0;
+                const winState  = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                convictions.commit({
+                  sessionId:           session?.id ?? null,
+                  thesis:              session?.query ?? null,
+                  timeHorizon:         synthesis?.timeHorizon ?? null,
+                  domains:             es?.happyPath?.domains ?? hp?.domains ?? [],
+                  peakScore:           es?.happyPath?.peakScore ?? hp?.peakScore ?? 0,
+                  velocity:            es?.happyPath?.velocity ?? 'FLAT',
+                  domainStates:        es?.domainStates ?? {},
+                  hypothesisId:        pendingHypothesisId || null,
+                  windowStateAtCommit: winState,
+                });
+                setPendingHypothesisId('');
+                emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
+              }}
+              onSetTrigger={({ domain, peakPosition }) => {
+                window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
+                  detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
+                }));
+              }}
+            />
+          </>
         )}
 
       </div>

@@ -587,10 +587,11 @@ export default function TargetPacket() {
                       const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
                       return (
                         <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{c.type.toUpperCase()}</span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.14em' }}>{c.id}</span>
                             <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
                           </div>
+                          <div style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{c.type.toUpperCase()}</div>
                           <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
                       );
@@ -627,13 +628,14 @@ export default function TargetPacket() {
                         return (
                         <div key={c.id} data-test="hypothesis_item" data-id={c.id}
                           style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase' }}>
-                              {c.type.toUpperCase()} · W:{winLabel}
-                            </span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                            <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.14em' }}>{c.id}</span>
                             <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
                               G:{gProxy} PROXY_UNTIL_WO1848
                             </span>
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', marginBottom: 5 }}>
+                            {c.type.toUpperCase()} · W:{winLabel}
                           </div>
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
