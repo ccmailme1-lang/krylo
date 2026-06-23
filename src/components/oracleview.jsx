@@ -668,7 +668,7 @@ function Oracleview({ query, canonical, data, signalMapData, lens, onLensSwitch,
         pointerEvents: 'none',
         zIndex:        50,
       }}>
-        v77
+        v78
       </div>
 
     </div>
