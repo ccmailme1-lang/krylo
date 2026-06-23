@@ -3,6 +3,7 @@
 
 import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
+import { resolveMCV }   from './mcvresolver.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -407,11 +408,11 @@ function synthRealEstate(session, numbers, query) {
       `At ${rate}%, 30-year total interest: $${totalI} — ${Math.round((m360 * 360) / loan * 10)/10}x the financed amount.`,
       `1 point rate buy-down costs ~1% of loan ($${fmtN(loan/100)}) and reduces payment by ~$${fmtN(calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.25, 360))}/mo.`,
       `Inventory rising YoY — days on market extending, price reductions more common.`,
-      `Property tax + insurance adds $400–$900/mo (location-dependent) to base P&I.`,
+      `Property tax + insurance adds $400–$900/mo (regime-dependent) to base P&I — see MCV for structural context.`,
     ],
     assumptions: [
       `Credit score 740+ assumed for advertised rates. Sub-740 carries 0.5–1.5% rate premium.`,
-      `Local market conditions may deviate materially from national averages.`,
+      `Market regime conditions may vary — see MCV for structural context.`,
     ],
     assessment: `True monthly cost of ownership: $${fmtN(m360 + 650)}/mo. At the 28% front-end ratio, this requires $${pct28income}/mo gross income. Each 0.25% rate move changes payment by $${fmtN(calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.25, 360))}/mo. Rate lock before offer is non-negotiable.`,
     threats: [
@@ -3787,6 +3788,7 @@ import { classifyAmbiguity } from './domainambiguitygate.js';
 export function synthesizeQuery(session) {
   if (!session) return null;
   const query   = session.query ?? '';
+  const mcv     = resolveMCV(query, session);
   const numbers = extractNumbers(query);
   const vector  = detectDomain(query, session.lens);
   // HOLD state falls back to synthGeneral — preserves UI stability in v1.
@@ -3802,5 +3804,5 @@ export function synthesizeQuery(session) {
     vector.weights?.[vector.primary] ?? 0.5,
   );
 
-  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal };
+  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv };
 }

@@ -237,8 +237,14 @@ export function parse7PointSchema(schema, signal = {}) {
   const coverage = computeCoverage(signal, schema.dependencies);
 
   const MAX_EMITTERS  = 6;
-  const diffusion     = Math.round(Math.min(signal.source_count ?? 1, MAX_EMITTERS) / MAX_EMITTERS * 100);
-  const elasticity    = Math.round(gap * (1 - coverage) * 100);
+  const mcv           = signal.mcv ?? null;
+  const inventoryWeight  = (mcv?.inventory_pressure ?? 50) / 100;
+  const rawDiffusion     = Math.min(signal.source_count ?? 1, MAX_EMITTERS) / MAX_EMITTERS;
+  const diffusion        = Math.round(rawDiffusion * (1 - inventoryWeight * 0.3) * 100);
+  const demandFactor     = (mcv?.demand_intensity ?? 50) / 100;
+  const priceFactor      = (mcv?.price_regime ?? 50) / 100;
+  const mcvElasticity    = 1 - (demandFactor * 0.4 + priceFactor * 0.2);
+  const elasticity       = Math.round(gap * (1 - coverage) * mcvElasticity * 100);
 
   const components = { gap, velocity, window: win, coverage, diffusion, elasticity };
 
