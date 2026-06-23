@@ -50,6 +50,7 @@ import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
+import { resolveGeo }         from './engine/georesolver.js';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
@@ -641,6 +642,7 @@ export default function App() {
   const [searchQuery, setSearchQuery]   = useState('');
   const [topoMode, setTopoMode]         = useState(false);
   const [xrayQuery, setXrayQuery]       = useState('');
+  const [geoPending, setGeoPending]     = useState(null); // { query, locationToken, candidates }
   const iframeRef = useRef(null);
 
   const { hydrateFromSignals } = useSurface();
@@ -709,6 +711,14 @@ export default function App() {
   const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now(), node_id, domain, routing_target } = {}) => {
     const q = (query ?? '').trim();
     if (!q) return;
+
+    // WO-1845 — geo-disambiguation gate (pre-synthesis ingestion boundary)
+    const geo = resolveGeo(q);
+    if (geo.geoAmbiguous) {
+      setGeoPending({ query: q, locationToken: geo.locationToken, candidates: geo.candidates, source, node_id, domain, routing_target });
+      return; // block — do not create session until resolved
+    }
+
     const sessionId = `session_${timestamp}`;
     createSession(sessionId, '10K View', q, { source, node_id, domain, routing_target });
     emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
@@ -936,6 +946,66 @@ export default function App() {
 
   return (
     <ecosystemcontext.Provider value={{ query, setquery }}>
+
+      {/* ── WO-1845 — Geo Disambiguation Gate ─────────────────── */}
+      {geoPending && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.88)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, minWidth: 320, maxWidth: 480 }}>
+            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)', marginBottom: 12, textTransform: 'uppercase' }}>
+              CLARIFY LOCATION
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.7)', marginBottom: 20 }}>
+              Which {geoPending.locationToken.replace(/\b\w/g, c => c.toUpperCase())}?
+            </div>
+            {geoPending.candidates.map(candidate => (
+              <button
+                key={candidate}
+                onClick={() => {
+                  const resolved = geoPending.query.replace(
+                    new RegExp(geoPending.locationToken, 'i'),
+                    candidate
+                  );
+                  setGeoPending(null);
+                  handleSessionBootstrap({
+                    query: resolved,
+                    source: geoPending.source,
+                    node_id: geoPending.node_id,
+                    domain: geoPending.domain,
+                    routing_target: geoPending.routing_target,
+                  });
+                }}
+                style={{
+                  fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em',
+                  color: 'rgba(255,255,255,0.85)', background: 'transparent',
+                  border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)',
+                  padding: '14px 0', textAlign: 'left', cursor: 'pointer',
+                  transition: 'color 120ms',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.color = LIME; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.85)'; }}
+              >
+                {candidate}
+              </button>
+            ))}
+            <button
+              onClick={() => setGeoPending(null)}
+              style={{
+                fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em',
+                color: 'rgba(255,255,255,0.2)', background: 'transparent',
+                border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)',
+                padding: '12px 0', textAlign: 'left', cursor: 'pointer',
+                textTransform: 'uppercase', marginTop: 4,
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Surface Bay ───────────────────────────────────────── */}
 
