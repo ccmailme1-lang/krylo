@@ -26,7 +26,7 @@ const LIME_DIM = 'rgba(102,255,0,0.25)';
 const LIME_MID = 'rgba(102,255,0,0.5)';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
-function buildBrief(session) {
+function buildBrief(session, synthesis) {
   const entity  = getDisplayEntity(session?.query ?? 'Unknown Signal');
   const lens    = session?.lens  ?? null;
   const domain  = session?.tensor?.domain ?? session?.tensor?.domains?.[0] ?? 'FINANCIAL';
@@ -34,9 +34,7 @@ function buildBrief(session) {
   const dateStr = now.toISOString().slice(0, 10);
   const timeStr = now.toTimeString().slice(0, 8) + ' EST';
 
-  // Use dynamic synthesis when available; fall back to adapter for custom lenses
-  const synthesis = synthesizeQuery(session);
-  const adapter   = LensRegistry.resolve(lens);
+  const adapter = LensRegistry.resolve(lens);
   const payload   = { entity, domain, lens };
 
   return {
@@ -152,13 +150,16 @@ export default function IntelligenceBrief() {
   const exportUnlocked = canExport(fs);
   const isImported     = session?.tensor?.isImported ?? false;
 
+  // Single memoized synthesis — query guard prevents call on empty session
+  const synthesis = useMemo(() => session?.query ? synthesizeQuery(session) : null, [session]);
+
   // WO-1752: runtime state
   const replayState = session?.tensor?.replayState ?? RUNTIME_STATE.LIVE;
   const replayMode  = replayState === RUNTIME_STATE.REPLAYING;
 
   function handleExport() {
     if (!exportUnlocked || !session) return;
-    const brief   = buildBrief(session);
+    const brief   = buildBrief(session, synthesis);
     const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs, hp);
     triggerDownload(payload);
     setExported(true);
@@ -225,7 +226,7 @@ export default function IntelligenceBrief() {
     );
   }
 
-  const brief = buildBrief(session);
+  const brief = buildBrief(session, synthesis);
 
   const [hpOpen, setHpOpen]       = useState(false);
   const [hpLog, setHpLog]         = useState([]);
@@ -234,7 +235,6 @@ export default function IntelligenceBrief() {
   const hpAnchorRef               = useRef(null);
   const scrollBodyRef             = useRef(null);
   const hpSnapshot                = useRef(null);
-  const synthesis                 = useMemo(() => synthesizeQuery(session), [session]);
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
   const hp                        = engineState?.happyPath ?? null;
