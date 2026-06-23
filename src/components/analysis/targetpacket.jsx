@@ -576,7 +576,7 @@ export default function TargetPacket() {
                   zIndex: 30, display: 'flex', flexDirection: 'column', overflow: 'hidden',
                 }}>
                   <div style={{ padding: '10px 16px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>Alternatives</span>
+                    <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>HYPOTHESIS FIELD</span>
                     <span
                       onClick={() => { setShowAlts(false); emitTelemetry({ type: 'AltToggleEvent', action: 'close', requestId: arbitration?.requestId, timestamp: new Date().toISOString() }); }}
                       style={{ fontFamily: MONO, fontSize: 9, color: DIM, cursor: 'pointer', letterSpacing: '0.1em' }}
@@ -584,10 +584,10 @@ export default function TargetPacket() {
                   </div>
                   <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {alternatives.map(c => (
-                      <div key={c.id} style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
+                      <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{c.type} · #{c.dominanceRank}</span>
-                          <span style={{ fontFamily: MONO, fontSize: 7, color: LIME }}>{(c.score * 100).toFixed(0)}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{c.type.toUpperCase()}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G·~ PROXY_UNTIL_WO1848</span>
                         </div>
                         <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                       </div>
@@ -598,36 +598,47 @@ export default function TargetPacket() {
 
               <div style={{ padding: '10px 24px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 <span style={{ fontSize: 10, color: LIME }}>⊙</span>
-                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Recommended Action</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>ANALYTICAL FRAME</span>
               </div>
 
 
               <div ref={actionPanelRef} onScroll={checkActionScroll} style={{ flex: 1, minHeight: 0, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
-                {alternatives.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {(() => {
-                      const rate     = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
-                      const winLabel = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-                      return (
-                        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
-                          ASSEMBLANCE · {alternatives.length} PATHS · WINDOW: {winLabel}
-                        </div>
-                      );
-                    })()}
-                    {alternatives.map(c => (
-                      <div key={c.id} data-test="ranked_item" data-id={c.id} style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase' }}>{c.type} · #{c.dominanceRank}</span>
-                          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em', color: LIME }}>{(c.score * 100).toFixed(0)}</span>
-                        </div>
-                        <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
+                {alternatives.length > 0 && (() => {
+                  const rate     = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
+                  const winLabel = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                  const winColor = winLabel === 'OPEN' ? LIME : winLabel === 'TIGHT' ? 'rgba(255,255,255,0.4)' : 'rgba(255,80,80,0.5)';
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {/* WO-1851 — ASSEMBLANCE header: 2-axis structural space (W × G) */}
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                          ASSEMBLANCE · {alternatives.length} PATHS
+                        </span>
+                        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: winColor }}>
+                          W: {winLabel}
+                        </span>
                       </div>
-                    ))}
-                    {paretoExtra.length > 0 && (
-                      <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} pareto frontier</div>
-                    )}
-                  </div>
-                )}
+                      {/* Hypothesis items — ordered by W (global Phase A), G is proxy until WO-1848 */}
+                      {alternatives.map(c => (
+                        <div key={c.id} data-test="hypothesis_item" data-id={c.id}
+                          style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase' }}>
+                              {c.type.toUpperCase()} · W:{winLabel}
+                            </span>
+                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
+                              G·~ PROXY
+                            </span>
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
+                        </div>
+                      ))}
+                      {paretoExtra.length > 0 && (
+                        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} unattested paths</div>
+                      )}
+                    </div>
+                  );
+                })()}
                 {synthesis?.leverage && <LeverageField leverage={synthesis.leverage} />}
                 <div style={{ border: `1px solid rgba(102,255,0,0.2)`, padding: '16px 20px', background: 'rgba(102,255,0,0.03)' }}>
                   <div style={{ fontFamily: SERIF, fontSize: 16, color: BRT, lineHeight: 1.4, marginBottom: 8 }}>{synthesis?.recommendedAction ?? 'Analysis in progress…'}</div>
