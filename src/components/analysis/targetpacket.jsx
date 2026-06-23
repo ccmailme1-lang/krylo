@@ -665,15 +665,15 @@ export default function TargetPacket() {
         </div>
       </div>
 
-      {/* ── PANE 3: Bottom Row — 4 columns ─────────────────────────────────── */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
-        flexShrink: 0, height: '26%', minHeight: 120,
-      }}>
+      {/* ── DECISION TRANSLATION LAYER — WO-1839 ──────────────────────────── */}
+      <div style={{ display: 'flex', flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} />
+        </div>
 
-        {/* Confidence Trajectory */}
-        <div style={{ padding: '12px 20px', borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
+        {/* Confidence Trajectory — moved from PANE 3 */}
+        <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
             Confidence Trajectory
           </div>
           <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={42} />
@@ -684,9 +684,9 @@ export default function TargetPacket() {
           </div>
         </div>
 
-        {/* Key Drivers */}
-        <div style={{ padding: '12px 20px', borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
+        {/* Key Drivers — moved from PANE 3 */}
+        <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
             Key Drivers
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1, justifyContent: 'center' }}>
@@ -701,61 +701,7 @@ export default function TargetPacket() {
             ))}
           </div>
         </div>
-
-        {/* Weighted Impact */}
-        <div style={{ padding: '12px 20px', borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase' }}>
-            Weighted Impact
-          </div>
-          <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-            <DonutGauge value={confScore} color={LIME} size={68} />
-            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <span style={{ fontFamily: MONO, fontSize: 14, color: BRT, letterSpacing: '0.05em' }}>{Math.round(confScore * 100)}%</span>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.1em' }}>High</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Revelation Status */}
-        <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase' }}>
-            Revelation Status
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 0, flex: 1, alignSelf: 'center', width: '100%', marginTop: 8 }}>
-            {REVELATION_STEPS.map((step, i) => {
-              const done    = i <= revelationStep;
-              const current = i === revelationStep;
-              return (
-                <React.Fragment key={step}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
-                    <div style={{
-                      width: current ? 20 : 16, height: current ? 20 : 16,
-                      borderRadius: '50%',
-                      background: done ? LIME : 'rgba(255,255,255,0.08)',
-                      border: current ? `2px solid ${LIME}` : 'none',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      flexShrink: 0,
-                    }}>
-                      {done && !current && <span style={{ color: '#000', fontSize: 8, fontWeight: 'bold' }}>✓</span>}
-                      {current && <div style={{ width: 6, height: 6, borderRadius: '50%', background: LIME }} />}
-                    </div>
-                    <span style={{ fontFamily: MONO, fontSize: 7, color: done ? LIME : DIM, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
-                      {step}
-                    </span>
-                  </div>
-                  {i < REVELATION_STEPS.length - 1 && (
-                    <div style={{ flex: 1, height: 1, background: i < revelationStep ? LIME : 'rgba(255,255,255,0.08)', marginBottom: 16 }} />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
-        </div>
-
       </div>
-
-      {/* ── DECISION TRANSLATION LAYER — WO-1839 ──────────────────────────── */}
-      <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} />
 
       {/* ── OLP VECTOR BLOCK ───────────────────────────────────────────────── */}
       {envelope && (

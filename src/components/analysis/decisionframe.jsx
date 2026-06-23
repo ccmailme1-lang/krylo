@@ -98,7 +98,6 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
   return (
     <div style={{
       flexShrink: 0,
-      borderTop: `1px solid ${BORDER}`,
       opacity: isFallback ? 0.5 : 1,
       pointerEvents: isFallback ? 'none' : 'auto',
     }}>
