@@ -243,6 +243,9 @@ export function triggerDownload(payload) {
   URL.revokeObjectURL(url);
 }
 
-export function canExport(fs) {
+// WO-1832 — EA Export Path: EA lens bypasses Fs gate — brief deliverable at qualification.
+// All other lenses retain the EXPORT_FS_GATE = 0.70 requirement.
+export function canExport(fs, lens) {
+  if (typeof lens === 'string' && lens.toUpperCase() === 'EA') return true;
   return typeof fs === 'number' && fs >= EXPORT_FS_GATE;
 }

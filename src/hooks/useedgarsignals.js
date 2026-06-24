@@ -109,3 +109,27 @@ export function useEdgarSignals() {
 
   return { signals, loading, error, lastFetch };
 }
+
+// ── WO-1768-A: DFC aggregation exposed for timing-proxy consumers ─────────────
+// Computes Deal-Flow Concentration from Form D filing volume by domain.
+// v1: count proxy. Day 2-3: totalOfferingAmount from filing XML replaces count.
+export function computeEdgarDFC(signals) {
+  const domain_amounts = { TECHNOLOGY: 0, CAPITAL: 0, OWNERSHIP: 0, KNOWLEDGE: 0, MEDIA: 0, LABOR: 0 };
+
+  for (const s of signals) {
+    const d = (s.domain ?? '').toUpperCase();
+    if (d in domain_amounts) domain_amounts[d] += s.raw ?? s.signal ?? 0;
+  }
+
+  const entries = Object.entries(domain_amounts).sort(([, a], [, b]) => b - a);
+  const total   = entries.reduce((s, [, v]) => s + v, 0);
+  if (total === 0) return { status: 'NORMAL', concentration: 0 };
+
+  const top2          = entries.slice(0, 2).reduce((s, [, v]) => s + v, 0);
+  const concentration = top2 / total;
+  const status        = concentration >= 0.55 ? 'HIGH CONCENTRATION'
+    : concentration >= 0.40 ? 'ELEVATED'
+    : 'NORMAL';
+
+  return { status, concentration: parseFloat(concentration.toFixed(3)) };
+}

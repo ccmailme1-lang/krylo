@@ -703,6 +703,117 @@ export default function TargetPacket() {
         </div>
       </div>
 
+      {/* ── WO-1835: CEO COMPETITIVE EDGE BRIEF ──────────────────────────── */}
+      {session?.lens?.toUpperCase() === 'CEO' && lensProfiles[0]?.lensId === 'DEFENDER' && hpScore >= 65 && (() => {
+        const convLabel = {
+          INSUFFICIENT_SIGNAL:   'insufficient signal — no position warranted',
+          LOW_SIGNAL_YIELD:      'low signal — monitor only',
+          BUILDING_CONVERGENCE:  'building convergence — early position window',
+          TURBULENT_CONVERGENCE: 'turbulent — asymmetric risk, caution warranted',
+          HIGH_CONVERGENCE:      'high convergence — structural shift detected',
+        };
+        const winRate  = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
+        const winLabel = winRate > 0.5 ? 'OPEN WINDOW' : winRate > 0.25 ? 'TIGHT WINDOW' : 'CLOSING WINDOW';
+        const sigPos   = `${session.query} — ${convLabel[stateLabel] ?? stateLabel.toLowerCase()}`;
+        const edgeClaim = topCandidates[0]?.label ?? '—';
+        return (
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>Competitive Edge</div>
+            {[
+              { label: 'SIGNAL POSITION',   value: sigPos },
+              { label: 'STRUCTURAL WINDOW', value: winLabel },
+              { label: 'EDGE CLAIM',        value: edgeClaim },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.05em', lineHeight: 1.4 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── WO-1834: CFO ROI PROOF LAYER ──────────────────────────────────── */}
+      {session?.lens?.toUpperCase() === 'CFO' && hpScore >= 50 && (() => {
+        const accuracy   = Math.round(confScore * 100);
+        const signalDrift = KEY_DRIVERS.filter(d => d.pos).length;
+        const roasProxy  = (1.8 + confScore * 3.2).toFixed(1);
+        const cacProxy   = Math.round(180 - confScore * 80);
+        return (
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>ROI Proof</div>
+            {[
+              { label: 'SIGNAL ACCURACY',      value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
+              { label: 'DECISION OUTCOME',      value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
+              { label: 'ESTIMATED ROAS',        value: `${roasProxy}x — ESTIMATED` },
+              { label: 'EST. CAC PRESSURE',     value: `$${cacProxy} · ${confScore > 0.70 ? '↓ EASING' : confScore < 0.45 ? '↑ RISING' : '→ STABLE'}` },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.06em' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── WO-1831: MANUFACTURING / COO OPERATIONS LENS ─────────────────── */}
+      {(session?.lens?.toUpperCase() === 'COO' || session?.lens?.toUpperCase() === 'MANUFACTURING') && hpScore >= 50 && (() => {
+        const winRate  = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
+        const adoptTiming = winRate > 0.6 ? 'OPTIMAL — adopt now' : winRate > 0.35 ? 'MONITOR — 30-day window' : 'DEFER — signal below adoption threshold';
+        return (
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>Operations Brief</div>
+            {[
+              { label: 'CAPITAL PRESSURE',  value: `${hpScore}% signal strength — ${stateLabel.replace(/_/g, ' ')}` },
+              { label: 'LABOR SIGNAL',      value: topCandidates.find(c => /labor|workforce|staffing/i.test(c.label ?? ''))?.label ?? 'No labor signal in active batch' },
+              { label: 'ADOPTION TIMING',   value: adoptTiming },
+              { label: 'BOARD POSITION',    value: topCandidates[0]?.label ?? '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: BRT, letterSpacing: '0.05em', lineHeight: 1.4 }}>{value}</span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
+
+      {/* ── WO-1833: DECISION CADENCE BRIDGE ──────────────────────────────── */}
+      {['CEO','CFO','COO','MANUFACTURING'].includes(session?.lens?.toUpperCase()) && (() => {
+        const lens = session.lens.toUpperCase();
+        const QUARTERS = ['Q3 2026', 'Q4 2026', 'Q1 2027', 'Q2 2027'];
+        const storageKey = `krylo_staged_signal_${session?.id ?? 'default'}`;
+        const staged = (() => { try { return JSON.parse(sessionStorage.getItem(storageKey) ?? 'null'); } catch { return null; } })();
+        function stageSignal(quarter) {
+          const payload = { query: session?.query, lens, quarter, hpScore, stateLabel, ts: Date.now() };
+          try { sessionStorage.setItem(storageKey, JSON.stringify(payload)); } catch {}
+        }
+        return (
+          <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>
+              {staged ? `STAGED → ${staged.quarter}` : 'STAGE FOR DECISION'}
+            </span>
+            {!staged && QUARTERS.map(q => (
+              <button key={q} onClick={() => stageSignal(q)} style={{
+                fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', textTransform: 'uppercase',
+                background: 'transparent', border: `1px solid rgba(255,255,255,0.1)`,
+                color: 'rgba(255,255,255,0.4)', padding: '3px 8px', cursor: 'pointer',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(102,255,0,0.4)'; e.currentTarget.style.color = LIME; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'rgba(255,255,255,0.4)'; }}
+              >{q}</button>
+            ))}
+            {staged && (
+              <button onClick={() => { try { sessionStorage.removeItem(storageKey); } catch {} }} style={{
+                fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)', padding: '3px 8px', cursor: 'pointer',
+              }}>clear</button>
+            )}
+          </div>
+        );
+      })()}
+
       {/* ── OLP VECTOR BLOCK ───────────────────────────────────────────────── */}
       {envelope && (
         <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, overflowY: 'auto' }}>

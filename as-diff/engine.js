@@ -6,10 +6,11 @@
 
 import http  from 'http';
 import https from 'https';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { randomUUID, createSign } from 'crypto';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
+import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 
 // WO-1042 — fixed port, no override
 const PORT = 4000;
@@ -288,6 +289,75 @@ function handleNotFound(_req, res) {
   send(res, 404, { error: 'Not found' });
 }
 
+// ── WO-1768-A: YCID persistent state ─────────────────────────────────────────
+const YCID_PATH = new URL('../runtime/ycid_state.json', import.meta.url).pathname;
+
+function readYcid() {
+  try { return JSON.parse(readFileSync(YCID_PATH, 'utf8')); }
+  catch { return { count: 0, lastChecked: '', inverted: false }; }
+}
+
+function writeYcid(state) {
+  try { writeFileSync(YCID_PATH, JSON.stringify(state, null, 2)); } catch {}
+}
+
+async function updateYcidFromFred() {
+  const apiKey = process.env.VITE_FRED_API_KEY ?? process.env.FRED_API_KEY ?? '';
+  if (!apiKey) return;
+  try {
+    const url  = `https://api.stlouisfed.org/fred/series/observations?series_id=T10Y2Y&api_key=${apiKey}&file_type=json&sort_order=desc&limit=3`;
+    const data = await fetch(url).then(r => r.json());
+    const obs  = (data.observations ?? []).filter(o => o.value !== '.');
+    if (!obs.length) return;
+    const raw      = parseFloat(obs[0].value);
+    const today    = obs[0].date;
+    const state    = readYcid();
+    if (state.lastChecked === today) return; // already checked today
+    state.lastChecked = today;
+    if (raw < 0) { state.count++; state.inverted = true; }
+    else         { state.count = 0; state.inverted = false; }
+    writeYcid(state);
+  } catch {}
+}
+
+// ── WO-1768-A: /v1/timing-proxy handler ──────────────────────────────────────
+async function handleTimingProxy(_req, res) {
+  const apiKey = process.env.VITE_FRED_API_KEY ?? process.env.FRED_API_KEY ?? '';
+  if (!apiKey) {
+    return send(res, 503, { error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['FRED_API_KEY'] });
+  }
+
+  const missing = [];
+  let fsStar, dfcResult, ycidDays;
+
+  try { fsStar = await computeFsStar(apiKey); }
+  catch (e) {
+    missing.push(e.message.includes('BAMLH0A0HYM2') ? 'BAMLH0A0HYM2' : 'M2V');
+  }
+
+  try { dfcResult = await computeDFC(); }
+  catch { missing.push('EDGAR'); }
+
+  try { ycidDays = readYcid().count; }
+  catch { ycidDays = 0; }
+
+  if (missing.length) {
+    return send(res, 503, { error: 'UPSTREAM_DATA_UNAVAILABLE', missing });
+  }
+
+  const dfcStatus = dfcResult?.status ?? 'NORMAL';
+  const result    = reconcile(fsStar, dfcStatus, ycidDays);
+
+  send(res, 200, {
+    fsStar:     parseFloat(fsStar.toFixed(4)),
+    dfcStatus,
+    ycidDays,
+    action:     result.action,
+    conviction: result.conviction,
+    ts:         Date.now(),
+  });
+}
+
 // ── FRED proxy — server-side fetch, cached ───────────────────────────────────
 function handleFredProxy(req, res) {
   const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
@@ -360,6 +430,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
+  if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   handleNotFound(req, res);
 }
 
@@ -370,4 +441,7 @@ const server = http.createServer(routeRequest);
 server.listen(PORT, async () => {
   console.log(`[AS-DIFF] engine live on port ${PORT}`);
   await migrate();
+  // WO-1768-A: YCID daily poll — update on startup then every 24h
+  updateYcidFromFred();
+  setInterval(updateYcidFromFred, 24 * 60 * 60 * 1000);
 });
