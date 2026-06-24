@@ -27,10 +27,13 @@ const LIME_DIM = 'rgba(102,255,0,0.25)';
 const LIME_MID = 'rgba(102,255,0,0.5)';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
-function buildBrief(session, synthesis) {
-  const entity  = getDisplayEntity(session?.query ?? 'Unknown Signal');
-  const lens    = session?.lens  ?? null;
-  const domain  = session?.tensor?.domain ?? session?.tensor?.domains?.[0] ?? 'FINANCIAL';
+function buildBrief(session, synthesis, hp = null) {
+  const entity     = getDisplayEntity(session?.query ?? 'Unknown Signal');
+  const lens       = session?.lens  ?? null;
+  const hpDomains  = hp?.qualified ? hp.domains : null;
+  const domain     = hpDomains
+    ? hpDomains[0]
+    : (session?.tensor?.domain ?? session?.tensor?.domains?.[0] ?? 'FINANCIAL');
   const now     = new Date();
   const dateStr = now.toISOString().slice(0, 10);
   const timeStr = now.toTimeString().slice(0, 8) + ' EST';
@@ -49,7 +52,9 @@ function buildBrief(session, synthesis) {
     cac:            (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↓ EASING' : conf < 0.45 ? '↑ RISING' : '→ STABLE'; return `$${Math.round(180 - conf * 80)} · ${dir} — ESTIMATED`; })(),
     roas:           (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↑ IMPROVING' : conf < 0.45 ? '↓ DECLINING' : '→ STABLE'; return `${(1.8 + conf * 3.2).toFixed(1)}x · ${dir} — ESTIMATED`; })(),
 
-    bluf:           synthesis?.bluf    ?? `Structural convergence detected in the ${domain.toLowerCase()} domain.`,
+    bluf:           synthesis?.bluf    ?? (hpDomains
+      ? `Happy Path qualified: HIGH convergence across ${hpDomains.join(' + ')} — score ${hp.peakScore?.toFixed(0) ?? '—'}/100. Structural asymmetry confirmed.`
+      : `Structural convergence detected in the ${domain.toLowerCase()} domain.`),
     purpose:        synthesis?.purpose ?? `To support ${lens ? lens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
     fiveWs:         synthesis?.fiveWs  ?? adapter.fiveWs?.(payload) ?? [],
     evidence:       synthesis?.evidence       ?? [],
@@ -175,7 +180,7 @@ export default function IntelligenceBrief() {
 
   function handleExport() {
     if (!exportUnlocked || !session) return;
-    const brief   = buildBrief(session, synthesis);
+    const brief   = buildBrief(session, synthesis, hp);
     const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs, hp);
     triggerDownload(payload);
     setExported(true);
@@ -242,8 +247,6 @@ export default function IntelligenceBrief() {
     );
   }
 
-  const brief = buildBrief(session, synthesis);
-
   const [hpOpen, setHpOpen]       = useState(false);
   const [hpDismissed, setHpDismissed] = useState(false);
   const [hpLog, setHpLog]         = useState([]);
@@ -255,6 +258,8 @@ export default function IntelligenceBrief() {
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
   const hp                        = engineState?.happyPath ?? null;
+
+  const brief = buildBrief(session, synthesis, hp);
   const convictions               = useConvictionStore();
 
   useEffect(() => {
