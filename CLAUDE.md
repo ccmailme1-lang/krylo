@@ -1,9 +1,9 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-21
+LAST BUILD SESSION: 2026-06-24
 BASELINE: baseline_reanalyze_hp_icon_fix
-SHA: 804cdcd
+SHA: e62ea2c
 DEPLOYED: krylo.org ✓
 ──────────────────────────────────────────────
 
@@ -126,9 +126,9 @@ Start at 1859. Work backwards. This is the only open list.
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
-1859 — Financial/Market Connector — Alpha Vantage / Finnhub; σN² jitter factor → confidence downscaler per domain; DAILY decay; keys gated (ALPHA_VANTAGE_KEY, FINNHUB_KEY)
-1858 — Economic Flow Connector — UN Comtrade / World Bank; macro baseline per domain; QUARTERLY decay; both public APIs
-1857 — Supply Chain Connector — Open Supply Hub / Versed AI; suppressionFactor → topology-scoped confidence multiplier; symmetric with WO-1855 amplifier
+1859 — Financial/Market Connector (COMPLETE — financialmarketconnector.js — σN² jitter factor → confidence downscaler per domain; DAILY decay; SHA: e62ea2c)
+1858 — Economic Flow Connector (COMPLETE — economicflowconnector.js — macro baseline per domain; QUARTERLY decay; SHA: 460c348)
+1857 — Supply Chain Connector (COMPLETE — supplychainconnector.js — suppressionFactor → topology-scoped confidence multiplier; SHA: 7802c51)
 1856 — Patent Intelligence Connector (COMPLETE — patentsviewconnector.js — velocity + assignee + migration; QUARTERLY decay; SHA: e074a98)
 1855 — Entity Topology Linker (COMPLETE — entitytopologyregistry.js + surfacerouter dispatchBatch; 3 clusters, 1.2x amplifier; SHA: 7b9a897)
 1854 — Structural Void Classifier (COMPLETE — voidclassifier.js + signalconstants.js POLARITY/DECAY; SHA: 42ddecc)
