@@ -31,8 +31,12 @@ function buildBrief(session, synthesis, hp = null) {
   const entity     = getDisplayEntity(session?.query ?? 'Unknown Signal');
   const lens       = session?.lens  ?? null;
   const hpDomains  = hp?.qualified ? hp.domains : null;
-  const domain     = hpDomains
-    ? hpDomains[0]
+  // Domain field = query's classified subject domain. The HP macro-convergence
+  // domains (the 6 locked: TECHNOLOGY/CAPITAL/...) describe WHERE convergence was
+  // detected in the signal field — not the subject of the analysis. They belong in
+  // the BLUF, not here. Leaking hp.domains[0] mislabeled expense queries as TECHNOLOGY.
+  const domain = (synthesis?.queryDomain && synthesis.queryDomain !== 'AMBIGUOUS')
+    ? synthesis.queryDomain
     : (session?.tensor?.domain ?? session?.tensor?.domains?.[0] ?? 'FINANCIAL');
   const now     = new Date();
   const dateStr = now.toISOString().slice(0, 10);
