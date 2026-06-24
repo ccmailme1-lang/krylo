@@ -198,6 +198,13 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1730 — Flexible Space Demand Signal (Neumann Protocol)
 1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
 1727 — Startup Market Readiness (YC Protocol)
+1863 — Hard State Contract — confidence >= threshold currently implies completion (semantic
+    collapse); fix: enforce STATE_TYPE = TERMINAL | TRANSITIONAL | PROJECTION at schema level;
+    gate terminal/outcome language only on TERMINAL; normalize projection language (confidence
+    maps to "high-probability path" not "resolved/complete/win"); Files: statecontract.js (NEW —
+    STATE_TYPE enum + isTerminal() + normalizeToProjectionLanguage()), convergenceclassifier.js
+    (add stateType: PROJECTION to all outputs), targetpacket.jsx (gate convLabel + CEO/CFO
+    executive language on stateType)
 1862 — Safe Matcher Wrapper — drop-in tokenization layer for resolvePrimary(); eliminates
     stem-family collisions (finance/financing, operate/operational) and structured-string bleed
     (camelCase tokens, JSON keys); replaces bare regex with boundary-aware token matcher;
