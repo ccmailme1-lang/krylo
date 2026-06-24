@@ -134,11 +134,9 @@ UNCLASSIFIED propagation, entropy handling, and overlap disambiguation are the a
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
-1860 — RFE State Propagation — routeLens() currently discards rfe.state/confidence/entropy after
-    computing RFE-1; executive output blocks in targetpacket.jsx gate on static lens label only;
-    UNCLASSIFIED must suppress executive output, MULTI_ROLE_OVERLAP must render with caveat;
-    Files: lensrouter.js (extend return to { profiles, rfe }), PrismContext.jsx (carry rfe field),
-    targetpacket.jsx (gate each executive block on rfe.state: RESOLVED=full, OVERLAP=caveat, UNCLASSIFIED=suppress)
+1860 — RFE State Propagation (COMPLETE — lensrouter.js return extended to { profiles, rfe };
+    targetpacket.jsx all 4 executive blocks gate on lensRfe?.state !== 'UNCLASSIFIED';
+    MULTI_ROLE_OVERLAP surfaces entropy caveat inline; RESOLVED=full output; SHA: 524339d)
 
 1859 — Financial/Market Connector (COMPLETE — financialmarketconnector.js — σN² jitter factor → confidence downscaler per domain; DAILY decay; SHA: e62ea2c)
 1858 — Economic Flow Connector (COMPLETE — economicflowconnector.js — macro baseline per domain; QUARTERLY decay; SHA: 460c348)
