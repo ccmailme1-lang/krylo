@@ -2,9 +2,11 @@
 // Phase A: static persona → LensProfile mapping + query signal elevation.
 // Phase B (WO-1828): profile-aware routing — derives persona from role/goals/challenges.
 // Phase C (RFE-1): probabilistic axis routing via rolefieldengine.js.
-// Output contract (frozen): LensProfile { lensId, conviction }
+// Phase D (WO-1861): RFE state reconciliation — hysteresis buffer, K=2/N=3.
+// Output contract (frozen): { profiles: LensProfile[], rfe: RfeState | null }
 
 import { classify, buildInputVector, AXIS_TO_LENS } from './rolefieldengine.js';
+import { reconcile as reconcileRfe }                 from './rfereconciler.js';
 
 const VALID_LENS_IDS = new Set([
   'CAPITAL_ALLOCATOR',
@@ -62,17 +64,17 @@ function detectQuerySignal(query) {
 // Decision context (goals, challenges, reporting line) overrides job title.
 function detectPersonaFromProfile(profile) {
   if (!profile) return null;
-  const role    = (profile.role    ?? '').toLowerCase();
-  const goals   = (profile.goals   ?? '').toLowerCase();
-  const line    = (profile.reportingLine ?? '').toLowerCase();
+  const role = (profile.role    ?? '').toLowerCase();
+  const goals = (profile.goals  ?? '').toLowerCase();
+  const line  = (profile.reportingLine ?? '').toLowerCase();
 
-  if (/\bceo\b|chief executive|founder/i.test(role))                          return 'CEO';
-  if (/\bcfo\b|chief financial|finance director/i.test(role))                 return 'CFO';
+  if (/\bceo\b|chief executive|founder/i.test(role))                           return 'CEO';
+  if (/\bcfo\b|chief financial|finance director/i.test(role))                  return 'CFO';
   if (/\bcoo\b|chief operating|operations director|manufacturing/i.test(role)) return 'COO';
-  if (/executive assistant|\bea\b|assistant to the/i.test(role))               return 'EA';
-  if (/invest|portfolio|fund|allocat|capital deploy/i.test(goals))             return 'INVESTOR';
-  if (/realtor|real estate agent|property/i.test(role))                        return 'REALTOR';
-  if (/board|c-suite|c suite/i.test(line))                                     return 'CEO';
+  if (/executive assistant|\bea\b|assistant to the/i.test(role))                return 'EA';
+  if (/invest|portfolio|fund|allocat|capital deploy/i.test(goals))              return 'INVESTOR';
+  if (/realtor|real estate agent|property/i.test(role))                         return 'REALTOR';
+  if (/board|c-suite|c suite/i.test(line))                                      return 'CEO';
 
   return null;
 }
@@ -90,8 +92,7 @@ export function detectGuidedMode(profile) {
   );
 }
 
-// Phase C — converts RFE-1 output to LensProfile[].
-// Uses sv_influence_vector.direction (axis centroid) to rank lenses.
+// Phase C — converts RFE-1 classify() output to LensProfile[].
 function buildProfilesFromRFE(rfe) {
   const dir    = rfe.sv_influence_vector.direction;
   const ranked = Object.entries(AXIS_TO_LENS)
@@ -99,11 +100,9 @@ function buildProfilesFromRFE(rfe) {
     .sort((a, b) => b.weight - a.weight);
 
   const profiles = [];
-  // Primary conviction: scaled from confidence into [65, 92]
   profiles.push({ lensId: ranked[0].lensId, conviction: Math.round(65 + rfe.confidence * 27) });
 
   const second = ranked[1];
-  // Secondary: emit when weight is material (>= 0.20) or state is MULTI_ROLE_OVERLAP
   if (second.weight >= 0.20 || rfe.state === 'MULTI_ROLE_OVERLAP') {
     const sec = Math.round(40 + second.weight * 140);
     profiles.push({ lensId: second.lensId, conviction: Math.min(sec, profiles[0].conviction - 8) });
@@ -112,33 +111,14 @@ function buildProfilesFromRFE(rfe) {
   return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
 }
 
-// routeLens — returns { profiles: LensProfile[], rfe: RfeState | null }
-// rfe is null when Phase A/B fallback fires (UNCLASSIFIED or RFE error).
-// Phase A guarantees: max 2 profiles, no duplicates, only valid lensIds.
-// Phase B (WO-1828): consults session.profile when lens key is absent or GENERAL.
-// Phase C (RFE-1): probabilistic routing — falls back to PERSONA_MAP only if UNCLASSIFIED.
-export function routeLens(session) {
-  // Phase C: attempt probabilistic routing via RFE-1
-  try {
-    const inputVector = buildInputVector(session);
-    const rfe         = classify(inputVector);
-    if (rfe.state !== 'UNCLASSIFIED') {
-      return {
-        profiles: buildProfilesFromRFE(rfe),
-        rfe: { state: rfe.state, confidence: rfe.confidence, entropy: rfe.entropy },
-      };
-    }
-  } catch (_) {
-    // RFE-1 failure is non-fatal — fall through to Phase A/B
-  }
-
-  // Phase A/B fallback — rfe is null (UNCLASSIFIED state)
+// Phase A/B — PERSONA_MAP + query signal profiles. Used as fallback and when
+// reconciler holds stable state but fresh classify() returned UNCLASSIFIED.
+function buildFallbackProfiles(session) {
   const rawKey     = (session?.lens ?? 'GENERAL').toUpperCase();
   const profileKey = (rawKey === 'GENERAL' || rawKey === 'OPEN')
     ? detectPersonaFromProfile(session?.profile)
     : null;
-  const personaKey = profileKey ?? rawKey;
-
+  const personaKey  = profileKey ?? rawKey;
   const query       = session?.query ?? '';
   const mapping     = PERSONA_MAP[personaKey] ?? PERSONA_MAP.GENERAL;
   const querySignal = detectQuerySignal(query);
@@ -152,5 +132,42 @@ export function routeLens(session) {
     profiles.push({ lensId: mapping.secondary, conviction: 55 });
   }
 
-  return { profiles: profiles.filter(p => VALID_LENS_IDS.has(p.lensId)), rfe: null };
+  return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
+}
+
+// routeLens — returns { profiles: LensProfile[], rfe: RfeState | null }
+// rfe is null only when both fresh classify and reconciler yield UNCLASSIFIED/error.
+// Phase D: reconciler absorbs transient UNCLASSIFIED (K=2) and degradation (N=3).
+export function routeLens(session) {
+  let freshClassify = null;
+  let freshRfeData  = null;
+
+  try {
+    const inputVector = buildInputVector(session);
+    freshClassify     = classify(inputVector);
+    freshRfeData      = {
+      state:      freshClassify.state,
+      confidence: freshClassify.confidence,
+      entropy:    freshClassify.entropy,
+    };
+  } catch (_) {
+    // RFE-1 failure is non-fatal — freshRfeData stays null
+  }
+
+  // Pass fresh data (or null on error) through the reconciler.
+  const stableRfe = reconcileRfe(session, freshRfeData);
+
+  // Reconciler authorizes execution: stable state is non-UNCLASSIFIED.
+  if (stableRfe && stableRfe.state !== 'UNCLASSIFIED') {
+    // Use Phase C profiles when fresh classify succeeded with a valid state.
+    // Fall back to Phase A/B profiles when fresh was UNCLASSIFIED but reconciler
+    // is holding a prior stable state (hysteresis absorbing transient noise).
+    const profiles = (freshClassify && freshClassify.state !== 'UNCLASSIFIED')
+      ? buildProfilesFromRFE(freshClassify)
+      : buildFallbackProfiles(session);
+    return { profiles, rfe: stableRfe };
+  }
+
+  // Suppression path: stable is null or UNCLASSIFIED.
+  return { profiles: buildFallbackProfiles(session), rfe: null };
 }
