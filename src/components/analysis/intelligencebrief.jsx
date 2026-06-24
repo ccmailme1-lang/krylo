@@ -231,6 +231,7 @@ export default function IntelligenceBrief() {
   const brief = buildBrief(session, synthesis);
 
   const [hpOpen, setHpOpen]       = useState(false);
+  const [hpDismissed, setHpDismissed] = useState(false);
   const [hpLog, setHpLog]         = useState([]);
   const [hpHeld, setHpHeld]       = useState(false);
   const hpHoldTimer               = useRef(null);
@@ -341,15 +342,15 @@ export default function IntelligenceBrief() {
               <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
             </svg>
             <div
-              onClick={() => { if (!(hp?.qualified || hpHeld)) return; setHpOpen(true); setTimeout(() => { if (scrollBodyRef.current && hpAnchorRef.current) scrollBodyRef.current.scrollTop = hpAnchorRef.current.offsetTop - 12; }, 80); }}
+              onClick={() => { if (!hpSnapshot.current) return; setHpOpen(true); setHpDismissed(false); setTimeout(() => { if (scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0; }, 80); }}
               style={{
-                cursor: hp?.qualified || hpHeld ? 'pointer' : 'default',
+                cursor: hpSnapshot.current ? 'pointer' : 'default',
                 padding: '4px 6px', display: 'flex', alignItems: 'center',
                 animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
-                opacity: hp?.qualified ? 1 : hpHeld ? 0.5 : 0,
-                visibility: hp?.qualified || hpHeld ? 'visible' : 'hidden',
+                opacity: hp?.qualified ? 1 : hpSnapshot.current ? 0.5 : 0,
+                visibility: hpSnapshot.current ? 'visible' : 'hidden',
                 marginLeft: '5%',
-                pointerEvents: hp?.qualified || hpHeld ? 'auto' : 'none',
+                pointerEvents: hpSnapshot.current ? 'auto' : 'none',
               }}
             >
               <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
@@ -380,6 +381,248 @@ export default function IntelligenceBrief() {
 
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
       <div ref={scrollBodyRef} style={{ flex: 3, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
+
+        {/* ── Happy Path Identified — top of frame ─────────────────────── */}
+        {hpOpen && hpSnapshot.current && (
+          <div ref={hpAnchorRef} style={{ flexShrink: 0, borderBottom: `1px solid rgba(138,43,226,0.2)`, marginBottom: 16 }}>
+            <div style={{ border: `1px solid rgba(138,43,226,0.3)`, background: 'rgba(138,43,226,0.04)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
+                  <span
+                    onClick={() => { setHpOpen(false); setHpDismissed(true); }}
+                    onMouseEnter={e => e.currentTarget.style.color = PURPLE}
+                    onMouseLeave={e => e.currentTarget.style.color = 'rgba(138,43,226,0.45)'}
+                    style={{ color: 'rgba(138,43,226,0.45)', cursor: 'pointer', fontFamily: MONO, fontSize: 10, lineHeight: 1, userSelect: 'none' }}
+                  >x</span>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                {[
+                  { label: 'CONVERGENCE', value: 'HIGH — sustained' },
+                  { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
+                  { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
+                  { label: 'COUNTER',     value: 'None above threshold' },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ fontFamily: SERIF, fontSize: 10, color: 'rgba(138,43,226,0.55)', lineHeight: 1.55, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
+                Invalidated by: velocity reversal in any qualifying domain · counter-signal breach · convergence below floor.
+              </div>
+              {alerts.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+                  </div>
+                  {alerts.map(a => (
+                    <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {convictions.active.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px 12px' }}>
+                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
+                  Active Convictions · {convictions.active.length}
+                </div>
+                {convictions.active.map(c => {
+                  const mAlerts    = monitorMap[c.id] ?? [];
+                  const highAlerts = mAlerts.filter(a => a.severity === 'high');
+                  const borderColor = highAlerts.length > 0 ? 'rgba(255,80,80,0.5)'
+                    : mAlerts.some(a => a.severity === 'medium') ? 'rgba(138,43,226,0.6)' : 'rgba(138,43,226,0.4)';
+                  return (
+                    <div key={c.id} style={{ borderLeft: `2px solid ${borderColor}`, paddingLeft: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
+                          {new Date(c.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </span>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
+                      </div>
+                      {c.thesis && (
+                        <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, letterSpacing: '0.03em' }}>
+                          {c.thesis.length > 120 ? c.thesis.slice(0, 117) + '…' : c.thesis}
+                        </div>
+                      )}
+                      {mAlerts.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, borderTop: `1px solid rgba(255,255,255,0.05)`, paddingTop: 5 }}>
+                          {mAlerts.map((a, i) => (
+                            <div key={i} style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.5, letterSpacing: '0.03em',
+                              color: a.severity === 'high' ? 'rgba(255,80,80,0.85)' : a.severity === 'medium' ? 'rgba(255,255,255,0.55)' : 'rgba(102,255,0,0.5)',
+                            }}>{a.message}</div>
+                          ))}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {['confirmed', 'denied', 'timed_out'].map(res => (
+                          <button key={res} onClick={() => convictions.resolve(c.id, res)} style={{
+                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                            background: 'transparent', cursor: 'pointer', padding: '3px 8px',
+                            border: `1px solid rgba(138,43,226,0.25)`, color: 'rgba(138,43,226,0.45)',
+                          }}>{res.replace('_', ' ')}</button>
+                        ))}
+                        <button onClick={() => convictions.dismiss(c.id)} style={{
+                          fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          background: 'transparent', cursor: 'pointer', padding: '3px 8px',
+                          border: `1px solid rgba(255,255,255,0.08)`, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto',
+                        }}>DISMISS</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {convictions.resolved.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 20px 16px', borderTop: `1px solid rgba(255,255,255,0.06)` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                    Decision Lineage · {convictions.resolved.length}
+                  </span>
+                  {calibration.total >= 5 && (
+                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: LIME }}>
+                      {Math.round(calibration.overallAccuracy * 100)}% ACCURACY
+                    </span>
+                  )}
+                </div>
+                {(calibration.overallAccuracy !== null || calibration.hpAccuracy !== null || calibration.domainAccuracy.length > 0) && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 12px', borderLeft: `2px solid rgba(102,255,0,0.2)` }}>
+                    {calibration.overallAccuracy !== null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{calibration.confirmed}C · {calibration.denied}D · {calibration.timedOut}T</span>
+                      </div>
+                    )}
+                    {calibration.hpAccuracy !== null && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.08em' }}>{Math.round(calibration.hpAccuracy * 100)}%</span>
+                      </div>
+                    )}
+                    {calibration.domainAccuracy.map(g => (
+                      <div key={g.domains.join('+')} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{Math.round(g.accuracy * 100)}%</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {calibration.overallAccuracy === null && calibration.hpAccuracy === null && calibration.domainAccuracy.length === 0 && (
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', lineHeight: 1.6 }}>
+                    Calibration metrics appear after more convictions are resolved.
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {convictions.resolved.map(r => {
+                    const resColor = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
+                    const hadHP    = r.peakScore >= 75 && r.domains.length >= 2;
+                    return (
+                      <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
+                            {new Date(r.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </span>
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 5, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
+                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
+                          </div>
+                        </div>
+                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
+                        {r.thesis && (
+                          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                            {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div style={{ margin: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
+                HP UPDATE LOG
+              </div>
+              {hpLog.length === 0 ? (
+                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.14em' }}>
+                  [ awaiting signal ]
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {hpLog.map(entry => (
+                    <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
+                        {new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
+                        {entry.label}
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
+                        {entry.detail}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── EQ Canvas — paired with HP report ── */}
+        {hpOpen && hpSnapshot.current && (
+          <>
+            <div style={{ padding: '6px 20px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
+              <input
+                value={pendingHypothesisId}
+                onChange={e => setPendingHypothesisId(e.target.value.trim())}
+                placeholder="enter hypothesis id"
+                style={{
+                  flex: 1, background: 'transparent', border: 'none',
+                  borderBottom: `1px solid ${pendingHypothesisId ? LIME : 'rgba(255,255,255,0.12)'}`,
+                  fontFamily: MONO, fontSize: 8, color: pendingHypothesisId ? LIME : DIM,
+                  letterSpacing: '0.08em', padding: '2px 0', outline: 'none',
+                }}
+              />
+              {pendingHypothesisId && (
+                <span onClick={() => setPendingHypothesisId('')} style={{ fontFamily: MONO, fontSize: 8, color: DIM, cursor: 'pointer' }}>✕</span>
+              )}
+            </div>
+            <EQCanvas
+              isPremium={true}
+              onCommitThesis={({ domain, engineState: es }) => {
+                const arb      = es?.arbitration ?? session?.tensor?.arbitration;
+                const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
+                const winState = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                convictions.commit({
+                  sessionId:           session?.id ?? null,
+                  thesis:              session?.query ?? null,
+                  timeHorizon:         synthesis?.timeHorizon ?? null,
+                  domains:             es?.happyPath?.domains ?? hp?.domains ?? [],
+                  peakScore:           es?.happyPath?.peakScore ?? hp?.peakScore ?? 0,
+                  velocity:            es?.happyPath?.velocity ?? 'FLAT',
+                  domainStates:        es?.domainStates ?? {},
+                  hypothesisId:        pendingHypothesisId || null,
+                  windowStateAtCommit: winState,
+                });
+                setPendingHypothesisId('');
+                emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
+              }}
+              onSetTrigger={({ domain, peakPosition }) => {
+                window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
+                  detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
+                }));
+              }}
+            />
+          </>
+        )}
 
         {/* IMPORTED ARTIFACT BANNER */}
         {isImported && importState?.status === 'success' && (
@@ -529,7 +772,7 @@ export default function IntelligenceBrief() {
         </Panel>
 
         {/* ── Happy Path — Access Latch ───────────────────────────────── */}
-        {hp?.qualified && !hpOpen && (
+        {hp?.qualified && !hpOpen && !hpDismissed && (
           <div
             onClick={() => setHpOpen(true)}
             style={{
@@ -549,14 +792,10 @@ export default function IntelligenceBrief() {
           </div>
         )}
 
-        {/* ── Happy Path Identified — workspace ───────────────────────── */}
-        {hpOpen && hpSnapshot.current && (
-          <div ref={hpAnchorRef} style={{ flexShrink: 0, borderTop: `1px solid rgba(138,43,226,0.2)` }}>
-            <div style={{ border: `1px solid rgba(138,43,226,0.3)`, background: 'rgba(138,43,226,0.04)', padding: '14px 18px', margin: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
-              </div>
+        {/* dead block removed */}
+        {false && (
+          <div>
+            <div>
               <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                 {[
                   { label: 'CONVERGENCE', value: 'HIGH — sustained' },
@@ -739,58 +978,6 @@ export default function IntelligenceBrief() {
           </div>
         )}
 
-        {/* ── CONVERGENCE FIELD · EQ — gated to Happy Path qualification ── */}
-        {hp?.qualified && (
-          <>
-            {/* WO-1852 — Hypothesis bind input: explicit index-free ID entry */}
-            <div style={{ padding: '6px 20px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
-              <input
-                value={pendingHypothesisId}
-                onChange={e => setPendingHypothesisId(e.target.value.trim())}
-                placeholder="enter hypothesis id"
-                style={{
-                  flex: 1, background: 'transparent', border: 'none',
-                  borderBottom: `1px solid ${pendingHypothesisId ? LIME : 'rgba(255,255,255,0.12)'}`,
-                  fontFamily: MONO, fontSize: 8, color: pendingHypothesisId ? LIME : DIM,
-                  letterSpacing: '0.08em', padding: '2px 0', outline: 'none',
-                }}
-              />
-              {pendingHypothesisId && (
-                <span
-                  onClick={() => setPendingHypothesisId('')}
-                  style={{ fontFamily: MONO, fontSize: 8, color: DIM, cursor: 'pointer' }}
-                >✕</span>
-              )}
-            </div>
-            <EQCanvas
-              isPremium={true}
-              onCommitThesis={({ domain, engineState: es }) => {
-                const arb       = es?.arbitration ?? session?.tensor?.arbitration;
-                const rate      = arb?.total > 0 ? (arb.passed / arb.total) : 0;
-                const winState  = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-                convictions.commit({
-                  sessionId:           session?.id ?? null,
-                  thesis:              session?.query ?? null,
-                  timeHorizon:         synthesis?.timeHorizon ?? null,
-                  domains:             es?.happyPath?.domains ?? hp?.domains ?? [],
-                  peakScore:           es?.happyPath?.peakScore ?? hp?.peakScore ?? 0,
-                  velocity:            es?.happyPath?.velocity ?? 'FLAT',
-                  domainStates:        es?.domainStates ?? {},
-                  hypothesisId:        pendingHypothesisId || null,
-                  windowStateAtCommit: winState,
-                });
-                setPendingHypothesisId('');
-                emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
-              }}
-              onSetTrigger={({ domain, peakPosition }) => {
-                window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
-                  detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
-                }));
-              }}
-            />
-          </>
-        )}
 
       </div>
 

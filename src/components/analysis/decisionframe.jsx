@@ -116,7 +116,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
             padding: '1px 6px',
             ...(isFallback
               ? { color: DIM, border: `1px solid rgba(255,255,255,0.1)`, background: 'transparent' }
-              : { color: '#000', background: LIME }),
+              : { color: LIME, background: 'transparent', border: `1px solid rgba(102,255,0,0.3)` }),
           }}>
             {primary.lensId.replace(/_/g, ' ')}
           </span>
