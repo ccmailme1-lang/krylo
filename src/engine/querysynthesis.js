@@ -149,6 +149,10 @@ function resolvePrimary(q, lens) {
   // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
   if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
   if (/\bcar\b|vehicle|suv|\btruck\b|\bauto\b|\blease\b|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|\baudi\b|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
+  // Property/homestead tax exemptions, freezes, deferrals, rebates are senior cost-relief
+  // levers — NOT real-estate transactions. Must precede the REAL_ESTATE 'property' keyword.
+  if (/homestead exemption/.test(q)) return 'EXPENSE_REDUCTION';
+  if (/property tax/.test(q) && /exemption|senior|fixed income|relief|rebate|freeze|deferral|struggling/.test(q)) return 'EXPENSE_REDUCTION';
   // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
   if (
     /\bhouse\b|mortgage|property|\bcondo\b|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
