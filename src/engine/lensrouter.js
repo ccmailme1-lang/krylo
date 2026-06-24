@@ -1,8 +1,10 @@
 // WO-1828 — Lens Routing Engine
 // Phase A: static persona → LensProfile mapping + query signal elevation.
-// Phase B (WO-1828): profile-aware routing — derives persona from role/goals/challenges
-//   when session.profile is present. Job title alone is insufficient; decision context wins.
+// Phase B (WO-1828): profile-aware routing — derives persona from role/goals/challenges.
+// Phase C (RFE-1): probabilistic axis routing via rolefieldengine.js.
 // Output contract (frozen): LensProfile { lensId, conviction }
+
+import { classify, buildInputVector, AXIS_TO_LENS } from './rolefieldengine.js';
 
 const VALID_LENS_IDS = new Set([
   'CAPITAL_ALLOCATOR',
@@ -88,34 +90,63 @@ export function detectGuidedMode(profile) {
   );
 }
 
+// Phase C — converts RFE-1 output to LensProfile[].
+// Uses sv_influence_vector.direction (axis centroid) to rank lenses.
+function buildProfilesFromRFE(rfe) {
+  const dir    = rfe.sv_influence_vector.direction;
+  const ranked = Object.entries(AXIS_TO_LENS)
+    .map(([ax, lensId]) => ({ lensId, weight: dir[ax] || 0 }))
+    .sort((a, b) => b.weight - a.weight);
+
+  const profiles = [];
+  // Primary conviction: scaled from confidence into [65, 92]
+  profiles.push({ lensId: ranked[0].lensId, conviction: Math.round(65 + rfe.confidence * 27) });
+
+  const second = ranked[1];
+  // Secondary: emit when weight is material (>= 0.20) or state is MULTI_ROLE_OVERLAP
+  if (second.weight >= 0.20 || rfe.state === 'MULTI_ROLE_OVERLAP') {
+    const sec = Math.round(40 + second.weight * 140);
+    profiles.push({ lensId: second.lensId, conviction: Math.min(sec, profiles[0].conviction - 8) });
+  }
+
+  return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
+}
+
 // routeLens — returns LensProfile[] sorted by conviction desc.
 // Phase A guarantees: max 2 profiles, no duplicates, only valid lensIds.
 // Phase B (WO-1828): consults session.profile when lens key is absent or GENERAL.
+// Phase C (RFE-1): probabilistic routing — falls back to PERSONA_MAP only if UNCLASSIFIED.
 export function routeLens(session) {
+  // Phase C: attempt probabilistic routing via RFE-1
+  try {
+    const inputVector = buildInputVector(session);
+    const rfe         = classify(inputVector);
+    if (rfe.state !== 'UNCLASSIFIED') {
+      return buildProfilesFromRFE(rfe);
+    }
+  } catch (_) {
+    // RFE-1 failure is non-fatal — fall through to Phase A/B
+  }
+
+  // Phase A/B fallback
   const rawKey     = (session?.lens ?? 'GENERAL').toUpperCase();
-  // Phase B: if persona is GENERAL or unset, derive from profile context
   const profileKey = (rawKey === 'GENERAL' || rawKey === 'OPEN')
     ? detectPersonaFromProfile(session?.profile)
     : null;
   const personaKey = profileKey ?? rawKey;
 
-  const query      = session?.query ?? '';
-
+  const query       = session?.query ?? '';
   const mapping     = PERSONA_MAP[personaKey] ?? PERSONA_MAP.GENERAL;
   const querySignal = detectQuerySignal(query);
 
   const profiles = [];
-
-  // Primary from persona — baseline conviction
   profiles.push({ lensId: mapping.primary, conviction: 82 });
 
-  // Query signal elevates or adds secondary
   if (querySignal && querySignal !== mapping.primary) {
     profiles.push({ lensId: querySignal, conviction: 62 });
   } else if (mapping.secondary && mapping.secondary !== mapping.primary) {
     profiles.push({ lensId: mapping.secondary, conviction: 55 });
   }
 
-  // Guard: strip any invalid lensIds (defensive, should not fire in Phase A)
   return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
 }
