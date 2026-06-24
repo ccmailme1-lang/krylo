@@ -126,12 +126,16 @@ SEQUENCE: Numbering must follow the Active Registry.
 RULE:     No code is written without a WO and explicit "Go."
 
 OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-24)
-Start at 1860. Work backwards. This is the only open list.
+Start at 1864. Work backwards. This is the only open list.
 
 ARCHITECTURE STATE (2026-06-24): Decision → Routing → Export pipeline is closed.
 Ingestion timing (1768-A), role routing (1828-1829), and executive output (1832-1835) are complete.
 Remaining risk is state coherence under role deformation — not feature completion.
 UNCLASSIFIED propagation, entropy handling, and overlap disambiguation are the active surface.
+
+ACTIVE DEFECTS (filed 2026-06-24 — must fix before next feature build):
+  DEF-1863 — Hard State Contract: confidence >= threshold implied as completion (semantic collapse)
+  DEF-1864 — Intent Lock Gate: ambiguous query escalates to life domain instead of returning AMBIGUOUS
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
@@ -198,14 +202,14 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1730 — Flexible Space Demand Signal (Neumann Protocol)
 1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
 1727 — Startup Market Readiness (YC Protocol)
-1864 — Intent Lock Gate — ambiguous/under-specified query currently escalates to highest-value
+DEF-1864 — Intent Lock Gate — ambiguous/under-specified query currently escalates to highest-value
     life domain via lens fallback (lines 203-208 resolvePrimary()); fix: (1) score-floor gate —
     if no domain keywords matched + no priority rule fired, return AMBIGUOUS not lens default;
     (2) lens fallback gated behind minimum score floor; (3) state:HOLD enforced as simulation
     blocker — resolutionEligible:false propagates to suppress output; Files: querysynthesis.js
     (resolvePrimary() intent gate + lens fallback removal), downstream consumers of detectDomain()
     (enforce resolutionEligible:false); QA: "guest win?" / "dogs" / bare phrases → AMBIGUOUS
-1863 — Hard State Contract — confidence >= threshold currently implies completion (semantic
+DEF-1863 — Hard State Contract — confidence >= threshold currently implies completion (semantic
     collapse); fix: enforce STATE_TYPE = TERMINAL | TRANSITIONAL | PROJECTION at schema level;
     gate terminal/outcome language only on TERMINAL; normalize projection language (confidence
     maps to "high-probability path" not "resolved/complete/win"); Files: statecontract.js (NEW —
