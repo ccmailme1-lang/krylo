@@ -198,7 +198,13 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1730 — Flexible Space Demand Signal (Neumann Protocol)
 1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
 1727 — Startup Market Readiness (YC Protocol)
-1724 — Ingress Keyword Contamination
+1862 — Safe Matcher Wrapper — drop-in tokenization layer for resolvePrimary(); eliminates
+    stem-family collisions (finance/financing, operate/operational) and structured-string bleed
+    (camelCase tokens, JSON keys); replaces bare regex with boundary-aware token matcher;
+    no change to routing logic or domain map; prerequisite: WO-1724 boundary patch (COMPLETE)
+1724 — Ingress Keyword Contamination (COMPLETE — 7 \b boundary additions in resolvePrimary():
+    auto/lease/truck → AUTO, condo → REAL_ESTATE, job/hire/raise/role → CAREER;
+    QA 14/14 contamination + regression guards; SHA: 7538cab)
 1723 — Global Macro Ingestion Layer (Dalio Protocol)
 1349 — Cross-Bay Resonance
 1348 — Multi-Bay Comparative Analysis
