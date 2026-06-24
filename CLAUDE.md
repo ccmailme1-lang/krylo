@@ -134,6 +134,12 @@ UNCLASSIFIED propagation, entropy handling, and overlap disambiguation are the a
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
+1861 — RFE State Reconciler — RFE recomputes on every session change; cross-consumer entropy
+    fluctuation causes executive suppression flicker and per-bay inconsistency; requires hysteresis
+    buffer: UNCLASSIFIED only fires after K>=2 consecutive samples, RESOLVED degrades only after N
+    consecutive lower-state results; stable RFE stored per session key, shared across consumers;
+    Files: rfereconciler.js (new — lastStableRfe map + reconcile()), lensrouter.js (call reconcile
+    before return); targetpacket.jsx unchanged
 1860 — RFE State Propagation (COMPLETE — lensrouter.js return extended to { profiles, rfe };
     targetpacket.jsx all 4 executive blocks gate on lensRfe?.state !== 'UNCLASSIFIED';
     MULTI_ROLE_OVERLAP surfaces entropy caveat inline; RESOLVED=full output; SHA: 524339d)
