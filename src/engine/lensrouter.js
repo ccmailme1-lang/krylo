@@ -112,7 +112,8 @@ function buildProfilesFromRFE(rfe) {
   return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
 }
 
-// routeLens — returns LensProfile[] sorted by conviction desc.
+// routeLens — returns { profiles: LensProfile[], rfe: RfeState | null }
+// rfe is null when Phase A/B fallback fires (UNCLASSIFIED or RFE error).
 // Phase A guarantees: max 2 profiles, no duplicates, only valid lensIds.
 // Phase B (WO-1828): consults session.profile when lens key is absent or GENERAL.
 // Phase C (RFE-1): probabilistic routing — falls back to PERSONA_MAP only if UNCLASSIFIED.
@@ -122,13 +123,16 @@ export function routeLens(session) {
     const inputVector = buildInputVector(session);
     const rfe         = classify(inputVector);
     if (rfe.state !== 'UNCLASSIFIED') {
-      return buildProfilesFromRFE(rfe);
+      return {
+        profiles: buildProfilesFromRFE(rfe),
+        rfe: { state: rfe.state, confidence: rfe.confidence, entropy: rfe.entropy },
+      };
     }
   } catch (_) {
     // RFE-1 failure is non-fatal — fall through to Phase A/B
   }
 
-  // Phase A/B fallback
+  // Phase A/B fallback — rfe is null (UNCLASSIFIED state)
   const rawKey     = (session?.lens ?? 'GENERAL').toUpperCase();
   const profileKey = (rawKey === 'GENERAL' || rawKey === 'OPEN')
     ? detectPersonaFromProfile(session?.profile)
@@ -148,5 +152,5 @@ export function routeLens(session) {
     profiles.push({ lensId: mapping.secondary, conviction: 55 });
   }
 
-  return profiles.filter(p => VALID_LENS_IDS.has(p.lensId));
+  return { profiles: profiles.filter(p => VALID_LENS_IDS.has(p.lensId)), rfe: null };
 }

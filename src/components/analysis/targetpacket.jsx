@@ -348,7 +348,7 @@ export default function TargetPacket() {
     : null;
 
   const revelationStep  = 3;
-  const lensProfiles    = useMemo(() => routeLens(session), [session]);
+  const { profiles: lensProfiles, rfe: lensRfe } = useMemo(() => routeLens(session), [session]);
   const hpScore         = Math.round(confScore * 100);
 
   // WO-1716: Domain Clamp — user-controlled bay assignment
@@ -704,7 +704,7 @@ export default function TargetPacket() {
       </div>
 
       {/* ── WO-1835: CEO COMPETITIVE EDGE BRIEF ──────────────────────────── */}
-      {session?.lens?.toUpperCase() === 'CEO' && lensProfiles[0]?.lensId === 'DEFENDER' && hpScore >= 65 && (() => {
+      {lensRfe?.state !== 'UNCLASSIFIED' && session?.lens?.toUpperCase() === 'CEO' && lensProfiles[0]?.lensId === 'DEFENDER' && hpScore >= 65 && (() => {
         const convLabel = {
           INSUFFICIENT_SIGNAL:   'insufficient signal — no position warranted',
           LOW_SIGNAL_YIELD:      'low signal — monitor only',
@@ -718,7 +718,14 @@ export default function TargetPacket() {
         const edgeClaim = topCandidates[0]?.label ?? '—';
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>Competitive Edge</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>Competitive Edge</div>
+              {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
+                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                  multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
+                </span>
+              )}
+            </div>
             {[
               { label: 'SIGNAL POSITION',   value: sigPos },
               { label: 'STRUCTURAL WINDOW', value: winLabel },
@@ -734,14 +741,21 @@ export default function TargetPacket() {
       })()}
 
       {/* ── WO-1834: CFO ROI PROOF LAYER ──────────────────────────────────── */}
-      {session?.lens?.toUpperCase() === 'CFO' && hpScore >= 50 && (() => {
+      {lensRfe?.state !== 'UNCLASSIFIED' && session?.lens?.toUpperCase() === 'CFO' && hpScore >= 50 && (() => {
         const accuracy   = Math.round(confScore * 100);
         const signalDrift = KEY_DRIVERS.filter(d => d.pos).length;
         const roasProxy  = (1.8 + confScore * 3.2).toFixed(1);
         const cacProxy   = Math.round(180 - confScore * 80);
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>ROI Proof</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>ROI Proof</div>
+              {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
+                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                  multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
+                </span>
+              )}
+            </div>
             {[
               { label: 'SIGNAL ACCURACY',      value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
               { label: 'DECISION OUTCOME',      value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
@@ -758,12 +772,19 @@ export default function TargetPacket() {
       })()}
 
       {/* ── WO-1831: MANUFACTURING / COO OPERATIONS LENS ─────────────────── */}
-      {(session?.lens?.toUpperCase() === 'COO' || session?.lens?.toUpperCase() === 'MANUFACTURING') && hpScore >= 50 && (() => {
+      {lensRfe?.state !== 'UNCLASSIFIED' && (session?.lens?.toUpperCase() === 'COO' || session?.lens?.toUpperCase() === 'MANUFACTURING') && hpScore >= 50 && (() => {
         const winRate  = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
         const adoptTiming = winRate > 0.6 ? 'OPTIMAL — adopt now' : winRate > 0.35 ? 'MONITOR — 30-day window' : 'DEFER — signal below adoption threshold';
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase', marginBottom: 2 }}>Operations Brief</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>Operations Brief</div>
+              {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
+                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                  multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
+                </span>
+              )}
+            </div>
             {[
               { label: 'CAPITAL PRESSURE',  value: `${hpScore}% signal strength — ${stateLabel.replace(/_/g, ' ')}` },
               { label: 'LABOR SIGNAL',      value: topCandidates.find(c => /labor|workforce|staffing/i.test(c.label ?? ''))?.label ?? 'No labor signal in active batch' },
@@ -780,7 +801,7 @@ export default function TargetPacket() {
       })()}
 
       {/* ── WO-1833: DECISION CADENCE BRIDGE ──────────────────────────────── */}
-      {['CEO','CFO','COO','MANUFACTURING'].includes(session?.lens?.toUpperCase()) && (() => {
+      {lensRfe?.state !== 'UNCLASSIFIED' && ['CEO','CFO','COO','MANUFACTURING'].includes(session?.lens?.toUpperCase()) && (() => {
         const lens = session.lens.toUpperCase();
         const QUARTERS = ['Q3 2026', 'Q4 2026', 'Q1 2027', 'Q2 2027'];
         const storageKey = `krylo_staged_signal_${session?.id ?? 'default'}`;
