@@ -164,7 +164,20 @@ class SurfaceRouter {
       return conf !== e.confidence ? { ...e, confidence: conf } : e;
     });
 
-    suppressed.forEach(e => this.dispatch(e));
+    // WO-1859 — apply jitterFactor: domain-scoped confidence downscaler
+    // Runs AFTER suppressionFactor (topology suppression → market jitter — order is load-bearing)
+    const jitterSignals = suppressed.filter(e => e.jitterFactor !== undefined);
+    const jittered = jitterSignals.length === 0 ? suppressed : suppressed.map(e => {
+      if (e.source === 'FINANCIAL_MARKET') return e;
+      let conf = e.confidence;
+      for (const j of jitterSignals) {
+        if (e.domain !== j.domain) continue;
+        conf = Math.max(0, conf * (1 - j.jitterFactor));
+      }
+      return conf !== e.confidence ? { ...e, confidence: conf } : e;
+    });
+
+    jittered.forEach(e => this.dispatch(e));
   }
 
   // EVENT IMMUTABILITY: each surface receives its own shallow copy — no shared references
