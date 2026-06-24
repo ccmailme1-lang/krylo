@@ -23,6 +23,17 @@ const MID   = 'rgba(255,255,255,0.65)';
 const WEAK  = 'rgba(255,255,255,0.22)';   // sub-threshold label color
 const SLATE = 'rgba(58,61,74,0.90)';      // muted_slate per CLAUDE.md color semantics
 
+const FREE_TIER_LIMIT = 3; // rows 1–3 free; row 4 partial; rows 5+ redacted
+
+// Visibility contract — access/rendering only, no value judgment
+const VISIBILITY = { FULL: 'FULL', PARTIAL: 'PARTIAL', REDACTED: 'REDACTED' };
+
+function getVisibility(rowIndex) {
+  if (rowIndex < FREE_TIER_LIMIT)    return VISIBILITY.FULL;
+  if (rowIndex === FREE_TIER_LIMIT)  return VISIBILITY.PARTIAL;
+  return VISIBILITY.REDACTED;
+}
+
 function TrendArrow({ forecast }) {
   if (forecast > 2)  return <span style={{ color: LIME }}>↑</span>;
   if (forecast < -2) return <span style={{ color: '#ff4444' }}>↓</span>;
@@ -142,38 +153,106 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       </div>
 
       {/* Rows */}
-      {displayRows.map((s, i) => (
-        <div
-          key={s.ticker}
-          onClick={() => onSignalClick?.(s)}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '20px 60px 36px 36px 52px 40px 20px',
-            gap: 0,
-            padding: '4px 10px',
-            borderBottom: '1px solid rgba(255,255,255,0.03)',
-            cursor: onSignalClick ? 'pointer' : 'default',
-            transition: 'background 150ms',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.04)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-        >
-          <span style={{ color: DIM, fontSize: 8 }}>{i + 1}</span>
-          <span style={{ color: MID, fontSize: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {s.domain}
-          </span>
-          <span style={{ color: '#ffffff', fontSize: 9, fontWeight: 600 }}>{s.signal}</span>
-          <span style={{
-            fontSize: 8,
-            color: s.forecast > 2 ? LIME : s.forecast < -2 ? '#ff4444' : DIM
-          }}>
-            {s.forecast > 0 ? '+' : ''}{s.forecast}
-          </span>
-          <VolBadge volatility={s.volatility} />
-          <span style={{ color: MID, fontSize: 8 }}>{s.confidence}%</span>
-          <TrendArrow forecast={s.forecast} />
-        </div>
-      ))}
+      {displayRows.map((s, i) => {
+        const vis = getVisibility(i);
+        const isFull     = vis === VISIBILITY.FULL;
+        const isPartial  = vis === VISIBILITY.PARTIAL;
+
+        return (
+          <div
+            key={s.ticker}
+            onClick={() => isFull && onSignalClick?.(s)}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '20px 60px 36px 36px 52px 40px 20px',
+              gap: 0,
+              padding: '4px 10px',
+              borderBottom: '1px solid rgba(255,255,255,0.03)',
+              cursor: isFull && onSignalClick ? 'pointer' : 'default',
+              transition: 'background 150ms',
+              position: 'relative',
+            }}
+            onMouseEnter={e => { if (isFull) e.currentTarget.style.background = 'rgba(102,255,0,0.04)'; }}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          >
+            {/* Rank — lime square navigation glyph for PARTIAL and REDACTED */}
+            {isFull ? (
+              <span style={{ color: DIM, fontSize: 8 }}>{i + 1}</span>
+            ) : (
+              <div style={{
+                width: 16, height: 16,
+                background: LIME,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 8, fontWeight: 700, color: '#000', flexShrink: 0,
+              }}>
+                {i + 1}
+              </div>
+            )}
+
+            {/* Content columns — FULL: normal | PARTIAL: blurred | REDACTED: empty */}
+            <span style={{
+              color: isFull ? MID : 'transparent',
+              fontSize: 8,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              filter: isPartial ? 'blur(3px)' : 'none',
+              userSelect: isFull ? 'auto' : 'none',
+            }}>
+              {isFull ? s.domain : isPartial ? '██████' : ''}
+            </span>
+
+            <span style={{
+              color: isFull ? '#ffffff' : 'transparent',
+              fontSize: 9, fontWeight: 600,
+              filter: isPartial ? 'blur(3px)' : 'none',
+              userSelect: isFull ? 'auto' : 'none',
+            }}>
+              {isFull ? s.signal : isPartial ? '██' : ''}
+            </span>
+
+            <span style={{
+              fontSize: 8,
+              color: isFull ? (s.forecast > 2 ? LIME : s.forecast < -2 ? '#ff4444' : DIM) : 'transparent',
+              filter: isPartial ? 'blur(3px)' : 'none',
+              userSelect: isFull ? 'auto' : 'none',
+            }}>
+              {isFull ? `${s.forecast > 0 ? '+' : ''}${s.forecast}` : ''}
+            </span>
+
+            {isFull
+              ? <VolBadge volatility={s.volatility} />
+              : <span />
+            }
+
+            <span style={{
+              color: isFull ? MID : 'transparent',
+              fontSize: 8,
+              filter: isPartial ? 'blur(3px)' : 'none',
+              userSelect: isFull ? 'auto' : 'none',
+            }}>
+              {isFull ? `${s.confidence}%` : ''}
+            </span>
+
+            {isFull ? <TrendArrow forecast={s.forecast} /> : <span />}
+
+            {/* CTA — PARTIAL row only, positioned to not overlap grid */}
+            {isPartial && (
+              <span style={{
+                position: 'absolute',
+                right: 10,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: LIME,
+                fontSize: 6,
+                letterSpacing: '0.14em',
+                fontFamily: "'IBM Plex Mono', monospace",
+                pointerEvents: 'none',
+              }}>
+                UPGRADE TO UNLOCK
+              </span>
+            )}
+          </div>
+        );
+      })}
 
       {/* WO-1726 Phase A/B — Weak Signals (cross-domain alert lives in WO-1734 NC layer) */}
       {weakSignals.length > 0 && (
