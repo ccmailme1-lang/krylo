@@ -156,12 +156,15 @@ export default function IntelligenceBrief() {
   // t₂ — decision terminal event: fires on allow OR deny whenever gate resolves
   useEffect(() => {
     if (!session) return;
-    const flowId          = session._dvFlowId ?? null;
+    const flowId = session._dvFlowId ?? null;
+    if (!flowId) return;                        // no t₀ yet → phantom mount, skip
+    const tracker = getTracker(flowId);
+    if (!tracker) return;                       // tracker released or never started
     const convergenceScore = session?.tensor?.convergenceScore ?? null;
-    const confidence       = fs;
+    const confidence       = session?.tensor?.confidence ?? null;
     const decision         = exportUnlocked ? 'allow' : 'deny';
-    getTracker(flowId)?.emit({ convergenceScore, confidence, decision });
-  }, [activeId, fs]); // eslint-disable-line react-hooks/exhaustive-deps
+    tracker.emit({ convergenceScore, confidence, decision });
+  }, [exportUnlocked, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Single memoized synthesis — query guard prevents call on empty session
   const synthesis = useMemo(() => session?.query ? synthesizeQuery(session) : null, [session]);
