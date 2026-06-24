@@ -12,6 +12,7 @@ import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
+import { getTracker } from '../../engine/decisionvelocity.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -149,8 +150,18 @@ export default function IntelligenceBrief() {
           ?? session?.tensor?.fidelityScore
           ?? session?.tensor?.confidence
           ?? 0;
-  const exportUnlocked = canExport(fs);
+  const exportUnlocked = canExport(fs, session?.lens);
   const isImported     = session?.tensor?.isImported ?? false;
+
+  // t₂ — decision terminal event: fires on allow OR deny whenever gate resolves
+  useEffect(() => {
+    if (!session) return;
+    const flowId          = session._dvFlowId ?? null;
+    const convergenceScore = session?.tensor?.convergenceScore ?? null;
+    const confidence       = fs;
+    const decision         = exportUnlocked ? 'allow' : 'deny';
+    getTracker(flowId)?.emit({ convergenceScore, confidence, decision });
+  }, [activeId, fs]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Single memoized synthesis — query guard prevents call on empty session
   const synthesis = useMemo(() => session?.query ? synthesizeQuery(session) : null, [session]);

@@ -94,8 +94,9 @@ export function createVelocityTracker(flowId = null) {
      * @param {object} [opts]
      * @param {number} [opts.convergenceScore] - existing engine field, optional
      * @param {number} [opts.confidence]        - existing engine field, optional
+     * @param {'allow'|'deny'|null} [opts.decision] - canExport() resolution
      */
-    report({ convergenceScore = null, confidence = null } = {}) {
+    report({ convergenceScore = null, confidence = null, decision = null } = {}) {
       const { t0, t1, t2 } = marks;
 
       const hasIngest   = typeof t0 === 'number';
@@ -118,6 +119,7 @@ export function createVelocityTracker(flowId = null) {
         dv,
         segments: { ingestToClassify, classifyToEmit },
         qdv,
+        decision,
         timestamps: {
           t0: hasIngest   ? t0 : null,
           t1: hasHappy    ? t1 : null,
@@ -133,8 +135,8 @@ export function createVelocityTracker(flowId = null) {
      * never propagate into the decision pipeline. Releases the tracker from
      * the registry after emission.
      */
-    emit({ convergenceScore = null, confidence = null } = {}) {
-      const velocity = this.report({ convergenceScore, confidence });
+    emit({ convergenceScore = null, confidence = null, decision = null } = {}) {
+      const velocity = this.report({ convergenceScore, confidence, decision });
       try {
         emitTelemetry({ type: 'DECISION_VELOCITY', ...velocity });
       } catch {
