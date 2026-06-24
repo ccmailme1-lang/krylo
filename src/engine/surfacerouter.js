@@ -5,6 +5,8 @@
 //   - Each surface receives its own event copy (immutability per surface)
 //   - Eviction preserves last causal cluster representative (provenance rule)
 import { RENDER_OWNER } from './surfacecontract.js';
+import { resolveTopology } from './entitytopologyregistry.js';
+import { TOPOLOGY_CLUSTER_AMPLIFIER } from './signalconstants.js';
 
 export const EVENT_DOMAIN = {
   ORACLE:   'oracle',
@@ -121,7 +123,29 @@ class SurfaceRouter {
   }
 
   dispatchBatch(events) {
-    events.forEach(e => this.dispatch(e));
+    // WO-1855 — tag topology, then apply cluster amplifier to overlapping signals
+    const tagged = events.map(e => ({
+      ...e,
+      topology: e.topology?.length ? e.topology : resolveTopology(e.source),
+    }));
+
+    const batchSources = new Set(
+      tagged.map(e => e.source?.toUpperCase().replace(/[\s-]/g, '_')).filter(Boolean)
+    );
+
+    const amplified = tagged.map(e => {
+      if (!e.topology?.length) return e;
+      const hasOverlap = e.topology.some(t => batchSources.has(t));
+      if (!hasOverlap) return e;
+      return {
+        ...e,
+        confidence: e.confidence !== undefined
+          ? Math.min(100, e.confidence * TOPOLOGY_CLUSTER_AMPLIFIER)
+          : e.confidence,
+      };
+    });
+
+    amplified.forEach(e => this.dispatch(e));
   }
 
   // EVENT IMMUTABILITY: each surface receives its own shallow copy — no shared references

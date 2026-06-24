@@ -25,3 +25,6 @@ export const DECAY = {
   WEEKLY:    'WEEKLY',
   QUARTERLY: 'QUARTERLY',
 };
+
+// WO-1855 — Topology cluster amplifier: applied to confidence when batch signals share topology overlap
+export const TOPOLOGY_CLUSTER_AMPLIFIER = 1.2;
