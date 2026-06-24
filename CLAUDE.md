@@ -3,7 +3,7 @@ ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 
 LAST BUILD SESSION: 2026-06-24
 BASELINE: baseline_reanalyze_hp_icon_fix
-SHA: e62ea2c
+SHA: d44d899
 DEPLOYED: krylo.org ✓
 ──────────────────────────────────────────────
 
@@ -90,6 +90,9 @@ In 2026, the best approach to website typography is purposeful contrast — not 
     src/data/mockComments.json      — Mock signal evidence
     src/utils/getSynthesis.js       — Synthesis text generator
     src/engine/convergenceclassifier.js — WO-1126A.v2: convergence state classifier + hysteresis buffer
+    src/engine/rolefieldengine.js   — RFE-1: probabilistic role field (19 personas × 5 axes → classify/buildInputVector)
+    src/engine/timingproxy.js       — WO-1768-A: Macro Timing Proxy (computeFsStar/computeDFC/reconcile)
+    src/engine/lensrouter.js        — WO-1828: lens routing Phase C (RFE-1 + profile-aware + PERSONA_MAP fallback)
     deploy.sh                       — one-command VPS deploy: build → rsync frontend → scp API → pm2 restart → health check
 
 8. ABSOLUTE RULES (NON-NEGOTIABLE)
@@ -132,21 +135,21 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1856 — Patent Intelligence Connector (COMPLETE — patentsviewconnector.js — velocity + assignee + migration; QUARTERLY decay; SHA: e074a98)
 1855 — Entity Topology Linker (COMPLETE — entitytopologyregistry.js + surfacerouter dispatchBatch; 3 clusters, 1.2x amplifier; SHA: 7b9a897)
 1854 — Structural Void Classifier (COMPLETE — voidclassifier.js + signalconstants.js POLARITY/DECAY; SHA: 42ddecc)
-1853 — Background Selector (spec filed — not yet built)
+1853 — Background Selector (SCRATCHED — not required)
 1852 — Non-Ranked Selection Contract (COMPLETE — convictionstore.js CommitEvent extended, BIND ID input)
 1851 — Assemblance Non-Scalar Structure Model (COMPLETE — W×G 2-axis layout, scalar ranking removed)
 1850 — (see registry)
 1849 — (see registry)
 1848 — SV Groundedness (spec hardened — BLOCKED pending θ + G_max_capacity + SV source)
 
-1835 — CEO Competitive Edge Delivery — C-suite persona consumes intelligence through private roundtables and high-level summaries; Krylo must deliver a competitive positioning signal in executive summary format; long-term edge proof distinct from CFO ROI calculator
-1834 — CFO ROI Proof Layer — CFO's core objection is unquantifiable software benefits; Krylo must surface its own signal accuracy and decision outcome tracking to prove ROI before spend is approved
-1833 — Decision Cadence Bridge — VP/COO-level users operate on quarterly approval cycles; Krylo signals move in real time; gap: no mechanism to hold, stage, or schedule a signal for a future decision window
-1832 — Executive Assistant Export Path — EA is the gateway to C-suite; export wall at Fs 0% blocks her primary function; brief must be deliverable at qualification, not gated behind conviction threshold
-1831 — Manufacturing Operations Lens — COO-level capital and labor pressure signals; system adoption timing; board-ready brief output; gap: internal disruption cost modeling not yet supported
-1830 — Healthcare Integration Scoping — regulated surface (HIPAA, HL7, FHIR); architecture decision required before any connector WO; define data boundary, compliance posture, and signal normalization path for institutional health systems
-1829 — Guided Entry Path — when profile indicates low tool familiarity, limited time, or integration barriers; surface one signal, one action, one outcome at entry; full console deferred until value proven
-1828 — Lens Routing Engine — read full user profile (role, goals, challenges, reporting line) at ingress to assign correct lens; job title alone is insufficient; INVESTOR/CAREER/REALTOR must derive from decision context not persona label
+1835 — CEO Competitive Edge Delivery (COMPLETE — targetpacket.jsx: CEO CompetitiveEdgeBrief block; gates lens=CEO + hpScore≥65; fields: SIGNAL POSITION, STRUCTURAL WINDOW, EDGE CLAIM; SHA: 7e9db3c)
+1834 — CFO ROI Proof Layer (COMPLETE — targetpacket.jsx: CFO ROI block; gates lens=CFO + hpScore≥50; fields: SIGNAL ACCURACY, DECISION OUTCOME, ROAS, CAC; SHA: 7e9db3c)
+1833 — Decision Cadence Bridge (COMPLETE — targetpacket.jsx: quarter-staging buttons Q3 2026–Q2 2027; gates CEO/CFO/COO/MANUFACTURING; sessionStorage persist; SHA: 7e9db3c)
+1832 — Executive Assistant Export Path (COMPLETE — consultingexport.js canExport() EA bypass: lens=EA skips Fs gate entirely; SHA: 7e9db3c)
+1831 — Manufacturing Operations Lens (COMPLETE — targetpacket.jsx: COO/Manufacturing Operations Brief; fields: CAPITAL PRESSURE, LABOR SIGNAL, ADOPTION TIMING, BOARD POSITION; SHA: 7e9db3c)
+1830 — Healthcare Integration Scoping (COMPLETE — specs/WO-1830-healthcare-integration-scoping.md: HIPAA boundary, compliance posture, normalization path, 3 open decisions for Founder; SHA: 7e9db3c)
+1829 — Guided Entry Path (COMPLETE — lensrouter.js detectGuidedMode(): profile.challenges heuristic for familiarity/time/integration barriers; SHA: 7e9db3c)
+1828 — Lens Routing Engine (COMPLETE — lensrouter.js Phase B+C: detectPersonaFromProfile() + RFE-1 probabilistic routing via rolefieldengine.js; SHA: d44d899)
 1827 — AS-DIFF Three-Tier Resolver (COMPLETE — asdiff.js: canonical SPACE_RESOLVER, SPACE_QUALITY merged, buildSignalUnit extended, resolveSharedSpace tier-aware)
 1826 — Happy Path Displacement Engine (COMPLETE — happypathdisplacementengine.js — hysteresis, 5 events, challenger hold)
 1825 — Decision Lineage (COMPLETE — computeCalibration in convictionstore.js, lineage panel + calibration metrics in targetpacket.jsx)
@@ -171,7 +174,7 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1776 — Operational Carry Risk Modeler (Beast Industries Protocol)
 1775 — Creator HoldCo Synthesizer (Beast Industries Protocol)
 1769 — Refinitiv / High-Freq Feed Procurement
-1768-A — Macro Timing Proxy v1 (APPROVED — 10-day sprint)
+1768-A — Macro Timing Proxy v1 (COMPLETE — timingproxy.js: Fs*=BAMLH0A0HYM2/M2V, DFC, YCID; /v1/timing-proxy route; QA 69/69 HTTP integration; SHA: d44d899)
 1754 — Lens-Specific Entry Vocabulary Layer
 1750 — EEG v2 DAG Runtime
 1742 — Narrative Permission Signal
