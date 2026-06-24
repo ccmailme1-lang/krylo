@@ -307,6 +307,116 @@ export default function IntelligenceBrief() {
         </div>
       )}
 
+      {/* ── HAPPY PATH FULL-SCREEN OVERLAY ───────────────────────────────── */}
+      {hpOpen && hpSnapshot.current && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 20, background: '#000', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {/* Header bar */}
+          <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: `1px solid rgba(138,43,226,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
+              <span
+                onClick={() => { setHpOpen(false); setHpDismissed(true); }}
+                onMouseEnter={e => e.currentTarget.style.color = '#fff'}
+                onMouseLeave={e => e.currentTarget.style.color = '#fff'}
+                style={{ color: '#fff', cursor: 'pointer', fontFamily: MONO, fontSize: 14, lineHeight: 1, userSelect: 'none', background: 'none', border: 'none' }}
+              >✕</span>
+            </div>
+          </div>
+          {/* Metrics */}
+          <div style={{ flexShrink: 0, padding: '14px 20px', borderBottom: `1px solid rgba(138,43,226,0.12)`, display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+            {[
+              { label: 'CONVERGENCE', value: 'HIGH — sustained' },
+              { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
+              { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
+              { label: 'COUNTER',     value: 'None above threshold' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+          {/* Invalidation */}
+          <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid rgba(138,43,226,0.08)`, fontFamily: SERIF, fontSize: 10, color: 'rgba(138,43,226,0.55)', lineHeight: 1.55 }}>
+            Invalidated by: velocity reversal in any qualifying domain · counter-signal breach · convergence below floor.
+          </div>
+          {/* Domain alerts */}
+          {alerts.length > 0 && (
+            <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid rgba(138,43,226,0.08)`, display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+              </div>
+              {alerts.map(a => (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* HP Update Log */}
+          <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid rgba(138,43,226,0.08)` }}>
+            <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 6 }}>HP UPDATE LOG</div>
+            {hpLog.length === 0 ? (
+              <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.14em' }}>[ awaiting signal ]</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {hpLog.map(entry => (
+                  <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>{new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>{entry.label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>{entry.detail}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {/* EQ Canvas */}
+          <div style={{ padding: '6px 20px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
+            <input
+              value={pendingHypothesisId}
+              onChange={e => setPendingHypothesisId(e.target.value.trim())}
+              placeholder="enter hypothesis id"
+              style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: `1px solid ${pendingHypothesisId ? LIME : 'rgba(255,255,255,0.12)'}`, fontFamily: MONO, fontSize: 8, color: pendingHypothesisId ? LIME : DIM, letterSpacing: '0.08em', padding: '2px 0', outline: 'none' }}
+            />
+            {pendingHypothesisId && (
+              <span onClick={() => setPendingHypothesisId('')} style={{ fontFamily: MONO, fontSize: 8, color: DIM, cursor: 'pointer' }}>✕</span>
+            )}
+          </div>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <EQCanvas
+              isPremium={true}
+              onCommitThesis={({ domain, engineState: es }) => {
+                const arb      = es?.arbitration ?? session?.tensor?.arbitration;
+                const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
+                const winState = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                convictions.commit({
+                  sessionId:           session?.id ?? null,
+                  thesis:              session?.query ?? null,
+                  timeHorizon:         synthesis?.timeHorizon ?? null,
+                  domains:             es?.happyPath?.domains ?? hp?.domains ?? [],
+                  peakScore:           es?.happyPath?.peakScore ?? hp?.peakScore ?? 0,
+                  velocity:            es?.happyPath?.velocity ?? 'FLAT',
+                  domainStates:        es?.domainStates ?? {},
+                  hypothesisId:        pendingHypothesisId || null,
+                  windowStateAtCommit: winState,
+                });
+                setPendingHypothesisId('');
+                emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
+              }}
+              onSetTrigger={({ domain, peakPosition }) => {
+                window.dispatchEvent(new CustomEvent('hp:peak.trigger_set', {
+                  detail: { domain, peakPosition, prefix: 'DOMAIN ·' },
+                }));
+              }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* ── TOP CLASSIFICATION BANNER ─────────────────────────────────────── */}
       <ClassificationBanner text={brief.classification} />
 
@@ -382,9 +492,9 @@ export default function IntelligenceBrief() {
       {/* ── SCROLLABLE BODY ───────────────────────────────────────────────── */}
       <div ref={scrollBodyRef} style={{ flex: 3, minHeight: 0, overflowY: 'auto', padding: '16px 16px 24px', position: 'relative', zIndex: 1 }}>
 
-        {/* ── Happy Path Identified — top of frame ─────────────────────── */}
-        {hpOpen && hpSnapshot.current && (
-          <div ref={hpAnchorRef} style={{ flexShrink: 0, borderBottom: `1px solid rgba(138,43,226,0.2)`, marginBottom: 16 }}>
+        {/* HP overlay rendered outside scroll body — see root div */}
+        {false && (
+          <div>
             <div style={{ border: `1px solid rgba(138,43,226,0.3)`, background: 'rgba(138,43,226,0.04)', padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
@@ -575,10 +685,10 @@ export default function IntelligenceBrief() {
           </div>
         )}
 
-        {/* ── EQ Canvas — paired with HP report ── */}
-        {hpOpen && hpSnapshot.current && (
+        {/* EQ Canvas rendered in HP overlay — see root div */}
+        {false && (
           <>
-            <div style={{ padding: '6px 20px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div>
               <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
               <input
                 value={pendingHypothesisId}
