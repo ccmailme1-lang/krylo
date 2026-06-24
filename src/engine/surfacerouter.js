@@ -148,7 +148,23 @@ class SurfaceRouter {
       };
     });
 
-    amplified.forEach(e => this.dispatch(e));
+    // WO-1857 — apply suppressionFactor: topology-scoped confidence downscaler
+    // Runs AFTER amplification pass (topology amplifier up first, then suppressor down)
+    const suppressionSignals = amplified.filter(e => e.suppressionFactor !== undefined);
+    const suppressed = amplified.map(e => {
+      if (e.source === 'SUPPLY_CHAIN') return e;
+      let conf = e.confidence;
+      for (const s of suppressionSignals) {
+        if (!s.topology?.length) continue;
+        const topologyArr = Array.isArray(e.topology) ? e.topology : [];
+        const hasOverlap = topologyArr.some(t => s.topology.includes(t));
+        if (!hasOverlap) continue;
+        conf = Math.max(0, conf * (1 - s.suppressionFactor));
+      }
+      return conf !== e.confidence ? { ...e, confidence: conf } : e;
+    });
+
+    suppressed.forEach(e => this.dispatch(e));
   }
 
   // EVENT IMMUTABILITY: each surface receives its own shallow copy — no shared references
