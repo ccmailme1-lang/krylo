@@ -198,6 +198,13 @@ BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket comp
 1730 — Flexible Space Demand Signal (Neumann Protocol)
 1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
 1727 — Startup Market Readiness (YC Protocol)
+1864 — Intent Lock Gate — ambiguous/under-specified query currently escalates to highest-value
+    life domain via lens fallback (lines 203-208 resolvePrimary()); fix: (1) score-floor gate —
+    if no domain keywords matched + no priority rule fired, return AMBIGUOUS not lens default;
+    (2) lens fallback gated behind minimum score floor; (3) state:HOLD enforced as simulation
+    blocker — resolutionEligible:false propagates to suppress output; Files: querysynthesis.js
+    (resolvePrimary() intent gate + lens fallback removal), downstream consumers of detectDomain()
+    (enforce resolutionEligible:false); QA: "guest win?" / "dogs" / bare phrases → AMBIGUOUS
 1863 — Hard State Contract — confidence >= threshold currently implies completion (semantic
     collapse); fix: enforce STATE_TYPE = TERMINAL | TRANSITIONAL | PROJECTION at schema level;
     gate terminal/outcome language only on TERMINAL; normalize projection language (confidence
