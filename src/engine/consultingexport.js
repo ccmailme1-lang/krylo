@@ -3,6 +3,7 @@
 // Phase C (cryptographic signing / SHA-256 backend): deferred — see csss.js.
 
 import { canonicalize, computeStateHash } from './csss.js';
+import { validatePayload, attachContractAudit } from './payloadcontract.js';
 
 export const EXPORT_FS_GATE = 0.70;
 
@@ -226,6 +227,10 @@ export function buildExportPayload(brief, session, fs, hp = null) {
   };
 
   payload.meta.artifact_hash = computeArtifactHash(payload);
+
+  // WO-1866 — contract validation before emit (fail-open)
+  const contractResult = validatePayload(payload);
+  attachContractAudit(payload, contractResult);
 
   return payload;
 }
