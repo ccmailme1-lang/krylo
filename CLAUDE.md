@@ -121,10 +121,23 @@ FORMAT:   WO-[NUMBER]: [TITLE]
 SEQUENCE: Numbering must follow the Active Registry.
 RULE:     No code is written without a WO and explicit "Go."
 
-OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-20)
-Start at 1826. Work backwards. This is the only open list.
+OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-24)
+Start at 1859. Work backwards. This is the only open list.
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
+
+1859 — Financial/Market Connector — Alpha Vantage / Finnhub; σN² jitter factor → confidence downscaler per domain; DAILY decay; keys gated (ALPHA_VANTAGE_KEY, FINNHUB_KEY)
+1858 — Economic Flow Connector — UN Comtrade / World Bank; macro baseline per domain; QUARTERLY decay; both public APIs
+1857 — Supply Chain Connector — Open Supply Hub / Versed AI; suppressionFactor → topology-scoped confidence multiplier; symmetric with WO-1855 amplifier
+1856 — Patent Intelligence Connector (COMPLETE — patentsviewconnector.js — velocity + assignee + migration; QUARTERLY decay; SHA: e074a98)
+1855 — Entity Topology Linker (COMPLETE — entitytopologyregistry.js + surfacerouter dispatchBatch; 3 clusters, 1.2x amplifier; SHA: 7b9a897)
+1854 — Structural Void Classifier (COMPLETE — voidclassifier.js + signalconstants.js POLARITY/DECAY; SHA: 42ddecc)
+1853 — Background Selector (spec filed — not yet built)
+1852 — Non-Ranked Selection Contract (COMPLETE — convictionstore.js CommitEvent extended, BIND ID input)
+1851 — Assemblance Non-Scalar Structure Model (COMPLETE — W×G 2-axis layout, scalar ranking removed)
+1850 — (see registry)
+1849 — (see registry)
+1848 — SV Groundedness (spec hardened — BLOCKED pending θ + G_max_capacity + SV source)
 
 1835 — CEO Competitive Edge Delivery — C-suite persona consumes intelligence through private roundtables and high-level summaries; Krylo must deliver a competitive positioning signal in executive summary format; long-term edge proof distinct from CFO ROI calculator
 1834 — CFO ROI Proof Layer — CFO's core objection is unquantifiable software benefits; Krylo must surface its own signal accuracy and decision outcome tracking to prove ROI before spend is approved
