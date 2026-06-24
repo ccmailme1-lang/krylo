@@ -72,7 +72,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
     <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '12px 20px 16px', userSelect: 'none' }}>
 
       {/* Header */}
-      <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 10 }}>
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', marginBottom: 10 }}>
         INTENT STRENGTH MAPPING
       </div>
 
@@ -127,7 +127,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
       </svg>
 
       {/* Derived values table */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4, fontFamily: MONO, fontSize: 7, letterSpacing: '0.08em', marginBottom: 14, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 4, fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', marginBottom: 14, paddingTop: 6, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         {[
           { label: 'STATUS',     val: tier.meaning },
           { label: 'ENVELOPE', val: tier.capitalLabel },
@@ -144,7 +144,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
       {/* TARGET slider */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>TARGET</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.22)', flexShrink: 0 }}>TARGET</span>
           <div style={{ flex: 1, position: 'relative' }}>
             {/* Track */}
             <div ref={trackRef} onMouseDown={e => { e.preventDefault(); setDragging(true); updateFromX(e.clientX); }}
@@ -210,7 +210,7 @@ export default function OptionCapital({ resetTrigger = 0, onIntentChange, resolv
 
       {/* Bay engine resolved output */}
       {resolvedThreshold != null && (
-        <div style={{ marginTop: 8, fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: resolveScore != null && resolveScore < 0.60 ? 'rgba(102,255,0,0.35)' : 'rgba(102,255,0,0.55)' }}>
+        <div style={{ marginTop: 8, fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: resolveScore != null && resolveScore < 0.60 ? 'rgba(102,255,0,0.35)' : 'rgba(102,255,0,0.55)' }}>
           ↓ RESOLVED AT {resolvedThreshold}%
           {closestResolved != null && (
             <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 6 }}>(REQUESTED {closestResolved}%)</span>

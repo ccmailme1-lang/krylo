@@ -208,7 +208,7 @@ function OlpCard({ domain, fs, tier, envelope = null }) {
             <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase' }}>
               ARBITRATION
             </span>
-            <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: `${LIME}55`, textTransform: 'uppercase' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: `${LIME}55`, textTransform: 'uppercase' }}>
               PREMIUM
             </span>
           </div>

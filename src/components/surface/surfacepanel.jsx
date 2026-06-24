@@ -30,7 +30,7 @@ function AttentionStack({ signals, selectedDomain, onSignalClick }) {
     <div style={{ padding: '8px 0' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '18px 1fr 32px 32px 36px 28px', padding: '0 12px 4px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         {['#', 'DOMAIN', 'SIG', 'VOL', 'CONF', ''].map(h => (
-          <span key={h} style={{ fontSize: 7, letterSpacing: '0.12em', color: DIM }}>{h}</span>
+          <span key={h} style={{ fontSize: 9, letterSpacing: '0.12em', color: DIM }}>{h}</span>
         ))}
       </div>
       {rows.map((s, i) => {
@@ -63,8 +63,8 @@ function AttentionStack({ signals, selectedDomain, onSignalClick }) {
         );
       })}
       <div style={{ padding: '4px 12px 0', marginTop: 2, display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-        <span style={{ color: DIM, fontSize: 7 }}>KALSHI · {signals.length} SIGNALS</span>
-        <span style={{ color: DIM, fontSize: 7 }}>LIVE</span>
+        <span style={{ color: DIM, fontSize: 9 }}>KALSHI · {signals.length} SIGNALS</span>
+        <span style={{ color: DIM, fontSize: 9 }}>LIVE</span>
       </div>
     </div>
   );
@@ -118,7 +118,7 @@ function DeltaChart({ signals, selectedDomain }) {
     <div style={{ padding: '8px 12px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>DELTA STEP-CHART</span>
-        <span style={{ color: DIM, fontSize: 7 }}>{signal.ticker?.slice(0, 12)}</span>
+        <span style={{ color: DIM, fontSize: 9 }}>{signal.ticker?.slice(0, 12)}</span>
       </div>
       <svg width={W} height={H} style={{ overflow: 'visible' }}>
         {[0, 25, 50, 75].map(v => (

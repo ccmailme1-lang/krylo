@@ -61,7 +61,7 @@ function DeltaStepChart({ signals, selectedDomain }) {
     <div style={{ padding: '0 10px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>DELTA STEP-CHART</span>
-        <span style={{ color: DIM, fontSize: 7 }}>SIGNAL SCORE ({signal.ticker?.slice(0, 10)})</span>
+        <span style={{ color: DIM, fontSize: 9 }}>SIGNAL SCORE ({signal.ticker?.slice(0, 10)})</span>
       </div>
       <svg width={W} height={H} style={{ overflow: 'visible' }}>
         {/* Y-axis ticks */}
@@ -110,13 +110,13 @@ function AttentionStack({ signals, selectedDomain, onSignalClick }) {
     <div style={{ width: 310, padding: '0 0 0 16px' }}>
       <div style={{ padding: '0 10px 6px', display: 'flex', justifyContent: 'space-between' }}>
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>ATTENTION STACK</span>
-        <span style={{ color: DIM, fontSize: 7 }}>HIERARCHY-DRIVEN FOCUS</span>
+        <span style={{ color: DIM, fontSize: 9 }}>HIERARCHY-DRIVEN FOCUS</span>
       </div>
 
       {/* Column headers */}
       <div style={{ display: 'grid', gridTemplateColumns: '18px 64px 30px 30px 42px 36px 16px', padding: '0 10px 4px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         {['RNK','CONE ID','SIG','Δ7D','VOL','CONF',''].map(h => (
-          <span key={h} style={{ fontSize: 7, letterSpacing: '0.12em', color: DIM }}>{h}</span>
+          <span key={h} style={{ fontSize: 9, letterSpacing: '0.12em', color: DIM }}>{h}</span>
         ))}
       </div>
 
@@ -154,8 +154,8 @@ function AttentionStack({ signals, selectedDomain, onSignalClick }) {
       })}
 
       <div style={{ padding: '4px 10px 0', borderTop: '1px solid rgba(255,255,255,0.04)', marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ color: DIM, fontSize: 7 }}>KALSHI · {signals.length} SIGNALS</span>
-        <span style={{ color: DIM, fontSize: 7 }}>LIVE. VERIFIABLE.</span>
+        <span style={{ color: DIM, fontSize: 9 }}>KALSHI · {signals.length} SIGNALS</span>
+        <span style={{ color: DIM, fontSize: 9 }}>LIVE. VERIFIABLE.</span>
       </div>
     </div>
   );

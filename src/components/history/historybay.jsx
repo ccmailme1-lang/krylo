@@ -211,7 +211,7 @@ function CalendarPanel({ rangeKey, setRangeKey, customRange, setCustomRange }) {
           const active = !customRange && !pickStart && rangeKey === key;
           return (
             <button key={key} onClick={() => selectPreset(key)} style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing:'0.16em',
+              fontFamily: MONO, fontSize: 9, letterSpacing:'0.16em',
               background: 'transparent',
               border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.1)'}`,
               color: active ? LIME : 'rgba(255,255,255,0.35)',
@@ -351,7 +351,7 @@ function SortHeader({ columns, sort, onSort, gridTemplateColumns }) {
           key={col.label}
           onClick={col.key ? () => onSort(col.key) : undefined}
           style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em',
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em',
             color: sort.key === col.key ? LIME : 'rgba(255,255,255,0.3)',
             cursor: col.key ? 'pointer' : 'default',
             textAlign: col.align ?? 'left', userSelect: 'none',
@@ -519,7 +519,7 @@ function HistoryRow({ entry, index, active, onHover, onRerun }) {
       {/* drift */}
       <div>
         {entry.driftCount > 0 && (
-          <span style={{ ...CELL, fontSize: 7, color: '#007FFF', border: '1px solid rgba(0,127,255,0.25)', padding: '1px 5px' }}>
+          <span style={{ ...CELL, fontSize: 9, color: '#007FFF', border: '1px solid rgba(0,127,255,0.25)', padding: '1px 5px' }}>
             DRIFT {entry.driftCount}
           </span>
         )}
@@ -531,7 +531,7 @@ function HistoryRow({ entry, index, active, onHover, onRerun }) {
         </span>
         {active && (
           <button onClick={() => onRerun(entry)} style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em',
             background: 'transparent', border: `1px solid ${LIME}`,
             color: LIME, padding: '3px 8px', cursor: 'pointer', flexShrink: 0,
           }}>RE-RUN</button>
@@ -664,7 +664,7 @@ export default function HistoryBay({ onRerunNavigate }) {
               </div>
               <span
                 onClick={() => setSwipeIndex(0)}
-                style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: LIME, cursor: 'pointer', opacity: 0.7 }}
+                style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: LIME, cursor: 'pointer', opacity: 0.7 }}
               >
                 GO TO ANALYSIS →
               </span>

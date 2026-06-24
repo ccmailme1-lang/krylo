@@ -17,7 +17,7 @@ const INPUT_BG = '#050505';
 
 function SectionLabel({ children }) {
   return (
-    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 14 }}>
+    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 14 }}>
       {children}
     </div>
   );
@@ -193,7 +193,7 @@ export default function IngestionBuilder() {
         {/* ── SITUATION ─────────────────────────────────────── */}
         <div style={{ marginBottom: 40 }} className={missingField === 'BASE' ? 'vector-incomplete' : ''}>
           {missingField === 'BASE' && (
-            <div style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.28em', marginBottom: 10, opacity: 0.8 }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.28em', marginBottom: 10, opacity: 0.8 }}>
               SELECT YOUR SITUATION TO CONTINUE
             </div>
           )}
@@ -226,7 +226,7 @@ export default function IngestionBuilder() {
         {/* ── QUERY ─────────────────────────────────────────── */}
         <div style={{ marginBottom: 40 }}>
           {missingField === 'TARGET' && (
-            <div style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.28em', marginBottom: 8, opacity: 0.8 }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.28em', marginBottom: 8, opacity: 0.8 }}>
               DESCRIBE YOUR SITUATION TO CONTINUE
             </div>
           )}
@@ -268,7 +268,7 @@ export default function IngestionBuilder() {
                   key={range.value}
                   onClick={() => setSelectedFloor(active ? null : range.value)}
                   style={{
-                    flex: 1, fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em',
+                    flex: 1, fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em',
                     padding: '8px 0', border: 'none',
                     background: active ? LIME : 'transparent',
                     color: active ? '#000' : 'rgba(255,255,255,0.3)',
@@ -289,17 +289,17 @@ export default function IngestionBuilder() {
         {/* ── TEMPORAL HORIZON ──────────────────────────────── */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em' }}>
               HOW FAR OUT ARE YOU THINKING?
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.2em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.2em' }}>
               {HORIZON_META[horizon].span}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 4 }}>
             {HORIZON_ORDER.map(h => (
               <button key={h} onClick={() => setHorizon(h)} style={{
-                flex: 1, fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em',
+                flex: 1, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em',
                 padding: '7px 0', border: 'none',
                 background: horizon === h ? LIME : 'transparent',
                 color: horizon === h ? '#000' : 'rgba(255,255,255,0.3)',
@@ -319,7 +319,7 @@ export default function IngestionBuilder() {
         <div style={{ marginBottom: 16 }}>
           <button
             onClick={() => setAdvancedOpen(p => !p)}
-            style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
+            style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <span style={{ color: LIME, fontSize: 13 }}>{advancedOpen ? '▾' : '▸'}</span>
             ADVANCED CONSTRAINTS
@@ -365,7 +365,7 @@ export default function IngestionBuilder() {
       {/* ── Sticky Execute ──────────────────────────────────── */}
       <div style={{ padding: '16px 24px', borderTop: `1px solid rgba(255,255,255,0.05)`, flexShrink: 0 }}>
         {missingField && (
-          <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.22em', marginBottom: 10, textAlign: 'center' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.22em', marginBottom: 10, textAlign: 'center' }}>
             {missingField === 'BASE' ? 'SELECT YOUR SITUATION TO CONTINUE' : 'DESCRIBE YOUR SITUATION TO CONTINUE'}
           </div>
         )}

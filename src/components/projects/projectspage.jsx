@@ -116,9 +116,9 @@ export default function ProjectsPage({ onLoad }) {
               padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
               display: 'flex', alignItems: 'center', gap: 16,
             }}>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.22em' }}>STORAGE</span>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>localStorage · Phase A</span>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em', marginLeft: 'auto' }}>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.22em' }}>STORAGE</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>localStorage · Phase A</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em', marginLeft: 'auto' }}>
                 {projects.length} / 50
               </span>
             </div>
@@ -186,8 +186,8 @@ export default function ProjectsPage({ onLoad }) {
               padding: '8px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)',
               display: 'flex', alignItems: 'center', gap: 16,
             }}>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.22em' }}>STORAGE</span>
-              <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>localStorage · Phase A</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.22em' }}>STORAGE</span>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>localStorage · Phase A</span>
             </div>
 
             {/* Footer */}

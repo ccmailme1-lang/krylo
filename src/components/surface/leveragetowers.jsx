@@ -210,7 +210,7 @@ function Tower({ domain, signal, friction, volatility, isActive, onClick }) {
       {/* Domain label */}
       <div style={{
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: 7,
+        fontSize: 9,
         letterSpacing: '0.18em',
         color: isActive ? LIME : 'rgba(255,255,255,0.4)',
         marginTop: 4,

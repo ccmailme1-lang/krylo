@@ -400,7 +400,7 @@ function ComparePanel() {
       overflowY:  'auto',
       zIndex:     20,
     }}>
-      <div style={{ fontSize: 7, letterSpacing: '0.3em', color: 'rgba(102,255,0,0.7)', marginBottom: 12, textTransform: 'uppercase' }}>
+      <div style={{ fontSize: 9, letterSpacing: '0.3em', color: 'rgba(102,255,0,0.7)', marginBottom: 12, textTransform: 'uppercase' }}>
         Cross-Bay Analysis · {flagged.length} subjects
       </div>
 
@@ -412,11 +412,11 @@ function ComparePanel() {
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.03)',
           }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', marginBottom: 3 }}>BAY {b.id}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em', marginBottom: 3 }}>BAY {b.id}</div>
             <div style={{ fontSize: 9, color: '#66FF00', letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.3 }}>
               {b.assignment.title}
             </div>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', marginTop: 2, letterSpacing: '0.12em' }}>{b.domain}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 2, letterSpacing: '0.12em' }}>{b.domain}</div>
           </div>
         ))}
       </div>
@@ -431,7 +431,7 @@ function ComparePanel() {
         }
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>COMPARATIVE VECTORS</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 4 }}>COMPARATIVE VECTORS</div>
             {pairs.map(([a, b]) => {
               const alignment = Math.max(0, 100 - Math.abs((a.id * 17 + 31) % 100 - (b.id * 17 + 31) % 100));
               const delta     = ((a.id * 13 + b.id * 7) % 40) - 20;
@@ -452,7 +452,7 @@ function ComparePanel() {
                     { label: 'VECTOR',          value: diverge, color: divColor },
                   ].map(({ label, value, color }) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.18em' }}>{label}</span>
+                      <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.18em' }}>{label}</span>
                       <span style={{ fontSize: 8, color: color ?? '#66FF00', letterSpacing: '0.1em' }}>{value}</span>
                     </div>
                   ))}
@@ -463,7 +463,7 @@ function ComparePanel() {
         );
       })()}
 
-      <div style={{ marginTop: 12, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.2)' }}>
+      <div style={{ marginTop: 12, fontSize: 9, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.2)' }}>
         PHASE A · MOCK VECTORS · LIVE ENGINE PENDING
       </div>
     </div>
@@ -606,7 +606,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
       {/* Search preview — entity loaded from search, pending bay assignment */}
       {searchPreview && (
         <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px solid ${LIME}33`, background: `${LIME}08` }}>
-          <div style={{ fontSize: 7, color: `${LIME}88`, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 4 }}>Signal Loaded</div>
+          <div style={{ fontSize: 9, color: `${LIME}88`, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 4 }}>Signal Loaded</div>
           <div style={{ fontSize: 13, color: LIME, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{searchPreview.title}</div>
           {!bayPickerOpen ? (
             <button
@@ -617,7 +617,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             >SAVE TO BAY →</button>
           ) : (
             <div>
-              <div style={{ fontSize: 7, color: `${LIME}66`, letterSpacing: '0.2em', marginBottom: 6 }}>SELECT BAY</div>
+              <div style={{ fontSize: 9, color: `${LIME}66`, letterSpacing: '0.2em', marginBottom: 6 }}>SELECT BAY</div>
               <div style={{ display: 'flex', gap: 4 }}>
                 {[1,2,3,4,5,6].map(n => (
                   <button key={n}
@@ -764,13 +764,13 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
       {(() => {
         const assignment = bay?.assignment;
         if (!assignment) return (
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
             NO SIGNAL ASSIGNED
           </div>
         );
         const resolved = resonancePath;
         if (!resolved) return (
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginBottom: 14 }}>
             RESOLVING PATH…
           </div>
         );
@@ -795,7 +795,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 8, fontSize: 7, color: `${LIME}88`, letterSpacing: '0.2em', fontFamily: "'IBM Plex Mono', monospace" }}>
+            <div style={{ marginTop: 8, fontSize: 9, color: `${LIME}88`, letterSpacing: '0.2em', fontFamily: "'IBM Plex Mono', monospace" }}>
               {hopCount} HOPS · {resolved.confidence}% CONF
             </div>
           </div>
@@ -1050,8 +1050,8 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
             }} />
           </div>
           <div>
-            <div style={{ fontSize: 7, color: 'rgba(102,255,0,0.55)', letterSpacing: '0.14em', marginBottom: 5 }}>{label}</div>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>{convDuration}</div>
+            <div style={{ fontSize: 9, color: 'rgba(102,255,0,0.55)', letterSpacing: '0.14em', marginBottom: 5 }}>{label}</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>{convDuration}</div>
           </div>
         </div>
       </div>
@@ -1579,7 +1579,7 @@ function DriverNodeOverlay({ state, apexY, isSelected }) {
         padding: '8px 10px',
         fontFamily: "'IBM Plex Mono', monospace",
       }}>
-        <div style={{ fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.25)', marginBottom: 6 }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.25)', marginBottom: 6 }}>
           driver · node · map
         </div>
         <svg width={W - 20} height={totalH} style={{ display: 'block', overflow: 'visible' }}>

@@ -111,7 +111,7 @@ export default function ShellLayout({ activeNav = 'surface', onNav, onBack, feed
               onMouseEnter={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.color = 'rgba(255,255,255,0.3)'; }}>
                 {item.icon}
-                <span style={{ fontSize: 7, letterSpacing: '0.12em' }}>{item.label}</span>
+                <span style={{ fontSize: 9, letterSpacing: '0.12em' }}>{item.label}</span>
               </div>
             );
           })}
@@ -124,7 +124,7 @@ export default function ShellLayout({ activeNav = 'surface', onNav, onBack, feed
         onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
         onMouseLeave={e => e.currentTarget.style.color = activeNav === 'settings' ? '#66FF00' : 'rgba(255,255,255,0.3)'}>
           {SETTINGS_ICON}
-          <span style={{ fontSize: 7, letterSpacing: '0.12em' }}>SETTINGS</span>
+          <span style={{ fontSize: 9, letterSpacing: '0.12em' }}>SETTINGS</span>
         </div>
       </nav>
 

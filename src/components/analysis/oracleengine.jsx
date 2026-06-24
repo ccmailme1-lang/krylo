@@ -91,7 +91,7 @@ function ClaimNode({ speaker, quote, tension, active, onHover }) {
         transition: 'background 150ms',
       }}
     >
-      <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em', marginBottom: 6 }}>
+      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em', marginBottom: 6 }}>
         {speaker}
       </div>
       <div style={{
@@ -117,7 +117,7 @@ function TelemetryNode({ label, value, delta, tension, active }) {
       transition: 'background 150ms',
       textAlign: 'right',
     }}>
-      <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em', marginBottom: 6 }}>
+      <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em', marginBottom: 6 }}>
         {label}
       </div>
       <div style={{
@@ -163,7 +163,7 @@ export default function OracleEngine() {
         flexShrink: 0,
       }}>
         <div>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
             P2 — ORACLE ENGINE
           </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.14em' }}>
@@ -191,9 +191,9 @@ export default function OracleEngine() {
         borderBottom: `1px solid ${BORDER}`,
         flexShrink: 0,
       }}>
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.24em' }}>NODE ALPHA — SPOKEN CLAIM</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.24em' }}>NODE ALPHA — SPOKEN CLAIM</div>
         <div />
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.24em', textAlign: 'right' }}>NODE BETA — TELEMETRY</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.24em', textAlign: 'right' }}>NODE BETA — TELEMETRY</div>
       </div>
 
       {/* ── Bipartite pairs ─────────────────────────────────────── */}
@@ -242,13 +242,13 @@ export default function OracleEngine() {
         borderTop: `1px solid ${BORDER}`,
         display: 'flex', gap: 24, flexShrink: 0,
       }}>
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
           FRAME: {frame.frameId}
         </div>
-        <div style={{ fontSize: 7, color: frame.globalTensionSpike > 0 ? LIME : 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
+        <div style={{ fontSize: 9, color: frame.globalTensionSpike > 0 ? LIME : 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
           TENSION SPIKE: {frame.globalTensionSpike.toFixed(2)}
         </div>
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.16em', marginLeft: 'auto' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.16em', marginLeft: 'auto' }}>
           WEBGL FRACTURE LINES — PENDING SHADER SPEC
         </div>
       </div>

@@ -45,9 +45,9 @@ export default function AssignmentModal() {
       >
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.35em' }}>ASSIGN TO DOMAIN</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.35em' }}>ASSIGN TO DOMAIN</span>
           <div style={{ flex: 1, height: 1, background: 'rgba(102,255,0,0.15)' }} />
-          <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.2em' }}>ESC to cancel</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>ESC to cancel</span>
         </div>
 
         {/* Signal being assigned */}
@@ -88,7 +88,7 @@ export default function AssignmentModal() {
               >
                 {/* Bay number + domain abbr */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.28em' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.28em' }}>
                     {bayId < 10 ? `0${bayId}` : bayId}
                   </span>
                   <span style={{ fontFamily: MONO, fontSize: 9, color: taken ? 'rgba(102,255,0,0.45)' : MID, letterSpacing: '0.22em' }}>
@@ -107,7 +107,7 @@ export default function AssignmentModal() {
                     }}>
                       {bay.assignment.title}
                     </div>
-                    <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.4)', letterSpacing: '0.18em' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(102,255,0,0.4)', letterSpacing: '0.18em' }}>
                       → REPLACE
                     </div>
                   </>
@@ -122,7 +122,7 @@ export default function AssignmentModal() {
         </div>
 
         {/* Footer */}
-        <div style={{ marginTop: 20, fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textAlign: 'center' }}>
+        <div style={{ marginTop: 20, fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textAlign: 'center' }}>
           SELECT A DOMAIN BAY · DOMAIN IDENTITY IS PRESERVED
         </div>
       </div>

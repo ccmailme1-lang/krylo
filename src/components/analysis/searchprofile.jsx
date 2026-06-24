@@ -180,7 +180,7 @@ export default function SearchProfile() {
           {/* Lens pills */}
           <div>
             <div style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em',
+              fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em',
               color: 'rgba(255,255,255,0.3)', marginBottom: 10,
             }}>
               LENS
@@ -250,7 +250,7 @@ export default function SearchProfile() {
                   display: 'flex', justifyContent: 'space-between',
                   marginBottom: 10, alignItems: 'center',
                 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em' }}>{label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.18em' }}>{label}</span>
                   <span style={{ fontFamily: MONO, fontSize: 11, color }}>{value}</span>
                 </div>
               ))}
@@ -313,7 +313,7 @@ export default function SearchProfile() {
             zIndex: 3,
           }}>
             <div style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.26em',
+              fontFamily: MONO, fontSize: 9, letterSpacing: '0.26em',
               color: 'rgba(255,255,255,0.35)', marginBottom: 10,
             }}>
               RESOLUTION: ISOLATED
@@ -333,7 +333,7 @@ export default function SearchProfile() {
               ].map(({ label, value }) => (
                 <div key={label}>
                   <div style={{ fontFamily: MONO, fontSize: 18, color: LIME, lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.16em', marginTop: 4 }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.16em', marginTop: 4 }}>{label}</div>
                 </div>
               ))}
             </div>

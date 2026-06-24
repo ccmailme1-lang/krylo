@@ -78,7 +78,7 @@ function AlertsMode({ isPremium }) {
   if (!isPremium) {
     return (
       <div style={{ position: 'relative', height: 28, borderTop: '0.5px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ filter: 'blur(2px)', pointerEvents: 'none', padding: '6px 10px', fontFamily: MONO, fontSize: 7, color: DIM }}>
+        <div style={{ filter: 'blur(2px)', pointerEvents: 'none', padding: '6px 10px', fontFamily: MONO, fontSize: 9, color: DIM }}>
           when signal exceeds...
         </div>
         <div style={{
@@ -117,7 +117,7 @@ function AlertsMode({ isPremium }) {
           onKeyDown={e => { if (e.key === 'Enter' && input.trim()) { e.stopPropagation(); setTrigger(input.trim()); setInput(''); }}}
           onClick={e => e.stopPropagation()}
           placeholder="when signal exceeds..."
-          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '0.5px solid rgba(255,255,255,0.12)', outline: 'none', color: MID, fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em' }}
+          style={{ flex: 1, background: 'transparent', border: 'none', borderBottom: '0.5px solid rgba(255,255,255,0.12)', outline: 'none', color: MID, fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em' }}
         />
       )}
     </div>
@@ -168,7 +168,7 @@ function Module({ d, cone, assignment, isPremium = false }) {
         borderBottom: '0.5px solid rgba(255,255,255,0.07)',
         flexShrink: 0,
       }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.22em' }}>{d.id}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.22em' }}>{d.id}</span>
         <span style={{ fontFamily: MONO, fontSize: 9, color: isLoaded ? color : MID, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
           {mainLabel}
         </span>

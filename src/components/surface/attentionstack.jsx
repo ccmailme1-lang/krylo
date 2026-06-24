@@ -123,7 +123,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         <span style={{ color: LIME, fontSize: 8, letterSpacing: '0.2em' }}>
           ATTENTION STACK
         </span>
-        <span style={{ color: DIM, fontSize: 7 }}>
+        <span style={{ color: DIM, fontSize: 9 }}>
           {loading ? 'LOADING…' : age !== null ? `${age}s AGO` : ''}
           {' '}{expanded ? '▲' : '▼'}
         </span>
@@ -137,7 +137,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         borderBottom: '1px solid rgba(255,255,255,0.05)',
       }}>
         {['RNK','SIGNAL','S','Δ','VOL','CONF',''].map(h => (
-          <span key={h} style={{ fontSize: 7, letterSpacing: '0.15em', color: DIM }}>{h}</span>
+          <span key={h} style={{ fontSize: 9, letterSpacing: '0.15em', color: DIM }}>{h}</span>
         ))}
       </div>
 
@@ -183,7 +183,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
             borderTop: '1px solid rgba(255,255,255,0.05)',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <span style={{ color: WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+            <span style={{ color: WEAK, fontSize: 9, letterSpacing: '0.18em' }}>
               WEAK SIGNALS · {weakSignals.length}
             </span>
             <span style={{ color: WEAK, fontSize: 6 }}>PRESSURE &lt; 20</span>
@@ -206,8 +206,8 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
                 onMouseEnter={e => e.currentTarget.style.opacity = '0.80'}
                 onMouseLeave={e => e.currentTarget.style.opacity = '0.55'}
               >
-                <span style={{ color: SLATE, fontSize: 7 }}>·</span>
-                <span style={{ color: WEAK, fontSize: 7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ color: SLATE, fontSize: 9 }}>·</span>
+                <span style={{ color: WEAK, fontSize: 9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {s.domain}
                 </span>
                 <span style={{ color: WEAK, fontSize: 8 }}>{s.signal}</span>
@@ -236,7 +236,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
-              fontSize: 7, letterSpacing: '0.18em',
+              fontSize: 9, letterSpacing: '0.18em',
               color: nc.classification === 'DIVERGING' ? LIME
                    : nc.consensusArriving ? '#007FFF'
                    : WEAK,
@@ -267,7 +267,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
             : 'rgba(102,255,0,0.03)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
-            <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
+            <span style={{ color: LIME, fontSize: 9, letterSpacing: '0.18em' }}>
               {formation.phase === PLATFORM_FORMATION_PHASE.CONFIRMED
                 ? '◈ PLATFORM FORMATION CONFIRMED'
                 : '◈ PLATFORM FORMATION DETECTED'}
@@ -300,7 +300,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
-              fontSize: 7, letterSpacing: '0.18em',
+              fontSize: 9, letterSpacing: '0.18em',
               color: conviction.level === CONVICTION_LEVEL.HYPERGROWTH ? '#8A2BE2'
                    : conviction.level === CONVICTION_LEVEL.CONFIRMED   ? LIME
                    : WEAK,
@@ -336,14 +336,14 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
           background: 'rgba(102,255,0,0.06)',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-            <span style={{ color: LIME, fontSize: 7, letterSpacing: '0.18em' }}>
+            <span style={{ color: LIME, fontSize: 9, letterSpacing: '0.18em' }}>
               ◈ CROSS-DOMAIN SYNTHESIS
             </span>
             <span style={{ color: WEAK, fontSize: 6 }}>
               {munger.domainCount} DOMAINS · Fs {Math.round(munger.mungerScore * 100)}%
             </span>
           </div>
-          <div style={{ color: MID, fontSize: 7, lineHeight: 1.5, marginBottom: 3 }}>
+          <div style={{ color: MID, fontSize: 9, lineHeight: 1.5, marginBottom: 3 }}>
             {munger.synthesis}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -360,7 +360,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       {portfolio.activeDomains > 0 && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', padding: '5px 10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-            <span style={{ color: inflection.triggered ? LIME : DIM, fontSize: 7, letterSpacing: '0.18em' }}>
+            <span style={{ color: inflection.triggered ? LIME : DIM, fontSize: 9, letterSpacing: '0.18em' }}>
               {inflection.triggered ? '◈ PLATFORM BET WINDOW' : '· PORTFOLIO FIELD'}
             </span>
             <span style={{ color: WEAK, fontSize: 6 }}>
@@ -395,7 +395,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
-              fontSize: 7, letterSpacing: '0.18em',
+              fontSize: 9, letterSpacing: '0.18em',
               color: regulatory.velocityState === REGULATORY_STATE.ENFORCEMENT_PRECEDENCE_CONFIRMED ? '#007FFF' : LIME,
             }}>
               ◈ GB · {regulatory.velocityState.replace(/_/g, ' ')}
@@ -430,7 +430,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
-              fontSize: 7, letterSpacing: '0.18em',
+              fontSize: 9, letterSpacing: '0.18em',
               color: hnw.phase === HNW_PHASE.TECH_CAPITAL_SPREAD ? '#007FFF' : LIME,
             }}>
               {hnw.phase === HNW_PHASE.OWNERSHIP_CAPITAL_DIVERGENCE && '◈ CS · OWNERSHIP CAPITAL DIVERGENCE'}
@@ -469,7 +469,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
             <span style={{
-              fontSize: 7, letterSpacing: '0.18em',
+              fontSize: 9, letterSpacing: '0.18em',
               color: materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE ? '#007FFF' : LIME,
             }}>
               {materials.phase === MATERIALS_PHASE.MEDIA_OWNERSHIP_CONVERGENCE && '◈ LACAZE · MEDIA OWNERSHIP CONVERGENCE'}
@@ -497,7 +497,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       {khoo.triggered && (
         <div style={{ borderTop: '1px solid rgba(102,255,0,0.08)', padding: '5px 10px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-            <span style={{ color: WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+            <span style={{ color: WEAK, fontSize: 9, letterSpacing: '0.18em' }}>
               · KHOO PROTOCOL
             </span>
             <span style={{ color: WEAK, fontSize: 6 }}>
@@ -533,13 +533,13 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
             style={{
               flex: 1, background: 'transparent', border: 'none',
               borderBottom: '1px solid rgba(102,255,0,0.25)',
-              color: '#fff', fontSize: 7, fontFamily: 'inherit',
+              color: '#fff', fontSize: 9, fontFamily: 'inherit',
               outline: 'none', padding: '2px 0',
             }}
           />
-          <button type="submit" style={{ background: 'none', border: 'none', color: LIME, fontSize: 7, cursor: 'pointer' }}>↩</button>
+          <button type="submit" style={{ background: 'none', border: 'none', color: LIME, fontSize: 9, cursor: 'pointer' }}>↩</button>
           {activeEntity && (
-            <button type="button" onClick={() => { setActiveEntity(''); setEntityInput(''); }} style={{ background: 'none', border: 'none', color: WEAK, fontSize: 7, cursor: 'pointer' }}>✕</button>
+            <button type="button" onClick={() => { setActiveEntity(''); setEntityInput(''); }} style={{ background: 'none', border: 'none', color: WEAK, fontSize: 9, cursor: 'pointer' }}>✕</button>
           )}
         </form>
         {entityResult && (
@@ -550,7 +550,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
             {entityResult.known && (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                  <span style={{ color: entityResult.qualified ? LIME : WEAK, fontSize: 7, letterSpacing: '0.15em' }}>
+                  <span style={{ color: entityResult.qualified ? LIME : WEAK, fontSize: 9, letterSpacing: '0.15em' }}>
                     {entityResult.qualified ? '◈ ENTITY FOOTPRINT' : '· ENTITY FOOTPRINT'}
                   </span>
                   <span style={{ color: WEAK, fontSize: 6 }}>
@@ -578,7 +578,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         return (
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', padding: '5px 10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: hasData ? LIME : WEAK, fontSize: 7, letterSpacing: '0.18em' }}>
+              <span style={{ color: hasData ? LIME : WEAK, fontSize: 9, letterSpacing: '0.18em' }}>
                 {hasData ? '◈ SIGNAL REGISTRY' : '· SIGNAL REGISTRY'}
               </span>
               <span style={{ color: WEAK, fontSize: 6 }}>
@@ -610,10 +610,10 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
         borderTop: '1px solid rgba(255,255,255,0.05)',
         display: 'flex', justifyContent: 'space-between',
       }}>
-        <span style={{ color: DIM, fontSize: 7, letterSpacing: '0.1em' }}>
+        <span style={{ color: DIM, fontSize: 9, letterSpacing: '0.1em' }}>
           KALSHI MARKETS · {signals.length} SIGNALS
         </span>
-        <span style={{ color: DIM, fontSize: 7 }}>LIVE. VERIFIABLE.</span>
+        <span style={{ color: DIM, fontSize: 9 }}>LIVE. VERIFIABLE.</span>
       </div>
     </div>
   );

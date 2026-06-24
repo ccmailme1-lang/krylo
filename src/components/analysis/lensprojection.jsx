@@ -50,7 +50,7 @@ export default function LensProjection() {
       }}>
         <div>
           <div style={{
-            fontSize: 7, color: 'rgba(255,255,255,0.25)',
+            fontSize: 9, color: 'rgba(255,255,255,0.25)',
             letterSpacing: '0.28em', borderBottom: `1px solid ${BORDER}`,
             paddingBottom: 10, marginBottom: 16,
           }}>
@@ -88,7 +88,7 @@ export default function LensProjection() {
           </div>
 
           {/* Event horizons */}
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.22em', marginBottom: 10 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.22em', marginBottom: 10 }}>
             EVENT HORIZONS
           </div>
           {[
@@ -109,7 +109,7 @@ export default function LensProjection() {
           <div style={{
             display: 'flex', justifyContent: 'space-between', marginBottom: 8,
           }}>
-            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em' }}>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.2em' }}>
               TEMPORAL PLAYHEAD
             </span>
             <span style={{ fontSize: 9, color: LIME }}>+{playheadYear} YRS</span>
@@ -139,8 +139,8 @@ export default function LensProjection() {
             className="proj-scrubber"
           />
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)' }}>NOW</span>
-            <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)' }}>YR 40</span>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>NOW</span>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)' }}>YR 40</span>
           </div>
         </div>
       </aside>
@@ -158,7 +158,7 @@ export default function LensProjection() {
           padding: '0 16px', pointerEvents: 'none',
         }}>
           {[0, 10, 20, 30, 40].map(yr => (
-            <span key={yr} style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', fontFamily: MONO }}>
+            <span key={yr} style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', fontFamily: MONO }}>
               YR {yr}
             </span>
           ))}
@@ -167,7 +167,7 @@ export default function LensProjection() {
         {/* Corner label */}
         <div style={{
           position: 'absolute', top: 12, left: 14,
-          fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em',
+          fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em',
           pointerEvents: 'none',
         }}>
           LENS: {lensLabel} — 40-YEAR PROJECTION
@@ -184,7 +184,7 @@ export default function LensProjection() {
         height: '100%', boxSizing: 'border-box', overflowY: 'auto',
       }}>
         <div style={{
-          fontSize: 7, color: 'rgba(255,255,255,0.25)',
+          fontSize: 9, color: 'rgba(255,255,255,0.25)',
           letterSpacing: '0.28em', borderBottom: `1px solid ${BORDER}`,
           paddingBottom: 10, marginBottom: 20,
         }}>
@@ -201,7 +201,7 @@ export default function LensProjection() {
           </div>
           {survival <= 30 && (
             <div style={{
-              marginTop: 8, fontSize: 7, color: RED, letterSpacing: '0.16em',
+              marginTop: 8, fontSize: 9, color: RED, letterSpacing: '0.16em',
               borderLeft: `2px solid ${RED}`, paddingLeft: 8,
             }}>
               CRITICAL — STRUCTURAL INTERVENTION REQUIRED
@@ -227,7 +227,7 @@ export default function LensProjection() {
             { label: 'VARIANCE BAND',      value: `±${(FRACTURE_SCORE * playheadYear * 0.4).toFixed(1)} PTS` },
           ].map(({ label, value }) => (
             <div key={label} style={{ borderBottom: `1px solid ${BORDER}`, paddingBottom: 10 }}>
-              <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.18em', marginBottom: 4 }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.18em', marginBottom: 4 }}>
                 {label}
               </div>
               <div style={{ fontSize: 13, color: '#ffffff', fontFamily: MONO }}>{value}</div>
@@ -243,7 +243,7 @@ export default function LensProjection() {
             background: 'rgba(255,51,0,0.06)',
             padding: '10px 12px',
           }}>
-            <div style={{ fontSize: 7, color: RED, letterSpacing: '0.18em', marginBottom: 4 }}>
+            <div style={{ fontSize: 9, color: RED, letterSpacing: '0.18em', marginBottom: 4 }}>
               LIQUIDITY ZERO-POINT
             </div>
             <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>

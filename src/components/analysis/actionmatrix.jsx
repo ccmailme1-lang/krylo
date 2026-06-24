@@ -52,13 +52,13 @@ function FrictionCard({ friction }) {
       flexShrink: 0,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)' }}>STRUCTURAL FRICTION</span>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px' }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)' }}>STRUCTURAL FRICTION</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.05)', padding: '2px 8px' }}>
           {state} · {Math.round(score * 100)}
         </span>
       </div>
       {primary && (
-        <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.14em', marginBottom: 6 }}>
+        <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.14em', marginBottom: 6 }}>
           ↑ {primary} shortfall
         </div>
       )}
@@ -78,7 +78,7 @@ function HeroCard({ action }) {
       background: 'rgba(102,255,0,0.03)',
       flexShrink: 0,
     }}>
-      <div style={{ fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.32em', marginBottom: 10 }}>
+      <div style={{ fontSize: 9, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.32em', marginBottom: 10 }}>
         LEAD ACTION
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
@@ -87,12 +87,12 @@ function HeroCard({ action }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginLeft: 16 }}>
           <div style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em',
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
             color: 'rgba(255,255,255,0.35)', background: 'rgba(255,255,255,0.05)', padding: '2px 7px',
           }}>
             {action.tag}
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.25)' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.25)' }}>
             {HORIZON_LABEL[action._horizon]}
           </div>
         </div>
@@ -130,11 +130,11 @@ function SecondaryCard({ action, active, onHover }) {
           {action.label}
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0, marginLeft: 12 }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.12em' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.12em' }}>
             {HORIZON_LABEL[action._horizon]}
           </div>
           <div style={{
-            fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)',
+            fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)',
             background: 'rgba(255,255,255,0.04)', padding: '2px 6px', letterSpacing: '0.12em',
           }}>
             {action.tag}
@@ -183,7 +183,7 @@ export default function ActionMatrix() {
         flexShrink: 0,
       }}>
         <div>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
             P4 — ACTION MATRIX
           </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.14em' }}>
@@ -193,11 +193,11 @@ export default function ActionMatrix() {
         <div style={{ display: 'flex', gap: 20 }}>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 16, color: LIME, lineHeight: 1 }}>{highImpact}</div>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>HIGH IMPACT</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>HIGH IMPACT</div>
           </div>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: 16, color: '#ffffff', lineHeight: 1 }}>{visibleCards.length}</div>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>TOTAL ACTIONS</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', marginTop: 3 }}>TOTAL ACTIONS</div>
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function ActionMatrix() {
       {secondary.length > 0 && (
         <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
           <div style={{ padding: '8px 28px 4px', borderBottom: `1px solid ${BORDER}` }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.28em' }}>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.28em' }}>
               SUPPORTING ACTIONS
             </div>
           </div>
@@ -247,7 +247,7 @@ export default function ActionMatrix() {
                     { label: 'DELTA',  value: gap ? `↑ ${gap} pts above next` : '—', lime: false },
                     { label: 'ENGINE', value: 'LEV-02 ARBITRATED',                    lime: true  },
                   ].map(({ label, value, lime }) => (
-                    <span key={label} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)' }}>
+                    <span key={label} style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)' }}>
                       {label} <span style={{ color: lime ? LIME : 'rgba(255,255,255,0.6)' }}>{value}</span>
                     </span>
                   ))}
@@ -270,11 +270,11 @@ export default function ActionMatrix() {
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         flexShrink: 0,
       }}>
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
           ACTIONS DERIVED FROM ORACLE FRACTURES + {lensLabel} LENS VECTORS
         </div>
         <div style={{
-          fontSize: 7, color: LIME, letterSpacing: '0.16em',
+          fontSize: 9, color: LIME, letterSpacing: '0.16em',
           background: 'rgba(102,255,0,0.08)',
           border: `1px solid rgba(102,255,0,0.2)`,
           padding: '3px 10px',

@@ -79,7 +79,7 @@ function resolveFrames(lensProfiles, hpScore) {
 function FrameRow({ label, value, dimValue }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingBottom: 10, borderBottom: `1px solid ${BORDER}` }}>
-      <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+      <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
         {label}
       </span>
       <span style={{ fontFamily: MONO, fontSize: 10, color: dimValue ? DIM : BRT, letterSpacing: '0.06em', lineHeight: 1.5 }}>
@@ -108,11 +108,11 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
         padding: '8px 20px', borderBottom: `1px solid ${BORDER}`,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: isFallback ? LIME : DIM, textTransform: 'uppercase' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: isFallback ? LIME : DIM, textTransform: 'uppercase' }}>
             {isFallback ? 'PRELIMINARY SIGNAL // LOW CONFIDENCE CONVERGENCE' : 'Decision Translation Layer'}
           </span>
           <span style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em',
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em',
             padding: '1px 6px',
             ...(isFallback
               ? { color: DIM, border: `1px solid rgba(255,255,255,0.1)`, background: 'transparent' }
@@ -122,7 +122,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
           </span>
         </div>
         {resolutionPolicyApplied && (
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: DIM }}>
             MULTI-LENS
           </span>
         )}
@@ -133,7 +133,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
         <FrameRow label="Stake" value={primary.stake}  dimValue={isFallback} />
         <FrameRow label="Move"  value={primary.move}   dimValue={isFallback} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
             Window
           </span>
           <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: isFallback ? MID : LIME }}>
@@ -145,7 +145,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
       {/* Secondary decision spaces — collapsed, non-active */}
       {secondaries.length > 0 && (
         <div style={{ padding: '8px 20px 12px', borderTop: `1px solid ${BORDER}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
             Secondary Decision Spaces — non-active
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -155,7 +155,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
                 padding: '6px 10px',
                 border: `1px solid ${BORDER}`,
               }}>
-                <span style={{ fontFamily: MONO, fontSize: 7, color: MID, letterSpacing: '0.18em', flexShrink: 0 }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.18em', flexShrink: 0 }}>
                   {s.lensId.replace(/_/g, ' ')}
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.4 }}>

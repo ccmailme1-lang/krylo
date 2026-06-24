@@ -71,7 +71,7 @@ export default function ConceptBDashboard() {
                 <div style={{ width: 4, height: 4, borderRadius: '50%', background: accent, flexShrink: 0, marginBottom: 1 }} />
                 <span style={{ fontSize: 8, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.85)', flexShrink: 0 }}>{card.key}</span>
                 <span style={{ fontSize: 13, color: '#fff', lineHeight: 1, flexShrink: 0 }}>{card.value}</span>
-                <span style={{ fontSize: 7, color: accent, letterSpacing: '0.06em', flexShrink: 0 }}>{card.delta}</span>
+                <span style={{ fontSize: 9, color: accent, letterSpacing: '0.06em', flexShrink: 0 }}>{card.delta}</span>
               </div>
 
               {/* Line 2 — all 4 metrics inline, abbreviated to fit */}
@@ -111,7 +111,7 @@ export default function ConceptBDashboard() {
           <svg width="50" height="8" viewBox="0 0 100 30">
             <polyline points="0,15 10,10 20,18 30,8 40,20 50,12 60,16 70,9 80,14 90,11 100,15" fill="none" stroke={LIME} strokeWidth="1.5" />
           </svg>
-          <span style={{ fontSize: 7, color: LIME, letterSpacing: '0.1em' }}>+8%</span>
+          <span style={{ fontSize: 9, color: LIME, letterSpacing: '0.1em' }}>+8%</span>
         </div>
       </div>
 

@@ -115,11 +115,11 @@ function ArtifactCard({ artifact, active, onHover }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.25)' }}>
             {artifact.source}
           </span>
           {active && (
-            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.35)', fontStyle: 'normal', letterSpacing: '0.04em' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.35)', fontStyle: 'normal', letterSpacing: '0.04em' }}>
               {artifact.note}
             </span>
           )}
@@ -162,7 +162,7 @@ export default function ArtifactsBay() {
         flexShrink: 0,
       }}>
         <div>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
             EVIDENCE ARCHIVE
           </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em' }}>
@@ -171,11 +171,11 @@ export default function ArtifactsBay() {
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 20 }}>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>CONTRADICTS</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>CONTRADICTS</div>
             <div style={{ fontSize: 16, color: '#FF3300', fontFamily: MONO }}>{contradicts}</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>CORROBORATES</div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.14em' }}>CORROBORATES</div>
             <div style={{ fontSize: 16, color: LIME, fontFamily: MONO }}>{corroborates}</div>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function ArtifactsBay() {
             key={f}
             onClick={() => setFilter(f)}
             style={{
-              fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em',
+              fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em',
               padding: '3px 10px',
               background: filter === f ? LIME : 'transparent',
               color: filter === f ? '#000000' : 'rgba(255,255,255,0.3)',
@@ -203,7 +203,7 @@ export default function ArtifactsBay() {
             {f}
           </button>
         ))}
-        <span style={{ marginLeft: 'auto', fontSize: 7, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.12em', alignSelf: 'center' }}>
+        <span style={{ marginLeft: 'auto', fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.12em', alignSelf: 'center' }}>
           {visible.length} ARTIFACT{visible.length !== 1 ? 'S' : ''}
         </span>
       </div>

@@ -104,7 +104,7 @@ export default function SettingsPanel() {
         borderBottom: `1px solid ${BORDER}`,
         flexShrink: 0,
       }}>
-        <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em', marginBottom: 2 }}>
           SETTINGS
         </div>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.14em' }}>
@@ -117,7 +117,7 @@ export default function SettingsPanel() {
 
         {/* ACCOUNT */}
         <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
             ACCOUNT
           </div>
           <SettingsRow label="Email"        value="—"         type="display" />
@@ -127,7 +127,7 @@ export default function SettingsPanel() {
 
         {/* DEFAULT LENS */}
         <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
             DEFAULT LENS
           </div>
           <SettingsRow
@@ -141,7 +141,7 @@ export default function SettingsPanel() {
 
         {/* SIGNAL SETTINGS */}
         <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
             SIGNAL SETTINGS
           </div>
           <SettingsRow label="Fidelity Threshold"    value={String(profile.signalSensitivityThreshold)} type="display" />
@@ -156,7 +156,7 @@ export default function SettingsPanel() {
 
         {/* SYSTEM */}
         <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
             SYSTEM
           </div>
           <SettingsRow label="Version"     value="KRYLO 0.4.22" type="display" />
@@ -166,7 +166,7 @@ export default function SettingsPanel() {
 
         {/* PROFILE */}
         <div style={{ marginTop: 28 }}>
-          <div style={{ fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
             PROFILE
           </div>
           <SettingsRow

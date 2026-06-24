@@ -241,10 +241,10 @@ function DomainCell({ domain, data }) {
       overflow: 'hidden',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div style={{ fontSize: 7, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.55)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.55)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           {domain.slice(0, 4).toUpperCase()} · {Math.round(latest)}
         </div>
-        <div style={{ fontSize: 7, color: deltaClr, letterSpacing: '0.08em', marginLeft: 4 }}>{deltaTxt}</div>
+        <div style={{ fontSize: 9, color: deltaClr, letterSpacing: '0.08em', marginLeft: 4 }}>{deltaTxt}</div>
       </div>
       <svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block' }}>
         <polyline points={pts} fill="none" stroke="#007FFF" strokeWidth={1} opacity={0.65} />
@@ -457,7 +457,7 @@ function AnalysisProfilePage({ lens, onLensChange, query, onQueryChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 36, padding: '0 48px' }}>
       <div style={{ width: '100%', maxWidth: 560 }}>
-        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>SELECT LENS</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>SELECT LENS</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {LENS_LIST.map(l => (
             <button key={l} onClick={() => onLensChange(l)} style={{
@@ -527,7 +527,7 @@ function AnalysisLensPage({ lens, leaderboardState }) {
               </div>
               <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, minWidth: 36, textAlign: 'right' }}>{pct}</span>
               {count > 0 && (
-                <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', minWidth: 40, textAlign: 'right', letterSpacing: '0.1em' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(102,255,0,0.5)', minWidth: 40, textAlign: 'right', letterSpacing: '0.1em' }}>
                   +{count}
                 </span>
               )}
@@ -539,7 +539,7 @@ function AnalysisLensPage({ lens, leaderboardState }) {
       {/* Last routed signal */}
       {lastSignal && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>LAST SIGNAL ROUTED</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>LAST SIGNAL ROUTED</div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
             {lastSignal.label}
           </div>
@@ -582,14 +582,14 @@ function BaySignalMapProjection({ signals, xraySignals = [] }) {
         borderBottom: `1px solid ${accentColor}30`,
         fontFamily: "'IBM Plex Mono', monospace",
       }}>
-        <span style={{ fontSize: 7, color: `${accentColor}88`, letterSpacing: '0.3em' }}>
+        <span style={{ fontSize: 9, color: `${accentColor}88`, letterSpacing: '0.3em' }}>
           BAY 0{activeBay.id} · {modeLabel}
         </span>
         <span style={{ fontSize: 9, color: accentColor, letterSpacing: '0.14em', textTransform: 'uppercase' }}>
           {activeBay.assignment.title}
         </span>
         {isXray && (
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.2em', marginLeft: 'auto' }}>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.2em', marginLeft: 'auto' }}>
             TARGETED · {activeBay.assignment.title.toUpperCase()}
           </span>
         )}
@@ -955,7 +955,7 @@ export default function App() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0, minWidth: 320, maxWidth: 480 }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)', marginBottom: 12, textTransform: 'uppercase' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.35)', marginBottom: 12, textTransform: 'uppercase' }}>
               CLARIFY LOCATION
             </div>
             <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.7)', marginBottom: 20 }}>
@@ -994,7 +994,7 @@ export default function App() {
             <button
               onClick={() => setGeoPending(null)}
               style={{
-                fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em',
+                fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em',
                 color: 'rgba(255,255,255,0.2)', background: 'transparent',
                 border: 'none', borderTop: '1px solid rgba(255,255,255,0.06)',
                 padding: '12px 0', textAlign: 'left', cursor: 'pointer',

@@ -904,7 +904,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── HEADER ── */}
           <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER_MED}`, padding: '12px 20px' }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.12em', lineHeight: '1.8' }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em', lineHeight: '1.8' }}>
               <div style={{ color: 'rgba(255,255,255,0.2)' }}>SIMULATION MODULE // NORTH-SOUTH PANEL</div>
               <div style={{ color: LIME }}>● SYS_STATUS: ACTIVE</div>
             </div>
@@ -918,7 +918,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
           {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
           <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
               <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
             </div>
             {/* Chart — responds to slider; no pointer events needed */}
@@ -971,7 +971,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 ['VOLATILITY', volatilityShock ? 'HIGH_TURB' : projectedState.stateId >= 3 ? 'TURBULENT' : 'NOMINAL'],
               ].map(([label, val], i) => (
                 <div key={label} style={{ flex: 1, paddingLeft: i > 0 ? 10 : 0, borderLeft: i > 0 ? `1px solid ${BORDER_FAINT}` : 'none', marginLeft: i > 0 ? 10 : 0 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.22)' }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.22)' }}>{label}</div>
                   <div style={{ fontFamily: MONO, fontSize: 9, color: label === 'VOLATILITY' && (volatilityShock || projectedState.stateId >= 3) ? '#007FFF' : '#ffffff', marginTop: 2, fontVariantNumeric: 'tabular-nums' }}>{val}</div>
                 </div>
               ))}
@@ -986,7 +986,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON SCRUBBER (t + Δ)</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON SCRUBBER (t + Δ)</div>
                     <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
                   </div>
                   {/* Range slider */}
@@ -1005,7 +1005,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                   {/* Tick labels */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
                     {HORIZON_ORDER.map((h, i) => (
-                      <span key={h} style={{ fontFamily: MONO, fontSize: 7, color: h === horizon ? LIME : '#3a3d4a', letterSpacing: '0.04em' }}>
+                      <span key={h} style={{ fontFamily: MONO, fontSize: 9, color: h === horizon ? LIME : '#3a3d4a', letterSpacing: '0.04em' }}>
                         {HORIZON_LABELS[h] ?? h}
                       </span>
                     ))}
@@ -1017,7 +1017,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                       ['STRATEGIC (wv)', frictionResult.score ?? 0, '#007FFF'],
                     ].map(([label, val, clr]) => (
                       <div key={label}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginBottom: 3 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em', marginBottom: 3 }}>
                           <span>{label}</span>
                           <span style={{ color: 'rgba(255,255,255,0.5)' }}>{Math.round(val * 100)}%</span>
                         </div>
@@ -1034,7 +1034,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── SECTION 3: FORENSIC MATRIX FIELDS ── */}
           <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
             <div style={{ height: 180, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden' }}>
               {(() => {
                 // 6 domain anchors — fixed positions on 320×160 SVG
@@ -1096,7 +1096,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── VOLATILITY SHOCK OVERRIDE ── */}
           <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>VOLATILITY SHOCK OVERRIDE</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>VOLATILITY SHOCK OVERRIDE</div>
             <div style={{
               background: '#0b0e11',
               border: `1px ${volatilityShock ? 'dashed' : 'solid'} ${volatilityShock ? 'rgba(0,127,255,0.4)' : 'rgba(255,255,255,0.07)'}`,
@@ -1110,7 +1110,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                   <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.6)' }}>
                     FORCE TURBULENT STATE ENGINE
                   </div>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
                     Bypasses parameters; forces wc to 0.60 ceiling
                   </div>
                 </div>
@@ -1419,7 +1419,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
             <div style={{ flex: 1, padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>FILE NAME</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>FILE NAME</div>
                 <input
                   value={saveFileName}
                   onChange={e => setSaveFileName(e.target.value)}
@@ -1433,10 +1433,10 @@ export default function AnalysisIdleField({ activeCones = null }) {
                     padding: '8px 12px', outline: 'none', letterSpacing: '0.06em',
                   }}
                 />
-                <div style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.18)', marginTop: 6, letterSpacing: '0.1em' }}>.json</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', marginTop: 6, letterSpacing: '0.1em' }}>.json</div>
               </div>
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>CONTENTS</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 8 }}>CONTENTS</div>
                 <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8, letterSpacing: '0.04em' }}>
                   {slotContent[activeSlot] ? (
                     <>

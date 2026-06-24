@@ -187,10 +187,10 @@ function DomainCell({ domain, data }) {
       overflow: 'visible',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <div style={{ fontSize: 7, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.55)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.55)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
           {domain.slice(0, 4).toUpperCase()} · {Math.round(latest)}
         </div>
-        <div style={{ fontSize: 7, color: deltaClr, letterSpacing: '0.08em', marginLeft: 4 }}>{deltaTxt}</div>
+        <div style={{ fontSize: 9, color: deltaClr, letterSpacing: '0.08em', marginLeft: 4 }}>{deltaTxt}</div>
       </div>
       <svg width={W} height={H} style={{ display: 'block', overflow: 'visible' }}>
         <polyline points={pts} fill="none" stroke={LIME} strokeWidth={1} opacity={0.65} />
@@ -246,7 +246,7 @@ function IngestionHorizon({ lagMs, domainScores }) {
       zIndex: 11,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', width: 1080 + 90, flexShrink: 0 }}>
-        <div style={{ fontSize: 7, letterSpacing: '0.22em', color: 'rgba(102,255,0,0.3)', padding: '0 10px', minWidth: 90, whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 9, letterSpacing: '0.22em', color: 'rgba(102,255,0,0.3)', padding: '0 10px', minWidth: 90, whiteSpace: 'nowrap' }}>
           SIGNAL VELOCITY<br />
           <span style={{ color: lagMs > 0 ? LIME : 'rgba(102,255,0,0.3)' }}>
             {lagMs > 0 ? `${lagMs}ms` : 'LIVE'}
@@ -396,7 +396,7 @@ function AnalysisProfilePage({ lens, onLensChange, query, onQueryChange }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 36, padding: '0 48px' }}>
       <div style={{ width: '100%', maxWidth: 560 }}>
-        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>SELECT LENS</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.3)', marginBottom: 14 }}>SELECT LENS</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {LENS_LIST.map(l => (
             <button key={l} onClick={() => onLensChange(l)} style={{
@@ -466,7 +466,7 @@ function AnalysisLensPage({ lens, leaderboardState }) {
               </div>
               <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, minWidth: 36, textAlign: 'right' }}>{pct}</span>
               {count > 0 && (
-                <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', minWidth: 40, textAlign: 'right', letterSpacing: '0.1em' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(102,255,0,0.5)', minWidth: 40, textAlign: 'right', letterSpacing: '0.1em' }}>
                   +{count}
                 </span>
               )}
@@ -478,7 +478,7 @@ function AnalysisLensPage({ lens, leaderboardState }) {
       {/* Last routed signal */}
       {lastSignal && (
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20 }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>LAST SIGNAL ROUTED</div>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.25)', marginBottom: 8 }}>LAST SIGNAL ROUTED</div>
           <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
             {lastSignal.label}
           </div>

@@ -368,16 +368,16 @@ export default function CoachWell({ activeSituation = null, seedQuery = '', sele
         flexShrink: 0, padding: '10px 22px 14px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.32em', color: phaseColor, textTransform: 'uppercase' }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: phaseColor, textTransform: 'uppercase' }}>
           {phase}
         </span>
         {domain && phase !== 'READY' && (
-          <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.18em' }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.18em' }}>
             {domain}
           </span>
         )}
         <span style={{
-          fontFamily: MONO, fontSize: 7,
+          fontFamily: MONO, fontSize: 9,
           color: phase === 'READY' ? 'rgba(102,255,0,0.6)' : 'rgba(255,255,255,0.18)',
           letterSpacing: '0.2em', fontVariantNumeric: 'tabular-nums',
         }}>

@@ -76,7 +76,7 @@ function ThreadList({ threads, activeId, onSelect }) {
   return (
     <div style={{ width: 220, flexShrink: 0, borderRight: `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '16px 20px 12px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.3em' }}>COMMUNITY · SIGNAL CHAT</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.3em' }}>COMMUNITY · SIGNAL CHAT</div>
       </div>
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {threads.map(t => (
@@ -92,16 +92,16 @@ function ThreadList({ threads, activeId, onSelect }) {
               transition: 'background 120ms',
             }}
           >
-            <div style={{ fontFamily: MONO, fontSize: 7, color: activeId === t.id ? LIME : DIM, letterSpacing: '0.2em', marginBottom: 5 }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: activeId === t.id ? LIME : DIM, letterSpacing: '0.2em', marginBottom: 5 }}>
               {t.tag}
             </div>
             <div style={{ fontFamily: SERIF, fontSize: 12, color: activeId === t.id ? BRT : MID, lineHeight: 1.4, marginBottom: 6 }}>
               {t.title}
             </div>
             <div style={{ display: 'flex', gap: 12 }}>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>{t.author}</span>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>{t.time}</span>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>{t.replies} replies</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>{t.author}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>{t.time}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>{t.replies} replies</span>
             </div>
           </div>
         ))}
@@ -148,7 +148,7 @@ function MessageThread({ thread }) {
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
       {/* Thread header */}
       <div style={{ padding: '16px 28px 14px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-        <div style={{ fontFamily: MONO, fontSize: 7, color: LIME, letterSpacing: '0.22em', marginBottom: 6 }}>{thread.tag}</div>
+        <div style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.22em', marginBottom: 6 }}>{thread.tag}</div>
         <div style={{ fontFamily: SERIF, fontSize: 18, color: BRT, lineHeight: 1.3 }}>{thread.title}</div>
       </div>
 
@@ -158,7 +158,7 @@ function MessageThread({ thread }) {
           <div key={msg.id} style={{ marginBottom: 24 }}>
             <div style={{ display: 'flex', gap: 14, alignItems: 'baseline', marginBottom: 6 }}>
               <span style={{ fontFamily: MONO, fontSize: 8, color: msg.author === 'YOU' ? LIME : BLUE, letterSpacing: '0.16em' }}>{msg.author}</span>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>{msg.time}</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>{msg.time}</span>
             </div>
             <div style={{ fontFamily: SERIF, fontSize: 13, color: MID, lineHeight: 1.75, paddingLeft: 0 }}>
               {msg.text}
@@ -188,7 +188,7 @@ function MessageThread({ thread }) {
           }}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.14em' }}>⌘ ENTER TO POST</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.14em' }}>⌘ ENTER TO POST</span>
           <button
             onClick={handlePost}
             disabled={!draft.trim()}

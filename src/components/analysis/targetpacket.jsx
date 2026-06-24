@@ -137,7 +137,7 @@ function SignalCluster({ entityTitle, pressure, volatility, loading, headline })
       }}>
         {(!loading && (entityTitle || headline)) ? (
           <span style={{
-            fontSize: 7, color: LIME, fontFamily: SERIF,
+            fontSize: 9, color: LIME, fontFamily: SERIF,
             lineHeight: 1.3, textAlign: 'center', padding: '0 8px',
             transition: 'color 400ms ease',
           }}>
@@ -147,7 +147,7 @@ function SignalCluster({ entityTitle, pressure, volatility, loading, headline })
           </span>
         ) : (
           <span style={{
-            fontSize: 7, color: `rgba(255,255,255,${opacity.toFixed(2)})`,
+            fontSize: 9, color: `rgba(255,255,255,${opacity.toFixed(2)})`,
             fontFamily: MONO, letterSpacing: '0.12em',
             transition: 'color 400ms ease',
           }}>···</span>
@@ -244,7 +244,7 @@ function DomainIsolationConsole() {
 
   return (
     <div style={{ flexShrink: 0, fontFamily: MONO, borderTop: `1px solid ${BORDER}`, paddingTop: 8 }}>
-      <div style={{ fontSize: 7, color: DIM, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6 }}>Domain Isolation Console</div>
+      <div style={{ fontSize: 9, color: DIM, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6 }}>Domain Isolation Console</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: BORDER }}>
         <DomainCard bayId={1} domainLabel="FINANCIAL" />
         <DomainCard bayId={2} domainLabel="MARKET"    />
@@ -576,7 +576,7 @@ export default function TargetPacket() {
                   zIndex: 30, display: 'flex', flexDirection: 'column', overflow: 'hidden',
                 }}>
                   <div style={{ padding: '10px 16px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>HYPOTHESIS FIELD</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>HYPOTHESIS FIELD</span>
                     <span
                       onClick={() => { setShowAlts(false); emitTelemetry({ type: 'AltToggleEvent', action: 'close', requestId: arbitration?.requestId, timestamp: new Date().toISOString() }); }}
                       style={{ fontFamily: MONO, fontSize: 9, color: DIM, cursor: 'pointer', letterSpacing: '0.1em' }}
@@ -589,9 +589,9 @@ export default function TargetPacket() {
                         <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                             <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.14em' }}>{c.id}</span>
-                            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
+                            <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{c.type.toUpperCase()}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{c.type.toUpperCase()}</div>
                           <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
                       );
@@ -615,10 +615,10 @@ export default function TargetPacket() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {/* WO-1851 — ASSEMBLANCE header: 2-axis structural space (W × G) */}
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-                        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
                           ASSEMBLANCE · {alternatives.length} PATHS
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: winColor }}>
+                        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: winColor }}>
                           W: {winLabel}
                         </span>
                       </div>
@@ -634,14 +634,14 @@ export default function TargetPacket() {
                               G:{gProxy} PROXY_UNTIL_WO1848
                             </span>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', marginBottom: 5 }}>
+                          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', marginBottom: 5 }}>
                             {c.type.toUpperCase()} · W:{winLabel}
                           </div>
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
                         </div>
                       ); })}
                       {paretoExtra.length > 0 && (
-                        <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} unattested paths</div>
+                        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} unattested paths</div>
                       )}
                     </div>
                   );
@@ -653,7 +653,7 @@ export default function TargetPacket() {
                   <div style={{ display: 'flex', gap: 20 }}>
                     {[{ label: 'Confidence', value: confScore.toFixed(2) }, { label: 'Time Horizon', value: synthesis?.timeHorizon ?? '—' }, { label: 'Impact', value: synthesis?.impactLevel ?? '—' }].map(({ label, value }) => (
                       <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
                         <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.08em' }}>{value}</span>
                       </div>
                     ))}
@@ -673,20 +673,20 @@ export default function TargetPacket() {
 
         {/* Confidence Trajectory — moved from PANE 3 */}
         <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
             Confidence Trajectory
           </div>
           <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={42} />
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>10m ago</span>
+            <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>10m ago</span>
             <span style={{ fontFamily: MONO, fontSize: 9, color: LIME }}>{confScore.toFixed(2)}</span>
-            <span style={{ fontFamily: MONO, fontSize: 7, color: DIM }}>Now</span>
+            <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>Now</span>
           </div>
         </div>
 
         {/* Key Drivers — moved from PANE 3 */}
         <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
             Key Drivers
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1, justifyContent: 'center' }}>
@@ -714,7 +714,7 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
               {[{ label: 'LENS', value: (envelope.lens ?? '—').toUpperCase() }, { label: 'DOMAIN', value: envelope.domain ?? '—' }, { label: 'FLOOR', value: `$${(envelope.capitalFloor ?? 0).toLocaleString()}` }, { label: 'CONFIDENCE', value: `${envelope.confidence}%` }].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM }}>{label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM }}>{label}</span>
                   <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.1em' }}>{value}</span>
                 </div>
               ))}
@@ -723,7 +723,7 @@ export default function TargetPacket() {
               <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${BORDER}`, paddingBottom: 6 }}>
                 <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, lineHeight: 1, flexShrink: 0 }}>{icon}</span>
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 2 }}>{label}</div>
                   <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.06em' }}>{value}</div>
                 </div>
               </div>
@@ -732,7 +732,7 @@ export default function TargetPacket() {
 
             {/* WO-1716: Domain Clamp — user assigns result to a bay */}
             <div style={{ borderTop: `1px solid rgba(255,255,255,0.06)`, paddingTop: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>ASSIGN TO BAY</span>
+              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>ASSIGN TO BAY</span>
               <select
                 value={clampBay}
                 onChange={e => setClampBay(e.target.value)}
@@ -752,7 +752,7 @@ export default function TargetPacket() {
                 onClick={handleClampAssign}
                 disabled={!qualified || !clampBay}
                 style={{
-                  fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', textTransform: 'uppercase',
+                  fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase',
                   background: 'transparent', cursor: qualified && clampBay ? 'pointer' : 'not-allowed',
                   border: `1px solid ${qualified && clampBay ? 'rgba(102,255,0,0.5)' : 'rgba(255,255,255,0.08)'}`,
                   color: qualified && clampBay ? LIME : 'rgba(255,255,255,0.2)', padding: '3px 10px', flexShrink: 0,
@@ -761,7 +761,7 @@ export default function TargetPacket() {
             </div>
             {envelope.criteria && Object.keys(envelope.criteria).length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, marginBottom: 2 }}>CRITERIA SUBMITTED</div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, marginBottom: 2 }}>CRITERIA SUBMITTED</div>
                 {Object.entries(envelope.criteria).map(([k, v]) => (
                   <div key={k} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9 }}>
                     <span style={{ color: DIM, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{k.replace(/_/g, ' ')}</span>
@@ -772,12 +772,12 @@ export default function TargetPacket() {
             )}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: `1px solid ${BORDER}`, paddingTop: 10 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM }}>OPTIMAL ACTION</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM }}>OPTIMAL ACTION</span>
               </div>
               {envelope.olp?.action && <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.07em', lineHeight: 1.5, textTransform: 'uppercase' }}>{envelope.olp.action}</div>}
               {envelope.arbitration && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: DIM, marginBottom: 2 }}>ARBITRATION</div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, marginBottom: 2 }}>ARBITRATION</div>
                   {[{ label: 'SIGNAL WEIGHT', value: envelope.arbitration.signal_weight }, { label: 'FIDELITY WEIGHT', value: envelope.arbitration.fidelity_weight }, { label: 'CONSENSUS SCORE', value: envelope.arbitration.consensus_score }].map(({ label, value }) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontFamily: MONO, fontSize: 9 }}>
                       <span style={{ color: DIM, letterSpacing: '0.1em' }}>{label}</span>

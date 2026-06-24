@@ -206,11 +206,11 @@ export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = tru
           <span style={{ fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.18)', textTransform: 'uppercase' }}>EQ</span>
         </div>
         {hp?.qualified ? (
-          <span style={{ fontSize: 7, letterSpacing: '0.22em', color: PURPLE, border: `1px solid rgba(138,43,226,0.35)`, padding: '2px 8px', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: 9, letterSpacing: '0.22em', color: PURPLE, border: `1px solid rgba(138,43,226,0.35)`, padding: '2px 8px', textTransform: 'uppercase' }}>
             Happy Path
           </span>
         ) : (
-          <span style={{ fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase' }}>—</span>
+          <span style={{ fontSize: 9, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.15)', textTransform: 'uppercase' }}>—</span>
         )}
       </div>
 
@@ -237,7 +237,7 @@ export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = tru
           const color = sig?.qualified ? PURPLE : (STATE_COLOR[sig?.state] ?? SLATE);
           return (
             <div key={d} style={{ flex: 1, textAlign: 'center' }}>
-              <span style={{ fontSize: 7, letterSpacing: '0.1em', color, textTransform: 'uppercase', opacity: (sig?.score ?? 0) < 20 ? 0.3 : 0.85 }}>
+              <span style={{ fontSize: 9, letterSpacing: '0.1em', color, textTransform: 'uppercase', opacity: (sig?.score ?? 0) < 20 ? 0.3 : 0.85 }}>
                 {d.slice(0, 4)}
               </span>
             </div>
@@ -254,7 +254,7 @@ export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = tru
             { label: 'Velocity', value: hp.velocity },
           ].map(({ label, value }) => (
             <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <span style={{ fontSize: 7, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
+              <span style={{ fontSize: 9, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
               <span style={{ fontSize: 9, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
             </div>
           ))}
