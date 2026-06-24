@@ -27,3 +27,16 @@ export function resolveTopology(source) {
   const key = source.toUpperCase().replace(/[\s-]/g, '_');
   return entityTopologyRegistry[key] ?? [];
 }
+
+// WO-1856 — Register an inventor migration edge (additive only, no removals).
+// Called by patentsviewconnector when an inventor is found at 2+ assignees.
+export function registerInventorMigrationEdge(sourceOrg, destOrg) {
+  const src = sourceOrg.toUpperCase().replace(/[\s-]/g, '_');
+  const dst = destOrg.toUpperCase().replace(/[\s-]/g, '_');
+
+  if (!entityTopologyRegistry[src]) entityTopologyRegistry[src] = [];
+  if (!entityTopologyRegistry[src].includes(dst)) entityTopologyRegistry[src].push(dst);
+
+  if (!entityTopologyRegistry[dst]) entityTopologyRegistry[dst] = [];
+  if (!entityTopologyRegistry[dst].includes(src)) entityTopologyRegistry[dst].push(src);
+}

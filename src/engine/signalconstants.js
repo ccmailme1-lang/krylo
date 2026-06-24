@@ -28,3 +28,9 @@ export const DECAY = {
 
 // WO-1855 — Topology cluster amplifier: applied to confidence when batch signals share topology overlap
 export const TOPOLOGY_CLUSTER_AMPLIFIER = 1.2;
+
+// WO-1856 — Canonical source tags
+export const SIGNAL_SOURCE = {
+  PATENTSVIEW:      'PATENTSVIEW',
+  VOID_CLASSIFIER:  'VOID_CLASSIFIER',
+};

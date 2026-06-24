@@ -6,7 +6,10 @@
 //   - Eviction preserves last causal cluster representative (provenance rule)
 import { RENDER_OWNER } from './surfacecontract.js';
 import { resolveTopology } from './entitytopologyregistry.js';
-import { TOPOLOGY_CLUSTER_AMPLIFIER } from './signalconstants.js';
+import { TOPOLOGY_CLUSTER_AMPLIFIER, DECAY } from './signalconstants.js';
+
+// WO-1856 — Extended λ for QUARTERLY decay signals (patent data ages over quarters, not minutes)
+const QUARTERLY_TTL = 90 * 24 * 60 * 60 * 1000;
 
 export const EVENT_DOMAIN = {
   ORACLE:   'oracle',
@@ -167,7 +170,8 @@ class SurfaceRouter {
     const id = event.id;
     if (!id) return HYDRATION_OP.APPEND;
 
-    const ttl = SURFACE_TTL[surfaceId] ?? Infinity;
+    // WO-1856 — QUARTERLY signals use extended λ regardless of surface TTL
+    const ttl = event.decay === DECAY.QUARTERLY ? QUARTERLY_TTL : (SURFACE_TTL[surfaceId] ?? Infinity);
     if (ttl !== Infinity && event.ts && (Date.now() - event.ts) > ttl) {
       // PROVENANCE PRESERVATION: never evict the last representative of a causal cluster
       if (this._isLastClusterRepresentative(surfaceId, event)) return null;
