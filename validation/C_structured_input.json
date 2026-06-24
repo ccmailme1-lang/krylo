@@ -1,0 +1,50 @@
+{
+  "group": "C",
+  "description": "Structured input contamination — camelCase tokens, schema field names, and telemetry strings that contain domain keywords must not trigger domain routing. Defect cases encode DESIRED behavior.",
+  "cases": [
+    {
+      "id": "C1a",
+      "input": "userRole is undefined in system",
+      "lens": null,
+      "expect": { "notPrimary": "CAREER" },
+      "note": "\\brole\\b — 'userRole' is camelCase. Boundary prevents match. Current: GENERAL. Correct."
+    },
+    {
+      "id": "C1b",
+      "input": "hireDate field missing from schema",
+      "lens": null,
+      "expect": { "notPrimary": "CAREER" },
+      "note": "\\bhire\\b — 'hireDate' camelCase. Boundary prevents match. Current: GENERAL. Correct."
+    },
+    {
+      "id": "C1c",
+      "input": "autoLeaseConfig initialization failed",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "\\bauto\\b and \\blease\\b — both appear in camelCase. Boundaries prevent match. Current: GENERAL. Correct."
+    },
+    {
+      "id": "C1d",
+      "input": "fundraiseTarget field not found",
+      "lens": null,
+      "expect": { "notPrimary": "HEALTH" },
+      "note": "fundraise (not fundraising) — protected domain gate in ingress.js only matches 'fundraising', not 'fundraise'. Current: GENERAL. Correct."
+    },
+    {
+      "id": "C2a",
+      "input": "jobOfferPackage deserialization error",
+      "lens": null,
+      "expect": { "notPrimary": "CAREER" },
+      "defect": "DEF-CAMELCASE-CAREER",
+      "note": "jobOfferPackage: 'offer' appears as standalone word in space-separated token after camelCase prefix. \\boffer\\b fires on 'deserialization' context. Currently routes → CAREER. Structured telemetry should not trigger domain routing."
+    },
+    {
+      "id": "C2b",
+      "input": "retirementSavingsModel null reference",
+      "lens": null,
+      "expect": { "notPrimary": "RETIREMENT" },
+      "defect": "DEF-CAMELCASE-RETIREMENT",
+      "note": "retirementSavingsModel: /retire/ pattern has no boundary — matches 'retirement' in camelCase prefix. Currently routes → RETIREMENT. Structured telemetry should not trigger domain routing."
+    }
+  ]
+}

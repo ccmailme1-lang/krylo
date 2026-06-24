@@ -1,0 +1,66 @@
+{
+  "group": "B",
+  "description": "Semantic near-miss traps — meaning-adjacent inputs that should not trigger a domain, plus known defects where they incorrectly do. Defect cases encode DESIRED behavior; runner flags them as DEFECT-OPEN until fixed.",
+  "cases": [
+    {
+      "id": "B1a",
+      "input": "fundraising round analysis",
+      "lens": null,
+      "expect": { "notPrimary": "HEALTH" },
+      "defect": "DEF-FUNDRAISE-HEALTH",
+      "note": "Startup fundraising context. detectProtectedDomain() in ingress.js maps 'fundraising' → HEALTH unconditionally. Desired: GENERAL or STARTUP_FINANCE."
+    },
+    {
+      "id": "B1b",
+      "input": "fundraising cycle strategy",
+      "lens": null,
+      "expect": { "notPrimary": "HEALTH" },
+      "defect": "DEF-FUNDRAISE-HEALTH",
+      "note": "Morphological variant of B1a. Same protected-domain gate fires."
+    },
+    {
+      "id": "B2a",
+      "input": "nonprofit grant allocation model",
+      "lens": null,
+      "expect": { "primary": "HEALTH" },
+      "note": "Correct behavior — nonprofit/grant are explicit HEALTH signals. Not a defect."
+    },
+    {
+      "id": "B3a",
+      "input": "automate leasing workflow for fleet",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "leasing — \\blease\\b boundary prevents match in 'leasing'. Correct behavior."
+    },
+    {
+      "id": "B4a",
+      "input": "landlord lease renewal negotiation",
+      "lens": null,
+      "expect": { "primary": "REAL_ESTATE" },
+      "defect": "DEF-LEASE-AUTO",
+      "note": "landlord context makes this unambiguously REAL_ESTATE. But \\blease\\b fires AUTO first; REAL_ESTATE has no 'landlord' or 'renewal' pattern. Currently routes → AUTO."
+    },
+    {
+      "id": "B4b",
+      "input": "lease financing for condo purchase",
+      "lens": null,
+      "expect": { "primary": "REAL_ESTATE" },
+      "defect": "DEF-LEASE-AUTO",
+      "note": "condo should anchor REAL_ESTATE but AUTO (lease) scores higher. Currently routes → AUTO."
+    },
+    {
+      "id": "B5a",
+      "input": "career role transition analysis",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "career + role both fire CAREER. Correct behavior — no semantic bleed."
+    },
+    {
+      "id": "B5b",
+      "input": "condominium appreciation forecast",
+      "lens": null,
+      "expect": { "primary": "GENERAL" },
+      "note": "condominium is not condo — \\bcondo\\b boundary correctly prevents REAL_ESTATE. Current behavior is GENERAL. Semantic limitation (condominium not in patterns) but boundary logic is correct."
+    }
+  ]
+}

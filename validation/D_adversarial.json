@@ -1,0 +1,57 @@
+{
+  "group": "D",
+  "description": "Adversarial composition — inputs designed to force domain collision, lens overload, or contradiction injection. Validates priority ordering, single-domain dominance, and boundary stability under pressure.",
+  "cases": [
+    {
+      "id": "D1a",
+      "input": "automation of fundraising roles in leasing companies",
+      "lens": null,
+      "expect": { "notPrimary": "HEALTH" },
+      "defect": "DEF-FUNDRAISE-HEALTH",
+      "note": "Multi-domain pressure: auto/lease/role all present but 'fundraising' protected gate dominates unconditionally. Desired: one primary domain from structural keywords, not HEALTH."
+    },
+    {
+      "id": "D1b",
+      "input": "the entire automated fundraising role leasing strategy",
+      "lens": null,
+      "expect": { "notPrimary": "HEALTH" },
+      "defect": "DEF-FUNDRAISE-HEALTH",
+      "note": "Same protected-gate domination in a maximally adversarial composition."
+    },
+    {
+      "id": "D2a",
+      "input": "analyze car purchase investor retirement career lens",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "Lens overload: car/retirement/career all present. 'car' is explicit AUTO keyword and wins deterministically. Correct behavior."
+    },
+    {
+      "id": "D3a",
+      "input": "this lease is not a lease but a release of liability",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "Contradiction injection: lease appears twice as standalone word; release has \\b protection. AUTO wins on lease match. Correct — boundary logic stable under negation context."
+    },
+    {
+      "id": "D4a",
+      "input": "job offer negotiation with equity upside",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "Multi-keyword: job + offer + negotiat all fire CAREER. No leakage into RETIREMENT or REAL_ESTATE."
+    },
+    {
+      "id": "D4b",
+      "input": "job offer negotiation with equity upside",
+      "lens": null,
+      "expect": { "notPrimary": "RETIREMENT" },
+      "note": "Same input as D4a — cross-assertion: CAREER must not bleed into RETIREMENT despite equity keyword."
+    },
+    {
+      "id": "D4c",
+      "input": "job offer negotiation with equity upside",
+      "lens": null,
+      "expect": { "notPrimary": "REAL_ESTATE" },
+      "note": "Same input as D4a — cross-assertion: CAREER must not bleed into REAL_ESTATE despite equity keyword."
+    }
+  ]
+}

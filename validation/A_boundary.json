@@ -1,0 +1,111 @@
+{
+  "group": "A",
+  "description": "Substring boundary traps — keyword stems must not trigger domain without word boundary. Includes positive controls confirming clean inputs still route correctly.",
+  "cases": [
+    {
+      "id": "A1a",
+      "input": "automation strategy for supply chain",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "auto in automation — \\bauto\\b boundary must hold"
+    },
+    {
+      "id": "A1b",
+      "input": "press release signal for media coverage",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "lease in release — \\blease\\b boundary must hold"
+    },
+    {
+      "id": "A1c",
+      "input": "release candidate build pipeline",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "lease in release — morphological variant of A1b"
+    },
+    {
+      "id": "A2a",
+      "input": "market was struck by volatility last quarter",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "truck in struck — \\btruck\\b boundary must hold"
+    },
+    {
+      "id": "A2b",
+      "input": "entire strategy overhaul this quarter",
+      "lens": null,
+      "expect": { "notPrimary": "AUTO" },
+      "note": "entire — no AUTO keyword present; sanity boundary check"
+    },
+    {
+      "id": "A3a",
+      "input": "should we condone the risk exposure in this position",
+      "lens": null,
+      "expect": { "notPrimary": "REAL_ESTATE" },
+      "note": "condo in condone — \\bcondo\\b boundary must hold"
+    },
+    {
+      "id": "A3b",
+      "input": "parole officer quarterly report filing",
+      "lens": null,
+      "expect": { "notPrimary": "CAREER" },
+      "note": "role in parole — \\brole\\b boundary must hold"
+    },
+    {
+      "id": "A4a",
+      "input": "rehire policy update in HR system",
+      "lens": null,
+      "expect": { "notPrimary": "CAREER" },
+      "note": "hire in rehire — \\bhire\\b boundary must hold"
+    },
+    {
+      "id": "A+1",
+      "input": "what to look for when buying a used auto",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "positive control — standalone auto must route to AUTO"
+    },
+    {
+      "id": "A+2",
+      "input": "best car lease options for 2026",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "positive control — standalone lease with car context must route to AUTO"
+    },
+    {
+      "id": "A+3",
+      "input": "pickup truck financing options",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "positive control — standalone truck must route to AUTO"
+    },
+    {
+      "id": "A+4",
+      "input": "downtown condo market trends this quarter",
+      "lens": null,
+      "expect": { "primary": "REAL_ESTATE" },
+      "note": "positive control — standalone condo must route to REAL_ESTATE"
+    },
+    {
+      "id": "A+5",
+      "input": "how to negotiate a salary raise at my current job",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "positive control — standalone raise with job context must route to CAREER"
+    },
+    {
+      "id": "A+6",
+      "input": "starting a new role at a tech company",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "positive control — standalone role must route to CAREER"
+    },
+    {
+      "id": "A+7",
+      "input": "we need to hire three engineers before Q4",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "positive control — standalone hire must route to CAREER"
+    }
+  ]
+}

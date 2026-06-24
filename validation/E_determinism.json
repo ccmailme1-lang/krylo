@@ -1,0 +1,70 @@
+{
+  "group": "E",
+  "description": "Determinism — same semantic intent expressed as synonym swaps, order inversions, punctuation noise, and token repetition must produce identical primary domain. Validates routing stability under surface variation.",
+  "cases": [
+    {
+      "id": "E1a",
+      "input": "retirement savings gap analysis",
+      "lens": null,
+      "expect": { "primary": "RETIREMENT" },
+      "note": "Canonical form — order variant set E1"
+    },
+    {
+      "id": "E1b",
+      "input": "savings gap analysis retirement",
+      "lens": null,
+      "expect": { "primary": "RETIREMENT" },
+      "note": "Order inversion — retire keyword at tail"
+    },
+    {
+      "id": "E1c",
+      "input": "analysis of retirement savings gap",
+      "lens": null,
+      "expect": { "primary": "RETIREMENT" },
+      "note": "Prepositional restructure — retire keyword medial"
+    },
+    {
+      "id": "E2a",
+      "input": "buy a car with financing",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "Canonical form — order variant set E2"
+    },
+    {
+      "id": "E2b",
+      "input": "financing for a car to buy",
+      "lens": null,
+      "expect": { "primary": "AUTO" },
+      "note": "Order inversion — car keyword at tail"
+    },
+    {
+      "id": "E3a",
+      "input": "job offer negotiation equity",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "Canonical form — order variant set E3"
+    },
+    {
+      "id": "E3b",
+      "input": "equity negotiation job offer",
+      "lens": null,
+      "expect": { "primary": "CAREER" },
+      "note": "Full inversion — CAREER keywords at tail"
+    },
+    {
+      "id": "E4a",
+      "input": "retirement, savings? gap analysis.",
+      "lens": null,
+      "expect": { "primary": "RETIREMENT" },
+      "note": "Punctuation noise — commas and question marks injected"
+    },
+    {
+      "id": "E4b",
+      "input": "retirement savings gap analysis",
+      "lens": null,
+      "repeat": 10,
+      "expect": { "consistent": true },
+      "note": "Determinism check — same input run 10x must return identical primary domain each time"
+    }
+  ]
+}
