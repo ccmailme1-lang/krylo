@@ -200,12 +200,6 @@ function resolvePrimary(q, lens) {
   if (/fintech.*infrastructure|payment.*infrastructure|payment.*rails|financial.*api|embedded.*finance|banking.*api|payment.*network.*build|stripe.*model|financial.*plumbing|developer.*payment|collison.*protocol/.test(q)) return 'FINTECH_INFRA';
   if (/forward.*compute|compute.*demand.*signal|gpu.*demand|ai.*compute.*demand|inference.*demand|training.*compute.*demand|compute.*supply.*gap|gpu.*supply.*gap|huang.*protocol|nvidia.*demand.*signal/.test(q)) return 'FORWARD_COMPUTE';
   if (/attention.*saturation|marketing.*saturation|purple.*cow|permission.*marketing|godin.*protocol|attention.*economy.*saturation|media.*saturation.*signal|relevance.*saturation|saturation.*signal/.test(q)) return 'ATTENTION_SATURATION';
-  // Lens fallback
-  if (lens === 'REALTOR')    return 'REAL_ESTATE';
-  if (lens === 'RETIREMENT') return 'RETIREMENT';
-  if (lens === 'ATHLETE')    return 'ATHLETE_ENTERPRISE';
-  if (lens === 'INVESTOR')   return 'INVESTOR';
-  if (lens === 'HEALTH')     return 'HEALTH';
   return 'GENERAL';
 }
 
@@ -234,6 +228,13 @@ export function detectDomain(query, lens) {
 
   const primary = resolvePrimary(q, lens);
   const scores  = scoreDomains(q);
+
+  // DEF-1864 Intent Lock Gate: no keyword evidence + no compound rule → AMBIGUOUS.
+  // Lens fallback is removed; bare queries must not escalate to a life domain.
+  const totalScore = Object.values(scores).reduce((s, v) => s + v, 0);
+  if (primary === 'GENERAL' && totalScore === 0) {
+    return { primary: 'AMBIGUOUS', weights: {}, state: 'HOLD', entropy: 0, coActive: [], resolutionEligible: false };
+  }
 
   // Ensure primary is represented in scoring (priority rules may fire on compound
   // conditions that the simple keyword scorer misses)
@@ -3791,8 +3792,10 @@ export function synthesizeQuery(session) {
   const mcv     = resolveMCV(query, session);
   const numbers = extractNumbers(query);
   const vector  = detectDomain(query, session.lens);
-  // HOLD state falls back to synthGeneral — preserves UI stability in v1.
-  // v2 may surface a true "insufficient signal" state using vector.state.
+  // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
+  if (!vector.resolutionEligible) {
+    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false };
+  }
   const fn      = synthesizerFor(vector) ?? synthGeneral;
   const result  = fn(session, numbers, query);
   const contractLens = resolveContractLens(vector.primary, session.lens);
