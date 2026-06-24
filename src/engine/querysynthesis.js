@@ -148,10 +148,10 @@ function resolvePrimary(q, lens) {
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
   // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
   if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
-  if (/\bcar\b|vehicle|suv|truck|auto|lease|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|\baudi\b|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
+  if (/\bcar\b|vehicle|suv|\btruck\b|\bauto\b|\blease\b|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|\baudi\b|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
   // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
   if (
-    /\bhouse\b|mortgage|property|condo|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
+    /\bhouse\b|mortgage|property|\bcondo\b|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
     (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|\bmarket\b/.test(q))
   ) return 'REAL_ESTATE';
   // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
@@ -162,7 +162,7 @@ function resolvePrimary(q, lens) {
   if (/medicare\s+premiums?/.test(q)) return 'EXPENSE_REDUCTION';
   if (/\bsenior\b/.test(q) && /medicare|medicaid|premiums?|copay|out.of.pocket|healthcare cost/.test(q)) return 'EXPENSE_REDUCTION';
   if (/retire|401k|\bira\b|pension|social security|withdrawal|nest egg/.test(q)) return 'RETIREMENT';
-  if (/job|career|salary|offer|negotiat|hire|compensation|raise|role/.test(q)) return 'CAREER';
+  if (/\bjob\b|career|salary|offer|negotiat|\bhire\b|compensation|\braise\b|\brole\b/.test(q)) return 'CAREER';
   // ── Persona entity gates (before lens fallback) ────────────────────────────
   if (/\bbrady\b|tb12|athlete.entrepre|athlete.brand|athlete.enterprise|athletic.brand|performance.wellness|athlete.business|sport.*business|legacy.venture|sports.enterprise/.test(q)) return 'ATHLETE_ENTERPRISE';
   if (/kris.jenner|kardashian|\bskims\b|kylie.cosmetics|good.american|spin.?off.brand|family.brand|momager|brand.spin.?off|celebrity.brand.empire|cpg.empire/.test(q)) return 'BRAND_SPINOFF';
