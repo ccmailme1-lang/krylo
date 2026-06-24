@@ -14,7 +14,7 @@ const HYSTERESIS_TICKS         = 3;                    // ticks challenger must 
 const TICK_MS                  = 4000;
 
 // ── MOCK SEED — pre-dated persistence for demo viability ─────────────────────
-const D3  = Date.now() - 3 * 24 * 60 * 60 * 1000;
+const D3  = Date.now() - 3 * 24 * 60 * 60 * 1000 - 5000; // 5s buffer past 72h boundary
 const D6H = Date.now() - 6 * 60 * 60 * 1000;
 
 function initSignals() {
@@ -52,13 +52,28 @@ function compositeScore(score, velocity) {
 
 // ── ENGINE COMPUTATION ────────────────────────────────────────────────────────
 function computeState(signals, prev) {
-  const domainStates = {};
-  const qualified    = [];
+  const domainStates    = {};
+  const qualified       = [];
+  const qualLossCounters = { ...(prev?.qualLossCounters ?? {}) };
 
   for (const d of EQ_DOMAINS) {
     const { score, velocity, counterSignal, since } = signals[d];
-    const state  = classifyState(score);
-    const isQual = qualifies(score, state, velocity, since, counterSignal);
+    const state    = classifyState(score);
+    const rawQual  = qualifies(score, state, velocity, since, counterSignal);
+    const wasQual  = prev?.domainStates?.[d]?.qualified ?? false;
+
+    // Qualification-loss hysteresis: a domain that was qualified must fail
+    // HYSTERESIS_TICKS consecutive ticks before losing qualification.
+    // Prevents noise-driven oscillation at the floor boundary.
+    let isQual;
+    if (wasQual && !rawQual) {
+      qualLossCounters[d] = (qualLossCounters[d] ?? 0) + 1;
+      isQual = qualLossCounters[d] < HYSTERESIS_TICKS;
+    } else {
+      qualLossCounters[d] = 0;
+      isQual = rawQual;
+    }
+
     domainStates[d] = { score, state, velocity, counterSignal, since, qualified: isQual };
     if (isQual) qualified.push(d);
   }
@@ -136,7 +151,7 @@ function computeState(signals, prev) {
     dispHoldCount = 0;
   }
 
-  return { happyPath, challengers, lastDisplacement, domainStates, dispHoldPos, dispHoldCount };
+  return { happyPath, challengers, lastDisplacement, domainStates, dispHoldPos, dispHoldCount, qualLossCounters };
 }
 
 // ── MOCK OSCILLATOR ───────────────────────────────────────────────────────────
