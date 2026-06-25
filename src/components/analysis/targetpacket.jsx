@@ -600,12 +600,12 @@ export default function TargetPacket() {
       </div>
 
       {/* ── DECISION TRANSLATION LAYER + ATTENTION STACK ────────────────── */}
-      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 0 }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 220 }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
-        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <AttentionStack style={{ position: 'relative', bottom: 'auto', right: 'auto', width: '100%', height: '100%', background: 'transparent', border: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none' }} />
+        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden' }}>
+          <AttentionStack style={{ position: 'relative', bottom: 'auto', right: 'auto', width: '100%', height: '100%', minHeight: 220, background: 'transparent', border: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none' }} />
         </div>
       </div>
 
