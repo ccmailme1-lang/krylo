@@ -12,7 +12,6 @@ import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }    from '../../engine/metricsengine.js';
 import MetricStrip           from './metricstrip.jsx';
-import AttentionStack        from '../surface/attentionstack.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -239,7 +238,7 @@ function DomainIsolationConsole() {
   }, []);
 
   return (
-    <div style={{ flexShrink: 0, fontFamily: MONO, borderTop: `1px solid ${BORDER}`, paddingTop: 8 }}>
+    <div style={{ fontFamily: MONO, paddingTop: 8 }}>
       <div style={{ fontSize: 9, color: DIM, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6 }}>Domain Isolation Console</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: BORDER }}>
         <DomainCard bayId={1} domainLabel="FINANCIAL" />
@@ -593,7 +592,6 @@ export default function TargetPacket() {
                     ))}
                   </div>
                 </div>
-                <DomainIsolationConsole />
               </div>
           </>
         </div>
@@ -604,8 +602,8 @@ export default function TargetPacket() {
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
-        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden' }}>
-          <AttentionStack style={{ position: 'relative', bottom: 'auto', right: 'auto', width: '100%', height: '100%', minHeight: 220, background: 'transparent', border: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none' }} />
+        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'auto' }}>
+          <DomainIsolationConsole />
         </div>
       </div>
 
