@@ -12,6 +12,7 @@ import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }    from '../../engine/metricsengine.js';
 import MetricStrip           from './metricstrip.jsx';
+import { fetchHNTop }        from '../../hooks/usehnsignals.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -238,7 +239,7 @@ function DomainIsolationConsole() {
   }, []);
 
   return (
-    <div style={{ fontFamily: MONO, paddingTop: 8 }}>
+    <div style={{ flexShrink: 0, fontFamily: MONO, borderTop: `1px solid ${BORDER}`, paddingTop: 8 }}>
       <div style={{ fontSize: 9, color: DIM, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6 }}>Domain Isolation Console</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: BORDER }}>
         <DomainCard bayId={1} domainLabel="FINANCIAL" />
@@ -359,6 +360,13 @@ export default function TargetPacket() {
     assignToBay(bayId, { title: session.query, domain: clampBay, source: 'user-clamp', ts: Date.now() });
     setClampBay('');
   }
+
+  const [hnItems, setHnItems] = useState([]);
+  useEffect(() => {
+    fetchHNTop(12).then(setHnItems).catch(() => {});
+    const id = setInterval(() => fetchHNTop(12).then(setHnItems).catch(() => {}), 300_000);
+    return () => clearInterval(id);
+  }, []);
 
   const [showAlts, setShowAlts] = useState(false);
   const actionPanelRef = useRef(null);
@@ -580,6 +588,7 @@ export default function TargetPacket() {
                   );
                 })()}
                 {synthesis?.leverage && <LeverageField leverage={synthesis.leverage} />}
+                <DomainIsolationConsole />
                 <div style={{ border: `1px solid rgba(102,255,0,0.2)`, padding: '16px 20px', background: 'rgba(102,255,0,0.03)' }}>
                   <div style={{ fontFamily: SERIF, fontSize: 16, color: BRT, lineHeight: 1.4, marginBottom: 8 }}>{synthesis?.recommendedAction ?? 'Analysis in progress…'}</div>
                   <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.1em', marginBottom: 14 }}>{synthesis?.timeHorizon ?? '—'}</div>
@@ -602,8 +611,32 @@ export default function TargetPacket() {
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
-        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'auto' }}>
-          <DomainIsolationConsole />
+        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          {/* HN live feed */}
+          <div style={{ padding: '8px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Signal Feed</span>
+            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.18em', marginLeft: 'auto' }}>HN · LIVE</span>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {hnItems.length === 0 ? (
+              <div style={{ padding: '16px 14px', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>CONNECTING…</div>
+            ) : hnItems.map((s, i) => (
+              <div key={s.id} style={{ padding: '8px 14px', borderBottom: `1px solid rgba(255,255,255,0.04)`, cursor: 'pointer' }}
+                onClick={() => window.open(s.url, '_blank')}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: (s.fs ?? 0) > 0.65 ? LIME : DIM, flexShrink: 0 }}>{i + 1}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.8)', lineHeight: 1.4, letterSpacing: '0.03em' }}>{s.title}</span>
+                </div>
+                <div style={{ paddingLeft: 16, display: 'flex', gap: 12 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.1em' }}>{(s.category_id ?? 'SIGNAL').toUpperCase()}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: (s.fs ?? 0) > 0.65 ? LIME : DIM, letterSpacing: '0.1em' }}>Fs {((s.fs ?? 0) * 100).toFixed(0)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

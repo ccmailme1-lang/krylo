@@ -38,11 +38,13 @@ function mapHit(hit) {
 
 // Fetch top N HN stories — no query required, sorted by recency with min signal
 export async function fetchHNTop(n = 25) {
-  const url = `${HN_SEARCH}?tags=story&numericFilters=points>50&hitsPerPage=${n}`;
+  const url = `${HN_SEARCH}?tags=story&numericFilters=points%3E50&hitsPerPage=${n}`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`HN API ${res.status}`);
   const data = await res.json();
-  return (data.hits ?? []).map(mapHit);
+  return (data.hits ?? []).flatMap(hit => {
+    try { return [mapHit(hit)]; } catch (e) { console.warn('HN mapHit skip:', hit?.objectID, e?.message); return []; }
+  });
 }
 
 export function usehnsignals(query) {
