@@ -13,6 +13,9 @@ import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 import { getTracker } from '../../engine/decisionvelocity.js';
+import { computeMetrics } from '../../engine/metricsengine.js';
+import MetricStrip from './metricstrip.jsx';
+import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -83,8 +86,6 @@ function buildBrief(session, synthesis, hp = null) {
     asOf:           timeStr,
     originator:     'ORACLE KERNEL v3.7.2',
     domain:         domain.toUpperCase(),
-    cac:            (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↓ EASING' : conf < 0.45 ? '↑ RISING' : '→ STABLE'; return `$${Math.round(180 - conf * 80)} · ${dir} — ESTIMATED`; })(),
-    roas:           (() => { const conf = synthesis?.confidence ?? 0.5; const dir = conf > 0.70 ? '↑ IMPROVING' : conf < 0.45 ? '↓ DECLINING' : '→ STABLE'; return `${(1.8 + conf * 3.2).toFixed(1)}x · ${dir} — ESTIMATED`; })(),
 
     bluf:           synthesis?.bluf    ?? (hpDomains
       ? `Happy Path qualified: HIGH convergence across ${hpDomains.join(' + ')} — score ${hp.peakScore?.toFixed(0) ?? '—'}/100. Structural asymmetry confirmed.`
@@ -292,6 +293,12 @@ export default function IntelligenceBrief() {
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
   const hp                        = engineState?.happyPath ?? null;
+  const [outcomeInput, setOutcomeInput] = useState(null); // { convictionId, pathId, value, followed }
+  const lrPrior = useMemo(() => {
+    if (!synthesis || synthesis.resolutionEligible === false) return null;
+    return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
+  }, [synthesis, session?.lens]);
+  const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
 
   const brief = buildBrief(session, synthesis, hp);
   const convictions               = useConvictionStore();
@@ -446,7 +453,7 @@ export default function IntelligenceBrief() {
                 const arb      = es?.arbitration ?? session?.tensor?.arbitration;
                 const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
                 const winState = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-                convictions.commit({
+                const convId   = convictions.commit({
                   sessionId:           session?.id ?? null,
                   thesis:              session?.query ?? null,
                   timeHorizon:         synthesis?.timeHorizon ?? null,
@@ -456,6 +463,14 @@ export default function IntelligenceBrief() {
                   domainStates:        es?.domainStates ?? {},
                   hypothesisId:        pendingHypothesisId || null,
                   windowStateAtCommit: winState,
+                });
+                // WO-1869: record the emission in Path Memory so outcomes can close the loop
+                logEmission({
+                  convictionId: convId,
+                  domain:       synthesis?.queryDomain ?? domain ?? 'UNKNOWN',
+                  stateLabel:   synthesis?.stateLabel  ?? 'BUILDING CONVERGENCE',
+                  lens:         session?.lens           ?? 'GENERAL',
+                  projectedValue: metrics?.ltv?.value   ?? 0,
                 });
                 setPendingHypothesisId('');
                 emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
@@ -684,8 +699,12 @@ export default function IntelligenceBrief() {
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {convictions.resolved.map(r => {
-                    const resColor = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
-                    const hadHP    = r.peakScore >= 75 && r.domains.length >= 2;
+                    const resColor   = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
+                    const hadHP      = r.peakScore >= 75 && r.domains.length >= 2;
+                    const pathRecs   = getByConvictionId(r.id);
+                    const path       = pathRecs[0] ?? null;
+                    const hasOutcome = path?.outcomeLoggedAt != null;
+                    const showForm   = outcomeInput?.convictionId === r.id;
                     return (
                       <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -701,6 +720,48 @@ export default function IntelligenceBrief() {
                         {r.thesis && (
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
                             {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
+                          </div>
+                        )}
+                        {/* WO-1869: outcome capture + LR display */}
+                        {hasOutcome && path.lr !== null && (
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>
+                            LR {path.lr.toFixed(2)}× · {path.followed}
+                          </span>
+                        )}
+                        {hasOutcome && path.lr === null && (
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
+                        )}
+                        {path && !hasOutcome && !showForm && (
+                          <button onClick={() => setOutcomeInput({ convictionId: r.id, pathId: path.id, value: '', followed: 'full' })} style={{
+                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase',
+                            background: 'transparent', cursor: 'pointer', padding: '3px 8px', alignSelf: 'flex-start',
+                            border: `1px solid rgba(102,255,0,0.2)`, color: 'rgba(102,255,0,0.4)',
+                          }}>LOG OUTCOME</button>
+                        )}
+                        {showForm && (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 3 }}>
+                            <input
+                              type="number" placeholder="Observed value"
+                              value={outcomeInput.value}
+                              onChange={e => setOutcomeInput({ ...outcomeInput, value: e.target.value })}
+                              style={{ fontFamily: MONO, fontSize: 8, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.1)`, color: BRT, padding: '3px 6px', width: 110, outline: 'none' }}
+                            />
+                            <select
+                              value={outcomeInput.followed}
+                              onChange={e => setOutcomeInput({ ...outcomeInput, followed: e.target.value })}
+                              style={{ fontFamily: MONO, fontSize: 8, background: '#000', border: `1px solid rgba(255,255,255,0.1)`, color: BRT, padding: '3px 6px', outline: 'none' }}
+                            >
+                              <option value="full">Full</option>
+                              <option value="partial">Partial</option>
+                              <option value="none">None</option>
+                            </select>
+                            <button onClick={() => {
+                              logOutcome({ pathId: outcomeInput.pathId, observedValue: parseFloat(outcomeInput.value) || 0, followed: outcomeInput.followed });
+                              setOutcomeInput(null);
+                            }} style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
+                              RECORD
+                            </button>
+                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 6, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
                           </div>
                         )}
                       </div>
@@ -764,7 +825,7 @@ export default function IntelligenceBrief() {
                 const arb      = es?.arbitration ?? session?.tensor?.arbitration;
                 const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
                 const winState = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-                convictions.commit({
+                const convId   = convictions.commit({
                   sessionId:           session?.id ?? null,
                   thesis:              session?.query ?? null,
                   timeHorizon:         synthesis?.timeHorizon ?? null,
@@ -774,6 +835,13 @@ export default function IntelligenceBrief() {
                   domainStates:        es?.domainStates ?? {},
                   hypothesisId:        pendingHypothesisId || null,
                   windowStateAtCommit: winState,
+                });
+                logEmission({
+                  convictionId: convId,
+                  domain:       synthesis?.queryDomain ?? domain ?? 'UNKNOWN',
+                  stateLabel:   synthesis?.stateLabel  ?? 'BUILDING CONVERGENCE',
+                  lens:         session?.lens           ?? 'GENERAL',
+                  projectedValue: metrics?.ltv?.value   ?? 0,
                 });
                 setPendingHypothesisId('');
                 emitTelemetry({ type: 'CommitThesisEvent', domain, hypothesisId: pendingHypothesisId || null, windowState: winState, timestamp: new Date().toISOString() });
@@ -846,9 +914,8 @@ export default function IntelligenceBrief() {
           <FieldRow label="Date"       value={brief.date} />
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
-          <FieldRow label="CAC"        value={brief.cac}        valueColor={LIME_MID} />
-          <FieldRow label="ROAS"       value={brief.roas}       valueColor={LIME_MID} />
         </Panel>
+        <MetricStrip metrics={metrics} />
 
 
         {/* 01 · BLUF */}
@@ -1084,8 +1151,12 @@ export default function IntelligenceBrief() {
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {convictions.resolved.map(r => {
-                    const resColor = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
-                    const hadHP    = r.peakScore >= 75 && r.domains.length >= 2;
+                    const resColor   = r.resolution === 'confirmed' ? LIME : r.resolution === 'denied' ? 'rgba(255,80,80,0.8)' : DIM;
+                    const hadHP      = r.peakScore >= 75 && r.domains.length >= 2;
+                    const pathRecs   = getByConvictionId(r.id);
+                    const path       = pathRecs[0] ?? null;
+                    const hasOutcome = path?.outcomeLoggedAt != null;
+                    const showForm   = outcomeInput?.convictionId === r.id;
                     return (
                       <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
@@ -1101,6 +1172,47 @@ export default function IntelligenceBrief() {
                         {r.thesis && (
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
                             {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
+                          </div>
+                        )}
+                        {hasOutcome && path.lr !== null && (
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>
+                            LR {path.lr.toFixed(2)}× · {path.followed}
+                          </span>
+                        )}
+                        {hasOutcome && path.lr === null && (
+                          <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
+                        )}
+                        {path && !hasOutcome && !showForm && (
+                          <button onClick={() => setOutcomeInput({ convictionId: r.id, pathId: path.id, value: '', followed: 'full' })} style={{
+                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase',
+                            background: 'transparent', cursor: 'pointer', padding: '3px 8px', alignSelf: 'flex-start',
+                            border: `1px solid rgba(102,255,0,0.2)`, color: 'rgba(102,255,0,0.4)',
+                          }}>LOG OUTCOME</button>
+                        )}
+                        {showForm && (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', paddingTop: 3 }}>
+                            <input
+                              type="number" placeholder="Observed value"
+                              value={outcomeInput.value}
+                              onChange={e => setOutcomeInput({ ...outcomeInput, value: e.target.value })}
+                              style={{ fontFamily: MONO, fontSize: 8, background: 'rgba(255,255,255,0.04)', border: `1px solid rgba(255,255,255,0.1)`, color: BRT, padding: '3px 6px', width: 110, outline: 'none' }}
+                            />
+                            <select
+                              value={outcomeInput.followed}
+                              onChange={e => setOutcomeInput({ ...outcomeInput, followed: e.target.value })}
+                              style={{ fontFamily: MONO, fontSize: 8, background: '#000', border: `1px solid rgba(255,255,255,0.1)`, color: BRT, padding: '3px 6px', outline: 'none' }}
+                            >
+                              <option value="full">Full</option>
+                              <option value="partial">Partial</option>
+                              <option value="none">None</option>
+                            </select>
+                            <button onClick={() => {
+                              logOutcome({ pathId: outcomeInput.pathId, observedValue: parseFloat(outcomeInput.value) || 0, followed: outcomeInput.followed });
+                              setOutcomeInput(null);
+                            }} style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
+                              RECORD
+                            </button>
+                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 6, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
                           </div>
                         )}
                       </div>

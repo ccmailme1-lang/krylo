@@ -134,6 +134,9 @@ SESSION 2026-06-25 — COMPLETE (committed):
   AMBIGUOUS withhold (4d30643) · WO-1867 numeric binding (43dfe8b) · docs lock §18/§19 (06e71c3).
   NOT DEPLOYED — prod = ee36ed3; ff1a63f→06e71c3 are 5 commits ahead.
 
+PRIORITY (Founder 2026-06-25): WO-1868 (six pillars) + WO-1869 (path memory) are the work.
+  WO-1870/1871/1872/1873 are low-hanging fruit — DEFERRED until the pillars + path memory are moving.
+
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
   1872 — Brand-as-Ticker / investment-context AUTO suppression — SPEC (regression risk; QA-gated)

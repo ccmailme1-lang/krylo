@@ -3836,5 +3836,5 @@ export function synthesizeQuery(session) {
     vector.weights?.[vector.primary] ?? 0.5,
   );
 
-  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv };
+  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers };
 }

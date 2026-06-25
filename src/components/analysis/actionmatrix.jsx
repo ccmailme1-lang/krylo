@@ -2,10 +2,13 @@
 // WO-1710: hero card (highest-impact action) receives full-width visual dominance.
 // Supporting cards are recessed. 3-column equal grid removed.
 import React, { useState, useMemo } from 'react';
-import { useAnalysisStore }   from '../../store/useanalysisstore.js';
-import { synthesizeQuery }    from '../../engine/querysynthesis.js';
-import { getVisibleCards }    from '../../engine/editorialgate.js';
-import { getDisplayEntity }   from '../../utils/formatters.js';
+import { useAnalysisStore }        from '../../store/useanalysisstore.js';
+import { synthesizeQuery }         from '../../engine/querysynthesis.js';
+import { getVisibleCards }         from '../../engine/editorialgate.js';
+import { getDisplayEntity }        from '../../utils/formatters.js';
+import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
+import { computeMetrics }         from '../../engine/metricsengine.js';
+import MetricStrip                from './metricstrip.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Playfair Display', serif";
@@ -159,6 +162,8 @@ export default function ActionMatrix() {
   const lensLabel       = session?.lens?.toUpperCase() ?? 'OPEN';
 
   const synthesis    = useMemo(() => synthesizeQuery(session), [session]);
+  const { engineState } = useHappyPathEngine();
+  const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null), [synthesis, engineState]);
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
   const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 
@@ -201,6 +206,9 @@ export default function ActionMatrix() {
           </div>
         </div>
       </div>
+
+      {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
+      <MetricStrip metrics={metrics} />
 
       {/* ── Structural Friction alert — injected pre-hero when HIGH_FRICTION */}
       {showFriction && <FrictionCard friction={structuralFriction} />}

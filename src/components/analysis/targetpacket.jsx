@@ -9,6 +9,9 @@ import LeverageField         from './leveragefield.jsx';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
+import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
+import { computeMetrics }    from '../../engine/metricsengine.js';
+import MetricStrip           from './metricstrip.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -350,6 +353,8 @@ export default function TargetPacket() {
   const revelationStep  = 3;
   const { profiles: lensProfiles, rfe: lensRfe } = useMemo(() => routeLens(session), [session]);
   const hpScore         = Math.round(confScore * 100);
+  const { engineState } = useHappyPathEngine();
+  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null), [synthesis, engineState]);
 
   // WO-1716: Domain Clamp — user-controlled bay assignment
   const assignToBay    = useBayStore(s => s.assignToBay);
@@ -469,6 +474,9 @@ export default function TargetPacket() {
           </div>
         </div>
       </div>
+
+      {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
+      <MetricStrip metrics={metrics} style={{ background: '#000' }} />
 
       {/* ── PANE 2: Middle Row ──────────────────────────────────────────────── */}
       <div style={{
@@ -744,8 +752,6 @@ export default function TargetPacket() {
       {lensRfe?.state !== 'UNCLASSIFIED' && session?.lens?.toUpperCase() === 'CFO' && hpScore >= 50 && (() => {
         const accuracy   = Math.round(confScore * 100);
         const signalDrift = KEY_DRIVERS.filter(d => d.pos).length;
-        const roasProxy  = (1.8 + confScore * 3.2).toFixed(1);
-        const cacProxy   = Math.round(180 - confScore * 80);
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
@@ -757,10 +763,10 @@ export default function TargetPacket() {
               )}
             </div>
             {[
-              { label: 'SIGNAL ACCURACY',      value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
-              { label: 'DECISION OUTCOME',      value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
-              { label: 'ESTIMATED ROAS',        value: `${roasProxy}x — ESTIMATED` },
-              { label: 'EST. CAC PRESSURE',     value: `$${cacProxy} · ${confScore > 0.70 ? '↓ EASING' : confScore < 0.45 ? '↑ RISING' : '→ STABLE'}` },
+              { label: 'SIGNAL ACCURACY',  value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
+              { label: 'DECISION OUTCOME', value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
+              { label: 'ROAS',             value: metrics ? `${metrics.roas.value}x · ${metrics.roas.label}` : '—' },
+              { label: 'CAC',              value: metrics ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : '—' },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>{label}</span>
