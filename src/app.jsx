@@ -21,6 +21,11 @@ import { usereplay }        from './hooks/usereplay.js';
 import { useFredSignals }    from './hooks/usefredsignals.js';
 import { useEdgarSignals }  from './hooks/useedgarsignals.js';
 import { useKalshiSignals } from './hooks/usekalshisignals.js';
+import { runFinancialMarketSync }  from './engine/connectors/financialmarketconnector.js';
+import { runEconomicFlowSync }     from './engine/connectors/economicflowconnector.js';
+import { runSupplyChainSync }      from './engine/connectors/supplychainconnector.js';
+import { runPatentsViewSync }      from './engine/connectors/patentsviewconnector.js';
+import { runNetworkTopologySync }  from './engine/connectors/networktopologyconnector.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -680,6 +685,26 @@ export default function App() {
     const handler = (e) => setLiveInjectSignals(e.detail ?? []);
     window.addEventListener('KRYLO_LIVE_INJECT', handler);
     return () => window.removeEventListener('KRYLO_LIVE_INJECT', handler);
+  }, []);
+
+  // WO-1874 + connectors — fire all five on mount; self-dispatch via surfaceRouter.dispatchBatch
+  // Intervals match decay type: topology=10min, market=4h, flow/supply/patents=24h
+  useEffect(() => {
+    runNetworkTopologySync().catch(() => {});
+    runFinancialMarketSync().catch(() => {});
+    runEconomicFlowSync().catch(() => {});
+    runSupplyChainSync().catch(() => {});
+    runPatentsViewSync().catch(() => {});
+
+    const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
+    const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
+    const dailyId   = setInterval(() => {
+      runEconomicFlowSync().catch(() => {});
+      runSupplyChainSync().catch(() => {});
+      runPatentsViewSync().catch(() => {});
+    }, 24 * 60 * 60 * 1000);
+
+    return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(dailyId); };
   }, []);
 
   // Live signal pool — every other ingest hook is query-gated, so with no
