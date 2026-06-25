@@ -3798,6 +3798,7 @@ const SYNTH_MAP = {
 import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
 import { detectProtectedDomain } from './ingress.js';
 import { classifyAmbiguity } from './domainambiguitygate.js';
+import { checkRealEstateEligibility } from './ienbg.js';
 
 export function synthesizeQuery(session) {
   if (!session) return null;
@@ -3809,8 +3810,23 @@ export function synthesizeQuery(session) {
   if (!vector.resolutionEligible) {
     return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false };
   }
+  // WO-1867 numeric binding: a REAL_ESTATE price must anchor to purchase/dwelling
+  // context AND be a plausible residential magnitude. Stated assets/income (e.g.
+  // "ASSETS: $15,000,000,000") must not be read as a home price. If numbers are
+  // present but none binds to a valid price, the query is structurally insufficient
+  // for a quantitative home brief — withhold rather than fabricate.
+  let synthNumbers = numbers;
+  if (vector.primary === 'REAL_ESTATE' && numbers.length > 0) {
+    const elig = checkRealEstateEligibility(query);
+    if (!elig.eligible) {
+      return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason };
+    }
+    // price bound → pass [price, down]; no price (only small scalars) → pass none so the
+    // synthesizer uses its defaults rather than reading a bed/bath count as a price.
+    synthNumbers = elig.price !== null ? (elig.down !== null ? [elig.price, elig.down] : [elig.price]) : [];
+  }
   const fn      = synthesizerFor(vector) ?? synthGeneral;
-  const result  = fn(session, numbers, query);
+  const result  = fn(session, synthNumbers, query);
   const contractLens = resolveContractLens(vector.primary, session.lens);
 
   // Gate: classification confidence (0–1) keyed by domain.
