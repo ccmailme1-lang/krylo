@@ -22,6 +22,7 @@ const PROXY_CACHE     = new Map();
 const FRED_TTL_MS     = 300_000;
 const EDGAR_TTL_MS    = 900_000;
 const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
+const KALSHI_TTL_MS   = 300_000; // 5 min — prevents 429 on simultaneous polls
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -242,6 +243,9 @@ async function handleKalshiSignals(req, res) {
   if (!KALSHI_KEY || !KALSHI_PKEY) {
     return send(res, 503, { error: 'KALSHI env not configured', signals: [] });
   }
+  const cacheKey = 'kalshi:signals';
+  const hit = getCached(cacheKey, KALSHI_TTL_MS);
+  if (hit) return send(res, hit.statusCode, hit.body);
   try {
     const eventDomainMap = await buildEventDomainMap();
     const markets        = await fetchKalshiMarkets(eventDomainMap);
@@ -279,7 +283,9 @@ async function handleKalshiSignals(req, res) {
       };
     });
 
-    send(res, 200, { signals, ts: Date.now(), source: 'KALSHI', markets: markets.length });
+    const payload = { signals, ts: Date.now(), source: 'KALSHI', markets: markets.length };
+    setCached(cacheKey, 200, payload);
+    send(res, 200, payload);
   } catch (err) {
     console.error('[KALSHI] fetch failed:', err.message);
     send(res, 500, { error: err.message, signals: [] });

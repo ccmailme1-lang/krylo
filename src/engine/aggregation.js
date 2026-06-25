@@ -21,9 +21,7 @@ export function aggregateSignals(signals = []) {
     const avgLeverage  = sigs.reduce((s, x) => s + (x.leverage  ?? 0), 0) / count;
     const avgVolatility = sigs.reduce((s, x) => s + (x.volatility ?? 0), 0) / count;
 
-    const pressure = Math.min(100, Math.max(0,
-      avgLeverage + (count * 0.15)
-    ));
+    const pressure = Math.min(100, Math.max(0, avgLeverage));
 
     return {
       domain,

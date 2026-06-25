@@ -12,6 +12,7 @@ import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }    from '../../engine/metricsengine.js';
 import MetricStrip           from './metricstrip.jsx';
+import { fetchHNTop }        from '../../hooks/usehnsignals.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -369,6 +370,27 @@ export default function TargetPacket() {
     setClampBay('');
   }
 
+  const [hnSignals, setHnSignals] = useState([]);
+  useEffect(() => {
+    fetchHNTop(12).then(hits => setHnSignals(hits)).catch(() => {});
+    const id = setInterval(() => {
+      fetchHNTop(12).then(hits => setHnSignals(hits)).catch(() => {});
+    }, 300_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const attentionRows = hnSignals.length > 0
+    ? hnSignals.map((s, i) => ({
+        rank:     i + 1,
+        signal:   s.title?.slice(0, 48) ?? '—',
+        category: (s.category_id ?? 'SIGNAL').toUpperCase(),
+        trend:    (s.fidelity_components?.t_telemetry ?? 0) > 0.5 ? '↑' : '→',
+        momentum: (s.fidelity_components?.m_checksum ?? 0) > 0.7 ? 'STRONG' : (s.fidelity_components?.m_checksum ?? 0) > 0.4 ? 'BUILDING' : 'EMERGING',
+        mColor:   (s.fs ?? 0) > 0.65 ? LIME : (s.fs ?? 0) > 0.35 ? BLUE : DIM,
+        conf:     s.fs ?? 0,
+      }))
+    : (synthesis?.attentionStack ?? []);
+
   const [showAlts, setShowAlts] = useState(false);
   const actionPanelRef = useRef(null);
   const [actionScroll, setActionScroll] = useState({ up: false, down: false });
@@ -478,20 +500,20 @@ export default function TargetPacket() {
       {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
       <MetricStrip metrics={metrics} style={{ background: '#000' }} />
 
-      {/* ── PANE 2: Middle Row ──────────────────────────────────────────────── */}
+      {/* ── PANE 2: Vertical Stack ─────────────────────────────────────────── */}
       <div style={{
-        display: 'flex', flex: 1,
+        display: 'flex', flexDirection: 'column', flex: 1,
         borderBottom: `1px solid ${BORDER}`,
         minHeight: 0,
       }}>
 
-        {/* Left: Attention Stack */}
+        {/* Top: Attention Stack — full width */}
         <div style={{
-          flex: 1.2, display: 'flex', flexDirection: 'column',
-          borderRight: `1px solid ${BORDER}`, overflow: 'hidden',
+          flex: '0 0 38%', display: 'flex', flexDirection: 'column',
+          borderBottom: `1px solid ${BORDER}`, overflow: 'hidden',
         }}>
           <div style={{
-            padding: '10px 24px', borderBottom: `1px solid ${BORDER}`,
+            padding: '8px 24px', borderBottom: `1px solid ${BORDER}`,
             display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
           }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>
@@ -501,60 +523,67 @@ export default function TargetPacket() {
               fontFamily: MONO, fontSize: 9, color: '#000', background: LIME,
               padding: '1px 6px', letterSpacing: '0.1em',
             }}>
-              {ATTENTION.length}
+              {attentionRows.length}
             </span>
+            {hnSignals.length > 0 && (
+              <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.4)', letterSpacing: '0.18em', marginLeft: 'auto' }}>
+                HN · LIVE
+              </span>
+            )}
           </div>
 
           {/* Table header */}
           <div style={{
-            display: 'grid', gridTemplateColumns: '40px 1fr 60px 100px 80px',
-            padding: '7px 24px', borderBottom: `1px solid ${BORDER}`,
+            display: 'grid', gridTemplateColumns: '36px 1fr 120px 90px 70px 72px',
+            padding: '6px 24px', borderBottom: `1px solid ${BORDER}`,
             flexShrink: 0,
           }}>
-            {['RANK', 'SIGNAL', 'TREND', 'MOMENTUM', 'CONFIDENCE'].map(h => (
+            {['#', 'SIGNAL', 'DOMAIN', 'MOMENTUM', 'TREND', 'CONF'].map(h => (
               <span key={h} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{h}</span>
             ))}
           </div>
 
           {/* Table rows */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {ATTENTION.map((item, i) => (
+            {attentionRows.length === 0 ? (
+              <div style={{ padding: '20px 24px', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>
+                LOADING SIGNAL FEED…
+              </div>
+            ) : attentionRows.map((item, i) => (
               <div key={i} style={{
-                display: 'grid', gridTemplateColumns: '40px 1fr 60px 100px 80px',
-                padding: '12px 24px', borderBottom: `1px solid rgba(255,255,255,0.04)`,
+                display: 'grid', gridTemplateColumns: '36px 1fr 120px 90px 70px 72px',
+                padding: '9px 24px', borderBottom: `1px solid rgba(255,255,255,0.04)`,
                 alignItems: 'center',
-              }}>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: item.mColor, letterSpacing: '0.05em' }}>{item.rank}</span>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.08em', marginBottom: 3 }}>{item.signal}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.08em' }}>{item.category}</div>
+                transition: 'background 150ms',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+              >
+                <span style={{ fontFamily: MONO, fontSize: 10, color: item.mColor, letterSpacing: '0.05em' }}>{item.rank}</span>
+                <div style={{ minWidth: 0, paddingRight: 12 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, color: BRT, letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.signal}</div>
                 </div>
-                <span style={{ fontFamily: MONO, fontSize: 14, color: item.mColor }}>{item.trend}</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.category}</span>
                 <span style={{
-                  fontFamily: MONO, fontSize: 8, color: item.mColor,
-                  border: `1px solid ${item.mColor}33`, padding: '2px 8px',
-                  letterSpacing: '0.1em', width: 'fit-content',
+                  fontFamily: MONO, fontSize: 7, color: item.mColor,
+                  border: `1px solid ${item.mColor}33`, padding: '2px 6px',
+                  letterSpacing: '0.08em', width: 'fit-content',
                 }}>
                   {item.momentum}
                 </span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, letterSpacing: '0.05em' }}>
+                <span style={{ fontFamily: MONO, fontSize: 13, color: item.mColor }}>{item.trend}</span>
+                <span style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.05em' }}>
                   {typeof item.conf === 'number' ? item.conf.toFixed(2) : '—'}
                 </span>
               </div>
             ))}
           </div>
-
-          <div style={{ padding: '10px 24px', borderTop: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.15em', cursor: 'pointer' }}>
-              View all 8 signals →
-            </span>
-          </div>
         </div>
 
-        {/* Right: Recommended Action */}
+        {/* Bottom: Analytical Frame / Assemblance — full width */}
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
-          position: 'relative',
+          position: 'relative', minHeight: 0,
         }}>
           <>
               {actionScroll.up && (
@@ -673,42 +702,9 @@ export default function TargetPacket() {
         </div>
       </div>
 
-      {/* ── DECISION TRANSLATION LAYER — WO-1839 ──────────────────────────── */}
-      <div style={{ display: 'flex', flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} />
-        </div>
-
-        {/* Confidence Trajectory — moved from PANE 3 */}
-        <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
-            Confidence Trajectory
-          </div>
-          <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={42} />
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>10m ago</span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: LIME }}>{confScore.toFixed(2)}</span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>Now</span>
-          </div>
-        </div>
-
-        {/* Key Drivers — moved from PANE 3 */}
-        <div style={{ width: 200, flexShrink: 0, borderLeft: `1px solid ${BORDER}`, padding: '12px 16px', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.25em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
-            Key Drivers
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1, justifyContent: 'center' }}>
-            {KEY_DRIVERS.map(({ label, delta, pos }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: pos ? LIME : 'rgba(255,80,80,0.8)', fontSize: 8 }}>{pos ? '▶' : '▼'}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: MID, letterSpacing: '0.06em' }}>{label}</span>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: pos ? LIME : 'rgba(255,80,80,0.8)', letterSpacing: '0.08em' }}>{delta}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ── DECISION TRANSLATION LAYER — WO-1839 (collapsed inline) ─────── */}
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
+        <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
       </div>
 
       {/* ── WO-1835: CEO COMPETITIVE EDGE BRIEF ──────────────────────────── */}
