@@ -89,7 +89,7 @@ function FrameRow({ label, value, dimValue }) {
   );
 }
 
-export default function DecisionFrameCard({ lensProfiles, hpScore }) {
+export default function DecisionFrameCard({ lensProfiles, hpScore, collapsed = false }) {
   const frames = resolveFrames(lensProfiles, hpScore);
   if (!frames) return null;
 
@@ -143,7 +143,7 @@ export default function DecisionFrameCard({ lensProfiles, hpScore }) {
       </div>
 
       {/* Secondary decision spaces — collapsed, non-active */}
-      {secondaries.length > 0 && (
+      {!collapsed && secondaries.length > 0 && (
         <div style={{ padding: '8px 20px 12px', borderTop: `1px solid ${BORDER}` }}>
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
             Secondary Decision Spaces — non-active
