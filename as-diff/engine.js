@@ -21,6 +21,7 @@ const PORT = 4000;
 const PROXY_CACHE     = new Map();
 const FRED_TTL_MS     = 300_000;
 const EDGAR_TTL_MS    = 900_000;
+const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -387,6 +388,35 @@ function handleFredProxy(req, res) {
   proxy.end();
 }
 
+// ── Finnhub proxy — server-side fetch, cached ────────────────────────────────
+function handleFinnhubProxy(req, res) {
+  const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const key   = 'finnhub:' + qs;
+  const hit   = getCached(key, FINNHUB_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+  const options = {
+    hostname: 'finnhub.io',
+    path:     '/api/v1/quote' + qs,
+    method:   'GET',
+    headers:  { 'Accept': 'application/json' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = '';
+    upstream.on('data', chunk => { body += chunk; });
+    upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'Finnhub upstream: ' + err.message }));
+  proxy.end();
+}
+
 // ── EDGAR proxy — server-side fetch, cached ──────────────────────────────────
 function handleEdgarProxy(req, res) {
   const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
@@ -429,6 +459,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   handleNotFound(req, res);
