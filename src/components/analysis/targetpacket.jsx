@@ -12,7 +12,7 @@ import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }    from '../../engine/metricsengine.js';
 import MetricStrip           from './metricstrip.jsx';
-import { fetchHNTop }        from '../../hooks/usehnsignals.js';
+import AttentionStack        from '../surface/attentionstack.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -23,14 +23,6 @@ const BORDER = 'rgba(255,255,255,0.06)';
 const DIM    = 'rgba(255,255,255,0.25)';
 const MID    = 'rgba(255,255,255,0.5)';
 const BRT    = 'rgba(255,255,255,0.85)';
-
-// ── Mock data (replaced by live engine when wired) ────────────────────────────
-const ATTENTION = [
-  { rank: 1, signal: 'Convergence Pressure',   category: 'Infrastructure / Signal',  trend: '↑', momentum: 'Accelerating', mColor: LIME,   conf: 0.88 },
-  { rank: 2, signal: 'Liquidity Rotation',      category: 'Macro / Capital Flows',    trend: '↘', momentum: 'Stabilizing',  mColor: BLUE,   conf: 0.64 },
-  { rank: 3, signal: 'Supply Chain Friction',   category: 'Global / Logistics',       trend: '↗', momentum: 'Emerging',     mColor: PURPLE, conf: 0.58 },
-  { rank: 4, signal: 'Sentiment Latency',       category: 'Media / Narrative',        trend: '↗', momentum: 'Mild',         mColor: DIM,    conf: 0.46 },
-];
 
 const KEY_DRIVERS = [
   { label: 'Signal density rate',   delta: '+14%', pos: true  },
@@ -337,7 +329,6 @@ export default function TargetPacket() {
   const entity      = getDisplayEntity(session?.query ?? '').toUpperCase() || 'AWAITING SIGNAL';
   const confScore   = synthesis?.confidence ?? 0.78;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
-  const ATTENTION   = synthesis?.attentionStack ?? [];
   const KEY_DRIVERS = synthesis?.keyDrivers ?? [];
   const TRAJ_POINTS = synthesis?.trajPoints ?? [0.18,0.22,0.28,0.31,0.35,0.42,0.50,0.55,0.61,0.68,0.74,0.78];
 
@@ -369,27 +360,6 @@ export default function TargetPacket() {
     assignToBay(bayId, { title: session.query, domain: clampBay, source: 'user-clamp', ts: Date.now() });
     setClampBay('');
   }
-
-  const [hnSignals, setHnSignals] = useState([]);
-  useEffect(() => {
-    fetchHNTop(12).then(hits => setHnSignals(hits)).catch(() => {});
-    const id = setInterval(() => {
-      fetchHNTop(12).then(hits => setHnSignals(hits)).catch(() => {});
-    }, 300_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const attentionRows = hnSignals.length > 0
-    ? hnSignals.map((s, i) => ({
-        rank:     i + 1,
-        signal:   s.title?.slice(0, 48) ?? '—',
-        category: (s.category_id ?? 'SIGNAL').toUpperCase(),
-        trend:    (s.fidelity_components?.t_telemetry ?? 0) > 0.5 ? '↑' : '→',
-        momentum: (s.fidelity_components?.m_checksum ?? 0) > 0.7 ? 'STRONG' : (s.fidelity_components?.m_checksum ?? 0) > 0.4 ? 'BUILDING' : 'EMERGING',
-        mColor:   (s.fs ?? 0) > 0.65 ? LIME : (s.fs ?? 0) > 0.35 ? BLUE : DIM,
-        conf:     s.fs ?? 0,
-      }))
-    : (synthesis?.attentionStack ?? []);
 
   const [showAlts, setShowAlts] = useState(false);
   const actionPanelRef = useRef(null);
@@ -507,77 +477,9 @@ export default function TargetPacket() {
         minHeight: 0,
       }}>
 
-        {/* Top: Attention Stack — full width */}
-        <div style={{
-          flex: '0 0 38%', display: 'flex', flexDirection: 'column',
-          borderBottom: `1px solid ${BORDER}`, overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '8px 24px', borderBottom: `1px solid ${BORDER}`,
-            display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
-          }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>
-              Attention Stack
-            </span>
-            <span style={{
-              fontFamily: MONO, fontSize: 9, color: '#000', background: LIME,
-              padding: '1px 6px', letterSpacing: '0.1em',
-            }}>
-              {attentionRows.length}
-            </span>
-            {hnSignals.length > 0 && (
-              <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.4)', letterSpacing: '0.18em', marginLeft: 'auto' }}>
-                HN · LIVE
-              </span>
-            )}
-          </div>
-
-          {/* Table header */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '36px 1fr 120px 90px 70px 72px',
-            padding: '6px 24px', borderBottom: `1px solid ${BORDER}`,
-            flexShrink: 0,
-          }}>
-            {['#', 'SIGNAL', 'DOMAIN', 'MOMENTUM', 'TREND', 'CONF'].map(h => (
-              <span key={h} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase' }}>{h}</span>
-            ))}
-          </div>
-
-          {/* Table rows */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {attentionRows.length === 0 ? (
-              <div style={{ padding: '20px 24px', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>
-                LOADING SIGNAL FEED…
-              </div>
-            ) : attentionRows.map((item, i) => (
-              <div key={i} style={{
-                display: 'grid', gridTemplateColumns: '36px 1fr 120px 90px 70px 72px',
-                padding: '9px 24px', borderBottom: `1px solid rgba(255,255,255,0.04)`,
-                alignItems: 'center',
-                transition: 'background 150ms',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <span style={{ fontFamily: MONO, fontSize: 10, color: item.mColor, letterSpacing: '0.05em' }}>{item.rank}</span>
-                <div style={{ minWidth: 0, paddingRight: 12 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 9, color: BRT, letterSpacing: '0.05em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.signal}</div>
-                </div>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.06em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.category}</span>
-                <span style={{
-                  fontFamily: MONO, fontSize: 7, color: item.mColor,
-                  border: `1px solid ${item.mColor}33`, padding: '2px 6px',
-                  letterSpacing: '0.08em', width: 'fit-content',
-                }}>
-                  {item.momentum}
-                </span>
-                <span style={{ fontFamily: MONO, fontSize: 13, color: item.mColor }}>{item.trend}</span>
-                <span style={{ fontFamily: MONO, fontSize: 10, color: BRT, letterSpacing: '0.05em' }}>
-                  {typeof item.conf === 'number' ? item.conf.toFixed(2) : '—'}
-                </span>
-              </div>
-            ))}
-          </div>
+        {/* Top: Attention Stack — live Kalshi signals */}
+        <div style={{ flex: '0 0 38%', overflow: 'hidden', borderBottom: `1px solid ${BORDER}` }}>
+          <AttentionStack />
         </div>
 
         {/* Bottom: Analytical Frame / Assemblance — full width */}
