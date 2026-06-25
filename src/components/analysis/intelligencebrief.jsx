@@ -42,6 +42,36 @@ function buildBrief(session, synthesis, hp = null) {
   const dateStr = now.toISOString().slice(0, 10);
   const timeStr = now.toTimeString().slice(0, 8) + ' EST';
 
+  // INSUFFICIENT SIGNAL gate: when the engine flags the query as unresolved
+  // (AMBIGUOUS / resolutionEligible:false), refuse to fabricate. Do NOT fall back
+  // to the ambient Happy Path BLUF or the lens-adapter frames — those invent a
+  // confident brief for input the engine itself rated as having no anchor.
+  if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
+    return {
+      classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
+      subject:    entity.toUpperCase(),
+      lens:       lens ?? 'UNANCHORED',
+      date:       dateStr,
+      asOf:       timeStr,
+      originator: 'ORACLE KERNEL v3.7.2',
+      domain:     'INSUFFICIENT SIGNAL',
+      cac:        '—',
+      roas:       '—',
+      insufficient: true,
+      bluf:       'Insufficient signal to synthesize a brief. The query did not resolve to a domain with adequate structural data. Add a specific decision, dollar amount, or timeline to anchor analysis.',
+      purpose:    'No domain anchor resolved — brief withheld to avoid fabrication.',
+      fiveWs:     [],
+      evidence:   [],
+      assumptions:[],
+      assessment: 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
+      threats:    [],
+      opportunities: [],
+      coas:       [],
+      alternativeView: '',
+      outlook:    [],
+    };
+  }
+
   const adapter = LensRegistry.resolve(lens);
   const payload   = { entity, domain, lens };
 
