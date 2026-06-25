@@ -477,12 +477,7 @@ export default function TargetPacket() {
         minHeight: 0,
       }}>
 
-        {/* Top: Attention Stack — live Kalshi signals */}
-        <div style={{ flex: '0 0 38%', overflow: 'hidden', borderBottom: `1px solid ${BORDER}` }}>
-          <AttentionStack />
-        </div>
-
-        {/* Bottom: Analytical Frame / Assemblance — full width */}
+        {/* Analytical Frame — full height, AttentionStack above header */}
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           position: 'relative', minHeight: 0,
@@ -604,9 +599,14 @@ export default function TargetPacket() {
         </div>
       </div>
 
-      {/* ── DECISION TRANSLATION LAYER — WO-1839 (collapsed inline) ─────── */}
-      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}` }}>
-        <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
+      {/* ── DECISION TRANSLATION LAYER + ATTENTION STACK ────────────────── */}
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
+        </div>
+        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden' }}>
+          <AttentionStack />
+        </div>
       </div>
 
       {/* ── WO-1835: CEO COMPETITIVE EDGE BRIEF ──────────────────────────── */}
