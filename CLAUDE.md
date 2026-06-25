@@ -138,6 +138,7 @@ PRIORITY (Founder 2026-06-25): WO-1868 (six pillars) + WO-1869 (path memory) are
   WO-1870/1871/1872/1873 are low-hanging fruit — DEFERRED until the pillars + path memory are moving.
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
+  1875 — Canonical AMBIGUOUS State (proper noun / no-domain-match → options UI → user directs) — SPEC, BLOCKED (UI mount point TBD)
   1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
   1872 — Brand-as-Ticker / investment-context AUTO suppression — SPEC (regression risk; QA-gated)
   1871 — Quiet residual chrome under INSUFFICIENT (HP chip + empty P4 block) — BUILD-READY
