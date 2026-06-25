@@ -45,7 +45,7 @@ function VolBadge({ volatility }) {
   return <span style={{ color, fontSize: 8 }}>{volatility}</span>;
 }
 
-export default function AttentionStack({ maxRows = 8, onSignalClick }) {
+export default function AttentionStack({ maxRows = 8, onSignalClick, style }) {
   const { signals, loading, lastFetch } = useKalshiSignals('ALL');
   const [expanded, setExpanded] = useState(false);
 
@@ -119,6 +119,7 @@ export default function AttentionStack({ maxRows = 8, onSignalClick }) {
       WebkitBackdropFilter: 'blur(10px)',
       fontFamily: "'IBM Plex Mono', monospace",
       userSelect: 'none',
+      ...style,
     }}>
 
       {/* Header */}

@@ -604,8 +604,8 @@ export default function TargetPacket() {
         <div style={{ flex: 1, minWidth: 0 }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
-        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden' }}>
-          <AttentionStack />
+        <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <AttentionStack style={{ position: 'relative', bottom: 'auto', right: 'auto', width: '100%', height: '100%', background: 'transparent', border: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none' }} />
         </div>
       </div>
 
