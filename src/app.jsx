@@ -26,6 +26,7 @@ import { runEconomicFlowSync }     from './engine/connectors/economicflowconnect
 import { runSupplyChainSync }      from './engine/connectors/supplychainconnector.js';
 import { runPatentsViewSync }      from './engine/connectors/patentsviewconnector.js';
 import { runNetworkTopologySync }  from './engine/connectors/networktopologyconnector.js';
+import { runEiaSync }              from './engine/connectors/eiaconnector.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -695,16 +696,18 @@ export default function App() {
     runEconomicFlowSync().catch(() => {});
     runSupplyChainSync().catch(() => {});
     runPatentsViewSync().catch(() => {});
+    runEiaSync().catch(() => {});
 
     const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
     const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
+    const weeklyId  = setInterval(() => runEiaSync().catch(() => {}), 7 * 24 * 60 * 60 * 1000);
     const dailyId   = setInterval(() => {
       runEconomicFlowSync().catch(() => {});
       runSupplyChainSync().catch(() => {});
       runPatentsViewSync().catch(() => {});
     }, 24 * 60 * 60 * 1000);
 
-    return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(dailyId); };
+    return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(weeklyId); clearInterval(dailyId); };
   }, []);
 
   // Live signal pool — every other ingest hook is query-gated, so with no
