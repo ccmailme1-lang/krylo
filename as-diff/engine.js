@@ -368,9 +368,18 @@ async function handleTimingProxy(_req, res) {
 
 // ── FRED proxy — server-side fetch, cached ───────────────────────────────────
 function handleFredProxy(req, res) {
-  const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
-  const key   = 'fred:' + qs;
-  const hit   = getCached(key, FRED_TTL_MS);
+  const apiKey = process.env.VITE_FRED_API_KEY ?? process.env.FRED_API_KEY ?? '';
+  if (!apiKey) { send(res, 503, { error: 'FRED key not configured' }); return; }
+  // Strip client-provided api_key — inject server-side key only
+  const rawQs  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?') + 1) : '';
+  const params = new URLSearchParams(rawQs);
+  params.set('api_key', apiKey);
+  params.set('file_type', 'json');
+  params.set('sort_order', 'desc');
+  params.set('limit', '2');
+  const qs  = '?' + params.toString();
+  const key = 'fred:' + (params.get('series_id') ?? 'unknown');
+  const hit = getCached(key, FRED_TTL_MS);
   if (hit) {
     res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
     res.end(hit.body);
