@@ -125,8 +125,25 @@ FORMAT:   WO-[NUMBER]: [TITLE]
 SEQUENCE: Numbering must follow the Active Registry.
 RULE:     No code is written without a WO and explicit "Go."
 
-OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-24)
+OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-25)
 Start at 1864. Work backwards. This is the only open list.
+
+SESSION 2026-06-25 — COMPLETE (committed):
+  DEF-1864 Intent Lock Gate (1dfaa1e) · export-brief domain field (ee36ed3) · property-tax routing
+  + WO-1862 spec (ff1a63f) · arithmetic guard + \b + vehicle-guard (985b2ba) · export-brief
+  AMBIGUOUS withhold (4d30643) · WO-1867 numeric binding (43dfe8b) · docs lock §18/§19 (06e71c3).
+  NOT DEPLOYED — prod = ee36ed3; ff1a63f→06e71c3 are 5 commits ahead.
+
+NEW WOs FILED 2026-06-25 (specs in /specs):
+  1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
+  1872 — Brand-as-Ticker / investment-context AUTO suppression — SPEC (regression risk; QA-gated)
+  1871 — Quiet residual chrome under INSUFFICIENT (HP chip + empty P4 block) — BUILD-READY
+  1870 — STARTUP_FINANCE orphan (truthful queryDomain + \b) — BUILD-READY
+  1869 — Closed-Loop Leverage Engine (Leverage Realization + Path Memory) — GOVERNING SPEC, BLOCKED
+         (5 open decisions); implements §19; builds on convictionstore.js (1823/1824/1825)
+  1868 — Metrics Truth Engine (six hero metrics + groundedness) — SPEC LOCKED, NOT BUILT; H1/H2 gate
+  1867 — IENBG: numeric-binding sub-contract BUILT (43dfe8b); required-field tier remains spec
+  1862 — Safe Matcher (LaTeX/merged-word/camelCase paste normalization) — SPEC, deferred
 
 ARCHITECTURE STATE (2026-06-24): Decision → Routing → Export pipeline is closed.
 Ingestion timing (1768-A), role routing (1828-1829), and executive output (1832-1835) are complete.
