@@ -124,7 +124,7 @@ const PROPER_NOUN_EXCLUSIONS = /\b(google|microsoft|apple|amazon|netflix|spotify
 // Used by classifyAmbiguity() to detect SOFT multi-domain states.
 const DOMAIN_SCORE_PATTERNS = {
   STARTUP_FINANCE: [/startup/, /runway/, /burn rate/, /payroll/, /seed round/, /series [ab]/, /raise capital/, /venture/, /bootstrap/],
-  AUTO:            [/\bcar\b/, /vehicle/, /suv/, /truck/, /\bauto\b/, /\blease\b/, /\bford\b/, /toyota/, /honda/, /tesla/, /bmw/, /mercedes/, /audi/, /chevy/, /chevrolet/, /kia/, /hyundai/, /dodge/, /jeep/, /rivian/],
+  AUTO:            [/\bcar\b/, /\bvehicle\b/, /\bsuv\b/, /\btruck\b/, /\bauto\b/, /\blease\b/, /\bford\b/, /\btoyota\b/, /\bhonda\b/, /\btesla\b/, /\bbmw\b/, /\bmercedes\b/, /\baudi\b/, /\bchevy\b/, /\bchevrolet\b/, /\bkia\b/, /\bhyundai\b/, /\bdodge\b/, /\bjeep\b/, /\brivian\b/],
   REAL_ESTATE:     [/\bhouse\b/, /mortgage/, /property/, /condo/, /apartment/, /real estate/, /sq ft/, /bedroom/, /bath/, /listing/, /\brent\b/],
   RETIREMENT:      [/retire/, /401k/, /\bira\b/, /pension/, /social security/, /withdrawal/, /nest egg/],
   CAREER:          [/\bjob\b/, /career/, /salary/, /\boffer\b/, /negotiat/, /hire/, /compensation/, /\braise\b/, /\brole\b/, /\bplayer\b/, /streamer/, /creator/, /esports/],
@@ -148,7 +148,13 @@ function resolvePrimary(q, lens) {
   if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
   // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
   if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
-  if (/\bcar\b|vehicle|suv|\btruck\b|\bauto\b|\blease\b|buick|\bford\b|toyota|honda|tesla|bmw|mercedes|\baudi\b|chevy|chevrolet|kia|hyundai|dodge|jeep|rivian/.test(q)) return 'AUTO';
+  // "vehicle" is automotive only — exclude financial "investment/savings vehicle".
+  // Brand names carry \b to stop substring bleed (kia∈Nokia/Slovakia, suv∈ inside words).
+  const autoVehicleWord = /\bvehicle\b/.test(q) && !/(investment|savings|financial|funding|tax.advantaged|retirement)\s+vehicles?/.test(q);
+  if (
+    /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
+    || autoVehicleWord
+  ) return 'AUTO';
   // Property/homestead tax exemptions, freezes, deferrals, rebates are senior cost-relief
   // levers — NOT real-estate transactions. Must precede the REAL_ESTATE 'property' keyword.
   if (/homestead exemption/.test(q)) return 'EXPENSE_REDUCTION';
@@ -371,12 +377,15 @@ function synthAuto(session, numbers, query) {
 }
 
 function synthRealEstate(session, numbers, query) {
-  const price  = numbers[0] || 350000;
-  const down   = numbers[1] || Math.round(price * 0.10);
-  const loan   = price - down;
+  // Arithmetic sanity guard: enforce 0 ≤ down ≤ price so loan can never go negative
+  // and down/price can never exceed 100% (the $55-home / $500k-down catastrophe).
+  // Derived dollar figures are floored at 0 so no negative dollars can ever surface.
+  const price  = (Number.isFinite(numbers[0]) && numbers[0] > 0) ? numbers[0] : 350000;
+  const down   = Number.isFinite(numbers[1]) ? Math.max(0, Math.min(numbers[1], price)) : Math.round(price * 0.10);
+  const loan   = Math.max(price - down, 0);
   const rate   = 6.9;
   const m360   = Math.round(calcMonthly(loan, rate, 360));
-  const totalI = fmtN(m360 * 360 - loan);
+  const totalI = fmtN(Math.max(m360 * 360 - loan, 0));
   const pct28income = fmtN((m360 + 650) / 0.28);
 
   return {
@@ -410,7 +419,7 @@ function synthRealEstate(session, numbers, query) {
       { w:'WHY',   answer:`Rising inventory shifts power toward buyers. Rate is the largest variable in total cost of ownership.` },
     ],
     evidence: [
-      `At ${rate}%, 30-year total interest: $${totalI} — ${Math.round((m360 * 360) / loan * 10)/10}x the financed amount.`,
+      `At ${rate}%, 30-year total interest: $${totalI}${loan > 0 ? ` — ${Math.round((m360 * 360) / loan * 10)/10}x the financed amount` : ''}.`,
       `1 point rate buy-down costs ~1% of loan ($${fmtN(loan/100)}) and reduces payment by ~$${fmtN(calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.25, 360))}/mo.`,
       `Inventory rising YoY — days on market extending, price reductions more common.`,
       `Property tax + insurance adds $400–$900/mo (regime-dependent) to base P&I — see MCV for structural context.`,
