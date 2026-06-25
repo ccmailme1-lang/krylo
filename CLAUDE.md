@@ -360,3 +360,116 @@ RULES:
     - Score ≥ 8: file a WO immediately. The gap identified becomes the WO spec. Add to BACKLOG.
     - Role-plays may be run through qa_roleplay_*.mjs harnesses when the pipeline is relevant.
     - Format applies to any Subject: real people, archetypes, fictional characters, organizations.
+
+18. METRICS TRUTH ENGINE (LOCKED — FOUNDER DIRECTIVE 2026-06-25)
+
+Full spec: specs/WO-1868-metrics-truth-engine.md (DRAFT — hardening items H1–H7 open).
+
+THE SIX HERO METRICS (daily dashboard, bold/primary): Signal · Validity · Convergence · CAC · ROAS · LTV.
+    - Detection trio (Signal/Validity/Convergence): measured, on-mission, universal across domains.
+    - Economics trio (CAC/ROAS/LTV): GENERALIZED (universal, not strict-business), MODELED — must be labeled.
+
+CORE REFRAME (Truth Engine): every metric = REALIZED (observed truth) + PROJECTED (assumed forecast).
+    - Realized → bold/primary/dominant. Projected → smaller, labeled, sensitivity-controlled.
+    - GROUNDEDNESS % = Realized weight / Total weight × 100 = Validity extended to economics.
+      Color: green >70, amber 40–70, red <40. A number that says how much of itself is real.
+    - HIERARCHY OF TRUTH (input ranking, higher=truer): user actuals > live feeds > benchmarks >
+      heuristics > pure projection. Push every input up the stack to raise groundedness.
+
+PERSONA GUARDRAIL: persona (aggressive MD ↔ conservative retiree) tunes ASSUMPTIONS (discount
+    rate, horizon, hourly rate) and DECISION THRESHOLDS only. Persona NEVER changes the groundedness
+    computation — "78% grounded" means the same observed-fraction for every persona, or truth is corrupted.
+
+HP SCOPING RULE (load-bearing): Signal/Velocity/Convergence are HP-engine + convergence-classifier
+    outputs. HP is AMBIENT (whole signal field — qualifies on TECHNOLOGY·CAPITAL regardless of query).
+    The strip is PER-QUERY. VALIDITY gates whether HP convergence is query-relevant: HP domains ∩
+    query domain → grounded/relevant; no overlap → ambient, low groundedness, flag "field signal, not
+    your query." Never render ambient HP convergence as query-specific.
+
+WIRING CONTRACT (NON-NEGOTIABLE — prevents f(confidence) drift):
+    Metrics computed ONLY in src/engine/metricsengine.js via computeMetrics(synthesis, hpState, persona),
+    attached ONLY at synthesizeQuery return as synthesis.metrics, rendered via ONE shared
+    <MetricStrip> (src/components/analysis/metricstrip.jsx) on Target Packet + Action Plan + HP panel.
+    Components NEVER recompute a metric — React is a render-only sink; the engine decides.
+    AMBIGUOUS/INSUFFICIENT returns carry metrics with validity low / groundedness ~0 → strip auto-renders
+    "ungrounded" (fail-safe and metric system are the same thing).
+
+BANNED: the single-scalar "confidence" costume for CAC/ROAS (current f(confidence) in buildBrief).
+    Replaced by component-based truth. Delete on wiring.
+
+DECISION EMISSION SCORE: MULTIPLICATIVE only (Signal × Validity × Convergence × AvgGroundedness) —
+    a weak leg craters the score and cannot be masked. Weighted-average/additive variants FORBIDDEN.
+    Components always visible alongside any composite.
+
+SEVENTH METRIC — LEVERAGE REALIZATION (Founder directive 2026-06-25 → own subsystem WO-1869):
+    LR = Observed Outcome ÷ Projected Outcome. Groundedness asks "how real are the inputs"; LR asks
+    "did the path create leverage" — orthogonal, and LR is closest to the mission ("find advantage
+    before it's obvious"). It is the one PURE-truth metric (retrospective = 100% observed once outcome
+    lands). TWO faces: LR(decision) fills in later + feeds the memory layer; LR-prior(path-class) shown
+    AT emission as the historical track record of similar paths ("0.7× leverage, N=12") — memory, not
+    prediction. Builds ON convictionstore.js (WO-1823/1824/1825 lineage+calibration), not greenfield.
+    Blockers: outcome capture (long lag), attribution/sample-size (need N; carry confidence), survivorship
+    bias. Reserve the 7th hero slot here; spec the engine as WO-1869. Vital Seven: Signal · Validity ·
+    Convergence · CAC · ROAS · LTV · Leverage Realization.
+    NOTE: Leverage Realization is the INSTRUMENT of the principle in §19 — read §19 first.
+
+19. CLOSED-LOOP LEVERAGE PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-06-25)
+
+This is a PRINCIPLE, not a metric. Metrics, panels, classifiers, and UI will be renamed, redesigned,
+and rebuilt — this holds. This is doctrine.
+
+CANONICAL MISSION (DOCTRINE — every subsystem sits under this one sentence):
+    "Finding advantageous positions before they become obvious."
+    Happy Path, Convergence, Fractures, Assemblance, HP Qualification, domain routing, Decision
+    Velocity, signal ingestion — all are parts of THIS machine, not separate inventions.
+
+    KRYLO currently remembers EMISSIONS. It does not remember OUTCOMES. Closing that loop is the
+    mission-critical architecture.
+
+    A decision is not complete when it is emitted. A decision is complete when its outcome is
+    OBSERVED, ATTRIBUTED, and incorporated into PATH MEMORY.
+
+    The system's purpose is NOT to generate Happy Paths. The system's purpose is to discover which
+    path structures repeatedly produce leverage BEFORE they become obvious to participants. The
+    mission cannot be proven by measuring emissions — only by measuring what happened after. That
+    is the missing evidence layer.
+
+THE FULL LOOP:
+    Signal → Synthesis → Happy Path → Decision → Export → OUTCOME → OUTCOME ATTRIBUTION →
+    PATH MEMORY → ROUTE RANKING → LEVERAGE DISCOVERY
+
+KNOWLEDGE CLASSES (distinct — never collapse):
+    Groundedness        = how much of the decision was based on reality
+    Convergence         = how strongly the signals agreed
+    Validity            = how internally sound the decision was
+    Path Memory         = which routes (path → outcome) we have recorded, and how they ranked
+    Outcome Attribution = what actually happened afterward
+    (Leverage Realization = Observed ÷ Projected — the instrument measuring Outcome/Attribution. WO-1869.)
+
+GRAPH MODEL (the shape this becomes — "Google Maps for leverage"):
+    It is a weighted shortest-path problem on a dynamic graph. Not "which road is best" but "given
+    current signals, what path historically produced leverage fastest with the least friction."
+    Signals → Graph Nodes → Convergence Routes → Happy Path Candidates → Outcome Attribution →
+    Path Memory → Route Ranking. Path Memory stores routes (not patterns); ranking surfaces them.
+    Matching a new path to history = route similarity on the graph, NOT pattern recognition / ML.
+
+    INVERSION (guardian tightening, locked): Maps routes you onto KNOWN-good (consensus) roads.
+    KRYLO must route to the NON-obvious advantage — "before it becomes obvious." So Route Ranking
+    weights for EARLINESS / non-consensus, not just historical realized leverage. Rank purely by past
+    leverage and you surface roads already crowded = edge gone. Ranking = f(leverage realization,
+    current non-obviousness). Ties to NON_INSTITUTIONAL_ALPHA / "know first."
+
+TIGHTENINGS (locked with the principle):
+    1. Completeness is a SPECTRUM. Most decisions never get a reported outcome. Path Memory is built
+       from the captured-outcome SUBSET — both the learning engine and its bias (survivorship).
+       Never imply the whole system is "incomplete"; learn from what closes.
+    2. ATTRIBUTION is the highest-risk layer. Claiming a route "produced leverage" off coincidence is
+       the Path-Memory equivalent of fabrication. The session's law extends here: WITHHOLD BEATS
+       FABRICATE — no route-leverage claim without N + attribution rigor. Coincidence is not causation.
+
+FUTURE ARCHITECTURE (emerges from the principle, NOT the immediate build):
+    Emission Layer → Outcome Layer → Path Memory Layer → Leverage Discovery Layer.
+    Not "more intelligence" — memory of which routes actually generated leverage. Evidence
+    accumulation, not prediction/recommendation/autonomous adaptation. Builds on convictionstore.js
+    (WO-1823/1824/1825). Sequence stays grounded: classifier/extraction hardening → six metrics
+    (1868) → outcome capture + Path Memory (1869). The graph is the north star, not next week's PR.
