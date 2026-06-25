@@ -474,9 +474,6 @@ export default function TargetPacket() {
         </div>
       </div>
 
-      {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} style={{ background: '#000' }} />
-
       {/* ── PANE 2: Vertical Stack ─────────────────────────────────────────── */}
       <div style={{
         display: 'flex', flexDirection: 'column', flex: 1,
