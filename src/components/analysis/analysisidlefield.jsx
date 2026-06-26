@@ -139,7 +139,7 @@ function deriveProxy(frames, prevCount) {
   };
 }
 
-function FieldCanvas({ fieldParamsRef, projectedStateRef }) {
+const FieldCanvas = React.memo(function FieldCanvas({ fieldParamsRef, projectedStateRef }) {
   const canvasRef = useRef(null);
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -183,7 +183,7 @@ function FieldCanvas({ fieldParamsRef, projectedStateRef }) {
     return () => { cancelAnimationFrame(frame); ro.disconnect(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
   return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />;
-}
+});
 
 function PacketRow({ packet }) {
   return (
@@ -947,7 +947,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
         <aside style={{
           width: 242, flexShrink: 0,
           borderRight: `1px solid ${BORDER}`,
-          background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
+          background: 'rgba(5,7,10,0.96)',
           display: 'flex', flexDirection: 'column',
           zIndex: 20, overflow: 'hidden',
         }}>
@@ -1214,7 +1214,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
             position: 'absolute', top: 0, left: 0, right: 0, height: 64,
             borderBottom: `1px solid ${BORDER_MED}`, padding: '0 32px',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            zIndex: 10, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+            zIndex: 10, background: 'rgba(5,7,10,0.95)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_MAIN_HDR, textTransform: 'uppercase', letterSpacing: '0.25em' }}>
               <span style={{ color: 'rgba(255,255,255,0.9)' }}>Analysis</span>
