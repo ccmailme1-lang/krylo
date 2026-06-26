@@ -304,6 +304,7 @@ export default function IntelligenceBrief() {
   const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
 
   const brief = buildBrief(session, synthesis, hp);
+  const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
   const convictions               = useConvictionStore();
 
   useEffect(() => {
@@ -943,15 +944,18 @@ export default function IntelligenceBrief() {
               ))}
             </tbody>
           </table>
-          <Divider />
-          {/* Evidence */}
-          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Evidence / Facts</div>
-          {brief.evidence.map((e, i) => (
-            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
-              <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, flexShrink: 0, marginTop: 1 }}>▸</span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.6, letterSpacing: '0.03em' }}>{typeof e === 'object' && e !== null ? `[${e.source}] ${e.finding}` : e}</span>
-            </div>
-          ))}
+          {outputFilters.precursors && (
+            <>
+              <Divider />
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Evidence / Facts</div>
+              {brief.evidence.map((e, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, flexShrink: 0, marginTop: 1 }}>▸</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.6, letterSpacing: '0.03em' }}>{typeof e === 'object' && e !== null ? `[${e.source}] ${e.finding}` : e}</span>
+                </div>
+              ))}
+            </>
+          )}
           <Divider />
           {/* Assumptions */}
           <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Assumptions</div>
@@ -967,29 +971,36 @@ export default function IntelligenceBrief() {
         <Panel seq="03" label="Discussion & Analysis">
           <div style={{ fontFamily: SERIF, fontSize: 12, color: MID, lineHeight: 1.85, marginBottom: 14 }}>{brief.assessment}</div>
           <Divider />
-          {/* Threats */}
-          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Threats</div>
-          {brief.threats.map(({ label, level, color }, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.04em' }}>{label}</span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{level}</span>
+          {outputFilters.risks && (
+            <>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Threats</div>
+              {brief.threats.map(({ label, level, color }, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.04em' }}>{label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{level}</span>
+                </div>
+              ))}
+              <Divider />
+            </>
+          )}
+          {outputFilters.opportunities && (
+            <>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Opportunities</div>
+              {brief.opportunities.map(({ label }, i) => (
+                <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+                  <span style={{ color: LIME, fontSize: 9, flexShrink: 0 }}>+</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.5 }}>{label}</span>
+                </div>
+              ))}
+              <Divider />
+            </>
+          )}
+          {outputFilters.contradictions && (
+            <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 6 }}>Alternative Viewpoint</div>
+              <div style={{ fontFamily: SERIF, fontSize: 11, color: DIM, lineHeight: 1.6, fontStyle: 'italic' }}>{brief.alternativeView}</div>
             </div>
-          ))}
-          <Divider />
-          {/* Opportunities */}
-          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Opportunities</div>
-          {brief.opportunities.map(({ label }, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
-              <span style={{ color: LIME, fontSize: 9, flexShrink: 0 }}>+</span>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.5 }}>{label}</span>
-            </div>
-          ))}
-          <Divider />
-          {/* Alt view */}
-          <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 6 }}>Alternative Viewpoint</div>
-            <div style={{ fontFamily: SERIF, fontSize: 11, color: DIM, lineHeight: 1.6, fontStyle: 'italic' }}>{brief.alternativeView}</div>
-          </div>
+          )}
         </Panel>
 
         {/* 04 · CONCLUSION & OUTLOOK */}
