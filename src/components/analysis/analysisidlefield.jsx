@@ -718,6 +718,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
     tensor.horizonMix         = frictionResult.horizonMix;
     tensor.structuralFriction = frictionResult.structuralFriction;
+    // Phase B: attach synthesis before arbitration so generateCandidates has real content
+    tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain });
     tensor.arbitration        = arbitrate(tensor);
 
     // CommitEvent — emitted at the payload boundary, not at render

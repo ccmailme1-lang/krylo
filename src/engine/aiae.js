@@ -86,44 +86,82 @@ function paretoFrontier(candidates) {
   return candidates.filter(a => !candidates.some(b => b !== a && dominates(b, a)));
 }
 
-// ── Candidate Generation Layer ─────────────────────────────────────────────────
-// High-recall, intentionally redundant. No ranking here.
-// Phase B: replaces mock pool with live signal engine.
+// ── Candidate Generation Layer — Phase B ──────────────────────────────────────
+// Derives candidates from tensor.synthesis (real query output).
+// Domain pool supplements synthesis-derived candidates.
+// Static base pool is eliminated — fallback only when synthesis is empty.
 export function generateCandidates(tensor) {
-  const domain = tensor.domain ?? 'GENERAL';
+  const domain    = tensor.domain    ?? 'GENERAL';
+  const synthesis = tensor.synthesis ?? null;
+  const conf      = Math.min(synthesis?.confidence ?? tensor.confidence ?? 0.5, 1);
+  const fs        = Math.min(tensor.fs ?? 0.5, 1);
+  const ttvMult   = TTV_MULTIPLIER[tensor.horizon ?? 'MED'] ?? 0.30;
 
-  const base = [
-    {
-      id: 'time-decay',
-      type: 'insight',
-      content: 'Earlier action preserves optionality — compounding cost differential widens with delay.',
-      features: { impact: 0.70, confidence: 0.75, novelty: 0.55, actionability: 0.60, timeToValue: 0.90, evidenceStrength: 0.65 },
-    },
-    {
-      id: 'floor-anchor',
-      type: 'action',
-      content: 'Capital floor constrains feasible action set. Sequence lower-cost actions first to preserve liquidity.',
-      features: { impact: 0.60, confidence: 0.80, novelty: 0.30, actionability: 0.85, timeToValue: 0.75, evidenceStrength: 0.70 },
-    },
-    {
-      id: 'leverage-unlock',
-      type: 'opportunity',
-      content: 'Current leverage position is sub-optimal relative to industry norm. Structural repositioning available.',
-      features: { impact: 0.75, confidence: 0.65, novelty: 0.70, actionability: 0.55, timeToValue: 0.45, evidenceStrength: 0.60 },
-    },
-    {
-      id: 'signal-noise',
-      type: 'risk',
-      content: 'Low evidence strength detected. Delay commitment until signal strengthens.',
-      features: { impact: 0.55, confidence: 0.55, novelty: 0.25, actionability: 0.40, timeToValue: 0.50, evidenceStrength: 0.35 },
-    },
-    {
-      id: 'generic-watch',
-      type: 'insight',
-      content: 'No dominant signal. Monitor without commitment.',
-      features: { impact: 0.15, confidence: 0.50, novelty: 0.05, actionability: 0.20, timeToValue: 0.30, evidenceStrength: 0.40 },
-    },
-  ];
+  const pool = [];
+
+  // Primary insight
+  if (synthesis?.primaryInsight) {
+    pool.push({
+      id: 'syn-primary', type: 'insight', content: synthesis.primaryInsight,
+      features: { impact: 0.75, confidence: conf, novelty: 0.60, actionability: 0.55, timeToValue: ttvMult, evidenceStrength: fs },
+    });
+  }
+
+  // Opportunities (up to 3)
+  (synthesis?.opportunities ?? []).slice(0, 3).forEach((opp, i) => {
+    const content = typeof opp === 'string' ? opp : (opp.label ?? '');
+    if (!content) return;
+    pool.push({
+      id: `syn-opp-${i}`, type: 'opportunity', content,
+      features: { impact: 0.70, confidence: conf, novelty: 0.65, actionability: 0.60, timeToValue: ttvMult, evidenceStrength: fs },
+    });
+  });
+
+  // Threats (up to 2)
+  (synthesis?.threats ?? []).slice(0, 2).forEach((threat, i) => {
+    const content = typeof threat === 'string' ? threat : (threat.label ?? '');
+    if (!content) return;
+    pool.push({
+      id: `syn-threat-${i}`, type: 'risk', content,
+      features: { impact: 0.65, confidence: conf, novelty: 0.40, actionability: 0.45, timeToValue: ttvMult, evidenceStrength: Math.min(fs * 0.85, 1) },
+    });
+  });
+
+  // Primary action
+  const pa = synthesis?.actions?.primary;
+  if (pa?.rationale || pa?.label) {
+    pool.push({
+      id: 'syn-action-primary', type: 'action', content: pa.rationale ?? pa.label,
+      features: { impact: Math.min(pa.impact ?? 0.80, 1), confidence: conf, novelty: 0.40, actionability: 0.90, timeToValue: 0.90, evidenceStrength: fs },
+    });
+  }
+
+  // Secondary action
+  const sa = synthesis?.actions?.secondary;
+  if (sa?.rationale || sa?.label) {
+    pool.push({
+      id: 'syn-action-secondary', type: 'action', content: sa.rationale ?? sa.label,
+      features: { impact: Math.min(sa.impact ?? 0.65, 1), confidence: conf, novelty: 0.35, actionability: 0.85, timeToValue: 0.80, evidenceStrength: fs },
+    });
+  }
+
+  // Context actions (up to 2)
+  (synthesis?.actions?.context ?? []).slice(0, 2).forEach((act, i) => {
+    const content = act.rationale ?? act.label;
+    if (!content) return;
+    pool.push({
+      id: `syn-action-ctx-${i}`, type: 'action', content,
+      features: { impact: Math.min(act.impact ?? 0.55, 1), confidence: conf, novelty: 0.30, actionability: 0.80, timeToValue: ttvMult, evidenceStrength: fs },
+    });
+  });
+
+  // Alternative view
+  if (synthesis?.alternativeView) {
+    pool.push({
+      id: 'syn-alt', type: 'insight', content: synthesis.alternativeView,
+      features: { impact: 0.55, confidence: Math.min(conf * 0.85, 1), novelty: 0.80, actionability: 0.35, timeToValue: ttvMult, evidenceStrength: Math.min(fs * 0.75, 1) },
+    });
+  }
 
   const domainPool = {
     REAL_ESTATE: [
@@ -264,7 +302,17 @@ export function generateCandidates(tensor) {
     ],
   };
 
-  return [...base, ...(domainPool[domain] ?? [])];
+  // Domain pool supplements synthesis-derived candidates
+  const supplements = domainPool[domain] ?? [];
+
+  // True fallback — only when synthesis produced nothing
+  const fallback = pool.length === 0 ? [{
+    id: 'fallback-insufficient', type: 'risk',
+    content: 'Insufficient signal to generate synthesis-grounded paths. Add a specific decision, amount, or timeline.',
+    features: { impact: 0.20, confidence: 0.30, novelty: 0.05, actionability: 0.25, timeToValue: 0.50, evidenceStrength: 0.10 },
+  }] : [];
+
+  return [...pool, ...supplements, ...fallback];
 }
 
 // ── Main arbitration function ──────────────────────────────────────────────────
