@@ -1,10 +1,10 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-24
+LAST BUILD SESSION: 2026-06-26
 BASELINE: baseline_reanalyze_hp_icon_fix
-SHA: d44d899
-DEPLOYED: krylo.org ✓
+SHA: 097b63f
+DEPLOYED: krylo.org ✗ (not deployed — 097b63f is ahead of prod)
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -134,8 +134,24 @@ SESSION 2026-06-25 — COMPLETE (committed):
   AMBIGUOUS withhold (4d30643) · WO-1867 numeric binding (43dfe8b) · docs lock §18/§19 (06e71c3).
   NOT DEPLOYED — prod = ee36ed3; ff1a63f→06e71c3 are 5 commits ahead.
 
-PRIORITY (Founder 2026-06-25): WO-1868 (six pillars) + WO-1869 (path memory) are the work.
-  WO-1870/1871/1872/1873 are low-hanging fruit — DEFERRED until the pillars + path memory are moving.
+SESSION 2026-06-26 — COMPLETE (097b63f):
+  §20 Direction Honesty Principle locked · WO-1879 Domain Gravity Wells (domaingravity.js)
+  WO-1870 STARTUP_FINANCE orphan fix · WO-1871 INSUFFICIENT chrome quiet
+  WO-1873 AUTO numeric binding · WO-1880 Fracture Output Surface (targetpacket.jsx)
+  WO-1868 MetricStrip mounted · WO-1877 code-complete (infra blocker: EIA_API_KEY on VPS)
+  State-of-system artifact + WO-2004 CanonicalEvent spec saved. NOT DEPLOYED.
+
+OPEN WO LIST (single list — updated 2026-06-26):
+  VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
+  DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
+  PRIORITY: WO-1868 metricsengine.js COMPLETE; metricstrip.jsx COMPLETE; wired on 3 surfaces ✓
+            WO-1869 Closed-Loop Leverage Engine — BLOCKED (5 open decisions)
+  BUILD-READY: WO-1877 (VPS infra: EIA_API_KEY + /api/eia proxy — code done)
+               WO-1872 Brand-as-Ticker AUTO suppression (regression risk, QA-gated)
+  SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (blocked WO-1868 — now unblocked)
+                WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
+                WO-1862 Safe Matcher (deferred)
+                WO-2004 CanonicalEvent Identity Kernel (deferred — after 1868/1869)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector (crude/gasoline/distillate Δ → CAPITAL domain) — BUILD-READY, needs /api/eia proxy + EIA_API_KEY on VPS
