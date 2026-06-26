@@ -13,6 +13,7 @@ import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js'
 import { computeMetrics }      from '../../engine/metricsengine.js';
 import MetricStrip             from './metricstrip.jsx';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
+import { getLRPrior }          from '../../engine/pathstore.js';
 import { fetchHNTop }        from '../../hooks/usehnsignals.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -347,7 +348,8 @@ export default function TargetPacket() {
   const { profiles: lensProfiles, rfe: lensRfe } = useMemo(() => routeLens(session), [session]);
   const hpScore         = Math.round(confScore * 100);
   const { engineState } = useHappyPathEngine();
-  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null), [synthesis, engineState]);
+  const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
+  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 

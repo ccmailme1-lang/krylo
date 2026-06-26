@@ -9,6 +9,7 @@ import { getDisplayEntity }        from '../../utils/formatters.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
 import MetricStrip                from './metricstrip.jsx';
+import { getLRPrior }             from '../../engine/pathstore.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Playfair Display', serif";
@@ -163,7 +164,9 @@ export default function ActionMatrix() {
 
   const synthesis    = useMemo(() => synthesizeQuery(session), [session]);
   const { engineState } = useHappyPathEngine();
-  const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null), [synthesis, engineState]);
+  const stateLabel   = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
+  const lrPrior      = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
+  const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
   const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 
