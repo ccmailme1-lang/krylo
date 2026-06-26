@@ -52,9 +52,10 @@ export default function LeverageField({ leverage }) {
   return (
     <div style={{ fontFamily: MONO, margin: '20px 0' }}>
 
-      <div style={{ overflowX: 'auto' }}>
+      <div>
       <svg
-        width={W} height={H}
+        viewBox={`0 0 ${W} ${H}`}
+        width="100%" height="auto"
         style={{ display: 'block', overflow: 'visible' }}
       >
 

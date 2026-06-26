@@ -138,6 +138,8 @@ PRIORITY (Founder 2026-06-25): WO-1868 (six pillars) + WO-1869 (path memory) are
   WO-1870/1871/1872/1873 are low-hanging fruit — DEFERRED until the pillars + path memory are moving.
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
+  1877 — EIA Inventory Delta Connector (crude/gasoline/distillate Δ → CAPITAL domain) — BUILD-READY, needs /api/eia proxy + EIA_API_KEY on VPS
+  1876 — Search DNA Intelligence Surface (Layer 3 repurposing — 4 cards around composer) — SPEC, BLOCKED pending WO-1868
   1875 — Canonical AMBIGUOUS State (proper noun / no-domain-match → options UI → user directs) — SPEC, BLOCKED (UI mount point TBD)
   1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
   1872 — Brand-as-Ticker / investment-context AUTO suppression — SPEC (regression risk; QA-gated)
