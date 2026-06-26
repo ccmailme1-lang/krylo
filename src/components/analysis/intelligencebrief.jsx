@@ -206,8 +206,11 @@ export default function IntelligenceBrief() {
     tracker.emit({ convergenceScore, confidence, decision });
   }, [exportUnlocked, activeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Single memoized synthesis — query guard prevents call on empty session
-  const synthesis = useMemo(() => session?.query ? synthesizeQuery(session) : null, [session]);
+  // WO-1878: use execute-time synthesis (full domain context) if present; re-derive only for legacy/imported sessions.
+  const synthesis = useMemo(() => {
+    if (!session?.query) return null;
+    return session.tensor?.synthesis ?? synthesizeQuery(session);
+  }, [session]);
 
   // WO-1752: runtime state
   const replayState = session?.tensor?.replayState ?? RUNTIME_STATE.LIVE;

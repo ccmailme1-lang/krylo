@@ -56,6 +56,40 @@ const HORIZON_LABELS = {
   STRUCTURAL: 'YEARS',
 };
 
+// WO-1878 — Mission Builder constants
+const SERIF = "Georgia, 'Times New Roman', serif";
+
+const DOMAIN_CHIPS = [
+  { key: 'FINANCIAL',  label: 'FINANCIAL',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></svg> },
+  { key: 'MARKET',     label: 'MARKET',     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg> },
+  { key: 'LEGAL',      label: 'LEGAL',      icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/></svg> },
+  { key: 'HEALTH',     label: 'HEALTH',     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
+  { key: 'CAREER',     label: 'CAREER',     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> },
+  { key: 'TECHNOLOGY', label: 'TECHNOLOGY', icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> },
+];
+
+const DOMAIN_PRECURSORS = {
+  FINANCIAL:  ['RATE ENVIRONMENT', 'CREDIT SPREADS', 'M2 VELOCITY'],
+  MARKET:     ['EQUITY FLOW',      'VOLATILITY IDX', 'SECTOR ROTATION'],
+  LEGAL:      ['REGULATORY SHIFT', 'CASE VELOCITY',  'COMPLIANCE FLUX'],
+  HEALTH:     ['COVERAGE GAP',     'COST TRAJECTORY','ACCESS SIGNAL'],
+  CAREER:     ['LABOR PRESSURE',   'HIRE VELOCITY',  'WAGE FLUX'],
+  TECHNOLOGY: ['ADOPTION RATE',    'PATENT FLUX',    'DEPLOY SIGNAL'],
+};
+
+const SIGNAL_SCOPE_OPTIONS = [
+  { key: 'live',       label: 'LIVE'            },
+  { key: 'historical', label: 'HISTORICAL'       },
+  { key: 'forecast',   label: 'FORECAST WINDOW'  },
+];
+
+const OUTPUT_FILTERS_DEF = [
+  { key: 'precursors',     label: 'PRECURSORS'     },
+  { key: 'risks',          label: 'RISKS'          },
+  { key: 'opportunities',  label: 'OPPORTUNITIES'  },
+  { key: 'contradictions', label: 'CONTRADICTIONS' },
+];
+
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -472,6 +506,10 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [processing,      setProcessing]      = useState(false);
   const [optCapResetKey,  setOptCapResetKey]  = useState(0);
   const [intentMagnitude, setIntentMagnitude] = useState(50);
+  // WO-1878 — Mission Builder state
+  const [selectedDomains, setSelectedDomains] = useState([]);
+  const [outputFilters,   setOutputFilters]   = useState({ precursors: true, risks: true, opportunities: true, contradictions: true });
+  const [signalScope,     setSignalScope]      = useState('live');
   const signalShownRef   = useRef(false);
   const processingTimer  = useRef(null);
 
@@ -638,6 +676,12 @@ export default function AnalysisIdleField({ activeCones = null }) {
     }
   }
 
+  function toggleDomain(key) {
+    setSelectedDomains(prev =>
+      prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key]
+    );
+  }
+
   function removeSituationToken() {
     setActiveSituation(null); setSelectedFloor(null); setHorizon(null);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
@@ -719,7 +763,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
     tensor.horizonMix         = frictionResult.horizonMix;
     tensor.structuralFriction = frictionResult.structuralFriction;
     // Phase B: attach synthesis before arbitration so generateCandidates has real content
-    tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain });
+    tensor.domainLock    = selectedDomains[0] ?? null;
+    tensor.outputFilters = outputFilters;
+    tensor.signalScope   = signalScope;
+    tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain, tensor: { domainLock: tensor.domainLock } });
+    tensor.fidelityScore      = tensor.synthesis?.confidence ?? 0;
     tensor.arbitration        = arbitrate(tensor);
 
     // CommitEvent — emitted at the payload boundary, not at render
@@ -1227,145 +1275,178 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* SIGNAL QUERY — idle only */}
           {!hasSession && (
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 10, pointerEvents: 'none', gap: 16, padding: '0 24px' }}>
-              <div style={{
-                width: 600, background: 'rgba(10,10,10,0.96)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                borderRadius: 20, overflow: 'hidden',
-                display: 'flex', flexDirection: 'column',
-                pointerEvents: 'auto',
-                boxShadow: '0 8px 40px rgba(0,0,0,0.6)',
-              }}>
-                <textarea
-                  ref={centerTextareaRef}
-                  defaultValue=""
-                  onChange={e => {
-                    const v = e.target.value;
-                    clearTimeout(queryDebounceRef.current);
-                    queryDebounceRef.current = setTimeout(() => {
-                      setSeedQuery(v);
-                      if (missingField === 'TARGET') setMissingField(null);
-                    }, 150);
-                  }}
-                  onFocus={() => setFocused(true)}
-                  onBlur={e => { setSeedQuery(e.target.value); handleQueryBlur(); }}
-                  onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleExecute(); }}
-                  placeholder="build your signal query..."
-                  rows={5}
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    background: 'transparent', border: 'none', resize: 'none',
-                    fontFamily: MONO, fontSize: 14, lineHeight: 1.9,
-                    color: 'rgba(255,255,255,0.88)',
-                    padding: '24px 24px 12px',
-                    caretColor: LIME, outline: 'none',
-                  }}
-                />
-                {/* Bottom bar */}
-                <div style={{ padding: '12px 16px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-                  {/* Left controls */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {/* + button with dropdown */}
-                    <div style={{ position: 'relative' }}>
-                      <button
-                        onClick={() => setPlusOpen(p => !p)}
-                        style={{
-                          width: 32, height: 32, borderRadius: '50%',
-                          background: 'transparent', border: '1px solid rgba(255,255,255,0.15)',
-                          color: 'rgba(255,255,255,0.5)', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 18, lineHeight: 1, padding: 0,
-                        }}
-                      >+</button>
-                      {plusOpen && (
-                        <div style={{
-                          position: 'absolute', bottom: 42, left: 0,
-                          background: '#111', border: '1px solid rgba(255,255,255,0.10)',
-                          borderRadius: 12, overflow: 'hidden',
-                          minWidth: 220, zIndex: 50,
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.7)',
-                        }}>
-                          {[
-                            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>, label: 'Upload document' },
-                            { icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6m-3-3v6"/></svg>, label: 'Import from file' },
-                          ].map(({ icon, label }) => (
-                            <button key={label} onClick={() => setPlusOpen(false)} style={{
-                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                              padding: '14px 16px', background: 'transparent', border: 'none',
-                              color: 'rgba(255,255,255,0.75)', cursor: 'pointer', textAlign: 'left',
-                              fontFamily: MONO, fontSize: 11, letterSpacing: '0.05em',
-                              borderBottom: '1px solid rgba(255,255,255,0.05)',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            >
-                              <span style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{icon}</span>
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {/* Exclude simulator */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', userSelect: 'none' }}>
-                    <input
-                      type="checkbox"
-                      checked={excludeSimulator}
-                      onChange={e => setExcludeSimulator(e.target.checked)}
-                      style={{ accentColor: LIME, width: 12, height: 12, cursor: 'pointer' }}
-                    />
-                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>
-                      Exclude simulator
-                    </span>
-                  </label>
-                  {/* Right controls */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Mic */}
-                    <button style={{
-                      width: 32, height: 32, background: 'transparent', border: 'none',
-                      color: 'rgba(255,255,255,0.28)', cursor: 'pointer', padding: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                        <rect x="9" y="2" width="6" height="11" rx="3"/>
-                        <path d="M5 10a7 7 0 0 0 14 0"/>
-                        <line x1="12" y1="19" x2="12" y2="22"/>
-                        <line x1="8" y1="22" x2="16" y2="22"/>
-                      </svg>
-                    </button>
-                    {/* Submit — always lime */}
-                    <button
-                      onClick={handleExecute}
-                      style={{
-                        width: 36, height: 36, borderRadius: '50%',
-                        background: LIME, border: 'none', cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="19" x2="12" y2="5"/>
-                        <polyline points="5 12 12 5 19 12"/>
-                      </svg>
-                    </button>
-                  </div>
+            <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10, pointerEvents: 'none', padding: '72px 24px 80px' }}>
+
+              {/* Headline */}
+              <div style={{ textAlign: 'center', marginBottom: 28, pointerEvents: 'none' }}>
+                <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.82)' }}>WHAT ARE YOU</div>
+                <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: LIME }}>FOCUSED ON?</div>
+                <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginTop: 10 }}>
+                  Search across topics, domains or ask anything
                 </div>
               </div>
 
-              {/* Situation chips below search box */}
-              <div style={{ width: 600, pointerEvents: 'auto' }}>
-                <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
-                  I'M FOCUSED ON
+              <div style={{ width: 600, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+                {/* ── CHOOSE A DOMAIN ── */}
+                <div style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    {DOMAIN_CHIPS.map(({ key, label, icon }) => {
+                      const active   = selectedDomains.includes(key);
+                      const dominant = selectedDomains[0] === key && selectedDomains.length > 1;
+                      return (
+                        <button
+                          key={key}
+                          onClick={() => toggleDomain(key)}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 6,
+                            padding: '7px 14px', borderRadius: 999, cursor: 'pointer',
+                            background: active ? 'rgba(102,255,0,0.06)' : 'rgba(255,255,255,0.03)',
+                            border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.14)'}`,
+                            color: active ? LIME : 'rgba(255,255,255,0.45)',
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
+                            boxShadow: active ? '0 0 10px rgba(102,255,0,0.22)' : 'none',
+                            transition: 'all 140ms',
+                          }}
+                          onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; e.currentTarget.style.color = '#fff'; } }}
+                          onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; } }}
+                        >
+                          <span style={{ opacity: active ? 1 : 0.45, display: 'flex' }}>{icon}</span>
+                          {dominant && <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME, flexShrink: 0 }} />}
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <StaggeredChips
-                  chips={rankedSituations}
-                  selected={activeSituation?.lens}
-                  onSelect={selectSituation}
-                  getKey={s => s.lens}
-                  getLabel={s => s.label}
-                  isSelected={(s, sel) => s.lens === sel}
-                />
+
+                {/* ── TRENDING PRECURSORS ── */}
+                {selectedDomains[0] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, minHeight: 22 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', flexShrink: 0 }}>TRENDING</span>
+                    {(DOMAIN_PRECURSORS[selectedDomains[0]] ?? []).map(p => (
+                      <span key={p} style={{
+                        fontFamily: MONO, fontSize: 8, color: 'rgba(102,255,0,0.5)',
+                        letterSpacing: '0.1em', padding: '2px 9px',
+                        border: '1px solid rgba(102,255,0,0.14)', borderRadius: 999,
+                      }}>{p}</span>
+                    ))}
+                  </div>
+                )}
+
+                {/* ── OBJECTIVE (textarea + toolbar) ── */}
+                <div style={{
+                  background: 'rgba(10,10,10,0.96)',
+                  border: `1px solid ${focused ? 'rgba(102,255,0,0.28)' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: 20, overflow: 'hidden',
+                  boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
+                  transition: 'border-color 200ms',
+                }}>
+                  <textarea
+                    ref={centerTextareaRef}
+                    defaultValue=""
+                    onChange={e => {
+                      const v = e.target.value;
+                      clearTimeout(queryDebounceRef.current);
+                      queryDebounceRef.current = setTimeout(() => {
+                        setSeedQuery(v);
+                        if (missingField === 'TARGET') setMissingField(null);
+                      }, 150);
+                    }}
+                    onFocus={() => setFocused(true)}
+                    onBlur={e => { setSeedQuery(e.target.value); handleQueryBlur(); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleExecute(); }}
+                    placeholder="Describe what you're trying to accomplish..."
+                    rows={4}
+                    style={{
+                      width: '100%', boxSizing: 'border-box',
+                      background: 'transparent', border: 'none', resize: 'none',
+                      fontFamily: MONO, fontSize: 14, lineHeight: 1.9,
+                      color: 'rgba(255,255,255,0.88)',
+                      padding: '20px 24px 10px',
+                      caretColor: LIME, outline: 'none',
+                    }}
+                  />
+                  {/* Toolbar */}
+                  <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {/* + attachment */}
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => setPlusOpen(p => !p)}
+                          style={{ width: 28, height: 28, borderRadius: '50%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.38)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, lineHeight: 1, padding: 0 }}
+                        >+</button>
+                        {plusOpen && (
+                          <div style={{ position: 'absolute', bottom: 36, left: 0, background: '#111', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, overflow: 'hidden', minWidth: 200, zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+                            {[
+                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>, label: 'Upload document' },
+                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6m-3-3v6"/></svg>, label: 'Import from file' },
+                            ].map(({ icon, label }) => (
+                              <button key={label} onClick={() => setPlusOpen(false)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', textAlign: 'left', fontFamily: MONO, fontSize: 10, letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <span style={{ color: 'rgba(255,255,255,0.38)', flexShrink: 0 }}>{icon}</span>{label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {/* Exclude sim */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none' }}>
+                        <input type="checkbox" checked={excludeSimulator} onChange={e => setExcludeSimulator(e.target.checked)} style={{ accentColor: LIME, width: 11, height: 11, cursor: 'pointer' }} />
+                        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: excludeSimulator ? 'rgba(102,255,0,0.6)' : 'rgba(255,255,255,0.22)', textTransform: 'uppercase', transition: 'color 150ms' }}>EXCLUDE SIM</span>
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button style={{ width: 30, height: 30, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.22)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                      </button>
+                      <button onClick={handleExecute} style={{ width: 34, height: 34, borderRadius: '50%', background: LIME, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── SIGNAL SCOPE ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', marginRight: 4, flexShrink: 0 }}>SIGNAL SCOPE</span>
+                  {SIGNAL_SCOPE_OPTIONS.map(({ key, label }) => {
+                    const active = signalScope === key;
+                    return (
+                      <button key={key} onClick={() => setSignalScope(key)} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', padding: '4px 11px', borderRadius: 999, cursor: 'pointer', background: 'transparent', border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.1)'}`, color: active ? LIME : 'rgba(255,255,255,0.28)', transition: 'all 120ms' }}>
+                        {active ? '● ' : '○ '}{label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* ── OUTPUT FILTERS ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', flexShrink: 0 }}>OUTPUT</span>
+                  {OUTPUT_FILTERS_DEF.map(({ key, label }) => (
+                    <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
+                      <input type="checkbox" checked={outputFilters[key]} onChange={e => setOutputFilters(p => ({ ...p, [key]: e.target.checked }))} style={{ accentColor: LIME, width: 10, height: 10, cursor: 'pointer' }} />
+                      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: outputFilters[key] ? 'rgba(102,255,0,0.65)' : 'rgba(255,255,255,0.22)', transition: 'color 120ms' }}>{label}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {/* ── I'M FOCUSED ON ── */}
+                <div style={{ marginTop: 20 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>I'M FOCUSED ON</div>
+                  <StaggeredChips
+                    chips={rankedSituations}
+                    selected={activeSituation?.lens}
+                    onSelect={selectSituation}
+                    getKey={s => s.lens}
+                    getLabel={s => s.label}
+                    isSelected={(s, sel) => s.lens === sel}
+                  />
+                </div>
+
               </div>
             </div>
           )}

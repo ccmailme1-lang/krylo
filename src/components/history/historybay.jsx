@@ -566,7 +566,7 @@ export default function HistoryBay({ onRerunNavigate }) {
 
   const handleRerun = useCallback((entry) => {
     const id = `session-${Date.now()}`;
-    createSession(id, '10K View', entry.query);
+    createSession(id, 'OPEN', entry.query);
     setSwipeIndex(1);
     onRerunNavigate?.();
   }, [createSession, setSwipeIndex, onRerunNavigate]);

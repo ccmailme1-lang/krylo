@@ -62,7 +62,7 @@ function detectQuerySignal(query) {
 
 // WO-1828 Phase B — derives persona key from full profile when session.lens is absent or GENERAL.
 // Decision context (goals, challenges, reporting line) overrides job title.
-function detectPersonaFromProfile(profile) {
+export function detectPersonaFromProfile(profile) {
   if (!profile) return null;
   const role = (profile.role    ?? '').toLowerCase();
   const goals = (profile.goals  ?? '').toLowerCase();

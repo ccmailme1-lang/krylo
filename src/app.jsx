@@ -57,6 +57,7 @@ import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import { resolveGeo }         from './engine/georesolver.js';
+import { detectPersonaFromProfile } from './engine/lensrouter.js';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
@@ -737,7 +738,20 @@ export default function App() {
   const canonical     = useOracleMapper(activeSession);
 
   const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now(), node_id, domain, routing_target } = {}) => {
-    const q = (query ?? '').trim();
+    let q = (typeof query === 'string' ? query : '').trim();
+    let detectedLens = null;
+
+    // Detect profile format: JSON string with profile keys
+    if (q.startsWith('{')) {
+      try {
+        const parsed = JSON.parse(q);
+        if (parsed && (parsed.role || parsed.goals || parsed.reportingLine)) {
+          detectedLens = detectPersonaFromProfile(parsed);
+          q = (parsed.seedQuery ?? parsed.query ?? '').trim();
+        }
+      } catch (_) { /* not JSON — treat as plain query */ }
+    }
+
     if (!q) return;
 
     // WO-1845 — geo-disambiguation gate (pre-synthesis ingestion boundary)
@@ -748,7 +762,8 @@ export default function App() {
     }
 
     const sessionId = `session_${timestamp}`;
-    createSession(sessionId, '10K View', q, { source, node_id, domain, routing_target });
+    const lens = detectedLens ?? '10K View';
+    createSession(sessionId, lens, q, { source, node_id, domain, routing_target });
     emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
     setNavMode('analysis');
   }, [createSession]);

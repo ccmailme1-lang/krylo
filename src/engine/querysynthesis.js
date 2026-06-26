@@ -3805,7 +3805,11 @@ export function synthesizeQuery(session) {
   const query   = session.query ?? '';
   const mcv     = resolveMCV(query, session);
   const numbers = extractNumbers(query);
-  const vector  = detectDomain(query, session.lens);
+  // WO-1878: when user explicitly locked a domain via chip selection, bypass keyword detection.
+  const domainLock = session.tensor?.domainLock ?? null;
+  const vector = domainLock
+    ? { primary: domainLock, resolutionEligible: true, weights: { [domainLock]: 1.0 }, secondary: null }
+    : detectDomain(query, session.lens);
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
     return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false };
