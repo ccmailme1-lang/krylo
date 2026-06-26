@@ -10,8 +10,9 @@ import { getDisplayEntity }  from '../../utils/formatters.js';
 import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
-import { computeMetrics }    from '../../engine/metricsengine.js';
-import MetricStrip           from './metricstrip.jsx';
+import { computeMetrics }      from '../../engine/metricsengine.js';
+import MetricStrip             from './metricstrip.jsx';
+import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { fetchHNTop }        from '../../hooks/usehnsignals.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -347,6 +348,11 @@ export default function TargetPacket() {
   const hpScore         = Math.round(confScore * 100);
   const { engineState } = useHappyPathEngine();
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null), [synthesis, engineState]);
+  // WO-1880: fracture pressures — read once per render, gates fracture surface
+  const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
+  const fractureDomains = useMemo(() =>
+    Object.values(domainPressures).filter(p => p.polarity === 'fracture' && p.signalCount > 0),
+  [domainPressures]);
 
   // WO-1716: Domain Clamp — user-controlled bay assignment
   const assignToBay    = useBayStore(s => s.assignToBay);
@@ -853,6 +859,25 @@ export default function TargetPacket() {
         </div>
       )}
 
+      {/* ── WO-1868: Metric Strip ───────────────────────────────────────── */}
+      <MetricStrip metrics={metrics} />
+
+      {/* ── WO-1880: Fracture Output Surface (§20 Direction Honesty) ─────── */}
+      {fractureDomains.length > 0 && (
+        <div style={{ flexShrink: 0, borderTop: `1px solid rgba(0,127,255,0.3)`, background: 'rgba(0,127,255,0.04)', padding: '10px 24px' }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BLUE, marginBottom: 8 }}>FRACTURE SIGNAL DETECTED</div>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+            {fractureDomains.map(p => (
+              <div key={p.domain} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: BLUE }}>{p.domain}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.1em' }}>
+                  {p.magnitude.toFixed(0)} · FRACTURE · N={p.signalCount}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );

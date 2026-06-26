@@ -123,7 +123,7 @@ const PROPER_NOUN_EXCLUSIONS = /\b(google|microsoft|apple|amazon|netflix|spotify
 // produces hit counts per domain rather than a single winner.
 // Used by classifyAmbiguity() to detect SOFT multi-domain states.
 const DOMAIN_SCORE_PATTERNS = {
-  STARTUP_FINANCE: [/startup/, /runway/, /burn rate/, /payroll/, /seed round/, /series [ab]/, /raise capital/, /venture/, /bootstrap/],
+  STARTUP_FINANCE: [/\bstartup\b/, /\brunway\b/, /burn rate/, /payroll/, /seed round/, /series [ab]/, /raise capital/, /\bventure\b/, /\bbootstrap\b/],
   AUTO:            [/\bcar\b/, /\bvehicle\b/, /\bsuv\b/, /\btruck\b/, /\bauto\b/, /\blease\b/, /\bford\b/, /\btoyota\b/, /\bhonda\b/, /\btesla\b/, /\bbmw\b/, /\bmercedes\b/, /\baudi\b/, /\bchevy\b/, /\bchevrolet\b/, /\bkia\b/, /\bhyundai\b/, /\bdodge\b/, /\bjeep\b/, /\brivian\b/],
   REAL_ESTATE:     [/\bhouse\b/, /mortgage/, /property/, /condo/, /apartment/, /real estate/, /sq ft/, /bedroom/, /bath/, /listing/, /\brent\b/],
   RETIREMENT:      [/retire/, /401k/, /\bira\b/, /pension/, /social security/, /withdrawal/, /nest egg/],
@@ -145,7 +145,7 @@ function scoreDomains(q) {
 // preserved). Returns a string domain label. Called inside detectDomain().
 function resolvePrimary(q, lens) {
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
-  if (/startup|runway|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|venture|bootstrap/.test(q)) return 'STARTUP_FINANCE';
+  if (/\bstartup\b|\brunway\b|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|\bventure\b|\bbootstrap\b/.test(q)) return 'STARTUP_FINANCE';
   // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
   if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
   // "vehicle" is automotive only — exclude financial "investment/savings vehicle".
@@ -236,8 +236,8 @@ export function detectDomain(query, lens) {
     return { primary: protectedDomain, weights: { [protectedDomain]: 1.0 }, state: 'HARD', entropy: 0, coActive: [], resolutionEligible: true };
   }
 
-  const primary = resolvePrimary(q, lens);
-  const scores  = scoreDomains(q);
+  let primary    = resolvePrimary(q, lens);
+  const scores   = scoreDomains(q);
 
   // DEF-1864 Intent Lock Gate: no keyword evidence + no compound rule → AMBIGUOUS.
   // Lens fallback is removed; bare queries must not escalate to a life domain.
@@ -250,6 +250,23 @@ export function detectDomain(query, lens) {
   // conditions that the simple keyword scorer misses)
   if (primary !== 'GENERAL') {
     scores[primary] = Math.max(scores[primary] ?? 0, 1);
+  }
+
+  // WO-1879 — Gravity tie-breaker (§20 Direction Honesty Principle)
+  // Fires only when compound rules returned GENERAL and scoreDomains found
+  // at least two close-scoring candidates. Live domain pressure breaks the tie.
+  // Never overrides a compound rule result (primary !== 'GENERAL').
+  if (primary === 'GENERAL' && Object.keys(scores).length >= 2) {
+    const sorted   = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+    const topScore = sorted[0][1];
+    const runnerUp = sorted[1][1];
+    const relGap   = Math.abs(topScore - runnerUp) / Math.max(topScore, runnerUp, 1);
+    if (relGap < GRAVITY_TIE_THRESHOLD) {
+      const pTop    = getQueryDomainPressure(sorted[0][0]);
+      const pSecond = getQueryDomainPressure(sorted[1][0]);
+      primary = pTop.magnitude >= pSecond.magnitude ? sorted[0][0] : sorted[1][0];
+      scores[primary] = Math.max(scores[primary] ?? 0, 1);
+    }
   }
 
   const ambiguity = classifyAmbiguity(scores);
@@ -3798,7 +3815,8 @@ const SYNTH_MAP = {
 import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
 import { detectProtectedDomain } from './ingress.js';
 import { classifyAmbiguity } from './domainambiguitygate.js';
-import { checkRealEstateEligibility } from './ienbg.js';
+import { checkRealEstateEligibility, checkAutoEligibility } from './ienbg.js';
+import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
 
 export function synthesizeQuery(session) {
   if (!session) return null;
@@ -3829,6 +3847,15 @@ export function synthesizeQuery(session) {
     // synthesizer uses its defaults rather than reading a bed/bath count as a price.
     synthNumbers = elig.price !== null ? (elig.down !== null ? [elig.price, elig.down] : [elig.price]) : [];
   }
+  // WO-1873: AUTO numeric binding — mirrors REAL_ESTATE contract.
+  // Asset/income figures must not become a car price. MSRP lookup remains preferred.
+  if (vector.primary === 'AUTO' && numbers.length > 0) {
+    const elig = checkAutoEligibility(query);
+    if (!elig.eligible) {
+      return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason };
+    }
+    synthNumbers = elig.price !== null ? (elig.down !== null ? [elig.price, elig.down] : [elig.price]) : [];
+  }
   const fn      = synthesizerFor(vector) ?? synthGeneral;
   const result  = fn(session, synthNumbers, query);
   const contractLens = resolveContractLens(vector.primary, session.lens);
@@ -3840,5 +3867,7 @@ export function synthesizeQuery(session) {
     vector.weights?.[vector.primary] ?? 0.5,
   );
 
-  return { ...result, queryDomain: vector.primary, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers };
+  // WO-1870: report the domain that ACTUALLY synthesized — no header/body contradiction.
+  const effectiveDomain = SYNTH_MAP[vector.primary] ? vector.primary : 'GENERAL';
+  return { ...result, queryDomain: effectiveDomain, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers };
 }

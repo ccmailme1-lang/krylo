@@ -496,3 +496,46 @@ FUTURE ARCHITECTURE (emerges from the principle, NOT the immediate build):
     accumulation, not prediction/recommendation/autonomous adaptation. Builds on convictionstore.js
     (WO-1823/1824/1825). Sequence stays grounded: classifier/extraction hardening → six metrics
     (1868) → outcome capture + Path Memory (1869). The graph is the north star, not next week's PR.
+
+20. DIRECTION HONESTY PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-06-26)
+
+This is a PRINCIPLE, not a feature. It governs all output surfaces.
+
+CANONICAL STATEMENT (DOCTRINE):
+    "Not showing it is showing reality. Suppressing a fracture signal is fabrication by omission."
+
+Structural fracture — negative convergence, downside positioning, credit stress, market dislocation —
+is a first-class signal. The system must surface it with the same authority as constructive convergence.
+The absence of a Happy Path is NOT the fracture signal. The fracture itself is the signal.
+Silence is not neutrality. Silence is concealment.
+
+POLARITY RULE (load-bearing):
+    All domain pressure signals carry two dimensions — magnitude AND polarity.
+        magnitude: signal density (0–100, §16 scale)
+        polarity:  'constructive' | 'fracture'
+    A domain gravity well without polarity is directionally blind.
+    Directional blindness = fabrication by omission.
+
+IMPLICATION FOR OUTPUT:
+    The Happy Path gate (HP ≥ 75) qualifies upside opportunity. It remains unchanged.
+    It is NOT the only output path.
+    Fracture convergence requires its own first-class output surface — equal visual weight, opposite
+    framing. Not a warning label. Not suppressed state. A signal output with full authority.
+
+HISTORICAL ANCHOR:
+    Michael Burry detected the 2008 mortgage fracture from raw CDO prospectuses — alone, manually,
+    against consensus silence. That silence was not neutrality. It was concealment by omission.
+    KRYLO must not replicate that silence. The system shows what it detects. Both directions. Always.
+    With path memory (§19 / WO-1869), it also tells you how long fractures of this class have
+    historically taken to realize — the hold signal Burry needed but never had.
+
+RELATIONSHIP TO §19:
+    §19 requires the loop to close (emission → outcome → path memory → route ranking).
+    §20 requires the loop to be direction-honest.
+    A closed loop that only tracks constructive outcomes is measuring the best half of reality.
+    The mission — "finding advantageous positions before they become obvious" — includes short-side,
+    defensive, and fracture positions. The system is blind to half its mission without §20.
+
+WIRING SEQUENCE:
+    WO-1879 — Domain Gravity Wells (polarity field) — prerequisite
+    WO-1880 — Fracture Output Surface (first-class UI) — depends on WO-1879

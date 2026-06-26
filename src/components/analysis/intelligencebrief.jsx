@@ -1016,7 +1016,7 @@ export default function IntelligenceBrief() {
         </Panel>
 
         {/* ── Happy Path — Access Latch ───────────────────────────────── */}
-        {hp?.qualified && !hpOpen && !hpDismissed && (
+        {hp?.qualified && !hpOpen && !hpDismissed && synthesis?.resolutionEligible !== false && synthesis?.queryDomain !== 'AMBIGUOUS' && (
           <div
             onClick={() => setHpOpen(true)}
             style={{

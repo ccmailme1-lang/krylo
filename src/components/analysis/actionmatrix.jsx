@@ -245,7 +245,7 @@ export default function ActionMatrix() {
         const gap = hp && alt.length > 0 ? ((hp.score - alt[0].score) * 100).toFixed(0) : null;
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.012)' }}>
-            {hp && (
+            {hp && synthesis?.resolutionEligible !== false && synthesis?.queryDomain !== 'AMBIGUOUS' && (
               <div style={{ padding: '10px 28px' }}>
                 <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
                   {[

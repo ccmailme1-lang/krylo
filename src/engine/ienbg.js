@@ -85,3 +85,55 @@ export function checkRealEstateEligibility(query) {
   // Only small non-money scalars (bed/bath counts, etc.) → qualitative, no fabricated price.
   return { eligible: true, price: null, down: null, reason: 'QUALITATIVE' };
 }
+
+// ── WO-1873 — AUTO Numeric Binding ────────────────────────────────────────────
+// Mirrors REAL_ESTATE contract. MSRP lookup (detectVehiclePrice) is the preferred
+// source; this gate handles explicit price figures and prevents asset bleed.
+
+const AUTO_PRICE_ANCHORS = /\b(price|msrp|sticker|\bcar\b|vehicle|cost|buy|buying|bought|purchase|purchasing|afford|budget|paying|financ|lease)\b/i;
+const AUTO_DOWN_ANCHORS  = /\b(down\s*payment|\bdown\b|deposit|trade.?in|put\s+down)\b/i;
+
+// Vehicle plausibility band — anything outside these bounds is not a car price.
+const AUTO_PRICE_MIN = 1_000;
+const AUTO_PRICE_MAX = 500_000;
+
+export function bindAutoNumbers(query) {
+  const text = query ?? '';
+  const nums = scanNumbers(text);
+
+  let price = null;
+  for (const num of nums) {
+    if (num.value >= AUTO_PRICE_MIN && num.value <= AUTO_PRICE_MAX
+        && anchoredWithin(text, num, AUTO_PRICE_ANCHORS, 32)) {
+      price = num.value;
+      break;
+    }
+  }
+
+  let down = null;
+  if (price !== null) {
+    for (const num of nums) {
+      if (num.value < price && anchoredWithin(text, num, AUTO_DOWN_ANCHORS, 12)) {
+        down = num.value;
+        break;
+      }
+    }
+  }
+
+  return { price, down };
+}
+
+// Eligibility verdict for an AUTO query that carries numbers.
+//   { eligible, price, down, reason }
+export function checkAutoEligibility(query) {
+  const { price, down } = bindAutoNumbers(query);
+  if (price !== null) return { eligible: true, price, down, reason: 'OK' };
+
+  // No price bound. A money-magnitude number outside the vehicle band that cannot bind
+  // to a purchase anchor (e.g. "ASSETS: $15B, drives a Tesla") → structurally insufficient.
+  const hasMoneyMagnitude = scanNumbers(query ?? '').some(n => n.value >= AUTO_PRICE_MIN);
+  if (hasMoneyMagnitude) return { eligible: false, price: null, down: null, reason: 'INSUFFICIENT_STRUCTURAL_DATA' };
+
+  // Only small scalars or no numbers → qualitative, MSRP lookup will supply a default.
+  return { eligible: true, price: null, down: null, reason: 'QUALITATIVE' };
+}
