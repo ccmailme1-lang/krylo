@@ -1228,21 +1228,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           </div>
 
-          {/* Domain pressure headers — idle only */}
-          {!hasSession && (
-            <div style={{
-              position: 'absolute', top: 92, left: 32, right: 32,
-              display: 'flex', justifyContent: 'space-between',
-              fontSize: FS_TELEMETRY, textTransform: 'uppercase', letterSpacing: '0.22em',
-              color: 'rgba(255,255,255,0.5)', zIndex: 10,
-            }}>
-              {domains.map(d => (
-                <div key={d} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <span>{d}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Session results */}
           {hasSession && (
