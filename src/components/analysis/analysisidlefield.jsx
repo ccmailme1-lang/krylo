@@ -1239,7 +1239,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
               {domains.map(d => (
                 <div key={d} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <span>{d}</span>
-                  <span style={{ fontSize: FS_CHIP, letterSpacing: 'normal', textTransform: 'none', color: 'rgba(255,255,255,0.2)' }}>Passive</span>
                 </div>
               ))}
             </div>
