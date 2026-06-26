@@ -1144,43 +1144,29 @@ export default function AnalysisIdleField({ activeCones = null }) {
             </div>
           </div>
 
-          {/* ── VOLATILITY SHOCK OVERRIDE ── */}
+          {/* ── SIGNAL SCOPE ── */}
           <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>VOLATILITY SHOCK OVERRIDE</div>
-            <div style={{
-              background: '#0b0e11',
-              border: `1px ${volatilityShock ? 'dashed' : 'solid'} ${volatilityShock ? 'rgba(0,127,255,0.4)' : 'rgba(255,255,255,0.07)'}`,
-              borderRadius: 4, padding: '8px 12px',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              transition: 'border-color 200ms',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 14 }}>⚡</span>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.6)' }}>
-                    FORCE TURBULENT STATE ENGINE
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.2)', marginTop: 2 }}>
-                    Bypasses parameters; forces wc to 0.60 ceiling
-                  </div>
-                </div>
-              </div>
-              <div
-                onClick={() => setVolatilityShock(v => !v)}
-                style={{
-                  width: 40, height: 22, borderRadius: 11, cursor: 'pointer', flexShrink: 0,
-                  background: volatilityShock ? 'rgba(0,127,255,0.25)' : 'rgba(255,255,255,0.07)',
-                  border: volatilityShock ? '1px solid rgba(0,127,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
-                  position: 'relative', transition: 'all 200ms',
-                }}
-              >
-                <div style={{
-                  position: 'absolute', top: 3, left: volatilityShock ? 19 : 3,
-                  width: 14, height: 14, borderRadius: '50%',
-                  background: volatilityShock ? '#007FFF' : 'rgba(255,255,255,0.35)',
-                  transition: 'left 200ms',
-                }} />
-              </div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>4. SIGNAL SCOPE</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {SIGNAL_SCOPE_OPTIONS.map(opt => {
+                const active = signalScope === opt.key;
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => setSignalScope(opt.key)}
+                    style={{
+                      fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em', textTransform: 'uppercase',
+                      background: active ? 'rgba(102,255,0,0.06)' : 'transparent',
+                      border: `1px solid ${active ? 'rgba(102,255,0,0.35)' : 'rgba(255,255,255,0.07)'}`,
+                      color: active ? LIME : 'rgba(255,255,255,0.35)',
+                      padding: '6px 10px', cursor: 'pointer', textAlign: 'left',
+                      transition: 'all 150ms',
+                    }}
+                  >
+                    {active ? '● ' : '○ '}{opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
