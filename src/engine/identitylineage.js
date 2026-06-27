@@ -10,6 +10,14 @@
 //   NODE_ADDED — single node inserted; stability delta observable
 //   MERGED     — two events collapsed into one; trigger = [idA, idB]
 //   FRAGMENTED — event marked FRAGMENTED by resolveIdentity split pass
+//
+// ── OBSERVATION BOUNDARY (non-negotiable) ────────────────────────────────────
+// This bus is read-only telemetry. It MUST NOT be imported by:
+//   structuralconfirmation.js · metricsengine.js · domaingravity.js
+//   or any other scoring/routing module.
+// Allowed consumers: identitydynamics.js · UI observation hooks · QA harnesses.
+// Feeding lineage events back into scoring creates self-referential amplification
+// loops where identity instability inflates or suppresses its own evidence weight.
 
 const subscribers = new Set();
 const history     = [];

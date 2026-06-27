@@ -41,6 +41,14 @@ import {
   clearHistory,
 } from './src/engine/identitylineage.js';
 
+import {
+  computeStabilityVelocity,
+  computeFractureDensity,
+  computeMergePressure,
+  describeTruthLifecycle,
+  computeTruthDynamics,
+} from './src/engine/identitydynamics.js';
+
 // ── Harness infrastructure ────────────────────────────────────────────────────
 
 let pass = 0; let fail = 0; let warn = 0;
@@ -506,6 +514,120 @@ check(
 );
 
 note(`Lineage events captured: ${lineageEvents.length} (CREATED=${createdEvents.length} NODE_ADDED=${nodeAddedEvents.length} FRAGMENTED=${fragmentedEvents.length})`);
+
+// ── Suite 6: WO-2008 — Identity Formation Dynamics ───────────────────────────
+section('Suite 6 — WO-2008: Truth Dynamics (velocity + lifecycle + field signals)');
+
+// Use a dedicated window to isolate Suite 6 from prior harness events.
+// Timestamps are staggered manually so velocity computation has meaningful Δt.
+clearHistory();
+const SUITE6_WINDOW = 60 * 60 * 1000; // 1-hour window, tight enough to isolate
+
+// Build a FORMING identity: start with low-anchor node, add high-anchor nodes sequentially.
+// Stability should increase monotonically → velocity FORMING.
+const now6  = Date.now();
+const step  = 5 * 60 * 1000; // 5-minute steps
+
+const formNode1 = createEvidenceNode({ evidenceType: 'SOCIAL_MEDIA',   timestamp: new Date(now6 - step * 4) });
+const formMap1  = new Map([[formNode1.id, formNode1]]);
+// Dispatch CREATED manually with a backdated ts so it falls in the window
+const formEvt = createCanonicalEvent({ nodes: formMap1, edges: [], rootSeeds: [formNode1.id], timeWindow: { start: new Date(now6 - step * 4), end: null } });
+// Patch ts on the CREATED event in the ring — identitylineage dispatches at real Date.now(),
+// but for velocity to be meaningful across the 1-hour window we override via clearHistory +
+// manual dispatch of backdated events.
+// Simpler: rebuild manually by dispatching backdated events directly.
+clearHistory();
+const { dispatch: dispatchL } = await import('./src/engine/identitylineage.js');
+
+// Simulate a FORMING trajectory: stability increases from 0.05 → 0.25 → 0.55 → 0.80
+const formId = crypto.randomUUID();
+dispatchL({ type: 'CREATED',    identityId: formId, trigger: 'INIT',           stabilityBefore: 0,    stabilityAfter: 0.05, ts: now6 - step * 4 });
+dispatchL({ type: 'NODE_ADDED', identityId: formId, trigger: 'node-structural', stabilityBefore: 0.05, stabilityAfter: 0.25, ts: now6 - step * 3 });
+dispatchL({ type: 'NODE_ADDED', identityId: formId, trigger: 'node-infra',      stabilityBefore: 0.25, stabilityAfter: 0.55, ts: now6 - step * 2 });
+dispatchL({ type: 'NODE_ADDED', identityId: formId, trigger: 'node-freight',    stabilityBefore: 0.55, stabilityAfter: 0.80, ts: now6 - step * 1 });
+
+// Simulate a FRACTURING identity
+const fragId2 = crypto.randomUUID();
+dispatchL({ type: 'CREATED',    identityId: fragId2, trigger: 'INIT',          stabilityBefore: 0,    stabilityAfter: 0.70, ts: now6 - step * 4 });
+dispatchL({ type: 'NODE_ADDED', identityId: fragId2, trigger: 'node-a',        stabilityBefore: 0.70, stabilityAfter: 0.50, ts: now6 - step * 3 });
+dispatchL({ type: 'FRAGMENTED', identityId: fragId2, trigger: 'FRAGMENTATION', stabilityBefore: 0.50, stabilityAfter: 0.50, ts: now6 - step * 2 });
+
+// Simulate a NASCENT identity (CREATED only)
+const nascentId = crypto.randomUUID();
+dispatchL({ type: 'CREATED', identityId: nascentId, trigger: 'INIT', stabilityBefore: 0, stabilityAfter: 0.10, ts: now6 - step });
+
+// Simulate a merge
+const mergeIdA = crypto.randomUUID();
+const mergeIdB = crypto.randomUUID();
+const mergeIdR = crypto.randomUUID();
+dispatchL({ type: 'MERGED', identityId: mergeIdR, trigger: [mergeIdA, mergeIdB], stabilityBefore: 0.40, stabilityAfter: 0.65, ts: now6 - step });
+
+// 6A: Stability velocity
+const velForming = computeStabilityVelocity(formId, SUITE6_WINDOW);
+check('FORMING identity: velocity computed (not null)', velForming !== null);
+check(
+  'FORMING identity: direction = FORMING (stability rising)',
+  velForming?.direction === 'FORMING',
+  `got ${velForming?.direction} velocity=${velForming?.velocity}`,
+);
+check(
+  'FORMING identity: velocity > 0 (positive Δstability)',
+  (velForming?.velocity ?? 0) > 0,
+);
+
+const velFracturing = computeStabilityVelocity(fragId2, SUITE6_WINDOW);
+check('FRACTURING identity: velocity computed (not null)', velFracturing !== null);
+check(
+  'FRACTURING identity: direction = FRACTURING (stability falling)',
+  velFracturing?.direction === 'FRACTURING',
+  `got ${velFracturing?.direction} velocity=${velFracturing?.velocity}`,
+);
+
+const velNascent = computeStabilityVelocity(nascentId, SUITE6_WINDOW);
+check(
+  'NASCENT identity: velocity = null (< 2 events)',
+  velNascent === null,
+);
+
+note(`FORMING velocity: ${velForming?.velocity} (${velForming?.direction}) over ${velForming?.eventCount} events`);
+note(`FRACTURING velocity: ${velFracturing?.velocity} (${velFracturing?.direction})`);
+
+// 6B: Truth lifecycle phases
+const lcForming     = describeTruthLifecycle(formId);
+const lcFracturing  = describeTruthLifecycle(fragId2);
+const lcNascent     = describeTruthLifecycle(nascentId);
+const lcNone        = describeTruthLifecycle(crypto.randomUUID());
+
+check('FORMING lifecycle: phase = CONSOLIDATING (stability 0.80 but recent)', lcForming?.phase === 'CONSOLIDATING', `got ${lcForming?.phase}`);
+check('FRACTURING lifecycle: phase = FRACTURING (FRAGMENTED event present)',   lcFracturing?.phase === 'FRACTURING', `got ${lcFracturing?.phase}`);
+check('NASCENT lifecycle: phase = NASCENT (CREATED only, no NODE_ADDED)',      lcNascent?.phase === 'NASCENT',       `got ${lcNascent?.phase}`);
+check('Unknown identity: lifecycle = null',                                     lcNone === null);
+
+check('Lifecycle has bornAt, lastEventAt, latestStability', lcForming?.bornAt > 0 && lcForming?.latestStability > 0);
+
+note(`Phases — FORMING-id=${lcForming?.phase} FRAG-id=${lcFracturing?.phase} NASCENT-id=${lcNascent?.phase}`);
+
+// 6C: Field signals
+const frac = computeFractureDensity(SUITE6_WINDOW);
+const merg = computeMergePressure(SUITE6_WINDOW);
+
+check('Fracture density > 0 (FRAGMENTED events exist in window)', frac.density > 0, `got ${frac.density}`);
+check('Fracture density < 1 (not all events are FRAGMENTED)',      frac.density < 1);
+check('Merge pressure > 0 (MERGED events exist in window)',        merg.pressure > 0, `got ${merg.pressure}`);
+check('computeFractureDensity returns { density, count, total, windowMs }',
+  typeof frac.density === 'number' && typeof frac.count === 'number' && typeof frac.total === 'number',
+);
+
+note(`Field: fractureDensity=${frac.density} (${frac.count}/${frac.total}) mergePressure=${merg.pressure} (${merg.count}/${merg.total})`);
+
+// 6D: computeTruthDynamics — suite function returns all four
+const dyn = computeTruthDynamics(formId, SUITE6_WINDOW);
+check('computeTruthDynamics returns { velocity, lifecycle, field }',
+  dyn?.velocity !== undefined && dyn?.lifecycle !== undefined && dyn?.field !== undefined,
+);
+check('field has fractureDensity and mergePressure',
+  dyn?.field?.fractureDensity !== undefined && dyn?.field?.mergePressure !== undefined,
+);
 
 // ── Final summary ─────────────────────────────────────────────────────────────
 
