@@ -1,7 +1,7 @@
-# WO-2004 — CanonicalEvent Identity Kernel (Refined Spec)
-Date: 2026-06-26
+# WO-2004 — CanonicalEvent Identity Kernel
+Date: 2026-06-26 (updated 2026-06-26 to absorb WO-2005 epistemic tier)
 Status: SPEC — do not build until Founder signals ready
-Depends on: WO-1879 (complete), state-of-system-2026-06-26.md
+Depends on: WO-1879 (complete), WO-1868 (complete), WO-1869 (complete), WO-2005 (schema)
 Supersedes: next-level progression.md WO-2004 section
 
 ---
@@ -15,6 +15,12 @@ isomorphism — independent of domain gravity, attention, or semantic interpreta
 **Critical refinement (prevents identity churn in streaming environments):**
 Not strict evidence-set closure. Equivalence class under allowed transformations.
 This prevents thrash in non-stationary signal environments.
+
+**Epistemic refinement (absorbed from WO-2005):**
+Not all evidence is epistemic equals. `EvidenceNode` carries a tier and descriptor
+(from WO-2005 `evidencetiers.js`) that govern how it influences identity stability,
+merge/split weight, and structural confirmation scoring. Tier is intrinsic to the node —
+it is set at ingestion from the source descriptor, never computed by the kernel.
 
 ---
 
@@ -31,47 +37,69 @@ This prevents thrash in non-stationary signal environments.
 
 - **Stability Under Perturbation:** Measured explicitly via `stabilityScore`.
 
+- **Tier-weighted stability:** T1 structural nodes have higher perturbation resistance —
+  a T1 node that contradicts an existing event demands explicit split consideration;
+  a T5 node that contradicts does not trigger the same pressure.
+
 ---
 
 ## 2. Schemas
 
 ```ts
+// From WO-2005 evidencetiers.js — imported, never redefined here
+type EpistemicTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5';
+type CanonicalRole =
+  | 'LONG_TERM_BASELINE'   // updates expected operating envelope
+  | 'STATE_TRANSITION'     // creates or strengthens an existing CanonicalEvent
+  | 'CAUSAL_PRECURSOR'     // high influence on early Happy Path discovery
+  | 'ENTITY_LINKED'        // strengthens attribution to company/facility/region
+  | 'ANOMALY_DETECTOR';    // does not create identity alone — requests corroboration
+
 interface EvidenceNode {
-  id: string;
-  seedId: string;
-  timestamp: Date;
-  content: string;
-  metadata: Record<string, any>;
+  id:             string;
+  seedId:         string;
+  timestamp:      Date;
+  content:        string;
+  metadata:       Record<string, any>;
   predecessorIds: string[];
-  successorIds: string[];
+  successorIds:   string[];
+
+  // Epistemic properties (from WO-2005 descriptor — set at ingestion)
+  epistemicTier:    EpistemicTier;
+  canonicalRole:    CanonicalRole;
+  anchorStrength:   number;          // 0–1, from descriptor
+  decayModel:       'NONE' | 'LINEAR' | 'EXPONENTIAL';
+  persistenceClass: 'INSTANT' | 'SHORT' | 'MEDIUM' | 'LONG' | 'VERY_LONG';
 }
 
 interface EvidenceGraph {
-  nodes: Map<string, EvidenceNode>;
-  edges: Array<{
-    from: string;
-    to: string;
-    type: 'TEMPORAL' | 'CAUSAL' | 'ENTITY_SHARED' | 'CORRELATION';
+  nodes:     Map<string, EvidenceNode>;
+  edges:     Array<{
+    from:     string;
+    to:       string;
+    type:     'TEMPORAL' | 'CAUSAL' | 'ENTITY_SHARED' | 'CORRELATION';
     strength: number;
   }>;
 
-  rootSeeds: string[];
-  versionHash: string;           // structural hash — changes on material updates
-  continuityScore: number;       // 0–1
-  branchingFactor: number;
-  fragmentationPoints: string[]; // candidate cut points
-  stabilityScore: number;        // invariance under perturbation (0–1)
+  rootSeeds:           string[];
+  versionHash:         string;        // structural hash — changes on material updates
+  continuityScore:     number;        // 0–1
+  branchingFactor:     number;
+  fragmentationPoints: string[];      // candidate cut points
+  stabilityScore:      number;        // invariance under perturbation (0–1)
+
+  // Structural coverage — derived from T1/T2 node presence
+  structuralBurdenScore: number;      // 0–1, see WO-2005 SCI formula
 }
 
 interface CanonicalEvent {
-  identityId: string;            // STABLE equivalence class identifier
-  currentVersionHash: string;
-  evidenceGraph: EvidenceGraph;
-  timeWindow: { start: Date; end: Date | null };
+  identityId:          string;        // STABLE equivalence class identifier
+  currentVersionHash:  string;
+  evidenceGraph:       EvidenceGraph;
+  timeWindow:          { start: Date; end: Date | null };
   structuralSignature: {
-    graphHash: string;
-    temporalWaveform: string;
-    // embedding is secondary / optional
+    graphHash:         string;
+    temporalWaveform:  string;
   };
   status: 'ACTIVE' | 'FRAGMENTED' | 'MERGED' | 'RESOLVED' | 'ARCHIVED';
   lineageRoot: string;
@@ -81,6 +109,8 @@ interface CanonicalEvent {
       magnitude: number;
       polarity: 'constructive' | 'fracture';
     }>;
+    // SCI computed post-formation by WO-2005 layer — never influences identity
+    structuralConfirmationIndex?: number;   // 0–10, from WO-2005
   };
 }
 ```
@@ -99,6 +129,9 @@ Merge(A, B) iff:
   AND stabilityScore(A ∪ B) ≥ min(stabilityScore(A), stabilityScore(B))
 ```
 
+**Tier weighting on merge:** T1 nodes in A or B raise τ_structural — structural evidence
+demands higher similarity before merge. T5 nodes have no effect on threshold.
+
 ### Split Condition
 
 ```
@@ -106,6 +139,7 @@ Split along weakest cut-set iff:
   fragmentationFactor > δ
   OR stabilityScore drops below perturbation threshold under simulated rewrites
   OR causalGraph divergence detected (inconsistent dependency chains)
+  OR a T1 node arrives that is causally incompatible with the current lineageRoot
 ```
 
 ---
@@ -131,6 +165,7 @@ This relation makes identity deterministic and auditable.
 
 - Simulate small perturbations (delayed arrivals, edge reclassifications).
 - Measure how much graphHash / continuityScore changes.
+- T1 nodes contribute higher perturbation resistance (their anchorStrength scales the test).
 - High score = robust identity under realistic signal noise.
 
 ---
@@ -138,21 +173,31 @@ This relation makes identity deterministic and auditable.
 ## 5. Layer Separation (Locked)
 
 ```
-Identity Kernel (WO-2004)   → pure structural equivalence + lineage
-          ↓
-Gravity Overlay             → ranking / pressure metadata only (post-formation)
-          ↓                   (domaingravity.js / WO-1879)
-Interpretation / Claims     → epistemic layer (epistemictier.js)
-          ↓
-Attention Economics         → rendering allocation (gap — unnamed WO)
+Signal Ingestion (§16 surfacerouter.js)
+          ↓  { source, domain, signal, confidence, ts }
+Epistemic Tier Assignment (WO-2005 evidencetiers.js)
+          ↓  EvidenceNode + { epistemicTier, canonicalRole, anchorStrength, decayModel }
+Identity Kernel (WO-2004)            ← THIS FILE
+          ↓  CanonicalEvent (stable equivalence class + EvidenceGraph)
+Gravity Overlay (domaingravity.js / WO-1879)
+          ↓  domainPressures attached POST-formation only
+Structural Confirmation (WO-2005 SCI layer)
+          ↓  structuralConfirmationIndex computed post-formation
+Interpretation / Attention Economics
+          ↓  rendering + Happy Path qualification
 ```
 
-**Boundary rule:** domainPressures attach to `CanonicalEvent.metadata` AFTER identity
-is resolved. They never influence identity formation. This boundary is load-bearing.
+**Boundary rules (load-bearing):**
+- `domainPressures` attach AFTER identity — never influence formation.
+- `structuralConfirmationIndex` is computed AFTER identity — never influences identity.
+- Epistemic tier is set AT ingestion — it is a property of the source, not the event.
+- §16 parity rule (no single source dominates cone pressure field) is preserved.
+  Tier governs CanonicalEvent synthesis weight — a separate layer from cone pressure.
+  These two do not conflict because they operate on different objects.
 
 ---
 
-## 6. Three build paths (when ready — Founder's call)
+## 6. Build Paths (when ready — Founder's call)
 
 ### Option A — Full mathematical + TypeScript hybrid spec
 Pseudocode for equivalence checking, stabilityScore computation, test harness phases.
@@ -172,12 +217,14 @@ attention starvation cascades. Maps to WO-2008 (stress harness — test layer on
 
 | Concept | Current closest analog | Gap |
 |---|---|---|
-| EvidenceNode | `evidenceregistry.js` emitPrediction | No graph structure, no predecessorIds |
+| EvidenceNode | `evidenceregistry.js` emitPrediction | No graph structure, no predecessorIds, no epistemicTier |
 | EvidenceGraph | None | Does not exist |
 | CanonicalEvent | None | Does not exist |
 | structuralSimilarity | `entitytopologyregistry.js` | Cluster similarity only, not graph isomorphism |
 | stabilityScore | None | Does not exist |
 | Merge/Split | None | Implicit in signal processing, never formalized |
+| epistemicTier | None | Does not exist — Phase A of WO-2005 creates it |
+| canonicalRole | None | Does not exist — WO-2005 defines the enum |
 
 ---
 
@@ -186,6 +233,7 @@ attention starvation cascades. Maps to WO-2008 (stress harness — test layer on
 Per state-of-system-2026-06-26.md:
 - CanonicalEvent is a **constraint field**, not a component.
 - It must be embedded as an invariant into every transformation stage — not a module that runs.
-- WO-1868 (metrics) and WO-1869 (path memory) must land first to give the identity
-  kernel meaningful signals to stabilize over.
-- Sequence: classifier hardening → six metrics (1868) → outcome capture (1869) → identity kernel
+- WO-1868 (metrics) and WO-1869 (path memory) must land first. Both are now COMPLETE.
+- WO-2005 Phase A (evidencetiers.js schema) should land before WO-2004 build begins,
+  so the EvidenceNode schema is stable at build time.
+- Sequence: WO-2005 Phase A (schema) → WO-2004 build → WO-2005 Phase B (SCI computation)
