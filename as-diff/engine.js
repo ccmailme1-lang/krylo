@@ -24,6 +24,20 @@ const EDGAR_TTL_MS    = 900_000;
 const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
 const KALSHI_TTL_MS   = 300_000; // 5 min — prevents 429 on simultaneous polls
 const EIA_TTL_MS      = 3_600_000; // 1h — WPSR releases weekly, no need to re-fetch often
+// WO-2019 — Service API connector TTLs
+const GITHUB_TTL_MS   =   900_000; // 15 min
+const ARXIV_TTL_MS    = 3_600_000; // 1h
+const NPM_TTL_MS      = 3_600_000; // 1h
+const PUBMED_TTL_MS   = 3_600_000; // 1h
+const OPENALEX_TTL_MS = 3_600_000; // 1h
+const BLS_TTL_MS      = 3_600_000; // 1h
+const USAJOBS_TTL_MS  = 1_800_000; // 30 min
+const TREASURY_TTL_MS = 3_600_000; // 1h
+const WORLDBANK_TTL_MS = 86_400_000; // 24h — annual data
+const GDELT_DOC_TTL_MS =   900_000; // 15 min
+const REDDIT_TTL_MS   =   900_000; // 15 min
+const FHFA_TTL_MS     = 86_400_000; // 24h — quarterly data
+const USGS_TTL_MS     =   900_000; // 15 min
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -492,6 +506,280 @@ function handleEdgarProxy(req, res) {
   proxy.end();
 }
 
+// ── WO-2019: Service API proxy handlers ──────────────────────────────────────
+
+
+function handleGithubProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'github:' + q;
+  const hit = getCached(key, GITHUB_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.github.com',
+    path: `/search/repositories?q=${encodeURIComponent(q)}&sort=stars&per_page=30`,
+    method: 'GET',
+    headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'krylo/1.0', 'X-GitHub-Api-Version': '2022-11-28' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleArxivProxy(req, res) {
+  const url   = new URL(req.url, 'http://localhost');
+  const q     = url.searchParams.get('q') ?? '';
+  const key   = 'arxiv:' + q;
+  const hit   = getCached(key, ARXIV_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const now  = new Date();
+  const end  = now.toISOString().slice(0, 10).replace(/-/g, '');
+  const ago  = new Date(now - 7 * 86_400_000).toISOString().slice(0, 10).replace(/-/g, '');
+  const searchQ = encodeURIComponent(`all:${q} AND submittedDate:[${ago} TO ${end}]`);
+  const options = {
+    hostname: 'export.arxiv.org',
+    path: `/api/query?search_query=${searchQ}&start=0&max_results=0`,
+    method: 'GET', headers: { 'Accept': 'application/atom+xml', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      const match = body.match(/<opensearch:totalResults[^>]*>(\d+)<\/opensearch:totalResults>/);
+      const count = parseInt(match?.[1] ?? '0', 10);
+      const json  = JSON.stringify({ count });
+      setCached(key, 200, json);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(json);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleNpmProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'npm:' + q;
+  const hit = getCached(key, NPM_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'registry.npmjs.org',
+    path: `/-/v1/search?text=${encodeURIComponent(q)}&size=20`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handlePubmedProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'pubmed:' + q;
+  const hit = getCached(key, PUBMED_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'eutils.ncbi.nlm.nih.gov',
+    path: `/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(q)}&datetype=pdat&reldate=365&rettype=json&retmode=json`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleOpenAlexProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'openalex:' + q;
+  const hit = getCached(key, OPENALEX_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.openalex.org',
+    path: `/works?filter=title.search:${encodeURIComponent(q)},publication_year:%3E%3D2024&per-page=25&select=cited_by_count`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0 (mailto:houzzco@gmail.com)' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleBlsProxy(req, res) {
+  const key = 'bls:jolts-quit';
+  const hit = getCached(key, BLS_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.bls.gov',
+    path: '/publicAPI/v1/timeseries/data/JTS000000000000000QUR',
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleUsajobsProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'usajobs:' + q;
+  const hit = getCached(key, USAJOBS_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const apiKey = process.env.USAJOBS_API_KEY ?? '';
+  if (!apiKey) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ SearchResult: { SearchResultCount: 0 } })); return; }
+  const options = {
+    hostname: 'data.usajobs.gov',
+    path: `/api/search?Keyword=${encodeURIComponent(q)}&ResultsPerPage=10`,
+    method: 'GET',
+    headers: { 'Authorization-Key': apiKey, 'Host': 'data.usajobs.gov', 'User-Agent': 'houzzco@gmail.com' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleTreasuryProxy(req, res) {
+  const key = 'treasury:avg-rates';
+  const hit = getCached(key, TREASURY_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const fields  = 'security_desc,avg_interest_rate_amt,record_date';
+  const filter  = encodeURIComponent('security_desc:in:(Treasury Notes-10 Yr,Treasury Bills-2 Yr)');
+  const options = {
+    hostname: 'api.fiscaldata.treasury.gov',
+    path: `/v1/accounting/od/avg_interest_rates?fields=${fields}&filter=${filter}&sort=-record_date&page[size]=4`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleWorldBankProxy(req, res) {
+  const key = 'worldbank:gdp-growth';
+  const hit = getCached(key, WORLDBANK_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.worldbank.org',
+    path: '/v2/country/WLD/indicator/NY.GDP.MKTP.KD.ZG?format=json&mrv=2',
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleGdeltDocProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'gdelt-doc:' + q;
+  const hit = getCached(key, GDELT_DOC_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.gdeltproject.org',
+    path: `/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=50&timespan=1d&format=json`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      try { JSON.parse(body); } catch { body = JSON.stringify({ articles: [] }); }
+      setCached(key, 200, body);
+      res.writeHead(200, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', () => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ articles: [] })); });
+  proxy.end();
+}
+
+function handleRedditSearchProxy(req, res) {
+  const url = new URL(req.url, 'http://localhost');
+  const q   = url.searchParams.get('q') ?? '';
+  const key = 'reddit:' + q;
+  const hit = getCached(key, REDDIT_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'www.reddit.com',
+    path: `/search.json?q=${encodeURIComponent(q)}&sort=new&limit=25&t=day`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0 (by /u/krylo_signal)' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleFhfaProxy(req, res) {
+  const url      = new URL(req.url, 'http://localhost');
+  const seriesId = url.searchParams.get('series_id') ?? 'USSTHPI';
+  const apiKey   = url.searchParams.get('api_key') ?? process.env.FRED_API_KEY ?? '';
+  const key      = 'fhfa:' + seriesId;
+  const hit      = getCached(key, FHFA_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const options = {
+    hostname: 'api.stlouisfed.org',
+    path: `/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&limit=8&sort_order=desc`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleUsgsProxy(req, res) {
+  const key = 'usgs:drought';
+  const hit = getCached(key, USGS_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  // US Drought Monitor statistics — national weekly area percentages
+  const today = new Date().toISOString().slice(0, 10);
+  const ago   = new Date(Date.now() - 14 * 86_400_000).toISOString().slice(0, 10);
+  const options = {
+    hostname: 'usdmdataservices.unl.edu',
+    path: `/api/USStatistics/GetDroughtSeverityStatisticsByArea?aoi=0&startdate=${ago}&enddate=${today}&statisticsType=1`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
 // ── WO-1043: Router ───────────────────────────────────────────────────────────
 
 function routeRequest(req, res) {
@@ -509,6 +797,20 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
+  // WO-2019 — Service API connectors
+  if (req.method === 'GET'  && url === '/api/github')                        return handleGithubProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/arxiv')                         return handleArxivProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/npm')                           return handleNpmProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/pubmed')                        return handlePubmedProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/openalex')                      return handleOpenAlexProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/bls')                           return handleBlsProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/usajobs')                       return handleUsajobsProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/treasury')                      return handleTreasuryProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/worldbank')                     return handleWorldBankProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/gdelt-doc')                     return handleGdeltDocProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/reddit-search')                 return handleRedditSearchProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/fhfa')                          return handleFhfaProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/usgs')                          return handleUsgsProxy(req, res);
   handleNotFound(req, res);
 }
 
