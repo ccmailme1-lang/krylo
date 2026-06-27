@@ -171,12 +171,18 @@ export function run(domainStates = {}, synthesis = null) {
   const hypotheses = generate_hypotheses(blindSpots);
   const emitted    = [];
 
+  // Deduplicate by (evidenceType, targetSignal) — same source for same target = one SCP
+  const seen = new Set();
+
   for (const hyp of hypotheses) {
     const sources     = discover_sources(hyp);
     let branchCount   = 0;
 
     for (const src of sources) {
       if (!canExpand({ depth: 0, branchCount, explorationScore: 0.5 }).allowed) break;
+
+      const dedupeKey = `${src.evidenceType}::${hyp.targetSignal}`;
+      if (seen.has(dedupeKey)) continue;
 
       const simResult  = simulate(src);
       const explScore  = score(src, hyp, simResult);
@@ -189,7 +195,7 @@ export function run(domainStates = {}, synthesis = null) {
         : [];
 
       const id = emitSCP(hyp, src, simResult, explScore, validity, ancestors);
-      if (id) { emitted.push(id); branchCount++; }
+      if (id) { emitted.push(id); branchCount++; seen.add(dedupeKey); }
     }
   }
 

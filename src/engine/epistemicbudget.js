@@ -17,7 +17,10 @@ export function canExpand({ depth, branchCount, explorationScore }) {
   return { allowed: true, reason: null };
 }
 
-// computeExplorationScore — locked formula from WO-2007 spec
+// computeExplorationScore — from WO-2007 spec, normalized via geometric means.
+// Raw ratio (num/den) saturates when denominators collapse to near-zero.
+// Fix: geometric mean of each side, then value × (1 - cost).
+// This preserves multiplicative semantics (weak leg still craters) while normalizing to 0–1.
 // All inputs 0–1. Score clamped to 0–1.
 export function computeExplorationScore({
   informationGain,
@@ -28,10 +31,15 @@ export function computeExplorationScore({
   redundancyFactor,
   maintenanceRisk,
 }) {
-  const num = informationGain * leadTimeFactor * causalStrength;
-  const den = integrationCost * noiseFactor * redundancyFactor * maintenanceRisk;
-  if (den <= 0) return 0;
-  return Math.min(1, num / den);
+  const value = Math.cbrt(informationGain * leadTimeFactor * causalStrength);
+  const cost  = Math.pow(
+    Math.max(integrationCost, 0.01) *
+    Math.max(noiseFactor,     0.01) *
+    Math.max(redundancyFactor,0.01) *
+    Math.max(maintenanceRisk, 0.01),
+    0.25
+  );
+  return Math.max(0, Math.min(1, value * (1 - cost)));
 }
 
 // leadTimeFactor — maps lag days to 0–1 discovery value (longer lead = higher value, diminishing)
