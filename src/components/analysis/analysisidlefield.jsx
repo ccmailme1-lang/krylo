@@ -1238,16 +1238,16 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 <TargetPacket />
               </div>
               <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0, background: '#000' }}>
                   {['BRIEF', 'RECON'].map(tab => (
                     <button
                       key={tab}
                       onClick={() => setRightPanel(tab)}
                       style={{
-                        padding: '8px 16px', background: 'transparent', border: 'none',
+                        padding: '10px 20px', background: 'transparent', border: 'none',
                         borderBottom: `2px solid ${rightPanel === tab ? '#66FF00' : 'transparent'}`,
-                        color: rightPanel === tab ? '#66FF00' : 'rgba(255,255,255,0.3)',
-                        fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em',
+                        color: rightPanel === tab ? '#66FF00' : 'rgba(255,255,255,0.55)',
+                        fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '0.22em',
                         cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1,
                       }}
                     >

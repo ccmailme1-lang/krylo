@@ -525,7 +525,6 @@ export default function IntelligenceBrief() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
-              <img src="/unicorn.png" alt="" style={{ width: 14, height: 14, filter: 'invert(1)', opacity: 0.65 }} />
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
             </span>
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
@@ -539,21 +538,14 @@ export default function IntelligenceBrief() {
               onClick={() => { if (!hpSnapshot.current) return; setHpOpen(true); setHpDismissed(false); setTimeout(() => { if (scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0; }, 80); }}
               style={{
                 cursor: hpSnapshot.current ? 'pointer' : 'default',
-                padding: '4px 6px', display: 'flex', alignItems: 'center',
+                display: 'flex', alignItems: 'center',
                 animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
                 opacity: hp?.qualified ? 1 : hpSnapshot.current ? 0.5 : 0,
                 visibility: hpSnapshot.current ? 'visible' : 'hidden',
-                marginLeft: '5%',
                 pointerEvents: hpSnapshot.current ? 'auto' : 'none',
               }}
             >
-              <svg width="16" height="20" viewBox="0 0 16 20" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ pointerEvents: 'none' }}>
-                <path d="M2 2 H10 L14 6 V18 H2 Z" stroke={PURPLE} strokeWidth="1" fill="none"/>
-                <path d="M10 2 V6 H14" stroke={PURPLE} strokeWidth="1" fill="none"/>
-                <line x1="4.5" y1="9"  x2="11.5" y2="9"  stroke={PURPLE} strokeWidth="0.9"/>
-                <line x1="4.5" y1="12" x2="11.5" y2="12" stroke={PURPLE} strokeWidth="0.9"/>
-                <line x1="4.5" y1="15" x2="9"    y2="15" stroke={PURPLE} strokeWidth="0.9"/>
-              </svg>
+              <img src="/unicorn.png" alt="" style={{ width: 19, height: 19, pointerEvents: 'none', filter: 'invert(1) sepia(1) hue-rotate(240deg) saturate(3) brightness(1.1)' }} />
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
