@@ -12,6 +12,7 @@
 //   epistemicClass from evidencetiers.js — set at ingestion, never recomputed.
 
 import { getDescriptor, EPISTEMIC_CLASS, CANONICAL_ROLE } from './evidencetiers.js';
+import { dispatch as dispatchLineage } from './identitylineage.js';
 
 // ── Tier stability weights (proxy for anchorStrength without calibration dep) ──────────────
 // Structural evidence stabilizes identity more than narrative.
@@ -178,8 +179,8 @@ export function createCanonicalEvent({
   timeWindow  = { start: new Date(), end: null },
   getAnchorStrength,
 } = {}) {
-  const graph = buildGraph(nodes, edges, rootSeeds, getAnchorStrength);
-  return {
+  const graph  = buildGraph(nodes, edges, rootSeeds, getAnchorStrength);
+  const event  = {
     identityId:         identityId ?? crypto.randomUUID(),
     currentVersionHash: graph.versionHash,
     evidenceGraph:      graph,
@@ -192,6 +193,8 @@ export function createCanonicalEvent({
     lineageRoot:  lineageRoot ?? (rootSeeds[0] ?? null),
     metadata:     {},   // domainPressures + SCI attached post-formation
   };
+  dispatchLineage({ type: 'CREATED', identityId: event.identityId, trigger: 'INIT', stabilityBefore: 0, stabilityAfter: graph.stabilityScore });
+  return event;
 }
 
 // ── Structural similarity ─────────────────────────────────────────────────────
@@ -262,13 +265,14 @@ export function shouldSplit(event, thresholds = DEFAULT_THRESHOLDS) {
 // ── Mutations (immutable — return new event) ──────────────────────────────────
 
 export function addNode(event, node, newEdges = [], getAnchorStrength) {
+  const stabilityBefore = event.evidenceGraph.stabilityScore;
   const newNodes = new Map(event.evidenceGraph.nodes);
   newNodes.set(node.id, node);
   const allEdges = [...event.evidenceGraph.edges, ...newEdges];
   const graph    = buildGraph(newNodes, allEdges, event.evidenceGraph.rootSeeds, getAnchorStrength);
   const nodeTs   = node.timestamp?.getTime?.() ?? node.timestamp ?? 0;
   const eventEnd = event.timeWindow.end?.getTime?.() ?? event.timeWindow.end ?? 0;
-  return {
+  const updated  = {
     ...event,
     currentVersionHash: graph.versionHash,
     evidenceGraph:      graph,
@@ -281,9 +285,12 @@ export function addNode(event, node, newEdges = [], getAnchorStrength) {
       end:   nodeTs > eventEnd ? node.timestamp : event.timeWindow.end,
     },
   };
+  dispatchLineage({ type: 'NODE_ADDED', identityId: event.identityId, trigger: node.id, stabilityBefore, stabilityAfter: graph.stabilityScore });
+  return updated;
 }
 
 export function mergeEvents(eventA, eventB, getAnchorStrength) {
+  const stabilityBefore = (eventA.evidenceGraph.stabilityScore + eventB.evidenceGraph.stabilityScore) / 2;
   const mergedNodes = new Map([...eventA.evidenceGraph.nodes, ...eventB.evidenceGraph.nodes]);
   const mergedEdges = [...eventA.evidenceGraph.edges, ...eventB.evidenceGraph.edges];
   const rootSeeds   = [...new Set([...eventA.evidenceGraph.rootSeeds, ...eventB.evidenceGraph.rootSeeds])];
@@ -292,7 +299,7 @@ export function mergeEvents(eventA, eventB, getAnchorStrength) {
   const startB = eventB.timeWindow.start?.getTime?.() ?? eventB.timeWindow.start ?? 0;
   const endA   = eventA.timeWindow.end?.getTime?.() ?? eventA.timeWindow.end ?? 0;
   const endB   = eventB.timeWindow.end?.getTime?.() ?? eventB.timeWindow.end ?? 0;
-  return {
+  const merged = {
     ...eventA,
     currentVersionHash: graph.versionHash,
     evidenceGraph:      graph,
@@ -304,6 +311,8 @@ export function mergeEvents(eventA, eventB, getAnchorStrength) {
     status: 'ACTIVE',
     metadata: { ...eventA.metadata, ...eventB.metadata },
   };
+  dispatchLineage({ type: 'MERGED', identityId: merged.identityId, trigger: [eventA.identityId, eventB.identityId], stabilityBefore, stabilityAfter: graph.stabilityScore });
+  return merged;
 }
 
 // ── Identity resolution pass ──────────────────────────────────────────────────
@@ -318,6 +327,9 @@ export function resolveIdentity(events, thresholds = DEFAULT_THRESHOLDS, getAnch
   working = working.map(event => {
     if (shouldSplit(event, thresholds)) {
       log.splits.push(event.identityId);
+      const trigger = event.evidenceGraph.stabilityScore < thresholds.theta_stability
+        ? 'LOW_STABILITY' : 'FRAGMENTATION';
+      dispatchLineage({ type: 'FRAGMENTED', identityId: event.identityId, trigger, stabilityBefore: event.evidenceGraph.stabilityScore, stabilityAfter: event.evidenceGraph.stabilityScore });
       return { ...event, status: 'FRAGMENTED' };
     }
     return event;

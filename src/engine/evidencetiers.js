@@ -48,6 +48,10 @@ export const DECAY_MODEL = {
 
 // EVIDENCE_DESCRIPTORS — intrinsic properties only.
 // Never add anchorStrength, independencePrior, or any numeric tunable here.
+//
+// entityBound: true  → independence is CONDITIONAL on entity attribution quality.
+//              false → ambient physical/aggregate signal; independence is intrinsic.
+// Structural confirmation discount for unverified entity-bound signals: see structuralconfirmation.js.
 export const EVIDENCE_DESCRIPTORS = {
   // ── Structural (T1) ────────────────────────────────────────────────────────
   POWER_CONSUMPTION: {
@@ -56,6 +60,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.LONG_TERM_BASELINE,
+    entityBound:              false,   // grid-level aggregate; no attribution required
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -66,6 +71,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.DAYS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.STATE_TRANSITION,
+    entityBound:              false,   // regional grid signal
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -76,6 +82,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.YEARS,
     decayModel:               DECAY_MODEL.NONE,
     canonicalRole:            CANONICAL_ROLE.CAUSAL_PRECURSOR,
+    entityBound:              false,   // regional infrastructure; entity tag is optional enrichment
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   true,
@@ -86,6 +93,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.ENTITY_LINKED,
+    entityBound:              true,    // demand attributed to specific facility/operator
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -96,6 +104,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.DAYS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.ANOMALY_DETECTOR,
+    entityBound:              false,   // grid event; not entity-attributed by nature
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -106,6 +115,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.LONG_TERM_BASELINE,
+    entityBound:              false,   // municipal/watershed aggregate
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -116,6 +126,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.DAYS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.STATE_TRANSITION,
+    entityBound:              false,   // internet backbone aggregate
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -126,6 +137,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.CAUSAL_PRECURSOR,
+    entityBound:              false,   // port/lane-level aggregate; not entity-specific by default
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -136,6 +148,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.YEARS,
     decayModel:               DECAY_MODEL.NONE,
     canonicalRole:            CANONICAL_ROLE.CAUSAL_PRECURSOR,
+    entityBound:              true,    // tied to specific applicant + parcel; unverified → discount
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   true,
@@ -146,6 +159,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.ENTITY_LINKED,
+    entityBound:              true,    // attributed to specific provider/facility
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -158,6 +172,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.ENTITY_LINKED,
+    entityBound:              true,    // specific filer; CIK-verifiable
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -168,6 +183,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.MONTHS,
     decayModel:               DECAY_MODEL.LINEAR,
     canonicalRole:            CANONICAL_ROLE.ENTITY_LINKED,
+    entityBound:              true,    // specific company; ticker-verifiable
     canCreateCanonicalEvent:  true,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -180,6 +196,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.WEEKS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.STATE_TRANSITION,
+    entityBound:              true,    // subject entity must be verified for attribution
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -190,6 +207,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.DAYS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.STATE_TRANSITION,
+    entityBound:              true,    // entity-specific coverage; unverified → discount
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -200,6 +218,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.DAYS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.STATE_TRANSITION,
+    entityBound:              true,    // issuer must be verified
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: true,
     canSplitCanonicalEvent:   false,
@@ -212,6 +231,7 @@ export const EVIDENCE_DESCRIPTORS = {
     predictiveHorizon:        PREDICTIVE_HORIZON.HOURS,
     decayModel:               DECAY_MODEL.EXPONENTIAL,
     canonicalRole:            CANONICAL_ROLE.ANOMALY_DETECTOR,
+    entityBound:              false,   // ambient sentiment aggregate; entity tag optional
     canCreateCanonicalEvent:  false,
     canStrengthenCanonicalEvent: false,
     canSplitCanonicalEvent:   false,

@@ -30,6 +30,11 @@ const CALIBRATION_PRIORS = {
   SOCIAL_MEDIA:            { anchorStrength: 0.12, independencePrior: 0.18 },
 };
 
+// Entity-bound discount: applied when a type is entityBound AND no node in the graph
+// has metadata.entityVerified === true. Independence is conditional on attribution quality.
+// 0.70 = structural weight of an entity claim without verification backing.
+const ENTITY_DISCOUNT = 0.70;
+
 // Tier weights: reflect non-fabricability hierarchy.
 // STRUCTURAL at 0.50 — only tier where fabrication is physically costly.
 const TIER_WEIGHT = {
@@ -63,36 +68,50 @@ export function getAnchorStrength(evidenceType) {
 export function computeSCI(evidenceGraph) {
   if (!evidenceGraph?.nodes?.size) return null;
 
+  const nodes = Array.from(evidenceGraph.nodes.values());
+
   // One contribution per distinct evidenceType — stacking rule enforced.
-  const coveredTypes = new Set(
-    Array.from(evidenceGraph.nodes.values()).map(n => n.evidenceType)
+  const coveredTypes = new Set(nodes.map(n => n.evidenceType));
+
+  // Entity verification index: type → true if ANY node of that type is explicitly verified.
+  // entityBound types without a verified node receive ENTITY_DISCOUNT on independence.
+  const verifiedTypes = new Set(
+    nodes
+      .filter(n => n.metadata?.entityVerified === true)
+      .map(n => n.evidenceType)
   );
 
   let raw = 0;
-  const classCount = {};
+  const classCount    = {};
+  const discountedTypes = [];
 
   for (const type of coveredTypes) {
     const descriptor = getDescriptor(type);
     const cal        = CALIBRATION_PRIORS[type];
     if (!descriptor || !cal) continue;
 
-    // Use independenceObserved once calibrated (N≥20); fall back to prior.
-    const independence  = cal.independenceObserved ?? cal.independencePrior;
-    const contribution  = cal.anchorStrength * independence;
-    const tw            = TIER_WEIGHT[descriptor.epistemicClass] ?? 0.05;
+    const baseIndependence = cal.independenceObserved ?? cal.independencePrior;
+    // Apply discount when entity attribution is required but unverified.
+    const isDiscounted = descriptor.entityBound && !verifiedTypes.has(type);
+    const independence = isDiscounted ? baseIndependence * ENTITY_DISCOUNT : baseIndependence;
+    if (isDiscounted) discountedTypes.push(type);
+
+    const contribution = cal.anchorStrength * independence;
+    const tw           = TIER_WEIGHT[descriptor.epistemicClass] ?? 0.05;
     raw += contribution * tw;
     classCount[descriptor.epistemicClass] = (classCount[descriptor.epistemicClass] ?? 0) + 1;
   }
 
-  const score       = parseFloat(Math.min(10, MAX_POSSIBLE > 0 ? (raw / MAX_POSSIBLE) * 10 : 0).toFixed(1));
+  const score        = parseFloat(Math.min(10, MAX_POSSIBLE > 0 ? (raw / MAX_POSSIBLE) * 10 : 0).toFixed(1));
   // Groundedness: rises with coverage diversity; saturates at ~8 distinct types
   const groundedness = parseFloat(Math.min(1, coveredTypes.size / 8).toFixed(2));
 
   return {
     score,
     groundedness,
-    coveredTypes:  [...coveredTypes],
-    classCoverage: classCount,   // { STRUCTURAL: 3, FINANCIAL: 1, ... }
+    coveredTypes:    [...coveredTypes],
+    classCoverage:   classCount,         // { STRUCTURAL: 3, FINANCIAL: 1, ... }
+    discountedTypes,                     // entity-bound types that had no verified node
   };
 }
 

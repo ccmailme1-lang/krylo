@@ -1,14 +1,16 @@
 // Epistemic Spine Stress Harness
-// Validates WO-2004 (Identity Kernel) + WO-2005A/B (Taxonomy + SCI) under adversarial pressure.
+// Validates WO-2004 (Identity Kernel) + WO-2005A/B (Taxonomy + SCI) + WO-2007 (Entity Discount +
+// Identity Lineage) under adversarial pressure.
 //
 // Scenario: NVDA / AWS — power infrastructure build-out (structural) running concurrently
 // with earnings-driven analyst cycle (narrative) on the same entity.
 //
-// Four assertion suites:
+// Five assertion suites:
 //   1. FALSE-MERGE PREVENTION  — structural ≠ narrative identity even at high semantic overlap
 //   2. SCI ANCHORING           — structural SCI stays high; narrative SCI trends toward 0 under noise
 //   3. IDENTITY STABILITY      — identityId invariant under graph mutation (versionHash may change)
 //   4. CALIBRATION GATE        — independenceObserved never fires at N < 20 (no premature correction)
+//   5. WO-2007 — entityBound discount + identity lineage event bus
 //
 // Run: node qa_epistemic_spine.mjs
 
@@ -32,6 +34,12 @@ import {
   EPISTEMIC_CLASS,
   getDescriptor,
 } from './src/engine/evidencetiers.js';
+
+import {
+  subscribe,
+  getHistory,
+  clearHistory,
+} from './src/engine/identitylineage.js';
 
 // ── Harness infrastructure ────────────────────────────────────────────────────
 
@@ -186,24 +194,31 @@ check(
 note(`Structural SCI: ${sciStructural.score}/10 (3 types / 16 theoretical — partial coverage expected)`);
 note(`Narrative SCI:  ${sciNarrative.score}/10 (groundedness ${sciNarrative.groundedness})`);
 
-// Full-coverage demonstration: all 9 T1 structural types → SCI must reach ≥ 9.0
+// Full-coverage demonstration: all 9 T1 structural types, entity-bound ones marked verified.
+// POWER_DATACENTER_DEMAND + COMPUTE_CAPACITY are entityBound: true — supply entityVerified: true
+// to demonstrate maximum possible SCI for a fully-attributed structural event.
 const allStructTypes = [
   'POWER_CONSUMPTION','POWER_LOAD','POWER_INFRA','POWER_DATACENTER_DEMAND','POWER_DISCONTINUITY',
   'WATER_USAGE','NETWORK_TRAFFIC','FREIGHT_LOGISTICS','CONSTRUCTION_PERMITS','COMPUTE_CAPACITY',
 ];
+const ENTITY_BOUND_T1 = new Set(['POWER_DATACENTER_DEMAND','CONSTRUCTION_PERMITS','COMPUTE_CAPACITY']);
 const fullMap = new Map();
 for (const t of allStructTypes) {
-  const n = structuralNode(t);
+  const n = createEvidenceNode({
+    evidenceType: t,
+    metadata:     ENTITY_BOUND_T1.has(t) ? { entityVerified: true } : {},
+    timestamp:    t0,
+  });
   fullMap.set(n.id, n);
 }
 const fullStructuralEvent = createCanonicalEvent({ nodes: fullMap, edges: [], rootSeeds: [], timeWindow: { start: t0, end: new Date() } });
 const sciFullCoverage = computeSCI(fullStructuralEvent.evidenceGraph);
 check(
-  'Full T1 coverage (9 types) → SCI ≥ 9.0 (high epistemic saturation)',
+  'Full T1 coverage with verified entities → SCI ≥ 9.0',
   sciFullCoverage.score >= 9.0,
   `got ${sciFullCoverage.score}`,
 );
-note(`Full T1 coverage SCI: ${sciFullCoverage.score}/10`);
+note(`Full T1 verified SCI: ${sciFullCoverage.score}/10 (discounted: ${sciFullCoverage.discountedTypes?.join(',') || 'none'})`);
 
 // Noise injection: add 3 more narrative types to narrative event — SCI must not rise significantly
 let noisyNarrative = narrativeEvent;
@@ -364,6 +379,133 @@ check(
   `SOCIAL_MEDIA=${socialAnchor} min=${minAnchor}`,
 );
 note(`Anchor range: ${minAnchor} (SOCIAL_MEDIA) → ${Math.max(...allAnchors)} (POWER_INFRA)`);
+
+// ── Suite 5: WO-2007 — Entity Discount + Identity Lineage ────────────────────
+section('Suite 5 — WO-2007: Entity Bound Discount + Lineage Event Bus');
+
+// 5A: entityBound classification
+// Ambient T1 types must be entityBound: false; entity-linked types must be true.
+const ambientTypes   = ['POWER_CONSUMPTION','POWER_LOAD','POWER_INFRA','POWER_DISCONTINUITY','WATER_USAGE','NETWORK_TRAFFIC','FREIGHT_LOGISTICS','SOCIAL_MEDIA'];
+const entityBoundTypes = ['POWER_DATACENTER_DEMAND','CONSTRUCTION_PERMITS','COMPUTE_CAPACITY','SEC_FILING','EARNINGS_CALL','ANALYST_REPORT','NEWS_ARTICLE','PRESS_RELEASE'];
+
+check(
+  'Ambient types have entityBound: false',
+  ambientTypes.every(t => getDescriptor(t)?.entityBound === false),
+  ambientTypes.filter(t => getDescriptor(t)?.entityBound !== false).join(', ') || 'all pass',
+);
+check(
+  'Entity-linked types have entityBound: true',
+  entityBoundTypes.every(t => getDescriptor(t)?.entityBound === true),
+  entityBoundTypes.filter(t => getDescriptor(t)?.entityBound !== true).join(', ') || 'all pass',
+);
+
+// 5B: Entity discount — CONSTRUCTION_PERMITS is entityBound: true.
+// Unverified node → independence × 0.70 → SCI lower than verified.
+const permitNodeUnverified = createEvidenceNode({
+  evidenceType: 'CONSTRUCTION_PERMITS',
+  metadata:     { entityVerified: false },
+  timestamp:    t0,
+});
+const permitNodeVerified = createEvidenceNode({
+  evidenceType: 'CONSTRUCTION_PERMITS',
+  metadata:     { entityVerified: true },
+  timestamp:    t0,
+});
+
+const mapUnverified = new Map([[permitNodeUnverified.id, permitNodeUnverified]]);
+const mapVerified   = new Map([[permitNodeVerified.id, permitNodeVerified]]);
+const eventUnverified = createCanonicalEvent({ nodes: mapUnverified, edges: [], rootSeeds: [permitNodeUnverified.id], timeWindow: { start: t0, end: new Date() } });
+const eventVerified   = createCanonicalEvent({ nodes: mapVerified,   edges: [], rootSeeds: [permitNodeVerified.id],   timeWindow: { start: t0, end: new Date() } });
+
+const sciUnverified = computeSCI(eventUnverified.evidenceGraph);
+const sciVerified   = computeSCI(eventVerified.evidenceGraph);
+
+check(
+  'Verified entity → SCI > unverified entity (discount applied)',
+  sciVerified.score > sciUnverified.score,
+  `verified=${sciVerified.score} unverified=${sciUnverified.score}`,
+);
+check(
+  'Unverified CONSTRUCTION_PERMITS appears in discountedTypes',
+  sciUnverified.discountedTypes?.includes('CONSTRUCTION_PERMITS'),
+  `discountedTypes=${JSON.stringify(sciUnverified.discountedTypes)}`,
+);
+check(
+  'Verified CONSTRUCTION_PERMITS NOT in discountedTypes',
+  !sciVerified.discountedTypes?.includes('CONSTRUCTION_PERMITS'),
+);
+note(`SCI verified=${sciVerified.score}/10 unverified=${sciUnverified.score}/10 (discount factor 0.70)`);
+
+// Ambient type (POWER_CONSUMPTION, entityBound: false) — never discounted regardless of metadata
+const ambientNode = createEvidenceNode({ evidenceType: 'POWER_CONSUMPTION', metadata: { entityVerified: false }, timestamp: t0 });
+const ambientMap  = new Map([[ambientNode.id, ambientNode]]);
+const ambientEvt  = createCanonicalEvent({ nodes: ambientMap, edges: [], rootSeeds: [ambientNode.id], timeWindow: { start: t0, end: new Date() } });
+const sciAmbient  = computeSCI(ambientEvt.evidenceGraph);
+check(
+  'Ambient T1 type (POWER_CONSUMPTION) not discounted even when entityVerified=false',
+  !sciAmbient.discountedTypes?.includes('POWER_CONSUMPTION'),
+);
+
+// 5C: Lineage event bus
+clearHistory();
+const lineageEvents = [];
+const unsub = subscribe(e => lineageEvents.push(e));
+
+// Build a small event — CREATED fires on createCanonicalEvent
+const lNode = createEvidenceNode({ evidenceType: 'POWER_INFRA', timestamp: t0 });
+const lMap  = new Map([[lNode.id, lNode]]);
+const lEvt  = createCanonicalEvent({ nodes: lMap, edges: [], rootSeeds: [lNode.id], timeWindow: { start: t0, end: new Date() } });
+
+// NODE_ADDED fires on addNode
+const lNode2  = createEvidenceNode({ evidenceType: 'FREIGHT_LOGISTICS', timestamp: new Date(t0.getTime() + delta) });
+const lEvt2   = addNode(lEvt, lNode2);
+
+// FRAGMENTED fires in resolveIdentity split pass
+const fragEvtMap = new Map();
+for (let i = 0; i < 10; i++) { const n = createEvidenceNode({ evidenceType: 'SOCIAL_MEDIA' }); fragEvtMap.set(n.id, n); }
+const fragEvtL = createCanonicalEvent({ nodes: fragEvtMap, edges: [], rootSeeds: [], timeWindow: { start: t0, end: new Date() } });
+resolveIdentity([fragEvtL]);
+
+unsub();
+
+const createdEvents    = lineageEvents.filter(e => e.type === 'CREATED');
+const nodeAddedEvents  = lineageEvents.filter(e => e.type === 'NODE_ADDED');
+const fragmentedEvents = lineageEvents.filter(e => e.type === 'FRAGMENTED');
+
+check(
+  'CREATED event emitted on createCanonicalEvent',
+  createdEvents.some(e => e.identityId === lEvt.identityId),
+);
+check(
+  'NODE_ADDED event emitted on addNode with correct identityId',
+  nodeAddedEvents.some(e => e.identityId === lEvt.identityId && e.trigger === lNode2.id),
+);
+check(
+  'FRAGMENTED event emitted by resolveIdentity split pass',
+  fragmentedEvents.length > 0,
+);
+check(
+  'Lineage events have ts field',
+  lineageEvents.every(e => typeof e.ts === 'number'),
+);
+check(
+  'stabilityBefore / stabilityAfter present on all events',
+  lineageEvents.every(e => typeof e.stabilityBefore === 'number' && typeof e.stabilityAfter === 'number'),
+);
+check(
+  'getHistory(identityId) filters correctly',
+  getHistory(lEvt.identityId).every(e => e.identityId === lEvt.identityId || (Array.isArray(e.trigger) && e.trigger.includes(lEvt.identityId))),
+);
+check(
+  'Unsubscribe works — no new events after unsub',
+  (() => {
+    const before = lineageEvents.length;
+    createCanonicalEvent({ nodes: new Map(), edges: [], timeWindow: { start: new Date(), end: null } });
+    return lineageEvents.length === before;
+  })(),
+);
+
+note(`Lineage events captured: ${lineageEvents.length} (CREATED=${createdEvents.length} NODE_ADDED=${nodeAddedEvents.length} FRAGMENTED=${fragmentedEvents.length})`);
 
 // ── Final summary ─────────────────────────────────────────────────────────────
 
