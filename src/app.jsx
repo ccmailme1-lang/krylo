@@ -1069,7 +1069,7 @@ export default function App() {
               selection={selection}
               clickEvent={clickEvent}
               onSelectCone={setSelection}
-              maxCones={surfaceActivated ? undefined : 3}
+              maxCones={undefined}
               searchPreview={searchPreview}
               onSearchPreviewSave={() => setSearchPreview(null)}
               onArcClick={(a, b) => {

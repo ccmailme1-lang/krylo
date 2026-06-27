@@ -110,11 +110,13 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const baseY      = coneHeight / 2 - coneHeight * 0.1;
 
-  // Phase A heuristic vector derivation — canonical mapping pending WO-1125
-  const leverageN  = activePressure / 100;
-  const vector     = { D: leverageN, V: activeVolatility, A: leverageN, T: 0.7 };
-  const { theme }  = classifyConvergenceState(vector, 0.8);
-  const stateColor = state.colorOverride ?? THEME_COLOR[theme] ?? LIME;
+  // Stage-aligned color: mirrors Y-axis markers (LO·50, MID·75, HI·90)
+  // §6: purple must remain rare — only genuine HI-tier signals (≥90) earn it.
+  const stageColor = activePressure >= 90 ? '#8A2BE2'
+    : activePressure >= 75 ? '#66FF00'
+    : activePressure >= 50 ? '#3a3d4a'
+    : '#1a1a1a';
+  const stateColor = state.colorOverride ?? stageColor;
 
   // velocity heuristic (Phase A) — deviation from neutral baseline (50)
   const velocity = (activePressure - 50) * 0.3;
