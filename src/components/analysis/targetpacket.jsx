@@ -321,6 +321,67 @@ function TrajectoryChart({ points, color = LIME, w = '100%', h = 60 }) {
   );
 }
 
+// ── WO-1880: Fracture Output Surface (§20 Direction Honesty) ─────────────────
+// First-class signal surface. Equal visual weight to constructive output.
+// Fracture polarity is a detection event, not a warning label.
+function FractureSignalSurface({ domainPressures }) {
+  const all          = Object.values(domainPressures);
+  const fracturing   = all.filter(p => p.polarity === 'fracture' && p.signalCount > 0);
+  const constructive = all.filter(p => p.polarity !== 'fracture' && p.signalCount > 0);
+
+  if (fracturing.length === 0) {
+    return (
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.15)', flexShrink: 0 }}>DOMAIN STATUS</span>
+        {all.map(p => (
+          <span key={p.domain} style={{
+            fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em',
+            color: p.signalCount > 0 ? 'rgba(102,255,0,0.35)' : 'rgba(255,255,255,0.10)',
+          }}>{p.domain}</span>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ flexShrink: 0, borderTop: '1px solid rgba(0,127,255,0.35)', padding: '14px 24px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 12 }}>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.35em', color: BLUE }}>STRUCTURAL DIVERGENCE</span>
+        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em', color: 'rgba(0,127,255,0.55)' }}>
+          {fracturing.length} DOMAIN{fracturing.length !== 1 ? 'S' : ''} IN FRACTURE POLARITY
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: constructive.length > 0 ? 12 : 0 }}>
+        {fracturing.map(p => (
+          <div key={p.domain} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: BLUE }}>{p.domain}</span>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+              <span style={{ fontFamily: MONO, fontSize: 13, color: BLUE, fontWeight: 600, letterSpacing: '0.02em' }}>
+                {p.magnitude.toFixed(0)}
+              </span>
+              <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,127,255,0.55)', letterSpacing: '0.12em' }}>
+                {p.signalCount} SIG
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {constructive.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
+          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>CONSTRUCTIVE</span>
+          {constructive.map(p => (
+            <span key={p.domain} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.40)' }}>
+              {p.domain} · {p.magnitude.toFixed(0)}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function TargetPacket() {
   const sessions       = useAnalysisStore(s => s.sessions);
@@ -865,26 +926,8 @@ export default function TargetPacket() {
       {/* ── WO-1868: Metric Strip ───────────────────────────────────────── */}
       <MetricStrip metrics={metrics} visibility={visibility} />
 
-      {/* ── WO-1880: Domain Pressure Surface (§20 Direction Honesty) ──────── */}
-      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '10px 24px' }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, marginBottom: 8 }}>DOMAIN PRESSURE</div>
-        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-          {Object.values(domainPressures).map(p => {
-            const isFracture = p.polarity === 'fracture' && p.signalCount > 0;
-            const labelColor = isFracture ? BLUE : p.signalCount > 0 ? LIME : 'rgba(255,255,255,0.15)';
-            return (
-              <div key={p.domain} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: labelColor }}>{p.domain}</span>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em' }}>
-                  {p.signalCount > 0
-                    ? `${p.magnitude.toFixed(0)} · ${isFracture ? 'FRACTURE' : 'CONSTRUCTIVE'}`
-                    : '— · NO SIGNAL'}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* ── WO-1880: Fracture Output Surface (§20 Direction Honesty) ─────── */}
+      <FractureSignalSurface domainPressures={domainPressures} />
 
     </div>
   );
