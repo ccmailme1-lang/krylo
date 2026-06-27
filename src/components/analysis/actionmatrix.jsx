@@ -9,6 +9,7 @@ import { getDisplayEntity }        from '../../utils/formatters.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
 import MetricStrip                from './metricstrip.jsx';
+import { useMetricVisibility }    from '../../hooks/useMetricVisibility.js';
 import { getLRPrior }             from '../../engine/pathstore.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -167,6 +168,7 @@ export default function ActionMatrix() {
   const stateLabel   = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   const lrPrior      = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const visibility   = useMetricVisibility(metrics);
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
   const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 
@@ -211,7 +213,7 @@ export default function ActionMatrix() {
       </div>
 
       {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} />
+      <MetricStrip metrics={metrics} visibility={visibility} />
 
       {/* ── Structural Friction alert — injected pre-hero when HIGH_FRICTION */}
       {showFriction && <FrictionCard friction={structuralFriction} />}

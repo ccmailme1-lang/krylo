@@ -12,6 +12,7 @@ import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }      from '../../engine/metricsengine.js';
 import MetricStrip             from './metricstrip.jsx';
+import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { fetchHNTop }        from '../../hooks/usehnsignals.js';
@@ -350,6 +351,7 @@ export default function TargetPacket() {
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const visibility      = useMetricVisibility(metrics);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 
@@ -859,7 +861,7 @@ export default function TargetPacket() {
       )}
 
       {/* ── WO-1868: Metric Strip ───────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} />
+      <MetricStrip metrics={metrics} visibility={visibility} />
 
       {/* ── WO-1880: Domain Pressure Surface (§20 Direction Honesty) ──────── */}
       <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '10px 24px' }}>

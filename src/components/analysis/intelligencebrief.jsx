@@ -15,6 +15,7 @@ import { validateImport, reconstructSession, reconstructAcquisition, parseImport
 import { getTracker } from '../../engine/decisionvelocity.js';
 import { computeMetrics } from '../../engine/metricsengine.js';
 import MetricStrip from './metricstrip.jsx';
+import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -296,6 +297,7 @@ export default function IntelligenceBrief() {
     return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
   }, [synthesis, session?.lens]);
   const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const visibility                = useMetricVisibility(metrics);
   const convictions               = useConvictionStore();
 
   useEffect(() => {
@@ -922,7 +924,7 @@ export default function IntelligenceBrief() {
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
-        <MetricStrip metrics={metrics} />
+        <MetricStrip metrics={metrics} visibility={visibility} />
 
 
         {/* 01 · BLUF */}
