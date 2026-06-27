@@ -147,27 +147,40 @@ SESSION 2026-06-26 CONT — COMPLETE:
           pathstore.js (135 lines) · logEmission on COMMIT THESIS · LOG OUTCOME UI in intelligencebrief
           · lrPrior → metricsengine → MetricStrip on all 3 surfaces. Loop is closed.
 
-OPEN WO LIST (single list — updated 2026-06-26):
+SESSION 2026-06-27 — COMPLETE (48a2cda):
+  WO-2011 HP Tier Gate — COMPLETE (a227346). hptiergate.js + arbitrateHP(). MEDIA+KNOWLEDGE alone
+          blocked from HP. TECHNOLOGY/CAPITAL/OWNERSHIP required in evidence for HP-2+.
+  DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16). background '#000' on wrapper divs +
+          results-enter animation removed. Panels now appear instantly.
+  WO-2007 Signal Recon Layer — SPEC (48a2cda). specs/WO-2007-signal-recon-layer.md.
+          SCP schema, ExplorationScore, epistemic budget, causal validity gate, negative genealogy,
+          happy path genome 3-object structure. WO-2004 complete → WO-2007 now UNBLOCKED.
+  Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
+
+OPEN WO LIST (single list — updated 2026-06-27):
   VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
   DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
-  COMPLETE:    WO-1869 Closed-Loop Leverage Engine — DONE (pathstore + logEmission + Log Outcome UI + MetricStrip)
-               WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380, 21/21 QA)
-               WO-1877 EIA connector DONE. eiaconnector.js + as-diff/engine.js /api/eia proxy +
-               app.jsx:700 runEiaSync(). CONFIRMED 2026-06-26. STOP ASKING.
+  COMPLETE:    WO-1869 Closed-Loop Leverage Engine — DONE
+               WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380)
+               WO-1877 EIA connector DONE. CONFIRMED 2026-06-26. STOP ASKING.
+               WO-2011 HP Tier Gate — DONE (a227346)
+               DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16)
   SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 done)
                 WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
                 WO-1862 Safe Matcher (deferred)
-  CONSTITUTIONAL SEQUENCE (locked 2026-06-26):
-                WO-2005A — Signal Epistemic Taxonomy (governance layer) — BUILD-READY
-                           spec: specs/WO-2005A-signal-epistemic-taxonomy.md
-                           intrinsic-only EvidenceDescriptor; evidencetiers.js; no scoring
-                WO-2004  — CanonicalEvent Identity Kernel — SPEC, blocked on WO-2005A
-                           spec: specs/WO-2004-canonical-event-identity-kernel.md
-                WO-2005B — Structural Confirmation Engine (SCI + calibration) — SPEC, blocked on WO-2004
-                           spec: specs/WO-2005B-structural-confirmation-engine.md
-                           calibrated priors live here; SCI formula; Structural Divergence (§20 trigger)
-                WO-2006  — Interpretation Validation — PLACEHOLDER (spec TBD)
-                MetricStrip — SCI (8th metric) + SPS (9th metric) — after WO-2005B
+                WO-2006 Interpretation Validation — PLACEHOLDER (spec TBD)
+  CONSTITUTIONAL SEQUENCE (updated 2026-06-27):
+                WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
+                           evidencetiers.js: EVIDENCE_DESCRIPTORS + getDescriptor() + listByClass()
+                WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
+                           identitykernel.js: createEvidenceNode, merge/split, stabilityScore
+                WO-2005B — Structural Confirmation Engine — COMPLETE (7e83107)
+                           structuralconfirmation.js: SCI formula + calibration priors
+                WO-2007  — Signal Recon Layer (Exploratory Genealogy Engine) — BUILD-READY
+                           spec: specs/WO-2007-signal-recon-layer.md
+                           7 files: signalgenealogy · scpstore · epistemicbudget ·
+                           causalvaliditygate · reconlayer · happypathgenome · recondashboard
+                MetricStrip — SCI (8th metric) + SPS (9th metric) — after WO-2005B ✓ (unblocked)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector — COMPLETE. Proxy + connector + app wiring all done. Confirmed 2026-06-26. Do not re-question.
