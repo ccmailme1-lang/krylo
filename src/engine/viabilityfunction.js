@@ -5,7 +5,7 @@
 
 const STRUCTURAL_DOMAINS = new Set(['TECHNOLOGY', 'CAPITAL', 'OWNERSHIP']);
 const STRESS_SUPPRESSION = 0.70; // structural evidence suppressed 70% under POWER_DISCONTINUITY
-const VIABILITY_THRESHOLD = 0.50;
+const VIABILITY_THRESHOLD = 0.20;
 
 export function computeViability(evidence, hpScore) {
   const total = evidence.length;
