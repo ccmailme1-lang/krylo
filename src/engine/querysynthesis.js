@@ -119,6 +119,13 @@ function fmtN(n) { return Math.round(n).toLocaleString(); }
 // influence domain routing — their presence says nothing about domain.
 const PROPER_NOUN_EXCLUSIONS = /\b(google|microsoft|apple|amazon|netflix|spotify|twitter|facebook|instagram|tiktok|youtube|twitch|zywoo|ropz|peanut|pewdiepie|ishowspeed|xqc|ninja|valorant|fortnite|navi|fnatic|faze|vitality|g2\s+esports|100\s*thieves)\b/gi;
 
+// WO-1872: conservative investment-context signal — strong explicit signals only.
+// "invest" alone is excluded (too many non-financial uses); portfolio/equity/stocks are load-bearing.
+const INVESTMENT_CONTEXT = /investment policy|investment objective|asset allocation|portfolio|\bequit(y|ies)\b|\bstocks?\b|\bshares?\b|\bbonds?\b|securities|brokerage|ticker|holdings?/i;
+// Non-brand automotive terms — presence of any of these means the query is about a vehicle,
+// not a ticker, so AUTO suppression does NOT fire even in investment context.
+const AUTO_EXPLICIT_VEHICLE = /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bdealer\b|\bdrive\b|\bmpg\b/;
+
 // Keyword patterns for co-activity scoring — parallel to routing rules but
 // produces hit counts per domain rather than a single winner.
 // Used by classifyAmbiguity() to detect SOFT multi-domain states.
@@ -151,9 +158,15 @@ function resolvePrimary(q, lens) {
   // "vehicle" is automotive only — exclude financial "investment/savings vehicle".
   // Brand names carry \b to stop substring bleed (kia∈Nokia/Slovakia, suv∈ inside words).
   const autoVehicleWord = /\bvehicle\b/.test(q) && !/(investment|savings|financial|funding|tax.advantaged|retirement)\s+vehicles?/.test(q);
+  // WO-1872: if the only AUTO signal is a brand name (Tesla/Ford/Rivian etc.) and the query
+  // carries explicit investment context, suppress AUTO — the brand is a ticker, not a vehicle.
+  // Explicit vehicle terms (car/truck/lease/dealer/drive/mpg) override the suppression.
+  const autoBrandOnly = !AUTO_EXPLICIT_VEHICLE.test(q) && !autoVehicleWord;
   if (
-    /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
-    || autoVehicleWord
+    (
+      /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
+      || autoVehicleWord
+    ) && !(INVESTMENT_CONTEXT.test(q) && autoBrandOnly)
   ) return 'AUTO';
   // Property/homestead tax exemptions, freezes, deferrals, rebates are senior cost-relief
   // levers — NOT real-estate transactions. Must precede the REAL_ESTATE 'property' keyword.
