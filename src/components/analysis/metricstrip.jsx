@@ -47,7 +47,7 @@ function Tile({ label, display, groundedness, tag }) {
 
 export default function MetricStrip({ metrics, style }) {
   if (!metrics) return null;
-  const { signal, validity, convergence, cac, roas, ltv, leverageRealization } = metrics;
+  const { signal, validity, convergence, cac, roas, ltv, leverageRealization, sci, sps } = metrics;
 
   const lr = leverageRealization;
   const tiles = [
@@ -92,6 +92,18 @@ export default function MetricStrip({ metrics, style }) {
       display: lr ? `${lr.avgLR}× N=${lr.n}` : '— N<5',
       groundedness: lr?.groundedness ?? 0,
       tag: lr ? null : 'RECORDING',
+    },
+    {
+      label: 'SCI',
+      display: sci ? `${sci.score}/10` : '—',
+      groundedness: sci?.groundedness ?? 0,
+      tag: sci ? null : 'NO GRAPH',
+    },
+    {
+      label: 'SPS',
+      display: sps ? `${sps.avgLR}× N=${sps.n}` : '— N<5',
+      groundedness: sps ? Math.min(1, sps.n / 5) : 0,
+      tag: sps ? null : 'RECORDING',
     },
   ];
 

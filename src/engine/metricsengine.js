@@ -19,7 +19,8 @@ function g(observedWeight, totalWeight) {
 }
 
 // lrPrior: { avgLR, rank, n, earlyRatio } from pathstore.getLRPrior(), or null if N<5
-export function computeMetrics(synthesis, hpState = null, persona = null, lrPrior = null) {
+// sciData: { sci, sps } from structuralconfirmation.computeStructuralSuite(), or null if no EvidenceGraph yet
+export function computeMetrics(synthesis, hpState = null, persona = null, lrPrior = null, sciData = null) {
   const ambiguous = !synthesis
     || synthesis?.resolutionEligible === false
     || synthesis?.queryDomain === 'AMBIGUOUS';
@@ -103,6 +104,9 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
     roas: { value: roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED' },
     ltv:  { value: ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED' },
     leverageRealization: lr,
+    // SCI (8th) + SPS (9th) — populated when EvidenceGraph exists (WO-2004/2005B pipeline)
+    sci: sciData?.sci ?? null,
+    sps: sciData?.sps ?? null,
     ltvCacRatio,
     economicsGroundedness,
     decisionEmissionScore,

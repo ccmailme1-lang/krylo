@@ -118,6 +118,25 @@ export function getLRPrior({ domain, stateLabel, lens }) {
 
 export function getAllRecords() { return load(); }
 
+// getLRPriorByKey — like getLRPrior but accepts a pre-built route key.
+// Used by structuralconfirmation.js (WO-2005B) for structural composition keys.
+export function getLRPriorByKey(key) {
+  const records    = load();
+  const attributed = records.filter(r => r.routeKey === key && r.followed !== 'none' && r.lr !== null);
+  if (attributed.length < MIN_N) return null;
+  const avgLR       = attributed.reduce((s, r) => s + r.lr, 0) / attributed.length;
+  const earlyCount  = attributed.filter(r => r.earlinessTag === 'early').length;
+  const earlyRatio  = earlyCount / attributed.length;
+  const earlinessFactor = 0.5 + earlyRatio * 0.5;
+  return {
+    routeKey:   key,
+    avgLR:      parseFloat(avgLR.toFixed(2)),
+    rank:       parseFloat((avgLR * earlinessFactor).toFixed(2)),
+    n:          attributed.length,
+    earlyRatio: parseFloat(earlyRatio.toFixed(2)),
+  };
+}
+
 // ── React hook ────────────────────────────────────────────────────────────────
 // revision counter triggers re-render after store mutation; localStorage is the source of truth.
 
