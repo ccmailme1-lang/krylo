@@ -141,14 +141,20 @@ SESSION 2026-06-26 — COMPLETE (097b63f):
   WO-1868 MetricStrip mounted · WO-1877 COMPLETE (eiaconnector.js + /api/eia proxy + runEiaSync wired)
   State-of-system artifact + WO-2004 CanonicalEvent spec saved. NOT DEPLOYED.
 
+SESSION 2026-06-26 CONT — COMPLETE:
+  WO-1872 Brand-as-Ticker AUTO suppression (ce92380) — 21/21 QA PASS
+  WO-1869 Closed-Loop Leverage Engine — CONFIRMED COMPLETE (built in ae3633c);
+          pathstore.js (135 lines) · logEmission on COMMIT THESIS · LOG OUTCOME UI in intelligencebrief
+          · lrPrior → metricsengine → MetricStrip on all 3 surfaces. Loop is closed.
+
 OPEN WO LIST (single list — updated 2026-06-26):
   VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
   DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
-  PRIORITY: WO-1868 metricsengine.js COMPLETE; metricstrip.jsx COMPLETE; wired on 3 surfaces ✓
-            WO-1869 Closed-Loop Leverage Engine — decisions locked 2026-06-25, BUILD-READY
-  COMPLETE:    WO-1877 EIA connector DONE. eiaconnector.js + as-diff/engine.js /api/eia proxy +
+  COMPLETE:    WO-1869 Closed-Loop Leverage Engine — DONE (pathstore + logEmission + Log Outcome UI + MetricStrip)
+               WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380, 21/21 QA)
+               WO-1877 EIA connector DONE. eiaconnector.js + as-diff/engine.js /api/eia proxy +
                app.jsx:700 runEiaSync(). CONFIRMED 2026-06-26. STOP ASKING.
-  BUILD-READY: WO-1872 Brand-as-Ticker AUTO suppression (regression risk, QA-gated)
+  SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 done)
   SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (blocked WO-1868 — now unblocked)
                 WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
                 WO-1862 Safe Matcher (deferred)
@@ -159,11 +165,10 @@ NEW WOs FILED 2026-06-25 (specs in /specs):
   1876 — Search DNA Intelligence Surface (Layer 3 repurposing — 4 cards around composer) — SPEC, BLOCKED pending WO-1868
   1875 — Canonical AMBIGUOUS State (proper noun / no-domain-match → options UI → user directs) — SPEC, BLOCKED (UI mount point TBD)
   1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
-  1872 — Brand-as-Ticker / investment-context AUTO suppression — SPEC (regression risk; QA-gated)
+  1872 — Brand-as-Ticker / investment-context AUTO suppression — COMPLETE (ce92380, 21/21 QA)
   1871 — Quiet residual chrome under INSUFFICIENT (HP chip + empty P4 block) — BUILD-READY
   1870 — STARTUP_FINANCE orphan (truthful queryDomain + \b) — BUILD-READY
-  1869 — Closed-Loop Leverage Engine (Leverage Realization + Path Memory) — GOVERNING SPEC, BLOCKED
-         (5 open decisions); implements §19; builds on convictionstore.js (1823/1824/1825)
+  1869 — Closed-Loop Leverage Engine — COMPLETE (ae3633c). pathstore.js + logEmission + LOG OUTCOME UI + MetricStrip surface. Loop closed.
   1868 — Metrics Truth Engine (six hero metrics + groundedness) — SPEC LOCKED, NOT BUILT; H1/H2 gate
   1867 — IENBG: numeric-binding sub-contract BUILT (43dfe8b); required-field tier remains spec
   1862 — Safe Matcher (LaTeX/merged-word/camelCase paste normalization) — SPEC, deferred
