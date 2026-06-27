@@ -10,8 +10,9 @@ import { getDisplayEntity }  from '../../utils/formatters.js';
 import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
-import { computeMetrics }      from '../../engine/metricsengine.js';
-import MetricStrip             from './metricstrip.jsx';
+import { computeMetrics }        from '../../engine/metricsengine.js';
+import { computeTruthDynamics } from '../../engine/identitydynamics.js';
+import MetricStrip               from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
@@ -351,7 +352,8 @@ export default function TargetPacket() {
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
-  const visibility      = useMetricVisibility(metrics);
+  const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
+  const visibility      = useMetricVisibility(metrics, dynamics);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 

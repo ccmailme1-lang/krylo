@@ -8,6 +8,7 @@ import { getVisibleCards }         from '../../engine/editorialgate.js';
 import { getDisplayEntity }        from '../../utils/formatters.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
+import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
 import MetricStrip                from './metricstrip.jsx';
 import { useMetricVisibility }    from '../../hooks/useMetricVisibility.js';
 import { getLRPrior }             from '../../engine/pathstore.js';
@@ -168,7 +169,8 @@ export default function ActionMatrix() {
   const stateLabel   = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   const lrPrior      = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
-  const visibility   = useMetricVisibility(metrics);
+  const dynamics     = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
+  const visibility   = useMetricVisibility(metrics, dynamics);
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };
   const visibleCards = useMemo(() => getVisibleCards(actions), [actions]);
 

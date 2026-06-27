@@ -13,7 +13,8 @@ import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 import { getTracker } from '../../engine/decisionvelocity.js';
-import { computeMetrics } from '../../engine/metricsengine.js';
+import { computeMetrics }        from '../../engine/metricsengine.js';
+import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
@@ -297,7 +298,8 @@ export default function IntelligenceBrief() {
     return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
   }, [synthesis, session?.lens]);
   const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
-  const visibility                = useMetricVisibility(metrics);
+  const dynamics                  = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
+  const visibility                = useMetricVisibility(metrics, dynamics);
   const convictions               = useConvictionStore();
 
   useEffect(() => {
