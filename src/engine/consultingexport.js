@@ -239,7 +239,7 @@ export function triggerDownload(payload) {
   const slug     = (payload.subject.entity ?? 'brief').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   const dateSlug = payload.meta.generated.slice(0, 10);
   const filename = `krylo-brief-${slug}-${dateSlug}.json`;
-  const blob     = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const blob     = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/octet-stream' });
   const url      = URL.createObjectURL(blob);
   const a        = document.createElement('a');
   a.href         = url;
