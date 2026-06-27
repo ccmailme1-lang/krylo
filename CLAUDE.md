@@ -138,23 +138,24 @@ SESSION 2026-06-26 — COMPLETE (097b63f):
   §20 Direction Honesty Principle locked · WO-1879 Domain Gravity Wells (domaingravity.js)
   WO-1870 STARTUP_FINANCE orphan fix · WO-1871 INSUFFICIENT chrome quiet
   WO-1873 AUTO numeric binding · WO-1880 Fracture Output Surface (targetpacket.jsx)
-  WO-1868 MetricStrip mounted · WO-1877 code-complete (infra blocker: EIA_API_KEY on VPS)
+  WO-1868 MetricStrip mounted · WO-1877 COMPLETE (eiaconnector.js + /api/eia proxy + runEiaSync wired)
   State-of-system artifact + WO-2004 CanonicalEvent spec saved. NOT DEPLOYED.
 
 OPEN WO LIST (single list — updated 2026-06-26):
   VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
   DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
   PRIORITY: WO-1868 metricsengine.js COMPLETE; metricstrip.jsx COMPLETE; wired on 3 surfaces ✓
-            WO-1869 Closed-Loop Leverage Engine — BLOCKED (5 open decisions)
-  BUILD-READY: WO-1877 (VPS infra: EIA_API_KEY + /api/eia proxy — code done)
-               WO-1872 Brand-as-Ticker AUTO suppression (regression risk, QA-gated)
+            WO-1869 Closed-Loop Leverage Engine — decisions locked 2026-06-25, BUILD-READY
+  COMPLETE:    WO-1877 EIA connector DONE. eiaconnector.js + as-diff/engine.js /api/eia proxy +
+               app.jsx:700 runEiaSync(). CONFIRMED 2026-06-26. STOP ASKING.
+  BUILD-READY: WO-1872 Brand-as-Ticker AUTO suppression (regression risk, QA-gated)
   SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (blocked WO-1868 — now unblocked)
                 WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
                 WO-1862 Safe Matcher (deferred)
                 WO-2004 CanonicalEvent Identity Kernel (deferred — after 1868/1869)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
-  1877 — EIA Inventory Delta Connector (crude/gasoline/distillate Δ → CAPITAL domain) — BUILD-READY, needs /api/eia proxy + EIA_API_KEY on VPS
+  1877 — EIA Inventory Delta Connector — COMPLETE. Proxy + connector + app wiring all done. Confirmed 2026-06-26. Do not re-question.
   1876 — Search DNA Intelligence Surface (Layer 3 repurposing — 4 cards around composer) — SPEC, BLOCKED pending WO-1868
   1875 — Canonical AMBIGUOUS State (proper noun / no-domain-match → options UI → user directs) — SPEC, BLOCKED (UI mount point TBD)
   1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
