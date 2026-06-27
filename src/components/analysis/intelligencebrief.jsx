@@ -524,7 +524,10 @@ export default function IntelligenceBrief() {
       <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)', whiteSpace: 'nowrap' }}>HP · HAPPY PATH</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+              <img src="/unicorn.png" alt="" style={{ width: 14, height: 14, filter: 'invert(1)', opacity: 0.65 }} />
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
+            </span>
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
               style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
               <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
@@ -1041,7 +1044,10 @@ export default function IntelligenceBrief() {
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(138,43,226,0.13)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(138,43,226,0.06)'}
           >
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE }}>HP · QUALIFIED</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <img src="/unicorn.png" alt="" style={{ width: 13, height: 13, filter: 'invert(1)', opacity: 0.85 }} />
+              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE }}>QUALIFIED</span>
+            </span>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, opacity: 0.7 }}>OPEN</span>
           </div>
         )}
