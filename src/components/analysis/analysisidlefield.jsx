@@ -1232,10 +1232,10 @@ export default function AnalysisIdleField({ activeCones = null }) {
           {/* Session results */}
           {hasSession && (
             <>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: '38%', bottom: 0, zIndex: 10, background: '#000', animation: 'results-enter 500ms ease forwards' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: '38%', bottom: 0, zIndex: 10, background: '#000' }}>
                 <TargetPacket />
               </div>
-              <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', animation: 'results-enter 500ms ease 120ms both' }}>
+              <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
                   <IntelligenceBrief />
                 </div>
