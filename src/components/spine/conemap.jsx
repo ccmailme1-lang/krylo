@@ -114,7 +114,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   // §6: purple must remain rare — only genuine HI-tier signals (≥90) earn it.
   const stageColor = activePressure >= 90 ? '#8A2BE2'
     : activePressure >= 75 ? '#66FF00'
-    : activePressure >= 50 ? '#3a3d4a'
+    : activePressure >= 50 ? '#007FFF'
     : '#1a1a1a';
   const stateColor = state.colorOverride ?? stageColor;
 
