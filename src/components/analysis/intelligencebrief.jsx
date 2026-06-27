@@ -14,6 +14,7 @@ import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 import { getTracker } from '../../engine/decisionvelocity.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
+import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
@@ -299,6 +300,7 @@ export default function IntelligenceBrief() {
     return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
   }, [synthesis, session?.lens]);
   const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const compositeMetrics          = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics                  = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility                = useMetricVisibility(metrics, dynamics);
   const convictions               = useConvictionStore();
@@ -550,15 +552,16 @@ export default function IntelligenceBrief() {
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={handleExport}
               style={{
-                fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em',
-                textTransform: 'uppercase', cursor: 'pointer',
+                fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em',
+                textTransform: 'uppercase', cursor: exportUnlocked ? 'pointer' : 'default',
                 background: 'transparent',
                 border: '1px solid rgba(0,127,255,0.3)',
                 color: BLUE,
-                padding: '5px 14px',
+                padding: '4.5px 12.5px',
                 transition: 'all 200ms ease',
+                opacity: exportUnlocked ? 1 : 0.4,
               }}
             >EXPORT BRIEF</button>
           </div>
@@ -924,7 +927,7 @@ export default function IntelligenceBrief() {
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
-        <MetricStrip metrics={metrics} visibility={visibility} />
+        <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
 
 
         {/* 01 · BLUF */}

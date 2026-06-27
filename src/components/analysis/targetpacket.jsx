@@ -11,6 +11,8 @@ import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
+import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
+import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip               from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
@@ -413,6 +415,7 @@ export default function TargetPacket() {
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const compositeMetrics = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility      = useMetricVisibility(metrics, dynamics);
   // WO-1880: full 6-domain pressure field — §20 both directions always
@@ -615,9 +618,16 @@ export default function TargetPacket() {
 
               <div ref={actionPanelRef} onScroll={checkActionScroll} style={{ flex: 1, minHeight: 0, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
                 {alternatives.length > 0 && (() => {
-                  const rate     = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
-                  const winLabel = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-                  const winColor = winLabel === 'OPEN' ? LIME : winLabel === 'TIGHT' ? 'rgba(255,255,255,0.4)' : 'rgba(255,80,80,0.5)';
+                  const rate        = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
+                  const winLabel    = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
+                  const winColor    = winLabel === 'OPEN' ? LIME : winLabel === 'TIGHT' ? 'rgba(255,255,255,0.4)' : 'rgba(255,80,80,0.5)';
+                  // WO-2012: SCPRL — apply RenderDirective to sort and tone
+                  const rd          = buildRenderDirective(alternatives, synthesis, metrics);
+                  const toneColors  = { NEUTRAL: DIM, COMPRESSED: 'rgba(255,200,0,0.5)', CAUTIONARY: 'rgba(255,80,80,0.6)' };
+                  const toneColor   = toneColors[rd.toneLabel] ?? DIM;
+                  const sortedAlts  = rd.sortedPathIds.length
+                    ? [...alternatives].sort((a, b) => rd.sortedPathIds.indexOf(a.id) - rd.sortedPathIds.indexOf(b.id))
+                    : alternatives;
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {/* WO-1851 — ASSEMBLANCE header: 2-axis structural space (W × G) */}
@@ -625,12 +635,12 @@ export default function TargetPacket() {
                         <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
                           ASSEMBLANCE · {alternatives.length} PATHS
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: winColor }}>
-                          W: {winLabel}
+                        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: toneColor }}>
+                          {rd.toneLabel} · W: {winLabel}
                         </span>
                       </div>
-                      {/* Hypothesis items — W axis live; G is SV_cluster_count_proxy until WO-1848 */}
-                      {alternatives.map(c => {
+                      {/* Hypothesis items — SCPRL sort order applied */}
+                      {sortedAlts.map(c => {
                         const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
                         return (
                         <div key={c.id} data-test="hypothesis_item" data-id={c.id}
@@ -924,7 +934,7 @@ export default function TargetPacket() {
       )}
 
       {/* ── WO-1868: Metric Strip ───────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} visibility={visibility} />
+      <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
 
       {/* ── WO-1880: Fracture Output Surface (§20 Direction Honesty) ─────── */}
       <FractureSignalSurface domainPressures={domainPressures} />

@@ -2,8 +2,10 @@
 // Full loop: detect_blind_spots → generate_hypotheses → discover_sources →
 //            simulate → score → emit SCP
 // Write-isolated from production. All outputs are CANDIDATE_ONLY SCP artifacts.
+// WO-2013 — BAC coupling applied to exploration scoring.
 
 import { buildSeedGraph, expand_genealogy } from './signalgenealogy.js';
+import { computeCFromHistory } from './baccoupling.js';
 import { createSCP, getRankedSCPs, getReconStats } from './scpstore.js';
 import { computeExplorationScore, leadTimeFactor, canExpand } from './epistemicbudget.js';
 import { assess as assessCausal } from './causalvaliditygate.js';
@@ -161,6 +163,11 @@ export function emitSCP(hypothesis, source, simResult, explorationScore, causalV
   });
 }
 
+// Ring buffers for BAC coupling (WO-2013) — per-run session state
+const _nvHistory        = [];
+const _attentionHistory = [];
+const NV_BUFFER_SIZE    = 5;
+
 // ── FULL LOOP ─────────────────────────────────────────────────────────────────
 // run — executes full Recon Layer pass
 // domainStates: from useHappyPathEngine().engineState.domainStates
@@ -171,8 +178,24 @@ export function run(domainStates = {}, synthesis = null) {
   const hypotheses = generate_hypotheses(blindSpots);
   const emitted    = [];
 
+  // WO-2013: compute BAC coupling scalar C for this exploration pass
+  const domainPressures   = Object.fromEntries(
+    Object.entries(domainStates).map(([k, v]) => [k, v?.score ?? 0])
+  );
+  const volatilityScore   = 1 - Math.min(1, Math.max(0,
+    Object.values(domainStates).reduce((acc, s) => acc + (s?.score ?? 0), 0) /
+    (Object.keys(domainStates).length * 100 || 1)
+  ));
+  // Snapshot current NV (domain weight vector) for ring buffer
+  const nvSnapshot = Object.values(domainPressures).map(v => v / 100);
+  _nvHistory.push(nvSnapshot);
+  if (_nvHistory.length > NV_BUFFER_SIZE) _nvHistory.shift();
+
+  const C = computeCFromHistory(_nvHistory, _attentionHistory, volatilityScore, domainPressures);
+
   // Deduplicate by (evidenceType, targetSignal) — same source for same target = one SCP
   const seen = new Set();
+  const attentionWeights = [];
 
   for (const hyp of hypotheses) {
     const sources     = discover_sources(hyp);
@@ -184,9 +207,14 @@ export function run(domainStates = {}, synthesis = null) {
       const dedupeKey = `${src.evidenceType}::${hyp.targetSignal}`;
       if (seen.has(dedupeKey)) continue;
 
-      const simResult  = simulate(src);
-      const explScore  = score(src, hyp, simResult);
-      const validity   = assessCausal({ upstreamHistory: [], targetHistory: [], regimes: [] });
+      const simResult = simulate(src);
+      const baseScore = score(src, hyp, simResult);
+
+      // WO-2013: apply BAC coupling — narrative pressure modulates exploration weight
+      const narrativePressure = (domainPressures['MEDIA'] ?? 0) / 100;
+      const explScore         = Math.min(1, baseScore + C * narrativePressure * 0.2);
+
+      const validity = assessCausal({ upstreamHistory: [], targetHistory: [], regimes: [] });
 
       if (!canExpand({ depth: 0, branchCount, explorationScore: explScore }).allowed) continue;
 
@@ -195,9 +223,20 @@ export function run(domainStates = {}, synthesis = null) {
         : [];
 
       const id = emitSCP(hyp, src, simResult, explScore, validity, ancestors);
-      if (id) { emitted.push(id); branchCount++; seen.add(dedupeKey); }
+      if (id) {
+        emitted.push(id);
+        branchCount++;
+        seen.add(dedupeKey);
+        attentionWeights.push(explScore);
+      }
     }
   }
 
-  return { scpIds: emitted, blindSpots, hypotheses, stats: getReconStats() };
+  // Update attention ring buffer for next pass
+  if (attentionWeights.length > 0) {
+    _attentionHistory.push(attentionWeights);
+    if (_attentionHistory.length > NV_BUFFER_SIZE) _attentionHistory.shift();
+  }
+
+  return { scpIds: emitted, blindSpots, hypotheses, stats: getReconStats(), couplingC: C };
 }
