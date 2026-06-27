@@ -51,7 +51,7 @@ function scoreY(score) {
   return CH - (score / 100) * (CH * 0.82) - CH * 0.06;
 }
 
-export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = true }) {
+export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = true, hpOverride }) {
   const canvasRef = useRef(null);
   const { engineState, domainSignals } = useHappyPathEngine();
   const [hovered, setHovered] = useState(false);
@@ -85,7 +85,7 @@ export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = tru
     ctx.setLineDash([]);
 
     // Build domain points
-    const hp  = engineState.happyPath;
+    const hp  = hpOverride ?? engineState.happyPath;
     const pts = EQ_DOMAINS.map((d, i) => {
       const sig = domainSignals[d] ?? { score: 0, state: 'INSUFFICIENT', qualified: false };
       return { x: domainX(i), y: scoreY(sig.score), score: sig.score, state: sig.state, qual: sig.qualified, d, i };
@@ -193,7 +193,7 @@ export default function EQCanvas({ onCommitThesis, onSetTrigger, isPremium = tru
     );
   }
 
-  const hp = engineState.happyPath;
+  const hp = hpOverride ?? engineState.happyPath;
 
   return (
     <div style={{ background: '#000', fontFamily: MONO, borderTop: '1px solid rgba(255,255,255,0.06)' }}>

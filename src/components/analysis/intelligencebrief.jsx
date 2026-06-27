@@ -18,6 +18,7 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
+import { arbitrateHP } from '../../engine/hptiergate.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -291,7 +292,7 @@ export default function IntelligenceBrief() {
   const hpSnapshot                = useRef(null);
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
-  const hp                        = engineState?.happyPath ?? null;
+  const hp                        = arbitrateHP(engineState, synthesis);
   const [outcomeInput, setOutcomeInput] = useState(null); // { convictionId, pathId, value, followed }
   const lrPrior = useMemo(() => {
     if (!synthesis || synthesis.resolutionEligible === false) return null;
@@ -460,6 +461,7 @@ export default function IntelligenceBrief() {
           <div style={{ flex: 1, minHeight: 0 }}>
             <EQCanvas
               isPremium={true}
+              hpOverride={hp}
               onCommitThesis={({ domain, engineState: es }) => {
                 const arb      = es?.arbitration ?? session?.tensor?.arbitration;
                 const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
@@ -832,6 +834,7 @@ export default function IntelligenceBrief() {
             </div>
             <EQCanvas
               isPremium={true}
+              hpOverride={hp}
               onCommitThesis={({ domain, engineState: es }) => {
                 const arb      = es?.arbitration ?? session?.tensor?.arbitration;
                 const rate     = arb?.total > 0 ? (arb.passed / arb.total) : 0;
