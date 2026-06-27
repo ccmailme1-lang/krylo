@@ -277,14 +277,8 @@ export default function IntelligenceBrief() {
     return () => clearInterval(t);
   }, [replayMode]);
 
-  if (!session) {
-    return (
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Active Session</span>
-      </div>
-    );
-  }
-
+  // All hooks must be above the early return — Rules of Hooks.
+  // Previously these were below the !session guard causing a flash on first render.
   const [hpOpen, setHpOpen]       = useState(false);
   const [hpDismissed, setHpDismissed] = useState(false);
   const [hpLog, setHpLog]         = useState([]);
@@ -302,9 +296,6 @@ export default function IntelligenceBrief() {
     return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
   }, [synthesis, session?.lens]);
   const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
-
-  const brief = buildBrief(session, synthesis, hp);
-  const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
   const convictions               = useConvictionStore();
 
   useEffect(() => {
@@ -344,6 +335,18 @@ export default function IntelligenceBrief() {
   }, [alerts.length]);
   const monitorMap                = useThesisMonitor(convictions.active, engineState?.domainStates, hp);
   const calibration               = useMemo(() => computeCalibration(convictions.resolved), [convictions.resolved]);
+
+  if (!session) {
+    return (
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.4em', textTransform: 'uppercase' }}>No Active Session</span>
+      </div>
+    );
+  }
+
+  // Non-hook derived values — safe here, session is guaranteed non-null
+  const brief = buildBrief(session, synthesis, hp);
+  const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
