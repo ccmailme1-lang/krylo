@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 're
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
+import ReconDashboard                 from './recondashboard.jsx';
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
 import { computePositionVector }      from '../../engine/positioningengine.js';
@@ -504,6 +505,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [rules,           setRules]           = useState([]);
   const [signalVisible,   setSignalVisible]   = useState(false);
   const [processing,      setProcessing]      = useState(false);
+  const [rightPanel,      setRightPanel]      = useState('BRIEF');
   const [optCapResetKey,  setOptCapResetKey]  = useState(0);
   const [intentMagnitude, setIntentMagnitude] = useState(50);
   // WO-1878 — Mission Builder state
@@ -1236,8 +1238,25 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 <TargetPacket />
               </div>
               <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
+                  {['BRIEF', 'RECON'].map(tab => (
+                    <button
+                      key={tab}
+                      onClick={() => setRightPanel(tab)}
+                      style={{
+                        padding: '8px 16px', background: 'transparent', border: 'none',
+                        borderBottom: `2px solid ${rightPanel === tab ? '#66FF00' : 'transparent'}`,
+                        color: rightPanel === tab ? '#66FF00' : 'rgba(255,255,255,0.3)',
+                        fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em',
+                        cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1,
+                      }}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                  <IntelligenceBrief />
+                  {rightPanel === 'BRIEF' ? <IntelligenceBrief /> : <ReconDashboard />}
                 </div>
               </div>
             </>
