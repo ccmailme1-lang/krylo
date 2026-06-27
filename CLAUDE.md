@@ -155,10 +155,19 @@ OPEN WO LIST (single list — updated 2026-06-26):
                WO-1877 EIA connector DONE. eiaconnector.js + as-diff/engine.js /api/eia proxy +
                app.jsx:700 runEiaSync(). CONFIRMED 2026-06-26. STOP ASKING.
   SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 done)
-  SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (blocked WO-1868 — now unblocked)
                 WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
                 WO-1862 Safe Matcher (deferred)
-                WO-2004 CanonicalEvent Identity Kernel (deferred — after 1868/1869)
+  CONSTITUTIONAL SEQUENCE (locked 2026-06-26):
+                WO-2005A — Signal Epistemic Taxonomy (governance layer) — BUILD-READY
+                           spec: specs/WO-2005A-signal-epistemic-taxonomy.md
+                           intrinsic-only EvidenceDescriptor; evidencetiers.js; no scoring
+                WO-2004  — CanonicalEvent Identity Kernel — SPEC, blocked on WO-2005A
+                           spec: specs/WO-2004-canonical-event-identity-kernel.md
+                WO-2005B — Structural Confirmation Engine (SCI + calibration) — SPEC, blocked on WO-2004
+                           spec: specs/WO-2005B-structural-confirmation-engine.md
+                           calibrated priors live here; SCI formula; Structural Divergence (§20 trigger)
+                WO-2006  — Interpretation Validation — PLACEHOLDER (spec TBD)
+                MetricStrip — SCI (8th metric) + SPS (9th metric) — after WO-2005B
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector — COMPLETE. Proxy + connector + app wiring all done. Confirmed 2026-06-26. Do not re-question.

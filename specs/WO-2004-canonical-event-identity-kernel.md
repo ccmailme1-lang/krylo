@@ -1,7 +1,7 @@
 # WO-2004 — CanonicalEvent Identity Kernel
 Date: 2026-06-26 (updated 2026-06-26 to absorb WO-2005 epistemic tier)
 Status: SPEC — do not build until Founder signals ready
-Depends on: WO-1879 (complete), WO-1868 (complete), WO-1869 (complete), WO-2005 (schema)
+Depends on: WO-1879 (complete), WO-1868 (complete), WO-1869 (complete), WO-2005A (intrinsic schema)
 Supersedes: next-level progression.md WO-2004 section
 
 ---
@@ -234,6 +234,6 @@ Per state-of-system-2026-06-26.md:
 - CanonicalEvent is a **constraint field**, not a component.
 - It must be embedded as an invariant into every transformation stage — not a module that runs.
 - WO-1868 (metrics) and WO-1869 (path memory) must land first. Both are now COMPLETE.
-- WO-2005 Phase A (evidencetiers.js schema) should land before WO-2004 build begins,
-  so the EvidenceNode schema is stable at build time.
-- Sequence: WO-2005 Phase A (schema) → WO-2004 build → WO-2005 Phase B (SCI computation)
+- WO-2005A (evidencetiers.js — intrinsic descriptor schema) must land before WO-2004
+  build begins so EvidenceNode's `descriptorKey` and `canonicalRole` fields are stable.
+- Sequence: WO-2005A (governance schema) → WO-2004 build → WO-2005B (calibration + SCI)
