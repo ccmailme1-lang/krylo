@@ -67,8 +67,8 @@ async function fetchSeries(series) {
     signal,
     raw,
     date:       obs.date,
-    confidence: 0.82,           // FRED is authoritative — high confidence
-    fs:         0.78,           // Estimated tier — no Mchecksum without context
+    confidence: 0.82,
+    fs:         signal / 100,
     origin:     'FRED',
     ts:         Date.now(),
     zone:       'national',

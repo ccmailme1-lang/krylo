@@ -2682,7 +2682,7 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
 
       {/* WO-896: Signal Field — InstancedMesh node engine */}
       {/* ClusterField (Option A swap) renders formation clusters */}
-      <ClusterField signals={signals} />
+      <ClusterField signals={signals} countSignals={signals} />
       {/* <SignalField /> */}
 
       {/* WO-1038: Leverage Engine — Shannon-gated, u_impact tracks dominant signal XZ */}

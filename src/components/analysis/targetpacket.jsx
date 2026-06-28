@@ -498,18 +498,20 @@ export default function TargetPacket() {
                 <ConfidenceBar value={confScore} color={LIME} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
-              {[{ label: 'Time Horizon', value: synthesis?.timeHorizon ?? '—' }, { label: 'Impact', value: synthesis?.impactLevel ?? '—' }].map(({ label, value }) => (
-                <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.08em' }}>{value}</span>
-                </div>
-              ))}
-            </div>
+            {(synthesis?.timeHorizon || synthesis?.impactLevel) && (
+              <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
+                {[{ label: 'Time Horizon', value: synthesis?.timeHorizon }, { label: 'Impact', value: synthesis?.impactLevel }].filter(f => f.value).map(({ label, value }) => (
+                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.08em' }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div style={{ fontFamily: SERIF, fontSize: 12, color: MID, lineHeight: 1.7, maxWidth: 480 }}>
               {synthesis?.recommendedAction ?? (
                 stateLabel === 'INSUFFICIENT_SIGNAL'
-                  ? 'Query did not resolve to a structural domain. Add a specific decision, dollar amount, or timeline to anchor analysis.'
+                  ? 'Insufficient signal to synthesize a brief. The query did not resolve to a domain with adequate structural data. Add a specific decision, dollar amount, or timeline to anchor analysis.'
                   : stateLabel === 'LOW_SIGNAL_YIELD'
                   ? 'Signal below synthesis threshold. Narrow the query — add a domain, company, or market context.'
                   : 'Refining signal…'

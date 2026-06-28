@@ -287,9 +287,17 @@ export default function ClusterField({ signals, countSignals, searchState, onTra
     if (!signals?.length) {
       const counts = DEFAULTS.map(d => categoryCounts[d.id] ?? 0);
       const maxCount = Math.max(1, ...counts);
+      const stateFromCount = (count) => {
+        if (count === 0) return 'low';
+        const ratio = count / maxCount;
+        if (ratio > 0.6) return 'high';
+        if (ratio > 0.25) return 'turbulent';
+        return 'building';
+      };
       return DEFAULTS.map((d, i) => ({
         ...d,
         count: counts[i],
+        state: stateFromCount(counts[i]),
         scale: counts[i] > 0
           ? 0.32 + (counts[i] / maxCount) * 0.25
           : d.scale,
