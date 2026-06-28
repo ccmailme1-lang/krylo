@@ -27,6 +27,22 @@ import { runSupplyChainSync }      from './engine/connectors/supplychainconnecto
 import { runPatentsViewSync }      from './engine/connectors/patentsviewconnector.js';
 import { runNetworkTopologySync }  from './engine/connectors/networktopologyconnector.js';
 import { runEiaSync }              from './engine/connectors/eiaconnector.js';
+// WO-2019 — macro connectors (topic-agnostic, fire on mount)
+import { runBlsSync }              from './engine/connectors/blsconnector.js';
+import { runTreasurySync }         from './engine/connectors/treasuryconnector.js';
+import { runWorldBankSync }        from './engine/connectors/worldbankconnector.js';
+import { runFhfaSync }             from './engine/connectors/fhfaconnector.js';
+import { runUsgsSync }             from './engine/connectors/usgsconnector.js';
+import { runMaerskSync }           from './engine/connectors/maerskconnector.js';
+// WO-2019 — topic connectors (fire on query submit)
+import { runGithubSync }           from './engine/connectors/githubconnector.js';
+import { runArxivSync }            from './engine/connectors/arxivconnector.js';
+import { runNpmSync }              from './engine/connectors/npmconnector.js';
+import { runPubmedSync }           from './engine/connectors/pubmedconnector.js';
+import { runOpenAlexSync }         from './engine/connectors/openalexconnector.js';
+import { runUsajobsSync }          from './engine/connectors/usajobsconnector.js';
+import { runGdeltSync }            from './engine/connectors/gdeltconnector.js';
+import { runRedditSync }           from './engine/connectors/redditconnector.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -689,8 +705,8 @@ export default function App() {
     return () => window.removeEventListener('KRYLO_LIVE_INJECT', handler);
   }, []);
 
-  // WO-1874 + connectors — fire all five on mount; self-dispatch via surfaceRouter.dispatchBatch
-  // Intervals match decay type: topology=10min, market=4h, flow/supply/patents=24h
+  // WO-1874 + connectors — fire all on mount; self-dispatch via surfaceRouter.dispatchBatch
+  // Intervals match decay type: topology=10min, market=4h, flow/supply/patents/macro=24h, eia=weekly
   useEffect(() => {
     runNetworkTopologySync().catch(() => {});
     runFinancialMarketSync().catch(() => {});
@@ -698,6 +714,13 @@ export default function App() {
     runSupplyChainSync().catch(() => {});
     runPatentsViewSync().catch(() => {});
     runEiaSync().catch(() => {});
+    // WO-2019 macro connectors
+    runBlsSync().catch(() => {});
+    runTreasurySync().catch(() => {});
+    runWorldBankSync().catch(() => {});
+    runFhfaSync().catch(() => {});
+    runUsgsSync().catch(() => {});
+    runMaerskSync().catch(() => {});
 
     const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
     const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
@@ -706,6 +729,12 @@ export default function App() {
       runEconomicFlowSync().catch(() => {});
       runSupplyChainSync().catch(() => {});
       runPatentsViewSync().catch(() => {});
+      runBlsSync().catch(() => {});
+      runTreasurySync().catch(() => {});
+      runWorldBankSync().catch(() => {});
+      runFhfaSync().catch(() => {});
+      runUsgsSync().catch(() => {});
+      runMaerskSync().catch(() => {});
     }, 24 * 60 * 60 * 1000);
 
     return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(weeklyId); clearInterval(dailyId); };
@@ -929,6 +958,15 @@ export default function App() {
       setSurfaceActivated(true);
       setSearchPreview({ id: q, title: q, source: 'search' });
       setSelection('technology');
+      // WO-2019 topic connectors — fire on each query submit
+      runGithubSync(q).catch(() => {});
+      runArxivSync(q).catch(() => {});
+      runNpmSync(q).catch(() => {});
+      runPubmedSync(q).catch(() => {});
+      runOpenAlexSync(q).catch(() => {});
+      runUsajobsSync(q).catch(() => {});
+      runGdeltSync(q).catch(() => {});
+      runRedditSync(q).catch(() => {});
     }
     window.addEventListener('message', onSubmit);
     return () => window.removeEventListener('message', onSubmit);
