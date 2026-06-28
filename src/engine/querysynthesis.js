@@ -494,7 +494,172 @@ function synthRealEstate(session, numbers, query) {
   };
 }
 
+// Intent signals for CAREER query branching
+const CAREER_TRANSITION_INTENT = /school|degree|certif|reskill|retrain|career change|career.*transition|transition.*career|pivot|new field|switch.*career|change.*career|back to school|go.*back.*school|new career|second career|new chapter|start over|reinvent/i;
+const CAREER_SEARCH_INTENT     = /job search|find.*job|looking for.*job|job.*hunting|job hunt|apply.*job|resume|interview prep|interview.*practice|job market|land.*job|get.*job|job.*offer.*pending|no.*offer|not.*getting.*call/i;
+
+function synthCareerTransition(session, numbers, query) {
+  const q      = (query ?? '').toLowerCase();
+  const hasAge = numbers.find(n => n >= 18 && n <= 75 && Number.isInteger(n));
+  const age    = hasAge ?? null;
+  const ageStr = age ? ` at ${age}` : '';
+
+  return {
+    stateLabel: 'TRANSITION WINDOW',
+    confidence: 0.76,
+    primaryInsight: `Career transition${ageStr} detected. ROI and timing are the dominant variables — not resume format. The structural question: does the destination field have entry-level demand, and is the training runway shorter than the payback horizon?`,
+    momentum:   { value: '+7%', h1: '+2%', h24: '+7%' },
+    trajPoints: [0.30,0.35,0.40,0.46,0.52,0.57,0.61,0.65,0.68,0.71,0.74,0.76],
+    attentionStack: [
+      { rank:1, signal:'Field Demand Signal',     category:'Labor / Destination',   trend:'↑', momentum:'Active',       mColor:LIME, conf:0.78 },
+      { rank:2, signal:'Training Time-to-Entry',  category:'Education / Runway',    trend:'→', momentum:'Quantifiable', mColor:BLUE, conf:0.70 },
+      { rank:3, signal:'Income Interruption Risk',category:'Capital / Risk',        trend:'↗', momentum:'Manageable',   mColor:LIME, conf:0.65 },
+      { rank:4, signal:'Age Discount Signal',     category:'Labor / Market Bias',   trend:'?', momentum:'Sector-dependent', mColor:DIM, conf:0.52 },
+    ],
+    keyDrivers: [
+      { label:'Destination field entry demand',   delta:'Verify first',             pos:true  },
+      { label:'Training runway',                  delta:'6–24 months typical',      pos:true  },
+      { label:'Income gap during transition',     delta:'Primary risk',             pos:false },
+      { label:'Age-related hiring signal',        delta:'Sector-dependent',         pos:false },
+    ],
+    recommendedAction: `Before any enrollment decision: confirm destination field has open entry-level roles (not just projected demand) and map the full cost + income interruption window. The payback period decides whether the ROI is positive within a working horizon.`,
+    timeHorizon: '6–36 months',
+    impactLevel: 'High',
+    bluf: `Career transition${ageStr}: ROI depends entirely on three numbers — training cost, income interruption length, and destination salary delta. Run those before choosing a program. Demand signal matters more than credential prestige.`,
+    purpose: `Career transition analysis${ageStr}. Covers field-entry demand, training runway, income interruption, and structural hiring signals.`,
+    fiveWs: [
+      { w:'WHO',   answer:`Candidate mid-career or later${ageStr}, assessing a pivot. Destination employer pool and hiring signal matter more than the credential itself.` },
+      { w:'WHAT',  answer:`Career transition via education or reskilling. The structural question: training cost + income gap ÷ salary delta = payback period.` },
+      { w:'WHEN',  answer:`Runway depends on program length. Bootcamp/cert: 3–12 months. Degree: 2–4 years. Part-time while employed compresses the income gap risk.` },
+      { w:'WHERE', answer:`Target field entry point: verify open roles at entry level before committing. Projected demand is not the same as current hiring.` },
+      { w:'WHY',   answer:`Transition economics must clear a threshold: payback period < remaining career horizon${age && age > 45 ? ` (${75 - age} working years at standard horizon)` : ''}.` },
+    ],
+    evidence: [
+      `Labor demand signals vary sharply by destination field — "healthcare" and "tech" are not monolithic hiring pools.`,
+      `Part-time / online programs reduce income interruption risk; employer tuition reimbursement (if current job offers it) further compresses cost.`,
+      `Age bias is sector-dependent: healthcare, trades, and government roles show lower age discount than early-stage tech startups.`,
+      `Credential value decays if the destination market is saturated — validate current job posting volume, not 10-year BLS projections.`,
+    ],
+    assumptions: [
+      `Transition is voluntary and the destination field is not yet selected (or is being validated).`,
+      age && age > 50 ? `At ${age}, the payback horizon is approximately ${75 - age} years — programs with payback > ${Math.min(10, 75 - age)} years are structurally marginal.` : `Sufficient career runway remains to recover transition investment.`,
+    ],
+    assessment: `The highest-leverage action is demand validation before any enrollment decision. Pull current job postings in the destination field at entry level — not projected growth. Then build the payback model: (training cost + income gap) ÷ (new salary − current salary) = payback years. If payback < remaining horizon, the transition has positive structural ROI.`,
+    threats: [
+      { label:'Credential without entry-level demand',         level:'HIGH',   color:LIME },
+      { label:'Program length vs. income interruption window', level:'HIGH',   color:LIME },
+      age && age > 50 ? { label:`Payback horizon compression at ${age}`, level:'MEDIUM', color:BLUE }
+                      : { label:'Age discount in target sector',          level:'MEDIUM', color:BLUE },
+    ],
+    opportunities: [
+      { label:`Part-time or employer-sponsored programs eliminate income interruption — highest-leverage structural option.` },
+      { label:`Fields with hiring signals above credential saturation: validate via live posting volume, not aggregate projections.` },
+      { label:`Bridge roles (adjacent to destination) allow income continuity while building credential — lower-risk transition path.` },
+    ],
+    alternativeView: `Staying in current field with lateral move to a new specialization may achieve the same destination faster than a degree. Assess whether the credential is the actual gate or just a perceived one.`,
+    outlook: [
+      { prob:0.55, label:`Transition completes with positive ROI — demand validated + runway confirmed`,             color:LIME },
+      { prob:0.30, label:`Partial transition — adjacent role in current field with new skills, no full pivot`,       color:BLUE },
+      { prob:0.15, label:`Transition stalls — credential saturation or income gap longer than modeled`,              color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'VALIDATE ENTRY-LEVEL DEMAND', impact:0.92, rationale:`Pull live job postings in the destination field at entry level right now. Count open roles, not projected growth. This is the single most important data point before any enrollment decision.`, tag:'DEMAND'     },
+        { id:'a2', label:'BUILD PAYBACK MODEL',          impact:0.85, rationale:`(Training cost + income gap during program) ÷ (destination salary − current salary) = payback years. If payback exceeds your remaining career horizon, the economics don't clear regardless of interest.`, tag:'ROI'        },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'IDENTIFY BRIDGE ROLES',        impact:0.74, rationale:`Adjacent roles in the destination field that don't require the full credential. Bridge roles allow income continuity and credential building simultaneously — the lowest-risk transition path.`,           tag:'RISK'       },
+        { id:'b2', label:'CHECK EMPLOYER REIMBURSEMENT', impact:0.68, rationale:`If employed, check current employer tuition reimbursement program. Many cover $5,250/year tax-free. This directly reduces transition cost and payback period.`,                                           tag:'CAPITAL'    },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'MAP CREDENTIAL ALTERNATIVES',  impact:0.63, rationale:`Bootcamp vs. cert vs. degree: each has a different cost, runway, and employer signal. The right one is the shortest path to the first job in the destination field — not the most prestigious.`,         tag:'EFFICIENCY' },
+        { id:'c2', label:'SET A COMMITMENT THRESHOLD',   impact:0.57, rationale:`Define the conditions under which you proceed: minimum destination salary, maximum program cost, maximum income gap. Decide the threshold before research — post-research anchoring distorts the math.`, tag:'DISCIPLINE'  },
+      ],
+    },
+    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(0.8), deRatio: 0.8, permissionless: true, industryNorm: 1.0 },
+  };
+}
+
+function synthCareerJobSearch(session, numbers, query) {
+  return {
+    stateLabel: 'SEARCH ACTIVE',
+    confidence: 0.73,
+    primaryInsight: `Active job search signal detected. The structural bottleneck is almost never the resume — it is volume, channel selection, and response rate. Measure inputs (applications per week, response rate) before diagnosing.`,
+    momentum:   { value: '+6%', h1: '+2%', h24: '+6%' },
+    trajPoints: [0.25,0.30,0.36,0.42,0.47,0.52,0.57,0.61,0.65,0.68,0.71,0.73],
+    attentionStack: [
+      { rank:1, signal:'Application Volume',      category:'Search / Activity',     trend:'↑', momentum:'Controllable',  mColor:LIME, conf:0.82 },
+      { rank:2, signal:'Channel Signal',          category:'Network / Inbound',     trend:'↗', momentum:'Underweighted', mColor:BLUE, conf:0.72 },
+      { rank:3, signal:'Response Rate',           category:'Funnel / Conversion',   trend:'→', momentum:'Baseline 3–5%', mColor:LIME, conf:0.65 },
+      { rank:4, signal:'Market Timing',           category:'Labor / Cycle',         trend:'?', momentum:'Sector-varying', mColor:DIM, conf:0.55 },
+    ],
+    keyDrivers: [
+      { label:'Applications per week',            delta:'Volume is primary input',  pos:true  },
+      { label:'Inbound vs outbound ratio',        delta:'Inbound converts 3× higher', pos:true },
+      { label:'Response rate baseline',           delta:'3–5% cold outbound',       pos:false },
+      { label:'Time in market',                   delta:'90-day cliff',             pos:false },
+    ],
+    recommendedAction: `Track three numbers this week: applications sent, responses received, and interviews booked. If response rate < 3%, the content is the problem. If response rate > 3% and interviews aren't converting, the interview is the problem. Diagnose before changing strategy.`,
+    timeHorizon: '30–90 days',
+    impactLevel: 'High',
+    bluf: `Job search is a funnel problem: applications → response → interview → offer. Identify where the drop-off is before changing tactics. The highest-leverage variable is usually network (inbound) vs. cold application (outbound).`,
+    purpose: `Active job search analysis. Covers funnel diagnosis, channel strategy, and response rate benchmarks.`,
+    fiveWs: [
+      { w:'WHO',   answer:`Active job seeker. Hiring manager pool is the counterparty — their response rate is the signal, not your resume quality alone.` },
+      { w:'WHAT',  answer:`Job search optimization. Funnel: applications → response → interview → offer. Each stage has a distinct lever.` },
+      { w:'WHEN',  answer:`90-day active search window is the signal horizon. Beyond 90 days without offers: reposition, not just retry.` },
+      { w:'WHERE', answer:`Channel matters: employee referral converts at 3–4× cold application. Network signal is the primary distribution advantage.` },
+      { w:'WHY',   answer:`Time is the highest-cost resource in a search. Optimizing inputs (channel + volume) compounds faster than optimizing content alone.` },
+    ],
+    evidence: [
+      `Employee referrals convert at 3–4× the rate of cold applications — channel is a structural multiplier.`,
+      `Cold outbound response rate baseline: 3–5%. Below 3% = content or targeting problem. Above 5% = scalable.`,
+      `Most offers occur within the first 90 days. Extended search past 90 days signals a positioning mismatch, not bad luck.`,
+    ],
+    assumptions: [
+      `Search is active — applications are being submitted regularly.`,
+      `Target role and level are defined. Undifferentiated search (any role, any level) degrades conversion rates.`,
+    ],
+    assessment: `Measure the funnel before changing tactics. Applications → response → interview → offer. Each stage has a different fix: application volume (channel + targeting), response rate (resume/outreach quality), interview conversion (prep + positioning), offer rate (comp anchoring + close technique).`,
+    threats: [
+      { label:'90-day cliff — extended search signals to market', level:'HIGH',   color:LIME },
+      { label:'Over-reliance on cold inbound applications',       level:'MEDIUM', color:BLUE },
+      { label:'Undefined target role or level',                   level:'MEDIUM', color:BLUE },
+    ],
+    opportunities: [
+      { label:`Referral network activation: one warm intro converts at 3–4× a cold application — identify 5 people who can refer, not 50 more job boards.` },
+      { label:`Inbound positioning: a targeted LinkedIn presence generates inbound recruiter contact — highest-leverage passive channel.` },
+    ],
+    alternativeView: `High-volume cold applications can work at scale — but network-first strategies consistently outperform on time-to-offer. The tradeoff: network takes relationship investment upfront.`,
+    outlook: [
+      { prob:0.65, label:`Offer within 90 days — volume + channel optimization`,           color:LIME },
+      { prob:0.25, label:`Extended search — positioning refinement needed beyond 90 days`, color:BLUE },
+      { prob:0.10, label:`Search stalls — market or role mismatch requires reframe`,        color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'MEASURE YOUR FUNNEL',            impact:0.90, rationale:`Count: applications sent this week, responses received, interviews scheduled. You cannot optimize what you haven't measured. This number set tells you exactly where the problem is.`, tag:'DIAGNOSIS'  },
+        { id:'a2', label:'ACTIVATE REFERRAL NETWORK',      impact:0.84, rationale:`Identify 5–10 people who could refer you to a role at their company. A warm referral converts at 3–4× a cold application. Email today — not LinkedIn message.`,                  tag:'CHANNEL'    },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'DEFINE TARGET ROLE PRECISELY',   impact:0.74, rationale:`Undifferentiated search degrades every conversion rate. Define: role, level, sector, company size range. Narrower targeting improves response rates even at lower volume.`,           tag:'FOCUS'      },
+        { id:'b2', label:'BUILD INBOUND SIGNAL',           impact:0.65, rationale:`A targeted LinkedIn headline + summary generates recruiter inbound without active application effort. Highest-leverage passive channel for mid-to-senior roles.`,                      tag:'INBOUND'    },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:'SET 90-DAY CHECKPOINT',          impact:0.60, rationale:`If no offers in 90 days: the problem is positioning, not persistence. Scheduled reframe prevents sunk-cost tunnel vision.`,                                                            tag:'DISCIPLINE' },
+        { id:'c2', label:'PREP COMP ANCHORING SEQUENCE',   impact:0.55, rationale:`When offers arrive, comp anchoring matters. Research market rate before first call. Never give a number first. The counter sequence is: enthusiasm → anchor → data → silence.`,       tag:'NEGOTIATION'},
+      ],
+    },
+    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(0.7), deRatio: 0.7, permissionless: false, industryNorm: 1.0 },
+  };
+}
+
 function synthCareer(session, numbers, query) {
+  // Intent gate — CAREER domain spans 3 distinct situations with incompatible templates.
+  if (CAREER_TRANSITION_INTENT.test(query)) return synthCareerTransition(session, numbers, query);
+  if (CAREER_SEARCH_INTENT.test(query))     return synthCareerJobSearch(session, numbers, query);
+
+  // Default: salary negotiation (original template — requires a concrete offer signal)
   const salary  = numbers[0] || 85000;
   const ask     = Math.round(salary * 1.13);
   const mid     = Math.round((salary + ask) / 2);
