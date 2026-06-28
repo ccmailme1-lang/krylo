@@ -55,7 +55,7 @@ export default function LeverageField({ leverage }) {
       <div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        width="100%" height="auto"
+        width="60%" height="auto"
         style={{ display: 'block', overflow: 'visible' }}
       >
 
@@ -145,11 +145,11 @@ export default function LeverageField({ leverage }) {
         {/* Coordinate readout — flips side when near right edge */}
         <text x={labelX} y={py - 8}
           textAnchor={labelAnchor} fontFamily={MONO}
-          fontSize={7.2} letterSpacing="0.14em" fill={LIME}
+          fontSize={8} letterSpacing="0.14em" fill={LIME}
         >{typeLabel} · {deRatio.toFixed(1)}×</text>
         <text x={labelX} y={py + 4}
           textAnchor={labelAnchor} fontFamily={MONO}
-          fontSize={6.3} letterSpacing="0.1em"
+          fontSize={7} letterSpacing="0.1em"
           fill="rgba(102,255,0,0.45)"
         >{tierLabel}</text>
 
