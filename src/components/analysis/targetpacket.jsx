@@ -1,5 +1,5 @@
 // WO-1340 — Emergence Payload: Unified Pane View
-import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
 import { useEntitySignal }   from '../../hooks/useEntitySignal.js';
@@ -442,24 +442,6 @@ export default function TargetPacket() {
   }, []);
 
   const [showAlts, setShowAlts] = useState(false);
-  const actionPanelRef = useRef(null);
-  const [actionScroll, setActionScroll] = useState({ up: false, down: false });
-  const checkActionScroll = useCallback(() => {
-    const el = actionPanelRef.current;
-    if (!el) return;
-    setActionScroll({
-      up:   el.scrollTop > 8,
-      down: el.scrollTop + el.clientHeight < el.scrollHeight - 8,
-    });
-  }, []);
-  useEffect(() => {
-    const t = setTimeout(checkActionScroll, 0);
-    const el = actionPanelRef.current;
-    if (!el) return () => clearTimeout(t);
-    const ro = new ResizeObserver(checkActionScroll);
-    ro.observe(el);
-    return () => { clearTimeout(t); ro.disconnect(); };
-  }, [session, checkActionScroll]);
 
   if (!session) {
     return (
@@ -499,7 +481,7 @@ export default function TargetPacket() {
             <div style={{ fontFamily: SERIF, fontSize: 22, color: BRT, lineHeight: 1.2, marginBottom: 12 }}>
               {entity}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
               <span style={{
                 fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase',
                 color: LIME, border: `1px solid rgba(102,255,0,0.4)`, padding: '3px 10px',
@@ -516,8 +498,22 @@ export default function TargetPacket() {
                 <ConfidenceBar value={confScore} color={LIME} />
               </div>
             </div>
+            <div style={{ display: 'flex', gap: 20, marginBottom: 12 }}>
+              {[{ label: 'Time Horizon', value: synthesis?.timeHorizon ?? '—' }, { label: 'Impact', value: synthesis?.impactLevel ?? '—' }].map(({ label, value }) => (
+                <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.08em' }}>{value}</span>
+                </div>
+              ))}
+            </div>
             <div style={{ fontFamily: SERIF, fontSize: 12, color: MID, lineHeight: 1.7, maxWidth: 480 }}>
-              {synthesis?.primaryInsight ?? 'Signal processing…'}
+              {synthesis?.recommendedAction ?? (
+                stateLabel === 'INSUFFICIENT_SIGNAL'
+                  ? 'Query did not resolve to a structural domain. Add a specific decision, dollar amount, or timeline to anchor analysis.'
+                  : stateLabel === 'LOW_SIGNAL_YIELD'
+                  ? 'Signal below synthesis threshold. Narrow the query — add a domain, company, or market context.'
+                  : 'Refining signal…'
+              )}
             </div>
           </div>
         </div>
@@ -560,25 +556,6 @@ export default function TargetPacket() {
           position: 'relative', minHeight: 0,
         }}>
           <>
-              {actionScroll.up && (
-                <div style={{
-                  position: 'absolute', top: 40, left: 0, right: 0, zIndex: 10,
-                  height: 28, pointerEvents: 'none',
-                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)',
-                  display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 4,
-                }}>
-                  <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, letterSpacing: '0.2em' }}>▴</span>
-                </div>
-              )}
-              <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10,
-                  height: 32, pointerEvents: 'none',
-                  background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
-                  display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: 4,
-                }}>
-                  <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, letterSpacing: '0.2em' }}>▾</span>
-                </div>
-
               {/* AltToggle drawer */}
               {showAlts && (
                 <div style={{
@@ -610,18 +587,81 @@ export default function TargetPacket() {
                 </div>
               )}
 
+              {/* ── ANALYTICAL FRAME header */}
               <div style={{ padding: '10px 24px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
                 <span style={{ fontSize: 10, color: LIME }}>⊙</span>
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>ANALYTICAL FRAME</span>
               </div>
 
-
-              <div ref={actionPanelRef} onScroll={checkActionScroll} style={{ flex: 1, minHeight: 0, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 12, overflowY: 'auto' }}>
+              {/* ── ASSEMBLANCE — bounded zone, independent scroll */}
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {alternatives.length === 0 && (() => {
+                  const lens = session?.lens?.toUpperCase() ?? 'GENERAL';
+                  const q = session?.query?.trim() ?? '';
+                  const suggestions = lens === 'REALTOR'
+                    ? [
+                        `Should I buy ${q}? Evaluate purchase risk vs. current REAL_ESTATE signal`,
+                        `${q} — compare listing price to regional structural market signal`,
+                      ]
+                    : lens === 'INVESTOR'
+                    ? [
+                        `${q} — evaluate as capital allocation: risk vs. structural opportunity`,
+                        `What is the convergence signal on ${q}? Assess entry timing`,
+                      ]
+                    : lens === 'CAREER'
+                    ? [
+                        `${q} — evaluate labor market signal and hiring window`,
+                        `Should I pursue ${q}? Assess role demand vs. current LABOR signal`,
+                      ]
+                    : [
+                        `${q} — evaluate decision risk and structural opportunity`,
+                        `What is the structural signal for ${q}? Add timeline or dollar context`,
+                      ];
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
+                        NO PATHS RESOLVED
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, letterSpacing: '0.04em', maxWidth: 340 }}>
+                        {stateLabel === 'INSUFFICIENT_SIGNAL'
+                          ? 'Signal density below threshold. Add a specific decision, dollar amount, or timeline to anchor analysis.'
+                          : 'Arbitration produced no surviving paths. Reformulate with more specific domain context.'
+                        }
+                      </div>
+                      {synthesis?.queryDomain && (
+                        <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+                          DOMAIN ATTEMPTED · {synthesis.queryDomain.replace(/_/g, ' ')}
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 2 }}>
+                          REFORMULATE →
+                        </div>
+                        {suggestions.map((s, i) => (
+                          <div
+                            key={i}
+                            onClick={() => window.postMessage({ type: 'krylo-submit', label: s }, '*')}
+                            style={{
+                              fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.04em',
+                              lineHeight: 1.6, padding: '8px 12px',
+                              border: `1px solid rgba(102,255,0,0.2)`,
+                              background: 'rgba(102,255,0,0.02)',
+                              cursor: 'pointer',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.06)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(102,255,0,0.02)'}
+                          >
+                            {s}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 {alternatives.length > 0 && (() => {
                   const rate        = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
                   const winLabel    = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
                   const winColor    = winLabel === 'OPEN' ? LIME : winLabel === 'TIGHT' ? 'rgba(255,255,255,0.4)' : 'rgba(255,80,80,0.5)';
-                  // WO-2012: SCPRL — apply RenderDirective to sort and tone
                   const rd          = buildRenderDirective(alternatives, synthesis, metrics);
                   const toneColors  = { NEUTRAL: DIM, COMPRESSED: 'rgba(255,200,0,0.5)', CAUTIONARY: 'rgba(255,80,80,0.6)' };
                   const toneColor   = toneColors[rd.toneLabel] ?? DIM;
@@ -630,7 +670,6 @@ export default function TargetPacket() {
                     : alternatives;
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {/* WO-1851 — ASSEMBLANCE header: 2-axis structural space (W × G) */}
                       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                         <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
                           ASSEMBLANCE · {alternatives.length} PATHS
@@ -639,7 +678,6 @@ export default function TargetPacket() {
                           {rd.toneLabel} · W: {winLabel}
                         </span>
                       </div>
-                      {/* Hypothesis items — SCPRL sort order applied */}
                       {sortedAlts.map(c => {
                         const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
                         return (
@@ -662,20 +700,18 @@ export default function TargetPacket() {
                     </div>
                   );
                 })()}
-                {synthesis?.leverage && <LeverageField leverage={synthesis.leverage} />}
-                <DomainIsolationConsole />
-                <div style={{ border: `1px solid rgba(102,255,0,0.2)`, padding: '16px 20px', background: 'rgba(102,255,0,0.03)' }}>
-                  <div style={{ fontFamily: SERIF, fontSize: 16, color: BRT, lineHeight: 1.4, marginBottom: 8 }}>{synthesis?.recommendedAction ?? 'Analysis in progress…'}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 11, color: LIME, letterSpacing: '0.1em', marginBottom: 14 }}>{synthesis?.timeHorizon ?? '—'}</div>
-                  <div style={{ display: 'flex', gap: 20 }}>
-                    {[{ label: 'Confidence', value: confScore.toFixed(2) }, { label: 'Time Horizon', value: synthesis?.timeHorizon ?? '—' }, { label: 'Impact', value: synthesis?.impactLevel ?? '—' }].map(({ label, value }) => (
-                      <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{label}</span>
-                        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.08em' }}>{value}</span>
-                      </div>
-                    ))}
-                  </div>
+              </div>
+
+              {/* ── LeverageField — bounded zone, hidden when no data */}
+              {synthesis?.leverage && (
+                <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER}`, padding: '14px 24px' }}>
+                  <LeverageField leverage={synthesis.leverage} />
                 </div>
+              )}
+
+              {/* ── Domain Isolation Console — bounded zone, independent scroll */}
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+                <DomainIsolationConsole />
               </div>
           </>
         </div>
