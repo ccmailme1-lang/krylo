@@ -15,6 +15,10 @@ import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.
 // WO-1042 — fixed port, no override
 const PORT = 4000;
 
+// WO-2019 — Maersk Consumer Key (env var preferred; falls back to specs/maersk.env)
+const MAERSK_KEY = process.env.MAERSK_CONSUMER_KEY ||
+  (existsSync('./specs/maersk.env') ? readFileSync('./specs/maersk.env', 'utf8').trim() : '');
+
 // ── Proxy response cache ──────────────────────────────────────────────────────
 // TTL matched to hook poll intervals: FRED = 5min, EDGAR = 15min.
 // Prevents redundant upstream calls when multiple clients poll simultaneously.
@@ -38,6 +42,7 @@ const GDELT_DOC_TTL_MS =   900_000; // 15 min
 const REDDIT_TTL_MS   =   900_000; // 15 min
 const FHFA_TTL_MS     = 86_400_000; // 24h — quarterly data
 const USGS_TTL_MS     =   900_000; // 15 min
+const MAERSK_TTL_MS   = 3_600_000; // 1h — vessel schedules update infrequently
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -759,6 +764,45 @@ function handleFhfaProxy(req, res) {
   proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
 }
 
+function handleMaerskProxy(req, res) {
+  const url    = new URL(req.url, 'http://localhost');
+  const origin = url.searchParams.get('origin') ?? 'CNSHA'; // Shanghai default
+  const dest   = url.searchParams.get('dest')   ?? 'USORF'; // Norfolk default
+  const key    = `maersk:${origin}:${dest}`;
+  const hit    = getCached(key, MAERSK_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+  if (!MAERSK_KEY) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ sailings: [] }));
+    return;
+  }
+  const options = {
+    hostname: 'api.maersk.com',
+    path: `/schedules/v1/pointToPoint?dateRange=P14D&originPortCode=${origin}&destinationPortCode=${dest}`,
+    method: 'GET',
+    headers: {
+      'Consumer-Key': MAERSK_KEY,
+      'Accept': 'application/json',
+      'User-Agent': 'krylo/1.0',
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = '';
+    upstream.on('data', c => { body += c; });
+    upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message }));
+  proxy.end();
+}
+
 function handleUsgsProxy(req, res) {
   const key = 'usgs:drought';
   const hit = getCached(key, USGS_TTL_MS);
@@ -811,6 +855,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/reddit-search')                 return handleRedditSearchProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fhfa')                          return handleFhfaProxy(req, res);
   if (req.method === 'GET'  && url === '/api/usgs')                          return handleUsgsProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/maersk')                        return handleMaerskProxy(req, res);
   handleNotFound(req, res);
 }
 
