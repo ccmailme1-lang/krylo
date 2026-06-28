@@ -7,6 +7,23 @@ import { computeIntegrity } from '../engine/integrityStack';
 
 const HN_SEARCH = 'https://hn.algolia.com/api/v1/search';
 
+const DOMAIN_KEYWORDS = {
+  technology: ['ai', 'software', 'hardware', 'startup', 'saas', 'cloud', 'developer', 'programming', 'open source', 'llm', 'model', 'chip', 'gpu', 'code', 'api', 'app', 'tech', 'data'],
+  capital:    ['venture', 'vc', 'fund', 'investment', 'ipo', 'stock', 'market', 'crypto', 'bitcoin', 'finance', 'bank', 'equity', 'valuation', 'raise', 'funding', 'revenue'],
+  knowledge:  ['research', 'science', 'paper', 'study', 'education', 'university', 'learn', 'book', 'course', 'publish', 'academic'],
+  labor:      ['job', 'hire', 'layoff', 'remote', 'salary', 'workforce', 'employee', 'career', 'work', 'recruiter', 'engineer'],
+  media:      ['news', 'media', 'social', 'content', 'podcast', 'video', 'streaming', 'platform', 'youtube', 'twitter', 'reddit'],
+  ownership:  ['real estate', 'property', 'housing', 'land', 'acquisition', 'merger', 'acquisition', 'rent', 'lease'],
+};
+
+function domainFromText(text = '') {
+  const lower = text.toLowerCase();
+  for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+    if (keywords.some(k => lower.includes(k))) return domain;
+  }
+  return 'technology'; // HN default — skews tech
+}
+
 function computeFs(m_checksum, t_telemetry, e_viral) {
   // Fs = (M · 0.40) + (T · 0.30) + (D · 0.20) + (V · 0.09) + (E · 0.01)
   // D_docs and V_voice unavailable from HN — default 0
@@ -25,6 +42,7 @@ function mapHit(hit) {
     truth_statement:      hit.title ?? '',
     url:                  hit.url   ?? `https://news.ycombinator.com/item?id=${hit.objectID}`,
     source_type:          'hackernews',
+    domain:               domainFromText(hit.title),
     born_at:              hit.created_at ? hit.created_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
     signal_score:         fs,
     fs,

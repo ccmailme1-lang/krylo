@@ -211,7 +211,7 @@ const COMPOSITION = [
 // 6-domain → 6-pillar surface mapping (WO-1717: market + knowledge promoted)
 const DOMAIN_TO_PILLAR = {
   capital:    'financial',
-  ownership:  'financial',
+  ownership:  'operating',
   knowledge:  'knowledge',
   technology: 'market',
   labor:      'time',

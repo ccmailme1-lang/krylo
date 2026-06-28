@@ -18,7 +18,7 @@ const REQUIRED_PREDECESSORS = {
 };
 
 // Structural: session_open must originate from an approved mediator source
-const APPROVED_SESSION_SOURCES = new Set(['krylo-submit', 'cone-search', 'arc-interaction', 'ingestion-builder']);
+const APPROVED_SESSION_SOURCES = new Set(['krylo-submit', 'cone-search', 'arc-interaction', 'ingestion-builder', 'analysis-field']);
 
 // Epistemic: resolution signals must declare a recognized truth source
 const VALID_RESOLUTION_SOURCES = new Set(['user', 'ingestion', 'ttl']);

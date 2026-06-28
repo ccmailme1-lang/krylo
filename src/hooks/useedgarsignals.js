@@ -55,7 +55,7 @@ async function fetchFormD() {
     raw:        count,
     count,
     confidence,
-    fs:         0.72,
+    fs:         signal / 100,
     origin:     'EDGAR',
     ts:         Date.now(),
     zone:       'national',
@@ -70,7 +70,7 @@ async function fetchFormD() {
     signal:     Math.round(signal * 0.65), // attenuated — indirect signal
     raw:        count,
     confidence: confidence * 0.80,
-    fs:         0.65,
+    fs:         Math.round(signal * 0.65) / 100,
     origin:     'EDGAR',
     ts:         Date.now(),
     zone:       'national',
