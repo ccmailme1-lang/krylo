@@ -50,13 +50,13 @@ export default function LeverageField({ leverage }) {
   const labelAnchor = labelRight ? 'end' : 'start';
 
   return (
-    <div style={{ fontFamily: MONO, margin: '20px 0' }}>
+    <div style={{ fontFamily: MONO, margin: '8px 0' }}>
 
       <div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        width="60%" height="auto"
-        style={{ display: 'block', overflow: 'visible' }}
+        width={W} height={H}
+        style={{ display: 'block', overflow: 'visible', maxWidth: '100%' }}
       >
 
         {/* Horizontal grid */}

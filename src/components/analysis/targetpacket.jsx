@@ -971,9 +971,6 @@ export default function TargetPacket() {
         </div>
       )}
 
-      {/* ── WO-1868: Metric Strip ───────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
-
       {/* ── WO-1880: Fracture Output Surface (§20 Direction Honesty) ─────── */}
       <FractureSignalSurface domainPressures={domainPressures} />
 
