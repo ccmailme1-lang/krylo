@@ -180,6 +180,16 @@ export default function ActionMatrix() {
   const structuralFriction = session?.tensor?.structuralFriction ?? null;
   const showFriction       = structuralFriction?.state === 'HIGH_FRICTION';
 
+  if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
+    return (
+      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
+          Awaiting Signal
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       width: '100%', height: '100%',

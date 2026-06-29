@@ -152,7 +152,7 @@ function scoreDomains(q) {
 // preserved). Returns a string domain label. Called inside detectDomain().
 function resolvePrimary(q, lens) {
   // STARTUP_FINANCE must precede RETIREMENT — 401k-as-bridge-capital is a startup signal
-  if (/\bstartup\b|\brunway\b|burn rate|payroll|bridge.*capital|liquidat.*401k|seed round|series [ab]|raise capital|\bventure\b|\bbootstrap\b/.test(q)) return 'STARTUP_FINANCE';
+  if (/\bstartup\b|\brunway\b|\bburn rate\b|\bpayroll\b|\bbridge.*capital\b|\bliquidat.*401k\b|\bseed round\b|\bseries [ab]\b|\braise capital\b|\bventure\b|\bbootstrap\b/.test(q)) return 'STARTUP_FINANCE';
   // CONTENT_COMMERCE must precede AUTO — "audience" contains "audi" which fires AUTO gate
   if (/content.*to.*commerce|content.*commerce|content.*convert.*audience|content.*revenue|content.*monetiz|audience.*commerce|creator.*commerce|social.*commerce|creator.*sales|content.*sales|audience.*monetiz|convert.*audience|content.*product.*sell/.test(q)) return 'CONTENT_COMMERCE';
   // "vehicle" is automotive only — exclude financial "investment/savings vehicle".
@@ -3986,6 +3986,7 @@ const SYNTH_MAP = {
   FINTECH_INFRA:            synthFintechInfra,
   FORWARD_COMPUTE:          synthForwardCompute,
   ATTENTION_SATURATION:     synthAttentionSaturation,
+  STARTUP_FINANCE:          synthGeneral,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────

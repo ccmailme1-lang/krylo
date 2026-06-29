@@ -493,9 +493,11 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
               <span style={{
                 fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase',
-                color: LIME, border: `1px solid rgba(102,255,0,0.4)`, padding: '3px 10px',
+                color: synthesis?.resolutionEligible === false ? DIM : LIME,
+                border: synthesis?.resolutionEligible === false ? '1px solid rgba(255,255,255,0.1)' : `1px solid rgba(102,255,0,0.4)`,
+                padding: '3px 10px',
               }}>
-                {stateLabel}
+                {synthesis?.resolutionEligible === false ? 'INSUFFICIENT SIGNAL' : stateLabel}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.1em' }}>
