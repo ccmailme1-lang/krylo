@@ -142,9 +142,15 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   return (
     // base lowered 10% of cone height below ground
     <group position={[position[0], baseY, position[2]]}>
-      <mesh>
-        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
-        <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
+      {/* Opaque black fill — blocks floor rings from showing through */}
+      <mesh renderOrder={1}>
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 3, true]} />
+        <meshBasicMaterial color="#000000" polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={2} />
+      </mesh>
+      {/* Wireframe overlay — always visible on top */}
+      <mesh renderOrder={2}>
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 3, true]} />
+        <meshBasicMaterial color={stateColor} wireframe transparent opacity={flashOpacity} />
       </mesh>
 
 
@@ -1758,9 +1764,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           const kalshiSignal = kalshiMap[kDomain] ?? null;
           return (
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
-              <BoundaryRing attenuationFactor={Math.max(0.5, (state.pressure ?? 50) / 50)} />
-              <Footprint position={[0, 0, 0]} radius={1.1} />
-              <ThresholdGates position={[0, 0, 0]} state={state} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
               <Cone
                 state={state}
