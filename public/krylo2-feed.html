@@ -1042,6 +1042,49 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     max-width:600px;
 }
 
+/* WO-1876 — Search DNA Intelligence Surface */
+.dna-surface {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    width:100%;
+}
+.dna-row {
+    display:flex;
+    gap:40px;
+    justify-content:center;
+    width:100%;
+}
+.dna-card {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    opacity:0.15;
+    transition:opacity 400ms ease;
+    min-width:100px;
+    pointer-events:none;
+    user-select:none;
+}
+.dna-card.active { opacity:0.18; }
+.dna-label {
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.5);
+}
+.dna-value {
+    font-family:'IBM Plex Mono', monospace;
+    font-size:22px;
+    font-weight:500;
+    letter-spacing:0.05em;
+    color:#ffffff;
+    line-height:1;
+}
+.dna-value.empty { color:rgba(255,255,255,0.2); font-size:14px; }
+
 .search-acq-label {
     font-family:'IBM Plex Mono', monospace;
     font-size:9px;
@@ -2582,10 +2625,37 @@ function cycleABSlot() {
 
     <!-- Hero Center (search CTA only) -->
     <div class="hero-center">
-        <div class="hero-cta" style="position:relative;">
-            <div id="cta-zone" class="cta-zone">
-                <input id="cta-input" class="cta-input" type="text" autocomplete="off"
-                       placeholder="Ask a question about any entity, signal, or relationship..." />
+        <div class="dna-surface">
+            <!-- DNA row top -->
+            <div class="dna-row">
+                <div class="dna-card" id="dna-signals">
+                    <div class="dna-label">Signals Explored</div>
+                    <div class="dna-value empty" id="dna-signals-val">—</div>
+                </div>
+                <div class="dna-card" id="dna-domain">
+                    <div class="dna-label">Primary Domain</div>
+                    <div class="dna-value empty" id="dna-domain-val">—</div>
+                </div>
+            </div>
+
+            <!-- Composer -->
+            <div class="hero-cta" style="position:relative;">
+                <div id="cta-zone" class="cta-zone">
+                    <input id="cta-input" class="cta-input" type="text" autocomplete="off"
+                           placeholder="Ask a question about any entity, signal, or relationship..." />
+                </div>
+            </div>
+
+            <!-- DNA row bottom -->
+            <div class="dna-row">
+                <div class="dna-card" id="dna-convergence">
+                    <div class="dna-label">Convergence Rate</div>
+                    <div class="dna-value empty" id="dna-convergence-val">—</div>
+                </div>
+                <div class="dna-card" id="dna-lens">
+                    <div class="dna-label">Top Lens</div>
+                    <div class="dna-value empty" id="dna-lens-val">—</div>
+                </div>
             </div>
         </div>
     </div>
@@ -3952,6 +4022,74 @@ function handleConsoleKey(e) {
   };
 
   document.addEventListener('DOMContentLoaded', initRibbon);
+})();
+</script>
+
+<script>
+// WO-1876 — Search DNA Intelligence Surface
+(function() {
+  function computeDNA() {
+    try {
+      var entries = JSON.parse(localStorage.getItem('krylo_search_dna') || '[]');
+      if (!entries.length) return null;
+
+      // SIGNALS EXPLORED
+      var total = entries.length;
+
+      // PRIMARY DOMAIN — mode of domain field, excluding AMBIGUOUS
+      var domainCounts = {};
+      entries.forEach(function(e) {
+        if (e.domain && e.domain !== 'AMBIGUOUS') {
+          domainCounts[e.domain] = (domainCounts[e.domain] || 0) + 1;
+        }
+      });
+      var primaryDomain = Object.keys(domainCounts).sort(function(a,b){ return domainCounts[b]-domainCounts[a]; })[0] || null;
+
+      // CONVERGENCE RATE — % where converged === true
+      var convergedCount = entries.filter(function(e){ return e.converged; }).length;
+      var convergenceRate = total > 0 ? Math.round((convergedCount / total) * 100) : 0;
+
+      // TOP LENS — most frequent lens
+      var lensCounts = {};
+      entries.forEach(function(e) {
+        if (e.lens) lensCounts[e.lens] = (lensCounts[e.lens] || 0) + 1;
+      });
+      var topLens = Object.keys(lensCounts).sort(function(a,b){ return lensCounts[b]-lensCounts[a]; })[0] || null;
+
+      return { total: total, primaryDomain: primaryDomain, convergenceRate: convergenceRate, topLens: topLens };
+    } catch(e) { return null; }
+  }
+
+  function renderDNA() {
+    var data = computeDNA();
+    var hasData = data && data.total > 0;
+
+    var sv = document.getElementById('dna-signals-val');
+    var dv = document.getElementById('dna-domain-val');
+    var cv = document.getElementById('dna-convergence-val');
+    var lv = document.getElementById('dna-lens-val');
+    if (!sv) return;
+
+    if (hasData) {
+      sv.textContent = data.total;
+      sv.className   = 'dna-value';
+      dv.textContent = data.primaryDomain ? data.primaryDomain.replace(/_/g,' ') : '—';
+      dv.className   = data.primaryDomain ? 'dna-value' : 'dna-value empty';
+      cv.textContent = data.convergenceRate + '%';
+      cv.className   = 'dna-value';
+      lv.textContent = data.topLens || '—';
+      lv.className   = data.topLens ? 'dna-value' : 'dna-value empty';
+      ['dna-signals','dna-domain','dna-convergence','dna-lens'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.classList.add('active');
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', renderDNA);
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'krylo-dna-update') renderDNA();
+  });
 })();
 </script>
 

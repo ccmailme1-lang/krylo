@@ -11,14 +11,10 @@ import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
-import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
-import MetricStrip               from './metricstrip.jsx';
-import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
-import { fetchHNTop }        from '../../hooks/usehnsignals.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -424,11 +420,30 @@ export default function TargetPacket() {
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
-  const compositeMetrics = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
-  const visibility      = useMetricVisibility(metrics, dynamics);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
+
+  // WO-1876: write DNA entry to localStorage after synthesis resolves
+  useEffect(() => {
+    const domain = synthesis?.queryDomain;
+    const q      = session?.query;
+    if (!domain || !q || domain === 'AMBIGUOUS') return;
+    const entry = {
+      query:     q,
+      domain,
+      stateLabel: synthesis?.stateLabel ?? '',
+      lens:       session?.lens ?? '',
+      converged:  synthesis?.resolutionEligible !== false,
+      ts:         Date.now(),
+    };
+    try {
+      const existing = JSON.parse(localStorage.getItem('krylo_search_dna') ?? '[]');
+      const deduped  = existing.filter(e => e.query !== q || Math.abs(e.ts - entry.ts) > 5000);
+      localStorage.setItem('krylo_search_dna', JSON.stringify([...deduped, entry].slice(-500)));
+      window.postMessage({ type: 'krylo-dna-update' }, '*');
+    } catch {}
+  }, [synthesis?.queryDomain, synthesis?.stateLabel, synthesis?.resolutionEligible, session?.query, session?.lens]);
 
   // WO-1716: Domain Clamp — user-controlled bay assignment
   const assignToBay    = useBayStore(s => s.assignToBay);
@@ -443,12 +458,6 @@ export default function TargetPacket() {
     setClampBay('');
   }
 
-  const [hnItems, setHnItems] = useState([]);
-  useEffect(() => {
-    fetchHNTop(12).then(setHnItems).catch(() => {});
-    const id = setInterval(() => fetchHNTop(12).then(setHnItems).catch(() => {}), 300_000);
-    return () => clearInterval(id);
-  }, []);
 
   const [showAlts, setShowAlts] = useState(false);
 
@@ -610,27 +619,12 @@ export default function TargetPacket() {
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
               <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {alternatives.length === 0 && (() => {
-                  const lens = session?.lens?.toUpperCase() ?? 'GENERAL';
                   const q = session?.query?.trim() ?? '';
-                  const suggestions = lens === 'REALTOR'
-                    ? [
-                        `Should I buy ${q}? Evaluate purchase risk vs. current REAL_ESTATE signal`,
-                        `${q} — compare listing price to regional structural market signal`,
-                      ]
-                    : lens === 'INVESTOR'
-                    ? [
-                        `${q} — evaluate as capital allocation: risk vs. structural opportunity`,
-                        `What is the convergence signal on ${q}? Assess entry timing`,
-                      ]
-                    : lens === 'CAREER'
-                    ? [
-                        `${q} — evaluate labor market signal and hiring window`,
-                        `Should I pursue ${q}? Assess role demand vs. current LABOR signal`,
-                      ]
-                    : [
-                        `${q} — evaluate decision risk and structural opportunity`,
-                        `What is the structural signal for ${q}? Add timeline or dollar context`,
-                      ];
+                  const suggestions = [
+                    `Add timeline or dollar context`,
+                    `The structural signal for ${q}?`,
+                    `${q} — decision risk and structural opportunity`,
+                  ];
                   return (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
@@ -638,8 +632,8 @@ export default function TargetPacket() {
                       </div>
                       <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, letterSpacing: '0.04em', maxWidth: 340 }}>
                         {stateLabel === 'INSUFFICIENT_SIGNAL'
-                          ? 'Signal density below threshold. Add a specific decision, dollar amount, or timeline to anchor analysis.'
-                          : 'Arbitration produced no surviving paths. Reformulate with more specific domain context.'
+                          ? 'Add a decision, amount, or timeline.'
+                          : 'No paths survived. Try a more specific query.'
                         }
                       </div>
                       {synthesis?.queryDomain && (
@@ -647,27 +641,31 @@ export default function TargetPacket() {
                           DOMAIN ATTEMPTED · {synthesis.queryDomain.replace(/_/g, ' ')}
                         </div>
                       )}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 6 }}>
-                        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 2 }}>
+                      <div style={{ marginTop: 6 }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
                           REFORMULATE →
                         </div>
-                        {suggestions.map((s, i) => (
-                          <div
-                            key={i}
-                            onClick={() => window.postMessage({ type: 'krylo-submit', label: s }, '*')}
-                            style={{
-                              fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.04em',
-                              lineHeight: 1.6, padding: '8px 12px',
-                              border: `1px solid rgba(102,255,0,0.2)`,
-                              background: 'rgba(102,255,0,0.02)',
-                              cursor: 'pointer',
-                            }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.06)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(102,255,0,0.02)'}
-                          >
-                            {s}
-                          </div>
-                        ))}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                          {suggestions.map((s, i) => (
+                            <div
+                              key={i}
+                              onClick={() => window.postMessage({ type: 'krylo-submit', label: s }, '*')}
+                              style={{
+                                fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em',
+                                padding: '4px 10px',
+                                border: `1px solid rgba(102,255,0,0.25)`,
+                                background: 'rgba(102,255,0,0.03)',
+                                borderRadius: 999,
+                                cursor: 'pointer',
+                                whiteSpace: 'nowrap',
+                              }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.08)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
+                            >
+                              {s}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   );
@@ -730,37 +728,28 @@ export default function TargetPacket() {
         </div>
       </div>
 
-      {/* ── MetricStrip ─────────────────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
-
       {/* ── DECISION TRANSLATION LAYER + ATTENTION STACK ────────────────── */}
       <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 220 }}>
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
         <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {/* HN live feed */}
           <div style={{ padding: '8px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Signal Feed</span>
-            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.18em', marginLeft: 'auto' }}>HN · LIVE</span>
+            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.18em', marginLeft: 'auto' }}>LIVE</span>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            {hnItems.length === 0 ? (
-              <div style={{ padding: '16px 14px', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.2em' }}>CONNECTING…</div>
-            ) : hnItems.map((s, i) => (
-              <div key={s.id} style={{ padding: '8px 14px', borderBottom: `1px solid rgba(255,255,255,0.04)`, cursor: 'pointer' }}
-                onClick={() => window.open(s.url, '_blank')}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-              >
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: (s.fs ?? 0) > 0.65 ? LIME : DIM, flexShrink: 0 }}>{i + 1}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.8)', lineHeight: 1.4, letterSpacing: '0.03em' }}>{s.title}</span>
-                </div>
-                <div style={{ paddingLeft: 16, display: 'flex', gap: 12 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.1em' }}>{(s.category_id ?? 'SIGNAL').toUpperCase()}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: (s.fs ?? 0) > 0.65 ? LIME : DIM, letterSpacing: '0.1em' }}>Fs {((s.fs ?? 0) * 100).toFixed(0)}</span>
-                </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { label: 'PRIMARY DOMAIN',   value: synthesis?.queryDomain?.replace(/_/g,' ') ?? '—' },
+              { label: 'STATE',            value: stateLabel?.replace(/_/g,' ') ?? '—' },
+              { label: 'CONFIDENCE',       value: confScore ? `${(confScore * 100).toFixed(0)}%` : '—' },
+              { label: 'SIGNAL STRENGTH',  value: hpScore ? `${hpScore}` : '—' },
+              { label: 'LENS',             value: session?.lens ?? '—' },
+              { label: 'HORIZON',          value: session?.tensor?.horizon ?? '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: `1px solid rgba(255,255,255,0.03)`, paddingBottom: 8 }}>
+                <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{value}</span>
               </div>
             ))}
           </div>

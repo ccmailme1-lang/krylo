@@ -1328,25 +1328,34 @@ const FRONTIER_VERT = `
     vec3 pos = position;
     float n = wave(aAngle, uTime * 0.5);
     n = clamp(n, -0.35, 0.35);
-    pos.y += n * uVolatility * 0.25;
+    pos.y += n * uVolatility * 0.8;
+    float radial = wave(aAngle + 1.2, uTime * 0.4);
+    radial = clamp(radial, -0.35, 0.35);
+    pos.x += normalize(pos).x * radial * uVolatility * 0.5;
+    pos.z += normalize(pos).z * radial * uVolatility * 0.5;
     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
   }
 `;
 
 const FRONTIER_FRAG = `
+  uniform vec3 uColor;
   void main() {
-    gl_FragColor = vec4(0.4, 1.0, 0.0, 0.35);
+    gl_FragColor = vec4(uColor, 0.35);
   }
 `;
 
 function FrontierRing({ position, state }) {
   const { height, radius } = encodeCone(state, { focusId: null });
   const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
-  const FRAC   = 0.75;
-  const worldY = coneHeight * (FRAC - 0.1);
-  const ringR  = (1 - FRAC) * radius * 1.5972;
   const volatility = state?.volatility ?? 0.5;
+  const worldY = -(coneHeight * 0.1) - 0.45;
+  const ringR  = radius * 1.5972;
   const matRef = useRef();
+
+  const pressure = state?.pressure ?? 0;
+  const hexColor = state?.colorOverride
+    ?? (pressure >= 90 ? '#8A2BE2' : pressure >= 75 ? '#66FF00' : pressure >= 50 ? '#007FFF' : '#1a1a1a');
+  const ringColor = useMemo(() => new THREE.Color(hexColor), [hexColor]);
 
   // Pre-compute ring geometry at rest (y=0) + angle attribute — no mutation in useFrame
   const { positions, angles } = useMemo(() => {
@@ -1369,6 +1378,7 @@ function FrontierRing({ position, state }) {
     if (!matRef.current) return;
     matRef.current.uniforms.uTime.value       = clock.elapsedTime;
     matRef.current.uniforms.uVolatility.value = volatility;
+    matRef.current.uniforms.uColor.value.set(ringColor);
   });
 
   return (
@@ -1384,19 +1394,9 @@ function FrontierRing({ position, state }) {
           fragmentShader={FRONTIER_FRAG}
           transparent
           linewidth={3}
-          uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility } }}
+          uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility }, uColor: { value: new THREE.Color(hexColor) } }}
         />
       </lineSegments>
-      <Html position={[ringR + 0.15, 0, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontFamily:    "'IBM Plex Mono', monospace",
-          fontSize:      7,
-          letterSpacing: '0.18em',
-          color:         'rgba(102,255,0,0.55)',
-          whiteSpace:    'nowrap',
-          userSelect:    'none',
-        }}>FRONTIER</div>
-      </Html>
     </group>
   );
 }

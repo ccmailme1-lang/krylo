@@ -464,6 +464,24 @@ function ChainSlot({ label, children }) {
   );
 }
 
+// WO-1876 — compute Search DNA metrics from localStorage entries
+function computeDNA(entries) {
+  if (!entries?.length) return null;
+  const domainCounts = {}, lensCounts = {};
+  let converged = 0;
+  entries.forEach(e => {
+    if (e.domain && e.domain !== 'AMBIGUOUS') domainCounts[e.domain] = (domainCounts[e.domain] || 0) + 1;
+    if (e.lens) lensCounts[e.lens] = (lensCounts[e.lens] || 0) + 1;
+    if (e.converged) converged++;
+  });
+  return {
+    total:       entries.length,
+    domain:      Object.keys(domainCounts).sort((a,b) => domainCounts[b]-domainCounts[a])[0] ?? null,
+    convergence: Math.round((converged / entries.length) * 100),
+    lens:        Object.keys(lensCounts).sort((a,b) => lensCounts[b]-lensCounts[a])[0] ?? null,
+  };
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export default function AnalysisIdleField({ activeCones = null }) {
 
@@ -481,6 +499,31 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const { latest, stats, lagMs }              = useframestream({ enabled: true });
 
   // Intake state
+  // WO-1876 — Search DNA
+  const [dna, setDna] = useState(() => {
+    try {
+      const entries = JSON.parse(localStorage.getItem('krylo_search_dna') ?? '[]');
+      return computeDNA(entries);
+    } catch { return null; }
+  });
+
+  const refreshDna = () => {
+    try {
+      const entries = JSON.parse(localStorage.getItem('krylo_search_dna') ?? '[]');
+      setDna(computeDNA(entries));
+    } catch {}
+  };
+
+  // Re-read when returning to idle state
+  useEffect(() => { if (!hasSession) refreshDna(); }, [hasSession]);
+
+  // Re-read on postMessage from targetpacket
+  useEffect(() => {
+    const onMsg = (e) => { if (e.data?.type === 'krylo-dna-update') refreshDna(); };
+    window.addEventListener('message', onMsg);
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
   const [activeSituation, setActiveSituation] = useState(null);
   const [seedQuery,       setSeedQuery]       = useState('');
   const [selectedFloor,   setSelectedFloor]   = useState(null);
@@ -1266,6 +1309,21 @@ export default function AnalysisIdleField({ activeCones = null }) {
           {!hasSession && (
             <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10, pointerEvents: 'none', padding: '72px 24px 80px' }}>
 
+              {/* WO-1876 — DNA row top */}
+              {dna && (
+                <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginBottom: 20, pointerEvents: 'none', opacity: 0.18 }}>
+                  {[
+                    { label: 'SIGNALS EXPLORED', value: dna.total },
+                    { label: 'PRIMARY DOMAIN',   value: dna.domain?.replace(/_/g,' ') ?? '—' },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{label}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 20, fontWeight: 500, color: '#fff', letterSpacing: '0.04em', lineHeight: 1 }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Headline */}
               <div style={{ textAlign: 'center', marginBottom: 28, pointerEvents: 'none' }}>
                 <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.82)' }}>WHAT ARE YOU</div>
@@ -1437,6 +1495,22 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 </div>
 
               </div>
+
+              {/* WO-1876 — DNA row bottom */}
+              {dna && (
+                <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginTop: 20, pointerEvents: 'none', opacity: 0.18 }}>
+                  {[
+                    { label: 'CONVERGENCE RATE', value: dna.convergence + '%' },
+                    { label: 'TOP LENS',          value: dna.lens ?? '—' },
+                  ].map(({ label, value }) => (
+                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{label}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 20, fontWeight: 500, color: '#fff', letterSpacing: '0.04em', lineHeight: 1 }}>{value}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </div>
           )}
 
