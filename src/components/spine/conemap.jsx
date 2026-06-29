@@ -1065,10 +1065,13 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
 // ─── WAVE 1 SUBSTRATE LAYERS ────────────────────────────────────────────────
 
-// Layer 1: System pulse floor — concentric rings, slow heartbeat opacity
-// (encodes "field is live" per Tufte motion-economy carve-out for state encoding)
+// Layer 1: System pulse floor — concentric rings with opaque fills between them.
+// Lines are frozen (always visible). Fills pulse.
 function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
-  const matRef = useRef();
+  const fillMat = useMemo(() => new THREE.MeshBasicMaterial({
+    color: '#000000', transparent: true, opacity: 0.92, side: THREE.DoubleSide,
+  }), []);
+
   const positions = useMemo(() => {
     const segs = 64;
     const verts = [];
@@ -1087,17 +1090,31 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
   }, [ringCount, maxRadius]);
 
   useFrame(({ clock }) => {
-    if (!matRef.current) return;
-    matRef.current.opacity = 0.45 + 0.20 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
+    fillMat.opacity = 0.80 + 0.14 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
   });
 
   return (
-    <lineSegments position={[0, -0.05, 0]}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial ref={matRef} color="#4A4A4A" transparent opacity={0.45} />
-    </lineSegments>
+    <group position={[0, -0.05, 0]}>
+      {/* Opaque fills between each pair of rings — shared material pulses */}
+      {Array.from({ length: ringCount }, (_, i) => {
+        const innerR = (i / ringCount) * maxRadius;
+        const outerR = ((i + 1) / ringCount) * maxRadius;
+        return (
+          <mesh key={i} material={fillMat} renderOrder={1}>
+            {innerR === 0
+              ? <circleGeometry args={[outerR, 64]} />
+              : <ringGeometry args={[innerR, outerR, 64]} />}
+          </mesh>
+        );
+      })}
+      {/* Ring lines — frozen, always fully visible */}
+      <lineSegments renderOrder={2}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial color="#4A4A4A" transparent opacity={0.65} />
+      </lineSegments>
+    </group>
   );
 }
 
