@@ -143,7 +143,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
     // base lowered 10% of cone height below ground
     <group position={[position[0], baseY, position[2]]}>
       <mesh>
-        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 1, true]} />
         <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
       </mesh>
 
@@ -1468,7 +1468,7 @@ const MAX_CONES      = 8;   // pre-allocation upper bound
 const MAX_GHOSTS     = MAX_CONES * GHOST_DEPTH;
 
 // Shared unit-cone geometry — one instance, scaled per ghost slot
-const GHOST_CONE_GEO = new THREE.ConeGeometry(1, 1, 16, 12, true);
+const GHOST_CONE_GEO = new THREE.ConeGeometry(1, 1, 16, 1, true);
 
 // WO-1307: shared ring geometry — one instance, never per-signal
 const BOUNDARY_RING_GEO = new THREE.RingGeometry(0.95, 1.0, 32);
