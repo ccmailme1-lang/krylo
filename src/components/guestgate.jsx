@@ -1,11 +1,9 @@
 import { useState } from 'react';
 
-const GUEST_EXPIRY = new Date('2026-06-29T12:00:00Z'); // 8AM EDT
-const SESSION_K    = 'krylo_auth_v1';
+const SESSION_K = 'krylo_auth_v1';
 
 const ACCOUNTS = [
-  { user: 'krylo', pass: 'krylo321',  expiry: null },
-  { user: 'guest', pass: 'krylo2906', expiry: GUEST_EXPIRY },
+  { user: 'krylo', pass: 'krylo321', expiry: null },
 ];
 
 const S = {
