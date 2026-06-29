@@ -1,3 +1,6 @@
+specs/jira.md
+specs/*.env
+
 # Logs
 logs
 *.log
