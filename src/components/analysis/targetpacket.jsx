@@ -580,8 +580,8 @@ export default function TargetPacket() {
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
                             <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{c.type.toUpperCase()}</div>
-                          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{(c.type ?? 'path').toUpperCase()}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{typeof c.content === 'string' ? c.content : String(c.content ?? '')}</div>
                         </div>
                       );
                     })}
@@ -691,9 +691,9 @@ export default function TargetPacket() {
                             </span>
                           </div>
                           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', marginBottom: 5 }}>
-                            {c.type.toUpperCase()} · W:{winLabel}
+                            {(c.type ?? 'path').toUpperCase()} · W:{winLabel}
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{c.content}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{typeof c.content === 'string' ? c.content : String(c.content ?? '')}</div>
                         </div>
                       ); })}
                       {paretoExtra.length > 0 && (

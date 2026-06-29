@@ -312,7 +312,13 @@ export function generateCandidates(tensor) {
     features: { impact: 0.20, confidence: 0.30, novelty: 0.05, actionability: 0.25, timeToValue: 0.50, evidenceStrength: 0.10 },
   }] : [];
 
-  return [...pool, ...supplements, ...fallback];
+  return [...pool, ...supplements, ...fallback].map(c => ({
+    ...c,
+    id:      c.id   ?? `gen-${Math.random().toString(36).slice(2, 9)}`,
+    type:    c.type ?? 'insight',
+    content: typeof c.content === 'string' ? c.content
+           : (c.content?.label ?? c.content?.insight ?? c.content?.text ?? String(c.content ?? '')),
+  }));
 }
 
 // ── Main arbitration function ──────────────────────────────────────────────────
