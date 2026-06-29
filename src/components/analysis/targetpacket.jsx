@@ -159,13 +159,22 @@ function SignalCluster({ entityTitle, pressure, volatility, loading, headline })
   );
 }
 
+// Domain label → HN search term (no server proxy required)
+const DOMAIN_HN_QUERY = {
+  FINANCIAL: 'finance economy interest rates',
+  MARKET:    'technology startup market',
+  CAREER:    'hiring jobs labor market',
+  HEALTH:    'healthcare medicine',
+};
+
 function useDomainHeadline(domain, active) {
   const [headline, setHeadline] = useState(null);
   useEffect(() => {
     if (!active) return;
-    fetch(`/api/signals/headline?domain=${domain}`)
+    const q = DOMAIN_HN_QUERY[domain] ?? domain.toLowerCase();
+    fetch(`https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(q)}&tags=story&numericFilters=points%3E30&hitsPerPage=1`)
       .then(r => r.json())
-      .then(d => setHeadline(d.headline ?? null))
+      .then(d => setHeadline(d.hits?.[0]?.title ?? null))
       .catch(() => {});
   }, [domain, active]);
   return headline;
@@ -215,8 +224,8 @@ function DomainCard({ bayId, domainLabel }) {
         </div>
       )}
       {!entityTitle && !headline && (
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.15)', fontFamily: MONO, marginTop: 4, letterSpacing: '0.18em' }}>
-          NO SIGNAL ASSIGNED
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', fontFamily: MONO, marginTop: 4, letterSpacing: '0.18em' }}>
+          MONITORING
         </div>
       )}
     </div>
