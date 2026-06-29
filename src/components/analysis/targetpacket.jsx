@@ -534,7 +534,7 @@ export default function TargetPacket() {
                   ? 'Insufficient signal to synthesize a brief. The query did not resolve to a domain with adequate structural data. Add a specific decision, dollar amount, or timeline to anchor analysis.'
                   : stateLabel === 'LOW_SIGNAL_YIELD'
                   ? 'Signal below synthesis threshold. Narrow the query — add a domain, company, or market context.'
-                  : 'Refining signal…'
+                  : 'Generating'
               )}
             </div>
           </div>
