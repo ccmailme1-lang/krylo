@@ -530,10 +530,10 @@ export default function TargetPacket() {
             )}
             <div style={{ fontFamily: SERIF, fontSize: 12, color: MID, lineHeight: 1.7, maxWidth: 480 }}>
               {synthesis?.recommendedAction ?? (
-                stateLabel === 'INSUFFICIENT_SIGNAL'
-                  ? 'Insufficient signal to synthesize a brief. The query did not resolve to a domain with adequate structural data. Add a specific decision, dollar amount, or timeline to anchor analysis.'
+                (stateLabel === 'INSUFFICIENT_SIGNAL' || synthesis?.resolutionEligible === false)
+                  ? 'Query did not resolve. Add a decision, amount, or timeline.'
                   : stateLabel === 'LOW_SIGNAL_YIELD'
-                  ? 'Signal below synthesis threshold. Narrow the query — add a domain, company, or market context.'
+                  ? 'Signal below threshold. Narrow the query.'
                   : 'Generating'
               )}
             </div>
