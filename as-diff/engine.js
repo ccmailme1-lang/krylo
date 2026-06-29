@@ -19,6 +19,10 @@ const PORT = 4000;
 const MAERSK_KEY = process.env.MAERSK_CONSUMER_KEY ||
   (existsSync('./specs/maersk.env') ? readFileSync('./specs/maersk.env', 'utf8').trim() : '');
 
+// WO-2039 — data.gov API key (covers FDA, FEC, Census — env var preferred; falls back to specs/data_gov.env)
+const DATA_GOV_KEY = process.env.DATA_GOV_API_KEY ||
+  (existsSync('./specs/data_gov.env') ? readFileSync('./specs/data_gov.env', 'utf8').trim() : '');
+
 // ── Proxy response cache ──────────────────────────────────────────────────────
 // TTL matched to hook poll intervals: FRED = 5min, EDGAR = 15min.
 // Prevents redundant upstream calls when multiple clients poll simultaneously.
@@ -43,6 +47,12 @@ const REDDIT_TTL_MS   =   900_000; // 15 min
 const FHFA_TTL_MS     = 86_400_000; // 24h — quarterly data
 const USGS_TTL_MS     =   900_000; // 15 min
 const MAERSK_TTL_MS   = 3_600_000; // 1h — vessel schedules update infrequently
+// WO-2040 — USASpending
+const USASPENDING_TTL_MS = 86_400_000; // 24h — obligation data posts daily; no need to re-fetch more often
+// WO-2039 — Federal Signal Trio TTLs
+const FDA_TTL_MS      = 86_400_000; // 24h — approval counts change daily at most
+const FEC_TTL_MS      = 3_600_000;  // 1h
+const CENSUS_TTL_MS   = 86_400_000; // 24h — ACS annual data, no point re-fetching often
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -824,6 +834,185 @@ function handleUsgsProxy(req, res) {
   proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
 }
 
+// ── WO-2046: USASpending Entity Award History ────────────────────────────────
+
+const USASPENDING_ENTITY_TTL_MS = 3_600_000; // 1h — FY totals don't shift hour-to-hour
+
+function handleUsaspendingEntityProxy(req, res) {
+  const url  = new URL(req.url, 'http://localhost');
+  const name = url.searchParams.get('name') ?? '';
+  if (!name) { send(res, 400, { error: 'name required' }); return; }
+
+  const key = `usaspending:entity:${name.toLowerCase()}`;
+  const hit = getCached(key, USASPENDING_ENTITY_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+
+  const payload = JSON.stringify({
+    group: 'fiscal_year',
+    filters: {
+      time_period: [{ start_date: '2019-10-01', end_date: new Date().toISOString().slice(0, 10) }],
+      recipient_search_text: [name],
+    },
+    subawards: false,
+  });
+
+  const options = {
+    hostname: 'api.usaspending.gov',
+    path: '/api/v2/search/spending_over_time/',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload),
+      'Accept': 'application/json',
+      'User-Agent': 'krylo/1.0',
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message }));
+  proxy.write(payload);
+  proxy.end();
+}
+
+// ── WO-2040: USASpending NAICS Capital Flow ──────────────────────────────────
+
+function handleUsaspendingProxy(req, res) {
+  const key = 'usaspending:naics:fy';
+  const hit = getCached(key, USASPENDING_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+
+  const now     = new Date();
+  const fyStart = new Date(now.getMonth() >= 9 ? now.getFullYear() : now.getFullYear() - 1, 9, 1);
+  const startDate = fyStart.toISOString().slice(0, 10);
+  const endDate   = now.toISOString().slice(0, 10);
+
+  const payload = JSON.stringify({
+    category: 'naics',
+    filters: { time_period: [{ start_date: startDate, end_date: endDate }] },
+    limit: 100,
+    page: 1,
+  });
+
+  const options = {
+    hostname: 'api.usaspending.gov',
+    path: '/api/v2/search/spending_by_category/',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(payload),
+      'Accept': 'application/json',
+      'User-Agent': 'krylo/1.0',
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message }));
+  proxy.write(payload);
+  proxy.end();
+}
+
+// ── WO-2039: Federal Signal Trio ─────────────────────────────────────────────
+
+function fdaDateRange() {
+  const to   = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const from = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10).replace(/-/g, '');
+  return { from, to };
+}
+
+function handleFdaDrugsProxy(req, res) {
+  const key = 'fda:drugs:90d';
+  const hit = getCached(key, FDA_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const apiKey = DATA_GOV_KEY;
+  const { from, to } = fdaDateRange();
+  const search = encodeURIComponent(`submissions.submission_status:AP AND submissions.submission_status_date:[${from} TO ${to}]`);
+  const keyParam = apiKey ? `&api_key=${apiKey}` : '';
+  const options = {
+    hostname: 'api.fda.gov',
+    path: `/drug/drugsfda.json?search=${search}&limit=1${keyParam}`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleFdaDevicesProxy(req, res) {
+  const key = 'fda:devices:90d';
+  const hit = getCached(key, FDA_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const apiKey = DATA_GOV_KEY;
+  const { from, to } = fdaDateRange();
+  const search = encodeURIComponent(`decision_date:[${from} TO ${to}] AND decision_code:SESE`);
+  const keyParam = apiKey ? `&api_key=${apiKey}` : '';
+  const options = {
+    hostname: 'api.fda.gov',
+    path: `/device/510k.json?search=${search}&limit=1${keyParam}`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleFecProxy(req, res) {
+  const key = 'fec:pac:totals';
+  const hit = getCached(key, FEC_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const apiKey = DATA_GOV_KEY;
+  if (!apiKey) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ pagination: { count: 0 } })); return; }
+  const cycle = new Date().getFullYear() % 2 === 0 ? new Date().getFullYear() : new Date().getFullYear() + 1;
+  const options = {
+    hostname: 'api.open.fec.gov',
+    path: `/v1/totals/pac/?api_key=${apiKey}&cycle=${cycle}&per_page=1&sort=-receipts`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
+function handleCensusAcsProxy(req, res) {
+  const key = 'census:acs:national';
+  const hit = getCached(key, CENSUS_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  const apiKey = DATA_GOV_KEY;
+  if (!apiKey) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify([[]])); return; }
+  const vars = 'B19013_001E,B23025_003E,B23025_005E';
+  const options = {
+    hostname: 'api.census.gov',
+    path: `/data/2023/acs/acs1?get=${vars}&for=us:1&key=${apiKey}`,
+    method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
+}
+
 // ── WO-1043: Router ───────────────────────────────────────────────────────────
 
 function routeRequest(req, res) {
@@ -856,6 +1045,15 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/fhfa')                          return handleFhfaProxy(req, res);
   if (req.method === 'GET'  && url === '/api/usgs')                          return handleUsgsProxy(req, res);
   if (req.method === 'GET'  && url === '/api/maersk')                        return handleMaerskProxy(req, res);
+  // WO-2046 — USASpending entity award history
+  if (req.method === 'GET'  && url === '/api/usaspending-entity')            return handleUsaspendingEntityProxy(req, res);
+  // WO-2040 — USASpending
+  if (req.method === 'GET'  && url === '/api/usaspending')                   return handleUsaspendingProxy(req, res);
+  // WO-2039 — Federal Signal Trio
+  if (req.method === 'GET'  && url === '/api/fda-drugs')                     return handleFdaDrugsProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/fda-devices')                   return handleFdaDevicesProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/fec')                           return handleFecProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/census-acs')                    return handleCensusAcsProxy(req, res);
   handleNotFound(req, res);
 }
 

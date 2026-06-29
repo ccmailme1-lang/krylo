@@ -1,0 +1,352 @@
+[
+  {
+    "canonicalId": "lockheed-martin",
+    "canonicalName": "LOCKHEED MARTIN",
+    "aliases": ["Lockheed Martin Corporation", "Lockheed Martin Corp", "LMC", "Lockheed"],
+    "identifiers": { "edgar": "0000936395", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "boeing",
+    "canonicalName": "BOEING",
+    "aliases": ["The Boeing Company", "Boeing Company", "Boeing Co"],
+    "identifiers": { "edgar": "0000012927", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "raytheon-technologies",
+    "canonicalName": "RAYTHEON TECHNOLOGIES",
+    "aliases": ["RTX", "Raytheon", "Raytheon Company", "Raytheon Technologies Corporation", "RTX Corporation"],
+    "identifiers": { "edgar": "0000101829", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "northrop-grumman",
+    "canonicalName": "NORTHROP GRUMMAN",
+    "aliases": ["Northrop Grumman Corporation", "Northrop Grumman Corp"],
+    "identifiers": { "edgar": "0001133421", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "general-dynamics",
+    "canonicalName": "GENERAL DYNAMICS",
+    "aliases": ["General Dynamics Corporation", "General Dynamics Corp", "GD"],
+    "identifiers": { "edgar": "0000040533", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "l3harris-technologies",
+    "canonicalName": "L3HARRIS TECHNOLOGIES",
+    "aliases": ["L3Harris", "L3 Harris", "Harris Corporation", "L3 Technologies"],
+    "identifiers": { "edgar": "0000202058", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "leidos",
+    "canonicalName": "LEIDOS",
+    "aliases": ["Leidos Holdings", "Leidos Inc", "Leidos Holdings Inc"],
+    "identifiers": { "edgar": "0001336920", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "KNOWLEDGE", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "booz-allen-hamilton",
+    "canonicalName": "BOOZ ALLEN HAMILTON",
+    "aliases": ["Booz Allen", "Booz Allen Hamilton Holding", "BAH"],
+    "identifiers": { "edgar": "0001443646", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "KNOWLEDGE"]
+  },
+  {
+    "canonicalId": "saic",
+    "canonicalName": "SAIC",
+    "aliases": ["Science Applications International", "Science Applications International Corporation"],
+    "identifiers": { "edgar": "0001336920", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "palantir-technologies",
+    "canonicalName": "PALANTIR TECHNOLOGIES",
+    "aliases": ["Palantir", "PLTR"],
+    "identifiers": { "edgar": "0001321655", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "apple",
+    "canonicalName": "APPLE",
+    "aliases": ["Apple Inc", "Apple Computer", "AAPL"],
+    "identifiers": { "edgar": "0000320193", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL", "MEDIA"]
+  },
+  {
+    "canonicalId": "microsoft",
+    "canonicalName": "MICROSOFT",
+    "aliases": ["Microsoft Corporation", "Microsoft Corp", "MSFT"],
+    "identifiers": { "edgar": "0000789019", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "alphabet",
+    "canonicalName": "ALPHABET",
+    "aliases": ["Alphabet Inc", "Google", "Google LLC", "Google Inc", "GOOGL", "GOOG"],
+    "identifiers": { "edgar": "0001652044", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "MEDIA", "CAPITAL"]
+  },
+  {
+    "canonicalId": "amazon",
+    "canonicalName": "AMAZON",
+    "aliases": ["Amazon.com", "Amazon.com Inc", "Amazon Web Services", "AWS", "AMZN"],
+    "identifiers": { "edgar": "0001018724", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL", "MEDIA"]
+  },
+  {
+    "canonicalId": "meta-platforms",
+    "canonicalName": "META PLATFORMS",
+    "aliases": ["Meta", "Facebook", "Facebook Inc", "META"],
+    "identifiers": { "edgar": "0001326801", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "MEDIA"]
+  },
+  {
+    "canonicalId": "nvidia",
+    "canonicalName": "NVIDIA",
+    "aliases": ["Nvidia Corporation", "Nvidia Corp", "NVDA"],
+    "identifiers": { "edgar": "0001045810", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "tesla",
+    "canonicalName": "TESLA",
+    "aliases": ["Tesla Inc", "Tesla Motors", "TSLA"],
+    "identifiers": { "edgar": "0001318605", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "oracle",
+    "canonicalName": "ORACLE",
+    "aliases": ["Oracle Corporation", "Oracle Corp", "ORCL"],
+    "identifiers": { "edgar": "0001341439", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "salesforce",
+    "canonicalName": "SALESFORCE",
+    "aliases": ["Salesforce Inc", "Salesforce.com", "CRM"],
+    "identifiers": { "edgar": "0001108524", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "exxonmobil",
+    "canonicalName": "EXXONMOBIL",
+    "aliases": ["ExxonMobil Corporation", "Exxon Mobil", "Exxon", "Mobil", "XOM"],
+    "identifiers": { "edgar": "0000034088", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "chevron",
+    "canonicalName": "CHEVRON",
+    "aliases": ["Chevron Corporation", "Chevron Corp", "CVX"],
+    "identifiers": { "edgar": "0000093410", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "conocophillips",
+    "canonicalName": "CONOCOPHILLIPS",
+    "aliases": ["ConocoPhillips Company", "Conoco Phillips", "COP"],
+    "identifiers": { "edgar": "0001163165", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "nextera-energy",
+    "canonicalName": "NEXTERA ENERGY",
+    "aliases": ["NextEra Energy Inc", "NextEra", "NEE", "Florida Power & Light"],
+    "identifiers": { "edgar": "0000753308", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "duke-energy",
+    "canonicalName": "DUKE ENERGY",
+    "aliases": ["Duke Energy Corporation", "Duke Energy Corp", "DUK"],
+    "identifiers": { "edgar": "0001326160", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "goldman-sachs",
+    "canonicalName": "GOLDMAN SACHS",
+    "aliases": ["Goldman Sachs Group", "The Goldman Sachs Group", "GS"],
+    "identifiers": { "edgar": "0000886982", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "jpmorgan-chase",
+    "canonicalName": "JPMORGAN CHASE",
+    "aliases": ["JPMorgan Chase & Co", "JP Morgan", "JPMorgan", "Chase", "JPM"],
+    "identifiers": { "edgar": "0000019617", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "blackrock",
+    "canonicalName": "BLACKROCK",
+    "aliases": ["BlackRock Inc", "BlackRock Investments", "BLK"],
+    "identifiers": { "edgar": "0001364742", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "blackstone",
+    "canonicalName": "BLACKSTONE",
+    "aliases": ["Blackstone Inc", "Blackstone Group", "The Blackstone Group", "BX"],
+    "identifiers": { "edgar": "0001393818", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "kkr",
+    "canonicalName": "KKR",
+    "aliases": ["KKR & Co", "KKR & Co Inc", "Kohlberg Kravis Roberts"],
+    "identifiers": { "edgar": "0001404912", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "pfizer",
+    "canonicalName": "PFIZER",
+    "aliases": ["Pfizer Inc", "Pfizer Corp", "PFE"],
+    "identifiers": { "edgar": "0000078003", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "johnson-johnson",
+    "canonicalName": "JOHNSON JOHNSON",
+    "aliases": ["Johnson & Johnson", "J&J", "JNJ"],
+    "identifiers": { "edgar": "0000200406", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "merck",
+    "canonicalName": "MERCK",
+    "aliases": ["Merck & Co", "Merck & Co Inc", "MRK"],
+    "identifiers": { "edgar": "0000310158", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "moderna",
+    "canonicalName": "MODERNA",
+    "aliases": ["Moderna Inc", "MRNA"],
+    "identifiers": { "edgar": "0001682852", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "unitedhealth-group",
+    "canonicalName": "UNITEDHEALTH GROUP",
+    "aliases": ["UnitedHealth", "United Health Group", "UnitedHealthcare", "UNH"],
+    "identifiers": { "edgar": "0000731766", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "abbvie",
+    "canonicalName": "ABBVIE",
+    "aliases": ["AbbVie Inc", "ABBV"],
+    "identifiers": { "edgar": "0001551152", "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "bechtel",
+    "canonicalName": "BECHTEL",
+    "aliases": ["Bechtel Group", "Bechtel Corporation", "Bechtel Corp"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "aecom",
+    "canonicalName": "AECOM",
+    "aliases": ["AECOM Technology", "AECOM Technology Corporation"],
+    "identifiers": { "edgar": "0000868780", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "fluor",
+    "canonicalName": "FLUOR",
+    "aliases": ["Fluor Corporation", "Fluor Corp", "FLR"],
+    "identifiers": { "edgar": "0001124198", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL"]
+  },
+  {
+    "canonicalId": "jacobs-engineering",
+    "canonicalName": "JACOBS ENGINEERING",
+    "aliases": ["Jacobs Solutions", "Jacobs", "J"],
+    "identifiers": { "edgar": "0000052988", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "accenture",
+    "canonicalName": "ACCENTURE",
+    "aliases": ["Accenture PLC", "Accenture Federal Services", "ACN"],
+    "identifiers": { "edgar": "0001467373", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL", "KNOWLEDGE"]
+  },
+  {
+    "canonicalId": "deloitte",
+    "canonicalName": "DELOITTE",
+    "aliases": ["Deloitte & Touche", "Deloitte Consulting", "Deloitte LLP"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "mckinseycompany",
+    "canonicalName": "MCKINSEY",
+    "aliases": ["McKinsey & Company", "McKinsey and Company"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["KNOWLEDGE", "CAPITAL"]
+  },
+  {
+    "canonicalId": "openai",
+    "canonicalName": "OPENAI",
+    "aliases": ["OpenAI Inc", "OpenAI LP"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "KNOWLEDGE"]
+  },
+  {
+    "canonicalId": "anthropic",
+    "canonicalName": "ANTHROPIC",
+    "aliases": ["Anthropic PBC", "Anthropic AI"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "KNOWLEDGE"]
+  },
+  {
+    "canonicalId": "spacex",
+    "canonicalName": "SPACEX",
+    "aliases": ["Space Exploration Technologies", "SpaceX Corp"],
+    "identifiers": { "edgar": null, "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "general-electric",
+    "canonicalName": "GENERAL ELECTRIC",
+    "aliases": ["GE", "GE Aerospace", "GE Vernova", "General Electric Company"],
+    "identifiers": { "edgar": "0000040554", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "honeywell",
+    "canonicalName": "HONEYWELL",
+    "aliases": ["Honeywell International", "Honeywell International Inc", "HON"],
+    "identifiers": { "edgar": "0000773840", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "ibm",
+    "canonicalName": "IBM",
+    "aliases": ["International Business Machines", "IBM Corporation", "IBM Corp"],
+    "identifiers": { "edgar": "0000051143", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "at-and-t",
+    "canonicalName": "AT&T",
+    "aliases": ["AT&T Inc", "ATT", "American Telephone Telegraph"],
+    "identifiers": { "edgar": "0000732717", "fec": null, "uei": null },
+    "domainTags": ["MEDIA", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "verizon",
+    "canonicalName": "VERIZON",
+    "aliases": ["Verizon Communications", "Verizon Communications Inc", "VZ"],
+    "identifiers": { "edgar": "0000732712", "fec": null, "uei": null },
+    "domainTags": ["MEDIA", "TECHNOLOGY"]
+  }
+]

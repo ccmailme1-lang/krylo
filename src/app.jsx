@@ -34,6 +34,14 @@ import { runWorldBankSync }        from './engine/connectors/worldbankconnector.
 import { runFhfaSync }             from './engine/connectors/fhfaconnector.js';
 import { runUsgsSync }             from './engine/connectors/usgsconnector.js';
 import { runMaerskSync }           from './engine/connectors/maerskconnector.js';
+// WO-2040 — USASpending NAICS sector capital flow
+import { runUsaspendingSync }        from './engine/connectors/usaspendingconnector.js';
+// WO-2046 — Capital Realization Connector (entity-level, query-gated)
+import { runCapitalRealizationSync } from './engine/connectors/capitalrealizationconnector.js';
+// WO-2039 — Federal Signal Trio (data.gov)
+import { runFdaSync }              from './engine/connectors/fdaconnector.js';
+import { runFecSync }              from './engine/connectors/fecconnector.js';
+import { runCensusSync }           from './engine/connectors/censusconnector.js';
 // WO-2019 — topic connectors (fire on query submit)
 import { runGithubSync }           from './engine/connectors/githubconnector.js';
 import { runArxivSync }            from './engine/connectors/arxivconnector.js';
@@ -721,6 +729,12 @@ export default function App() {
     runFhfaSync().catch(() => {});
     runUsgsSync().catch(() => {});
     runMaerskSync().catch(() => {});
+    // WO-2040 — USASpending
+    runUsaspendingSync().catch(() => {});
+    // WO-2039 — Federal Signal Trio
+    runFdaSync().catch(() => {});
+    runFecSync().catch(() => {});
+    runCensusSync().catch(() => {});
 
     const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
     const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
@@ -735,6 +749,10 @@ export default function App() {
       runFhfaSync().catch(() => {});
       runUsgsSync().catch(() => {});
       runMaerskSync().catch(() => {});
+      runUsaspendingSync().catch(() => {});
+      runFdaSync().catch(() => {});
+      runFecSync().catch(() => {});
+      runCensusSync().catch(() => {});
     }, 24 * 60 * 60 * 1000);
 
     return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(weeklyId); clearInterval(dailyId); };
@@ -967,6 +985,8 @@ export default function App() {
       runUsajobsSync(q).catch(() => {});
       runGdeltSync(q).catch(() => {});
       runRedditSync(q).catch(() => {});
+      // WO-2046 — entity capital realization (fires only when query resolves a known entity)
+      runCapitalRealizationSync(q).catch(() => {});
     }
     window.addEventListener('message', onSubmit);
     return () => window.removeEventListener('message', onSubmit);

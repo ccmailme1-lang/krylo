@@ -604,8 +604,9 @@ export default function TargetPacket() {
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>ANALYTICAL FRAME</span>
               </div>
 
-              {/* ── ASSEMBLANCE — bounded zone, independent scroll */}
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* ── Scrollable content — ASSEMBLANCE + LeverageField + DIC in single scroll */}
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {alternatives.length === 0 && (() => {
                   const lens = session?.lens?.toUpperCase() ?? 'GENERAL';
                   const q = session?.query?.trim() ?? '';
@@ -713,17 +714,16 @@ export default function TargetPacket() {
                 })()}
               </div>
 
-              {/* ── LeverageField — bounded zone, hidden when no data */}
+              {/* ── LeverageField */}
               {synthesis?.leverage && (
-                <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER}`, padding: '14px 24px' }}>
+                <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px' }}>
                   <LeverageField leverage={synthesis.leverage} />
                 </div>
               )}
 
-              {/* ── Domain Isolation Console — bounded zone, independent scroll */}
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-                <DomainIsolationConsole />
-              </div>
+              {/* ── Domain Isolation Console */}
+              <DomainIsolationConsole />
+              </div>{/* end single scroll */}
           </>
         </div>
       </div>

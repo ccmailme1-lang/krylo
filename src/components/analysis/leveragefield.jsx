@@ -16,8 +16,8 @@ const TIERS = [
   { label: 'HIGH', ratio: '>1.0×', x: 2.0  },
 ];
 
-const W    = 320;
-const H    = 180;
+const W    = 370;
+const H    = 208;
 const PL   = 72;
 const PR   = 20;
 const PT   = 16;
@@ -56,7 +56,7 @@ export default function LeverageField({ leverage }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         width={W} height={H}
-        style={{ display: 'block', overflow: 'visible', maxWidth: '100%' }}
+        style={{ display: 'block', maxWidth: '100%' }}
       >
 
         {/* Horizontal grid */}
@@ -154,31 +154,6 @@ export default function LeverageField({ leverage }) {
         >{tierLabel}</text>
 
       </svg>
-      </div>
-
-      {/* Metric strip */}
-      <div style={{
-        display: 'flex', gap: 0,
-        borderTop: '1px solid rgba(255,255,255,0.05)',
-        paddingTop: 10, marginTop: 4,
-      }}>
-        {[
-          { k: 'TYPE',     v: typeLabel                                },
-          { k: 'TIER',     v: tierLabel                                },
-          { k: 'D/E',      v: `${deRatio.toFixed(1)}×`                },
-          { k: 'PERM',     v: permissionless ? 'YES' : 'NO'           },
-          { k: 'IND NORM', v: industryNorm ? `${industryNorm}×` : '—' },
-        ].map((m, i, arr) => (
-          <div key={m.k} style={{
-            flex: 1,
-            paddingLeft:  i > 0 ? 10 : 0,
-            paddingRight: i < arr.length - 1 ? 10 : 0,
-            borderRight:  i < arr.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
-          }}>
-            <div style={{ fontSize: 6, letterSpacing: '0.24em', color: 'rgba(255,255,255,0.18)', marginBottom: 4 }}>{m.k}</div>
-            <div style={{ fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.55)' }}>{m.v}</div>
-          </div>
-        ))}
       </div>
 
     </div>
