@@ -1309,97 +1309,6 @@ function GhostLayer({ domainIdx, buf }) {
   );
 }
 
-// WO-1309: Dynamic Frontier Waveforms — GPU vertex shader, uTime + uVolatility uniforms.
-// Noise clamp [-0.35, 0.35] per spec. No CPU vertex mutation in useFrame.
-const FRONTIER_SEGS = 32;
-
-const FRONTIER_VERT = `
-  attribute float aAngle;
-  uniform float uTime;
-  uniform float uVolatility;
-
-  float wave(float a, float t) {
-    return sin(a * 3.7 + t)        * 0.45
-         + sin(a * 1.9 - t * 1.3)  * 0.35
-         + sin(a * 5.1 + t * 0.7)  * 0.20;
-  }
-
-  void main() {
-    vec3 pos = position;
-    float n = wave(aAngle, uTime * 0.5);
-    n = clamp(n, -0.35, 0.35);
-    pos.y += n * uVolatility * 0.8;
-    float radial = wave(aAngle + 1.2, uTime * 0.4);
-    radial = clamp(radial, -0.35, 0.35);
-    pos.x += normalize(pos).x * radial * uVolatility * 0.5;
-    pos.z += normalize(pos).z * radial * uVolatility * 0.5;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
-`;
-
-const FRONTIER_FRAG = `
-  uniform vec3 uColor;
-  void main() {
-    gl_FragColor = vec4(uColor, 0.35);
-  }
-`;
-
-function FrontierRing({ position, state }) {
-  const { height, radius } = encodeCone(state, { focusId: null });
-  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
-  const volatility = state?.volatility ?? 0.5;
-  const worldY = -(coneHeight * 0.1) - 0.45;
-  const ringR  = radius * 1.5972;
-  const matRef = useRef();
-
-  const pressure = state?.pressure ?? 0;
-  const hexColor = state?.colorOverride
-    ?? (pressure >= 90 ? '#8A2BE2' : pressure >= 75 ? '#66FF00' : pressure >= 50 ? '#007FFF' : '#1a1a1a');
-  const ringColor = useMemo(() => new THREE.Color(hexColor), [hexColor]);
-
-  // Pre-compute ring geometry at rest (y=0) + angle attribute — no mutation in useFrame
-  const { positions, angles } = useMemo(() => {
-    const pos = new Float32Array(FRONTIER_SEGS * 2 * 3);
-    const ang = new Float32Array(FRONTIER_SEGS * 2);
-    for (let i = 0; i < FRONTIER_SEGS; i++) {
-      const a0 = (i / FRONTIER_SEGS) * Math.PI * 2;
-      const a1 = ((i + 1) / FRONTIER_SEGS) * Math.PI * 2;
-      const b  = i * 6;
-      pos[b]   = Math.cos(a0) * ringR; pos[b+1] = 0; pos[b+2] = Math.sin(a0) * ringR;
-      pos[b+3] = Math.cos(a1) * ringR; pos[b+4] = 0; pos[b+5] = Math.sin(a1) * ringR;
-      ang[i*2]   = a0;
-      ang[i*2+1] = a1;
-    }
-    return { positions: pos, angles: ang };
-  }, [ringR]);
-
-  // Uniform update only — no geometry mutation
-  useFrame(({ clock }) => {
-    if (!matRef.current) return;
-    matRef.current.uniforms.uTime.value       = clock.elapsedTime;
-    matRef.current.uniforms.uVolatility.value = volatility;
-    matRef.current.uniforms.uColor.value.set(ringColor);
-  });
-
-  return (
-    <group position={[position[0], worldY, position[2]]}>
-      <lineSegments>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-          <bufferAttribute attach="attributes-aAngle"   args={[angles, 1]} />
-        </bufferGeometry>
-        <shaderMaterial
-          ref={matRef}
-          vertexShader={FRONTIER_VERT}
-          fragmentShader={FRONTIER_FRAG}
-          transparent
-          linewidth={3}
-          uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility }, uColor: { value: new THREE.Color(hexColor) } }}
-        />
-      </lineSegments>
-    </group>
-  );
-}
 
 
 // Wave 2: event pulses — small particles rise from cone base to apex when a
@@ -1853,7 +1762,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
               <Footprint position={[0, 0, 0]} radius={1.1} />
               <ThresholdGates position={[0, 0, 0]} state={state} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
-              <FrontierRing position={[0, 0, 0]} state={state} />
               <Cone
                 state={state}
                 position={[0, 0, 0]}
