@@ -1,10 +1,10 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-26
-BASELINE: baseline_reanalyze_hp_icon_fix
-SHA: 097b63f
-DEPLOYED: krylo.org ✗ (not deployed — 097b63f is ahead of prod)
+LAST BUILD SESSION: 2026-06-29
+BASELINE: baseline_federal_signal_stack_wo2046
+SHA: fdaa963
+DEPLOYED: krylo.org ✗ (not deployed)
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -157,43 +157,52 @@ SESSION 2026-06-27 — COMPLETE (48a2cda):
           happy path genome 3-object structure. WO-2004 complete → WO-2007 now UNBLOCKED.
   Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
 
-OPEN WO LIST (single list — updated 2026-06-27):
+OPEN WO LIST (single list — updated 2026-06-29):
   VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
   DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
-  COMPLETE:    WO-1869 Closed-Loop Leverage Engine — DONE
+  COMPLETE:    WO-1868 Metrics Truth Engine — DONE (2026-06-29). metricsengine.js + metricstrip.jsx
+                        + computeMetrics wired in targetpacket/actionmatrix/intelligencebrief.
+               WO-1869 Closed-Loop Leverage Engine — DONE
                WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380)
                WO-1877 EIA connector DONE. CONFIRMED 2026-06-26. STOP ASKING.
                WO-2011 HP Tier Gate — DONE (a227346)
                DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16)
-  SPEC/BLOCKED: WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 done)
-                WO-1875 Canonical AMBIGUOUS State (UI mount TBD)
-                WO-1862 Safe Matcher (deferred)
-                WO-2006 Interpretation Validation — PLACEHOLDER (spec TBD)
+  BUILD-READY: WO-2007 Signal Recon Layer
+               WO-2047 EDGAR 8-K Event Connector
+               WO-1873 AUTO Numeric Binding (depends WO-1867 sub-contract ✓)
+               WO-1871 Quiet INSUFFICIENT chrome
+               WO-1870 STARTUP_FINANCE orphan fix
+               MetricStrip SCI (8th) + SPS (9th)
+  BLOCKED:     WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 now DONE → BUILD-READY)
+               WO-1848 SV Groundedness (θ/G_max/SV source undefined)
+               CPDE Constraint Precursor Detection Engine (4 unbuilt dependencies)
+  NEEDS SPEC:  WO-1875 Canonical AMBIGUOUS State (mount decision needed)
+               WO-1867 IENBG required-field tier
+               WO-2006 Interpretation Validation
+  DEFERRED:    WO-1862 Safe Matcher
+               WO-2048 Commitment primitive (doctrine first → §21)
+  NEW WOs (2026-06-29):
+               WO-2047 — EDGAR 8-K Event Connector (metricsengine.js feeds groundedness from 8-K state events; EDGAR CIKs present for 44/50 entities)
+               WO-2048 — Commitment Primitive (doctrine first; §21 locks before build)
+               WO-2049 — Truth Event Ledger (external validation grounding layer; orthogonal to WO-1868/1869)
   CONSTITUTIONAL SEQUENCE (updated 2026-06-27):
                 WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
-                           evidencetiers.js: EVIDENCE_DESCRIPTORS + getDescriptor() + listByClass()
                 WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
-                           identitykernel.js: createEvidenceNode, merge/split, stabilityScore
                 WO-2005B — Structural Confirmation Engine — COMPLETE (7e83107)
-                           structuralconfirmation.js: SCI formula + calibration priors
-                WO-2007  — Signal Recon Layer (Exploratory Genealogy Engine) — BUILD-READY
-                           spec: specs/WO-2007-signal-recon-layer.md
-                           7 files: signalgenealogy · scpstore · epistemicbudget ·
-                           causalvaliditygate · reconlayer · happypathgenome · recondashboard
-                MetricStrip — SCI (8th metric) + SPS (9th metric) — after WO-2005B ✓ (unblocked)
+                WO-2007  — Signal Recon Layer — BUILD-READY (spec: specs/WO-2007-signal-recon-layer.md)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
-  1877 — EIA Inventory Delta Connector — COMPLETE. Proxy + connector + app wiring all done. Confirmed 2026-06-26. Do not re-question.
-  1876 — Search DNA Intelligence Surface (Layer 3 repurposing — 4 cards around composer) — SPEC, BLOCKED pending WO-1868
-  1875 — Canonical AMBIGUOUS State (proper noun / no-domain-match → options UI → user directs) — SPEC, BLOCKED (UI mount point TBD)
-  1873 — AUTO Numeric Binding (extend IENBG to AUTO) — BUILD-READY, depends WO-1867
-  1872 — Brand-as-Ticker / investment-context AUTO suppression — COMPLETE (ce92380, 21/21 QA)
-  1871 — Quiet residual chrome under INSUFFICIENT (HP chip + empty P4 block) — BUILD-READY
-  1870 — STARTUP_FINANCE orphan (truthful queryDomain + \b) — BUILD-READY
-  1869 — Closed-Loop Leverage Engine — COMPLETE (ae3633c). pathstore.js + logEmission + LOG OUTCOME UI + MetricStrip surface. Loop closed.
-  1868 — Metrics Truth Engine (six hero metrics + groundedness) — SPEC LOCKED, NOT BUILT; H1/H2 gate
-  1867 — IENBG: numeric-binding sub-contract BUILT (43dfe8b); required-field tier remains spec
-  1862 — Safe Matcher (LaTeX/merged-word/camelCase paste normalization) — SPEC, deferred
+  1877 — EIA Inventory Delta Connector — COMPLETE. Confirmed 2026-06-26. Do not re-question.
+  1876 — Search DNA Intelligence Surface — BLOCKED pending WO-1868 → WO-1868 now DONE → BUILD-READY
+  1875 — Canonical AMBIGUOUS State — NEEDS SPEC (mount decision TBD)
+  1873 — AUTO Numeric Binding — BUILD-READY, depends WO-1867
+  1872 — Brand-as-Ticker AUTO suppression — COMPLETE (ce92380)
+  1871 — Quiet INSUFFICIENT chrome — BUILD-READY
+  1870 — STARTUP_FINANCE orphan — BUILD-READY
+  1869 — Closed-Loop Leverage Engine — COMPLETE (ae3633c)
+  1868 — Metrics Truth Engine — COMPLETE (2026-06-29)
+  1867 — IENBG required-field tier — NEEDS SPEC
+  1862 — Safe Matcher — DEFERRED
 
 ARCHITECTURE STATE (2026-06-24): Decision → Routing → Export pipeline is closed.
 Ingestion timing (1768-A), role routing (1828-1829), and executive output (1832-1835) are complete.

@@ -728,6 +728,9 @@ export default function TargetPacket() {
         </div>
       </div>
 
+      {/* ── MetricStrip ─────────────────────────────────────────────────── */}
+      <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
+
       {/* ── DECISION TRANSLATION LAYER + ATTENTION STACK ────────────────── */}
       <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 220 }}>
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
