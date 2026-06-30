@@ -51,6 +51,8 @@ import { runOpenAlexSync }         from './engine/connectors/openalexconnector.j
 import { runUsajobsSync }          from './engine/connectors/usajobsconnector.js';
 import { runGdeltSync }            from './engine/connectors/gdeltconnector.js';
 import { runRedditSync }           from './engine/connectors/redditconnector.js';
+import { runEdgar8KSync }          from './engine/connectors/edgar8kconnector.js';
+import { runEdgar8KSignalSync }    from './engine/connectors/edgar8ksignal.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -736,7 +738,11 @@ export default function App() {
     runFecSync().catch(() => {});
     runCensusSync().catch(() => {});
 
+    // WO-2047/2051 — EDGAR 8-K pipeline: connector then signal integration, 5-min cadence
+    runEdgar8KSync().then(() => runEdgar8KSignalSync()).catch(() => {});
+
     const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
+    const edgar8kId = setInterval(() => runEdgar8KSync().then(() => runEdgar8KSignalSync()).catch(() => {}), 5 * 60 * 1000);
     const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
     const weeklyId  = setInterval(() => runEiaSync().catch(() => {}), 7 * 24 * 60 * 60 * 1000);
     const dailyId   = setInterval(() => {
@@ -755,7 +761,7 @@ export default function App() {
       runCensusSync().catch(() => {});
     }, 24 * 60 * 60 * 1000);
 
-    return () => { clearInterval(topoId); clearInterval(marketId); clearInterval(weeklyId); clearInterval(dailyId); };
+    return () => { clearInterval(topoId); clearInterval(edgar8kId); clearInterval(marketId); clearInterval(weeklyId); clearInterval(dailyId); };
   }, []);
 
   // Live signal pool — every other ingest hook is query-gated, so with no
