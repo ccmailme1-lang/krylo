@@ -2,9 +2,10 @@ ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
 LAST BUILD SESSION: 2026-06-29
-BASELINE: baseline_federal_signal_stack_wo2046
-SHA: fdaa963
+BASELINE: baseline_insufficient_signal_copy
+SHA: baa1c0f
 DEPLOYED: krylo.org ✗ (not deployed)
+UNCOMMITTED: conemap.jsx (restored from bc33dcd — pending commit)
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -158,9 +159,9 @@ SESSION 2026-06-27 — COMPLETE (48a2cda):
   Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
 
 OPEN WO LIST (single list — updated 2026-06-29):
-  VALIDATE: WO-1879 (behavioral — submit tie-case queries, check domain routing)
   DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
-  COMPLETE:    WO-1868 Metrics Truth Engine — DONE (2026-06-29). metricsengine.js + metricstrip.jsx
+  COMPLETE:    WO-1879 Domain Gravity Wells — VALIDATED (2026-06-29). Confirmed via behavioral QA.
+               WO-1868 Metrics Truth Engine — DONE (2026-06-29). metricsengine.js + metricstrip.jsx
                         + computeMetrics wired in targetpacket/actionmatrix/intelligencebrief.
                WO-1869 Closed-Loop Leverage Engine — DONE
                WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380)
@@ -168,7 +169,6 @@ OPEN WO LIST (single list — updated 2026-06-29):
                WO-2011 HP Tier Gate — DONE (a227346)
                DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16)
   BUILD-READY: WO-2007 Signal Recon Layer
-               WO-2047 EDGAR 8-K Event Connector
                WO-1873 AUTO Numeric Binding (depends WO-1867 sub-contract ✓)
                WO-1871 Quiet INSUFFICIENT chrome
                WO-1870 STARTUP_FINANCE orphan fix
@@ -176,15 +176,13 @@ OPEN WO LIST (single list — updated 2026-06-29):
   BLOCKED:     WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 now DONE → BUILD-READY)
                WO-1848 SV Groundedness (θ/G_max/SV source undefined)
                CPDE Constraint Precursor Detection Engine (4 unbuilt dependencies)
-  NEEDS SPEC:  WO-1875 Canonical AMBIGUOUS State (mount decision needed)
+  NEEDS SPEC:  WO-2047 — EDGAR 8-K Event Connector (no hardened spec — Bottle Test required before build)
+               WO-2049 — Truth Event Ledger (no spec — write from scratch)
+               WO-1875 Canonical AMBIGUOUS State (mount decision needed)
                WO-1867 IENBG required-field tier
                WO-2006 Interpretation Validation
   DEFERRED:    WO-1862 Safe Matcher
-               WO-2048 Commitment primitive (doctrine first → §21)
-  NEW WOs (2026-06-29):
-               WO-2047 — EDGAR 8-K Event Connector (metricsengine.js feeds groundedness from 8-K state events; EDGAR CIKs present for 44/50 entities)
-               WO-2048 — Commitment Primitive (doctrine first; §21 locks before build)
-               WO-2049 — Truth Event Ledger (external validation grounding layer; orthogonal to WO-1868/1869)
+               WO-2048 Commitment Primitive (§21 doctrine must be written first)
   CONSTITUTIONAL SEQUENCE (updated 2026-06-27):
                 WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
                 WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)

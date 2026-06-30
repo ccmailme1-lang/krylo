@@ -142,15 +142,9 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   return (
     // base lowered 10% of cone height below ground
     <group position={[position[0], baseY, position[2]]}>
-      {/* Opaque black fill — blocks floor rings from showing through */}
-      <mesh renderOrder={1}>
-        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 3, true]} />
-        <meshBasicMaterial color="#000000" polygonOffset polygonOffsetFactor={2} polygonOffsetUnits={2} />
-      </mesh>
-      {/* Wireframe overlay — always visible on top */}
-      <mesh renderOrder={2}>
-        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 3, true]} />
-        <meshBasicMaterial color={stateColor} wireframe transparent opacity={flashOpacity} />
+      <mesh>
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
+        <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
       </mesh>
 
 
@@ -1071,13 +1065,10 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
 // ─── WAVE 1 SUBSTRATE LAYERS ────────────────────────────────────────────────
 
-// Layer 1: System pulse floor — concentric rings with opaque fills between them.
-// Lines are frozen (always visible). Fills pulse.
+// Layer 1: System pulse floor — concentric rings, slow heartbeat opacity
+// (encodes "field is live" per Tufte motion-economy carve-out for state encoding)
 function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
-  const fillMat = useMemo(() => new THREE.MeshBasicMaterial({
-    color: '#000000', transparent: true, opacity: 0.92, side: THREE.DoubleSide,
-  }), []);
-
+  const matRef = useRef();
   const positions = useMemo(() => {
     const segs = 64;
     const verts = [];
@@ -1096,31 +1087,17 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
   }, [ringCount, maxRadius]);
 
   useFrame(({ clock }) => {
-    fillMat.opacity = 0.80 + 0.14 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
+    if (!matRef.current) return;
+    matRef.current.opacity = 0.45 + 0.20 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
   });
 
   return (
-    <group position={[0, -0.05, 0]}>
-      {/* Opaque fills between each pair of rings — shared material pulses */}
-      {Array.from({ length: ringCount }, (_, i) => {
-        const innerR = (i / ringCount) * maxRadius;
-        const outerR = ((i + 1) / ringCount) * maxRadius;
-        return (
-          <mesh key={i} material={fillMat} renderOrder={1}>
-            {innerR === 0
-              ? <circleGeometry args={[outerR, 64]} />
-              : <ringGeometry args={[innerR, outerR, 64]} />}
-          </mesh>
-        );
-      })}
-      {/* Ring lines — frozen, always fully visible */}
-      <lineSegments renderOrder={2}>
-        <bufferGeometry>
-          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        </bufferGeometry>
-        <lineBasicMaterial color="#4A4A4A" transparent opacity={0.65} />
-      </lineSegments>
-    </group>
+    <lineSegments position={[0, -0.05, 0]}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial ref={matRef} color="#4A4A4A" transparent opacity={0.45} />
+    </lineSegments>
   );
 }
 
@@ -1315,6 +1292,97 @@ function GhostLayer({ domainIdx, buf }) {
   );
 }
 
+// WO-1309: Dynamic Frontier Waveforms — GPU vertex shader, uTime + uVolatility uniforms.
+// Noise clamp [-0.35, 0.35] per spec. No CPU vertex mutation in useFrame.
+const FRONTIER_SEGS = 32;
+
+const FRONTIER_VERT = `
+  attribute float aAngle;
+  uniform float uTime;
+  uniform float uVolatility;
+
+  float wave(float a, float t) {
+    return sin(a * 3.7 + t)        * 0.45
+         + sin(a * 1.9 - t * 1.3)  * 0.35
+         + sin(a * 5.1 + t * 0.7)  * 0.20;
+  }
+
+  void main() {
+    vec3 pos = position;
+    float n = wave(aAngle, uTime * 0.5);
+    n = clamp(n, -0.35, 0.35);
+    pos.y += n * uVolatility * 0.25;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+  }
+`;
+
+const FRONTIER_FRAG = `
+  void main() {
+    gl_FragColor = vec4(0.4, 1.0, 0.0, 0.35);
+  }
+`;
+
+function FrontierRing({ position, state }) {
+  const { height, radius } = encodeCone(state, { focusId: null });
+  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
+  const FRAC   = 0.75;
+  const worldY = coneHeight * (FRAC - 0.1);
+  const ringR  = (1 - FRAC) * radius * 1.5972;
+  const volatility = state?.volatility ?? 0.5;
+  const matRef = useRef();
+
+  // Pre-compute ring geometry at rest (y=0) + angle attribute — no mutation in useFrame
+  const { positions, angles } = useMemo(() => {
+    const pos = new Float32Array(FRONTIER_SEGS * 2 * 3);
+    const ang = new Float32Array(FRONTIER_SEGS * 2);
+    for (let i = 0; i < FRONTIER_SEGS; i++) {
+      const a0 = (i / FRONTIER_SEGS) * Math.PI * 2;
+      const a1 = ((i + 1) / FRONTIER_SEGS) * Math.PI * 2;
+      const b  = i * 6;
+      pos[b]   = Math.cos(a0) * ringR; pos[b+1] = 0; pos[b+2] = Math.sin(a0) * ringR;
+      pos[b+3] = Math.cos(a1) * ringR; pos[b+4] = 0; pos[b+5] = Math.sin(a1) * ringR;
+      ang[i*2]   = a0;
+      ang[i*2+1] = a1;
+    }
+    return { positions: pos, angles: ang };
+  }, [ringR]);
+
+  // Uniform update only — no geometry mutation
+  useFrame(({ clock }) => {
+    if (!matRef.current) return;
+    matRef.current.uniforms.uTime.value       = clock.elapsedTime;
+    matRef.current.uniforms.uVolatility.value = volatility;
+  });
+
+  return (
+    <group position={[position[0], worldY, position[2]]}>
+      <lineSegments>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+          <bufferAttribute attach="attributes-aAngle"   args={[angles, 1]} />
+        </bufferGeometry>
+        <shaderMaterial
+          ref={matRef}
+          vertexShader={FRONTIER_VERT}
+          fragmentShader={FRONTIER_FRAG}
+          transparent
+          linewidth={3}
+          uniforms={{ uTime: { value: 0 }, uVolatility: { value: volatility } }}
+        />
+      </lineSegments>
+      <Html position={[ringR + 0.15, 0, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
+        <div style={{
+          fontFamily:    "'IBM Plex Mono', monospace",
+          fontSize:      7,
+          letterSpacing: '0.18em',
+          color:         'rgba(102,255,0,0.55)',
+          whiteSpace:    'nowrap',
+          userSelect:    'none',
+        }}>FRONTIER</div>
+      </Html>
+    </group>
+  );
+}
 
 
 // Wave 2: event pulses — small particles rise from cone base to apex when a
@@ -1764,7 +1832,11 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           const kalshiSignal = kalshiMap[kDomain] ?? null;
           return (
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
+              <BoundaryRing attenuationFactor={Math.max(0.5, (state.pressure ?? 50) / 50)} />
+              <Footprint position={[0, 0, 0]} radius={1.1} />
+              <ThresholdGates position={[0, 0, 0]} state={state} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
+              <FrontierRing position={[0, 0, 0]} state={state} />
               <Cone
                 state={state}
                 position={[0, 0, 0]}
