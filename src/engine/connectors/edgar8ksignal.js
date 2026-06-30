@@ -1,17 +1,19 @@
 // WO-2051 — Grounded Signal Integration
+// WO-2052 — Signal Stabilization (adapter refactor — materialization now in rkmaterializer.js)
 // Translates EDGAR 8-K RealityObjects into surfacerouter signal packets.
-// Reads from edgar8kconnector.getProcessedEvents(); dispatches via dispatchBatch().
 //
 // Boundary rules:
 //   NO direct EDGAR fetch — edgar8kconnector owns that.
 //   NO createObject — rkmstore is a read-only source here.
 //   NO metricsengine — no metric computation.
 //   NO direct cone wiring — all routing via surfacerouter.
+//   NO materialization arithmetic — rkmaterializer owns that.
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
 import { getProcessedEvents } from './edgar8kconnector.js';
 import { getById } from '../rkmstore.js';
+import { materializeSignal, attenuateSecondary } from '../rkmaterializer.js';
 
 // ── Event class → domain(s) map (locked) ─────────────────────────────────────
 // Each event class maps to 1-2 domains. Multi-domain events emit one signal per domain.
@@ -41,7 +43,6 @@ const EVENT_DOMAIN_MAP = {
 };
 
 // Fracture events per §20 Direction Honesty Principle — polarity = POLARITY.NEGATIVE.
-// These represent downside/stress corporate actions; domaingravity counts them as fracture.
 const FRACTURE_EVENT_CLASSES = new Set([
   'BANKRUPTCY',
   'BANKRUPTCY_TRIGGER',
@@ -54,7 +55,6 @@ const FRACTURE_EVENT_CLASSES = new Set([
 ]);
 
 // ── Session dedup ─────────────────────────────────────────────────────────────
-// realityObjectId → true: already dispatched this session
 const _dispatched = new Set();
 
 // ── Signal builder ────────────────────────────────────────────────────────────
@@ -62,18 +62,21 @@ const _dispatched = new Set();
 function buildSignals(eventMeta) {
   const { realityObjectId, eventClass, materiality, groundedness, entityName, ts } = eventMeta;
 
-  // Fetch RealityObject for truthStability — confidence blends groundedness + truth stability
   const ro          = getById(realityObjectId);
   const stability   = ro?.truthStability ?? 1.0;
-  const signal      = materiality ?? 50;
+  const rawSignal   = materiality ?? 50;
   const rawConf     = (groundedness ?? 0.85) * 100;
-  // Blend: groundedness dominates (primary certainty), stability attenuates slightly
-  const confidence  = Math.round(Math.min(100, rawConf * (0.5 + stability * 0.5)));
-  const isFracture  = FRACTURE_EVENT_CLASSES.has(eventClass);
-  const domains     = EVENT_DOMAIN_MAP[eventClass] ?? ['capital'];
+
+  const primary    = materializeSignal({ signal: rawSignal, confidence: rawConf }, stability);
+  const isFracture = FRACTURE_EVENT_CLASSES.has(eventClass);
+  const domains    = EVENT_DOMAIN_MAP[eventClass] ?? ['capital'];
 
   return domains.map((domain, i) => {
-    const sig = {
+    const { signal, confidence } = i === 0
+      ? primary
+      : attenuateSecondary(primary.signal, primary.confidence);
+
+    const packet = {
       id:         `edgar8k-${realityObjectId}-${domain}`,
       source:     'EDGAR_8K',
       domain,
@@ -86,23 +89,17 @@ function buildSignals(eventMeta) {
       entityName,
       realityObjectId,
     };
-    if (isFracture) sig.polarity = POLARITY.NEGATIVE;
-    // Secondary domain gets attenuated signal — primary domain is index 0
-    if (i > 0) {
-      sig.signal     = Math.round(signal * 0.65);
-      sig.confidence = Math.round(confidence * 0.80);
-      sig.fs         = parseFloat((sig.signal / 100).toFixed(3));
-    }
-    return sig;
+    if (isFracture) packet.polarity = POLARITY.NEGATIVE;
+    return packet;
   });
 }
 
 // ── Main sync ─────────────────────────────────────────────────────────────────
 
 export function runEdgar8KSignalSync() {
-  const events  = getProcessedEvents();
-  const batch   = [];
-  let skipped   = 0;
+  const events = getProcessedEvents();
+  const batch  = [];
+  let skipped  = 0;
 
   for (const eventMeta of events) {
     if (_dispatched.has(eventMeta.realityObjectId)) {

@@ -95,6 +95,7 @@ In 2026, the best approach to website typography is purposeful contrast — not 
     src/engine/timingproxy.js       — WO-1768-A: Macro Timing Proxy (computeFsStar/computeDFC/reconcile)
     src/engine/lensrouter.js        — WO-1828/1861: lens routing Phase D (RFE-1 + reconciler + PERSONA_MAP fallback)
     src/engine/rfereconciler.js     — WO-1861: RFE state hysteresis buffer (K=2/N=3, per-session)
+    src/engine/rkmaterializer.js    — WO-2052: Signal Stabilization contract — 4 named constants + materializeSignal/attenuateSecondary
     deploy.sh                       — one-command VPS deploy: build → rsync frontend → scp API → pm2 restart → health check
 
 8. ABSOLUTE RULES (NON-NEGOTIABLE)
@@ -186,7 +187,7 @@ OPEN WO LIST (single list — updated 2026-06-29):
                WO-2006 Interpretation Validation
   DEFERRED:    WO-1862 Safe Matcher
                WO-2048 Commitment Primitive (§21 doctrine must be written first)
-  CONSTITUTIONAL SEQUENCE (updated 2026-06-27):
+  CONSTITUTIONAL SEQUENCE (updated 2026-06-30):
                 WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
                 WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
                 WO-2005B — Structural Confirmation Engine — COMPLETE (7e83107)
@@ -194,6 +195,15 @@ OPEN WO LIST (single list — updated 2026-06-29):
                 WO-2050  — RKM Core — COMPLETE (8fae2f2)
                 WO-2047  — EDGAR 8-K Event Connector — COMPLETE (010fd27)
                 WO-2051  — Grounded Signal Integration — COMPLETE (9af9ab0)
+                WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
+                           rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
+                           edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — 2026-06-30 spec, build pending GO):
+                WO-2053  — CI-F Engine (Causal Expansion System) — SPEC COMPLETE, BUILD-READY
+                WO-2054  — CI-R Gate (Constitutional Validator) — SPEC COMPLETE, BUILD-READY
+                WO-2055  — RBCS Scoring Engine — SPEC COMPLETE, BUILD-READY
+                WO-2056  — LFOS Engine (Propagation Physics) — SPEC COMPLETE, BUILD-READY
+                WO-2057  — IB Contract Definition — NEEDS CONTRACT (pre-implementation, schema first)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector — COMPLETE. Confirmed 2026-06-26. Do not re-question.
