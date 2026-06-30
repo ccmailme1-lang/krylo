@@ -469,17 +469,56 @@ function computeDNA(entries) {
   if (!entries?.length) return null;
   const domainCounts = {}, lensCounts = {};
   let converged = 0;
+  const domainSet = new Set();
   entries.forEach(e => {
-    if (e.domain && e.domain !== 'AMBIGUOUS') domainCounts[e.domain] = (domainCounts[e.domain] || 0) + 1;
+    if (e.domain && e.domain !== 'AMBIGUOUS') {
+      domainCounts[e.domain] = (domainCounts[e.domain] || 0) + 1;
+      domainSet.add(e.domain);
+    }
     if (e.lens) lensCounts[e.lens] = (lensCounts[e.lens] || 0) + 1;
     if (e.converged) converged++;
   });
+  // Session streak — consecutive calendar days ending today
+  const dayKeys = new Set(entries.map(e => new Date(e.ts).toDateString()));
+  let streak = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    if (dayKeys.has(d.toDateString())) streak++;
+    else if (i > 0) break;
+  }
+  const last = entries[entries.length - 1];
   return {
-    total:       entries.length,
-    domain:      Object.keys(domainCounts).sort((a,b) => domainCounts[b]-domainCounts[a])[0] ?? null,
-    convergence: Math.round((converged / entries.length) * 100),
-    lens:        Object.keys(lensCounts).sort((a,b) => lensCounts[b]-lensCounts[a])[0] ?? null,
+    total:         entries.length,
+    domain:        Object.keys(domainCounts).sort((a,b) => domainCounts[b]-domainCounts[a])[0] ?? null,
+    convergence:   Math.round((converged / entries.length) * 100),
+    lens:          Object.keys(lensCounts).sort((a,b) => lensCounts[b]-lensCounts[a])[0] ?? null,
+    domains_count: domainSet.size,
+    last_query:    last?.query ?? null,
+    streak,
   };
+}
+
+// WO-1876B — configurable metric pool for DNA objective cards
+const DNA_METRICS = [
+  { key: 'total',         label: 'SIGNALS EXPLORED', isNumeric: true  },
+  { key: 'domain',        label: 'PRIMARY DOMAIN',   isNumeric: false, fmt: v => v?.replace(/_/g,' ') ?? '—' },
+  { key: 'convergence',   label: 'CONVERGENCE RATE', isNumeric: true,  fmt: v => v + '%' },
+  { key: 'lens',          label: 'TOP LENS',         isNumeric: false },
+  { key: 'domains_count', label: 'DOMAINS EXPLORED', isNumeric: true  },
+  { key: 'last_query',    label: 'LAST SIGNAL',      isNumeric: false, fmt: v => v ? (v.length > 15 ? v.slice(0,15)+'…' : v) : '—' },
+  { key: 'streak',        label: 'SESSION STREAK',   isNumeric: true,  fmt: v => v + 'd' },
+];
+const DNA_METRIC_MAP = Object.fromEntries(DNA_METRICS.map(m => [m.key, m]));
+
+function defaultDnaCards() {
+  const cx = typeof window !== 'undefined' ? Math.round(window.innerWidth / 2 + 336) : 940;
+  const cy = typeof window !== 'undefined' ? Math.round(window.innerHeight / 2 - 160) : 200;
+  return [
+    { id: 'c0', metricKey: 'total',       x: cx, y: cy },
+    { id: 'c1', metricKey: 'domain',      x: cx, y: cy + 110 },
+    { id: 'c2', metricKey: 'convergence', x: cx, y: cy + 220 },
+    { id: 'c3', metricKey: 'lens',        x: cx, y: cy + 330 },
+  ];
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -523,6 +562,56 @@ export default function AnalysisIdleField({ activeCones = null }) {
     window.addEventListener('message', onMsg);
     return () => window.removeEventListener('message', onMsg);
   }, []);
+
+  // WO-1876B — draggable objective cards
+  const [dnaCards, setDnaCards] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('krylo_dna_cards') ?? 'null');
+      if (Array.isArray(saved) && saved.length === 4) return saved;
+    } catch {}
+    return defaultDnaCards();
+  });
+  const [pickerCardId, setPickerCardId] = useState(null);
+  const dragRef = useRef(null); // { id, startMx, startMy, startX, startY, moved }
+
+  useEffect(() => {
+    try { localStorage.setItem('krylo_dna_cards', JSON.stringify(dnaCards)); } catch {}
+  }, [dnaCards]);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const d = dragRef.current;
+      if (!d) return;
+      const dx = e.clientX - d.startMx;
+      const dy = e.clientY - d.startMy;
+      if (!d.moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      d.moved = true;
+      setDnaCards(prev => prev.map(c => c.id === d.id ? { ...c, x: d.startX + dx, y: d.startY + dy } : c));
+    };
+    const onUp = () => {
+      const d = dragRef.current;
+      if (!d) return;
+      if (!d.moved) setPickerCardId(id => id === d.id ? null : d.id);
+      dragRef.current = null;
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  // Dismiss picker on outside click
+  useEffect(() => {
+    if (!pickerCardId) return;
+    const dismiss = (e) => { if (!e.target.closest?.('[data-dna-card]')) setPickerCardId(null); };
+    window.addEventListener('mousedown', dismiss);
+    return () => window.removeEventListener('mousedown', dismiss);
+  }, [pickerCardId]);
+
+  const onCardMouseDown = (e, card) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragRef.current = { id: card.id, startMx: e.clientX, startMy: e.clientY, startX: card.x, startY: card.y, moved: false };
+  };
 
   const [activeSituation, setActiveSituation] = useState(null);
   const [seedQuery,       setSeedQuery]       = useState('');
@@ -1309,21 +1398,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
           {!hasSession && (
             <div style={{ position: 'absolute', inset: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10, pointerEvents: 'none', padding: '72px 24px 80px' }}>
 
-              {/* WO-1876 — DNA row top */}
-              {dna && (
-                <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginBottom: 20, pointerEvents: 'none', opacity: 0.18 }}>
-                  {[
-                    { label: 'SIGNALS EXPLORED', value: dna.total },
-                    { label: 'PRIMARY DOMAIN',   value: dna.domain?.replace(/_/g,' ') ?? '—' },
-                  ].map(({ label, value }) => (
-                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{label}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 20, fontWeight: 500, color: '#fff', letterSpacing: '0.04em', lineHeight: 1 }}>{value}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
               {/* Headline */}
               <div style={{ textAlign: 'center', marginBottom: 28, pointerEvents: 'none' }}>
                 <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.82)' }}>WHAT ARE YOU</div>
@@ -1496,23 +1570,105 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
               </div>
 
-              {/* WO-1876 — DNA row bottom */}
-              {dna && (
-                <div style={{ display: 'flex', gap: 48, justifyContent: 'center', marginTop: 20, pointerEvents: 'none', opacity: 0.18 }}>
-                  {[
-                    { label: 'CONVERGENCE RATE', value: dna.convergence + '%' },
-                    { label: 'TOP LENS',          value: dna.lens ?? '—' },
-                  ].map(({ label, value }) => (
-                    <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase' }}>{label}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 20, fontWeight: 500, color: '#fff', letterSpacing: '0.04em', lineHeight: 1 }}>{value}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
 
             </div>
           )}
+
+          {/* WO-1876B — DNA objective cards: draggable, click-configurable, fixed-positioned */}
+          {!hasSession && dna && dnaCards.map(card => {
+            const metric   = DNA_METRIC_MAP[card.metricKey];
+            const rawVal   = dna[card.metricKey];
+            const display  = rawVal !== undefined && rawVal !== null
+              ? (metric.fmt ? metric.fmt(rawVal) : String(rawVal))
+              : '—';
+            const isOpen   = pickerCardId === card.id;
+            return (
+              <div
+                key={card.id}
+                data-dna-card
+                onMouseDown={e => onCardMouseDown(e, card)}
+                style={{
+                  position: 'fixed',
+                  left: card.x,
+                  top:  card.y,
+                  width: 148,
+                  background: 'rgba(4,6,9,0.82)',
+                  backdropFilter: 'blur(14px)',
+                  border: `1px solid ${isOpen ? 'rgba(102,255,0,0.35)' : 'rgba(102,255,0,0.10)'}`,
+                  borderRadius: 7,
+                  padding: '13px 15px 11px',
+                  cursor: 'grab',
+                  userSelect: 'none',
+                  zIndex: 8800,
+                  pointerEvents: 'auto',
+                  transition: 'border-color 120ms',
+                }}
+              >
+                {/* Grip dots */}
+                <div style={{ position: 'absolute', top: 9, right: 10, display: 'grid', gridTemplateColumns: 'repeat(3,3px)', gap: 2, opacity: 0.22 }}>
+                  {[...Array(6)].map((_,i) => <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: '#fff' }} />)}
+                </div>
+
+                {/* Value */}
+                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: metric.isNumeric ? LIME : '#fff', letterSpacing: '0.02em', lineHeight: 1, paddingRight: 16 }}>
+                  {display}
+                </div>
+
+                {/* Label */}
+                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', marginTop: 7 }}>
+                  {metric.label}
+                </div>
+
+                {/* Config hint */}
+                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.22)', textTransform: 'uppercase', marginTop: 5 }}>
+                  TAP TO CONFIGURE
+                </div>
+
+                {/* Metric picker */}
+                {isOpen && (
+                  <div
+                    data-dna-card
+                    onMouseDown={e => e.stopPropagation()}
+                    style={{
+                      position: 'absolute', top: 'calc(100% + 6px)', left: 0,
+                      width: 192,
+                      background: 'rgba(4,6,9,0.97)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      borderRadius: 6,
+                      zIndex: 8801,
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <div style={{ padding: '7px 12px 5px', fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                      SELECT METRIC
+                    </div>
+                    {DNA_METRICS.map(m => {
+                      const active = m.key === card.metricKey;
+                      return (
+                        <div
+                          key={m.key}
+                          data-dna-card
+                          onClick={() => { setDnaCards(prev => prev.map(c => c.id === card.id ? { ...c, metricKey: m.key } : c)); setPickerCardId(null); }}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 9,
+                            padding: '8px 12px',
+                            cursor: 'pointer',
+                            background: active ? 'rgba(102,255,0,0.05)' : 'transparent',
+                            borderBottom: '1px solid rgba(255,255,255,0.03)',
+                          }}
+                        >
+                          <div style={{ width: 5, height: 5, borderRadius: '50%', flexShrink: 0, background: active ? LIME : 'transparent', border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.18)'}` }} />
+                          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.15em', color: active ? LIME : 'rgba(255,255,255,0.50)', textTransform: 'uppercase' }}>
+                            {m.label}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {/* Time axis */}
           <div style={{
