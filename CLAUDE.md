@@ -1,11 +1,11 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-29
+LAST BUILD SESSION: 2026-06-30
 BASELINE: baseline_insufficient_signal_copy
-SHA: baa1c0f
+SHA: 9af9ab0
 DEPLOYED: krylo.org ✗ (not deployed)
-UNCOMMITTED: conemap.jsx (restored from bc33dcd — pending commit)
+UNCOMMITTED: none
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -168,6 +168,10 @@ OPEN WO LIST (single list — updated 2026-06-29):
                WO-1877 EIA connector DONE. CONFIRMED 2026-06-26. STOP ASKING.
                WO-2011 HP Tier Gate — DONE (a227346)
                DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16)
+               WO-2007 Signal Recon Layer — DONE (031770e). All 7 files confirmed built.
+               WO-2050 RKM Core — DONE (8fae2f2). rkmstore.js — RealityObject schema + execution engine.
+               WO-2047 EDGAR 8-K Connector — DONE (010fd27). edgar8kconnector.js — poll/parse/RealityObject.
+               WO-2051 Grounded Signal Integration — DONE (9af9ab0). edgar8ksignal.js → surfacerouter. §20 polarity live.
   BUILD-READY: WO-2007 Signal Recon Layer
                WO-1873 AUTO Numeric Binding (depends WO-1867 sub-contract ✓)
                WO-1871 Quiet INSUFFICIENT chrome
@@ -176,8 +180,7 @@ OPEN WO LIST (single list — updated 2026-06-29):
   BLOCKED:     WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 now DONE → BUILD-READY)
                WO-1848 SV Groundedness (θ/G_max/SV source undefined)
                CPDE Constraint Precursor Detection Engine (4 unbuilt dependencies)
-  NEEDS SPEC:  WO-2047 — EDGAR 8-K Event Connector (no hardened spec — Bottle Test required before build)
-               WO-2049 — Truth Event Ledger (no spec — write from scratch)
+  NEEDS SPEC:  WO-2049 — Truth Event Ledger (no spec — write from scratch)
                WO-1875 Canonical AMBIGUOUS State (mount decision needed)
                WO-1867 IENBG required-field tier
                WO-2006 Interpretation Validation
@@ -187,7 +190,10 @@ OPEN WO LIST (single list — updated 2026-06-29):
                 WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
                 WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
                 WO-2005B — Structural Confirmation Engine — COMPLETE (7e83107)
-                WO-2007  — Signal Recon Layer — BUILD-READY (spec: specs/WO-2007-signal-recon-layer.md)
+                WO-2007  — Signal Recon Layer — COMPLETE (031770e)
+                WO-2050  — RKM Core — COMPLETE (8fae2f2)
+                WO-2047  — EDGAR 8-K Event Connector — COMPLETE (010fd27)
+                WO-2051  — Grounded Signal Integration — COMPLETE (9af9ab0)
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector — COMPLETE. Confirmed 2026-06-26. Do not re-question.
