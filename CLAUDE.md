@@ -3,7 +3,7 @@ ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 
 LAST BUILD SESSION: 2026-06-30
 BASELINE: baseline_insufficient_signal_copy
-SHA: 9af9ab0
+SHA: da3255a
 DEPLOYED: krylo.org ✗ (not deployed)
 UNCOMMITTED: none
 ──────────────────────────────────────────────
@@ -198,12 +198,32 @@ OPEN WO LIST (single list — updated 2026-06-29):
                 WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
                            rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
                            edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — 2026-06-30 spec, build pending GO):
-                WO-2053  — CI-F Engine (Causal Expansion System) — SPEC COMPLETE, BUILD-READY
-                WO-2054  — CI-R Gate (Constitutional Validator) — SPEC COMPLETE, BUILD-READY
-                WO-2055  — RBCS Scoring Engine — SPEC COMPLETE, BUILD-READY
-                WO-2056  — LFOS Engine (Propagation Physics) — SPEC COMPLETE, BUILD-READY
-                WO-2057  — IB Contract Definition — NEEDS CONTRACT (pre-implementation, schema first)
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — 2026-06-30 — ALL COMPLETE):
+                WO-2053  — CI-F Engine (Causal Expansion System) — COMPLETE (4551645). cifengine.js.
+                WO-2054  — CI-R Gate (Constitutional Validator) — COMPLETE (3e80848). cirgate.js.
+                WO-2055  — RBCS Scoring Engine — COMPLETE (c0cb08b). rbcsengine.js.
+                WO-2056  — LFOS Engine (Propagation Physics) — COMPLETE (e253d38). lfosengine.js.
+                WO-2057  — IB Collapse Engine — COMPLETE (becbb22). ibengine.js.
+                           Filter(IB_SURVIVAL_FLOOR=0.30) → rank(collapsedScore) → cap(IB_TOP_N=10).
+                WO-2059  — Decision Framework — COMPLETE (ed62da7). decisionengine.js.
+                           13 lens profiles. intentScore=collapsedScore×lensRelevanceScore.
+                           LENS_RELEVANCE_FLOOR=0.40, DECISION_TOP_N=5.
+                WO-2060  — Action Execution Layer — COMPLETE (5703aaa). executionengine.js.
+                           SIMULATION|PARTIAL|LIVE. COMMIT_INTENT_FLOOR=0.30, ALERT_INTENT_FLOOR=0.15.
+                WO-2061  — Feedback / Learning Loop — COMPLETE (8ff751b). feedbackengine.js.
+                           ObservedOutcome[] → LearningEvent[]. ATTRIBUTION_FLOOR=0.60, MIN_N=3.
+                           Distinct from WO-1869 (path memory): calibrates params, not routes.
+                WO-2062  — System Calibration + Drift Correction — COMPLETE (da3255a). calibrationengine.js.
+                           weightedDirection=Σ(sign×mag×N)/Σ(N). WEIGHT_FLOOR=5, DRIFT_THRESHOLD=0.20.
+                           Adjusts 5 floors only. Immutable: ANCHOR_COVERAGE_FLOOR, RBCS weights, LFOS physics.
+                WO-2062  — System Calibration + Drift Correction — LOCKED (2026-06-30). BUILD-READY.
+                           LearningEvent[] → parameter adjustments ONLY (floors, decay coefficients).
+                           Cannot touch CI-F/CI-R/RBCS logic or LFOS physics model.
+                           "Calibration modifies how the system behaves, not what the system is."
+                WO-2058  — LFOS Output Contract (LFOSValidatedCandidates) — SCHEMA LOCKED (2026-06-30).
+                           Unblocks WO-2057. rbcsScore carried immutably; LFOS adds survivalProbability
+                           + propagationStability + instabilityVectors + failureModes.
+                           IB ranking formula: rbcsScore × survivalProbability × propagationStability.
 
 NEW WOs FILED 2026-06-25 (specs in /specs):
   1877 — EIA Inventory Delta Connector — COMPLETE. Confirmed 2026-06-26. Do not re-question.
