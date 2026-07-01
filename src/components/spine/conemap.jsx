@@ -1959,7 +1959,8 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const events = useEventStream(coneState);
   const [log, setLog] = useState([]);
   const [flows, setFlows] = useState([]);
-  const carouselRef = useRef({ stopped: false });
+  const carouselRef    = useRef({ stopped: false });
+  const lastClickRef   = useRef(0);
   const lastEventRef = useRef(null);
   const flowIdRef    = useRef(0);
 
@@ -2017,7 +2018,11 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
         if (e.clientX > window.innerWidth - 260) return;
-        if (e.detail === 2) {
+        const now = Date.now();
+        const gap = now - lastClickRef.current;
+        lastClickRef.current = now;
+        if (gap < 300) {
+          lastClickRef.current = 0;
           carouselRef.current.stopped = !carouselRef.current.stopped;
           return;
         }
