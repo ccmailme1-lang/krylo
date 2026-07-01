@@ -1179,8 +1179,9 @@ function ThresholdBands() {
 
 // Layer 3: Per-cone floor footprint — small ring under each cone anchor
 // defines "this is a fixed sector slot, not a floating dot"
-function Footprint({ position, radius = 1.1, color = '#4A4A4A', isLocked = false }) {
+function Footprint({ position, radius = 1.1, color = '#4A4A4A', isLocked = false, opacity }) {
   const finalColor = isLocked ? LIME : color;
+  const finalOpacity = opacity !== undefined ? opacity : (isLocked ? 0.9 : 0.65);
   const positions = useMemo(() => {
     const segs = 36;
     const verts = [];
@@ -1200,7 +1201,7 @@ function Footprint({ position, radius = 1.1, color = '#4A4A4A', isLocked = false
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <lineBasicMaterial color={finalColor} transparent opacity={isLocked ? 0.9 : 0.65} />
+      <lineBasicMaterial color={finalColor} transparent opacity={finalOpacity} />
     </lineSegments>
   );
 }
@@ -1631,7 +1632,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [] }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], editMode = false }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1651,6 +1652,8 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const topoLerpRef    = useRef(0);
   const prevTopoRef    = useRef(false);
   const rotOffsetRef   = useRef(0);
+  const prevEditModeRef = useRef(false);
+  const frozenAngleRef  = useRef(0);
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
@@ -1700,11 +1703,23 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         spinRef.current.rotation.y = 0;
       }
       if (!topoMode) {
-        // Clock-based rotation — inherently smooth, no delta accumulation jitter
-        spinRef.current.rotation.y = elapsed * SPIN + rotOffsetRef.current;
+        if (editMode && !prevEditModeRef.current) {
+          // Entering edit mode: freeze at current angle
+          frozenAngleRef.current = spinRef.current.rotation.y;
+        } else if (!editMode && prevEditModeRef.current) {
+          // Exiting edit mode: recalculate offset so rotation resumes from frozen angle
+          rotOffsetRef.current = frozenAngleRef.current - elapsed * SPIN;
+        }
+        if (editMode) {
+          spinRef.current.rotation.y = frozenAngleRef.current;
+        } else {
+          // Clock-based rotation — inherently smooth, no delta accumulation jitter
+          spinRef.current.rotation.y = elapsed * SPIN + rotOffsetRef.current;
+        }
       }
     }
-    prevTopoRef.current = topoMode;
+    prevTopoRef.current  = topoMode;
+    prevEditModeRef.current = editMode;
 
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
@@ -1841,11 +1856,8 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           const kalshiSignal = kalshiMap[kDomain] ?? null;
           return (
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
-              <BoundaryRing attenuationFactor={Math.max(0.5, (state.pressure ?? 50) / 50)} />
               <Footprint position={[0, 0, 0]} radius={1.1} />
-              <ThresholdGates position={[0, 0, 0]} state={state} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
-              <FrontierRing position={[0, 0, 0]} state={state} />
               <Cone
                 state={state}
                 position={[0, 0, 0]}
@@ -1952,6 +1964,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const events = useEventStream(coneState);
   const [log, setLog] = useState([]);
   const [flows, setFlows] = useState([]);
+  const [editMode, setEditMode] = useState(false);
   const lastEventRef = useRef(null);
   const flowIdRef    = useRef(0);
 
@@ -2008,9 +2021,14 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     <div
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
+        if (e.detail === 2) return; // handled by onDoubleClick
         if (e.clientX > window.innerWidth - 260) return;
         const rect = e.currentTarget.getBoundingClientRect();
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
+      }}
+      onDoubleClick={e => {
+        if (e.clientX > window.innerWidth - 260) return;
+        setEditMode(prev => !prev);
       }}
     >
       <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
@@ -2025,6 +2043,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           onArcClick={onArcClick}
           hudRef={hudRef}
           kalshiSignals={kalshiSignals}
+          editMode={editMode}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
