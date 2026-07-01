@@ -2023,12 +2023,16 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       onClick={e => {
         if (e.detail === 2) return; // handled by onDoubleClick
         if (e.clientX > window.innerWidth - 260) return;
+        if (editMode) {
+          setEditMode(false); // single click resumes carousel
+          return;
+        }
         const rect = e.currentTarget.getBoundingClientRect();
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
       onDoubleClick={e => {
         if (e.clientX > window.innerWidth - 260) return;
-        setEditMode(prev => !prev);
+        if (!editMode) setEditMode(true); // double click stops carousel
       }}
     >
       <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
