@@ -1632,7 +1632,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], editMode = false }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1703,23 +1703,21 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         spinRef.current.rotation.y = 0;
       }
       if (!topoMode) {
-        if (editMode && !prevEditModeRef.current) {
-          // Entering edit mode: freeze at current angle
+        const stopped = carouselRef?.current?.stopped ?? false;
+        if (stopped && !prevEditModeRef.current) {
           frozenAngleRef.current = spinRef.current.rotation.y;
-        } else if (!editMode && prevEditModeRef.current) {
-          // Exiting edit mode: recalculate offset so rotation resumes from frozen angle
+        } else if (!stopped && prevEditModeRef.current) {
           rotOffsetRef.current = frozenAngleRef.current - elapsed * SPIN;
         }
-        if (editMode) {
+        if (stopped) {
           spinRef.current.rotation.y = frozenAngleRef.current;
         } else {
-          // Clock-based rotation — inherently smooth, no delta accumulation jitter
           spinRef.current.rotation.y = elapsed * SPIN + rotOffsetRef.current;
         }
+        prevEditModeRef.current = stopped;
       }
     }
-    prevTopoRef.current  = topoMode;
-    prevEditModeRef.current = editMode;
+    prevTopoRef.current = topoMode;
 
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
@@ -1964,7 +1962,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const events = useEventStream(coneState);
   const [log, setLog] = useState([]);
   const [flows, setFlows] = useState([]);
-  const [editMode, setEditMode] = useState(false);
+  const carouselRef = useRef({ stopped: false });
   const lastEventRef = useRef(null);
   const flowIdRef    = useRef(0);
 
@@ -2021,10 +2019,10 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     <div
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
-        if (e.detail === 2) return; // handled by onDoubleClick
+        if (e.detail === 2) return;
         if (e.clientX > window.innerWidth - 260) return;
-        if (editMode) {
-          setEditMode(false); // single click resumes carousel
+        if (carouselRef.current.stopped) {
+          carouselRef.current.stopped = false;
           return;
         }
         const rect = e.currentTarget.getBoundingClientRect();
@@ -2032,7 +2030,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       }}
       onDoubleClick={e => {
         if (e.clientX > window.innerWidth - 260) return;
-        if (!editMode) setEditMode(true); // double click stops carousel
+        carouselRef.current.stopped = true;
       }}
     >
       <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
@@ -2047,7 +2045,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           onArcClick={onArcClick}
           hudRef={hudRef}
           kalshiSignals={kalshiSignals}
-          editMode={editMode}
+          carouselRef={carouselRef}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
