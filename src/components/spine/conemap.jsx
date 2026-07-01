@@ -1788,10 +1788,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       }
     });
 
-    // Toggle: clicking the already-pinned cone deselects (back to auto-highest).
-    const resolved = bestDist < 180
-      ? (bestDomain === selectedDomain ? null : bestDomain)
-      : null;
+    const resolved = bestDist < 180 ? bestDomain : null;
     onSelectCone(resolved);
   });
 
