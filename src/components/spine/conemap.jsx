@@ -15,6 +15,8 @@ import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 
+let _carouselStopped = false;
+
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 5.35; // 4.86 × 1.10 — another 10% height increase, base unchanged
@@ -1703,7 +1705,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         spinRef.current.rotation.y = 0;
       }
       if (!topoMode) {
-        const stopped = carouselRef?.current?.stopped ?? false;
+        const stopped = _carouselStopped;
         if (stopped && !prevEditModeRef.current) {
           frozenAngleRef.current = spinRef.current.rotation.y;
         } else if (!stopped && prevEditModeRef.current) {
@@ -2023,7 +2025,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         lastClickRef.current = now;
         if (gap < 300) {
           lastClickRef.current = 0;
-          carouselRef.current.stopped = !carouselRef.current.stopped;
+          _carouselStopped = !_carouselStopped;
           return;
         }
         const rect = e.currentTarget.getBoundingClientRect();
