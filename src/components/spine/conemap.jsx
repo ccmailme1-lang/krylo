@@ -2016,14 +2016,13 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     <div
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
-        if (e.detail === 2) return;
         if (e.clientX > window.innerWidth - 260) return;
+        if (e.detail === 2) {
+          carouselRef.current.stopped = !carouselRef.current.stopped;
+          return;
+        }
         const rect = e.currentTarget.getBoundingClientRect();
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
-      }}
-      onDoubleClick={e => {
-        if (e.clientX > window.innerWidth - 260) return;
-        carouselRef.current.stopped = !carouselRef.current.stopped;
       }}
     >
       <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
