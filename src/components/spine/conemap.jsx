@@ -1650,6 +1650,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   // WO-1313: topology lerp state
   const topoLerpRef    = useRef(0);
   const prevTopoRef    = useRef(false);
+  const rotOffsetRef   = useRef(0);
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
@@ -1671,7 +1672,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     return out;
   }, [coneState, total, R]);
 
-  useFrame((_, delta) => {
+  useFrame(({ clock }, delta) => {
     // WO-1313: topology lerp — snap rotation to 0 on entry, lerp positions, fade grid
     const topoTarget = topoMode ? 1 : 0;
     // WO-1313: time-normalized lerp — 1-second transition, frame-rate independent
@@ -1692,8 +1693,16 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     }
 
     if (spinRef.current) {
-      if (topoMode && !prevTopoRef.current) spinRef.current.rotation.y = 0;
-      if (!topoMode) spinRef.current.rotation.y += delta * SPIN;
+      const elapsed = clock.getElapsedTime();
+      if (topoMode && !prevTopoRef.current) {
+        // Entering topo: freeze rotation at 0, record offset for clean resume
+        rotOffsetRef.current = spinRef.current.rotation.y - elapsed * SPIN;
+        spinRef.current.rotation.y = 0;
+      }
+      if (!topoMode) {
+        // Clock-based rotation — inherently smooth, no delta accumulation jitter
+        spinRef.current.rotation.y = elapsed * SPIN + rotOffsetRef.current;
+      }
     }
     prevTopoRef.current = topoMode;
 
