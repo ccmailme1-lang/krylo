@@ -1645,7 +1645,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const mapMatRef      = useRef();
   const { camera, size } = useThree();
   const tmpVec     = useMemo(() => new THREE.Vector3(), []);
-  const zoomTarget = useRef(16.2);
+  const zoomTarget = useRef(10);
   const zooming    = useRef(true);
   useEffect(() => { zooming.current = true; }, []);
 
