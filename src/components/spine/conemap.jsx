@@ -1,7 +1,7 @@
 // src/components/spine/conemap.jsx
 // Phase 1 — single ConeMap, single Canvas, no overlays, no auxiliary systems
 
-import React, { useMemo, useRef, useState, useEffect } from 'react';
+import React, { useMemo, useRef, useState, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
@@ -65,7 +65,7 @@ function arcThesis(a, b) {
   return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
 }
 
-function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null }) {
+function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, riseIn = false }) {
   const bays       = useBayStore(s => s.bays);
   const hoveredBay = useBayStore(s => s.hoveredBay);
   const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
@@ -141,9 +141,25 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
     return new Float32Array([-w, 0, 0, w, 0, 0]);
   }, []);
 
+  // Rise-in animation — only fires for newly-surfaced cones (riseIn=true)
+  const riseGroupRef = useRef();
+  const riseYRef     = useRef(0);
+  useLayoutEffect(() => {
+    if (riseIn && riseGroupRef.current) {
+      riseGroupRef.current.position.y = -15;
+      riseYRef.current = -15;
+    }
+  }, []); // mount only
+  useFrame((_, delta) => {
+    if (!riseGroupRef.current || riseYRef.current >= 0) return;
+    riseYRef.current = Math.min(0, riseYRef.current + delta * 7.5); // ~2s rise
+    riseGroupRef.current.position.y = riseYRef.current;
+  });
+
   return (
     // base lowered 10% of cone height below ground
     <group position={[position[0], baseY, position[2]]}>
+      <group ref={riseGroupRef}>
       <mesh>
         <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
         <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
@@ -174,7 +190,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           </div>
         </div>
       </Html>
-
+      </group>
     </group>
   );
 }
@@ -1619,6 +1635,18 @@ const CONE_TO_KALSHI_DOMAIN = {
 };
 
 function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef }) {
+  // Track which domains were already visible — new ones get rise-in animation
+  const prevConeDomainsRef = useRef(null);
+  const newDomainsSet = useMemo(() => {
+    const prev = prevConeDomainsRef.current;
+    const curr = new Set(coneState.map(s => s.domain));
+    if (prev === null) return new Set(); // initial render — no animation
+    return new Set([...curr].filter(d => !prev.has(d)));
+  }, [coneState]);
+  useLayoutEffect(() => {
+    prevConeDomainsRef.current = new Set(coneState.map(s => s.domain));
+  }, [coneState]);
+
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1845,6 +1873,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
                 index={i}
                 isSelected={state.domain === selectedDomain}
                 kalshiSignal={kalshiSignal}
+                riseIn={newDomainsSet.has(state.domain)}
               />
             </group>
           );
