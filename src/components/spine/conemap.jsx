@@ -19,7 +19,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 5.35; // 4.86 × 1.10 — another 10% height increase, base unchanged
+const CONE_HEIGHT_SCALE = 8.0;
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -114,10 +114,10 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
 
   // Stage-aligned color: mirrors Y-axis markers (LO·50, MID·75, HI·90)
   // §6: purple must remain rare — only genuine HI-tier signals (≥90) earn it.
-  // Blue is the floor — all cones default to signal_blue; lime only at ≥75.
   const stageColor = activePressure >= 90 ? '#8A2BE2'
     : activePressure >= 75 ? '#66FF00'
-    : '#007FFF';
+    : activePressure >= 50 ? '#007FFF'
+    : '#707070';
   const stateColor = state.colorOverride ?? stageColor;
 
   // velocity heuristic (Phase A) — deviation from neutral baseline (50)
