@@ -6,11 +6,8 @@
 import { STATE_TYPE } from './statecontract.js';
 
 // ── THEME TOKENS ────────────────────────────────────────────────────────────
-// void_gray     → #000000 (existing --moat-bg)
-// muted_slate   → low-signal muted state
-// signal_lime   → #66FF00 (existing --signal-lime)
-// signal_blue   → #007FFF (existing Leverage Lattice blue)
-// unicorn_purple → #8A2BE2 (existing --unicorn-purple)
+// Token → hex mapping is owned solely by conemap.jsx (THEME_COLOR + resolveConvergenceState()).
+// Not restated here — one table, no drift.
 
 // ── CLASSIFIER ──────────────────────────────────────────────────────────────
 

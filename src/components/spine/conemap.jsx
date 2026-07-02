@@ -19,7 +19,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 7.5;
+const CONE_HEIGHT_SCALE = 7.0;
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -38,14 +38,30 @@ function velocityDisplay(v) {
   return { glyph, color, text: `${sign}${Math.round(v)}%` };
 }
 
-// convergence-state → hex (per CLAUDE.md §6, classifier theme tokens WO-1126A)
+// Cone body color — 3-tier model (Founder directive 2026-07-02): gray = low signal
+// (void/muted collapse together), blue = default body, purple = top/unicorn tier.
+// Lime is never a cone fill — it stays this file's text/accent color only.
+// Single source of truth for cone fill color — Cone mesh and ComparePanel accent
+// both resolve through resolveConvergenceState() below. Do not add a second table.
+const GRAY_TIER   = '#4A4A4A';
+const BLUE_TIER   = '#007FFF';
+const PURPLE_TIER = '#8A2BE2';
 const THEME_COLOR = {
-  void_gray:      '#4A4A4A', // INSUFFICIENT SIGNAL
-  muted_slate:    '#4A4A4A', // LOW SIGNAL YIELD
-  signal_lime:    '#66FF00', // BUILDING CONVERGENCE
-  signal_blue:    '#007FFF', // TURBULENT CONVERGENCE
-  unicorn_purple: '#8A2BE2', // HIGH CONVERGENCE
+  void_gray:      GRAY_TIER,   // INSUFFICIENT SIGNAL
+  muted_slate:    GRAY_TIER,   // LOW SIGNAL YIELD
+  signal_lime:    BLUE_TIER,   // BUILDING CONVERGENCE — body default
+  signal_blue:    BLUE_TIER,   // TURBULENT CONVERGENCE
+  unicorn_purple: PURPLE_TIER, // HIGH CONVERGENCE
 };
+
+// Resolves a cone's live pressure/volatility to a classifier state + fill color.
+// The only place a convergence vector is built — Cone and ComparePanel both call this.
+function resolveConvergenceState(pressure, volatility) {
+  const leverageN = (pressure ?? 0) / 100;
+  const vector    = { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: 0.7 };
+  const { label, theme } = classifyConvergenceState(vector, 0.8);
+  return { label, color: THEME_COLOR[theme] ?? BLUE_TIER };
+}
 
 const ARC_THESIS = {
   'capital+technology':  'WATCH: LIQUIDITY FLOW',
@@ -112,13 +128,8 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const baseY      = coneHeight / 2 - coneHeight * 0.1;
 
-  // Stage-aligned color: mirrors Y-axis markers (LO·50, MID·75, HI·90)
-  // §6: purple must remain rare — only genuine HI-tier signals (≥90) earn it.
-  const stageColor = activePressure >= 90 ? '#8A2BE2'
-    : activePressure >= 75 ? '#66FF00'
-    : activePressure >= 50 ? '#007FFF'
-    : '#707070';
-  const stateColor = state.colorOverride ?? stageColor;
+  // Cone body color = classifier convergence state, resolved once via the shared helper.
+  const stateColor = state.colorOverride ?? resolveConvergenceState(activePressure, activeVolatility).color;
 
   // velocity heuristic (Phase A) — deviation from neutral baseline (50)
   const velocity = (activePressure - 50) * 0.3;
@@ -533,10 +544,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   }, [bay?.assignment?.title]);
 
   if (!cone) return null;
-  const leverageN   = (cone.pressure ?? 0) / 100;
-  const vector      = { D: leverageN, V: cone.volatility ?? 0.5, A: leverageN, T: 0.7 };
-  const { label, theme } = classifyConvergenceState(vector, 0.8);
-  const accent      = THEME_COLOR[theme] ?? LIME;
+  const { label, color: accent } = resolveConvergenceState(cone.pressure, cone.volatility);
 
   if (convergenceStartRef.current.label !== label) {
     convergenceStartRef.current = { label, startTime: Date.now() };
