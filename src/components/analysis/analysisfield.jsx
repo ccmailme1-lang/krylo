@@ -19,6 +19,7 @@ export default function AnalysisField({
   onSearchPreviewSave,
   onArcClick,
   maxCones,
+  dollyKey,
   coneColorOverrides,
 }) {
   return (
@@ -49,6 +50,7 @@ export default function AnalysisField({
         searchPreview={searchPreview}
         onSearchPreviewSave={onSearchPreviewSave}
         maxCones={maxCones}
+        dollyKey={dollyKey}
         coneColorOverrides={coneColorOverrides}
       />
     </div>
