@@ -12,6 +12,7 @@ import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
 import MetricStrip                from './metricstrip.jsx';
 import { useMetricVisibility }    from '../../hooks/useMetricVisibility.js';
 import { getLRPrior }             from '../../engine/pathstore.js';
+import AmbiguousState             from './ambiguousstate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Playfair Display', serif";
@@ -181,13 +182,7 @@ export default function ActionMatrix() {
   const showFriction       = structuralFriction?.state === 'HIGH_FRICTION';
 
   if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
-    return (
-      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
-          Awaiting Signal
-        </span>
-      </div>
-    );
+    return <AmbiguousState variant="compact" />;
   }
 
   return (

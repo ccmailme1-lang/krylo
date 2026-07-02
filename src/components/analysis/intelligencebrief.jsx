@@ -20,6 +20,7 @@ import MetricStrip from './metricstrip.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 import { arbitrateHP } from '../../engine/hptiergate.js';
+import { AMBIGUOUS_COPY } from './ambiguousstate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -65,8 +66,8 @@ function buildBrief(session, synthesis, hp = null) {
       cac:        '—',
       roas:       '—',
       insufficient: true,
-      bluf:       'Insufficient signal to synthesize a brief. The query did not resolve to a domain with adequate structural data. Add a specific decision, dollar amount, or timeline to anchor analysis.',
-      purpose:    'No domain anchor resolved — brief withheld to avoid fabrication.',
+      bluf:       AMBIGUOUS_COPY.bluf,
+      purpose:    AMBIGUOUS_COPY.purpose,
       fiveWs:     [],
       evidence:   [],
       assumptions:[],
