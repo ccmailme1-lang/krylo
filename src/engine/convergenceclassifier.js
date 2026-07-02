@@ -1,6 +1,10 @@
 // WO-1126A.v2 — Convergence Classifier + Hysteresis Buffer
 // Heuristic only. No predictive claims. UI compression states, not unified scalars.
 
+// DEF-1863 — every output here is inferred from signals, never an observed/closed outcome.
+// stateType is always PROJECTION until a real outcome-capture layer (WO-1869 territory) exists.
+import { STATE_TYPE } from './statecontract.js';
+
 // ── THEME TOKENS ────────────────────────────────────────────────────────────
 // void_gray     → #000000 (existing --moat-bg)
 // muted_slate   → low-signal muted state
@@ -35,7 +39,7 @@ export function classifyConvergenceState(vector, telemetryConfidence) {
     [stateId, label, theme] = [2, 'BUILDING CONVERGENCE', 'signal_lime'];
   }
 
-  return { classifierVersion: '1126A.v2', stateId, label, theme };
+  return { classifierVersion: '1126A.v2', stateId, label, theme, stateType: STATE_TYPE.PROJECTION };
 }
 
 // ── HYSTERESIS BUFFER ────────────────────────────────────────────────────────
@@ -44,7 +48,7 @@ export function classifyConvergenceState(vector, telemetryConfidence) {
 const stateBuffer = [];
 const PERSISTENCE_REQUIRED = 3;
 
-let lockedCognitiveState = { stateId: 0, label: 'INSUFFICIENT SIGNAL', theme: 'void_gray' };
+let lockedCognitiveState = { stateId: 0, label: 'INSUFFICIENT SIGNAL', theme: 'void_gray', stateType: STATE_TYPE.PROJECTION };
 
 export function applyTransitionPolicy(rawStateEvaluation) {
   stateBuffer.push(rawStateEvaluation.stateId);
@@ -66,7 +70,7 @@ export function applyTransitionPolicy(rawStateEvaluation) {
 
 export function resetHysteresisBuffer() {
   stateBuffer.length = 0;
-  lockedCognitiveState = { stateId: 0, label: 'INSUFFICIENT SIGNAL', theme: 'void_gray' };
+  lockedCognitiveState = { stateId: 0, label: 'INSUFFICIENT SIGNAL', theme: 'void_gray', stateType: STATE_TYPE.PROJECTION };
 }
 
 // ── FRAGILITY PHASE CLASSIFIER (WO-1384) ─────────────────────────────────────

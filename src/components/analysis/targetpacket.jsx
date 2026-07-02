@@ -15,6 +15,7 @@ import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
+import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -401,6 +402,8 @@ export default function TargetPacket() {
   const entity      = getDisplayEntity(session?.query ?? '').toUpperCase() || 'AWAITING SIGNAL';
   const confScore   = synthesis?.confidence ?? 0.78;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
+  // DEF-1863: nothing in this pipeline produces an observed/closed outcome yet — default PROJECTION.
+  const stateType   = synthesis?.stateType ?? STATE_TYPE.PROJECTION;
   const KEY_DRIVERS = synthesis?.keyDrivers ?? [];
   const TRAJ_POINTS = synthesis?.trajPoints ?? [0.18,0.22,0.28,0.31,0.35,0.42,0.50,0.55,0.61,0.68,0.74,0.78];
 
@@ -809,7 +812,7 @@ export default function TargetPacket() {
             </div>
             {[
               { label: 'SIGNAL ACCURACY',  value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
-              { label: 'DECISION OUTCOME', value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
+              { label: normalizeToProjectionLanguage('DECISION OUTCOME', stateType), value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
               { label: 'ROAS',             value: metrics ? `${metrics.roas.value}x · ${metrics.roas.label}` : '—' },
               { label: 'CAC',              value: metrics ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : '—' },
             ].map(({ label, value }) => (
@@ -825,7 +828,10 @@ export default function TargetPacket() {
       {/* ── WO-1831: MANUFACTURING / COO OPERATIONS LENS ─────────────────── */}
       {lensRfe?.state !== 'UNCLASSIFIED' && (session?.lens?.toUpperCase() === 'COO' || session?.lens?.toUpperCase() === 'MANUFACTURING') && hpScore >= 50 && (() => {
         const winRate  = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
-        const adoptTiming = winRate > 0.6 ? 'OPTIMAL — adopt now' : winRate > 0.35 ? 'MONITOR — 30-day window' : 'DEFER — signal below adoption threshold';
+        const adoptTiming = normalizeToProjectionLanguage(
+          winRate > 0.6 ? 'OPTIMAL — adopt now' : winRate > 0.35 ? 'MONITOR — 30-day window' : 'DEFER — signal below adoption threshold',
+          stateType
+        );
         return (
           <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
