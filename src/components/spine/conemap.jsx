@@ -19,7 +19,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 8.0;
+const CONE_HEIGHT_SCALE = 7.5;
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -1647,13 +1647,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const zoomTarget = useRef(16.2);
   const zooming    = useRef(true);
   useEffect(() => { zooming.current = true; }, []);
-  const dollyMountedRef = useRef(false);
-  useEffect(() => {
-    if (!dollyMountedRef.current) { dollyMountedRef.current = true; return; }
-    camera.position.z = 18;
-    zoomTarget.current = 10;
-    zooming.current = true;
-  }, [dollyKey]);
   // Per-cone position + apex Y lookup for event rendering
   const coneData = useMemo(() => {
     const out = {};
