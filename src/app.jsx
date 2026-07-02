@@ -654,7 +654,6 @@ export default function App() {
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
-  const [heroKey, setHeroKey]           = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
   useEffect(() => {
@@ -956,7 +955,6 @@ export default function App() {
       if (ev.data?.type !== 'krylo-reset') return;
       setNavMode('surface');
       setSurfaceActivated(false);
-      setHeroKey(n => n + 1);
       setquery('');
       setScrubPos(0);
       setSelection(null);
@@ -1146,8 +1144,6 @@ export default function App() {
               }}
               coneColorOverrides={coneColorOverrides}
               dollyKey={surfaceEntryCount}
-              heroKey={heroKey}
-              maxCones={surfaceActivated ? undefined : 3}
             />
           </div>
 

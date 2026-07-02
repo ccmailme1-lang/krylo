@@ -21,7 +21,6 @@ export default function AnalysisField({
   maxCones,
   coneColorOverrides,
   dollyKey,
-  heroKey,
 }) {
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
@@ -53,7 +52,6 @@ export default function AnalysisField({
         maxCones={maxCones}
         coneColorOverrides={coneColorOverrides}
         dollyKey={dollyKey}
-        heroKey={heroKey}
       />
     </div>
   );
