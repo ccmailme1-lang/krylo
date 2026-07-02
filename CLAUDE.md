@@ -1,10 +1,10 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-06-30
-BASELINE: baseline_insufficient_signal_copy
-SHA: da3255a
-DEPLOYED: krylo.org ✗ (not deployed)
+LAST BUILD SESSION: 2026-07-02
+BASELINE: baseline_wo2069_2082_batch
+SHA: 41af2fa
+DEPLOYED: krylo.org — pending (deploy in progress this session)
 UNCOMMITTED: none
 ──────────────────────────────────────────────
 
