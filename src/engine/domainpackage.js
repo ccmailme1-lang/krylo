@@ -16,6 +16,37 @@ const INVARIANT_NAMES = [
 // Required top-level keys in domain output — no additions permitted
 const REQUIRED_OUTPUT_KEYS = ['domainState', 'componentGraph', 'signalEvaluation', 'causalMap'];
 
+// WO-2082 — Relationship Semantics Framework
+// Every causalMap edge must declare what KIND of relationship it claims — the three
+// representations formalized in Wang/Richardson/Robins, "Causal Inference: A Tale of Three
+// Frameworks" (Journal of Data Science 24(1), 2026): mechanism (SCM-style), structural
+// dependence (DAG-style), or measured/estimated intervention effect (potential-outcomes-style).
+// These are different claims, not interchangeable labels for "A causes B."
+export const RELATION_TYPES = ['MECHANISTIC', 'STRUCTURAL', 'INTERVENTIONAL'];
+
+export function validateCausalMapEdge(edge) {
+  const errors = [];
+
+  if (!edge || typeof edge !== 'object') {
+    return { valid: false, errors: ['causalMap edge must be an object'] };
+  }
+  if (!RELATION_TYPES.includes(edge.relationType)) {
+    errors.push(`causalMap edge relationType must be one of: ${RELATION_TYPES.join(', ')}`);
+  }
+  if (!edge.description || typeof edge.description !== 'string') {
+    errors.push('causalMap edge requires a non-empty description');
+  }
+  if (edge.relationType === 'MECHANISTIC' && !edge.mechanism) {
+    errors.push('MECHANISTIC causalMap edge requires a non-empty mechanism field');
+  }
+  if (edge.relationType === 'INTERVENTIONAL' &&
+      (!edge.effect || !['UP', 'DOWN', 'NEUTRAL'].includes(edge.effect.direction))) {
+    errors.push('INTERVENTIONAL causalMap edge requires effect.direction (UP | DOWN | NEUTRAL)');
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
 // ── Factory ───────────────────────────────────────────────────────────────────
 
 export function createDomainPackage(domain, subject) {
@@ -66,6 +97,18 @@ export function validateDomainOutput(output) {
         errors.push(`invariant leakage in domainState: field "${key}" is forbidden`);
       }
     }
+  }
+
+  // WO-2082: every causalMap edge must declare a typed relationType
+  if (Array.isArray(output.causalMap)) {
+    output.causalMap.forEach((edge, i) => {
+      const result = validateCausalMapEdge(edge);
+      if (!result.valid) {
+        errors.push(...result.errors.map(e => `causalMap[${i}]: ${e}`));
+      }
+    });
+  } else if ('causalMap' in output) {
+    errors.push('causalMap must be an array');
   }
 
   return { valid: errors.length === 0, errors };
