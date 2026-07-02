@@ -114,10 +114,10 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
 
   // Stage-aligned color: mirrors Y-axis markers (LO·50, MID·75, HI·90)
   // §6: purple must remain rare — only genuine HI-tier signals (≥90) earn it.
+  // Blue is the floor — all cones default to signal_blue; lime only at ≥75.
   const stageColor = activePressure >= 90 ? '#8A2BE2'
     : activePressure >= 75 ? '#66FF00'
-    : activePressure >= 50 ? '#007FFF'
-    : '#1a1a1a';
+    : '#007FFF';
   const stateColor = state.colorOverride ?? stageColor;
 
   // velocity heuristic (Phase A) — deviation from neutral baseline (50)
@@ -175,24 +175,6 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
         </div>
       </Html>
 
-      {/* Matrix Scaffold — data block at cone apex offset. Always on. Kalshi-fed when available. */}
-      <Html position={[radius * 1.5972 + 0.5, coneHeight / 2, 0]} distanceFactor={9} style={{ pointerEvents: 'none' }}>
-        <div style={{
-          fontFamily:    "'IBM Plex Mono', monospace",
-          fontSize:      9,
-          lineHeight:    '1.8',
-          letterSpacing: '0.13em',
-          color:         'rgba(255,255,255,0.55)',
-          whiteSpace:    'nowrap',
-          userSelect:    'none',
-          opacity:       1,
-          transition:    'opacity 200ms ease',
-        }}>
-          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>FORECAST{'    '}</span><span style={{ color: LIME }}>{kalshiSignal ? (kalshiSignal.forecast >= 0 ? '+' : '') + kalshiSignal.forecast + 'D' : '+7D'}</span></div>
-          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>VOLATILITY{'  '}</span><span style={{ color: kalshiSignal?.volatility === 'HIGH' ? '#ff4444' : kalshiSignal?.volatility === 'MED' ? '#ffaa00' : LIME }}>{kalshiSignal ? kalshiSignal.volatility : (state.volatility ?? 0) > 0.6 ? 'HIGH' : (state.volatility ?? 0) > 0.3 ? 'MED' : 'LOW'}</span></div>
-          <div><span style={{ color: 'rgba(255,255,255,0.28)' }}>CONFIDENCE{'  '}</span><span style={{ color: isSelected || isHovered ? '#fff' : 'rgba(255,255,255,0.7)' }}>{kalshiSignal ? kalshiSignal.confidence + '%' : Math.round((1 - (state.volatility ?? 0.5)) * 100) + '%'}</span></div>
-        </div>
-      </Html>
     </group>
   );
 }
@@ -593,8 +575,11 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         right:         16,
         width:         'calc(240px + 1vw)',
         padding:       '14px 16px',
-        background:    'rgba(0,0,0,0.68)',
-        border:        `1px solid ${accent}22`,
+        background:    '#000000',
+        borderTop:     `1px solid ${accent}22`,
+        borderRight:   `1px solid ${accent}22`,
+        borderLeft:    `1px solid ${accent}22`,
+        borderBottom:  '1px solid rgba(0,255,0,0.3)',
         fontFamily:    "'IBM Plex Mono', monospace",
         color:         'rgba(255,255,255,0.75)',
         fontSize:      10,
@@ -605,7 +590,6 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         zIndex:        10,
         maxHeight:     'calc(100vh - 320px)',
         overflowY:     'hidden',
-        borderBottom:  '1px solid rgba(0,255,0,0.3)',
       }}>
       {/* Search preview — entity loaded from search, pending bay assignment */}
       {searchPreview && (
@@ -1962,7 +1946,8 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const [log, setLog] = useState([]);
   const [flows, setFlows] = useState([]);
   const carouselRef    = useRef({ stopped: false });
-  const lastClickRef   = useRef(0);
+  const containerRef   = useRef(null);
+  const pdLastRef      = useRef(0);
   const lastEventRef = useRef(null);
   const flowIdRef    = useRef(0);
 
@@ -2002,6 +1987,23 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     return () => clearInterval(sweep);
   }, []);
 
+  // Native pointerdown capture — fires BEFORE R3F, guaranteed twice per double-click
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = e => {
+      const now = Date.now();
+      const gap = now - pdLastRef.current;
+      pdLastRef.current = now;
+      if (gap < 300) {
+        pdLastRef.current = 0;
+        _carouselStopped = !_carouselStopped;
+      }
+    };
+    el.addEventListener('pointerdown', handler, { capture: true });
+    return () => el.removeEventListener('pointerdown', handler, { capture: true });
+  }, []);
+
   const baysForResonance = useBayStore(s => s.bays);
   const hudRef     = useRef([]);
   const [hudList, setHudList] = useState([]);
@@ -2017,17 +2019,11 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
 
   return (
     <div
+      ref={containerRef}
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
+        if (e.detail >= 2) return; // double-click handled by native pointerdown
         if (e.clientX > window.innerWidth - 260) return;
-        const now = Date.now();
-        const gap = now - lastClickRef.current;
-        lastClickRef.current = now;
-        if (gap < 300) {
-          lastClickRef.current = 0;
-          _carouselStopped = !_carouselStopped;
-          return;
-        }
         const rect = e.currentTarget.getBoundingClientRect();
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
