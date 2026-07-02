@@ -1618,7 +1618,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0 }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1648,6 +1648,14 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const zoomTarget = useRef(16.2);
   const zooming    = useRef(true);
   useEffect(() => { zooming.current = true; }, []);
+
+  // Surface nav dolly — fires each time user clicks the Surface icon
+  useEffect(() => {
+    if (dollyKey === 0) return;
+    camera.position.z = 18;
+    zoomTarget.current = 10;
+    zooming.current = true;
+  }, [dollyKey]);
   // Per-cone position + apex Y lookup for event rendering
   const coneData = useMemo(() => {
     const out = {};
@@ -1675,9 +1683,9 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     }
     const lerpT = topoLerpRef.current;
 
-    // Smooth 10% zoom-in on surface engage
+    // Camera dolly — lerp toward zoomTarget (surface entry: 18→10, mount: 18→16.2)
     if (zooming.current) {
-      camera.position.z += (zoomTarget.current - camera.position.z) * 0.012;
+      camera.position.z += (zoomTarget.current - camera.position.z) * 0.025;
       if (Math.abs(camera.position.z - zoomTarget.current) < 0.01) zooming.current = false;
     }
 
@@ -1890,7 +1898,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
 
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, coneColorOverrides = {} }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, coneColorOverrides = {}, dollyKey = 0 }) {
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
     const normalized = signals.map(sig => ({
@@ -2041,6 +2049,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           hudRef={hudRef}
           kalshiSignals={kalshiSignals}
           carouselRef={carouselRef}
+          dollyKey={dollyKey}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
