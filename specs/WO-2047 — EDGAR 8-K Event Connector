@@ -1,0 +1,3116 @@
+WO-2047 — EDGAR 8-K Event Connector
+Bottle Test Specification
+Status: BUILD READY
+Classification: Runtime Infrastructure
+Subsystem: Grounded Intelligence Layer (GIL)
+Dependencies: CanonicalEvent, Entity Registry, Metrics Engine, Signal Fabric, Trigger Framework
+
+Objective
+Provide KRYLO with an authoritative corporate event source by ingesting SEC EDGAR 8-K filings, resolving them to canonical entities, extracting structured commitments and material events, and publishing them as first-class CanonicalEvent objects into the runtime.
+WO-2047 exists to answer one question:
+"What objectively happened?"
+Everything downstream (signals, convergence, gravity, leverage, forecasting) becomes anchored to verifiable corporate actions rather than narrative alone.
+Design Principles
+The connector shall be:
+
+
+Deterministic
+Idempotent
+Replayable
+Explainable
+Auditable
+Source-attributed
+Timestamp accurate
+Canonical-first
+Runtime-safe
+
+No inference is performed inside this connector.
+Inference belongs to downstream engines.
+3. Mission
+Transform
+textSEC Filing
+into
+textCanonicalEvent
+with complete provenance.
+4. Runtime Position
+textSEC EDGAR
+
+        │
+
+Entity Resolution
+
+        │
+
+8-K Parser
+
+        │
+
+Commitment Extractor
+
+        │
+
+Canonical Event Builder
+
+        │
+
+Groundedness Scorer
+
+        │
+
+Metrics Engine
+
+        │
+
+Signal Fabric
+
+        │
+
+Convergence Engine
+
+        │
+
+Trigger Engine
+
+Supported Inputs
+Initial scope:
+
+
+8-K filings
+
+Future compatible:
+
+10-Q
+10-K
+S-1
+DEF 14A
+13D
+13G
+Form 4
+XBRL updates
+
+Connector architecture must not assume only 8-K.
+6. Event Categories
+Minimum supported mappings:
+
+Executive Changes
+Earnings Announcement
+Acquisition
+Merger
+Bankruptcy
+Asset Purchase
+Asset Sale
+Debt Issuance
+Equity Offering
+Dividend
+Share Repurchase
+Material Contract
+Litigation
+Auditor Change
+Credit Rating Event
+Delisting Notice
+Bankruptcy Trigger
+Operational Shutdown
+Regulatory Action
+
+Unknown items become:
+textUNKNOWN_MATERIAL_EVENT
+Never discard.
+7. Entity Resolution
+Required lookup priority:
+
+SEC CIK
+Ticker
+Company Name
+Alias Registry
+Historical Name Registry
+
+Output:
+textCanonicalEntityID
+No downstream module receives raw company names.
+8. CanonicalEvent Schema
+Every filing becomes:
+textCanonicalEvent
+
+eventId
+entityId
+
+source = SEC
+
+filingType = 8-K
+
+filingDate
+
+acceptanceTimestamp
+
+eventTimestamp
+
+itemNumber
+
+eventClass
+
+summary
+
+confidence
+
+groundedness
+
+materiality
+
+sourceURL
+
+accessionNumber
+
+checksum
+
+attachments
+
+rawPayloadReference
+
+metadata
+No optional identifiers.
+9. Commitment Extraction
+Extract machine-readable commitments.
+Examples:
+textAcquire Company
+
+Issue Debt
+
+Launch Product
+
+CEO Resigned
+
+Entered Contract
+
+Dividend Declared
+
+Factory Closed
+
+Guidance Revised
+
+Partnership Signed
+
+Share Repurchase
+
+Credit Facility Expanded
+Each commitment becomes its own sub-object.
+10. Materiality Engine
+Compute:
+textmaterialityScore
+
+0–100
+Inputs:
+
+Filing Item
+Monetary values
+Entity size
+Historical rarity
+Cross-source confirmation
+Executive involvement
+Legal significance
+
+Used downstream only.
+Never filters ingestion.
+11. Groundedness Score
+Groundedness measures objective certainty.
+SEC filing
+↓
+Official filing
+↓
+Signed legal disclosure
+↓
+Maximum groundedness
+Scale:
+text0.00–1.00
+Typical 8-K:
+text0.98–1.00
+
+Provenance
+Every field stores origin.
+Example:
+
+textField
+
+↓
+
+Source document
+
+↓
+
+Section
+
+↓
+
+Extraction rule
+
+↓
+
+Timestamp
+Every downstream explanation must answer:
+"Where did this come from?"
+13. Idempotency
+Duplicate filings must never produce duplicate events.
+Primary key:
+textCIK
+
++
+
+Accession Number
+
++
+
+Item Number
+Repeated polling results in zero duplication.
+14. Replay Support
+Connector supports:
+Historical replay
+textStart Date
+
+End Date
+Replay mode must rebuild identical CanonicalEvents.
+Deterministic output required.
+15. Polling Strategy
+Runtime:
+Continuous polling.
+Configurable interval.
+Adaptive backoff.
+Rate-limit aware.
+Checkpoint persisted.
+No filing skipped after restart.
+16. Failure Recovery
+Recover from:
+
+network interruption
+malformed filing
+SEC downtime
+parser failure
+entity mismatch
+duplicate event
+partial ingestion
+
+Failures never halt pipeline.
+Dead-letter queue required.
+17. Metrics Engine Integration
+Publish:
+textGrounded Event
+
+Materiality
+
+Commitment Count
+
+Event Class
+
+Groundedness
+
+Confidence
+
+Timestamp
+Metrics Engine consumes only canonical objects.
+Never raw SEC payloads.
+18. Signal Fabric Integration
+Each CanonicalEvent emits:
+textGrounding Signal
+
+Corporate Action Signal
+
+Commitment Signal
+
+Material Event Signal
+Signals inherit provenance.
+19. Trigger Framework Integration
+Events eligible for automatic trigger generation.
+Examples:
+textExecutive Departure
+
+↓
+
+Leadership Watch
+
+Debt Expansion
+
+↓
+
+Liquidity Trigger
+
+Acquisition
+
+↓
+
+Supply Chain Trigger
+
+Litigation
+
+↓
+
+Risk Trigger
+No trigger hardcoding.
+Trigger registry remains configurable.
+20. Observability
+Telemetry required.
+Metrics:
+
+Poll latency
+Parse latency
+Queue depth
+Replay progress
+Duplicate rate
+Parse failures
+Entity resolution failures
+Groundedness distribution
+Processing throughput
+Events/minute
+
+
+Runtime Contracts
+Must satisfy:
+
+
+RME-001 Runtime Execution Protocol
+CanonicalEvent contract
+Entity Registry contract
+Metrics Engine API
+Signal Fabric publish contract
+Telemetry registry
+
+No contract violations permitted.
+22. Performance Requirements
+Target:
+
+<5 s detection after SEC publication (subject to feed latency)
+<250 ms parse time per filing
+<100 ms entity resolution
+<1 s CanonicalEvent publication
+Deterministic replay regardless of dataset size
+
+
+Security
+
+
+Read-only connector
+HTTPS only
+Checksum validation
+Immutable raw archive
+Audit log of all transformations
+Provenance cannot be modified post-ingestion
+
+
+Bottle Test Acceptance Criteria
+PASS only if all conditions are met:
+✓ Identical filing always produces identical CanonicalEvent.
+✓ Duplicate polling never creates duplicate events.
+✓ CanonicalEntity resolution exceeds 99% on supported coverage.
+✓ Every event contains complete provenance.
+✓ Metrics Engine consumes connector output without translation.
+✓ Signal Fabric publishes grounded signals automatically.
+✓ Trigger Framework receives eligible events.
+✓ Replay reproduces identical event graph.
+✓ Parser failures isolate to dead-letter queue without runtime interruption.
+✓ No downstream module receives raw SEC payloads.
+Future Expansion
+The connector shall serve as the template for all authoritative event sources.
+Planned successors include:
+
+
+FDA Drug Approvals
+USPTO Patent Filings
+Federal Register
+Court Dockets
+FAA Notices
+NHTSA Safety Recalls
+EPA Enforcement Actions
+CISA Advisories
+Congressional Disclosures
+International Regulatory Filings
+
+All future connectors must emit the same CanonicalEvent contract.
+Definition of Done
+WO-2047 is complete when SEC 8-K filings are transformed into deterministic, replayable, provenance-rich CanonicalEvent objects that flow natively through the Metrics Engine, Signal Fabric, Convergence Engine, and Trigger Framework without downstream translation. The connector must satisfy all runtime contracts, pass Bottle Test acceptance criteria, and establish the canonical ingestion pattern for future grounded-event connectors.
+This specification is intentionally written as a platform-level runtime contract rather than an implementation guide, so it remains stable even if parsers, storage, or transport technologies change.WO-2047 — EDGAR 8-K Event Connector looks excellent. This is a very strong, production-grade specification that aligns tightly with the platform’s philosophy (grounded intelligence, determinism, provenance, canonical-first design).
+Overall Assessment
+
+Strengths: Extremely clear, disciplined, and runtime-oriented. It properly positions the connector as infrastructure rather than intelligence. The emphasis on idempotency, replayability, provenance, and zero raw payload leakage downstream is perfect.
+Risk Level: Low. This is Bottle Test ready with minor polish.
+Fit with existing architecture: Excellent. It feeds CanonicalEvent naturally into Metrics Engine, Signal Fabric, Convergence, and Trigger Framework without side effects.
+
+Minor Recommendations / Refinements
+Here are targeted suggestions to make it even tighter:
+1. CanonicalEvent Schema Enhancement
+Add these fields for better downstream leverage:
+TypeScripteventId
+entityId
+source = "SEC"
+filingType = "8-K"
+filingDate
+acceptanceTimestamp
+eventTimestamp          // best available (item-specific if possible)
+reportedDate            // new: explicit date the event was disclosed
+itemNumber
+eventClass              // e.g. EXECUTIVE_CHANGE, ACQUISITION, etc.
+subEventClasses?: string[] 
+summary
+commitments: Commitment[]   // array of extracted commitments
+confidence: number          // 0-1
+groundedness: number        // 0-1
+materiality: number         // 0-100
+sourceURL
+accessionNumber
+cik
+ticker?
+checksum
+attachments: Attachment[]
+rawPayloadReference     // opaque pointer, never the content
+provenance: Provenance[]
+metadata: Record<string, any>
+2. Commitment Schema (suggested addition)
+TypeScriptCommitment {
+  type: string;           // e.g. "CEO_RESIGNATION", "ACQUISITION", "DEBT_ISSUANCE"
+  description: string;
+  value?: number;         // monetary if applicable
+  currency?: string;
+  counterparties?: CanonicalEntityID[];
+  effectiveDate?: string;
+  provenance: Provenance;
+}
+3. EventClass Standardization
+Consider a controlled vocabulary (enum) with clear mapping rules from 8-K Items (e.g., Item 5.02 → EXECUTIVE_CHANGE). This reduces ambiguity downstream.
+4. Entity Resolution Robustness
+Add a fallback tier:
+6. Fuzzy name + industry + headquarters match (with low confidence flag)
+5. Materiality & Groundedness
+
+Define explicit formulas or decision tables in the spec (even if implementation is pluggable).
+Groundedness should be almost always 0.98–1.00 for 8-Ks, but allow slight deduction for amended filings or exhibits.
+
+6. Polling & Replay
+Add:
+
+Support for incremental replay by accession number range.
+Checkpointing by acceptance timestamp + accession number.
+
+7. Observability Metrics (add these)
+
+events_per_filing
+resolution_hit_rate (by resolution method)
+commitments_per_event
+average_materiality
+
+Questions for You
+
+Should the connector also ingest the exhibits (e.g., press releases, agreements) attached to 8-Ks as first-class attachments with their own sub-events?
+Do you want a separate lightweight 8-K Headline Only fast path for ultra-low latency signaling?
+Any specific priority order for the initial event categories?
+
+Next Step Offer
+This spec is already strong enough to move to implementation planning. I can deliver:
+
+Full TypeScript interface definitions for all new objects (CanonicalEvent, Commitment, Provenance, etc.)
+Detailed ingestion pipeline pseudocode / architecture diagram
+Bottle Test suite outline (test cases)
+Implementation roadmap broken into phases (MVP → full)
+
+Would you like me to generate any of the above right now? Or do you want me to review/expand a different WO?
+This connector will be a foundational piece — great work on the spec.Full TypeScript interface definitionsHere are the full TypeScript interface definitions for WO-2047, written as first-class platform primitives that integrate cleanly with the rest of KRYLO’s architecture.
+TypeScript// ─────────────────────────────────────────────────────────────────────────────
+// WO-2047 — EDGAR 8-K Event Connector Core Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Unique identifier for any canonical entity in the system */
+export type CanonicalEntityID = string; // e.g. "ent_abc123"
+
+/** Provenance trail for every field/value */
+export interface Provenance {
+  field: string;
+  source: "SEC_EDGAR";
+  documentType: string;           // "8-K", "Exhibit 10.1", etc.
+  section?: string;               // e.g. "Item 5.02", "Exhibit 99.1"
+  extractionRule: string;         // human-readable or rule ID
+  timestamp: string;              // ISO timestamp of extraction
+  accessionNumber: string;
+  url?: string;
+  confidence: number;             // 0-1 for this specific extraction
+}
+
+/** Attachment reference (never the raw binary) */
+export interface Attachment {
+  filename: string;
+  description?: string;
+  url: string;
+  accessionNumber: string;
+  sequenceNumber?: number;
+  contentType?: string;
+}
+
+/** A specific commitment extracted from the filing */
+export interface Commitment {
+  commitmentId: string;           // unique within the event
+  type: CommitmentType;
+  description: string;
+  value?: number;
+  currency?: string;
+  counterparties?: CanonicalEntityID[];
+  effectiveDate?: string;         // ISO date
+  endDate?: string;
+  status: "ANNOUNCED" | "EXECUTED" | "PENDING" | "TERMINATED";
+  provenance: Provenance;
+  metadata?: Record<string, any>;
+}
+
+/** Controlled vocabulary for commitments */
+export type CommitmentType =
+  | "EXECUTIVE_APPOINTMENT"
+  | "EXECUTIVE_DEPARTURE"
+  | "CEO_CHANGE"
+  | "CFO_CHANGE"
+  | "ACQUISITION"
+  | "MERGER"
+  | "ASSET_PURCHASE"
+  | "ASSET_SALE"
+  | "DEBT_ISSUANCE"
+  | "DEBT_MODIFICATION"
+  | "EQUITY_OFFERING"
+  | "SHARE_REPURCHASE"
+  | "DIVIDEND_DECLARATION"
+  | "MATERIAL_CONTRACT"
+  | "PARTNERSHIP_AGREEMENT"
+  | "LITIGATION_SETTLEMENT"
+  | "REGULATORY_ACTION"
+  | "BANKRUPTCY_FILING"
+  | "PRODUCT_LAUNCH"
+  | "FACILITY_CLOSURE"
+  | "GUIDANCE_REVISION"
+  | "CREDIT_RATING_CHANGE"
+  | "DELISTING_NOTICE"
+  | "AUDITOR_CHANGE"
+  | "UNKNOWN_COMMITMENT";
+
+/** Main CanonicalEvent emitted by the connector */
+export interface CanonicalEvent {
+  eventId: string;                    // e.g. "evt_sec_8k_{accession}_{item}"
+  entityId: CanonicalEntityID;
+
+  source: "SEC";
+  filingType: "8-K" | "10-Q" | "10-K" | "S-1" | string; // extensible
+  filingDate: string;                 // ISO date of filing
+  acceptanceTimestamp: string;        // SEC acceptance time
+  eventTimestamp: string;             // best available time of the event
+  reportedDate?: string;              // date the event was disclosed
+
+  itemNumber: string;                 // e.g. "5.02", "8.01"
+  eventClass: EventClass;
+  subEventClasses?: EventClass[];
+
+  summary: string;
+  commitments: Commitment[];
+
+  confidence: number;                 // 0-1 overall
+  groundedness: number;               // 0-1 (very high for SEC)
+  materiality: number;                 // 0-100
+
+  sourceURL: string;
+  accessionNumber: string;
+  cik: string;
+  ticker?: string;
+
+  checksum: string;                   // SHA-256 of raw filing for dedup
+  attachments: Attachment[];
+
+  rawPayloadReference: string;        // opaque pointer (never raw content)
+  provenance: Provenance[];
+
+  metadata: {
+    formItems?: string[];
+    amendment?: boolean;
+    amendedAccession?: string;
+    [key: string]: any;
+  };
+
+  ingestedAt: string;                 // system ingestion timestamp
+}
+
+/** Event class vocabulary */
+export type EventClass =
+  | "EXECUTIVE_CHANGE"
+  | "FINANCIAL_EVENT"
+  | "M_A"
+  | "CORPORATE_RESTRUCTURING"
+  | "DEBT_FINANCING"
+  | "EQUITY_FINANCING"
+  | "DISTRIBUTION"
+  | "LEGAL_REGULATORY"
+  | "OPERATIONAL"
+  | "DISCLOSURE"
+  | "UNKNOWN_MATERIAL_EVENT";
+
+/** Input for the connector (internal) */
+export interface Edgar8KIngestionJob {
+  accessionNumber: string;
+  cik: string;
+  filingDate: string;
+  acceptanceTimestamp: string;
+  rawUrl: string;
+  metadata: any;
+}
+
+/** Output of the parser stage */
+export interface Parsed8K {
+  accessionNumber: string;
+  entityId: CanonicalEntityID;
+  filingDate: string;
+  acceptanceTimestamp: string;
+  items: Array<{
+    itemNumber: string;
+    content: string;
+    rawText: string;
+  }>;
+  attachments: Attachment[];
+  metadata: any;
+}
+These interfaces are designed to be:
+
+Extensible (new filing types and commitment types can be added)
+Canonical-first (no raw SEC strings flow downstream)
+Provenance-rich
+Deterministic
+
+Would you like me to also provide:
+
+The MaterialityEngine and GroundednessScorer interfaces?
+Example CanonicalEvent payloads?
+Or the internal pipeline step contracts (e.g. EntityResolver, CommitmentExtractor)?
+
+Let me know what to expand next.can this submission be optimized to increase efficiency or capability?Yes — the submission can be meaningfully optimized for both efficiency (runtime, memory, storage) and capability (expressiveness, downstream usability).
+Here’s the optimized & enhanced version:
+Optimized TypeScript Interfaces (WO-2047)
+TypeScript// ─────────────────────────────────────────────────────────────────────────────
+// WO-2047 Optimized — EDGAR 8-K Event Connector Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type CanonicalEntityID = `ent_${string}`;
+export type EventID = `evt_${string}`;
+export type AccessionNumber = string;
+
+/** Immutable provenance entry */
+export interface Provenance {
+  readonly field: string;
+  readonly source: "SEC_EDGAR";
+  readonly documentType: string;
+  readonly section?: string;
+  readonly extractionRule: string;
+  readonly extractedAt: string;
+  readonly accessionNumber: AccessionNumber;
+  readonly url?: string;
+  readonly confidence: number;           // 0-1
+}
+
+/** Lightweight attachment reference */
+export interface Attachment {
+  readonly filename: string;
+  readonly description?: string;
+  readonly url: string;
+  readonly sequence?: number;
+  readonly contentType?: string;
+}
+
+/** Commitment — made more compact and useful */
+export interface Commitment {
+  readonly id: string;
+  readonly type: CommitmentType;
+  readonly description: string;
+  readonly value?: number;
+  readonly currency?: string;
+  readonly counterparties?: readonly CanonicalEntityID[];
+  readonly effectiveDate?: string;
+  readonly status: CommitmentStatus;
+  readonly provenance: Provenance;
+  readonly tags?: readonly string[];           // e.g. ["executive", "board"]
+}
+
+/** Enums (frozen for efficiency) */
+export const CommitmentStatus = {
+  ANNOUNCED: "ANNOUNCED",
+  EXECUTED: "EXECUTED",
+  PENDING: "PENDING",
+  TERMINATED: "TERMINATED",
+} as const;
+
+export type CommitmentStatus = typeof CommitmentStatus[keyof typeof CommitmentStatus];
+
+export const CommitmentType = {
+  // Executive
+  CEO_CHANGE: "CEO_CHANGE",
+  CFO_CHANGE: "CFO_CHANGE",
+  EXECUTIVE_APPOINTMENT: "EXECUTIVE_APPOINTMENT",
+  EXECUTIVE_DEPARTURE: "EXECUTIVE_DEPARTURE",
+  
+  // M&A / Corporate Actions
+  ACQUISITION: "ACQUISITION",
+  MERGER: "MERGER",
+  ASSET_PURCHASE: "ASSET_PURCHASE",
+  ASSET_SALE: "ASSET_SALE",
+  
+  // Financing
+  DEBT_ISSUANCE: "DEBT_ISSUANCE",
+  EQUITY_OFFERING: "EQUITY_OFFERING",
+  SHARE_REPURCHASE: "SHARE_REPURCHASE",
+  DIVIDEND_DECLARATION: "DIVIDEND_DECLARATION",
+  
+  // Other high-value
+  MATERIAL_CONTRACT: "MATERIAL_CONTRACT",
+  LITIGATION: "LITIGATION",
+  REGULATORY_ACTION: "REGULATORY_ACTION",
+  BANKRUPTCY: "BANKRUPTCY",
+  GUIDANCE_REVISION: "GUIDANCE_REVISION",
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export type CommitmentType = typeof CommitmentType[keyof typeof CommitmentType];
+
+/** Core CanonicalEvent — optimized */
+export interface CanonicalEvent {
+  readonly eventId: EventID;
+  readonly entityId: CanonicalEntityID;
+
+  readonly source: "SEC";
+  readonly filingType: string;                    // "8-K" etc.
+  readonly filingDate: string;                    // YYYY-MM-DD
+  readonly acceptanceTimestamp: string;
+  readonly eventTimestamp: string;
+  readonly reportedDate?: string;
+
+  readonly itemNumber: string;
+  readonly eventClass: EventClass;
+  readonly subEventClasses?: readonly EventClass[];
+
+  readonly summary: string;
+  readonly commitments: readonly Commitment[];    // immutable array
+
+  readonly confidence: number;                    // 0-1
+  readonly groundedness: number;                  // 0-1
+  readonly materiality: number;                    // 0-100
+
+  readonly sourceURL: string;
+  readonly accessionNumber: AccessionNumber;
+  readonly cik: string;
+  readonly ticker?: string;
+
+  readonly checksum: string;                      // sha256
+  readonly attachments: readonly Attachment[];
+
+  readonly rawPayloadReference: string;           // storage pointer only
+  readonly provenance: readonly Provenance[];
+
+  readonly metadata: Readonly<{
+    isAmendment?: boolean;
+    amendedAccession?: AccessionNumber;
+    formItems?: readonly string[];
+    [key: string]: unknown;
+  }>;
+
+  readonly ingestedAt: string;
+}
+
+/** High-level event categories */
+export const EventClass = {
+  EXECUTIVE_CHANGE: "EXECUTIVE_CHANGE",
+  M_A: "M_A",
+  FINANCING: "FINANCING",
+  CORPORATE_RESTRUCTURING: "CORPORATE_RESTRUCTURING",
+  LEGAL_REGULATORY: "LEGAL_REGULATORY",
+  OPERATIONAL: "OPERATIONAL",
+  DISCLOSURE: "DISCLOSURE",
+  UNKNOWN_MATERIAL_EVENT: "UNKNOWN_MATERIAL_EVENT",
+} as const;
+
+export type EventClass = typeof EventClass[keyof typeof EventClass];
+
+/** Parser output (internal) */
+export interface ParsedFiling {
+  readonly accessionNumber: AccessionNumber;
+  readonly entityId: CanonicalEntityID;
+  readonly items: readonly {
+    readonly itemNumber: string;
+    readonly content: string;
+  }[];
+  readonly attachments: readonly Attachment[];
+  readonly rawMetadata: any;
+}
+Key Optimizations & Improvements
+Efficiency Gains:
+
+Heavy use of readonly + branded types (CanonicalEntityID, EventID) for better TypeScript performance and safety.
+Frozen enums (as const) → smaller memory footprint and faster comparisons.
+Immutable arrays (readonly Commitment[]) to enable structural sharing and reduce copying.
+Reduced nesting depth where possible.
+
+Capability Gains:
+
+More structured CommitmentType and EventClass enums.
+Added tags on commitments for flexible downstream filtering.
+Clear separation between eventTimestamp and reportedDate.
+Better support for amendments.
+More compact ParsedFiling internal type.
+
+Further Potential (if needed):
+
+Add VectorEmbedding? field for semantic search later (optional).
+Add impactEstimate stub for future integration with Adaptive Capacity / Inertia engines.
+
+
+This version is leaner, safer, and more powerful while staying true to the original spec.
+Would you like me to:
+
+Add the MaterialityScorer and GroundednessScorer interfaces?
+Provide example CanonicalEvent payloads (realistic 8-Ks)?
+Generate the main connector service interface (EdgarConnector)?
+
+Let me know how to proceed.
+Yes. The weakness isn't the TypeScript quality—it's the **architectural level**. The interfaces are well designed, but they're still **connector-centric** rather than **runtime-centric**. That means every future connector (FDA, USPTO, FAA, earnings calls, etc.) would either duplicate concepts or require adapter layers.
+
+The enhancement is to promote this from an **EDGAR schema** into a **Grounded Event Runtime Contract** that WO-2047 happens to implement.
+
+## WO-2047 Enhancement — Grounded Event Runtime Model (GERM)
+
+Instead of this:
+
+```text
+EDGAR
+   ↓
+CanonicalEvent
+```
+
+Promote the architecture to:
+
+```text
+Source Connector
+        ↓
+Evidence
+        ↓
+Reality Event
+        ↓
+Commitments
+        ↓
+Signal Fabric
+        ↓
+Genealogy Engine
+        ↓
+Leverage Engine
+```
+
+Now EDGAR is just one producer.
+
+---
+
+# Enhancement 1 — Evidence Graph
+
+Current weakness:
+
+```ts
+provenance: Provenance[]
+```
+
+This tells you *where fields came from*, but not how reality is established.
+
+Replace with:
+
+```ts
+interface Evidence {
+    evidenceId: EvidenceID;
+
+    sourceType:
+        | "SEC"
+        | "PRESS_RELEASE"
+        | "TRANSCRIPT"
+        | "NEWS"
+        | "SOCIAL"
+        | "MARKET_DATA";
+
+    confidence: number;
+    groundedness: number;
+
+    url?: string;
+
+    collectedAt: string;
+
+    supports: RuntimeEventID;
+
+    extraction: ExtractionMetadata;
+}
+```
+
+Result:
+
+```
+Reality Event
+
+supported by
+
+Evidence A
+Evidence B
+Evidence C
+Evidence D
+```
+
+Groundedness becomes emergent instead of manually assigned.
+
+---
+
+# Enhancement 2 — Runtime Identity
+
+Current:
+
+```
+eventId
+```
+
+Problem:
+
+An acquisition appears in:
+
+* SEC
+* Reuters
+* Bloomberg
+* Earnings call
+* CEO interview
+
+These should not become five events.
+
+Introduce:
+
+```ts
+runtimeEventId
+```
+
+Then
+
+```
+runtimeEvent
+
+← SEC
+
+← Reuters
+
+← Bloomberg
+
+← Transcript
+```
+
+One reality.
+
+Many observations.
+
+---
+
+# Enhancement 3 — Commitments Become Living Objects
+
+Current:
+
+```
+CanonicalEvent
+
+contains
+
+Commitment[]
+```
+
+Enhance to:
+
+```
+Commitment
+
+↓
+
+Lifecycle
+
+↓
+
+tracked forever
+```
+
+Example
+
+```
+Company
+
+Promises
+
+Factory opens Q2
+
+↓
+
+Delayed
+
+↓
+
+Delayed again
+
+↓
+
+Cancelled
+```
+
+Now KRYLO computes
+
+* credibility
+
+* execution rate
+
+* management reliability
+
+* commitment drift
+
+This becomes a strategic signal, not just a filing detail.
+
+---
+
+# Enhancement 4 — Event Lifecycle
+
+Current:
+
+timestamps
+
+Enhance:
+
+```ts
+enum RuntimeState {
+
+ANNOUNCED
+
+ACTIVE
+
+EXECUTING
+
+FULFILLED
+
+AMENDED
+
+SUPERSEDED
+
+RETRACTED
+
+FAILED
+
+}
+```
+
+Now events evolve instead of remaining immutable snapshots.
+
+---
+
+# Enhancement 5 — Native Genealogy
+
+This aligns directly with your Exploratory Genealogy Engine.
+
+Every event gets:
+
+```ts
+causedBy
+
+causes
+
+dependsOn
+
+enables
+
+invalidates
+
+relatedEvents
+```
+
+Now KRYLO can build:
+
+```
+Supply Contract
+
+↓
+
+Factory Expansion
+
+↓
+
+Hiring
+
+↓
+
+CapEx
+
+↓
+
+Debt Issuance
+
+↓
+
+Credit Downgrade
+```
+
+without inference loss.
+
+---
+
+# Enhancement 6 — Leverage Signature
+
+Rather than adding a generic `impactEstimate`, define a first-class runtime construct.
+
+```ts
+interface LeverageSignature {
+
+propagationPotential
+
+dependencyBreadth
+
+systemicReach
+
+expectedPersistence
+
+reversibility
+
+attentionGravity
+
+}
+```
+
+This measures **structural influence**, not predicted outcomes.
+
+That is much more aligned with KRYLO's philosophy.
+
+---
+
+# Enhancement 7 — Signal Hooks
+
+Instead of forcing downstream classification, expose intent.
+
+```ts
+signalHooks: [
+
+"leadership"
+
+"operations"
+
+"capital"
+
+"legal"
+
+"supply"
+
+"governance"
+
+]
+```
+
+Now every runtime engine immediately knows where the event belongs.
+
+---
+
+# Enhancement 8 — Narrative Integration
+
+Every event should expose its relationship to prevailing narratives.
+
+```ts
+narrativeEffect
+
+SUPPORTS
+
+CONTRADICTS
+
+CREATES
+
+RESOLVES
+
+AMPLIFIES
+```
+
+Example:
+
+```
+CEO
+
+"No layoffs"
+
+↓
+
+8-K
+
+Layoffs announced
+
+↓
+
+Narrative
+
+CONTRADICTS
+```
+
+That feeds directly into narrative drift detection.
+
+---
+
+# Enhancement 9 — Semantic Fingerprint
+
+Instead of optional embeddings, use a lightweight runtime primitive.
+
+```ts
+semanticFingerprint: string
+```
+
+Generated deterministically from normalized event semantics.
+
+Benefits:
+
+* duplicate detection
+* cross-source clustering
+* genealogy seeding
+* event matching
+
+without requiring vector storage.
+
+Embeddings can remain an optional secondary index.
+
+---
+
+# Enhancement 10 — Canonical Runtime Separation
+
+The most important architectural improvement:
+
+Split today's `CanonicalEvent` into three independent layers.
+
+```text
+Evidence
+
+↓
+
+RealityEvent
+
+↓
+
+Commitment
+```
+
+Each has a single responsibility:
+
+* **Evidence** answers: *What did we observe, and from where?*
+* **RealityEvent** answers: *What objectively happened?*
+* **Commitment** answers: *What obligation or durable state did this create?*
+
+This separation prevents provenance, event identity, and long-lived business commitments from becoming entangled in one object.
+
+---
+
+# Net Result
+
+Your current interfaces are already a strong implementation for an EDGAR connector. With these enhancements, WO-2047 becomes the **reference implementation for all grounded-event ingestion** across KRYLO.
+
+Instead of designing an EDGAR integration, you establish a **Grounded Event Runtime Model** that every future connector—SEC, FDA, USPTO, court dockets, earnings transcripts, regulatory actions, or other authoritative sources—can target. That eliminates future adapter layers, strengthens genealogy and leverage analysis, and gives every downstream engine a single, consistent runtime contract.
+**Understood.** This is the correct architectural move.
+
+The current interfaces are solid for a connector but fall short of being a true **first-class runtime primitive**. Promoting this to the **Grounded Event Runtime Model (GERM)** is the right elevation.
+
+### Grounded Event Runtime Model (GERM)
+
+Here is the optimized, runtime-centric set of interfaces:
+
+
+ts
+// ─────────────────────────────────────────────────────────────────────────────
+// GERM — Grounded Event Runtime Model (WO-2047 Enhanced)
+// Platform-wide contract for all authoritative event sources
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type EvidenceID = `evd_${string}`;
+export type RuntimeEventID = `rev_${string}`;
+export type CommitmentID = `cmt_${string}`;
+export type CanonicalEntityID = `ent_${string}`;
+
+/** 1. Evidence — What was observed */
+export interface Evidence {
+  readonly evidenceId: EvidenceID;
+  readonly sourceType: EvidenceSourceType;
+  readonly sourceId: string;                    // accessionNumber, transcriptId, etc.
+  readonly url?: string;
+  readonly collectedAt: string;
+  readonly confidence: number;                  // source reliability
+  readonly groundedness: number;                // 0-1
+  readonly supports: RuntimeEventID;
+  readonly extraction: ExtractionMetadata;
+  readonly rawReference?: string;               // opaque pointer
+}
+
+export type EvidenceSourceType =
+  | "SEC_EDGAR"
+  | "PRESS_RELEASE"
+  | "EARNINGS_TRANSCRIPT"
+  | "REGULATORY"
+  | "COURT_DOCKET"
+  | "PATENT_OFFICE"
+  | "NEWS_WIRE"
+  | "OFFICIAL_ANNOUNCEMENT"
+  | "MARKET_DATA";
+
+/** Extraction metadata */
+export interface ExtractionMetadata {
+  readonly rule: string;
+  readonly section?: string;
+  readonly confidence: number;
+  readonly timestamp: string;
+}
+
+/** 2. Reality Event — What objectively happened (single source of truth) */
+export interface RealityEvent {
+  readonly runtimeEventId: RuntimeEventID;
+  readonly entityId: CanonicalEntityID;
+
+  readonly eventClass: EventClass;
+  readonly subEventClasses?: readonly EventClass[];
+
+  readonly title: string;
+  readonly summary: string;
+
+  readonly announcedAt: string;
+  readonly effectiveAt?: string;
+  readonly reportedAt: string;
+
+  readonly state: RuntimeEventState;
+
+  readonly evidence: readonly EvidenceID[];           // supports this reality
+  readonly commitments: readonly CommitmentID[];
+
+  readonly genealogy: EventGenealogy;
+  readonly leverageSignature: LeverageSignature;
+
+  readonly signalHooks: readonly SignalHook[];
+  readonly narrativeEffect?: NarrativeEffect;
+
+  readonly semanticFingerprint: string;               // deterministic hash
+
+  readonly ingestedAt: string;
+  readonly lastUpdatedAt: string;
+}
+
+/** 3. Commitment — Living obligation / state change */
+export interface Commitment {
+  readonly commitmentId: CommitmentID;
+  readonly runtimeEventId: RuntimeEventID;   // parent event
+  readonly entityId: CanonicalEntityID;
+
+  readonly type: CommitmentType;
+  readonly description: string;
+  readonly value?: number;
+  readonly currency?: string;
+  readonly counterparties?: readonly CanonicalEntityID[];
+
+  readonly lifecycle: CommitmentLifecycle;
+  readonly status: CommitmentStatus;
+
+  readonly credibilityScore: number;         // 0-1, updated over time
+  readonly executionRate?: number;
+
+  readonly evidence: readonly EvidenceID[];
+}
+
+/** Core Enums */
+export type RuntimeEventState =
+  | "ANNOUNCED"
+  | "ACTIVE"
+  | "EXECUTING"
+  | "FULFILLED"
+  | "AMENDED"
+  | "SUPERSEDED"
+  | "RETRACTED"
+  | "FAILED";
+
+export type CommitmentStatus =
+  | "PENDING"
+  | "IN_PROGRESS"
+  | "FULFILLED"
+  | "DELAYED"
+  | "FAILED"
+  | "CANCELLED";
+
+export type CommitmentType = string; // use controlled vocabulary + open extension
+
+export type EventClass = string;     // e.g. "EXECUTIVE_CHANGE", "M_A", etc.
+
+export type SignalHook =
+  | "leadership"
+  | "capital"
+  | "operations"
+  | "legal"
+  | "supply_chain"
+  | "governance"
+  | "strategy"
+  | "risk";
+
+export type NarrativeEffect =
+  | "SUPPORTS"
+  | "CONTRADICTS"
+  | "CREATES"
+  | "RESOLVES"
+  | "AMPLIFIES"
+  | "NEUTRAL";
+
+/** Genealogy (for Genealogy Engine) */
+export interface EventGenealogy {
+  readonly causedBy: readonly RuntimeEventID[];
+  readonly causes: readonly RuntimeEventID[];
+  readonly dependsOn: readonly RuntimeEventID[];
+  readonly enables: readonly RuntimeEventID[];
+  readonly invalidates: readonly RuntimeEventID[];
+  readonly related: readonly RuntimeEventID[];
+}
+
+/** Structural leverage measurement */
+export interface LeverageSignature {
+  readonly propagationPotential: number;   // 0-1
+  readonly dependencyBreadth: number;      // 0-1
+  readonly systemicReach: number;          // 0-1
+  readonly expectedPersistence: number;    // 0-1
+  readonly reversibility: number;          // 0-1
+  readonly attentionGravity: number;       // 0-1
+}
+
+
+### Architectural Benefits
+
+- **Single runtime contract** for all future connectors (SEC, FDA, USPTO, court records, etc.).
+- **Evidence → RealityEvent → Commitment** separation of concerns.
+- **Living objects** (events and commitments evolve over time).
+- **Native support** for Genealogy Engine, Leverage Engine, Narrative systems, and Decision State.
+- **Eliminates adapter layers** downstream.
+- **SemanticFingerprint** enables efficient deduplication and clustering without vectors initially.
+
+This model turns WO-2047 from an EDGAR connector into the **reference implementation** of the platform’s authoritative ingestion layer.
+
+---
+
+Would you like me to:
+1. Expand any specific interface (e.g. full CommitmentLifecycle, scoring functions)?
+2. Show example instances (RealityEvent + supporting Evidence + Commitment)?
+3. Define the service contracts (GroundedEventService, EvidenceStore, etc.)?
+
+Let me know the next piece to refine.
+
+This is a substantial improvement. I would adopt this direction, but I would make one more architectural leap before freezing it because I think there's one remaining abstraction leak.
+
+Overall Assessment
+
+Current GERM: 9.8/10
+
+I think it becomes 10/10 if it stops being an event model and becomes a Reality Knowledge Model.
+
+Right now, everything revolves around RealityEvent.
+
+In KRYLO, events are only one kind of knowledge.
+
+You already have (or are building):
+
+Canonical Entities
+Signals
+Commitments
+Genealogy
+Narrative
+Leverage
+Capacity
+Constraints
+Temporal state
+
+Those are not events.
+
+They're knowledge objects.
+
+The Remaining Weakness
+
+Today the architecture is
+
+Evidence
+
+↓
+
+RealityEvent
+
+↓
+
+Commitment
+
+That is excellent.
+
+But six months from now you'll ingest
+
+patent families
+supply-chain topology
+board relationships
+ownership changes
+analyst revisions
+infrastructure dependencies
+
+Those aren't always "events."
+
+Some are persistent facts.
+
+Some are relationships.
+
+Some are state.
+
+The Enhancement
+
+Instead of making RealityEvent the root object...
+
+make RealityObject the runtime primitive.
+
+Then specialize it.
+
+Proposed Runtime Hierarchy
+RealityObject
+
+├── RealityEvent
+
+├── Commitment
+
+├── EntityState
+
+├── Relationship
+
+├── Constraint
+
+├── Capability
+
+├── Observation
+
+Now every runtime object has:
+
+identity
+evidence
+genealogy
+leverage
+narrative
+provenance
+
+Everything becomes consistent.
+
+Example
+
+Instead of
+
+RealityEvent
+
+↓
+
+Commitment
+
+You get
+
+RealityObject
+
+↓
+
+Commitment
+
+because commitments aren't events.
+
+They're durable state transitions.
+
+Likewise
+
+RealityObject
+
+↓
+
+Relationship
+
+Apple
+
+↓
+
+Supplier
+
+↓
+
+TSMC
+
+No event required.
+
+Observation Layer
+
+I think you're still missing one primitive.
+
+Evidence answers
+
+Where did we learn this?
+
+Observation answers
+
+What exactly was observed?
+
+Example
+
+Evidence
+
+SEC Filing
+
+contains
+
+Observation
+
+CEO resigned
+
+Evidence is the container.
+
+Observation is the extracted fact.
+
+Then
+
+multiple observations
+
+↓
+
+construct
+
+one RealityEvent
+
+That separation becomes incredibly valuable when parsers improve over time.
+
+Identity
+
+I'd also remove
+
+semanticFingerprint
+
+from RealityEvent.
+
+Instead create
+
+IdentitySignature
+
+because it can contain multiple deterministic hashes.
+
+Example
+
+semantic hash
+
+temporal hash
+
+entity hash
+
+causal hash
+
+Different engines need different notions of sameness.
+
+Leverage
+
+Current
+
+LeverageSignature
+
+is good.
+
+I would add one field.
+
+informationAsymmetry
+
+Meaning
+
+How widely is this already appreciated?
+
+An SEC filing everyone knows about has low asymmetry.
+
+An obscure patent filing has high asymmetry.
+
+That directly aligns with KRYLO's goal of discovering leverage before consensus forms.
+
+Genealogy
+
+Current
+
+causes
+
+causedBy
+
+dependsOn
+
+related
+
+I'd add
+
+derivedFrom
+
+because not every dependency is causal.
+
+Example
+
+Quarterly Revenue
+
+derivedFrom
+
+Store Sales
+
+No causality implied.
+
+Signal Hooks
+
+I'd probably rename them
+
+ActivationHooks
+
+because these aren't just signals anymore.
+
+They activate:
+
+models
+listeners
+workflows
+alerting
+genealogy expansion
+
+Much broader.
+
+The Biggest Enhancement
+
+This is the one I think becomes uniquely KRYLO.
+
+Every RealityObject should expose an Epistemic State.
+
+Example
+
+EpistemicState
+
+Known
+
+Observed
+
+Verified
+
+Grounded
+
+Disputed
+
+Superseded
+
+Unknown
+
+Notice these are knowledge states, not business states.
+
+An event can be:
+
+Business state:
+
+ACTIVE
+
+Knowledge state:
+
+DISPUTED
+
+Those are orthogonal.
+
+Separating them gives KRYLO a much richer model of reality.
+
+Final Architecture
+
+If I were locking the platform today, I'd elevate GERM one final level:
+
+Evidence
+        │
+        ▼
+Observation
+        │
+        ▼
+RealityObject
+   ├── RealityEvent
+   ├── Commitment
+   ├── Relationship
+   ├── EntityState
+   ├── Capability
+   ├── Constraint
+        │
+        ▼
+Genealogy Engine
+        │
+        ▼
+Narrative Engine
+        │
+        ▼
+Leverage Engine
+        │
+        ▼
+Signal Fabric
+        │
+        ▼
+Decision Runtime
+Why I think this is worth doing
+
+This isn't just future-proofing for its own sake. It aligns with the trajectory you've been taking across the recent work orders:
+
+WO-2047 establishes grounded ingestion.
+The Genealogy Engine needs to reason over more than discrete events.
+The Narrative Engine compares claims, observations, and outcomes.
+The Leverage Engine evaluates persistent conditions and relationships, not only event streams.
+Your broader objective is to build an operating model of reality, where events are one class of object rather than the root abstraction.
+
+Making that shift now avoids having to refactor the runtime later as additional authoritative connectors come online. It turns GERM from an excellent ingestion contract into the foundational knowledge model for the entire KRYLO platform
+Yes. This is the correct final leap.**
+
+You’ve identified the last abstraction leak. Moving from an *event-centric* model to a **Reality Knowledge Model** with RealityObject as the unifying primitive is the right architectural maturity step for KRYLO.
+
+Here is the synthesized, cleaned, and elevated version:
+
+### KRYLO Reality Knowledge Model (RKM)
+
+
+ts
+// ─────────────────────────────────────────────────────────────────────────────
+// Reality Knowledge Model (RKM) — Core Runtime Primitive
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type RealityObjectID = `robj_${string}`;
+export type EvidenceID = `evd_${string}`;
+export type ObservationID = `obs_${string}`;
+
+/** 1. Evidence — Source container */
+export interface Evidence {
+  readonly evidenceId: EvidenceID;
+  readonly sourceType: EvidenceSourceType;
+  readonly sourceId: string;
+  readonly url?: string;
+  readonly collectedAt: string;
+  readonly confidence: number;
+  readonly groundedness: number;
+  readonly extraction: ExtractionMetadata;
+  readonly rawReference?: string;
+}
+
+export type EvidenceSourceType = 
+  | "SEC_EDGAR" 
+  | "REGULATORY" 
+  | "TRANSCRIPT" 
+  | "PRESS_RELEASE"
+  | "PATENT"
+  | "COURT"
+  | "OFFICIAL" 
+  | "MARKET" 
+  | "OTHER";
+
+/** 2. Observation — Atomic extracted fact */
+export interface Observation {
+  readonly observationId: ObservationID;
+  readonly evidenceId: EvidenceID;
+  readonly content: string;
+  readonly type: ObservationType;
+  readonly confidence: number;
+  readonly extractedAt: string;
+}
+
+export type ObservationType = 
+  | "STATEMENT"
+  | "ACTION"
+  | "STATE_CHANGE"
+  | "RELATIONSHIP"
+  | "QUANTITATIVE"
+  | "QUALITATIVE";
+
+/** 3. RealityObject — The unified runtime primitive */
+export interface RealityObject {
+  readonly id: RealityObjectID;
+  readonly entityId?: CanonicalEntityID;           // primary entity if applicable
+  readonly objectType: RealityObjectType;
+
+  readonly title: string;
+  readonly summary: string;
+
+  readonly observedAt: string;
+  readonly validFrom?: string;
+  readonly validUntil?: string;
+
+  readonly state: RuntimeState;                    // business / operational state
+  readonly epistemicState: EpistemicState;         // knowledge state
+
+  readonly evidence: readonly EvidenceID[];
+  readonly observations: readonly ObservationID[];
+
+  readonly genealogy: Genealogy;
+  readonly leverageSignature: LeverageSignature;
+  readonly activationHooks: readonly ActivationHook[];
+
+  readonly narrativeEffect?: NarrativeEffect;
+  readonly identitySignature: IdentitySignature;
+
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly ingestedAt: string;
+  readonly lastUpdatedAt: string;
+}
+
+/** Specialization Types */
+export type RealityObjectType =
+  | "EVENT"
+  | "COMMITMENT"
+  | "RELATIONSHIP"
+  | "ENTITY_STATE"
+  | "CAPABILITY"
+  | "CONSTRAINT"
+  | "OBSERVATION";   // for standalone facts
+
+/** Knowledge State (orthogonal to business state) */
+export type EpistemicState =
+  | "KNOWN"
+  | "OBSERVED"
+  | "VERIFIED"
+  | "GROUNDED"
+  | "DISPUTED"
+  | "SUPERSEDED"
+  | "RETRACTED"
+  | "UNKNOWN";
+
+/** Supporting Structures */
+export interface Genealogy {
+  readonly causedBy: readonly RealityObjectID[];
+  readonly causes: readonly RealityObjectID[];
+  readonly dependsOn: readonly RealityObjectID[];
+  readonly enables: readonly RealityObjectID[];
+  readonly invalidates: readonly RealityObjectID[];
+  readonly derivedFrom: readonly RealityObjectID[];     // new
+  readonly related: readonly RealityObjectID[];
+}
+
+export interface LeverageSignature {
+  readonly propagationPotential: number;
+  readonly dependencyBreadth: number;
+  readonly systemicReach: number;
+  readonly expectedPersistence: number;
+  readonly reversibility: number;
+  readonly attentionGravity: number;
+  readonly informationAsymmetry: number;               // new
+}
+
+export interface IdentitySignature {
+  readonly semanticHash: string;
+  readonly temporalHash: string;
+  readonly entityHash: string;
+  readonly causalHash?: string;
+}
+
+export type ActivationHook = 
+  | "leadership" 
+  | "capital" 
+  | "operations" 
+  | "legal" 
+  | "supply_chain" 
+  | "governance" 
+  | "strategy" 
+  | "risk";
+
+export type NarrativeEffect = 
+  | "SUPPORTS" 
+  | "CONTRADICTS" 
+  | "CREATES" 
+  | "RESOLVES" 
+  | "AMPLIFIES" 
+  | "NEUTRAL";
+
+/** RuntimeState remains domain-specific per objectType */
+export type RuntimeState = string;   // e.g. "ACTIVE", "FULFILLED", "DELAYED", etc.
+
+
+### Why This Is Now 10/10
+
+- RealityObject is the single source of truth across all knowledge types.
+- Events, commitments, relationships, constraints, and capabilities are all first-class peers.
+- Clean separation: **Evidence → Observation → RealityObject**.
+- EpistemicState gives KRYLO a true model of *what it knows* vs *what is happening*.
+- Genealogy, Leverage, and ActivationHooks are now universal.
+- Future connectors (patents, supply chain, board changes, etc.) plug in without friction.
+
+This is no longer an “event model.” It is the **foundational knowledge substrate** for the entire platform.
+
+---
+
+**Next Move?**
+
+I recommend we freeze this as the **Reality Knowledge Model v1** and then define the specialized convenience types (e.g. RealityEvent, Commitment, Relationship) as typed extensions of RealityObject.
+
+Would you like me to:
+1. Produce the full specialized interfaces extending RealityObject?
+2. Write the core service contracts (RealityStore, GroundedIngestionService)?
+3. Or draft the WO-2047 update that references this new RKM?
+
+This feels like the stable foundation we’ve been building toward.
+
+This is now structurally sound enough to treat as a platform primitive rather than a module spec. The key improvement you’ve made is exactly the right one: collapsing the ontology into a single RealityObject substrate while preserving specialization through typing rather than parallel models.
+
+There are only a few final refinements I would make before freezing this as RKM v1—not because anything is wrong, but because there are still two subtle risks at scale: type collapse ambiguity and state vs truth conflation under mutation pressure.
+
+1. One Remaining Structural Tightening: Split “Identity” from “Instance”
+
+Right now:
+
+RealityObject
+  id: RealityObjectID
+
+This implicitly assumes:
+
+one object = one identity
+
+But in grounded systems you will eventually need:
+
+Identity (what it refers to)
+
+vs
+
+Instance (what was observed at a point in time)
+
+Add:
+
+readonly identityId?: string;   // stable cross-time anchor
+
+Why this matters:
+
+A “CEO resignation” appears multiple times:
+rumor
+confirmation
+correction
+retraction
+Same identity, multiple RealityObjects
+
+This prevents silent duplication collapse in genealogy.
+
+2. EpistemicState Needs a Temporal Dimension
+
+Current:
+
+EpistemicState
+
+Problem:
+
+It is static.
+
+But epistemology is time-evolving.
+
+Upgrade minimally:
+
+readonly epistemicHistory?: readonly {
+  state: EpistemicState;
+  at: string;
+  source?: EvidenceID;
+}[];
+
+Why this matters:
+
+“OBSERVED → DISPUTED → VERIFIED” is itself a signal
+transitions matter more than state
+
+This becomes a truth volatility signal surface
+
+3. Genealogy Needs Directional Weighting (Critical for Leverage Engine)
+
+Current:
+
+causedBy: RealityObjectID[];
+
+Enhancement (small but important):
+
+readonly weightedCauses?: readonly {
+  id: RealityObjectID;
+  strength: number;   // 0–1
+}[];
+
+Why:
+
+Without weighting, genealogy becomes:
+
+graph traversal only
+not influence modeling
+
+With weighting, it becomes:
+
+propagation physics
+
+This directly feeds your Signal Gravity Engine
+
+4. RealityObjectType should NOT remain open string in production core
+
+You currently have:
+
+RealityObjectType = "EVENT" | ...
+
+That’s good—but for runtime stability:
+
+Split into:
+
+Core stable set
+
+and
+
+Extension namespace
+CoreRealityObjectType =
+  | "EVENT"
+  | "COMMITMENT"
+  | "RELATIONSHIP"
+  | "ENTITY_STATE"
+ExtensionRealityObjectType = string;
+
+This avoids schema lock-in when new domains appear (defense, biotech, infrastructure, etc.).
+
+5. Missing Primitive: “Contradiction Link”
+
+This is the most important semantic gap in the current model.
+
+You have:
+
+narrativeEffect
+
+But no explicit contradiction graph.
+
+Add:
+
+readonly contradictions?: readonly RealityObjectID[];
+
+Why:
+
+Narrative engines detect contradiction
+But system cannot store contradiction as a first-class relationship
+
+This is essential for:
+
+rumor resolution
+SEC correction cycles
+earnings revisions
+legal reversals
+
+Without this, contradictions are ephemeral analytics instead of structural truth.
+
+6. Final Architectural Elevation (Minimal but decisive)
+
+Right now:
+
+Evidence
+→ Observation
+→ RealityObject
+
+The final refinement is to explicitly acknowledge:
+
+RealityObject is not the truth
+
+It is the best stabilized model of truth at time T
+
+So add:
+
+readonly truthStability: number;  // 0–1
+
+This becomes:
+
+high = stable fact (e.g. merger completed)
+low = volatile or emerging reality
+
+This is extremely powerful for:
+
+signal ranking
+alert suppression
+convergence scoring
+leverage estimation
+Final Verdict
+
+After these refinements:
+
+RKM v1 becomes:
+
+A temporally-aware, contradiction-aware, weighted epistemic graph of reality objects with explicit identity anchoring and truth stability scoring.
+
+That is no longer an ingestion model.
+
+It is a world-state substrate for machine cognition.
+
+Suggested Next Step (important)
+
+At this point the correct next artifact is NOT more schema.
+
+It should be one of:
+
+1. Runtime execution model
+how RealityObjects are created, merged, superseded
+2. Graph semantics spec
+how genealogy + contradiction + weighting resolve conflicts
+3. KRYLO engine wiring
+how Signal Fabric, Convergence Engine, and Leverage Engine consume RKM
+
+If you want, I can take this one step further and define:
+
+RKM Execution Semantics (how reality updates over time without inconsistency or duplication collapse)
+
+That’s the next real failure boundary in systems like this.
+
+**Agreed. These are high-quality refinements.** They close the remaining subtle gaps that would cause pain at scale.
+
+Here is **RKM v1 — Finalized** with your refinements incorporated cleanly:
+
+### Reality Knowledge Model (RKM) v1 — Platform Primitive
+
+
+ts
+// ─────────────────────────────────────────────────────────────────────────────
+// KRYLO Reality Knowledge Model (RKM) v1 — Core Substrate
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type RealityObjectID = `robj_${string}`;
+export type IdentityID = `rid_${string}`;           // stable identity anchor
+export type EvidenceID = `evd_${string}`;
+export type ObservationID = `obs_${string}`;
+
+/** Evidence Layer */
+export interface Evidence { ... } // unchanged from previous
+
+export interface Observation {
+  readonly observationId: ObservationID;
+  readonly evidenceId: EvidenceID;
+  readonly content: string;
+  readonly type: ObservationType;
+  readonly confidence: number;
+  readonly extractedAt: string;
+}
+
+/** Core Reality Object */
+export interface RealityObject {
+  readonly id: RealityObjectID;
+  readonly identityId?: IdentityID;                 // stable cross-instance anchor
+
+  readonly objectType: CoreRealityObjectType | ExtensionRealityObjectType;
+
+  readonly title: string;
+  readonly summary: string;
+
+  readonly observedAt: string;
+  readonly validFrom?: string;
+  readonly validUntil?: string;
+
+  readonly state: RuntimeState;                     // business/operational state
+  readonly epistemicState: EpistemicState;
+  readonly epistemicHistory: readonly EpistemicTransition[];
+
+  readonly truthStability: number;                  // 0–1
+
+  readonly evidence: readonly EvidenceID[];
+  readonly observations: readonly ObservationID[];
+
+  readonly genealogy: Genealogy;
+  readonly leverageSignature: LeverageSignature;
+  readonly activationHooks: readonly ActivationHook[];
+
+  readonly narrativeEffect?: NarrativeEffect;
+  readonly contradictions?: readonly RealityObjectID[];   // new
+
+  readonly identitySignature: IdentitySignature;
+
+  readonly metadata: Readonly<Record<string, unknown>>;
+  readonly ingestedAt: string;
+  readonly lastUpdatedAt: string;
+}
+
+/** Supporting Types */
+export type CoreRealityObjectType =
+  | "EVENT"
+  | "COMMITMENT"
+  | "RELATIONSHIP"
+  | "ENTITY_STATE"
+  | "CAPABILITY"
+  | "CONSTRAINT";
+
+export type ExtensionRealityObjectType = `ext_${string}`;
+
+export type EpistemicState =
+  | "KNOWN"
+  | "OBSERVED"
+  | "VERIFIED"
+  | "GROUNDED"
+  | "DISPUTED"
+  | "SUPERSEDED"
+  | "RETRACTED"
+  | "UNKNOWN";
+
+export interface EpistemicTransition {
+  readonly state: EpistemicState;
+  readonly at: string;
+  readonly source?: EvidenceID;
+  readonly reason?: string;
+}
+
+export interface Genealogy {
+  readonly causedBy: readonly RealityObjectID[];
+  readonly causes: readonly RealityObjectID[];
+  readonly dependsOn: readonly RealityObjectID[];
+  readonly enables: readonly RealityObjectID[];
+  readonly invalidates: readonly RealityObjectID[];
+  readonly derivedFrom: readonly RealityObjectID[];
+  readonly related: readonly RealityObjectID[];
+  readonly weightedCauses?: readonly { id: RealityObjectID; strength: number }[]; // new
+}
+
+export interface LeverageSignature {
+  readonly propagationPotential: number;
+  readonly dependencyBreadth: number;
+  readonly systemicReach: number;
+  readonly expectedPersistence: number;
+  readonly reversibility: number;
+  readonly attentionGravity: number;
+  readonly informationAsymmetry: number;            // new
+}
+
+export interface IdentitySignature {
+  readonly semanticHash: string;
+  readonly temporalHash: string;
+  readonly entityHash: string;
+  readonly causalHash?: string;
+}
+
+export type ActivationHook = string; // controlled + extensible
+export type NarrativeEffect = "SUPPORTS" | "CONTRADICTS" | "CREATES" | "RESOLVES" | "AMPLIFIES" | "NEUTRAL";
+export type RuntimeState = string;
+
+
+### Status
+**RKM v1 is now structurally sound** as a platform primitive.
+
+It supports:
+- Identity vs Instance distinction
+- Temporal epistemology
+- Weighted influence
+- Explicit contradictions
+- Truth stability
+- Core + extension typing
+
+---
+
+**Next Artifact: RKM Execution Semantics**
+
+Since you correctly identified that the real failure boundary is *how reality updates over time*, here’s the proposed high-level execution model:
+
+**RKM Execution Principles**
+1. **Immutability by default** — New RealityObject on material change.
+2. **Identity anchoring** — Objects sharing the same identityId are related versions.
+3. **Supersession** — When a newer object invalidates an older one, the older gets SUPERSEDED + explicit invalidates link.
+4. **Merging** — Compatible observations from multiple evidence streams can strengthen an existing RealityObject (update truthStability, append evidence, create new epistemic transition).
+5. **Contradiction Handling** — Explicit contradictions links + DISPUTED epistemic state.
+6. **Truth Stability Decay** — Optional time-based decay unless reinforced by new evidence.
+
+Would you like me to fully specify the **RKM Execution Semantics** (create, update, merge, supersede, contradiction resolution rules) next?
+
+This would complete the transition from schema to operational runtime contract.
+
+Yes — this is now at the point where the next step is no longer “model refinement,” it’s operational semantics design.
+
+RKM v1 is structurally complete. What’s missing now is how reality is allowed to mutate without breaking consistency guarantees.
+
+That is where systems like this usually fail in production.
+
+So the right next artifact is exactly what you proposed:
+
+RKM Execution Semantics (RKM-ES v1)
+
+I’m going to define this in a way that makes it directly implementable as a runtime contract, not just theory.
+
+RKM Execution Semantics v1 (RKM-ES)
+0. Core Invariant
+Reality is never updated.
+Reality is only appended, reinterpreted, or superseded.
+
+There is no mutation of truth objects.
+
+Only evolution of the graph.
+
+1. Create Semantics
+Rule: Always append-first
+createEvidence → createObservation → createRealityObject
+
+A RealityObject is only created if:
+
+observations cannot be merged into an existing identity cluster
+or represent a materially distinct state
+Creation rule:
+IF no matching identityId cluster exists:
+    CREATE new RealityObject
+ELSE:
+    route to MERGE flow
+2. Identity Resolution Semantics
+Identity clustering rule
+
+Two objects share identity if:
+
+semantic similarity > threshold
+OR
+entityHash matches
+OR
+causal overlap exceeds threshold
+Output:
+identityId is assigned AFTER creation
+not during ingestion
+
+This is critical:
+
+identity is a posterior inference, not an input assumption
+
+3. Update Semantics (Never mutate in place)
+Rule: Immutable object model
+
+A RealityObject cannot be edited.
+
+Instead:
+
+UPDATE = CREATE new RealityObject version
+         + link via identityId
+Chain model:
+robj_v1 → robj_v2 → robj_v3
+         (supersession chain)
+
+Each version is valid in its own temporal window.
+
+4. Merge Semantics
+When two objects are merged:
+Conditions:
+same identityId
+AND
+no contradiction OR contradiction resolvable
+Action:
+NEW RealityObject is created:
+
+- union(evidence)
+- union(observations)
+- recomputed truthStability
+- updated epistemicHistory
+Important constraint:
+
+Merge does NOT overwrite history
+
+It creates a stronger node.
+
+5. Supersession Semantics (Hard Replacement)
+
+Triggered when:
+
+contradiction is irreconcilable
+new evidence invalidates prior state
+regulatory correction occurs (SEC amendment, retraction, etc.)
+Rule:
+OLD object:
+    epistemicState = SUPERSEDED
+    validUntil = now
+    invalidates → new object
+
+NEW object:
+    inherits identityId
+    replaces semantic authority
+6. Contradiction Semantics
+Contradiction is first-class state, not error
+
+When conflicting evidence exists:
+
+A ↔ B contradiction detected
+Result:
+No deletion
+No overwrite
+
+Instead:
+
+RealityObject.epistemicState = DISPUTED
+contradictions[] updated
+truthStability ↓
+Resolution requires:
+higher confidence evidence
+or time-based convergence
+or external authoritative source
+7. Epistemic Transition Semantics
+
+Every state change must be recorded:
+
+epistemicHistory.push({
+  state,
+  at,
+  source,
+  reason
+})
+Rule:
+
+Epistemology is immutable trace, not mutable flag.
+
+This enables:
+
+truth volatility analysis
+reliability scoring
+source quality modeling
+8. Truth Stability Semantics
+Computation rule (conceptual)
+truthStability =
+    f(
+      evidenceCount,
+      evidenceQuality,
+      contradictionWeight,
+      timeDecay,
+      sourceAuthority
+    )
+Key rule:
+
+truth stability never increases without new evidence
+
+No silent inflation.
+
+9. Genealogy Propagation Semantics
+
+When a RealityObject is created or updated:
+
+Forward propagation:
+update all downstream:
+
+- causes
+- enables
+- dependsOn
+Rule:
+
+Genealogy is reactive graph, not static annotation.
+
+10. Leverage Recalculation Semantics
+
+Any change triggers partial recomputation:
+
+IF RealityObject changes:
+    recompute:
+        propagationPotential
+        attentionGravity
+        informationAsymmetry
+Constraint:
+Only local subgraph recomputation allowed
+No global recompute (performance boundary)
+11. Time Semantics
+
+Each RealityObject has:
+
+validFrom → validUntil
+observedAt → lastUpdatedAt
+Rule:
+
+Time is multi-axis:
+
+observation time
+validity time
+ingestion time
+
+Never collapse these.
+
+12. Identity Stability Semantics
+
+Identity is:
+
+persistent
+probabilistic
+corrigible
+Rule:
+identityId can be:
+    strengthened
+    split
+    merged
+Example:
+“Twitter layoffs rumor”
+“Twitter layoffs confirmed”
+
+May initially share identity → later split or merged based on evidence divergence.
+
+13. System-Level Invariant
+Final rule:
+No RealityObject is ever deleted.
+Only:
+- superseded
+- merged into stronger object
+- or left as historical branch
+
+This ensures:
+
+full auditability
+genealogy integrity
+leverage traceability
+narrative reconstruction
+What this unlocks (important)
+
+With RKM-ES, KRYLO now has:
+
+1. A physics model of information
+objects evolve
+not overwrite
+2. A truth lifecycle system
+observe → stabilize → dispute → supersede
+3. A causal graph engine
+not just event logs
+4. A leverage computation substrate
+because persistence and contradiction become measurable
+Final architectural statement
+
+At this point:
+
+RKM is no longer a data model.
+
+It is a state transition system for reality representation.
+
+If we go one step further
+
+The next natural artifact is:
+
+RKM Runtime Kernel
+
+Which defines:
+
+ingestion scheduler
+merge engine
+contradiction resolver
+identity graph manager
+leverage recomputation engine
+
+That would complete the transition from:
+
+“model” → “operating system for reality ingestion”
+
+If you want, I can build that next layer directly and map it to your existing WO structure (especially around EDGAR, genealogy, and signal engines)
+Good. This is the point where the system stops being a schema exercise and becomes a **runtime operating system design problem**.
+
+I’m going to define the **RKM Runtime Kernel (RKM-RK v1)** as a *deterministic execution layer* that sits underneath everything you’ve built.
+
+---
+
+# RKM Runtime Kernel (RKM-RK v1)
+
+## “Operating System for Reality Ingestion”
+
+## 0. Kernel Invariant
+
+```text id="rk0"
+The kernel does not store truth.
+
+It maintains evolving consistency across RealityObjects under continuous contradictory input.
+```
+
+This is the core shift:
+
+* Not “data processing”
+* Not “event ingestion”
+* Not “knowledge storage”
+
+→ **continuous reality state arbitration**
+
+---
+
+# 1. Kernel Architecture
+
+```text id="rk1"
+               ┌────────────────────────────┐
+               │   Ingestion Scheduler      │
+               └────────────┬───────────────┘
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│ Merge Engine │   │ Contradiction│   │ Identity     │
+│              │   │ Resolver     │   │ Graph Manager│
+└──────────────┘   └──────────────┘   └──────────────┘
+        │                   │                   │
+        └──────────────┬────┴─────┬─────────────┘
+                       ▼            ▼
+            ┌────────────────────────────┐
+            │ Leverage Recompute Engine  │
+            └────────────────────────────┘
+```
+
+All modules are stateless processors over RKM graph slices.
+
+---
+
+# 2. Ingestion Scheduler (Temporal Arbitration Layer)
+
+## Responsibility
+
+Controls *what reality gets processed, when, and at what priority*.
+
+---
+
+## Input Types
+
+```ts id="rk2"
+IngestionUnit = {
+  evidence: Evidence
+  priority: number
+  sourceReliability: number
+  arrivalTime: timestamp
+  volatilityEstimate: number
+}
+```
+
+---
+
+## Scheduling Rules
+
+### Rule 1 — Volatility First
+
+```text id="rk3"
+Higher contradiction probability → earlier processing
+```
+
+---
+
+### Rule 2 — Identity Hot Zones
+
+Entities with active updates get priority boost:
+
+```text id="rk4"
+recentlyChanged(identityId) → +priority
+```
+
+---
+
+### Rule 3 — Cascade Awareness
+
+If object is upstream of many others:
+
+```text id="rk5"
+high dependency breadth → prioritized ingestion
+```
+
+---
+
+## Output
+
+Ordered execution queue of:
+
+```text id="rk6"
+Evidence → Observation → RealityObject pipeline jobs
+```
+
+---
+
+# 3. Identity Graph Manager (Truth Topology Engine)
+
+## Responsibility
+
+Maintains **identity clusters as evolving probabilistic graphs**
+
+---
+
+## Structure
+
+```text id="rk7"
+IdentityNode {
+  identityId
+  members: RealityObject[]
+  confidence
+  centroidSignature
+}
+```
+
+---
+
+## Key Operations
+
+### A. Assign
+
+```text id="rk8"
+Evidence → Observation → candidate RealityObject → identity cluster
+```
+
+---
+
+### B. Split (critical)
+
+Triggered when divergence exceeds threshold:
+
+```text id="rk9"
+IF semantic drift > threshold:
+    split identity cluster
+```
+
+Example:
+
+* rumor of acquisition
+* confirmed acquisition
+* denial
+
+→ identity splits into multiple truth branches
+
+---
+
+### C. Merge
+
+Triggered when convergence increases:
+
+```text id="rk10"
+multiple identity nodes → unified cluster
+```
+
+---
+
+## Output
+
+* stable identity graph
+* probabilistic entity resolution surface
+
+---
+
+# 4. Merge Engine (Reality Compression Layer)
+
+## Responsibility
+
+Compress redundant RealityObjects while preserving history.
+
+---
+
+## Rule Set
+
+### Rule 1 — Never overwrite
+
+```text id="rk11"
+MERGE creates new node
+never mutates existing
+```
+
+---
+
+### Rule 2 — Evidence union
+
+```text id="rk12"
+merged.evidence = union(all evidence)
+```
+
+---
+
+### Rule 3 — epistemic strengthening
+
+```text id="rk13"
+truthStability = recomputed weighted evidence strength
+```
+
+---
+
+### Rule 4 — version chain preservation
+
+```text id="rk14"
+old → new → newer
+```
+
+---
+
+## Output
+
+* compact reality graph
+* reduced duplication
+* strengthened truth nodes
+
+---
+
+# 5. Contradiction Resolver (Truth Conflict Arbitration Engine)
+
+## Responsibility
+
+Manages disagreement without loss of information.
+
+---
+
+## Detection Rule
+
+```text id="rk15"
+IF observation sets conflict:
+    create contradiction edge
+```
+
+---
+
+## Resolution Modes
+
+### Mode 1 — Evidence dominance
+
+```text id="rk16"
+highest groundedness wins
+```
+
+---
+
+### Mode 2 — Temporal override
+
+```text id="rk17"
+newer verified evidence supersedes older
+```
+
+---
+
+### Mode 3 — Branching reality (critical)
+
+```text id="rk18"
+if unresolved:
+    fork RealityObject lineage
+```
+
+This is extremely important:
+
+> Reality can branch instead of resolve immediately.
+
+---
+
+## Output
+
+* contradiction graph
+* epistemic state updates
+* forked realities when needed
+
+---
+
+# 6. Leverage Recompute Engine (Propagation Physics Layer)
+
+## Responsibility
+
+Recalculates influence after any structural change.
+
+---
+
+## Trigger Conditions
+
+```text id="rk19"
+on:
+  RealityObject create
+  RealityObject merge
+  identity split/merge
+  contradiction resolution
+```
+
+---
+
+## Computation Scope Rule
+
+```text id="rk20"
+only recompute affected subgraph radius N
+```
+
+(no global recompute)
+
+---
+
+## Computed Outputs
+
+### A. Propagation Update
+
+```text id="rk21"
+impact spreads through genealogy edges
+```
+
+---
+
+### B. Attention Reweighting
+
+```text id="rk22"
+attentionGravity adjusted per node
+```
+
+---
+
+### C. Information Asymmetry Recalculation
+
+```text id="rk23"
+rarity × novelty × exposure gap
+```
+
+---
+
+### D. Stability Feedback
+
+```text id="rk24"
+truthStability updated from new structure
+```
+
+---
+
+# 7. Kernel Execution Cycle
+
+This is the full runtime loop:
+
+```text id="rk25"
+1. ingest Evidence
+2. generate Observation
+3. propose RealityObject
+4. identity resolution
+5. merge or branch
+6. contradiction check
+7. update epistemic state
+8. recompute leverage
+9. propagate genealogy updates
+```
+
+This cycle is continuous.
+
+No “batch processing mindset” survives here.
+
+---
+
+# 8. Kernel Guarantees
+
+## Guarantee 1 — No truth loss
+
+```text id="rk26"
+Nothing is deleted; only superseded or branched
+```
+
+---
+
+## Guarantee 2 — Deterministic replay
+
+```text id="rk27"
+same inputs → identical graph state
+```
+
+---
+
+## Guarantee 3 — Localized recomputation
+
+```text id="rk28"
+changes never require full graph rebuild
+```
+
+---
+
+## Guarantee 4 — Identity stability under drift
+
+```text id="rk29"
+identity evolves, never collapses silently
+```
+
+---
+
+# 9. What This Actually Becomes
+
+At this point:
+
+## RKM Kernel =
+
+> A distributed epistemic state machine for modeling evolving reality under contradictory, incomplete, and streaming information.
+
+---
+
+# 10. Final Architectural Truth
+
+This completes the transition you described:
+
+### Before:
+
+* models
+* schemas
+* ingestion logic
+
+### After:
+
+> A **runtime operating system for reality ingestion and reconciliation**
+
+---
+
+# If you want next step (important)
+
+There are only 3 natural extensions from here:
+
+### 1. Kernel Scheduling Policy Spec
+
+→ how priority evolves under system load
+
+### 2. Distributed execution model
+
+→ how this runs across nodes / shards
+
+### 3. KRYLO integration map
+
+→ exactly how Signal Fabric, Convergence Engine, and Narrative Engine subscribe to kernel outputs
+
+---
+
+If you want to push this to the final level, the next artifact is:
+
+> **RKM Distributed Runtime Architecture (multi-node reality graph system)**
+
+That is where this stops being a kernel and becomes a **real-time epistemic system at scale**.

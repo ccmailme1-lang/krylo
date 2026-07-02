@@ -653,7 +653,6 @@ export default function App() {
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
-  const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
   useEffect(() => {
@@ -939,7 +938,6 @@ export default function App() {
         if (ev.data.mode === 'surface') {
           setSurfaceActivated(true);
           setSurfaceExpanded(true);
-          setSurfaceEntryCount(n => n + 1);
         } else {
           setSurfaceExpanded(false);
         }
@@ -1143,7 +1141,6 @@ export default function App() {
                 setSelection('technology');
               }}
               coneColorOverrides={coneColorOverrides}
-              dollyKey={surfaceEntryCount}
             />
           </div>
 
