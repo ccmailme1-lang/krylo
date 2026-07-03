@@ -155,7 +155,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   return (
     // base lowered 10% of cone height below ground
     <group position={[position[0], baseY, position[2]]}>
-      <mesh>
+      <mesh userData={{ domain: state.domain }}>
         <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
         <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
       </mesh>
@@ -1651,7 +1651,8 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
   const { camera, size } = useThree();
-  const tmpVec     = useMemo(() => new THREE.Vector3(), []);
+  const raycasterRef = useRef();
+  if (!raycasterRef.current) raycasterRef.current = new THREE.Raycaster();
   const zoomTarget = useRef(16.2);
   const zooming    = useRef(true);
   useEffect(() => { zooming.current = true; }, []);
@@ -1758,30 +1759,26 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       if (slot.opacity <= 0.01) slot.active = false;
     }
 
-    // Click-to-pin: uses the real camera + current spin angle, so projection is exact.
+    // Click-to-pin: real raycasting against the actual cone meshes (userData.domain
+    // tagged in Cone), so a foreground cone correctly wins over one behind it.
+    // Was: comparing 2D screen distance from each cone's projected BASE point to
+    // the click — never checked what was actually visually hit, so an overlapping
+    // background cone could "win" over the foreground one the user clicked.
     if (!clickEvent || clickEvent.ts === lastClickTs.current || !onSelectCone) return;
     lastClickTs.current = clickEvent.ts;
 
-    const theta = spinRef.current ? spinRef.current.rotation.y : 0;
-    let bestDist  = Infinity;
-    let bestDomain = null;
+    const ndcX = (clickEvent.x / size.width) * 2 - 1;
+    const ndcY = -(clickEvent.y / size.height) * 2 + 1;
+    raycasterRef.current.setFromCamera({ x: ndcX, y: ndcY }, camera);
 
-    coneState.forEach((state, i) => {
-      const localAngle = (i / total) * Math.PI * 2;
-      // Y rotation: local angle α appears at world angle (α - θ)
-      const worldAngle = localAngle - theta;
-      tmpVec.set(R * Math.cos(worldAngle), 0, R * Math.sin(worldAngle));
-      tmpVec.project(camera); // NDC in [-1, 1]
-      const sx = (tmpVec.x + 1) * size.width  / 2;
-      const sy = (1 - tmpVec.y) * size.height / 2;
-      const dist = Math.hypot(sx - clickEvent.x, sy - clickEvent.y);
-      if (dist < bestDist) {
-        bestDist   = dist;
-        bestDomain = state.domain;
-      }
-    });
-
-    const resolved = bestDist < 180 ? bestDomain : null;
+    const targets = coneGroupRefs.current
+      .slice(0, coneState.length)
+      .map(ref => ref.current)
+      .filter(Boolean);
+    // intersectObjects sorts by distance from camera — first hit is the frontmost
+    // mesh actually under the click, correctly respecting real occlusion.
+    const hits = raycasterRef.current.intersectObjects(targets, true);
+    const resolved = hits.length ? hits[0].object.userData?.domain ?? null : null;
     onSelectCone(resolved);
   });
 

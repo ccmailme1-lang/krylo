@@ -1278,12 +1278,18 @@ export default function App() {
       <div id="krylo-hud-root" style={{ position: 'fixed', inset: 0, zIndex: 20, pointerEvents: 'none' }} />
 
       {/* ── CampaignFunnel — always mounted ───────────────────── */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 10 }}>
+      {/* pointerEvents:none — this wrapper has no content of its own; only the
+          iframe inside (via CampaignFunnel) should ever capture clicks, and only
+          within its own (possibly clipped) region. Fixes cones/Surface content
+          being unclickable — this full-viewport wrapper was intercepting every
+          click before it could reach the cone canvas underneath. */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 10, pointerEvents: 'none' }}>
         <CampaignFunnel
           signals={marqueeSignals}
           records={marqueeSignals}
           iframeRef={iframeRef}
           src="/krylo2-feed.html"
+          restrictToChrome={isSurface && surfaceActivated}
         />
       </div>
 
