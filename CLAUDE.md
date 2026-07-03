@@ -4,8 +4,11 @@ ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 LAST BUILD SESSION: 2026-07-02
 BASELINE: baseline_wo2069_2082_batch
 SHA: 41af2fa
-DEPLOYED: krylo.org — pending (deploy in progress this session)
-UNCOMMITTED: none
+DEPLOYED: krylo.org ✓ (deployed this session, includes the WO-2072-2081 batch)
+UNCOMMITTED: CLAUDE.md only (this registry update — DEF-2087 status)
+NOTE: header-refresh (DEF-2087) investigation happened AFTER deploy — app.jsx and
+campaignfunnel.jsx were experimentally modified then reverted via git checkout to their
+committed state. krylo.org and this baseline are unaffected by that investigation.
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -159,34 +162,38 @@ SESSION 2026-06-27 — COMPLETE (48a2cda):
           happy path genome 3-object structure. WO-2004 complete → WO-2007 now UNBLOCKED.
   Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
 
-OPEN WO LIST (single list — updated 2026-06-29):
-  DEFECTS:  DEF-1863 (Hard State Contract) · DEF-1864 (Intent Lock Gate — partial)
-  COMPLETE:    WO-1879 Domain Gravity Wells — VALIDATED (2026-06-29). Confirmed via behavioral QA.
-               WO-1868 Metrics Truth Engine — DONE (2026-06-29). metricsengine.js + metricstrip.jsx
-                        + computeMetrics wired in targetpacket/actionmatrix/intelligencebrief.
-               WO-1869 Closed-Loop Leverage Engine — DONE
-               WO-1872 Brand-as-Ticker AUTO suppression — DONE (ce92380)
-               WO-1877 EIA connector DONE. CONFIRMED 2026-06-26. STOP ASKING.
-               WO-2011 HP Tier Gate — DONE (a227346)
-               DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16)
-               WO-2007 Signal Recon Layer — DONE (031770e). All 7 files confirmed built.
-               WO-2050 RKM Core — DONE (8fae2f2). rkmstore.js — RealityObject schema + execution engine.
-               WO-2047 EDGAR 8-K Connector — DONE (010fd27). edgar8kconnector.js — poll/parse/RealityObject.
-               WO-2051 Grounded Signal Integration — DONE (9af9ab0). edgar8ksignal.js → surfacerouter. §20 polarity live.
-  BUILD-READY: WO-2007 Signal Recon Layer
-               WO-1873 AUTO Numeric Binding (depends WO-1867 sub-contract ✓)
-               WO-1871 Quiet INSUFFICIENT chrome
-               WO-1870 STARTUP_FINANCE orphan fix
-               MetricStrip SCI (8th) + SPS (9th)
-  BLOCKED:     WO-1876 Search DNA Intelligence Surface (unblocked — WO-1868 now DONE → BUILD-READY)
-               WO-1848 SV Groundedness (θ/G_max/SV source undefined)
-               CPDE Constraint Precursor Detection Engine (4 unbuilt dependencies)
-  NEEDS SPEC:  WO-2049 — Truth Event Ledger (no spec — write from scratch)
-               WO-1875 Canonical AMBIGUOUS State (mount decision needed)
-               WO-1867 IENBG required-field tier
-               WO-2006 Interpretation Validation
+OPEN WO LIST (single list — updated 2026-07-02. Everything not listed below is COMPLETE —
+see git log / Jira KRYL project for history. This list is the only thing to read.):
+  DEFECTS:     DEF-1863, DEF-1864 both verified complete.
+               DEF-2087 (KRYL-968) — krylo-reset (logo click) visibly refreshes the
+               header/left-nav/ticker in the krylo2-feed.html iframe. CONFIRMED (via real
+               DevTools Network tab, Doc filter) this is PRE-EXISTING behavior in the
+               committed code (iframeRef.current.src = iframeRef.current.src, app.jsx:964
+               reloads the whole iframe document to reset internal search/hero/ETR state,
+               which also reloads the header/nav/ticker living in the same document) — NOT a
+               regression from tonight's session. THREE fixes attempted (imperative
+               opacity+setTimeout; React-state onTransitionEnd rewrite; onTransitionEnd +
+               double-rAF fade-in) — all failed to eliminate the flash, and the last one
+               introduced a WORSE regression (iframe could get permanently stuck at opacity 0
+               — "page goes dark" — if the same-string src reassignment didn't reliably
+               re-fire the load event). REVERTED both src/app.jsx and
+               src/components/spine/campaignfunnel.jsx to last-committed state via git
+               checkout — confirmed clean, no uncommitted changes, original flash behavior
+               (harmless, long-standing) restored. STATUS: DEFERRED — low-severity cosmetic
+               issue, do not attempt the fade/opacity approach again without a session that
+               has real browser DevTools from the start. Full history in KRYL-968.
+  OPEN:        WO-1848 SV Groundedness — ON HOLD (θ/G_max/SV source undefined; spec-level
+               modeling decision needed before code — see specs/WO-1848-sv-groundedness.md)
+               WO-2049 Truth Event Ledger — NEEDS SPEC (write from scratch)
+               WO-1867 IENBG required-field tier — NEEDS SPEC
+               WO-2006 Interpretation Validation — NEEDS SPEC
   DEFERRED:    WO-1862 Safe Matcher
                WO-2048 Commitment Primitive (§21 doctrine must be written first)
+  CANCELLED:   WO-2069 (expanded into WO-2074/2075, not standalone)
+               WO-2076/2077 Cone State Geometry Model + Cone Interaction Dual Model — struck
+               2026-07-02, redefines cone rendering geometry (spread/depth/amplitude vs.
+               current height/radius), never approved. Do not revisit without explicit
+               Founder sign-off per the architecture-first-audit rule (§4, WO-295 incident).
   CONSTITUTIONAL SEQUENCE (updated 2026-06-30):
                 WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
                 WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
@@ -225,27 +232,10 @@ OPEN WO LIST (single list — updated 2026-06-29):
                            + propagationStability + instabilityVectors + failureModes.
                            IB ranking formula: rbcsScore × survivalProbability × propagationStability.
 
-NEW WOs FILED 2026-06-25 (specs in /specs):
-  1877 — EIA Inventory Delta Connector — COMPLETE. Confirmed 2026-06-26. Do not re-question.
-  1876 — Search DNA Intelligence Surface — BLOCKED pending WO-1868 → WO-1868 now DONE → BUILD-READY
-  1875 — Canonical AMBIGUOUS State — NEEDS SPEC (mount decision TBD)
-  1873 — AUTO Numeric Binding — BUILD-READY, depends WO-1867
-  1872 — Brand-as-Ticker AUTO suppression — COMPLETE (ce92380)
-  1871 — Quiet INSUFFICIENT chrome — BUILD-READY
-  1870 — STARTUP_FINANCE orphan — BUILD-READY
-  1869 — Closed-Loop Leverage Engine — COMPLETE (ae3633c)
-  1868 — Metrics Truth Engine — COMPLETE (2026-06-29)
-  1867 — IENBG required-field tier — NEEDS SPEC
-  1862 — Safe Matcher — DEFERRED
-
 ARCHITECTURE STATE (2026-06-24): Decision → Routing → Export pipeline is closed.
 Ingestion timing (1768-A), role routing (1828-1829), and executive output (1832-1835) are complete.
 Remaining risk is state coherence under role deformation — not feature completion.
 UNCLASSIFIED propagation, entropy handling, and overlap disambiguation are the active surface.
-
-ACTIVE DEFECTS (filed 2026-06-24 — must fix before next feature build):
-  DEF-1863 — Hard State Contract: confidence >= threshold implied as completion (semantic collapse)
-  DEF-1864 — Intent Lock Gate: ambiguous query escalates to life domain instead of returning AMBIGUOUS
 
 BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
 
