@@ -122,7 +122,40 @@ Answer each with YES or NO. Any NO = WO fails. Rewrite before proceeding.
 
 ---
 
-## 9. DEFINITION OF DONE
+## 9. FOUR-AXIS HARDENING RUBRIC (4AR)
+
+Second-pass filter, run only after the Bottle Test passes. The Bottle Test checks buildability
+and scope; 4AR checks whether the WO is actually worth the architectural weight — in particular
+it has the one check the Bottle Test has no equivalent for: Risk of Contamination.
+
+**1. Structural Integrity (SI)**
+- Does the change preserve existing invariants?
+- Are any hidden dependencies introduced?
+- Are runtime contracts unchanged or explicitly versioned?
+
+**2. Semantic Consistency (SC)**
+- Does terminology align with existing ontology?
+- Are new concepts derivable from existing definitions?
+- Any duplication of existing constructs under new naming?
+
+**3. Execution Containment (EC)**
+- Does this WO require runtime changes, or is it declarative-only?
+- Are side effects bounded to the described module(s)?
+- Does it avoid implicit cross-module mutation?
+
+**4. Drift Exposure (DE)**
+- Does this introduce ambiguity over time?
+- Could future interpretations diverge from intended meaning?
+- Does it require a "living definition," or is it static?
+
+**Outcome tag (one per WO):**
+- **PASS** — no escalation required
+- **CONSTRAINED** — acceptable but requires a downstream note
+- **BLOCKED** — violates structural/semantic integrity
+
+---
+
+## 10. DEFINITION OF DONE
 
 State the exact grep or visual check that confirms this WO is complete.
 Memory and registries are updated only after this check passes.

@@ -616,3 +616,59 @@ RELATIONSHIP TO §19:
 WIRING SEQUENCE:
     WO-1879 — Domain Gravity Wells (polarity field) — prerequisite
     WO-1880 — Fracture Output Surface (first-class UI) — depends on WO-1879
+
+21. ROUTE-DON'T-AGGREGATE PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
+
+    KRYLO must not collapse heterogeneous signals into precomputed aggregates before routing
+    decisions are made. Routing decisions operate on atomic signals, uncollapsed event vectors,
+    or raw/minimally normalized inputs. Aggregation is permitted ONLY after routing.
+
+    RATIONALE: pre-aggregation causes loss of causal separability, hidden averaging artifacts,
+    suppression of outlier significance, and false convergence signals.
+
+    ENFORCEMENT RULE: if a system component combines signals before classification, OR computes
+    composite metrics prior to routing, it is a routing violation unless explicitly exempted.
+
+    ALLOWED EXCEPTIONS: post-route summarization layers, visualization-only aggregation,
+    user-facing dashboards (non-decisioning layer).
+
+    This is not a new invention — cirgate.js (CI-R, WO-2054) already practices this (absolute
+    gates sit above RBCS's blended score, never mixed into it); availabilityfilter.js already
+    practices this (eliminates, never deprioritizes). This section makes the discipline an
+    explicit, citable rule instead of an emergent pattern noticed only by inspection.
+
+22. ABSENCE-IS-SIGNAL PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
+
+    The absence of an expected signal is an explicit informational state, not a null condition.
+    Absence must be represented as a classified state — never a missing value, never an ignored
+    input. Categories: STRUCTURAL ABSENCE (signal cannot exist in this context), TEMPORAL ABSENCE
+    (expected but not yet observed), ANOMALOUS ABSENCE (expected and historically present, now
+    missing), FILTERED ABSENCE (suppressed by system constraints).
+
+    NON-COMPLIANCE FAILURE MODE: treating absence as null/zero/undefined produces false
+    neutrality bias and inflates convergence scores.
+
+    BOUNDARY (explicit — do not overclaim enforcement): this doctrine is NOT automatically
+    enforced in SCI, RBCS, or availability filtering as of 2026-07-03. epistemictransparency.js
+    (WO-2079) partially implements this pattern for Decision Invariants only (surfaces
+    `unpopulated` rather than defaulting to zero). Full enforcement across SCI/RBCS/availability
+    filtering requires a separate implementation layer ("absence encoding pipeline") — filed
+    separately, not implied by this doctrine's existence.
+
+23. ORTHOGONAL AXIS INTEGRITY PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
+
+    All metric axes used in scoring systems must be orthogonal unless explicitly declared
+    dependent. Violation exists if Axis A can be expressed as a function of Axis B, or two axes
+    respond to the same latent variable under different names.
+
+    FAILURE MODE: non-orthogonal axes produce artificial confidence inflation, duplicated signal
+    weighting, and false convergence stability.
+
+    AUDIT OUTPUT FORMAT (per axis pair): Pair (A, B) — Dependency: Independent / Partially
+    Dependent / Fully Dependent — Risk: Low / Medium / High — Action: Merge / Reweight /
+    Separate / Retire.
+
+    Ties to §18's existing multiplicative-only rule for the decision emission score (Signal ×
+    Validity × Convergence × AvgGroundedness) — that rule is the one case already locked; this
+    section generalizes the underlying discipline so future composite metrics get audited
+    against it by default, not as an afterthought.
