@@ -21,7 +21,7 @@ const LIME             = '#66FF00';
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 7.0;
 const DRAG_SENSITIVITY  = 0.01; // radians per pixel of horizontal drag while frozen
-const STEP_DURATION     = 0.35; // seconds — ease-out duration for arrow-button step (standard carousel timing)
+const STEP_DURATION     = 0.15; // seconds — short, snappy ease for arrow-button step
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
