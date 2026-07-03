@@ -20,6 +20,8 @@ let _carouselStopped = false;
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 7.0;
+const DRAG_SENSITIVITY  = 0.01; // radians per pixel of horizontal drag while frozen
+const STEP_DURATION     = 0.35; // seconds — ease-out duration for arrow-button step (standard carousel timing)
 
 // velocity glyph contract (per topology critic spec — Tufte data-ink for V metric)
 function velocityDisplay(v) {
@@ -1085,7 +1087,7 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
   });
 
   return (
-    <lineSegments position={[0, -0.05, 0]}>
+    <lineSegments position={[0, -0.4, 0]}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
@@ -1647,6 +1649,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const rotOffsetRef   = useRef(0);
   const prevEditModeRef = useRef(false);
   const frozenAngleRef  = useRef(0);
+  const stepAnimRef     = useRef(null); // { startAngle, targetAngle, startTime } while an arrow-step eases in
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
@@ -1704,6 +1707,29 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           rotOffsetRef.current = frozenAngleRef.current - elapsed * SPIN;
         }
         if (stopped) {
+          // Manual steer while frozen — drag (continuous, applied directly) or
+          // arrow-button (stepped by one cone's angular spacing, EASED over
+          // STEP_DURATION rather than snapped instantly — an instant full-step
+          // jump reads as too fast / jarring; standard carousel-arrow behavior
+          // is a short ease-out transition). carouselRef is the same ref
+          // ConeMap writes into from its pointer handlers and arrow buttons.
+          if (carouselRef?.current?.dragDelta) {
+            stepAnimRef.current = null; // drag overrides/cancels any in-flight step ease
+            frozenAngleRef.current += carouselRef.current.dragDelta;
+            carouselRef.current.dragDelta = 0;
+          }
+          if (carouselRef?.current?.stepRequest) {
+            const targetAngle = frozenAngleRef.current + carouselRef.current.stepRequest * (Math.PI * 2 / total);
+            stepAnimRef.current = { startAngle: frozenAngleRef.current, targetAngle, startTime: elapsed };
+            carouselRef.current.stepRequest = 0;
+          }
+          if (stepAnimRef.current) {
+            const { startAngle, targetAngle, startTime } = stepAnimRef.current;
+            const t = Math.min(1, (elapsed - startTime) / STEP_DURATION);
+            const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic — standard for stepped carousel nav
+            frozenAngleRef.current = startAngle + (targetAngle - startAngle) * eased;
+            if (t >= 1) stepAnimRef.current = null;
+          }
           spinRef.current.rotation.y = frozenAngleRef.current;
         } else {
           spinRef.current.rotation.y = elapsed * SPIN + rotOffsetRef.current;
@@ -1811,7 +1837,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   return (
     <>
       <group ref={gridGroupRef}>
-        <PulseFloor ringCount={6} maxRadius={R + 3} />
+        <PulseFloor ringCount={6} maxRadius={R + 1.2} />
         <ThresholdBands />
 
       </group>
@@ -1949,11 +1975,15 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const events = useEventStream(coneState);
   const [log, setLog] = useState([]);
   const [flows, setFlows] = useState([]);
-  const carouselRef    = useRef({ stopped: false });
+  const carouselRef    = useRef({ stopped: false, dragDelta: 0, stepRequest: 0 });
   const containerRef   = useRef(null);
   const pdLastRef      = useRef(0);
   const lastEventRef = useRef(null);
   const flowIdRef    = useRef(0);
+  const isPointerDownRef = useRef(false);
+  const dragStartXRef    = useRef(null);
+  const [frozenUi, setFrozenUi] = useState(false); // mirrors _carouselStopped for arrow-button visibility
+  const [hoverArrow, setHoverArrow] = useState(null); // -1 | 1 | null — which steer arrow is hovered
 
   useEffect(() => {
     if (!events.length) return;
@@ -1991,21 +2021,47 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     return () => clearInterval(sweep);
   }, []);
 
-  // Native pointerdown capture — fires BEFORE R3F, guaranteed twice per double-click
+  // Native pointerdown capture — fires BEFORE R3F, guaranteed twice per double-click.
+  // Also tracks drag-to-rotate: while frozen (_carouselStopped), horizontal drag
+  // steers the carousel manually via carouselRef.dragDelta, consumed once per
+  // frame in ConeScene's useFrame.
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const handler = e => {
+
+    const handleDown = e => {
+      isPointerDownRef.current = true;
+      dragStartXRef.current = e.clientX;
       const now = Date.now();
       const gap = now - pdLastRef.current;
       pdLastRef.current = now;
       if (gap < 300) {
         pdLastRef.current = 0;
         _carouselStopped = !_carouselStopped;
+        setFrozenUi(_carouselStopped);
       }
     };
-    el.addEventListener('pointerdown', handler, { capture: true });
-    return () => el.removeEventListener('pointerdown', handler, { capture: true });
+    const handleMove = e => {
+      if (!isPointerDownRef.current || !_carouselStopped || dragStartXRef.current === null) return;
+      const deltaX = e.clientX - dragStartXRef.current;
+      dragStartXRef.current = e.clientX;
+      carouselRef.current.dragDelta += deltaX * DRAG_SENSITIVITY;
+    };
+    const handleUp = () => {
+      isPointerDownRef.current = false;
+      dragStartXRef.current = null;
+    };
+
+    el.addEventListener('pointerdown', handleDown, { capture: true });
+    el.addEventListener('pointermove', handleMove);
+    el.addEventListener('pointerup', handleUp);
+    el.addEventListener('pointerleave', handleUp);
+    return () => {
+      el.removeEventListener('pointerdown', handleDown, { capture: true });
+      el.removeEventListener('pointermove', handleMove);
+      el.removeEventListener('pointerup', handleUp);
+      el.removeEventListener('pointerleave', handleUp);
+    };
   }, []);
 
   const baysForResonance = useBayStore(s => s.bays);
@@ -2106,6 +2162,44 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         <>
           <ComparePanel />
           <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} searchPreview={searchPreview} onSearchPreviewSave={onSearchPreviewSave} />
+        </>,
+        document.getElementById('krylo-hud-root')
+      )}
+
+      {/* Manual-steer arrows — frozen mode only. Positioned in the actual cone
+          content gutter, not the raw viewport edge: left nav is left:72
+          (app.jsx), InspectionPanel is right:16 + width:calc(240px + 1vw)
+          (conemap.jsx ~line 583) — so its left edge is calc(256px + 1vw) from
+          the viewport right. Circle + opaque background — original design. */}
+      {frozenUi && typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
+        <>
+          {[-1, 1].map(dir => (
+            <div
+              key={dir}
+              style={{
+                position: 'fixed', top: '50%', transform: 'translateY(-50%)',
+                ...(dir === -1 ? { left: 96 } : { right: 'calc(280px + 1vw)' }),
+                zIndex: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+              }}
+              onMouseEnter={() => setHoverArrow(dir)}
+              onMouseLeave={() => setHoverArrow(a => (a === dir ? null : a))}
+            >
+              <button
+                onClick={() => { carouselRef.current.stepRequest = dir; }}
+                style={{
+                  pointerEvents: 'auto', cursor: 'pointer',
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: hoverArrow === dir ? 'rgba(102,255,0,0.15)' : 'rgba(0,0,0,0.7)',
+                  border: `1px solid ${hoverArrow === dir ? LIME : LIME + '55'}`,
+                  color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 18,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'background 120ms ease, border-color 120ms ease',
+                }}
+              >
+                {dir === -1 ? '‹' : '›'}
+              </button>
+            </div>
+          ))}
         </>,
         document.getElementById('krylo-hud-root')
       )}
