@@ -2029,9 +2029,28 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     const el = containerRef.current;
     if (!el) return;
 
+    // pointermove/up are attached ONLY between an actual pointerdown and its
+    // matching up/leave — not permanently registered on the whole cone view.
+    // Reduces the always-on listener footprint to the moment a press is live.
+    const handleMove = e => {
+      if (!_carouselStopped || dragStartXRef.current === null) return;
+      const deltaX = e.clientX - dragStartXRef.current;
+      dragStartXRef.current = e.clientX;
+      carouselRef.current.dragDelta += deltaX * DRAG_SENSITIVITY;
+    };
+    const handleUp = () => {
+      isPointerDownRef.current = false;
+      dragStartXRef.current = null;
+      el.removeEventListener('pointermove', handleMove);
+      el.removeEventListener('pointerup', handleUp);
+      el.removeEventListener('pointerleave', handleUp);
+    };
     const handleDown = e => {
       isPointerDownRef.current = true;
       dragStartXRef.current = e.clientX;
+      el.addEventListener('pointermove', handleMove);
+      el.addEventListener('pointerup', handleUp);
+      el.addEventListener('pointerleave', handleUp);
       const now = Date.now();
       const gap = now - pdLastRef.current;
       pdLastRef.current = now;
@@ -2041,21 +2060,8 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         setFrozenUi(_carouselStopped);
       }
     };
-    const handleMove = e => {
-      if (!isPointerDownRef.current || !_carouselStopped || dragStartXRef.current === null) return;
-      const deltaX = e.clientX - dragStartXRef.current;
-      dragStartXRef.current = e.clientX;
-      carouselRef.current.dragDelta += deltaX * DRAG_SENSITIVITY;
-    };
-    const handleUp = () => {
-      isPointerDownRef.current = false;
-      dragStartXRef.current = null;
-    };
 
     el.addEventListener('pointerdown', handleDown, { capture: true });
-    el.addEventListener('pointermove', handleMove);
-    el.addEventListener('pointerup', handleUp);
-    el.addEventListener('pointerleave', handleUp);
     return () => {
       el.removeEventListener('pointerdown', handleDown, { capture: true });
       el.removeEventListener('pointermove', handleMove);
