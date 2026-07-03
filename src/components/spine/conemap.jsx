@@ -161,6 +161,19 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
         <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
         <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
       </mesh>
+      {/* Invisible raycast-only base cap — coneGeometry's openEnded:true leaves the base
+          hollow for rendering, which means a click aimed at the wide lower part of a
+          foreground cone's silhouette can pass through with no geometry to catch it,
+          hitting whatever cone is behind it instead. This plugs that hole without
+          changing anything visible: opacity:0 (not visible:false — an invisible object
+          is skipped by the raycaster entirely) keeps it raycast-active while rendering
+          nothing. Tagged with the same domain directly (not resolved via group/parent)
+          so the existing hit.object.userData.domain read in ConeScene's raycast handler
+          needs no changes. */}
+      <mesh position={[0, -coneHeight / 2, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ domain: state.domain }}>
+        <circleGeometry args={[radius * 1.5972, 16]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
 
 
       <Html position={[0, coneHeight / 2 + 0.4, 0]} center>
