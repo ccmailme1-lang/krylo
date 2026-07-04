@@ -187,3 +187,47 @@ export function applyLearningEvents(events) {
     totalAdjusted:  adjustments.length,
   };
 }
+
+// ── KRYL-981 — Domain Profile enforcement (Perception-as-a-Service boundary) ───
+//
+// Enforcement Point: this is the single authoritative boundary for all DomainProfile
+// writes. verifyDomainProfile() MUST be called before any DomainProfile is persisted.
+//
+// RBCS weights (wT/wD/wC/wA/wV, defined in rbcsengine.js) are IMMUTABLE per this
+// file's own header comment above — no per-domain profile may touch them. A domain
+// profile may only ever adjust the five CALIBRATABLE_LEVERS already defined in this
+// file. Any other key is a schema violation.
+
+const RBCS_FORBIDDEN_KEYS = ['wT', 'wD', 'wC', 'wA', 'wV']; // rbcsengine.js RBCS_WEIGHTS — immutable
+
+const DOMAIN_PROFILE_ALLOWED_KEYS = [
+  'domain_id',
+  'interpretation_tier',
+  ...CALIBRATABLE_LEVERS,                 // the five real, already-adjustable floors
+  'additive_explain_boost',               // presentation-only
+  'summary_length_target',                // presentation-only
+];
+
+/**
+ * verifyDomainProfile — hard guard against RBCS-weight mutation and schema drift.
+ * Throws E_RBCS_LOCK if any forbidden RBCS weight key is present.
+ * Throws E_SCHEMA_VIOLATION if any key outside the allowed set is present.
+ * Call this as the first line of any DomainProfile write path, before persistence.
+ */
+export function verifyDomainProfile(domainProfile) {
+  const keys = Object.keys(domainProfile ?? {});
+
+  if (keys.some(k => RBCS_FORBIDDEN_KEYS.includes(k))) {
+    const err = new Error('E_RBCS_LOCK');
+    err.code = 'E_RBCS_LOCK';
+    throw err;
+  }
+
+  if (!keys.every(k => DOMAIN_PROFILE_ALLOWED_KEYS.includes(k))) {
+    const err = new Error('E_SCHEMA_VIOLATION');
+    err.code = 'E_SCHEMA_VIOLATION';
+    throw err;
+  }
+
+  return true;
+}

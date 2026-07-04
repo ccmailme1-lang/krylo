@@ -84,6 +84,11 @@ export function computeSCI(evidenceGraph) {
   let raw = 0;
   const classCount    = {};
   const discountedTypes = [];
+  // KRYL-980 (Phase 0 audit, 2026-07-04): this per-type contribution was already
+  // being computed here and then discarded — only the aggregate `raw` sum survived.
+  // Exposing it closes the "no per-node/per-type attribution" gap identified in
+  // specs/KRYL-980-audit-report.md without changing the score formula at all.
+  const perTypeContribution = {};
 
   for (const type of coveredTypes) {
     const descriptor = getDescriptor(type);
@@ -100,6 +105,13 @@ export function computeSCI(evidenceGraph) {
     const tw           = TIER_WEIGHT[descriptor.epistemicClass] ?? 0.05;
     raw += contribution * tw;
     classCount[descriptor.epistemicClass] = (classCount[descriptor.epistemicClass] ?? 0) + 1;
+    perTypeContribution[type] = {
+      contribution: parseFloat(contribution.toFixed(4)),
+      tierWeight:   tw,
+      weighted:     parseFloat((contribution * tw).toFixed(4)),
+      epistemicClass: descriptor.epistemicClass,
+      discounted:   isDiscounted,
+    };
   }
 
   const score        = parseFloat(Math.min(10, MAX_POSSIBLE > 0 ? (raw / MAX_POSSIBLE) * 10 : 0).toFixed(1));
@@ -112,6 +124,7 @@ export function computeSCI(evidenceGraph) {
     coveredTypes:    [...coveredTypes],
     classCoverage:   classCount,         // { STRUCTURAL: 3, FINANCIAL: 1, ... }
     discountedTypes,                     // entity-bound types that had no verified node
+    perTypeContribution,                 // KRYL-980: type -> { contribution, tierWeight, weighted, epistemicClass, discounted }
   };
 }
 
