@@ -1640,7 +1640,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0 }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, debugRef = null }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1825,7 +1825,22 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     // Skip untagged hits entirely; the first TAGGED hit is the real answer.
     const hits = raycasterRef.current.intersectObjects(targets, true);
     const validHit = hits.find(h => h.object.userData?.domain);
-    onSelectCone(validHit ? validHit.object.userData.domain : null);
+    const resolved = validHit ? validHit.object.userData.domain : null;
+    if (debugRef) {
+      debugRef.current = {
+        ts: clickEvent.ts,
+        clickXY: [clickEvent.x, clickEvent.y],
+        targetCount: targets.length,
+        hitCount: hits.length,
+        hits: hits.slice(0, 6).map(h => ({
+          domain: h.object.userData?.domain ?? null,
+          dist: Math.round(h.distance * 100) / 100,
+        })),
+        resolved,
+        priorSelectedDomainProp: selectedDomain,
+      };
+    }
+    onSelectCone(resolved);
   });
 
   // HUD projector — world positions via getWorldPosition → screen coords → hudRef
@@ -2103,6 +2118,18 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const [localClick, setLocalClick] = useState(null);
   const activeClick = localClick ?? clickEvent;
 
+  // TEMP DIAGNOSTIC (KRYL cone-click investigation) — on-screen readout of
+  // raycast resolution + selection derivation, per Founder-approved on-screen
+  // counter methodology. Remove once click defaulting is confirmed fixed.
+  const clickDebugRef = useRef(null);
+  const [clickDebug, setClickDebug] = useState(null);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setClickDebug(clickDebugRef.current ? { ...clickDebugRef.current } : null);
+    }, 150);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <div
       ref={containerRef}
@@ -2128,6 +2155,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           kalshiSignals={kalshiSignals}
           carouselRef={carouselRef}
           dollyKey={dollyKey}
+          debugRef={clickDebugRef}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
@@ -2135,6 +2163,27 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         />
       </Canvas>
 
+      {/* TEMP DIAGNOSTIC PANEL — remove with clickDebugRef/clickDebug above once cone-click defaulting is confirmed fixed */}
+      <div style={{
+        position: 'fixed', top: 48, left: 80, zIndex: 999,
+        background: 'rgba(0,0,0,0.85)', border: '1px solid #66FF00',
+        color: '#66FF00', fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 10, lineHeight: 1.5, padding: '8px 10px', maxWidth: 340,
+        pointerEvents: 'none', whiteSpace: 'pre-wrap',
+      }}>
+        <div style={{ color: '#fff', marginBottom: 4 }}>CLICK DEBUG</div>
+        <div>selectedDomain (prop): {String(selectedDomain)}</div>
+        <div>manualPick: {manualPick ? manualPick.domain : 'null (FALLBACK)'}</div>
+        <div>autoHighest: {autoHighest?.domain} (p={Math.round(autoHighest?.pressure ?? 0)})</div>
+        <div>activeDomain (shown): {activeDomain}</div>
+        <div style={{ marginTop: 4, color: '#fff' }}>last raycast:</div>
+        {clickDebug ? (
+          <>
+            <div>targets={clickDebug.targetCount} hits={clickDebug.hitCount} resolved={String(clickDebug.resolved)}</div>
+            <div>hits: {clickDebug.hits.map(h => `${h.domain ?? '∅'}@${h.dist}`).join(', ')}</div>
+          </>
+        ) : <div>(no click yet)</div>}
+      </div>
 
       {/* WO-1349 — Cross-bay resonance arcs for COMPARE-flagged bays */}
       {(() => {
