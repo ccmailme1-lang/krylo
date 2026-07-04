@@ -1814,11 +1814,18 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       .slice(0, coneState.length)
       .map(ref => ref.current)
       .filter(Boolean);
-    // intersectObjects sorts by distance from camera — first hit is the frontmost
-    // mesh actually under the click, correctly respecting real occlusion.
+    // intersectObjects sorts by distance from camera. Each cone group also
+    // contains Footprint (a thin line-ring at the base) and GhostLayer —
+    // neither tagged with userData.domain — sitting at nearly the same height
+    // as the invisible base cap. If one of those wins the closest-hit race,
+    // hits[0] is untagged and resolves to null, which the selection fallback
+    // (coneMap.jsx ~line 1976 "fall back to highest-pressure cone") then
+    // silently replaces with whatever cone has the highest pressure — reading
+    // as "click sometimes selects an unrelated domain" with no visible error.
+    // Skip untagged hits entirely; the first TAGGED hit is the real answer.
     const hits = raycasterRef.current.intersectObjects(targets, true);
-    const resolved = hits.length ? hits[0].object.userData?.domain ?? null : null;
-    onSelectCone(resolved);
+    const validHit = hits.find(h => h.object.userData?.domain);
+    onSelectCone(validHit ? validHit.object.userData.domain : null);
   });
 
   // HUD projector — world positions via getWorldPosition → screen coords → hudRef
