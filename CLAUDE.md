@@ -1,14 +1,20 @@
 ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
 ──────────────────────────────────────────────
 
-LAST BUILD SESSION: 2026-07-02
-BASELINE: baseline_wo2069_2082_batch
-SHA: 41af2fa
-DEPLOYED: krylo.org ✓ (deployed this session, includes the WO-2072-2081 batch)
-UNCOMMITTED: CLAUDE.md only (this registry update — DEF-2087 status)
-NOTE: header-refresh (DEF-2087) investigation happened AFTER deploy — app.jsx and
-campaignfunnel.jsx were experimentally modified then reverted via git checkout to their
-committed state. krylo.org and this baseline are unaffected by that investigation.
+LAST BUILD SESSION: 2026-07-04
+BASELINE: baseline_perception_synergy
+SHA: 3be5d35
+DEPLOYED: krylo.org ✓ (deployed this session — build/rsync/API-restart/health-check all
+verified; live asset hash index-tEMvD2lc.js confirmed matching local build)
+UNCOMMITTED: deploy.sh, deploy-vps.sh, specs/features_backlog(.md) — untracked, pre-existing,
+not touched this session
+NOTE: session covered (1) cone click-selection bug — two real fixes: stale-matrixWorld
+raycast timing + miss-clears-selection fallback (82597e7), plus removal of fabricated
+STUB_SIGNALS fallback data shown to guests before live signals connect (ab1c2ea); (2)
+Perception Synergy epic — KRYL-975 through KRYL-981, mined from a COMPASS (Nature Medicine)
+paper, reframed onto detect-not-predict/historical-fact framing per §11a; KRYL-977/978/980/981
+built, validated, and hardened (34f0e34, 3be5d35) — KRYL-980's Phase 0 audit found the "why"
+legibility already existed and only needed a small join, not a new subsystem.
 ──────────────────────────────────────────────
 
 Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
@@ -161,6 +167,23 @@ SESSION 2026-06-27 — COMPLETE (48a2cda):
           SCP schema, ExplorationScore, epistemic budget, causal validity gate, negative genealogy,
           happy path genome 3-object structure. WO-2004 complete → WO-2007 now UNBLOCKED.
   Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
+
+SESSION 2026-07-04 — COMPLETE (deployed, 3be5d35):
+  Cone click-selection bug (no formal KRYL ticket filed — untracked): two real root causes
+  fixed — (1) raycast tested against previous frame's rotation while carousel spun
+  (82597e7); (2) a missed click called onSelectCone(null), overwriting a valid manual
+  selection with the highest-pressure fallback (82597e7). Separately, removed fabricated
+  STUB_SIGNALS fallback (ownership fs:0.95 vs technology's 0.15 — guaranteed the same fake
+  "Operating" reading for every guest before live signals connected) per §22 absence-is-signal
+  (ab1c2ea).
+  KRYL-975 Epic + KRYL-976/977/978/979/980/981 — Perception Synergy (COMPASS paper,
+  Nature Medicine, mined for detect-not-predict capabilities): KRYL-977 (Modality-Weighted
+  Evidence Reliability), KRYL-978 (Path Memory Retrieval, Stage 1), KRYL-980 (Why-Trace —
+  Phase 0 audit found existing legibility, small join built instead of new subsystem), and
+  KRYL-981 (Perception-as-a-Service, DomainProfile calibration bound to WO-2062's real 5
+  floors) all built + validated + hardened (34f0e34, 3be5d35). KRYL-979 (Historical
+  Divergence Retrieval) still flagged for Founder reconsideration, not built.
+  Baseline: baseline_perception_synergy (3be5d35). DEPLOYED to krylo.org, verified live.
 
 OPEN WO LIST (single list — updated 2026-07-02. Everything not listed below is COMPLETE —
 see git log / Jira KRYL project for history. This list is the only thing to read.):
