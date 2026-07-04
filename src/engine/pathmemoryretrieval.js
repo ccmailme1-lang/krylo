@@ -2,6 +2,11 @@
 // Activates the deferred WO-1869 Path Memory concept using a retrieval-not-prediction
 // mechanism: find structurally similar historical paths, report similarity only.
 //
+// Classification: pure read-only join. Stored PathRecords are immutable and
+// retrieval never recomputes an inference result — it compares pre-existing
+// embeddings only. Nothing here reconstructs SCI, identity, or any other
+// inference-derived structure.
+//
 // Outcome Neutrality Clause (mandatory, locked 2026-07-04 review):
 //   This module retrieves historical path structures only. It does not infer,
 //   project, or predict future outcomes. All retrieved results are strictly

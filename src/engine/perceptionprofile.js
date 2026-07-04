@@ -3,6 +3,12 @@
 // and historical-frequency data (KRYL-978), never a decision. No modification of
 // CI-R gating, RBCS aggregation logic, or core model architecture.
 //
+// Classification: presentation-layer projection. Project() reads a core output
+// and a stored profile, returns a new object — it never recomputes an inference
+// result and never reads back into scoring/identity/routing. Contrast with
+// whytrace.js (KRYL-980), which DOES recompute an inference-derived value
+// (SCI) for explanation purposes — a materially different risk category.
+//
 // Enforcement: every DomainProfile write goes through
 // calibrationengine.verifyDomainProfile() first — see that file for the
 // RBCS-immutability guard. This module never re-implements that check; it calls it.

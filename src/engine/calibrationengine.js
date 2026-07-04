@@ -19,6 +19,8 @@
 //   Parameters stay within PARAM_BOUNDS at all times.
 //   Accumulators reset per-lever after adjustment to prevent stale evidence compounding.
 
+import { RBCS_INVARIANT_KEYS, RBCS_INVARIANT_VERSION } from './rbcsengine.js';
+
 // ── Calibratable levers (exhaustive list — nothing else may be adjusted) ─────
 
 export const CALIBRATABLE_LEVERS = [
@@ -190,6 +192,11 @@ export function applyLearningEvents(events) {
 
 // ── KRYL-981 — Domain Profile enforcement (Perception-as-a-Service boundary) ───
 //
+// Classification: pure guard/gate — validates a proposed write, never mutates
+// RBCS/identity/routing state itself and never reads back a prior inference
+// result. This is the same category as CI-R's admission gate, not a scoring
+// or reconstruction step.
+//
 // Enforcement Point: this is the single authoritative boundary for all DomainProfile
 // writes. verifyDomainProfile() MUST be called before any DomainProfile is persisted.
 //
@@ -198,7 +205,11 @@ export function applyLearningEvents(events) {
 // profile may only ever adjust the five CALIBRATABLE_LEVERS already defined in this
 // file. Any other key is a schema violation.
 
-const RBCS_FORBIDDEN_KEYS = ['wT', 'wD', 'wC', 'wA', 'wV']; // rbcsengine.js RBCS_WEIGHTS — immutable
+// Derived from rbcsengine.js's own versioned export — never hand-duplicate this
+// key list. If RBCS_INVARIANT_VERSION ever bumps (i.e. the weight key set itself
+// changes), profiles validated against a stale version are treated as needing
+// re-validation rather than silently assumed still-compliant.
+const RBCS_FORBIDDEN_KEYS = RBCS_INVARIANT_KEYS;
 
 const DOMAIN_PROFILE_ALLOWED_KEYS = [
   'domain_id',
@@ -212,10 +223,19 @@ const DOMAIN_PROFILE_ALLOWED_KEYS = [
  * verifyDomainProfile — hard guard against RBCS-weight mutation and schema drift.
  * Throws E_RBCS_LOCK if any forbidden RBCS weight key is present.
  * Throws E_SCHEMA_VIOLATION if any key outside the allowed set is present.
+ * Throws E_RBCS_VERSION_STALE if the profile was validated against an
+ * RBCS_INVARIANT_VERSION older than the current one — forces re-validation
+ * instead of silently trusting a guard that assumed a prior invariant set.
  * Call this as the first line of any DomainProfile write path, before persistence.
  */
-export function verifyDomainProfile(domainProfile) {
+export function verifyDomainProfile(domainProfile, { assumedRbcsVersion } = {}) {
   const keys = Object.keys(domainProfile ?? {});
+
+  if (Number.isFinite(assumedRbcsVersion) && assumedRbcsVersion !== RBCS_INVARIANT_VERSION) {
+    const err = new Error('E_RBCS_VERSION_STALE');
+    err.code = 'E_RBCS_VERSION_STALE';
+    throw err;
+  }
 
   if (keys.some(k => RBCS_FORBIDDEN_KEYS.includes(k))) {
     const err = new Error('E_RBCS_LOCK');
@@ -229,5 +249,5 @@ export function verifyDomainProfile(domainProfile) {
     throw err;
   }
 
-  return true;
+  return { valid: true, rbcsInvariantVersion: RBCS_INVARIANT_VERSION };
 }

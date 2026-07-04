@@ -21,6 +21,13 @@ export const RBCS_WEIGHTS = {
   wV: 0.175,  // volatility utility
 };
 
+// KRYL-981: authoritative, versioned invariant surface for anything that needs to
+// guard against RBCS weight mutation (e.g. calibrationengine.js's per-domain
+// profile enforcement). Derived from RBCS_WEIGHTS directly — never hand-duplicate
+// this key list elsewhere, or a future change here won't propagate to the guard.
+export const RBCS_INVARIANT_KEYS    = Object.freeze(Object.keys(RBCS_WEIGHTS));
+export const RBCS_INVARIANT_VERSION = 1; // bump only if RBCS_WEIGHTS' key set changes
+
 export const RBCS_EPSILON = 0.01;  // log-space floor — prevents ln(0) collapse
 
 export const RBCS_THRESHOLDS = {

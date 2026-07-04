@@ -2,6 +2,12 @@
 // Post-CI-R, pre-RBCS conditioning layer. Adjusts evidence reliability by modality,
 // source consistency, and cross-source agreement — without aggregating or scoring.
 //
+// Classification: stateless conditioning transform. Produces a NEW derived value
+// (weighted_payload) from raw evidence, but never mutates identity/routing state
+// and never reads back a prior inference result. Distinct from a pure join
+// (nothing here is retrieved unchanged) and distinct from RBCS-style inference
+// (nothing here affects a branch's admission or ranking).
+//
 // Boundary rules (locked 2026-07-04 review):
 //   Execution order: Raw Evidence -> CI-R gates (raw only) -> surviving evidence ->
 //                     this module -> RBCS aggregation.

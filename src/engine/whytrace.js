@@ -6,6 +6,21 @@
 // join/presentation layer over those existing, already-working exports. It computes
 // NOTHING new: no new formula, no new attribution model, no dependency on KRYL-976/977.
 //
+// Classification (important, revised 2026-07-04): this module is NOT a pure join
+// like pathmemoryretrieval.js or perceptionprofile.js. computeSCI() is called fresh
+// here rather than reading a value already attached via identitykernel.attachSCI —
+// it recomputes a real inference-derived result for explanation purposes. computeSCI
+// is deterministic and side-effect-free, so the recomputed value is provably
+// identical to whatever was originally attached — but the mechanism (recompute, not
+// retrieve) is a materially different risk category from pure retrieval, and must be
+// treated as such by anything that consumes this module's output in the future.
+//
+// No-Rewrite Rule (enforced below, not just documented): this module may recompute
+// and expose existing structure, but must never introduce a NEW evidence type,
+// epistemic class, or canonical role that isn't already defined in evidencetiers.js.
+// assertNoNewPrimitives() checks every type name that flows through a trace against
+// the real evidencetiers.js taxonomy and throws if one isn't found there.
+//
 // Provenance constraint (locked 2026-07-04 review): this trace layer must not reconstruct
 // or reinterpret any downstream aggregate as causal truth. It only reads forward from
 // permitted, already-computed upstream artifacts and presents them together.
@@ -13,11 +28,30 @@
 // Boundary: read-only. Never feeds back into scoring, identity resolution, or routing.
 // Must never be imported by structuralconfirmation.js, identitykernel.js, or any
 // scoring/routing module — same OBSERVATION BOUNDARY rule as identitylineage.js/
-// identitydynamics.js, which this module itself consumes.
+// identitydynamics.js, which this module itself consumes. Nothing in the codebase
+// may import buildWhyTrace's output back into a scoring/identity/routing path.
 
 import { getHistory } from './identitylineage.js';
 import { computeSCI } from './structuralconfirmation.js';
 import { computeTruthDynamics } from './identitydynamics.js';
+import { getDescriptor } from './evidencetiers.js';
+
+/**
+ * assertNoNewPrimitives — No-Rewrite Rule enforcement. Every evidence type name
+ * appearing in an SCI result must already be a known descriptor in
+ * evidencetiers.js. Throws E_NEW_PRIMITIVE_INTRODUCED if not — this module must
+ * only ever expose/recompute existing taxonomy, never invent a new one.
+ */
+function assertNoNewPrimitives(sci) {
+  if (!sci?.coveredTypes) return;
+  for (const type of sci.coveredTypes) {
+    if (!getDescriptor(type)) {
+      const err = new Error(`E_NEW_PRIMITIVE_INTRODUCED: "${type}" is not a known evidencetiers.js descriptor`);
+      err.code = 'E_NEW_PRIMITIVE_INTRODUCED';
+      throw err;
+    }
+  }
+}
 
 /**
  * buildWhyTrace — assemble a human-legible explanation for a CanonicalEvent.
@@ -41,7 +75,9 @@ export function buildWhyTrace(event) {
     return { identityId: null, sci: null, lineage: [], dynamics: null, trace_edges: [], flag: 'NO_IDENTITY' };
   }
 
-  const sci      = computeSCI(event.evidenceGraph);
+  const sci = computeSCI(event.evidenceGraph);
+  assertNoNewPrimitives(sci); // No-Rewrite Rule — throws if sci names an unknown evidence type
+
   const lineage  = getHistory(event.identityId);
   const dynamics = computeTruthDynamics(event.identityId);
 
