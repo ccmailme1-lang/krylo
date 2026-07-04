@@ -90,14 +90,14 @@ const CampaignFunnel = campaignfunnel;
 const ConeMap        = conemap;
 const OracleView     = oracleview;
 
-const STUB_SIGNALS = [
-  { id: '__stub_0', text: 'AI infrastructure spending accelerates across enterprise stack',        truth_statement: 'AI infrastructure spending accelerates across enterprise stack',        source: 'technology', strength: 1, primary: false, _isStub: true, fs: 0.15, fidelity: { m_checksum: 0.08, t_telemetry: 0.11, e_viral: 0.05 } },
-  { id: '__stub_1', text: 'Federal reserve signals higher-for-longer rate posture into Q4',       truth_statement: 'Federal reserve signals higher-for-longer rate posture into Q4',       source: 'capital',    strength: 2, primary: false, _isStub: true, fs: 0.38, fidelity: { m_checksum: 0.06, t_telemetry: 0.09, e_viral: 0.25 } },
-  { id: '__stub_2', text: 'Union organizing accelerates in logistics and warehouse sectors',      truth_statement: 'Union organizing accelerates in logistics and warehouse sectors',      source: 'labor',      strength: 3, primary: false, _isStub: true, fs: 0.62, fidelity: { m_checksum: 0.12, t_telemetry: 0.07, e_viral: 0.50 } },
-  { id: '__stub_3', text: 'Legacy media consolidation reshapes advertising market dynamics',      truth_statement: 'Legacy media consolidation reshapes advertising market dynamics',      source: 'media',      strength: 4, primary: false, _isStub: true, fs: 0.80, fidelity: { m_checksum: 0.05, t_telemetry: 0.13, e_viral: 0.70 } },
-  { id: '__stub_4', text: 'Credential inflation drives mismatch between degrees and hiring',      truth_statement: 'Credential inflation drives mismatch between degrees and hiring',      source: 'knowledge',  strength: 5, primary: false, _isStub: true, fs: 0.55, fidelity: { m_checksum: 0.09, t_telemetry: 0.06, e_viral: 0.45 } },
-  { id: '__stub_5', text: 'Commercial real estate ownership shifts as office vacancies persist',  truth_statement: 'Commercial real estate ownership shifts as office vacancies persist',  source: 'ownership',  strength: 6, primary: false, _isStub: true, fs: 0.95, fidelity: { m_checksum: 0.07, t_telemetry: 0.14, e_viral: 0.90 } },
-];
+// §22 Absence-Is-Signal: no live records is a TEMPORAL ABSENCE, not an
+// invitation to fabricate one. Previously fell back to a hardcoded
+// STUB_SIGNALS demo array (invented fs/fidelity numbers presented as if
+// real) whenever mergedRecords was empty — every guest who loaded before
+// feeds connected, or hit a connector fetch failure, saw fabricated data
+// with no indication it wasn't real. Removed; liveSignals now falls back to
+// [], which aggregateToPillars/aggregateSignals already render honestly as
+// zero-pressure ("NO SIGNAL") per domain rather than a fake reading.
 
 const MARQUEE_SEED      = 'workplace layoffs culture conflict';
 const LENS_LIST         = ['INVESTOR', 'REALTOR', 'ATHLETE', 'SALES', 'LEGAL'];
@@ -851,7 +851,7 @@ export default function App() {
             e_viral:     r.fidelity_components?.e_viral     ?? 0,
           },
         };})
-      : STUB_SIGNALS,
+      : [],
     [mergedRecords],
   );
 
