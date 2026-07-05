@@ -17,6 +17,25 @@ function defTitle(metricKey) {
   return `${d.definition}\n\nScope: ${d.scope}\nUnits: ${d.units}\nSensitivity: ${d.sensitivity}`;
 }
 
+// Visible "?" affordance — a hidden title attribute alone gave no visual cue
+// that a definition exists at all. This makes it discoverable without a new
+// icon dependency, styled to match the existing mono/dim label aesthetic.
+function HelpMark({ title, color = 'rgba(255,255,255,0.35)' }) {
+  if (!title) return null;
+  return (
+    <span
+      title={title}
+      style={{
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        width: 10, height: 10, borderRadius: '50%',
+        border: `1px solid ${color}`, color,
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, lineHeight: 1,
+        cursor: 'help', flexShrink: 0, marginLeft: 2,
+      }}
+    >?</span>
+  );
+}
+
 const MONO    = "'IBM Plex Mono', monospace";
 const LIME    = '#66FF00';
 const BLUE    = '#007FFF';
@@ -39,12 +58,13 @@ function gColor(gnd) {
 function Tile({ label, display, groundedness, tag, tileMode = 'active', title }) {
   if (tileMode === 'dormant') {
     return (
-      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 3 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: DORMANT,
             letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>{label}</span>
+          <HelpMark title={title} color={DORMANT} />
         </div>
         {/* No value, no tag, no groundedness — dormant means non-demanding presence */}
       </div>
@@ -53,12 +73,13 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
 
   if (tileMode === 'critical') {
     return (
-      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: LIME,
             letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>{label}</span>
+          <HelpMark title={title} color={LIME} />
           {tag && (
             <span style={{
               fontFamily: MONO, fontSize: 6, color: LIME,
@@ -83,12 +104,13 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
   const gc  = gColor(groundedness);
   const pct = `${Math.round(groundedness * 100)}%`;
   return (
-    <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
         <span style={{
           fontFamily: MONO, fontSize: 7, color: DIM,
           letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
         }}>{label}</span>
+        <HelpMark title={title} />
         {tag && (
           <span style={{
             fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)',
@@ -286,20 +308,22 @@ function TileWithDot(props) {
 
   if (tileMode === 'dormant') {
     return (
-      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <span style={{ fontFamily: MONO, fontSize: 7, color: DORMANT, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
           <div style={phaseDot} />
+          <HelpMark title={title} color={DORMANT} />
         </div>
       </div>
     );
   }
 
   return (
-    <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
         <div style={phaseDot} />
+        <HelpMark title={title} />
         {tag && <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{tag}</span>}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
