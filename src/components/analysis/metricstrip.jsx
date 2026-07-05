@@ -6,6 +6,16 @@
 // Never computes visibility — metricvisibility.js is the authority.
 import React from 'react';
 import { getPhaseLock } from '../../engine/phaselock.js';
+import { getMetricDefinition } from '../../engine/metricdefinitions.js';
+
+// Native title-attribute tooltip text for a metric's label — "what is this
+// instrument" on hover. Render-only: reads a static definition, never computes
+// or alters anything. Falls back to no tooltip if a key has no definition.
+function defTitle(metricKey) {
+  const d = getMetricDefinition(metricKey);
+  if (!d) return undefined;
+  return `${d.definition}\n\nScope: ${d.scope}\nUnits: ${d.units}\nSensitivity: ${d.sensitivity}`;
+}
 
 const MONO    = "'IBM Plex Mono', monospace";
 const LIME    = '#66FF00';
@@ -26,10 +36,10 @@ function gColor(gnd) {
 //   dormant  — label at DORMANT opacity; no display value, no tag, no groundedness
 //   active   — standard rendering
 //   critical — display value in LIME; tag in LIME; groundedness always shown
-function Tile({ label, display, groundedness, tag, tileMode = 'active' }) {
+function Tile({ label, display, groundedness, tag, tileMode = 'active', title }) {
   if (tileMode === 'dormant') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: DORMANT,
@@ -43,7 +53,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active' }) {
 
   if (tileMode === 'critical') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: LIME,
@@ -73,7 +83,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active' }) {
   const gc  = gColor(groundedness);
   const pct = `${Math.round(groundedness * 100)}%`;
   return (
-    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
         <span style={{
           fontFamily: MONO, fontSize: 7, color: DIM,
@@ -128,6 +138,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: signal?.groundedness ?? 0,
       tag:          null,
       tileMode:     'active',
+      title:        defTitle('signal'),
     },
     {
       label:        'Validity',
@@ -135,6 +146,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: validity?.groundedness ?? 0,
       tag:          null,
       tileMode:     'active',
+      title:        defTitle('validity'),
     },
     {
       label:        'Convergence',
@@ -142,6 +154,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: convergence?.groundedness ?? 0,
       tag:          convergence?.queryRelevant === false ? 'AMB' : null,
       tileMode:     'active',
+      title:        defTitle('convergence'),
     },
     {
       label:        'CAC',
@@ -149,6 +162,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: cac?.groundedness ?? 0,
       tag:          cac?.label ?? 'MODELED',
       tileMode:     'active',
+      title:        defTitle('cac'),
     },
     {
       label:        'ROAS',
@@ -156,6 +170,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: roas?.groundedness ?? 0,
       tag:          roas?.label ?? 'MODELED',
       tileMode:     'active',
+      title:        defTitle('roas'),
     },
     {
       label:        'LTV',
@@ -163,6 +178,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: ltv?.groundedness ?? 0,
       tag:          ltv?.label ?? 'MODELED',
       tileMode:     'active',
+      title:        defTitle('ltv'),
     },
     {
       label:        'LR-Prior',
@@ -170,6 +186,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: lr?.groundedness ?? 0,
       tag:          lr ? null : 'RECORDING',
       tileMode:     'active',
+      title:        defTitle('leverageRealization'),
     },
     {
       label:        'S.DENSITY',
@@ -178,6 +195,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       tag:          sci ? null : null,
       tileMode:     sciMode,
       phaseDot:     phaseDotStyle, // WO-2015: dot lives on this tile
+      title:        defTitle('sci'),
     },
     {
       label:        'SPS',
@@ -185,6 +203,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       groundedness: sps ? Math.min(1, sps.n / 5) : 0,
       tag:          sps ? null : null,
       tileMode:     spsMode,
+      title:        defTitle('sps'),
     },
   ];
 
@@ -259,7 +278,7 @@ function TileWithDot(props) {
   if (!phaseDot) return <Tile {...rest} />;
 
   // Inject phaseDot after label in S.DENSITY tile
-  const { label, display, groundedness, tag, tileMode } = rest;
+  const { label, display, groundedness, tag, tileMode, title } = rest;
   const DORMANT = 'rgba(255,255,255,0.10)';
   const BRT2    = 'rgba(255,255,255,0.85)';
   const gc      = gColor(groundedness);
@@ -267,7 +286,7 @@ function TileWithDot(props) {
 
   if (tileMode === 'dormant') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <span style={{ fontFamily: MONO, fontSize: 7, color: DORMANT, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
           <div style={phaseDot} />
@@ -277,7 +296,7 @@ function TileWithDot(props) {
   }
 
   return (
-    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div title={title} style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
         <div style={phaseDot} />
