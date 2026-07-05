@@ -1085,6 +1085,21 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
 }
 .dna-value.empty { color:rgba(255,255,255,0.2); font-size:14px; }
 
+/* Platform-wide Help Layer — consistent "?" affordance, same visual language
+   as the React MetricStrip help marks (metricdefinitions.js). Explicit
+   pointer-events:auto because several containers here (e.g. .dna-card) are
+   pointer-events:none for their own decorative/non-interactive reasons —
+   the help mark must still be hoverable regardless of its parent. */
+.help-mark {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:10px; height:10px; border-radius:50%;
+    border:1px solid rgba(255,255,255,0.35); color:rgba(255,255,255,0.35);
+    font-family:'IBM Plex Mono', monospace; font-size:7px; line-height:1;
+    cursor:help; pointer-events:auto; user-select:none;
+    margin-left:3px; vertical-align:middle;
+}
+.help-mark:hover { border-color:#66FF00; color:#66FF00; }
+
 .search-acq-label {
     font-family:'IBM Plex Mono', monospace;
     font-size:9px;
@@ -2629,11 +2644,11 @@ function cycleABSlot() {
             <!-- DNA row top -->
             <div class="dna-row">
                 <div class="dna-card" id="dna-signals">
-                    <div class="dna-label">Signals Explored</div>
+                    <div class="dna-label">Signals Explored<span class="help-mark" title="The number of different things you've searched so far.">?</span></div>
                     <div class="dna-value empty" id="dna-signals-val">—</div>
                 </div>
                 <div class="dna-card" id="dna-domain">
-                    <div class="dna-label">Primary Domain</div>
+                    <div class="dna-label">Primary Domain<span class="help-mark" title="The topic area you've searched the most — like Money, Tech, Career, or Media.">?</span></div>
                     <div class="dna-value empty" id="dna-domain-val">—</div>
                 </div>
             </div>
@@ -2643,17 +2658,18 @@ function cycleABSlot() {
                 <div id="cta-zone" class="cta-zone">
                     <input id="cta-input" class="cta-input" type="text" autocomplete="off"
                            placeholder="Ask a question about any entity, signal, or relationship..." />
+                    <span class="help-mark" title="Type what you want to know about, then press enter to search." style="position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:auto;">?</span>
                 </div>
             </div>
 
             <!-- DNA row bottom -->
             <div class="dna-row">
                 <div class="dna-card" id="dna-convergence">
-                    <div class="dna-label">Convergence Rate</div>
+                    <div class="dna-label">Convergence Rate<span class="help-mark" title="How much the things you've found agree with each other.">?</span></div>
                     <div class="dna-value empty" id="dna-convergence-val">—</div>
                 </div>
                 <div class="dna-card" id="dna-lens">
-                    <div class="dna-label">Top Lens</div>
+                    <div class="dna-label">Top Lens<span class="help-mark" title="The point of view (like Investor or Student) that best fits what you've been searching.">?</span></div>
                     <div class="dna-value empty" id="dna-lens-val">—</div>
                 </div>
             </div>
@@ -3599,13 +3615,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = { id: d.id, category: d.category, origin: d.detailId, source: d.source, velocity: d.velocity };
             const pillsHTML = `<div class="lens-bar" id="lens-bar" style="border-top:none;padding:8px 12px;">
                 <span class="lens-bar-label">LENS</span>
-                <button class="lens-pill ${activeLens==='INVESTOR'?'active':''}" data-lens="INVESTOR">Investor</button>
-                <button class="lens-pill ${activeLens==='REALTOR'?'active':''}" data-lens="REALTOR">Realtor</button>
-                <button class="lens-pill ${activeLens==='ATHLETE'?'active':''}" data-lens="ATHLETE">Athlete</button>
-                <button class="lens-pill ${activeLens==='SALES'?'active':''}" data-lens="SALES">Sales</button>
-                <button class="lens-pill ${activeLens==='STUDENT'?'active':''}" data-lens="STUDENT">Student</button>
-                <button class="lens-pill ${activeLens==='CAREER'?'active':''}" data-lens="CAREER">Career</button>
-                <button class="lens-pill ${activeLens==='LEGAL'?'active':''}" data-lens="LEGAL">Legal</button>
+                <button class="lens-pill ${activeLens==='INVESTOR'?'active':''}" data-lens="INVESTOR" title="For people looking to grow money through investments.">Investor</button>
+                <button class="lens-pill ${activeLens==='REALTOR'?'active':''}" data-lens="REALTOR" title="For people buying, selling, or working in real estate.">Realtor</button>
+                <button class="lens-pill ${activeLens==='ATHLETE'?'active':''}" data-lens="ATHLETE" title="For people focused on sports performance and career.">Athlete</button>
+                <button class="lens-pill ${activeLens==='SALES'?'active':''}" data-lens="SALES" title="For people focused on selling and business deals.">Sales</button>
+                <button class="lens-pill ${activeLens==='STUDENT'?'active':''}" data-lens="STUDENT" title="For people learning or researching a topic.">Student</button>
+                <button class="lens-pill ${activeLens==='CAREER'?'active':''}" data-lens="CAREER" title="For people focused on jobs and career moves.">Career</button>
+                <button class="lens-pill ${activeLens==='LEGAL'?'active':''}" data-lens="LEGAL" title="For people dealing with legal or compliance questions.">Legal</button>
             </div>`;
             bsPanel.innerHTML = `<div class="adv-panel-header"><span class="adv-panel-title">MOMENTUM · ${d.id}</span><span class="adv-close" onclick="this.closest('.adv-panel').remove();bsPanel=null;">×</span></div>` + pillsHTML + advBuildPanel(card, advGetCorrelations(card), activeLens);
         }
@@ -3639,13 +3655,13 @@ function openDetail(detailId) {
     const correlations = advGetCorrelations(card);
     const pillsHTML = `<div class="lens-bar" style="border-top:none;padding:8px 12px;">
         <span class="lens-bar-label">LENS</span>
-        <button class="lens-pill active" data-lens="INVESTOR">Investor</button>
-        <button class="lens-pill" data-lens="REALTOR">Realtor</button>
-        <button class="lens-pill" data-lens="ATHLETE">Athlete</button>
-        <button class="lens-pill" data-lens="SALES">Sales</button>
-        <button class="lens-pill" data-lens="STUDENT">Student</button>
-        <button class="lens-pill" data-lens="CAREER">Career</button>
-        <button class="lens-pill" data-lens="LEGAL">Legal</button>
+        <button class="lens-pill active" data-lens="INVESTOR" title="For people looking to grow money through investments.">Investor</button>
+        <button class="lens-pill" data-lens="REALTOR" title="For people buying, selling, or working in real estate.">Realtor</button>
+        <button class="lens-pill" data-lens="ATHLETE" title="For people focused on sports performance and career.">Athlete</button>
+        <button class="lens-pill" data-lens="SALES" title="For people focused on selling and business deals.">Sales</button>
+        <button class="lens-pill" data-lens="STUDENT" title="For people learning or researching a topic.">Student</button>
+        <button class="lens-pill" data-lens="CAREER" title="For people focused on jobs and career moves.">Career</button>
+        <button class="lens-pill" data-lens="LEGAL" title="For people dealing with legal or compliance questions.">Legal</button>
     </div>`;
     bsPanel = document.createElement('div');
     bsPanel.className = 'adv-panel';
