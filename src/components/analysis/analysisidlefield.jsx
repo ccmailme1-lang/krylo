@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import HelpMark                       from '../shared/helpmark.jsx';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
@@ -1102,7 +1103,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
           {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
           <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', display: 'flex', alignItems: 'center' }}>1. INTENT STRENGTH MAPPING (θ)<HelpMark text="How strongly-worded your question is. A more specific, confident question gets a higher number." /></div>
               <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
             </div>
             {/* Chart — responds to slider; no pointer events needed */}
@@ -1170,7 +1171,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON SCRUBBER (t + Δ)</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', display: 'flex', alignItems: 'center' }}>2. HORIZON SCRUBBER (t + Δ)<HelpMark text="How far into the future you want to look — from right now out to years ahead. Slide it to change the time window." /></div>
                     <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
                   </div>
                   {/* Range slider */}
@@ -1218,7 +1219,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── SECTION 3: FORENSIC MATRIX FIELDS ── */}
           <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8 }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8, display: 'flex', alignItems: 'center' }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)<HelpMark text="A map showing which topic areas (Tech, Money, Knowledge, Labor, Media, Ownership) have the most activity right now. Bigger circle = more activity." /></div>
             <div style={{ height: 180, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden' }}>
               {(() => {
                 // 6 domain anchors — fixed positions on 320×160 SVG
@@ -1280,7 +1281,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
           {/* ── SIGNAL SCOPE ── */}
           <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 10 }}>4. SIGNAL SCOPE</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 10, display: 'flex', alignItems: 'center' }}>4. SIGNAL SCOPE<HelpMark text="Choose whether to look at what's happening right now (Live), what's already happened (Historical), or a future time window you pick (Forecast Window)." /></div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {SIGNAL_SCOPE_OPTIONS.map(opt => {
                 const active = signalScope === opt.key;

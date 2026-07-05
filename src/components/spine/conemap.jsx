@@ -3,6 +3,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import HelpMark from '../shared/helpmark.jsx';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -915,7 +916,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ opacity: 0.55 }}>SIGNAL</span>
+        <span style={{ opacity: 0.55, display: 'flex', alignItems: 'center' }}>SIGNAL<HelpMark text="How strong the activity is in this area right now, from 0 to 100." /></span>
         <span style={{ color: LIME }}>{Math.round(cone.pressure ?? 0)}</span>
       </div>
 
@@ -926,7 +927,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         const arrow = fcst > cur ? '↗' : fcst < cur ? '↘' : '→';
         return (
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, opacity: 0.85 }}>
-            <span style={{ opacity: 0.55 }}>FORECAST · +7D</span>
+            <span style={{ opacity: 0.55, display: 'flex', alignItems: 'center' }}>FORECAST · +7D<HelpMark text="Where this number is expected to land in 7 days if the current trend keeps going." /></span>
             <span style={{ color: 'rgba(255,255,255,0.75)' }}>
               {cur} {arrow} {fcst}
             </span>
@@ -945,15 +946,15 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         return (
           <div style={{ paddingTop: 8, marginBottom: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ opacity: 0.55 }}>DIFFUSION</span>
+              <span style={{ opacity: 0.55, display: 'flex', alignItems: 'center' }}>DIFFUSION<HelpMark text="How many different sources are showing this same activity — more sources means it's more spread out, not just one place." /></span>
               <span style={{ color: LIME }}>{D}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ opacity: 0.55 }}>ELASTICITY</span>
+              <span style={{ opacity: 0.55, display: 'flex', alignItems: 'center' }}>ELASTICITY<HelpMark text="How much room this still has to change. Higher means it could still move a lot." /></span>
               <span style={{ color: LIME }}>{E}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ opacity: 0.55 }}>WINDOW</span>
+              <span style={{ opacity: 0.55, display: 'flex', alignItems: 'center' }}>WINDOW<HelpMark text="How much time is likely left before this becomes obvious to everyone else." /></span>
               <span style={{ color: LIME }}>{LE} · {leLabel}</span>
             </div>
           </div>
@@ -962,7 +963,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
       <div style={{ paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-          <span>COMPOSITION</span>
+          <span style={{ display: 'flex', alignItems: 'center' }}>COMPOSITION<HelpMark text="What's making up this area, broken down by category, based on the point of view you've selected." /></span>
           <span style={{ color: LIME, opacity: 0.85 }}>{lens} LENS</span>
         </div>
         {(LENS_COMPOSITION[lens] ?? COMPOSITION).map(f => (
@@ -975,8 +976,8 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
       {log.length > 0 && (
         <div style={{ paddingTop: 10, marginTop: 6, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4 }}>
-            EVENT LOG
+          <div style={{ fontSize: 8, letterSpacing: '0.2em', opacity: 0.5, marginBottom: 4, display: 'flex', alignItems: 'center' }}>
+            EVENT LOG<HelpMark text="A running list of recent activity, newest at the top." />
           </div>
           {log.slice(0, 6).map(e => {
             const t = new Date(e.born).toTimeString().slice(0, 8);
@@ -1036,7 +1037,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         }
       `}</style>
       <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid rgba(102,255,0,0.07)' }}>
-        <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', marginBottom: 6 }}>SCAN SWEEP</div>
+        <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.35)', marginBottom: 6, display: 'flex', alignItems: 'center' }}>SCAN SWEEP<HelpMark text="Shows the system continuously checking for new activity in the background." /></div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{ position: 'relative', width: 42, height: 42, flexShrink: 0 }}>
             {[0,1,2].map(r => (
