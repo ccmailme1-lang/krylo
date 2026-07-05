@@ -7,33 +7,16 @@
 import React from 'react';
 import { getPhaseLock } from '../../engine/phaselock.js';
 import { getMetricDefinition } from '../../engine/metricdefinitions.js';
+import HelpMark from '../shared/helpmark.jsx';
 
-// Native title-attribute tooltip text for a metric's label — "what is this
-// instrument" on hover. Render-only: reads a static definition, never computes
-// or alters anything. Falls back to no tooltip if a key has no definition.
+// Help text for a metric's label — click the "?" to see it. Render-only:
+// reads a static definition, never computes or alters anything. Falls back
+// to no help mark at all if a key has no definition (HelpMark itself
+// returns null when text is falsy).
 function defTitle(metricKey) {
   const d = getMetricDefinition(metricKey);
   if (!d) return undefined;
-  return `${d.definition}\n\nScope: ${d.scope}\nUnits: ${d.units}\nSensitivity: ${d.sensitivity}`;
-}
-
-// Visible "?" affordance — a hidden title attribute alone gave no visual cue
-// that a definition exists at all. This makes it discoverable without a new
-// icon dependency, styled to match the existing mono/dim label aesthetic.
-function HelpMark({ title, color = 'rgba(255,255,255,0.35)' }) {
-  if (!title) return null;
-  return (
-    <span
-      title={title}
-      style={{
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        width: 10, height: 10, borderRadius: '50%',
-        border: `1px solid ${color}`, color,
-        fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, lineHeight: 1,
-        cursor: 'help', flexShrink: 0, marginLeft: 2,
-      }}
-    >?</span>
-  );
+  return `${d.definition} Scope: ${d.scope} Units: ${d.units} Sensitivity: ${d.sensitivity}`;
 }
 
 const MONO    = "'IBM Plex Mono', monospace";
@@ -64,7 +47,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
             fontFamily: MONO, fontSize: 7, color: DORMANT,
             letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>{label}</span>
-          <HelpMark title={title} color={DORMANT} />
+          <HelpMark text={title} color={DORMANT} />
         </div>
         {/* No value, no tag, no groundedness — dormant means non-demanding presence */}
       </div>
@@ -79,7 +62,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
             fontFamily: MONO, fontSize: 7, color: LIME,
             letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
           }}>{label}</span>
-          <HelpMark title={title} color={LIME} />
+          <HelpMark text={title} color={LIME} />
           {tag && (
             <span style={{
               fontFamily: MONO, fontSize: 6, color: LIME,
@@ -110,7 +93,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
           fontFamily: MONO, fontSize: 7, color: DIM,
           letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap',
         }}>{label}</span>
-        <HelpMark title={title} />
+        <HelpMark text={title} />
         {tag && (
           <span style={{
             fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)',
@@ -312,7 +295,7 @@ function TileWithDot(props) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <span style={{ fontFamily: MONO, fontSize: 7, color: DORMANT, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
           <div style={phaseDot} />
-          <HelpMark title={title} color={DORMANT} />
+          <HelpMark text={title} color={DORMANT} />
         </div>
       </div>
     );
@@ -323,7 +306,7 @@ function TileWithDot(props) {
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
         <div style={phaseDot} />
-        <HelpMark title={title} />
+        <HelpMark text={title} />
         {tag && <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{tag}</span>}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
