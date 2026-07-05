@@ -7,6 +7,14 @@
 //           whitespace only. Monotonic density gradient.
 // Skin locked per CLAUDE.md §6: #000000, #66FF00, IBM Plex Mono + Georgia.
 import React, { useState, useEffect, useMemo } from 'react';
+import HelpMark from '../shared/helpmark.jsx';
+
+const RAIL_HELP = {
+  'FEATURED':         'A hand-picked story the system thinks is worth your attention right now.',
+  'THE SCROLL':       'A quick-scroll list of smaller stories, for when you just want headlines.',
+  'DOMAIN PRESSURE':  'Which topic areas (Tech, Money, Career, etc.) have the most activity right now.',
+  'SIGNAL WIRE':      'A raw feed of individual signals as they come in, without editorial grouping.',
+};
 
 const MONO  = "'IBM Plex Mono', monospace";
 const SERIF = "Georgia, 'Times New Roman', serif";
@@ -316,8 +324,8 @@ function RailSection({ label, children, first = false }) {
   return (
     <div style={{ borderTop: first ? 'none' : `1px solid ${RULE}`, marginTop: first ? 0 : 20, paddingTop: first ? 0 : 18 }}>
       {label && (
-        <div style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:LIME, letterSpacing:'0.26em', marginBottom:12 }}>
-          {label}
+        <div style={{ fontFamily:MONO, fontSize:9, fontWeight:700, color:LIME, letterSpacing:'0.26em', marginBottom:12, display:'flex', alignItems:'center' }}>
+          {label}<HelpMark text={RAIL_HELP[label]} />
         </div>
       )}
       {children}

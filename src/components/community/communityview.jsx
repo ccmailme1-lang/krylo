@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import HelpMark from '../shared/helpmark.jsx';
 
 /* ── Krylo palette ── */
 const BG     = '#000000';
@@ -501,7 +502,7 @@ function DetailPanel() {
 
       {/* Overview */}
       <div style={{ padding:'16px 18px', borderBottom:`1px solid ${BORDER}` }}>
-        <div style={{ fontFamily: MONO, fontSize:9, color: T3, letterSpacing:'0.2em', marginBottom:14 }}>COMMUNITY OVERVIEW</div>
+        <div style={{ fontFamily: MONO, fontSize:9, color: T3, letterSpacing:'0.2em', marginBottom:14, display:'flex', alignItems:'center' }}>COMMUNITY OVERVIEW<HelpMark text="Basic facts about this community — who started it, when, and what category it's in." /></div>
         <Row label="Creator">
           <span style={{ fontFamily: MONO, fontSize:10, color: LIME, letterSpacing:'0.06em' }}>{DETAIL.creator}</span>
         </Row>
@@ -569,7 +570,7 @@ function DetailPanel() {
 
       {/* Member roles */}
       <div style={{ padding:'16px 18px 28px' }}>
-        <div style={{ fontFamily: MONO, fontSize:9, color: T3, letterSpacing:'0.2em', marginBottom:12 }}>MEMBER ROLE</div>
+        <div style={{ fontFamily: MONO, fontSize:9, color: T3, letterSpacing:'0.2em', marginBottom:12, display:'flex', alignItems:'center' }}>MEMBER ROLE<HelpMark text="What permission level each member has in this community — what they're allowed to post or moderate." /></div>
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {DETAIL.roles.map(r => (
             <div key={r.label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>

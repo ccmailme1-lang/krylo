@@ -1,6 +1,7 @@
 // WO-1322 — History Bay: telemetry log as audit trail (SAB Architect_03 patch)
 // Source of truth: getTelemetryLog() — session_open events + per-session traversal chain.
 import React, { useState, useEffect, useCallback } from 'react';
+import HelpMark from '../shared/helpmark.jsx';
 import { useUIStore }        from '../../store/useuistore.js';
 import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { getTelemetryLog }   from '../../engine/telemetry.js';
@@ -600,8 +601,8 @@ export default function HistoryBay({ onRerunNavigate }) {
         <div style={{ width: 296, flexShrink: 0 }} />
         {/* Align with center records panel */}
         <div style={{ flex: 1, padding: '16px 24px 12px' }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 4 }}>
-            INVESTIGATION HISTORY
+          <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 4, display:'flex', alignItems:'center' }}>
+            INVESTIGATION HISTORY<HelpMark text="Every search you've run before, saved here so you can revisit or re-run it." />
           </div>
           <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', marginBottom: 16 }}>
             {visibleHistory.length} SESSION{visibleHistory.length !== 1 ? 'S' : ''} · AUDIT TRAIL
@@ -699,8 +700,8 @@ export default function HistoryBay({ onRerunNavigate }) {
 
           {/* Transaction History */}
           <div style={{ marginTop: 32, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 14 }}>
-              TRANSACTION HISTORY
+            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', marginBottom: 14, display:'flex', alignItems:'center' }}>
+              TRANSACTION HISTORY<HelpMark text="A record of any paid or credit-based actions you've made." />
             </div>
             {visibleTransactions.length === 0 ? (
               <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.18em', paddingTop: 12 }}>
@@ -755,8 +756,8 @@ export default function HistoryBay({ onRerunNavigate }) {
           overflowY: 'auto', display: 'flex', flexDirection: 'column',
         }}>
           <div style={{ padding: '16px 18px 14px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-              Export & Save
+            <div style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.2em', textTransform: 'uppercase', display:'flex', alignItems:'center' }}>
+              Export & Save<HelpMark text="Download your history or save it, so you don't lose it." />
             </div>
           </div>
 
