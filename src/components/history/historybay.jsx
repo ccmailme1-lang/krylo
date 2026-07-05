@@ -608,24 +608,24 @@ export default function HistoryBay({ onRerunNavigate }) {
             {visibleHistory.length} SESSION{visibleHistory.length !== 1 ? 'S' : ''} · AUDIT TRAIL
           </div>
           {/* Big stats */}
-          <div style={{ display: 'flex', alignItems: 'stretch' }}>
+          <div style={{ display: 'flex', alignItems: 'stretch', gap: 24 }}>
             {[
               { value: visibleHistory.length,                                                                                            label: 'SESSIONS'     },
               { value: visibleTransactions.length,                                                                                       label: 'TRANSACTIONS' },
               { value: [...visibleHistory.filter(e => e.complete), ...visibleTransactions.filter(t => t.status === 'COMPLETE')].length,  label: 'COMPLETE'     },
               { value: visibleHistory.reduce((acc, e) => acc + (e.driftCount ?? 0), 0),                                                 label: 'DRIFT EVENTS' },
             ].map(({ value, label }, i) => (
-              <React.Fragment key={label}>
-                {i > 0 && <span style={{ display: 'inline-block', width: 1, height: 36, background: LIME, alignSelf: 'flex-start', margin: '0 32px' }} />}
-                <div>
-                  <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif", fontSize: 36, fontWeight: 700, color: 'rgba(255,255,255,0.88)', lineHeight: 1, letterSpacing: '-0.02em' }}>
-                    {String(value).padStart(2, '0')}
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
-                    {label}
-                  </div>
+              <div key={label} style={{
+                flex: '0 0 auto', background: '#000000', border: `1px solid ${BORDER}`,
+                padding: '14px 18px',
+              }}>
+                <div style={{ fontFamily: "system-ui, -apple-system, 'Segoe UI', sans-serif", fontSize: 36, fontWeight: 700, color: i % 2 === 0 ? LIME : '#007FFF', lineHeight: 1, letterSpacing: '-0.02em' }}>
+                  {String(value).padStart(2, '0')}
                 </div>
-              </React.Fragment>
+                <div style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.12em', marginTop: 5 }}>
+                  {label}
+                </div>
+              </div>
             ))}
           </div>
         </div>
