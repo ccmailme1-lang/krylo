@@ -1056,6 +1056,14 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
     justify-content:center;
     width:100%;
 }
+/* TODO (2026-07-05, Founder note): DNA cards are currently ON HOLD, kept in
+   place deliberately (not legacy/dead code — real, working, part of the
+   WO-1876/1876B "Search DNA"/Search Pods prototype). They're intentionally
+   near-invisible at rest (opacity 0.15/0.18) which makes them easy to miss
+   entirely. Bring forward / increase visibility when this feature is
+   reprioritized. Same code also lives in analysisidlefield.jsx and
+   targetpacket.jsx (writes/reads the shared krylo_search_dna localStorage
+   key) — do not touch one without the others. */
 .dna-card {
     display:flex;
     flex-direction:column;
