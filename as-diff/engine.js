@@ -23,6 +23,10 @@ const MAERSK_KEY = process.env.MAERSK_CONSUMER_KEY ||
 const DATA_GOV_KEY = process.env.DATA_GOV_API_KEY ||
   (existsSync('./specs/data_gov.env') ? readFileSync('./specs/data_gov.env', 'utf8').trim() : '');
 
+// KRYL-969 Phase 1 — Companies House key (env var preferred; falls back to specs/companies_house.env)
+const COMPANIES_HOUSE_KEY = process.env.COMPANIES_HOUSE_API_KEY ||
+  (existsSync('./specs/companies_house.env') ? readFileSync('./specs/companies_house.env', 'utf8').trim() : '');
+
 // ── Proxy response cache ──────────────────────────────────────────────────────
 // TTL matched to hook poll intervals: FRED = 5min, EDGAR = 15min.
 // Prevents redundant upstream calls when multiple clients poll simultaneously.
@@ -53,6 +57,12 @@ const USASPENDING_TTL_MS = 86_400_000; // 24h — obligation data posts daily; n
 const FDA_TTL_MS      = 86_400_000; // 24h — approval counts change daily at most
 const FEC_TTL_MS      = 3_600_000;  // 1h
 const CENSUS_TTL_MS   = 86_400_000; // 24h — ACS annual data, no point re-fetching often
+// KRYL-969 Phase 1 — Narrative Snapshot Capture (Wayback Machine)
+const WAYBACK_TTL_MS  = 2_592_000_000; // 30d — archived captures are immutable, safe to cache long
+// KRYL-969 Phase 1 — EDGAR filing document fetch (distinct from existing efts.sec.gov search-index proxy)
+const EDGAR_DOC_TTL_MS = 2_592_000_000; // 30d — filed documents never change once filed
+// KRYL-969 Phase 1 — Companies House
+const COMPANIES_HOUSE_TTL_MS  = 86_400_000; // 24h — profile/filings don't change intraday
 
 function getCached(key, ttlMs) {
   const entry = PROXY_CACHE.get(key);
@@ -1013,6 +1023,161 @@ function handleCensusAcsProxy(req, res) {
   proxy.on('error', err => send(res, 502, { error: err.message })); proxy.end();
 }
 
+// KRYL-969 Phase 1 — Wayback Machine CDX proxy (list of captures for a domain)
+// Free, unauthenticated, public API — archive.org/help/wayback_api.php
+function handleWaybackCdxProxy(req, res) {
+  const url  = new URL(req.url, 'http://localhost');
+  const site = url.searchParams.get('url') ?? '';
+  const from = url.searchParams.get('from') ?? '';
+  const to   = url.searchParams.get('to') ?? '';
+  const key  = 'wayback-cdx:' + site + ':' + from + ':' + to;
+  const hit  = getCached(key, WAYBACK_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+
+  const params = new URLSearchParams({ url: site, output: 'json' });
+  if (from) params.set('from', from);
+  if (to)   params.set('to', to);
+
+  const options = {
+    hostname: 'web.archive.org',
+    path: `/cdx/search/cdx?${params}`,
+    method: 'GET',
+    headers: { 'Accept': 'application/json', 'User-Agent': 'krylo-signal-engine/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'Wayback CDX upstream: ' + err.message }));
+  proxy.end();
+}
+
+// KRYL-969 Phase 1 — Wayback Machine archived snapshot proxy (actual captured page)
+// Returns the archived HTML/text verbatim — NOT JSON — caller extracts narrative text from it.
+function handleWaybackSnapshotProxy(req, res) {
+  const url       = new URL(req.url, 'http://localhost');
+  const timestamp = url.searchParams.get('timestamp') ?? '';
+  const site      = url.searchParams.get('url') ?? '';
+  const key       = 'wayback-snapshot:' + timestamp + ':' + site;
+  const hit       = getCached(key, WAYBACK_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'text/html', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+
+  const options = {
+    hostname: 'web.archive.org',
+    path: `/web/${encodeURIComponent(timestamp)}/${site}`,
+    method: 'GET',
+    headers: { 'Accept': 'text/html', 'User-Agent': 'krylo-signal-engine/1.0' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'text/html', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'Wayback snapshot upstream: ' + err.message }));
+  proxy.end();
+}
+
+// KRYL-969 Phase 1 — EDGAR filing document proxy (raw filing text, not the search index)
+// efts.sec.gov (existing handleEdgarProxy) only returns search hits; the actual filed
+// document lives on www.sec.gov/Archives and is not proxied elsewhere — CORS blocks a
+// direct browser fetch, so this route exists solely to forward the document bytes.
+function handleEdgarDocumentProxy(req, res) {
+  const url       = new URL(req.url, 'http://localhost');
+  const cik       = url.searchParams.get('cik') ?? '';
+  const accession = url.searchParams.get('accession') ?? '';
+  const file      = url.searchParams.get('file') ?? '';
+  const key       = 'edgar-doc:' + cik + ':' + accession + ':' + file;
+  const hit       = getCached(key, EDGAR_DOC_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'text/html', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+
+  const options = {
+    hostname: 'www.sec.gov',
+    path: `/Archives/edgar/data/${encodeURIComponent(cik)}/${encodeURIComponent(accession)}/${file}`,
+    method: 'GET',
+    headers: { 'Accept': 'text/html', 'User-Agent': 'Krylo Signal Engine admin@krylo.org' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'text/html', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'EDGAR document upstream: ' + err.message }));
+  proxy.end();
+}
+
+// KRYL-969 Phase 1 — Companies House company profile (includes sic_codes — declared nature-of-business)
+function handleCompaniesHouseProfileProxy(req, res) {
+  const url           = new URL(req.url, 'http://localhost');
+  const companyNumber = url.searchParams.get('companyNumber') ?? '';
+  const key           = 'ch-profile:' + companyNumber;
+  const hit           = getCached(key, COMPANIES_HOUSE_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  if (!COMPANIES_HOUSE_KEY) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({})); return; }
+
+  const options = {
+    // Test-type API keys (specs/companies_house.env is currently a Test key) only work
+    // against the sandbox host — the production host rejects them with a clean 401.
+    // Confirmed via Companies House's own docs, 2026-07-05. SANDBOX DATA IS SYNTHETIC —
+    // real company numbers (e.g. Tesco PLC) will not resolve here. Swap to
+    // 'api.company-information.service.gov.uk' once a Live application key exists.
+    hostname: 'api-sandbox.company-information.service.gov.uk',
+    path: `/company/${encodeURIComponent(companyNumber)}`,
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'krylo-signal-engine/1.0',
+      // Companies House auth: HTTP Basic, API key as username, blank password
+      'Authorization': 'Basic ' + Buffer.from(COMPANIES_HOUSE_KEY + ':').toString('base64'),
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'Companies House upstream: ' + err.message }));
+  proxy.end();
+}
+
+// KRYL-969 Phase 1 — Companies House filing history (links to accounts/strategic-report documents)
+function handleCompaniesHouseFilingHistoryProxy(req, res) {
+  const url           = new URL(req.url, 'http://localhost');
+  const companyNumber = url.searchParams.get('companyNumber') ?? '';
+  const key           = 'ch-filing-history:' + companyNumber;
+  const hit           = getCached(key, COMPANIES_HOUSE_TTL_MS);
+  if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  if (!COMPANIES_HOUSE_KEY) { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ items: [] })); return; }
+
+  const options = {
+    // Test-type API keys (specs/companies_house.env is currently a Test key) only work
+    // against the sandbox host — the production host rejects them with a clean 401.
+    // Confirmed via Companies House's own docs, 2026-07-05. SANDBOX DATA IS SYNTHETIC —
+    // real company numbers (e.g. Tesco PLC) will not resolve here. Swap to
+    // 'api.company-information.service.gov.uk' once a Live application key exists.
+    hostname: 'api-sandbox.company-information.service.gov.uk',
+    path: `/company/${encodeURIComponent(companyNumber)}/filing-history`,
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'krylo-signal-engine/1.0',
+      'Authorization': 'Basic ' + Buffer.from(COMPANIES_HOUSE_KEY + ':').toString('base64'),
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
+      setCached(key, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' }); res.end(body);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'Companies House upstream: ' + err.message }));
+  proxy.end();
+}
+
 // ── WO-1043: Router ───────────────────────────────────────────────────────────
 
 function routeRequest(req, res) {
@@ -1054,6 +1219,12 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/fda-devices')                   return handleFdaDevicesProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fec')                           return handleFecProxy(req, res);
   if (req.method === 'GET'  && url === '/api/census-acs')                    return handleCensusAcsProxy(req, res);
+  // KRYL-969 Phase 1 — Narrative Snapshot Capture
+  if (req.method === 'GET'  && url === '/api/wayback-cdx')                   return handleWaybackCdxProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/wayback-snapshot')              return handleWaybackSnapshotProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/edgar-document')                return handleEdgarDocumentProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/companies-house-profile')       return handleCompaniesHouseProfileProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/companies-house-filing-history') return handleCompaniesHouseFilingHistoryProxy(req, res);
   handleNotFound(req, res);
 }
 
