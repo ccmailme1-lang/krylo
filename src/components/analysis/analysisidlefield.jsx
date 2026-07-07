@@ -48,7 +48,7 @@ const MAX_EVENTS         = 50;
 const EMA_ALPHA          = 0.18;
 const PACKET_COOLDOWN_MS = 4000;
 const MAX_PACKETS        = 6;
-const domains            = ['FINANCIAL', 'MARKET', 'LEGAL', 'HEALTH', 'CAREER', 'TECHNOLOGY'];
+const domains            = ['FINANCIAL', 'MARKET', 'LEGAL', 'HEALTH', 'CAREER', 'TECHNOLOGY', 'MEDIA', 'OWNERSHIP'];
 
 const HORIZON_LABELS = {
   IMMEDIATE:  'NOW',
@@ -68,6 +68,8 @@ const DOMAIN_CHIPS = [
   { key: 'HEALTH',     label: 'HEALTH',     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> },
   { key: 'CAREER',     label: 'CAREER',     icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg> },
   { key: 'TECHNOLOGY', label: 'TECHNOLOGY', icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg> },
+  { key: 'MEDIA',      label: 'MEDIA',      icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="15" rx="2"/><path d="M17 2l-5 5-5-5"/></svg> },
+  { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> },
 ];
 
 const DOMAIN_PRECURSORS = {
@@ -77,6 +79,8 @@ const DOMAIN_PRECURSORS = {
   HEALTH:     ['COVERAGE GAP',     'COST TRAJECTORY','ACCESS SIGNAL'],
   CAREER:     ['LABOR PRESSURE',   'HIRE VELOCITY',  'WAGE FLUX'],
   TECHNOLOGY: ['ADOPTION RATE',    'PATENT FLUX',    'DEPLOY SIGNAL'],
+  MEDIA:      ['NEWS VELOCITY',    'NARRATIVE SHIFT','MESSAGE SPEND'],
+  OWNERSHIP:  ['SUPPLY CONSTRAINT','CONTROL SHIFT',  'ASSET CONCENTRATION'],
 };
 
 const SIGNAL_SCOPE_OPTIONS = [
@@ -140,52 +144,6 @@ function deriveProxy(frames, prevCount) {
     signal_persistence:       1 - volatility,
   };
 }
-
-const FieldCanvas = React.memo(function FieldCanvas({ fieldParamsRef, projectedStateRef }) {
-  const canvasRef = useRef(null);
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const parent = canvas.parentElement;
-    const ctx    = canvas.getContext('2d', { alpha: false });
-    const resize = () => {
-      canvas.width  = parent.offsetWidth;
-      canvas.height = parent.offsetHeight;
-      ctx.fillStyle = BG;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
-    resize();
-    const ro = new ResizeObserver(resize);
-    ro.observe(parent);
-    const particles = Array.from({ length: 360 }, () => ({
-      x: Math.random() * canvas.width,  y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 1.1, vy: (Math.random() - 0.5) * 1.1,
-      size: Math.random() * 1.6 + 0.9, intensity: Math.random(),
-      phase: Math.random() * Math.PI * 2,
-    }));
-    let frame;
-    const animate = () => {
-      const { density, driftVelocity, opacityGrad } = fieldParamsRef.current;
-      const { stateId } = projectedStateRef.current;
-      ctx.fillStyle = 'rgba(0,0,0,0.08)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      const t = Date.now();
-      particles.forEach((p, i) => {
-        const drift = driftVelocity * (density * 1.1 + 0.15);
-        p.x += p.vx * drift; p.y += p.vy * drift;
-        if (p.x < 0 || p.x > canvas.width)  p.vx *= -0.94;
-        if (p.y < 0 || p.y > canvas.height) p.vy *= -0.94;
-        p.intensity = Math.max(0.08, Math.sin(t / 260 + p.phase + i * 0.1) * 0.45 + density);
-        const alpha = p.intensity * opacityGrad * (stateId >= 2 ? 0.82 : 0.48);
-        ctx.fillStyle = stateId >= 3 ? `rgba(102,255,0,${alpha})` : `rgba(102,255,0,${alpha * 0.6})`;
-        ctx.fillRect(p.x, p.y, p.size, p.size);
-      });
-      frame = requestAnimationFrame(animate);
-    };
-    animate();
-    return () => { cancelAnimationFrame(frame); ro.disconnect(); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  return <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />;
-});
 
 function PacketRow({ packet }) {
   return (
@@ -657,8 +615,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
   });
   const [packets, setPackets] = useState([]);
 
-  const fieldParamsRef    = useRef({ density: 0.12, driftVelocity: 1, opacityGrad: 0.4 });
-  const projectedStateRef = useRef(projectedState);
   const prevCountRef      = useRef(0);
   const emaRef            = useRef(0);
   const stableRef         = useRef(0);
@@ -680,14 +636,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
                       : projectedState.stateId >= 2 ? 'rgba(102,255,0,0.4)'
                       : 'rgba(255,255,255,0.15)';
 
-  const fieldParams = useMemo(() => ({
-    density:       Math.min(1, (stats?.received ?? 0) / 100),
-    driftVelocity: Math.max(0.3, Math.min(2, 1 + (lagMs ?? 42) / 500)),
-    opacityGrad:   0.4 + projectedState.convergenceScore * 0.6,
-  }), [stats, lagMs, projectedState.convergenceScore]);
-
-  useEffect(() => { fieldParamsRef.current    = fieldParams;    }, [fieldParams]);
-  useEffect(() => { projectedStateRef.current = projectedState; }, [projectedState]);
   useEffect(() => () => clearTimeout(processingTimer.current), []);
 
   useEffect(() => {
@@ -1341,8 +1289,6 @@ export default function AnalysisIdleField({ activeCones = null }) {
 
         {/* ── MAIN FIELD ───────────────────────────────────────────────── */}
         <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-
-          <FieldCanvas fieldParamsRef={fieldParamsRef} projectedStateRef={projectedStateRef} />
 
           {/* Header */}
           <div style={{

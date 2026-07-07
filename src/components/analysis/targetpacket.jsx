@@ -276,7 +276,7 @@ function Sparkline({ points, color = LIME, w = 120, h = 32 }) {
   if (!points?.length) return null;
   const max = Math.max(...points), min = Math.min(...points);
   const range = max - min || 1;
-  const xs = points.map((_, i) => (i / (points.length - 1)) * w);
+  const xs = points.map((_, i) => (i / Math.max(points.length - 1, 1)) * w);
   const ys = points.map(p => h - ((p - min) / range) * h * 0.85 - h * 0.075);
   const d  = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   return (
@@ -315,10 +315,11 @@ function DonutGauge({ value, color = LIME, size = 72 }) {
 }
 
 function TrajectoryChart({ points, color = LIME, w = '100%', h = 60 }) {
+  if (!points?.length) return null;
   const max = Math.max(...points), min = Math.min(...points);
   const range = max - min || 1;
   const W = 200;
-  const xs = points.map((_, i) => (i / (points.length - 1)) * W);
+  const xs = points.map((_, i) => (i / Math.max(points.length - 1, 1)) * W);
   const ys = points.map(p => h - ((p - min) / range) * h * 0.8 - h * 0.1);
   const d  = xs.map((x, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
   return (

@@ -20,7 +20,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 7.0;
+const CONE_HEIGHT_SCALE = 6.5; // was 7.0 — reduced 2026-07-07 for margin against PulseFloor's outer ring (7.2)
 const DRAG_SENSITIVITY  = 0.01; // radians per pixel of horizontal drag while frozen
 const STEP_DURATION     = 0.15; // seconds — short, snappy ease for arrow-button step
 
@@ -1076,7 +1076,22 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
 // Layer 1: System pulse floor — concentric rings, slow heartbeat opacity
 // (encodes "field is live" per Tufte motion-economy carve-out for state encoding)
-function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
+//
+// Wired to real data (2026-07-07): previously pure decoration — color was a
+// fixed grey, opacity pulsed on elapsed time only, nothing here reflected any
+// actual signal. Now driven by the same globalPressure/globalCS values that
+// already drive AnalysisSubstrate/AnalysisDomainField — color uses the exact
+// locked convergence-state palette (CLAUDE.md §6), pulse speed scales with
+// real signal pressure. No new colors introduced — reusing already-approved
+// constants in a new context.
+const CONVERGENCE_COLOR = {
+  INSUFFICIENT_SIGNAL:   '#3a3d4a', // muted slate
+  BUILDING_CONVERGENCE:  '#66FF00', // lime
+  TURBULENT_CONVERGENCE: '#007FFF', // blue
+  HIGH_CONVERGENCE:      '#8A2BE2', // purple
+};
+
+function PulseFloor({ ringCount = 6, maxRadius = 8, pressure = 0, convergenceState = 'INSUFFICIENT_SIGNAL' }) {
   const matRef = useRef();
   const positions = useMemo(() => {
     const segs = 64;
@@ -1095,9 +1110,14 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
     return new Float32Array(verts);
   }, [ringCount, maxRadius]);
 
+  const color = CONVERGENCE_COLOR[convergenceState] ?? CONVERGENCE_COLOR.INSUFFICIENT_SIGNAL;
+  // Pulse speed scales with real pressure (0-1) — higher signal volume = faster heartbeat.
+  // 2.1 was the original fixed period; pressure compresses it down to ~0.7 at max.
+  const pulsePeriod = 2.1 - pressure * 1.4;
+
   useFrame(({ clock }) => {
     if (!matRef.current) return;
-    matRef.current.opacity = 0.45 + 0.20 * Math.sin(clock.elapsedTime * Math.PI / 2.1);
+    matRef.current.opacity = 0.45 + 0.20 * Math.sin(clock.elapsedTime * Math.PI / pulsePeriod);
   });
 
   return (
@@ -1105,7 +1125,7 @@ function PulseFloor({ ringCount = 6, maxRadius = 8 }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <lineBasicMaterial ref={matRef} color="#4A4A4A" transparent opacity={0.45} />
+      <lineBasicMaterial ref={matRef} color={color} transparent opacity={0.45} />
     </lineSegments>
   );
 }
@@ -1874,7 +1894,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   return (
     <>
       <group ref={gridGroupRef}>
-        <PulseFloor ringCount={6} maxRadius={R + 1.2} />
+        <PulseFloor ringCount={7} maxRadius={R + 2.4} />
         <ThresholdBands />
 
       </group>
@@ -1902,9 +1922,16 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           const pos   = [R * Math.cos(angle), 0, R * Math.sin(angle)];
           const kDomain = CONE_TO_KALSHI_DOMAIN[state.domain] ?? 'SIGNAL';
           const kalshiSignal = kalshiMap[kDomain] ?? null;
+          // Footprint ring must track the cone's own base radius — was hardcoded
+          // to a fixed 1.1 regardless of actual signal-driven size, so wide
+          // (high-pressure) cones visually overflowed their ring and narrow ones
+          // looked oversized relative to their cone. Same encodeCone() + 1.5972
+          // scale factor the cone geometry itself uses, so the ring always
+          // matches what's actually rendered.
+          const { radius: footRadius } = encodeCone(state, { focusId: null });
           return (
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
-              <Footprint position={[0, 0, 0]} radius={1.1} />
+              <Footprint position={[0, 0, 0]} radius={footRadius * 1.5972} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
               <Cone
                 state={state}

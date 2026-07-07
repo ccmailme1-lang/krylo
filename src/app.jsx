@@ -61,6 +61,7 @@ import LensProjection    from './components/analysis/lensprojection.jsx';
 import OracleEngine      from './components/analysis/oracleengine.jsx';
 import ActionMatrix      from './components/analysis/actionmatrix.jsx';
 import AnalysisSubstrate  from './components/analysis/analysissubstrate.jsx';
+import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
@@ -858,6 +859,34 @@ export default function App() {
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const activeCones = useMemo(() => buildActiveCones(liveSignals, coneColorOverrides), [liveSignals, coneColorOverrides]);
 
+  // Analysis Bay domain node field — real "full signal access" (per Founder
+  // direction: Analysis sees ALL, not a filtered subset). liveSignals above
+  // only covers mergedRecords' sources (pool/hn/frame/ingest/fred/edgar/
+  // kalshi) — it does NOT include the many connectors that dispatch straight
+  // to surfaceRouter (GDELT/FEC/Maersk/Census/BLS/Treasury/WorldBank/FHFA/
+  // USGS/FDA/USASpending, etc.). Subscribing directly to surfaceRouter is the
+  // only path that actually sees everything. Unique surfaceId — does not
+  // conflict with AnalysisLensPage's separate 'analysis' subscription.
+  const [routedSignals, setRoutedSignals] = useState([]);
+  usesurfacerouter('analysis-domain-field', [EVENT_DOMAIN.ORACLE, EVENT_DOMAIN.FEED, EVENT_DOMAIN.ANALYSIS], (event, op) => {
+    if (!event || op === HYDRATION_OP.RECONCILE) return;
+    if (op !== HYDRATION_OP.APPEND && op !== HYDRATION_OP.PATCH) return;
+    setRoutedSignals(prev => {
+      const withoutDup = event.id ? prev.filter(e => e.id !== event.id) : prev;
+      return [...withoutDup, event].slice(-200); // cap — this is a live ambient field, not an archive
+    });
+  });
+
+  const domainFieldSignals = useMemo(() => {
+    const fromRouter = routedSignals.map(e => ({
+      id:     e.id ?? `${e.source}-${e.ts}`,
+      domain: e.domain ?? null,
+      // connectors dispatch signal already normalized 0-100 per §16 — convert to 0-1 like liveSignals does
+      fs:     typeof e.signal === 'number' ? e.signal / 100 : (e.confidence ?? 0),
+    }));
+    return [...liveSignals, ...fromRouter];
+  }, [liveSignals, routedSignals]);
+
   const isLive = scrubPos === 0;
 
   // Sync scrub position via timestamp authority — prevents frame-count drift
@@ -1208,7 +1237,7 @@ export default function App() {
 
       {navMode === 'analysis' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <AnalysisSubstrate pressure={globalPressure} convergenceState={globalCS} />
+          <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} />
           <AnalysisIdleField activeCones={activeCones} />
         </div>
       )}
