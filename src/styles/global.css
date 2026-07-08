@@ -96,3 +96,9 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* Guest-action attention cue — blue sphere on the REFORMULATE label. */
+@keyframes reformulate-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.12; }
+}

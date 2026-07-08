@@ -655,14 +655,17 @@ export default function TargetPacket() {
                         </div>
                       )}
                       <div style={{ marginTop: 6 }}>
-                        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase', marginBottom: 8 }}>
-                          REFORMULATE →
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#007FFF', flexShrink: 0, animation: 'reformulate-blink 1.1s ease-in-out infinite' }} />
+                          <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase' }}>
+                            REFORMULATE →
+                          </span>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                           {suggestions.map((s, i) => (
                             <div
                               key={i}
-                              onClick={() => window.postMessage({ type: 'krylo-submit', label: s }, '*')}
+                              onClick={() => window.postMessage({ type: 'krylo-submit', query: s }, '*')}
                               style={{
                                 fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em',
                                 padding: '4px 10px',

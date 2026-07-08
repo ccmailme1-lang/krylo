@@ -19,7 +19,7 @@ import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
 import { transformIntentToConstraints } from '../../engine/baylogic.js';
 import { computeStructuralFriction }   from '../../engine/structuralfriction.js';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
-import DomainMetricsMatrix from './domainmetricsmatrix.jsx';
+import { useDomainMetrics } from '../../hooks/useDomainMetrics.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
@@ -482,28 +482,31 @@ const DNA_METRICS = [
   { key: 'domains_count', label: 'DOMAINS EXPLORED', isNumeric: true  },
   { key: 'last_query',    label: 'LAST SIGNAL',      isNumeric: false, fmt: v => v ? (v.length > 15 ? v.slice(0,15)+'…' : v) : '—' },
   { key: 'streak',        label: 'SESSION STREAK',   isNumeric: true,  fmt: v => v + 'd' },
-  // Context Projection Layer (specs/six-domain-cards-plan.md) — slots A-F.
-  // Only ctx_domain has a real source today; the rest render '—' (honest absence,
-  // not fabricated) until each is individually built and marked DONE.
-  { key: 'ctx_domain',      label: 'DOMAIN',      isNumeric: false, fmt: v => v?.replace(/_/g,' ') ?? '—' },
-  { key: 'ctx_question',    label: 'QUESTION',    isNumeric: false },
-  { key: 'ctx_window',      label: 'WINDOW',      isNumeric: false },
-  { key: 'ctx_evidence',    label: 'EVIDENCE',    isNumeric: false },
-  { key: 'ctx_connections', label: 'CONNECTIONS', isNumeric: false },
-  { key: 'ctx_thesis',      label: 'THESIS',      isNumeric: false },
+  // §18 Metrics Truth Engine — Vital Six, sourced from domainmetricsstore.js
+  // (real computeMetrics() snapshots, scoped to the selected domain chip).
+  // Detection trio (measured) + economics trio (modeled) — never blended.
+  { key: 'dm_signal',      label: 'SIGNAL',      isNumeric: true, fmt: v => `${Math.round(v * 100)}%` },
+  { key: 'dm_validity',    label: 'VALIDITY',    isNumeric: true, fmt: v => `${Math.round(v * 100)}%` },
+  { key: 'dm_convergence', label: 'CONVERGENCE', isNumeric: true, fmt: v => `${Math.round(v * 100)}%` },
+  { key: 'dm_cac',         label: 'CAC',         isNumeric: true, fmt: v => `$${Math.round(v)}` },
+  { key: 'dm_roas',        label: 'ROAS',        isNumeric: true, fmt: v => `${v.toFixed(1)}x` },
+  { key: 'dm_ltv',         label: 'LTV',         isNumeric: true, fmt: v => `$${Math.round(v)}` },
 ];
 const DNA_METRIC_MAP = Object.fromEntries(DNA_METRICS.map(m => [m.key, m]));
 
 function defaultDnaCards() {
-  const cx = typeof window !== 'undefined' ? Math.round(window.innerWidth / 2 + 336) : 940;
+  const cxRight = typeof window !== 'undefined' ? Math.min(Math.round(window.innerWidth / 2 + 336), window.innerWidth - 156) : 940;
+  const cxLeft  = typeof window !== 'undefined' ? Math.max(8, Math.round(window.innerWidth / 2 - 336 - 148)) : 316;
   const cy = typeof window !== 'undefined' ? Math.round(window.innerHeight / 2 - 160) : 200;
   return [
-    { id: 'c0', metricKey: 'ctx_domain',      x: cx, y: cy },
-    { id: 'c1', metricKey: 'ctx_question',    x: cx, y: cy + 110 },
-    { id: 'c2', metricKey: 'ctx_window',      x: cx, y: cy + 220 },
-    { id: 'c3', metricKey: 'ctx_evidence',    x: cx, y: cy + 330 },
-    { id: 'c4', metricKey: 'ctx_connections', x: cx, y: cy + 440 },
-    { id: 'c5', metricKey: 'ctx_thesis',      x: cx, y: cy + 550 },
+    // Detection trio — left
+    { id: 'c0', metricKey: 'dm_signal',      x: cxLeft,  y: cy },
+    { id: 'c1', metricKey: 'dm_validity',    x: cxLeft,  y: cy + 110 },
+    { id: 'c2', metricKey: 'dm_convergence', x: cxLeft,  y: cy + 220 },
+    // Economics trio — right
+    { id: 'c3', metricKey: 'dm_cac',         x: cxRight, y: cy },
+    { id: 'c4', metricKey: 'dm_roas',        x: cxRight, y: cy + 110 },
+    { id: 'c5', metricKey: 'dm_ltv',         x: cxRight, y: cy + 220 },
   ];
 }
 
@@ -552,8 +555,15 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   // WO-1876B — draggable objective cards
   const [dnaCards, setDnaCards] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('krylo_dna_cards_v2') ?? 'null');
-      if (Array.isArray(saved) && saved.length === 6) return saved;
+      const saved = JSON.parse(localStorage.getItem('krylo_dna_cards_v4') ?? 'null');
+      // Guard: discard any saved set containing a metricKey that no longer
+      // exists in DNA_METRICS (stale schema from a previous card set), and
+      // clamp positions on-screen so no card can be stranded off-viewport.
+      if (Array.isArray(saved) && saved.length === 6 && saved.every(c => DNA_METRIC_MAP[c.metricKey])) {
+        const maxX = (typeof window !== 'undefined' ? window.innerWidth : 1200) - 156;
+        const maxY = (typeof window !== 'undefined' ? window.innerHeight : 800) - 90;
+        return saved.map(c => ({ ...c, x: Math.min(Math.max(8, c.x), maxX), y: Math.min(Math.max(8, c.y), maxY) }));
+      }
     } catch {}
     return defaultDnaCards();
   });
@@ -561,7 +571,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const dragRef = useRef(null); // { id, startMx, startMy, startX, startY, moved }
 
   useEffect(() => {
-    try { localStorage.setItem('krylo_dna_cards_v2', JSON.stringify(dnaCards)); } catch {}
+    try { localStorage.setItem('krylo_dna_cards_v4', JSON.stringify(dnaCards)); } catch {}
   }, [dnaCards]);
 
   useEffect(() => {
@@ -628,11 +638,23 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const [intentMagnitude, setIntentMagnitude] = useState(50);
   // WO-1878 — Mission Builder state
   const [selectedDomains, setSelectedDomains] = useState([]);
+  // Two distinct taxonomies exist by design (specs/analysis-domain-taxonomy-
+  // unification.md): selectedDomains[0] is the raw 8-pill UI key the user
+  // clicked (e.g. "FINANCIAL") — used for display, DOMAIN_PRECURSORS lookup,
+  // and tensor.domainLock/synthesis.queryDomain. selectedLockedDomain is the
+  // engine's locked-six bucket it maps onto (e.g. "CAPITAL") — used ONLY by
+  // consumers that require the locked six (AnalysisDomainField's real
+  // connector-tagged signals). Computed once here, not inlined per call site,
+  // so a future card can't accidentally grab the wrong one.
+  const selectedLockedDomain = useMemo(
+    () => selectedDomains[0] ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null) : null,
+    [selectedDomains]
+  );
+  const { data: domainMetrics } = useDomainMetrics(selectedDomains[0]);
   useEffect(() => {
     if (!onDomainSelect) return;
-    const mapped = selectedDomains[0] ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null) : null;
-    onDomainSelect(mapped);
-  }, [selectedDomains, onDomainSelect]);
+    onDomainSelect(selectedLockedDomain);
+  }, [selectedLockedDomain, onDomainSelect]);
   const [outputFilters,   setOutputFilters]   = useState({ precursors: true, risks: true, opportunities: true, contradictions: true });
   const [signalScope,     setSignalScope]      = useState('live');
   const signalShownRef   = useRef(false);
@@ -1436,16 +1458,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 )}
 
-                {/* ── DOMAIN METRICS MATRIX ── */}
-                {/* Reads the SAME raw chip key targetpacket.jsx writes under (via
-                    tensor.domainLock -> synthesis.queryDomain) — no six-locked-domain
-                    remap here, or the write key and read key never match. */}
-                {selectedDomains[0] && (
-                  <div style={{ marginBottom: 14 }}>
-                    <DomainMetricsMatrix activeDomain={selectedDomains[0]} />
-                  </div>
-                )}
-
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
                 <div style={{
                   background: 'rgba(10,10,10,0.96)',
@@ -1567,8 +1579,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           {/* WO-1876B — DNA objective cards: draggable, click-configurable, fixed-positioned */}
           {!hasSession && dnaCards.map(card => {
             const metric   = DNA_METRIC_MAP[card.metricKey];
-            const rawVal   = card.metricKey === 'ctx_domain'
-              ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null)
+            const rawVal   = card.metricKey.startsWith('dm_')
+              ? (domainMetrics?.[card.metricKey.slice(3)]?.value ?? null)
               : dna?.[card.metricKey];
             const display  = rawVal !== undefined && rawVal !== null
               ? (metric.fmt ? metric.fmt(rawVal) : String(rawVal))
@@ -1591,7 +1603,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   padding: '13px 15px 11px',
                   cursor: 'grab',
                   userSelect: 'none',
-                  zIndex: 8800,
+                  zIndex: isOpen ? 8900 : 8800,
                   pointerEvents: 'auto',
                   transition: 'border-color 120ms',
                 }}
@@ -1607,13 +1619,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 </div>
 
                 {/* Value */}
-                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: metric.isNumeric ? LIME : '#fff', letterSpacing: '0.02em', lineHeight: 1, marginTop: 7 }}>
+                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: metric.isNumeric ? LIME : '#fff', letterSpacing: '0.02em', lineHeight: 1.15, marginTop: 7, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {display}
                 </div>
 
                 {/* Config hint */}
-                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.22)', textTransform: 'uppercase', marginTop: 5 }}>
+                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.22)', textTransform: 'uppercase', marginTop: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                   TAP TO CONFIGURE
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 120ms' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
                 </div>
 
                 {/* Metric picker */}
@@ -1624,11 +1639,12 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     style={{
                       position: 'absolute', top: 'calc(100% + 6px)', left: 0,
                       width: 192,
+                      maxHeight: 220,
+                      overflowY: 'auto',
                       background: 'rgba(4,6,9,0.97)',
                       border: '1px solid rgba(255,255,255,0.10)',
                       borderRadius: 6,
                       zIndex: 8801,
-                      overflow: 'hidden',
                     }}
                   >
                     <div style={{ padding: '7px 12px 5px', fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.22)', textTransform: 'uppercase', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
