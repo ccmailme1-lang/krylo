@@ -793,7 +793,7 @@ export default function App() {
   const activeSession = activeSessionId ? (sessions[activeSessionId] ?? null) : null;
   const canonical     = useOracleMapper(activeSession);
 
-  const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now(), node_id, domain, routing_target } = {}) => {
+  const handleSessionBootstrap = useCallback(({ query, source = 'unknown', timestamp = Date.now(), node_id, domain, routing_target, navigate = true } = {}) => {
     let q = (typeof query === 'string' ? query : '').trim();
     let detectedLens = null;
 
@@ -810,9 +810,11 @@ export default function App() {
 
     if (!q) return;
 
-    // WO-1845 — geo-disambiguation gate (pre-synthesis ingestion boundary)
+    // WO-1845 — geo-disambiguation gate (pre-synthesis ingestion boundary).
+    // Only gate in the foreground (navigate) path — a background process
+    // (KRYL-1001: cone assignment) must never pop the disambiguation UI.
     const geo = resolveGeo(q);
-    if (geo.geoAmbiguous) {
+    if (navigate && geo.geoAmbiguous) {
       setGeoPending({ query: q, locationToken: geo.locationToken, candidates: geo.candidates, source, node_id, domain, routing_target });
       return; // block — do not create session until resolved
     }
@@ -821,7 +823,9 @@ export default function App() {
     const lens = detectedLens ?? '10K View';
     createSession(sessionId, lens, q, { source, node_id, domain, routing_target });
     emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
-    setNavMode('analysis');
+    // KRYL-1001 — background processing (cone assignment) populates analysis
+    // without switching the view; only the foreground path navigates.
+    if (navigate) setNavMode('analysis');
   }, [createSession]);
 
   // WO-1092 Phase A — route merged records into surface subscriptions
@@ -1016,6 +1020,27 @@ export default function App() {
     const xrayBay = Object.values(bays).find(b => b.xrayOpen && b.assignment !== null);
     setXrayQuery(xrayBay ? xrayBay.assignment.title : '');
   }, [bays]);
+
+  // KRYL-1001 (CRE) — on cone assignment, populate analysis in the background:
+  // create + activate the anchor's session via the direct store action (NOT
+  // handleSessionBootstrap — that foreground path's geo/lens/telemetry/nav side
+  // effects are not wanted here). Placed AFTER `bays` is declared (its earlier
+  // position hit a temporal-dead-zone ReferenceError). Idempotent via ref guard,
+  // null-guarded, wrapped. No navigation — only the "Full Analysis" link navigates.
+  const processedAnchorsRef = useRef(new Set());
+  useEffect(() => {
+    try {
+      for (const b of Object.values(bays ?? {})) {
+        const subject = b?.assignment?.title;
+        if (subject && !processedAnchorsRef.current.has(subject)) {
+          processedAnchorsRef.current.add(subject);
+          createSession(`session_cre_${subject}`, '10K View', subject, { source: 'cone-assignment' });
+        }
+      }
+    } catch (err) {
+      console.error('[CRE-watcher] error:', err);
+    }
+  }, [bays, createSession]);
 
   // krylo-submit: preview entity in stat card, no modal — SAVE triggers bay selector.
   useEffect(() => {

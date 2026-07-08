@@ -735,6 +735,26 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         </div>
       )}
 
+      {/* KRYL-1001 (CRE) — pure-nav link to the pre-populated analysis page for this
+          anchor. Fires the existing krylo-nav postMessage (app.jsx listener); no session
+          creation, no compute on click. Sits inside the panel content flow so it does
+          not overlap the visor HUD. Only shown once a subject is assigned to the
+          cone (bay.assignment), not for a bare domain cone. */}
+      {bay?.assignment && (
+        <button
+          onClick={() => window.postMessage({ type: 'krylo-nav', mode: 'analysis' }, '*')}
+          style={{
+            display: 'block', width: '100%', textAlign: 'left',
+            background: 'none', border: 'none', borderBottom: '1px solid rgba(0,127,255,0.25)',
+            padding: '0 0 8px', marginBottom: 12, cursor: 'pointer',
+            fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.2em',
+            color: '#007FFF', textTransform: 'uppercase',
+          }}
+        >
+          Full Analysis →
+        </button>
+      )}
+
       {/* Inline search — opens on + click */}
       {panelSearch && bay && (
         <div style={{ marginBottom: 12 }}>
