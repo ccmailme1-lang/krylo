@@ -19,6 +19,7 @@ import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
 import { transformIntentToConstraints } from '../../engine/baylogic.js';
 import { computeStructuralFriction }   from '../../engine/structuralfriction.js';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
+import DomainMetricsMatrix from './domainmetricsmatrix.jsx';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
@@ -81,6 +82,21 @@ const DOMAIN_PRECURSORS = {
   TECHNOLOGY: ['ADOPTION RATE',    'PATENT FLUX',    'DEPLOY SIGNAL'],
   MEDIA:      ['NEWS VELOCITY',    'NARRATIVE SHIFT','MESSAGE SPEND'],
   OWNERSHIP:  ['SUPPLY CONSTRAINT','CONTROL SHIFT',  'ASSET CONCENTRATION'],
+};
+
+// Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy — derived
+// from real DOMAIN_PRECURSORS keyword content (specs/analysis-domain-taxonomy-
+// unification.md), not invented. Needed to filter AnalysisDomainField (which
+// only knows the locked six) from a pill click (which uses these 8 labels).
+const ANALYSIS_PILL_TO_DOMAIN = {
+  FINANCIAL:  'CAPITAL',
+  MARKET:     'CAPITAL',
+  LEGAL:      'KNOWLEDGE',
+  HEALTH:     'LABOR',
+  CAREER:     'LABOR',
+  TECHNOLOGY: 'TECHNOLOGY',
+  MEDIA:      'MEDIA',
+  OWNERSHIP:  'OWNERSHIP',
 };
 
 const SIGNAL_SCOPE_OPTIONS = [
@@ -466,6 +482,15 @@ const DNA_METRICS = [
   { key: 'domains_count', label: 'DOMAINS EXPLORED', isNumeric: true  },
   { key: 'last_query',    label: 'LAST SIGNAL',      isNumeric: false, fmt: v => v ? (v.length > 15 ? v.slice(0,15)+'…' : v) : '—' },
   { key: 'streak',        label: 'SESSION STREAK',   isNumeric: true,  fmt: v => v + 'd' },
+  // Context Projection Layer (specs/six-domain-cards-plan.md) — slots A-F.
+  // Only ctx_domain has a real source today; the rest render '—' (honest absence,
+  // not fabricated) until each is individually built and marked DONE.
+  { key: 'ctx_domain',      label: 'DOMAIN',      isNumeric: false, fmt: v => v?.replace(/_/g,' ') ?? '—' },
+  { key: 'ctx_question',    label: 'QUESTION',    isNumeric: false },
+  { key: 'ctx_window',      label: 'WINDOW',      isNumeric: false },
+  { key: 'ctx_evidence',    label: 'EVIDENCE',    isNumeric: false },
+  { key: 'ctx_connections', label: 'CONNECTIONS', isNumeric: false },
+  { key: 'ctx_thesis',      label: 'THESIS',      isNumeric: false },
 ];
 const DNA_METRIC_MAP = Object.fromEntries(DNA_METRICS.map(m => [m.key, m]));
 
@@ -473,15 +498,17 @@ function defaultDnaCards() {
   const cx = typeof window !== 'undefined' ? Math.round(window.innerWidth / 2 + 336) : 940;
   const cy = typeof window !== 'undefined' ? Math.round(window.innerHeight / 2 - 160) : 200;
   return [
-    { id: 'c0', metricKey: 'total',       x: cx, y: cy },
-    { id: 'c1', metricKey: 'domain',      x: cx, y: cy + 110 },
-    { id: 'c2', metricKey: 'convergence', x: cx, y: cy + 220 },
-    { id: 'c3', metricKey: 'lens',        x: cx, y: cy + 330 },
+    { id: 'c0', metricKey: 'ctx_domain',      x: cx, y: cy },
+    { id: 'c1', metricKey: 'ctx_question',    x: cx, y: cy + 110 },
+    { id: 'c2', metricKey: 'ctx_window',      x: cx, y: cy + 220 },
+    { id: 'c3', metricKey: 'ctx_evidence',    x: cx, y: cy + 330 },
+    { id: 'c4', metricKey: 'ctx_connections', x: cx, y: cy + 440 },
+    { id: 'c5', metricKey: 'ctx_thesis',      x: cx, y: cy + 550 },
   ];
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function AnalysisIdleField({ activeCones = null }) {
+export default function AnalysisIdleField({ activeCones = null, onDomainSelect = null }) {
 
   // Store
   const createSession = useAnalysisStore(s => s.createSession);
@@ -525,8 +552,8 @@ export default function AnalysisIdleField({ activeCones = null }) {
   // WO-1876B — draggable objective cards
   const [dnaCards, setDnaCards] = useState(() => {
     try {
-      const saved = JSON.parse(localStorage.getItem('krylo_dna_cards') ?? 'null');
-      if (Array.isArray(saved) && saved.length === 4) return saved;
+      const saved = JSON.parse(localStorage.getItem('krylo_dna_cards_v2') ?? 'null');
+      if (Array.isArray(saved) && saved.length === 6) return saved;
     } catch {}
     return defaultDnaCards();
   });
@@ -534,7 +561,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const dragRef = useRef(null); // { id, startMx, startMy, startX, startY, moved }
 
   useEffect(() => {
-    try { localStorage.setItem('krylo_dna_cards', JSON.stringify(dnaCards)); } catch {}
+    try { localStorage.setItem('krylo_dna_cards_v2', JSON.stringify(dnaCards)); } catch {}
   }, [dnaCards]);
 
   useEffect(() => {
@@ -601,6 +628,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
   const [intentMagnitude, setIntentMagnitude] = useState(50);
   // WO-1878 — Mission Builder state
   const [selectedDomains, setSelectedDomains] = useState([]);
+  useEffect(() => {
+    if (!onDomainSelect) return;
+    const mapped = selectedDomains[0] ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null) : null;
+    onDomainSelect(mapped);
+  }, [selectedDomains, onDomainSelect]);
   const [outputFilters,   setOutputFilters]   = useState({ precursors: true, risks: true, opportunities: true, contradictions: true });
   const [signalScope,     setSignalScope]      = useState('live');
   const signalShownRef   = useRef(false);
@@ -1360,7 +1392,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {DOMAIN_CHIPS.map(({ key, label, icon }) => {
+                    {DOMAIN_CHIPS.map(({ key, label, icon }, i) => {
                       const active   = selectedDomains.includes(key);
                       const dominant = selectedDomains[0] === key && selectedDomains.length > 1;
                       return (
@@ -1376,6 +1408,7 @@ export default function AnalysisIdleField({ activeCones = null }) {
                             fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
                             boxShadow: active ? '0 0 10px rgba(102,255,0,0.22)' : 'none',
                             transition: 'all 140ms',
+                            opacity: 0, animation: 'krylo-fade-in 0.3s ease forwards', animationDelay: `${i * 60}ms`,
                           }}
                           onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; e.currentTarget.style.color = '#fff'; } }}
                           onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; } }}
@@ -1400,6 +1433,16 @@ export default function AnalysisIdleField({ activeCones = null }) {
                         border: '1px solid rgba(102,255,0,0.14)', borderRadius: 999,
                       }}>{p}</span>
                     ))}
+                  </div>
+                )}
+
+                {/* ── DOMAIN METRICS MATRIX ── */}
+                {/* Reads the SAME raw chip key targetpacket.jsx writes under (via
+                    tensor.domainLock -> synthesis.queryDomain) — no six-locked-domain
+                    remap here, or the write key and read key never match. */}
+                {selectedDomains[0] && (
+                  <div style={{ marginBottom: 14 }}>
+                    <DomainMetricsMatrix activeDomain={selectedDomains[0]} />
                   </div>
                 )}
 
@@ -1522,9 +1565,11 @@ export default function AnalysisIdleField({ activeCones = null }) {
           )}
 
           {/* WO-1876B — DNA objective cards: draggable, click-configurable, fixed-positioned */}
-          {!hasSession && dna && dnaCards.map(card => {
+          {!hasSession && dnaCards.map(card => {
             const metric   = DNA_METRIC_MAP[card.metricKey];
-            const rawVal   = dna[card.metricKey];
+            const rawVal   = card.metricKey === 'ctx_domain'
+              ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null)
+              : dna?.[card.metricKey];
             const display  = rawVal !== undefined && rawVal !== null
               ? (metric.fmt ? metric.fmt(rawVal) : String(rawVal))
               : '—';
@@ -1556,14 +1601,14 @@ export default function AnalysisIdleField({ activeCones = null }) {
                   {[...Array(6)].map((_,i) => <div key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: '#fff' }} />)}
                 </div>
 
-                {/* Value */}
-                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: metric.isNumeric ? LIME : '#fff', letterSpacing: '0.02em', lineHeight: 1, paddingRight: 16 }}>
-                  {display}
+                {/* Label */}
+                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', paddingRight: 16 }}>
+                  {metric.label}
                 </div>
 
-                {/* Label */}
-                <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', marginTop: 7 }}>
-                  {metric.label}
+                {/* Value */}
+                <div style={{ fontFamily: MONO, fontSize: 22, fontWeight: 600, color: metric.isNumeric ? LIME : '#fff', letterSpacing: '0.02em', lineHeight: 1, marginTop: 7 }}>
+                  {display}
                 </div>
 
                 {/* Config hint */}

@@ -62,6 +62,7 @@ import OracleEngine      from './components/analysis/oracleengine.jsx';
 import ActionMatrix      from './components/analysis/actionmatrix.jsx';
 import AnalysisSubstrate  from './components/analysis/analysissubstrate.jsx';
 import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
+import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
@@ -877,6 +878,8 @@ export default function App() {
     });
   });
 
+  const [activeAnalysisDomain, setActiveAnalysisDomain] = useState(null);
+
   const domainFieldSignals = useMemo(() => {
     const fromRouter = routedSignals.map(e => ({
       id:     e.id ?? `${e.source}-${e.ts}`,
@@ -886,6 +889,17 @@ export default function App() {
     }));
     return [...liveSignals, ...fromRouter];
   }, [liveSignals, routedSignals]);
+
+  // Domain chip click -> real observed signal density for that domain only.
+  // validity/convergence/cac/roas/ltv are left unrecorded (not fabricated) —
+  // getDomainAverage() honestly returns null for them until a real query runs.
+  useEffect(() => {
+    if (!activeAnalysisDomain) return;
+    const scoped = domainFieldSignals.filter(s => s.domain === activeAnalysisDomain);
+    if (!scoped.length) return;
+    const avgFs = scoped.reduce((a, s) => a + (s.fs ?? 0), 0) / scoped.length;
+    recordMetricsSnapshot({ domain: activeAnalysisDomain, metrics: { signal: { value: avgFs } } });
+  }, [activeAnalysisDomain, domainFieldSignals]);
 
   const isLive = scrubPos === 0;
 
@@ -1237,8 +1251,8 @@ export default function App() {
 
       {navMode === 'analysis' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} />
-          <AnalysisIdleField activeCones={activeCones} />
+          <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} activeDomain={activeAnalysisDomain} />
+          <AnalysisIdleField activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} />
         </div>
       )}
 

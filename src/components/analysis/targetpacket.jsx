@@ -11,6 +11,7 @@ import { routeLens }         from '../../engine/lensrouter.js';
 import DecisionFrameCard     from './decisionframe.jsx';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
+import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
 import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
@@ -424,6 +425,14 @@ export default function TargetPacket() {
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  // Producer side of the domain metrics history store — records the real,
+  // already-computed metrics object, tagged by domain. Never recomputes,
+  // never fires speculatively — only when a real synthesis+domain exists.
+  useEffect(() => {
+    if (synthesis?.queryDomain && metrics) {
+      recordMetricsSnapshot({ domain: synthesis.queryDomain, metrics });
+    }
+  }, [synthesis?.queryDomain, metrics]);
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);

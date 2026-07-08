@@ -43,12 +43,27 @@ const LIME = '#66FF00';
 // Context Card v2 palette — matches the approved spec, lime substituted for
 // the original mockup's gold accent per Founder decision.
 const CARD_BG        = '#0F1114';
-const CARD_BORDER    = '#2A2F36';
 const TEXT_PRIMARY   = '#ECECEC';
 const TEXT_SECONDARY = '#A3A3A3';
 const CARD_WIDTH     = 260;
 const LEGACY_WIDTH   = 260; // maxWidth of the legacy popover, used for boundary math
 const VIEWPORT_MARGIN = 8;
+
+// Lightweight **bold** parsing for card body text — same lime-highlight-on-
+// key-terms convention already used on the Hero page headline (plain text,
+// specific words emphasized). Mechanical split on `**...**`, not full
+// Markdown — no other syntax supported. Returns an array of strings/spans,
+// safe to drop directly into JSX children.
+function renderEmphasis(text) {
+  if (!text) return text;
+  const parts = String(text).split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} style={{ color: LIME, fontWeight: 600 }}>{part.slice(2, -2)}</strong>;
+    }
+    return part;
+  });
+}
 
 let injected = false;
 
@@ -196,7 +211,7 @@ export default function HelpMark({
       >
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 12px', borderBottom: `1px solid ${CARD_BORDER}`,
+          padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
           <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_PRIMARY }}>
             {title}
@@ -212,10 +227,10 @@ export default function HelpMark({
 
         <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
           {body && (
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: TEXT_PRIMARY }}>{body}</div>
+            <div style={{ fontSize: 11, lineHeight: 1.5, color: TEXT_PRIMARY }}>{renderEmphasis(body)}</div>
           )}
           {rationale && (
-            <div style={{ fontSize: 11, lineHeight: 1.5, color: TEXT_SECONDARY }}>{rationale}</div>
+            <div style={{ fontSize: 11, lineHeight: 1.5, color: TEXT_SECONDARY }}>{renderEmphasis(rationale)}</div>
           )}
           {inputs && inputs.length > 0 && (
             <div>
@@ -240,7 +255,7 @@ export default function HelpMark({
         </div>
 
         {related && (
-          <div style={{ padding: '10px 12px', borderTop: `1px solid ${CARD_BORDER}` }}>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
             <a
               href={related.href || '#'}
               onClick={e => { if (!related.href) e.preventDefault(); related.onClick?.(e); }}
@@ -260,14 +275,14 @@ export default function HelpMark({
           top: pos ? pos.top : -9999, left: pos ? pos.left : -9999,
           visibility: pos ? 'visible' : 'hidden',
           minWidth: 180, maxWidth: LEGACY_WIDTH,
-          background: 'rgba(0,0,0,0.95)', border: `1px solid ${LIME}`,
+          background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(255,255,255,0.08)',
           color: 'rgba(255,255,255,0.85)',
           fontFamily: MONO, fontSize: 10, lineHeight: 1.5,
           letterSpacing: 'normal', textTransform: 'none', fontWeight: 400,
           padding: '8px 10px', whiteSpace: 'normal',
           boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
         }}
-      >{body}</div>
+      >{renderEmphasis(body)}</div>
     )
   );
 
