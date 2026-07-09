@@ -261,24 +261,33 @@ export function toReconViewModel(scps = [], { topPerGroup = 3 } = {}) {
     byQ.get(s.hypothesis).push(s);
   }
   const groups = [...byQ.entries()].map(([question, items]) => {
-    const sorted = [...items].sort((a, b) => (b.exploration_score ?? 0) - (a.exploration_score ?? 0));
+    // Dedupe by SOURCE — keep the highest-scoring instance per distinct source, so the
+    // display shows real DISTINCT upstream sources (not the same one repeated) and the
+    // count is honest. If a cluster collapses to 1-2 sources, that truth is shown, not padded.
+    const bySource = new Map();
+    for (const s of items) {
+      const src  = s.candidate_upstream_sources?.[0] ?? '—';
+      const prev = bySource.get(src);
+      if (!prev || (s.exploration_score ?? 0) > (prev.exploration_score ?? 0)) bySource.set(src, s);
+    }
+    const distinct = [...bySource.values()].sort((a, b) => (b.exploration_score ?? 0) - (a.exploration_score ?? 0));
     const byValidity = {};
-    for (const s of items) byValidity[s.causal_validity] = (byValidity[s.causal_validity] ?? 0) + 1;
+    for (const s of distinct) byValidity[s.causal_validity] = (byValidity[s.causal_validity] ?? 0) + 1;
     const validities = Object.keys(byValidity);
     return {
       question,
-      target:      sorted[0]?.target_signal ?? null,
-      gap:         sorted[0]?.observed_gap ?? null,
-      count:       items.length,
+      target:      distinct[0]?.target_signal ?? null,
+      gap:         distinct[0]?.observed_gap ?? null,
+      count:       distinct.length, // DISTINCT sources, not raw SCP instances
       byValidity,
       allValidity: validities.length === 1 ? validities[0] : null, // single shared status, or null if mixed
-      top: sorted.slice(0, topPerGroup).map(s => ({
+      top: distinct.slice(0, topPerGroup).map(s => ({
         source:        s.candidate_upstream_sources?.[0] ?? '—',
         observability: s.observability_score,
         score:         Math.round((s.exploration_score ?? 0) * 100),
         validity:      s.causal_validity,
       })),
-      moreCount: Math.max(0, items.length - topPerGroup),
+      moreCount: Math.max(0, distinct.length - topPerGroup),
     };
   }).sort((a, b) => b.count - a.count);
   return { total: scps.length, groups };
