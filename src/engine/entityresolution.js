@@ -5,6 +5,7 @@
 // Phase B (WO-2046) will add cross-source identifier joins (FEC↔UEI↔EDGAR).
 
 import REGISTRY from '../data/entityregistry.json';
+import { nodeId } from './entitytopologyregistry.js';
 
 // Corporate suffix strip list — remove before matching
 const SUFFIX_RE = /\b(INCORPORATED|CORPORATION|INTERNATIONAL|TECHNOLOGIES|TECHNOLOGY|ENTERPRISES|ENTERPRISE|INDUSTRIES|INDUSTRY|SOLUTIONS|SOLUTION|HOLDINGS|HOLDING|SERVICES|SERVICE|SYSTEMS|SYSTEM|GLOBAL|GROUP|COMPANY|ASSOCIATES|PARTNERS|NETWORKS|NETWORK|INC|LLC|CORP|LTD|LP|LLP|PLC|CO|AG|SA|NV|BV|GMBH)\b\.?/g;
@@ -141,6 +142,20 @@ export function resolveAny(ref) {
   }
 
   return resolve(s);
+}
+
+/**
+ * toTopologyNodeId(ref) → string
+ * KRYL-1011 — resolve a raw subject to the node id the topology graph is keyed by,
+ * so the Causal Impact Map can take "GOOGLE" instead of a pre-normalized id. Reuses
+ * the registry's OWN nodeId() so a resolved subject keys EXACTLY like registered
+ * edges (CIK-first for stable identity, else canonical name). An unresolved ref
+ * falls back to a best-effort nodeId of the raw string — callers can detect this by
+ * comparing against resolveAny(ref) being null (unresolved -> no grounded identity).
+ */
+export function toTopologyNodeId(ref) {
+  const card = resolveAny(ref);
+  return nodeId(card?.identifiers?.edgar, card?.canonicalName ?? ref);
 }
 
 /**

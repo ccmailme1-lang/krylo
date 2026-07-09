@@ -64,7 +64,7 @@ function normId(name) {
 // 0001893311)"), so name-based normId() silently produced a different ID per
 // lookup than per registration — getTypedEdgesFor() returned empty for an edge
 // that was actually present. CIK-based IDs don't have this problem.
-function nodeId(cik, fallbackName) {
+export function nodeId(cik, fallbackName) {
   return cik ? `CIK:${cik}` : normId(fallbackName);
 }
 
