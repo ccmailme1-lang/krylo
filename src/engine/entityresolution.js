@@ -117,6 +117,33 @@ export function resolveByIdentifier(source, id) {
 }
 
 /**
+ * resolveAny(ref) → entity | null
+ * KRYL-1007 — single type-sniffing entry point for consumers that don't know the
+ * ref kind (CRE anchors, connector payloads). Routing:
+ *   all-digits           → EDGAR CIK  (identifier match, authoritative)
+ *   1-5 uppercase letters → ticker     (falls back to name if not a known ticker)
+ *   otherwise            → fuzzy name resolve
+ * Identifier matches beat name matches (a CIK/ticker is exact truth; a name is fuzzy).
+ */
+export function resolveAny(ref) {
+  if (!ref || typeof ref !== 'string') return null;
+  const s = ref.trim();
+  if (!s) return null;
+
+  // CIK — all digits (EDGAR CIKs are ≤ 10, often zero-padded)
+  if (/^\d{1,10}$/.test(s)) return resolveByIdentifier('edgar', s);
+
+  // Ticker — 1-5 uppercase letters, optional dotted share class (e.g. BRK.B)
+  if (/^[A-Z]{1,5}(\.[A-Z])?$/.test(s)) {
+    const byTicker = resolveByIdentifier('ticker', s);
+    if (byTicker) return byTicker;
+    // not a known ticker — fall through to name resolution
+  }
+
+  return resolve(s);
+}
+
+/**
  * listByDomain(domain) → entity[]
  * Return all registry entities tagged for a given KRYLO domain.
  */

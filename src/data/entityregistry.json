@@ -80,21 +80,21 @@
     "canonicalId": "microsoft",
     "canonicalName": "MICROSOFT",
     "aliases": ["Microsoft Corporation", "Microsoft Corp", "MSFT"],
-    "identifiers": { "edgar": "0000789019", "fec": null, "uei": null },
+    "identifiers": { "edgar": "0000789019", "ticker": "MSFT", "fec": null, "uei": null },
     "domainTags": ["TECHNOLOGY", "CAPITAL"]
   },
   {
     "canonicalId": "alphabet",
     "canonicalName": "ALPHABET",
     "aliases": ["Alphabet Inc", "Google", "Google LLC", "Google Inc", "GOOGL", "GOOG"],
-    "identifiers": { "edgar": "0001652044", "fec": null, "uei": null },
+    "identifiers": { "edgar": "0001652044", "ticker": "GOOGL", "fec": null, "uei": null },
     "domainTags": ["TECHNOLOGY", "MEDIA", "CAPITAL"]
   },
   {
     "canonicalId": "amazon",
     "canonicalName": "AMAZON",
     "aliases": ["Amazon.com", "Amazon.com Inc", "Amazon Web Services", "AWS", "AMZN"],
-    "identifiers": { "edgar": "0001018724", "fec": null, "uei": null },
+    "identifiers": { "edgar": "0001018724", "ticker": "AMZN", "fec": null, "uei": null },
     "domainTags": ["TECHNOLOGY", "CAPITAL", "MEDIA"]
   },
   {
