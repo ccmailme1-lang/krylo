@@ -94,3 +94,32 @@ export function buildImpactMap(subject, { maxDepth = 4 } = {}) {
   }
   return out;
 }
+
+/**
+ * toImpactViewModel(map) — shape buildImpactMap() output for rendering (pure, no JSX).
+ * Groups impacts into levels by depth, carries the grounded/tentative flag through,
+ * and rolls up counts. The render layer maps over this with zero logic of its own.
+ * @param {Object} map — buildImpactMap() result
+ * @returns {Object} { subject, reached, grounded, tentative, truncated, empty, note, levels[] }
+ *   levels[]: { depth, edges: [{ from, to, type, grounded }] }
+ */
+export function toImpactViewModel(map) {
+  if (!map) return { subject: null, reached: 0, grounded: 0, tentative: 0, truncated: false, empty: true, levels: [] };
+  const byDepth = new Map();
+  for (const i of map.impacts) {
+    if (!byDepth.has(i.depth)) byDepth.set(i.depth, []);
+    byDepth.get(i.depth).push({ from: i.fromLabel, to: i.toLabel, type: i.type, grounded: i.grounded });
+  }
+  const levels = [...byDepth.keys()].sort((a, b) => a - b).map(depth => ({ depth, edges: byDepth.get(depth) }));
+  const grounded = map.impacts.filter(i => i.grounded).length;
+  return {
+    subject:   map.nodes[0]?.label ?? map.subject,
+    reached:   map.reached,
+    grounded,
+    tentative: map.impacts.length - grounded,
+    truncated: map.truncated,
+    empty:     map.impacts.length === 0,
+    note:      map.note ?? null,
+    levels,
+  };
+}

@@ -4,6 +4,7 @@ import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
 import ReconDashboard                 from './recondashboard.jsx';
+import CausalImpactView               from './causalimpactview.jsx';
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
 import { computePositionVector }      from '../../engine/positioningengine.js';
@@ -1372,7 +1373,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
               </div>
               <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0, background: '#000' }}>
-                  {['BRIEF', 'RECON'].map(tab => (
+                  {['BRIEF', 'RECON', 'IMPACT'].map(tab => (
                     <button
                       key={tab}
                       onClick={() => setRightPanel(tab)}
@@ -1389,7 +1390,9 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   ))}
                 </div>
                 <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                  {rightPanel === 'BRIEF' ? <IntelligenceBrief /> : <ReconDashboard />}
+                  {rightPanel === 'BRIEF' ? <IntelligenceBrief />
+                    : rightPanel === 'RECON' ? <ReconDashboard />
+                    : <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={activeSession?.query} /></div>}
                 </div>
               </div>
             </>
