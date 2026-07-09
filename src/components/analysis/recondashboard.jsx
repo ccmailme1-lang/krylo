@@ -6,7 +6,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
-import { run as runRecon } from '../../engine/reconlayer.js';
+import { run as runRecon, toReconViewModel } from '../../engine/reconlayer.js';
 import { getRankedSCPs, getReconStats } from '../../engine/scpstore.js';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -38,6 +38,10 @@ export default function ReconDashboard() {
     setScps(getRankedSCPs());
     setStats(r.stats);
   }, [engineState?.domainStates, synthesis]);
+
+  // Group the candidate flurry into digestible clusters (§21 display-only aggregation):
+  // N candidates sharing a hypothesis collapse to one cluster, differentiated by source.
+  const grouped = useMemo(() => toReconViewModel(scps), [scps]);
 
   return (
     <div style={{ background: '#000', fontFamily: MONO, padding: '16px 20px', overflowY: 'auto', height: '100%', boxSizing: 'border-box' }}>
@@ -76,44 +80,36 @@ export default function ReconDashboard() {
           <div style={{ color: 'rgba(255,255,255,0.18)', fontSize: 8 }}>No candidates above threshold</div>
         )}
 
-        {scps.map(scp => (
-          <div
-            key={scp.id}
-            style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}`, cursor: 'pointer' }}
-            onClick={() => setExpanded(expanded === scp.id ? null : scp.id)}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: BRT, fontSize: 9, letterSpacing: '0.06em' }}>{scp.id}</span>
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <span style={{ color: VALIDITY_COLOR[scp.causal_validity] ?? DIM, fontSize: 8, letterSpacing: '0.10em' }}>
-                  {scp.causal_validity}
-                </span>
-                <span style={{ color: LIME, fontSize: 9, fontWeight: 600 }}>
-                  {(scp.exploration_score * 100).toFixed(0)}
+        {grouped.groups.map((group, gi) => (
+          <div key={gi} style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
+            {/* Cluster header: the shared question + how many sources + one shared status */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ color: BRT, fontSize: 9, lineHeight: 1.4 }}>{group.question}</span>
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                <span style={{ color: DIM, fontSize: 8 }}>{group.count} SRC</span>
+                <span style={{ color: group.allValidity ? (VALIDITY_COLOR[group.allValidity] ?? DIM) : DIM, fontSize: 8, letterSpacing: '0.10em' }}>
+                  {group.allValidity ?? 'MIXED'}
                 </span>
               </div>
             </div>
 
-            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, marginTop: 3, lineHeight: 1.5 }}>
-              {scp.hypothesis}
+            {/* The real differentiator: top upstream sources, ranked by exploration score */}
+            <div style={{ marginTop: 6 }}>
+              {group.top.map((t, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0 2px 10px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 8 }}>▸ {t.source}</span>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+                    <span style={{ color: DIM, fontSize: 7 }}>obs {t.observability}</span>
+                    <span style={{ color: LIME, fontSize: 8, fontWeight: 600 }}>{t.score}</span>
+                  </div>
+                </div>
+              ))}
+              {group.moreCount > 0 && (
+                <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 7, padding: '2px 0 0 10px' }}>
+                  … +{group.moreCount} more{group.allValidity ? ` (all ${group.allValidity.toLowerCase()} — no signal history yet)` : ''}
+                </div>
+              )}
             </div>
-
-            {expanded === scp.id && (
-              <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(255,255,255,0.025)', borderLeft: `2px solid ${VALIDITY_COLOR[scp.causal_validity] ?? DIM}` }}>
-                <Row label="TARGET"    value={scp.target_signal} />
-                <Row label="GAP"       value={scp.observed_gap} />
-                <Row label="LEAD"      value={scp.expected_lead_time} />
-                <Row label="SOURCE"    value={scp.candidate_upstream_sources.join(', ')} />
-                <Row label="RECOMMEND" value={scp.recommendation} />
-                {scp.genealogy_chain?.length > 0 && (
-                  <Row label="GENEALOGY" value={scp.genealogy_chain.join(' → ')} />
-                )}
-                {scp.outcome_lag_distribution && (
-                  <Row label="LAG DIST"  value={`p25:${scp.outcome_lag_distribution.p25}d p50:${scp.outcome_lag_distribution.p50}d p75:${scp.outcome_lag_distribution.p75}d n:${scp.outcome_lag_distribution.n}`} />
-                )}
-                <Row label="STATUS"    value={scp.status} color={LIME} />
-              </div>
-            )}
           </div>
         ))}
       </section>
