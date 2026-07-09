@@ -175,7 +175,8 @@ function resolvePrimary(q, lens) {
   // "home" requires purchase/equity context — bare "home" fires on "home care", "home & community access"
   if (
     /\bhouse\b|mortgage|property|\bcondo\b|apartment|real estate|sq ft|bedroom|bath|listing|\brent\b/.test(q) ||
-    (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|\bmarket\b/.test(q))
+    // buy-side OR sell-side (disposition) context lifts a bare "home" into REAL_ESTATE.
+    (/\bhome\b/.test(q) && /purchase|buy|afford|equity|loan|down payment|listing|\bmarket\b|\bsell\b|selling|\bsold\b|\blist\b|offload|downsize|dispose|disposition/.test(q))
   ) return 'REAL_ESTATE';
   // EXPENSE_REDUCTION must precede RETIREMENT — distribution phase, not accumulation
   if (/\bretired\b/.test(q) && /fixed income|expenses? down|reduce.*expense|lower.*bill|cut.*cost|monthly.*down|expenses? lower|struggling/.test(q)) return 'EXPENSE_REDUCTION';
@@ -406,7 +407,19 @@ function synthAuto(session, numbers, query) {
   };
 }
 
+// Disposition intent — the query is about SELLING a property, not acquiring one.
+// A strong buy verb present alongside sell language keeps it buy-side (default).
+function isRealEstateSellSide(query) {
+  const q = (query ?? '').toLowerCase();
+  const sell = /\b(sell|selling|sold|list(ing)?|offload|dispose|disposition|flip|cash\s*out|downsize)\b/.test(q);
+  const strongBuy = /\b(buy|buying|purchase|purchasing|pre-?approv\w*|down\s*payment|house\s*hunt\w*)\b/.test(q);
+  return sell && !strongBuy;
+}
+
 function synthRealEstate(session, numbers, query) {
+  // Sell-side (disposition) queries get a seller brief — net proceeds and cost of
+  // sale, NOT buy-side mortgage math ("get pre-approved / lock a rate").
+  if (isRealEstateSellSide(query)) return synthRealEstateSell(session, numbers, query);
   // Arithmetic sanity guard: enforce 0 ≤ down ≤ price so loan can never go negative
   // and down/price can never exceed 100% (the $55-home / $500k-down catastrophe).
   // Derived dollar figures are floored at 0 so no negative dollars can ever surface.
@@ -491,6 +504,93 @@ function synthRealEstate(session, numbers, query) {
       ],
     },
     leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / Math.max(down, 1)).toFixed(1))), deRatio: parseFloat((loan / Math.max(down, 1)).toFixed(1)), permissionless: true, industryNorm: 3.0 },
+  };
+}
+
+// Sell-side real-estate synthesis. Detect-not-predict: net-proceeds + cost-of-sale
+// structure and tax/market exposure, NOT a fabricated appreciation forecast.
+function synthRealEstateSell(session, numbers, query) {
+  const q = (query ?? '').toLowerCase();
+  const value    = (Number.isFinite(numbers[0]) && numbers[0] > 0) ? numbers[0] : 350000;
+  const mortgage = Number.isFinite(numbers[1]) ? Math.max(0, Math.min(numbers[1], value)) : 0;
+  const commission  = Math.round(value * 0.06);   // agent commission (~5–6%)
+  const closing     = Math.round(value * 0.02);   // seller closing/transfer costs (~1–3%)
+  const netProceeds = Math.max(value - commission - closing - mortgage, 0);
+  const crossBorder = /\bmexico\b|\bcanada\b|abroad|overseas|foreign|dual citizen|vallarta|expat/.test(q);
+
+  return {
+    stateLabel: 'MARKET ACTIVE',
+    confidence: 0.74,
+    primaryInsight: `Disposition of a $${fmtN(value)} property. Estimated cost of sale: commission $${fmtN(commission)} (6%) + closing $${fmtN(closing)} (2%)${mortgage > 0 ? ` + mortgage payoff $${fmtN(mortgage)}` : ''}. Net proceeds today ≈ $${fmtN(netProceeds)}.${crossBorder ? ' Cross-border sale — tax exposure spans both jurisdictions; net will be lower after tax.' : ''}`,
+    momentum:   { value: '+4%', h1: '+1%', h24: '+4%' },
+    trajPoints: [0.30,0.34,0.38,0.42,0.46,0.50,0.54,0.58,0.62,0.66,0.70,0.74],
+    attentionStack: [
+      { rank:1, signal:'Local Comps / CMA',    category:'Pricing / Local Market',  trend:'↗', momentum:'Firming',    mColor:LIME, conf:0.80 },
+      { rank:2, signal:'Days on Market',        category:'Demand / Local',          trend:'↗', momentum:'Extending',  mColor:BLUE, conf:0.68 },
+      { rank:3, signal:'Cost of Sale',          category:'Transaction Friction',    trend:'→', momentum:'Fixed',      mColor:DIM,  conf:0.85 },
+      { rank:4, signal:'Tax Exposure',          category:crossBorder ? 'Cross-Border' : 'Capital Gains', trend:'↑', momentum:'Material', mColor:BLUE, conf:0.62 },
+    ],
+    keyDrivers: [
+      { label:'Cost of sale (commission+closing)', delta:`-$${fmtN(commission + closing)}`, pos:false },
+      { label:'Net proceeds today',                delta:`$${fmtN(netProceeds)}`,           pos:true  },
+      { label:'Mortgage payoff at close',          delta:mortgage > 0 ? `-$${fmtN(mortgage)}` : 'None', pos:mortgage === 0 },
+      { label:'Tax treatment',                     delta:crossBorder ? 'Two jurisdictions' : 'Cap gains', pos:false },
+    ],
+    recommendedAction: `Order a comparative market analysis (CMA) to set a defensible asking price, and get a cost-of-sale + tax estimate BEFORE listing. Net proceeds — not sale price — is the number that matters.`,
+    timeHorizon: '2-year hold to sale',
+    impactLevel: 'High',
+    bluf: `Selling this $${fmtN(value)} property nets ≈ $${fmtN(netProceeds)} today after ~$${fmtN(commission + closing)} cost of sale${mortgage > 0 ? ` and $${fmtN(mortgage)} payoff` : ''}. Whether a 2-year hold produces profit depends on local price movement vs. carrying cost — that is a market-data question, not a guaranteed path. Anchor the decision on net proceeds and tax, not headline price.`,
+    purpose: `Disposition analysis for a $${fmtN(value)} property. Covers cost of sale, net proceeds, tax exposure, and the sell-now vs. hold decision.`,
+    fiveWs: [
+      { w:'WHO',   answer:`Seller of a $${fmtN(value)} property.${crossBorder ? ' Cross-border owner — foreign situs adds tax and legal steps.' : ''}` },
+      { w:'WHAT',  answer:`Sale of a $${fmtN(value)} home. Cost of sale ≈ $${fmtN(commission + closing)}${mortgage > 0 ? `, mortgage payoff $${fmtN(mortgage)}` : ''}. Net ≈ $${fmtN(netProceeds)}.` },
+      { w:'WHEN',  answer:`Stated horizon: sell within ~2 years. Timing against local market cycle and tax year is the primary lever.` },
+      { w:'WHERE', answer:`Local comps set the price; ${crossBorder ? 'foreign jurisdiction (e.g. Mexico) governs transfer, trust/fideicomiso, and local gains tax.' : 'local market determines demand and days on market.'}` },
+      { w:'WHY',   answer:`Profit on sale is realized after cost of sale AND tax — both are often underestimated. The structural question is net-in-pocket, not gross price.` },
+    ],
+    evidence: [
+      `Cost of sale ≈ $${fmtN(commission + closing)} (6% commission + 2% closing) — the fixed drag on any sale price.`,
+      `Net proceeds today ≈ $${fmtN(netProceeds)}${mortgage > 0 ? ` after $${fmtN(mortgage)} mortgage payoff` : ''}.`,
+      crossBorder ? `Cross-border sale: local capital-gains tax AND home-country worldwide-income tax may both apply — a cross-border tax advisor is required before listing.` : `Capital-gains treatment depends on holding period and primary-residence exclusion eligibility.`,
+      `A 2-year "profit" claim requires local appreciation to exceed cost of sale + carrying cost — this is detected from market data, not assumed.`,
+    ],
+    assumptions: [
+      `Commission 6% and closing 2% are typical; actuals vary by market and negotiation.`,
+      crossBorder ? `Cross-border tax modeling is out of scope here — flagged, not computed. Confirm with a licensed advisor.` : `No primary-residence exclusion assumed unless eligibility is confirmed.`,
+    ],
+    assessment: `Net-in-pocket ≈ $${fmtN(netProceeds)} today. The sell-now vs. hold-2-years decision turns on whether expected local appreciation over the hold exceeds cost of sale + carrying cost + tax. KRYLO does not forecast that appreciation — it surfaces the cost structure so the market data can be read against it.`,
+    threats: [
+      { label:crossBorder ? 'Cross-border tax exposure' : 'Capital-gains tax exposure', level:'HIGH',   color:LIME },
+      { label:'Cost of sale erodes gross price',        level:'MEDIUM', color:BLUE },
+      { label:'Extended days on market / price cuts',    level:'MEDIUM', color:BLUE },
+      { label:'Carrying cost during a 2-year hold',      level:'LOW',    color:DIM  },
+    ],
+    opportunities: [
+      { label:`Price to local comps (CMA) to minimize days on market and avoid reductions.` },
+      { label:`Time the sale to the local peak season and a favorable tax year.` },
+      { label:crossBorder ? `Structure the sale with a cross-border advisor to avoid double taxation where treaties allow.` : `Confirm primary-residence exclusion eligibility to shield gains.` },
+    ],
+    alternativeView: `Holding and renting the property can beat selling if local appreciation plus rental yield exceeds cost of sale and carrying cost. Rational when the market is early in a cycle or the tax hit on sale is large.`,
+    outlook: [
+      { prob:0.55, label:`Sell after CMA + tax review captures net proceeds cleanly`,                 color:LIME },
+      { prob:0.30, label:`Hold ~2 years IF local data shows appreciation above cost of sale`,         color:BLUE },
+      { prob:0.15, label:`Market softens — net proceeds compress; earlier sale would have been better`, color:DIM  },
+    ],
+    actions: {
+      IMMEDIATE: [
+        { id:'a1', label:'ORDER A CMA',                impact:0.90, rationale:`A comparative market analysis sets a defensible asking price from recent local sales. Overpricing extends days on market and forces reductions.`, tag:'PRICING'  },
+        { id:'a2', label:'GET COST-OF-SALE + TAX ESTIMATE', impact:0.86, rationale:`Model commission, closing, ${crossBorder ? 'and cross-border tax' : 'and capital-gains tax'} before listing. Net proceeds ≈ $${fmtN(netProceeds)} pre-tax — tax lowers it further.`, tag:'FINANCING' },
+      ],
+      SHORT_TERM: [
+        { id:'b1', label:'PREP + STAGE FOR LISTING',   impact:0.72, rationale:`Condition and staging move days-on-market and final price more than small price cuts. Address deferred maintenance first.`, tag:'EXECUTION' },
+        { id:'b2', label:'TIME THE LISTING WINDOW',    impact:0.68, rationale:`List into local peak-demand season and a favorable tax year. Timing is the seller's main controllable lever on net.`, tag:'TIMING'    },
+      ],
+      STRUCTURAL: [
+        { id:'c1', label:crossBorder ? 'ENGAGE CROSS-BORDER TAX ADVISOR' : 'CONFIRM CAP-GAINS TREATMENT', impact:0.83, rationale:crossBorder ? `Foreign-property sales can trigger tax in BOTH countries. A cross-border advisor structures for treaty relief and avoids double taxation.` : `Primary-residence exclusion can shield a large share of gains if eligibility holds. Confirm before signing.`, tag:'TAX' },
+        { id:'c2', label:'MODEL SELL-NOW vs HOLD-2YR',  impact:0.64, rationale:`Compare net-now against projected net after a 2-year hold (appreciation − carrying cost − tax). Decide on data, not on a headline profit target.`, tag:'PLANNING' },
+      ],
+    },
+    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((value / Math.max(netProceeds, 1)).toFixed(1))), deRatio: parseFloat((value / Math.max(netProceeds, 1)).toFixed(1)), permissionless: true, industryNorm: 1.1 },
   };
 }
 
@@ -4017,7 +4117,10 @@ export function synthesizeQuery(session) {
   // present but none binds to a valid price, the query is structurally insufficient
   // for a quantitative home brief — withhold rather than fabricate.
   let synthNumbers = numbers;
-  if (vector.primary === 'REAL_ESTATE' && numbers.length > 0) {
+  // Gate runs even with no numbers: the wealth-context override must be able to
+  // suppress the default-brief case (a $350k mortgage fabricated for an AUM query
+  // that carries no digit at all).
+  if (vector.primary === 'REAL_ESTATE') {
     const elig = checkRealEstateEligibility(query);
     if (!elig.eligible) {
       return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason };
@@ -4028,7 +4131,7 @@ export function synthesizeQuery(session) {
   }
   // WO-1873: AUTO numeric binding — mirrors REAL_ESTATE contract.
   // Asset/income figures must not become a car price. MSRP lookup remains preferred.
-  if (vector.primary === 'AUTO' && numbers.length > 0) {
+  if (vector.primary === 'AUTO') {
     const elig = checkAutoEligibility(query);
     if (!elig.eligible) {
       return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason };

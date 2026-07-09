@@ -18,6 +18,14 @@ function g(observedWeight, totalWeight) {
   return Math.min(1, Math.max(0, observedWeight / totalWeight));
 }
 
+// §19 WITHHOLD-BEATS-FABRICATE — economics floor.
+// CAC/ROAS/LTV are MODELED. Below this groundedness they carry no observed
+// anchor, so attaching a dollar/ratio figure to a subject (esp. a named real
+// person) is fabrication. At/under the floor the engine flags `withheld` and
+// the strip renders '—' instead of a number. One tunable constant; §18 green
+// boundary (0.70) so anything not majority-real is suppressed.
+const ECONOMICS_GROUNDEDNESS_FLOOR = 0.70;
+
 // lrPrior: { avgLR, rank, n, earlyRatio } from pathstore.getLRPrior(), or null if N<5
 // sciData: { sci, sps } from structuralconfirmation.computeStructuralSuite(), or null if no EvidenceGraph yet
 export function computeMetrics(synthesis, hpState = null, persona = null, lrPrior = null, sciData = null) {
@@ -100,9 +108,9 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
     signal:      { value: signalVal,      groundedness: signalGnd },
     validity:    { value: validityVal,    groundedness: validityGnd },
     convergence: { value: convergenceVal, groundedness: convergenceGnd, queryRelevant, state: convLabel },
-    cac:  { value: cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: 'MODELED' },
-    roas: { value: roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED' },
-    ltv:  { value: ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED' },
+    cac:  { value: cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: 'MODELED', withheld: cacGnd  < ECONOMICS_GROUNDEDNESS_FLOOR },
+    roas: { value: roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED', withheld: roasGnd < ECONOMICS_GROUNDEDNESS_FLOOR },
+    ltv:  { value: ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED', withheld: ltvGnd  < ECONOMICS_GROUNDEDNESS_FLOOR },
     leverageRealization: lr,
     // SCI (8th) + SPS (9th) — populated when EvidenceGraph exists (WO-2004/2005B pipeline)
     sci: sciData?.sci ?? null,
