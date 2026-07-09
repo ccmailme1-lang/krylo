@@ -1389,7 +1389,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </button>
                   ))}
                 </div>
-                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
                   {rightPanel === 'BRIEF' ? <IntelligenceBrief />
                     : rightPanel === 'RECON' ? <ReconDashboard />
                     : <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={activeSession?.query} /></div>}
