@@ -63,6 +63,7 @@ import ActionMatrix      from './components/analysis/actionmatrix.jsx';
 import AnalysisSubstrate  from './components/analysis/analysissubstrate.jsx';
 import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
+import { registerChokepointEdges } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
@@ -827,6 +828,11 @@ export default function App() {
     // without switching the view; only the foreground path navigates.
     if (navigate) setNavMode('analysis');
   }, [createSession]);
+
+  // KRYL-1011 — populate the grounded chokepoint dependency edges once at startup,
+  // so the Causal Impact Map graph is live. Idempotent; amplifier-checked (surface
+  // amplification keys on connector-name sources, never these entity/capability nodes).
+  useEffect(() => { registerChokepointEdges(); }, []);
 
   // WO-1092 Phase A — route merged records into surface subscriptions
   useEffect(() => {
