@@ -348,5 +348,47 @@
     "aliases": ["Verizon Communications", "Verizon Communications Inc", "VZ"],
     "identifiers": { "edgar": "0000732712", "fec": null, "uei": null },
     "domainTags": ["MEDIA", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "visa",
+    "canonicalName": "VISA",
+    "aliases": ["Visa Inc.", "Visa Inc", "V"],
+    "identifiers": { "edgar": "0001403161", "ticker": "V", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "mastercard",
+    "canonicalName": "MASTERCARD",
+    "aliases": ["Mastercard Inc", "Mastercard Incorporated", "MA"],
+    "identifiers": { "edgar": "0001141391", "ticker": "MA", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "fiserv",
+    "canonicalName": "FISERV",
+    "aliases": ["Fiserv Inc", "Fiserv, Inc.", "FISV", "FI"],
+    "identifiers": { "edgar": "0000798354", "ticker": "FI", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "sabre",
+    "canonicalName": "SABRE",
+    "aliases": ["Sabre Corp", "Sabre Corporation", "Sabre Holdings", "SABR"],
+    "identifiers": { "edgar": "0001597033", "ticker": "SABR", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "cloudflare",
+    "canonicalName": "CLOUDFLARE",
+    "aliases": ["Cloudflare Inc", "Cloudflare, Inc.", "NET"],
+    "identifiers": { "edgar": "0001477333", "ticker": "NET", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "akamai",
+    "canonicalName": "AKAMAI",
+    "aliases": ["Akamai Technologies", "Akamai Technologies Inc", "AKAM"],
+    "identifiers": { "edgar": "0001086222", "ticker": "AKAM", "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY"]
   }
 ]

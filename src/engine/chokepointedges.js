@@ -61,6 +61,21 @@ const EDGES = [
   ['ONLINE_ACCOUNT_AUTHORIZATION', 'PAYMENT_AUTHORIZATION', 'ENABLES'],
 ];
 
+// CIK-anchored chokepoint companies — real SEC CIKs, verified against SEC
+// company_tickers.json (not typed from memory). Company nodes key by CIK so they
+// resolve identically through the ERK (toTopologyNodeId -> CIK:xxxx). Capability/
+// sector nodes are never companies -> always name-keyed. WORLDPAY intentionally
+// absent — currently private (GTCR), no clean standalone SEC CIK; it stays
+// name-keyed rather than carry a fabricated identifier (§22).
+const COMPANY_CIK = {
+  Visa:       '0001403161',
+  Mastercard: '0001141391',
+  Fiserv:     '0000798354',
+  Sabre:      '0001597033',
+  Cloudflare: '0001477333',
+  Akamai:     '0001086222',
+};
+
 let _registered = false;
 
 /**
@@ -72,7 +87,7 @@ export function registerChokepointEdges() {
   if (_registered) return 0;
   _registered = true;
   for (const [from, to, type] of EDGES) {
-    registerTypedEdge({ from, to, type, source: SRC, fromLabel: from, toLabel: to });
+    registerTypedEdge({ from, to, type, source: SRC, fromCik: COMPANY_CIK[from], fromLabel: from, toLabel: to });
   }
   return EDGES.length;
 }
