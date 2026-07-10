@@ -15,6 +15,8 @@ import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '..
 import { parseIntent }                from '../../engine/intentparser.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
+import { computeSES } from '../../engine/searchenvironmentstate.js';
+import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
 import { arbitrate }                  from '../../engine/aiae.js';
 import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
@@ -613,21 +615,33 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   // KRYL-1010 — SES pod: draggable Search Pod (mirrors WO-1876B drag), defaults
   // to the left of the search box, position persisted to localStorage.
+  // v5: landscape panel (372 wide) — default centered above the search box.
   const [sesPos, setSesPos] = useState(() => {
     try {
-      const s = JSON.parse(localStorage.getItem('krylo_ses_pod_v3') ?? 'null');
+      const s = JSON.parse(localStorage.getItem('krylo_ses_pod_v5') ?? 'null');
       if (s && typeof s.x === 'number' && typeof s.y === 'number') return s;
     } catch {}
     const w = typeof window !== 'undefined' ? window.innerWidth  : 1200;
     const h = typeof window !== 'undefined' ? window.innerHeight : 800;
-    // Open gap to the LEFT of the search box, clear of the left simulation panel.
-    return { x: Math.max(24, Math.round(w * 0.5 - 480)), y: Math.round(h * 0.28) };
+    return { x: Math.max(16, Math.round(w * 0.5 - 177)), y: Math.round(h * 0.12) };
   });
   const sesDragRef = useRef(null);
 
   useEffect(() => {
-    try { localStorage.setItem('krylo_ses_pod_v3', JSON.stringify(sesPos)); } catch {}
+    try { localStorage.setItem('krylo_ses_pod_v5', JSON.stringify(sesPos)); } catch {}
   }, [sesPos]);
+
+  // KRYL-1010 — ambient SES: recompute from the live observation snapshot as signals
+  // flow (empty query = pre-search environment). computeSES is pure/cheap; observations
+  // arrive async via surfacerouter → observationtap, so poll on a modest interval.
+  const [ambientSes, setAmbientSes] = useState(() => {
+    try { return computeSES({ observations: getObservations(), query: '', domains: [] }); } catch { return null; }
+  });
+  useEffect(() => {
+    const tick = () => { try { setAmbientSes(computeSES({ observations: getObservations(), query: '', domains: [] })); } catch {} };
+    const id = setInterval(tick, 4000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     const onMove = (e) => {
@@ -1508,17 +1522,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   onMouseDown={onSesMouseDown}
                   style={{
                     position: 'fixed', left: sesPos.x, top: sesPos.y, zIndex: 40,
-                    width: 165, userSelect: 'none',
+                    width: 353, maxWidth: 'calc(100vw - 32px)', userSelect: 'none',
                     cursor: sesDragRef.current ? 'grabbing' : 'grab',
                     // same surface treatment as the search box
                     background: 'rgba(10,10,10,0.96)',
                     border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 20,
+                    borderRadius: 22,
                     overflow: 'hidden',
                     boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
                   }}
                 >
-                  <SESCard width={165} />
+                  <SESCard ses={ambientSes} width={353} />
                 </div>
 
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
