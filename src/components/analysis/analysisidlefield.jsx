@@ -626,6 +626,19 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     return { x: Math.max(16, Math.round(w * 0.5 - 177)), y: Math.round(h * 0.12) };
   });
   const sesDragRef = useRef(null);
+  // helipad: home = centered in the canal (between sim panel & search box), measured on mount.
+  // Pod starts holstered here; release near it → snaps back.
+  const [sesHome, setSesHome] = useState({ x: 360, y: 120 });
+  useEffect(() => {
+    const r = (s) => document.querySelector(s)?.getBoundingClientRect();
+    const pr = r('[data-sim-panel]'), sr = r('[data-search-box]'), pod = r('[data-ses-pod]');
+    const left = pr ? pr.right : 242;
+    const right = sr ? sr.left : (typeof window !== 'undefined' ? window.innerWidth * 0.62 : 900);
+    const podW = pod ? pod.width : 353;
+    const home = { x: Math.round((left + right) / 2 - podW / 2), y: sesPos.y };
+    setSesHome(home);
+    setSesPos(home);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     try { localStorage.setItem('krylo_ses_pod_v5', JSON.stringify(sesPos)); } catch {}
@@ -653,7 +666,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       d.moved = true;
       setSesPos({ x: d.startX + dx, y: d.startY + dy });
     };
-    const onUp = () => { sesDragRef.current = null; };
+    const onUp = (e) => {
+      const d = sesDragRef.current;
+      sesDragRef.current = null;
+      if (!d || !d.moved) return;
+      // Helipad / holster: release within SNAP px of home → holster back. Else leave it free.
+      const SNAP = 130;
+      const finalX = d.startX + (e.clientX - d.startMx);
+      const finalY = d.startY + (e.clientY - d.startMy);
+      if (Math.hypot(finalX - sesHome.x, finalY - sesHome.y) < SNAP) setSesPos({ ...sesHome });
+    };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
@@ -1137,7 +1159,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       <div style={{ width: '100%', height: '100%', background: BG, color: '#fff', overflow: 'hidden', fontFamily: MONO, position: 'relative', display: 'flex' }}>
 
         {/* ── SIMULATION CONTROL PANEL ─────────────────────────────────── */}
-        <aside style={{
+        <aside data-sim-panel style={{
           width: 242, flexShrink: 0,
           borderRight: `1px solid ${BORDER}`,
           background: 'rgba(5,7,10,0.96)',
@@ -1466,7 +1488,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 </div>
               </div>
 
-              <div style={{ width: 600, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <div data-search-box style={{ width: 600, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
 
                 {/* ── CHOOSE A DOMAIN ── */}
                 <div style={{ marginBottom: 14 }}>
