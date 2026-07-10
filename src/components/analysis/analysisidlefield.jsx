@@ -1518,7 +1518,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
                   }}
                 >
-                  <SESCard width={331} />
+                  <SESCard width={165} />
                 </div>
 
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
