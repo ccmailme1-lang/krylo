@@ -7,6 +7,7 @@
 import { RENDER_OWNER } from './surfacecontract.js';
 import { resolveTopology } from './entitytopologyregistry.js';
 import { TOPOLOGY_CLUSTER_AMPLIFIER, DECAY } from './signalconstants.js';
+import { recordObservationBatch } from './observationtap.js';
 
 // WO-1856 — Extended λ for QUARTERLY decay signals (patent data ages over quarters, not minutes)
 const QUARTERLY_TTL = 90 * 24 * 60 * 60 * 1000;
@@ -176,6 +177,9 @@ class SurfaceRouter {
       }
       return conf !== e.confidence ? { ...e, confidence: conf } : e;
     });
+
+    // KRYL-1010: passive SES observation tap. Guarded so a tap fault can NEVER break routing.
+    try { recordObservationBatch(jittered); } catch { /* observation is best-effort */ }
 
     jittered.forEach(e => this.dispatch(e));
   }

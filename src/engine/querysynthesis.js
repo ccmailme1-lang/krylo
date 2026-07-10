@@ -4095,6 +4095,8 @@ import { applyEditorialGate, resolveContractLens } from './editorialgate.js';
 import { detectProtectedDomain } from './ingress.js';
 import { classifyAmbiguity } from './domainambiguitygate.js';
 import { checkRealEstateEligibility, checkAutoEligibility } from './ienbg.js';
+import { computeSES } from './searchenvironmentstate.js';
+import { getObservations } from './runtimeobservablestore.js';
 import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
 
 export function synthesizeQuery(session) {
@@ -4107,9 +4109,13 @@ export function synthesizeQuery(session) {
   const vector = domainLock
     ? { primary: domainLock, resolutionEligible: true, weights: { [domainLock]: 1.0 }, secondary: null }
     : detectDomain(query, session.lens);
+  // KRYL-1010: SES is a PRECONDITION — computed at intake and attached to EVERY return
+  // path (incl. AMBIGUOUS / withheld), where knowing the environment is noisy matters most.
+  // Annotation only; never mutates a grounded score.
+  const ses = computeSES({ observations: getObservations(), query, domains: Object.keys(vector.weights || {}) });
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
-    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false };
+    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, ses };
   }
   // WO-1867 numeric binding: a REAL_ESTATE price must anchor to purchase/dwelling
   // context AND be a plausible residential magnitude. Stated assets/income (e.g.
@@ -4123,7 +4129,7 @@ export function synthesizeQuery(session) {
   if (vector.primary === 'REAL_ESTATE') {
     const elig = checkRealEstateEligibility(query);
     if (!elig.eligible) {
-      return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason };
+      return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses };
     }
     // price bound → pass [price, down]; no price (only small scalars) → pass none so the
     // synthesizer uses its defaults rather than reading a bed/bath count as a price.
@@ -4134,7 +4140,7 @@ export function synthesizeQuery(session) {
   if (vector.primary === 'AUTO') {
     const elig = checkAutoEligibility(query);
     if (!elig.eligible) {
-      return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason };
+      return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses };
     }
     synthNumbers = elig.price !== null ? (elig.down !== null ? [elig.price, elig.down] : [elig.price]) : [];
   }
@@ -4151,5 +4157,6 @@ export function synthesizeQuery(session) {
 
   // WO-1870: report the domain that ACTUALLY synthesized — no header/body contradiction.
   const effectiveDomain = SYNTH_MAP[vector.primary] ? vector.primary : 'GENERAL';
-  return { ...result, queryDomain: effectiveDomain, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers };
+  // KRYL-1010: SES computed at intake above; attach here (annotation only, no score mutation).
+  return { ...result, queryDomain: effectiveDomain, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses };
 }

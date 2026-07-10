@@ -5,6 +5,7 @@ import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
 import ReconDashboard                 from './recondashboard.jsx';
 import CausalImpactView               from './causalimpactview.jsx';
+import SESCard                        from './sescard.jsx';
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
 import { computePositionVector }      from '../../engine/positioningengine.js';
@@ -608,6 +609,46 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     e.preventDefault();
     e.stopPropagation();
     dragRef.current = { id: card.id, startMx: e.clientX, startMy: e.clientY, startX: card.x, startY: card.y, moved: false };
+  };
+
+  // KRYL-1010 — SES pod: draggable Search Pod (mirrors WO-1876B drag), defaults
+  // to the left of the search box, position persisted to localStorage.
+  const [sesPos, setSesPos] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem('krylo_ses_pod_v3') ?? 'null');
+      if (s && typeof s.x === 'number' && typeof s.y === 'number') return s;
+    } catch {}
+    const w = typeof window !== 'undefined' ? window.innerWidth  : 1200;
+    const h = typeof window !== 'undefined' ? window.innerHeight : 800;
+    // Open gap to the LEFT of the search box, clear of the left simulation panel.
+    return { x: Math.max(24, Math.round(w * 0.5 - 480)), y: Math.round(h * 0.28) };
+  });
+  const sesDragRef = useRef(null);
+
+  useEffect(() => {
+    try { localStorage.setItem('krylo_ses_pod_v3', JSON.stringify(sesPos)); } catch {}
+  }, [sesPos]);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      const d = sesDragRef.current;
+      if (!d) return;
+      const dx = e.clientX - d.startMx;
+      const dy = e.clientY - d.startMy;
+      if (!d.moved && Math.abs(dx) < 4 && Math.abs(dy) < 4) return;
+      d.moved = true;
+      setSesPos({ x: d.startX + dx, y: d.startY + dy });
+    };
+    const onUp = () => { sesDragRef.current = null; };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp); };
+  }, []);
+
+  const onSesMouseDown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    sesDragRef.current = { startMx: e.clientX, startMy: e.clientY, startX: sesPos.x, startY: sesPos.y, moved: false };
   };
 
   const [activeSituation, setActiveSituation] = useState(null);
@@ -1460,6 +1501,25 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     ))}
                   </div>
                 )}
+
+                {/* ── KRYL-1010 SES pod (draggable, left of search box) ── */}
+                <div
+                  data-ses-pod
+                  onMouseDown={onSesMouseDown}
+                  style={{
+                    position: 'fixed', left: sesPos.x, top: sesPos.y, zIndex: 40,
+                    width: 165, userSelect: 'none',
+                    cursor: sesDragRef.current ? 'grabbing' : 'grab',
+                    // same surface treatment as the search box
+                    background: 'rgba(10,10,10,0.96)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 20,
+                    overflow: 'hidden',
+                    boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
+                  }}
+                >
+                  <SESCard width={331} />
+                </div>
 
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
                 <div style={{
