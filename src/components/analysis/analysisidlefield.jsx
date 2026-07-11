@@ -17,6 +17,7 @@ import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
+import { geocodeCity, fetchWeather, geolocate } from '../../engine/weather.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
 import { arbitrate }                  from '../../engine/aiae.js';
 import { buildEnvelope, storeEnvelope } from '../../engine/lineage.js';
@@ -655,6 +656,30 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     const id = setInterval(tick, 4000);
     return () => clearInterval(id);
   }, []);
+
+  // KRYL-1023 — weather feed. Load a saved location, else geolocate; city/state override
+  // via prompt → geocode. Real feed or null (SES card renders "—" when null, never fake).
+  const [weather, setWeather] = useState(null);
+  const loadWeather = React.useCallback(async (coords) => {
+    try {
+      let c = coords;
+      if (!c) { try { c = JSON.parse(localStorage.getItem('krylo_ses_loc') || 'null'); } catch {} }
+      if (!c) c = await geolocate();
+      if (!c) return;
+      const w = await fetchWeather(c);
+      if (w) {
+        setWeather(w);
+        try { localStorage.setItem('krylo_ses_loc', JSON.stringify({ lat: c.lat, lon: c.lon, place: w.place })); } catch {}
+      }
+    } catch {}
+  }, []);
+  useEffect(() => { loadWeather(); }, [loadWeather]);
+  const onSetLocation = React.useCallback(async () => {
+    const q = window.prompt('Weather location — city, state / country:');
+    if (!q || !q.trim()) return;
+    const g = await geocodeCity(q.trim());
+    if (g) loadWeather(g); else window.alert('Location not found — try "City, Country".');
+  }, [loadWeather]);
 
   useEffect(() => {
     const onMove = (e) => {
@@ -1544,7 +1569,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   onMouseDown={onSesMouseDown}
                   style={{
                     position: 'fixed', left: sesPos.x, top: sesPos.y, zIndex: 40,
-                    width: 353, maxWidth: 'calc(100vw - 32px)', userSelect: 'none',
+                    width: 265, maxWidth: 'calc(100vw - 32px)', userSelect: 'none',
                     cursor: sesDragRef.current ? 'grabbing' : 'grab',
                     // same surface treatment as the search box
                     background: 'rgba(10,10,10,0.96)',
@@ -1554,7 +1579,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
                   }}
                 >
-                  <SESCard ses={ambientSes} width={353} />
+                  <SESCard ses={ambientSes} weather={weather} onSetLocation={onSetLocation} width={265} />
                 </div>
 
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}

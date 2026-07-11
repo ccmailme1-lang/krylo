@@ -94,7 +94,7 @@ const SES_METRICS = [
 const METRIC_MAP = Object.fromEntries(SES_METRICS.map((m) => [m.key, m]));
 const DEFAULT_SLOTS = ['signalDensity', 'observationHealth', 'opportunityClimate'];
 
-export default function SESCard({ ses = null, width = 300 }) {
+export default function SESCard({ ses = null, weather = null, onSetLocation, width = 300 }) {
   const s = width / BASE_WIDTH;                 // single scale factor
   const px = (v, floor = 0) => Math.max(floor, Math.round(v * s * 10) / 10);
 
@@ -131,33 +131,60 @@ export default function SESCard({ ses = null, width = 300 }) {
                  + ' · ' + now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   const weekday = now.toLocaleDateString(undefined, { weekday: 'long' });
 
+  // KRYL-1023 — weather display: real feed or honest "—" (never fabricated). Location tap
+  // opens the city/state override.
+  const wxTemp     = weather?.temp;
+  const wxMeta     = weather ? `${weather.hi}°/${weather.lo}° · REALFEEL ${weather.realFeel}°` : '—';
+  const wxPlace    = weather?.place;
+  const wxForecast = weather?.forecast?.length
+    ? weather.forecast
+    : ['TUE', 'WED', 'THU', 'FRI', 'SAT'].map((day) => ({ day, hi: null, lo: null }));
+
   // gauges derived from the configurable loadout; each reads live from `ses` (or "—").
   const gauges = slots.map((key) => {
     const m = METRIC_MAP[key] || METRIC_MAP[DEFAULT_SLOTS[0]];
     return [m.label, m.read(ses)];
   });
 
-  // dial-row SVG geometry (viewBox units — auto-scales to the panel width)
-  const R = 92, cellW = 220, cx0 = 110, topLabel = 28, cyDial = topLabel + 20 + R;
-  const vbW = cellW * 3, vbH = cyDial + R + 16;
+  // circular (chrono sub-dial) config — two gauges up top, one bottom-center. Compact,
+  // square-ish cluster (Navitimer) instead of a wide row.
+  const R = 90;
+  const POS = [
+    { cx: 128, cy: 116 },   // top-left
+    { cx: 344, cy: 116 },   // top-right
+    { cx: 236, cy: 320 },   // bottom-center
+  ];
+  const vbW = 472, vbH = 428;
   const rowEls = useMemo(() => gauges.map(([label, value], i) => {
-    const cx = cx0 + i * cellW;
+    const { cx, cy } = POS[i];
     return (
       <g key={`slot${i}`}>
-        <text x={cx} y={topLabel} textAnchor="middle" fill={TEXT} fontFamily={DISPLAY} fontSize="13" fontWeight="700" letterSpacing="0.4">{label}</text>
-        {gaugeElements(cx, cyDial, R, value, `g${i}`)}
-        {/* KRYL-1024 — transparent hit target: tap the dial to swap its metric */}
-        <rect x={i * cellW} y={0} width={cellW} height={vbH} fill="transparent"
-              style={{ cursor: 'pointer' }}
-              onClick={() => setPickerSlot(i)} onMouseDown={(e) => e.stopPropagation()}>
+        <text x={cx} y={cy - R - 8} textAnchor="middle" fill={TEXT} fontFamily={DISPLAY} fontSize="13" fontWeight="700" letterSpacing="0.4">{label}</text>
+        {gaugeElements(cx, cy, R, value, `g${i}`)}
+        {/* KRYL-1024 — circular hit target: tap the dial to swap its metric */}
+        <circle cx={cx} cy={cy} r={R} fill="transparent"
+                style={{ cursor: 'pointer' }}
+                onClick={() => setPickerSlot(i)} onMouseDown={(e) => e.stopPropagation()}>
           <title>Tap to change metric</title>
-        </rect>
+        </circle>
       </g>
     );
   }), [JSON.stringify(gauges)]);
 
   return (
     <div style={{ width: '100%', position: 'relative', fontFamily: DISPLAY, color: TEXT }}>
+      {/* ── drag grip: top-left corner handle. Moves the card — does NOT stopPropagation,
+             so mousedown bubbles to the pod wrapper's drag. Always present, both states. ── */}
+      <div title="Drag to move" role="button" aria-label="Move card"
+           style={{ position: 'absolute', top: px(4, 3), left: px(4, 3), zIndex: 4,
+                    padding: px(6, 5), cursor: 'grab', lineHeight: 0 }}>
+        <svg width={px(11, 9)} height={px(15, 12)} viewBox="0 0 8 12">
+          <circle cx="2" cy="2" r="1" fill={FAINT} /><circle cx="6" cy="2" r="1" fill={FAINT} />
+          <circle cx="2" cy="6" r="1" fill={FAINT} /><circle cx="6" cy="6" r="1" fill={FAINT} />
+          <circle cx="2" cy="10" r="1" fill={FAINT} /><circle cx="6" cy="10" r="1" fill={FAINT} />
+        </svg>
+      </div>
+
       {/* ── glance gauges — always on top (the quick read) ── */}
       <div style={{ padding: `${px(10, 7)}px ${px(8, 5)}px 0` }}>
         <svg viewBox={`0 0 ${vbW} ${vbH}`} width="100%" role="img" aria-label="Search Environment State gauges" style={{ display: 'block' }}>
@@ -198,19 +225,23 @@ export default function SESCard({ ses = null, width = 300 }) {
             <div style={{ fontFamily: MONO, fontSize: px(10, 8.5), letterSpacing: '0.12em', color: FAINT, textTransform: 'uppercase' }}>{dateLine}</div>
             <div style={{ fontWeight: 700, fontSize: px(22, 14), marginTop: 2 }}>{weekday}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: px(10, 6), marginTop: 4 }}>
-              <div style={{ fontWeight: 700, fontSize: px(40, 24), lineHeight: 1 }}>2<sup style={{ fontSize: px(15, 10), fontWeight: 400, color: TEXT_DIM }}>°C</sup></div>
+              <div style={{ fontWeight: 700, fontSize: px(40, 24), lineHeight: 1 }}>{wxTemp != null ? wxTemp : '—'}<sup style={{ fontSize: px(15, 10), fontWeight: 400, color: TEXT_DIM }}>°F</sup></div>
               <CloudIcon size={px(34, 22)} />
             </div>
-            <div style={{ fontFamily: MONO, fontSize: px(10.5, 9), color: TEXT_DIM, marginTop: 4, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>12°/0° · REALFEEL 1°</div>
+            <div style={{ fontFamily: MONO, fontSize: px(10.5, 9), color: TEXT_DIM, marginTop: 4, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>{wxMeta}</div>
           </div>
           <div style={{ flex: '1 1 0', minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: px(15, 11), marginBottom: px(8, 6) }}>⌖ Location</div>
+            <div
+              onClick={onSetLocation}
+              onMouseDown={(e) => e.stopPropagation()}
+              style={{ fontWeight: 600, fontSize: px(15, 11), marginBottom: px(8, 6), cursor: onSetLocation ? 'pointer' : 'default' }}
+            >⌖ {wxPlace || 'Set location'}</div>
             <div style={{ display: 'flex', gap: px(4, 3) }}>
-              {FORECAST.map(([d, hi, lo]) => (
-                <div key={d} style={{ flex: '1 1 0', minWidth: 0, textAlign: 'center', padding: `${px(8, 5)}px 1px`, background: 'rgba(255,255,255,0.04)', border: `1px solid ${EDGE2}`, borderRadius: px(11, 7), fontFamily: MONO }}>
-                  <div style={{ fontSize: px(9, 7.5), letterSpacing: '0.04em', color: FAINT }}>{d}</div>
+              {wxForecast.map((f) => (
+                <div key={f.day} style={{ flex: '1 1 0', minWidth: 0, textAlign: 'center', padding: `${px(8, 5)}px 1px`, background: 'rgba(255,255,255,0.04)', border: `1px solid ${EDGE2}`, borderRadius: px(11, 7), fontFamily: MONO }}>
+                  <div style={{ fontSize: px(9, 7.5), letterSpacing: '0.04em', color: FAINT }}>{f.day}</div>
                   <div style={{ margin: '3px 0' }}><CloudIcon size={px(18, 12)} /></div>
-                  <div style={{ fontSize: px(10, 8), color: TEXT_DIM }}><b style={{ color: TEXT, fontWeight: 400 }}>{hi}°</b>/{lo}°</div>
+                  <div style={{ fontSize: px(10, 8), color: TEXT_DIM }}>{f.hi != null ? <><b style={{ color: TEXT, fontWeight: 400 }}>{f.hi}°</b>/{f.lo}°</> : '—'}</div>
                 </div>
               ))}
             </div>
@@ -237,15 +268,18 @@ export default function SESCard({ ses = null, width = 300 }) {
               return (
                 <div
                   key={m.key}
-                  onClick={(e) => { e.stopPropagation(); setSlots((prev) => prev.map((k, idx) => (idx === pickerSlot ? m.key : k))); setPickerSlot(null); }}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer',
+                  onClick={m.live
+                    ? (e) => { e.stopPropagation(); setSlots((prev) => prev.map((k, idx) => (idx === pickerSlot ? m.key : k))); setPickerSlot(null); }
+                    : (e) => e.stopPropagation()}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                           cursor: m.live ? 'pointer' : 'default', opacity: m.live ? 1 : 0.5,
                            padding: `${px(8, 6)}px ${px(11, 9)}px`, borderRadius: px(8, 6),
                            background: sel ? 'rgba(102,255,0,0.09)' : 'transparent',
                            border: `1px solid ${sel ? 'rgba(102,255,0,0.4)' : EDGE2}`,
                            color: m.live ? TEXT : TEXT_DIM }}
                 >
                   <span style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: px(12.5, 10.5) }}>{m.label}</span>
-                  <span style={{ fontFamily: MONO, fontSize: px(8.5, 8), letterSpacing: '0.1em', color: m.live ? LIME : FAINT }}>{m.live ? 'LIVE' : '—'}</span>
+                  <span style={{ fontFamily: MONO, fontSize: px(8.5, 8), letterSpacing: '0.1em', color: m.live ? LIME : FAINT }}>{m.live ? 'LIVE' : 'SOON'}</span>
                 </div>
               );
             })}
