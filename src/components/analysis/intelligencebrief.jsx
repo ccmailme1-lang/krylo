@@ -6,6 +6,7 @@ import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
+import { getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { useHappyPathEngine, useUnicornAlerts } from '../../engine/happypathdisplacementengine.js';
 import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../engine/convictionstore.js';
 import { emitTelemetry }     from '../../engine/telemetry.js';
@@ -1291,16 +1292,37 @@ export default function IntelligenceBrief() {
         display: 'flex', gap: 0, alignItems: 'center',
         position: 'relative', zIndex: 1, overflow: 'hidden',
       }}>
-        {[
-          { label: 'SIGNAL',          value: 'LOCKED',                         color: LIME },
-          { label: 'CONVERGENCE',     value: 'HIGH',                           color: LIME },
-          { label: 'FRACTURE WINDOW', value: 'OPEN · 48H',                     color: LIME },
-          { label: 'NODES',           value: '5 / 7',                          color: BLUE },
-          { label: 'KERNEL',
-            value: replayMode ? replayState : RUNTIME_STATE.LIVE,
-            color: replayMode ? BLUE : LIME,
-          },
-        ].map(({ label, value, color }, i) => (
+        {(() => {
+          // DEF-1875 — wire the badge ribbon to real per-query state (was hardcoded
+          // LOCKED/HIGH regardless of the actual analysis). The convergence % lives
+          // inside the badge so label and number can never diverge again. §18/§19.
+          const cv   = Math.round((metrics?.convergence?.value ?? 0) * 100);
+          const qRel = metrics?.convergence?.queryRelevant !== false;
+          const insufficient = !metrics?.convergence || synthesis?.resolutionEligible === false;
+          let convT, convC;
+          if (insufficient)  { convT = 'INSUFFICIENT'; convC = DIM;    }
+          else if (cv >= 66) { convT = 'HIGH';         convC = PURPLE; }
+          else if (cv >= 40) { convT = 'BUILDING';     convC = LIME;   }
+          else if (cv >= 20) { convT = 'LOW';          convC = DIM;    }
+          else               { convT = 'INSUFFICIENT'; convC = DIM;    }
+          const convValue = insufficient ? convT : `${convT} · ${cv}%${qRel ? '' : ' · FIELD'}`;
+          const locked = hp?.qualified === true;
+          // Real fracture polarity + active-signal count for the query domain
+          // (domaingravity §20). Fracture window OPEN = domain in fracture polarity;
+          // NODES = real signalCount. No fabricated 48H duration or /7 denominator.
+          const dp = synthesis?.queryDomain ? getQueryDomainPressure(synthesis.queryDomain) : null;
+          const fracturing = dp?.polarity === 'fracture' && dp.signalCount > 0;
+          return [
+            { label: 'SIGNAL',          value: locked ? 'LOCKED' : 'TRACKING', color: locked ? LIME : DIM },
+            { label: 'CONVERGENCE',     value: convValue,                      color: qRel ? convC : DIM },
+            { label: 'FRACTURE WINDOW', value: dp ? (fracturing ? 'OPEN' : 'CLOSED') : '—', color: fracturing ? BRT : DIM },
+            { label: 'NODES',           value: dp ? String(dp.signalCount) : '—',           color: (dp?.signalCount ?? 0) > 0 ? MID : DIM },
+            { label: 'KERNEL',
+              value: replayMode ? replayState : RUNTIME_STATE.LIVE,
+              color: replayMode ? BLUE : LIME,
+            },
+          ];
+        })().map(({ label, value, color }, i) => (
           <div key={label} style={{ display: 'flex', gap: 7, alignItems: 'center', paddingRight: 20, borderRight: i < 4 ? `1px solid rgba(255,255,255,0.06)` : 'none', marginRight: 20, flexShrink: 0 }}>
             <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{label}</span>
             <span style={{ fontFamily: MONO, fontSize: 9, color, letterSpacing: '0.18em' }}>{value}</span>

@@ -666,20 +666,20 @@ export default function TargetPacket() {
                             REFORMULATE →
                           </span>
                         </div>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                           {suggestions.map((s, i) => (
                             <div
                               key={i}
                               style={{
                                 fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em',
-                                padding: '4px 10px',
-                                border: `1px solid rgba(102,255,0,0.25)`,
-                                background: 'rgba(102,255,0,0.03)',
-                                borderRadius: 999,
+                                padding: '3px 14px 3px 8px',
+                                background: 'rgba(102,255,0,0.10)',
+                                borderLeft: '2px solid rgba(102,255,0,0.45)',
+                                alignSelf: 'flex-start',
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              {s}
+                              {`+ ${s}`}
                             </div>
                           ))}
                         </div>
@@ -759,7 +759,11 @@ export default function TargetPacket() {
           <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             {[
               { label: 'PRIMARY DOMAIN',   value: synthesis?.queryDomain?.replace(/_/g,' ') ?? '—' },
-              { label: 'STATE',            value: stateLabel?.replace(/_/g,' ') ?? '—' },
+              // DEF-1875 — guest-facing STATE must reflect real resolution, not the
+              // default 'BUILDING CONVERGENCE' on an unresolved/ambiguous query (§19).
+              { label: 'STATE',            value: synthesis?.resolutionEligible === false ? 'INSUFFICIENT SIGNAL'
+                                                : synthesis?.queryDomain === 'AMBIGUOUS'    ? 'AMBIGUOUS'
+                                                : (stateLabel?.replace(/_/g,' ') ?? '—') },
               { label: 'CONFIDENCE',       value: confScore ? `${(confScore * 100).toFixed(0)}%` : '—' },
               { label: 'SIGNAL STRENGTH',  value: hpScore ? `${hpScore}` : '—' },
               { label: 'LENS',             value: session?.lens ?? '—' },
