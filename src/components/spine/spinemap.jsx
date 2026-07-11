@@ -18,6 +18,7 @@
 //           KRYL-314: Search/filter — keyword highlight
 
 import React, { useRef, useMemo, useEffect, useState, useCallback } from 'react';
+import { useCanvasGuard } from '../../utils/webglcontextguard.js';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -3162,6 +3163,7 @@ function RightRailHUD({
 
 // ── Export ────────────────────────────────────────────────────────────────────
 export default function SignalMap({ data, signalMapData, isActive = false, onSelect, contained = false, filterQuery = null }) {
+  const onCanvasCreated = useCanvasGuard();
   const resolved = signalMapData ?? data;
   const signals  = Array.isArray(resolved) ? resolved : (resolved?.signals ?? []);
   const loading  = resolved?.loading ?? false;
@@ -3469,7 +3471,7 @@ export default function SignalMap({ data, signalMapData, isActive = false, onSel
           style={{ width: '100%', height: '100%' }}
           gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true, stencil: true }}
           camera={{ fov: 50, position: [0, 4, 10], near: 0.1, far: 200 }}
-          onCreated={({ camera }) => camera.lookAt(0, 3, 0)}
+          onCreated={(state) => { onCanvasCreated(state); state.camera.lookAt(0, 3, 0); }}
           onPointerMissed={() => { setLockedIdx(null); setLockedNodeData(null); }}
         >
           <ambientLight intensity={0.4} />

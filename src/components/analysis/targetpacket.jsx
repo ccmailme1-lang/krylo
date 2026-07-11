@@ -633,6 +633,10 @@ export default function TargetPacket() {
               <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {alternatives.length === 0 && (() => {
                   const q = session?.query?.trim() ?? '';
+                  // Reformulate cue only when the query itself is under-specified — i.e.
+                  // refining it would yield richer results. A specific query that simply
+                  // found no paths is not refinable, so no cue there.
+                  const needsRefine = stateLabel === 'INSUFFICIENT_SIGNAL' || synthesis?.resolutionEligible === false;
                   const suggestions = [
                     `Add timeline or dollar context`,
                     `The structural signal for ${q}?`,
@@ -654,6 +658,7 @@ export default function TargetPacket() {
                           DOMAIN ATTEMPTED · {synthesis.queryDomain.replace(/_/g, ' ')}
                         </div>
                       )}
+                      {needsRefine && (
                       <div style={{ marginTop: 6 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
                           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#007FFF', flexShrink: 0, animation: 'reformulate-blink 1.1s ease-in-out infinite' }} />
@@ -665,24 +670,21 @@ export default function TargetPacket() {
                           {suggestions.map((s, i) => (
                             <div
                               key={i}
-                              onClick={() => window.postMessage({ type: 'krylo-submit', query: s }, '*')}
                               style={{
                                 fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em',
                                 padding: '4px 10px',
                                 border: `1px solid rgba(102,255,0,0.25)`,
                                 background: 'rgba(102,255,0,0.03)',
                                 borderRadius: 999,
-                                cursor: 'pointer',
                                 whiteSpace: 'nowrap',
                               }}
-                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(102,255,0,0.08)'}
-                              onMouseLeave={e => e.currentTarget.style.background = 'rgba(102,255,0,0.03)'}
                             >
                               {s}
                             </div>
                           ))}
                         </div>
                       </div>
+                      )}
                     </div>
                   );
                 })()}

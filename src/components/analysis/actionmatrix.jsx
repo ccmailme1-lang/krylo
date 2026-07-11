@@ -220,7 +220,7 @@ export default function ActionMatrix() {
       </div>
 
       {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} visibility={visibility} />
+      <MetricStrip metrics={metrics} visibility={visibility} hide={['LR-Prior']} />
 
       {/* ── Structural Friction alert — injected pre-hero when HIGH_FRICTION */}
       {showFriction && <FrictionCard friction={structuralFriction} />}

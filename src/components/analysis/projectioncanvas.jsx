@@ -1,6 +1,7 @@
 // WO-1318 — ProjectionCanvas: 40-year topological projection (R3F)
 // Consumes SpatialFrame snapshot — never reads live DOM coordinates directly
 import React, { useMemo } from 'react';
+import { useCanvasGuard } from '../../utils/webglcontextguard.js';
 import { Canvas } from '@react-three/fiber';
 import { Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -146,11 +147,13 @@ function Scene({ playhead, fractureScore }) {
 // ── Export ────────────────────────────────────────────────────────────────────
 
 export default function ProjectionCanvas({ playhead = 0, fractureScore = 1.8 }) {
+  const onCanvasCreated = useCanvasGuard();
   return (
     <Canvas
       camera={{ position: [0, 0.8, 9], fov: 48 }}
       style={{ width: '100%', height: '100%', display: 'block' }}
       gl={{ antialias: true }}
+      onCreated={onCanvasCreated}
     >
       <Scene playhead={playhead} fractureScore={fractureScore} />
       <OrbitControls enablePan={false} enableZoom={false} minPolarAngle={Math.PI / 4} maxPolarAngle={Math.PI / 1.8} />

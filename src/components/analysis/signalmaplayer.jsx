@@ -2,6 +2,7 @@
 // Real liveSignals data. Max 20 nodes. Nodes drift + rotate independently.
 
 import React, { useRef, useMemo } from 'react';
+import { useCanvasGuard } from '../../utils/webglcontextguard.js';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -117,6 +118,7 @@ function Scene({ nodes, controlsRef }) {
 
 export default function SignalMapLayer({ signals = [] }) {
   const controlsRef = useRef();
+  const onCanvasCreated = useCanvasGuard();
 
   const nodes = useMemo(() => {
     const top = [...signals]
@@ -142,6 +144,7 @@ export default function SignalMapLayer({ signals = [] }) {
       dpr={[1, 1.5]}
       performance={{ min: 0.5 }}
       style={{ background: '#09090b' }}
+      onCreated={onCanvasCreated}
     >
       <Scene nodes={nodes} controlsRef={controlsRef} />
     </Canvas>

@@ -124,7 +124,7 @@ const PHASE_DOT_STYLES = [
 
 // visibility: output of useMetricVisibility() — optional; defaults to full active rendering
 // compositeMetrics: from computeCompositeMetrics() — WO-2014; optional
-export default function MetricStrip({ metrics, visibility, compositeMetrics, style }) {
+export default function MetricStrip({ metrics, visibility, compositeMetrics, style, hide }) {
   if (!metrics) return null;
   const { signal, validity, convergence, cac, roas, ltv, leverageRealization, sci, sps } = metrics;
 
@@ -212,6 +212,11 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
     },
   ];
 
+  // DEF-1870 — placement fix: omit named tiles for this instance only (e.g. the
+  // action-matrix strip drops LR-Prior). The metric + its RECORDING state stay
+  // intact on every other surface; this filters render, not the metric itself.
+  const shownTiles = (hide && hide.length) ? tiles.filter(t => !hide.includes(t.label)) : tiles;
+
   // WO-2016: Divergence Spectrum visibility
   const showSpectrum  = fsmMode !== 'QUIET' && compositeMetrics != null;
   const spectrumOpacity = fsmMode === 'CRITICAL' ? 1.0 : 0.5;
@@ -237,10 +242,10 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
         padding: '10px 0',
         overflowX: 'auto',
       }}>
-        {tiles.map((t, i) => (
+        {shownTiles.map((t, i) => (
           <React.Fragment key={t.label}>
             <TileWithDot {...t} />
-            {i < tiles.length - 1 && (
+            {i < shownTiles.length - 1 && (
               <div style={{ width: 1, background: 'rgba(255,255,255,0.07)', alignSelf: 'stretch', flexShrink: 0 }} />
             )}
           </React.Fragment>

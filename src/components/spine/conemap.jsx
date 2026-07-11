@@ -2,6 +2,7 @@
 // Phase 1 — single ConeMap, single Canvas, no overlays, no auxiliary systems
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { useCanvasGuard } from '../../utils/webglcontextguard.js';
 import { createPortal } from 'react-dom';
 import HelpMark from '../shared/helpmark.jsx';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
@@ -2005,6 +2006,7 @@ const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media
 
 
 export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, dollyKey = 0, coneColorOverrides = {} }) {
+  const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
     const normalized = signals.map(sig => ({
@@ -2178,7 +2180,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
     >
-      <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }}>
+      <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }} onCreated={onCanvasCreated}>
         <ConeScene
           coneState={coneState}
           selectedDomain={activeDomain}

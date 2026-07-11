@@ -234,8 +234,15 @@ async function buildMigrationSignals(now) {
   return signals;
 }
 
+// Legacy PatentsView API (api.patentsview.org) was decommissioned; its replacement
+// Search API is key-gated and CORS-blocked from the browser. Every fetch here fails
+// ("Failed to fetch") and floods the console. Disabled until a server-side proxy exists.
+// Flip to true only once runs through an API proxy (§16). — 2026-07-11
+const PATENTSVIEW_ENABLED = false;
+
 // Main entry point — call once per sync cycle (PatentsView is weekly/monthly, not live)
 export async function runPatentsViewSync() {
+  if (!PATENTSVIEW_ENABLED) return [];
   const now = Date.now();
 
   const [velocityResult, assigneeResult, migrationResult] = await Promise.allSettled([
