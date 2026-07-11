@@ -24,10 +24,12 @@ Scope note: this WO is the **engine** (`computeRelevance`). Rendering the Domain
 
 ## 2. BOUNDARY DECLARATION
 
-**Input contract:**
-- `condition` — the SES output from `computeSES()` (`searchenvironmentstate.js`): the detected environmental state (activity, observation health, opportunity climate, volatility, constraint pressure, active domains).
-- `signals` — pooled field signals already in the store, via `getObservations()` (`runtimeobservablestore.js`). The broker does NOT fetch or ingest.
-- Evidence quality per signal — read from STEE surfaces: `computeSCI()` + `computeStructuralDivergence()` (`structuralconfirmation.js`), and domain field via `getQueryDomainPressure()` (`domaingravity.js`).
+**Input contract (CORRECTED 2026-07-11 after shape-grounding):**
+- `condition` — the SES output from `computeSES()` (`searchenvironmentstate.js`): environmental state + groundedness. `condition.domains` (the query/active domains) drives `domainMatch`.
+- `signals` — the **live signal array** already produced upstream (the `liveSignals` shape from `usetruthlens`/`useingest`): each `{ domain, fs (0–1), fidelity{m_checksum,t_telemetry,d_docs,v_voice,e_viral}, ts, source }`. The broker does NOT fetch, ingest, or subscribe — it receives the array.
+- Domain field per signal — `getQueryDomainPressure(domain)` (`domaingravity.js`) → `{ polarity, signalCount }` for the contradiction + earliness terms.
+
+CORRECTION NOTE: the prior draft used `getObservations()` (a 5-field SES *environment snapshot*, not rankable signals) and per-signal `computeSCI` (graph-level, not per-signal). Both were shape-mismatches caught before build. Independence stays a field-level enhancement (`evidenceindependence.js`), NOT a per-signal formula term in slice 1.
 
 **Output contract:** `CandidateRelevance[]`, each:
 `{ signalId, relevanceScore (0–100), servedDimension, groundedness (0–1), reason, withheld (bool) }`, ranked descending. Plus classified **ABSENCE** entries (`{ dimension, absenceClass, expectedDomain }`) for expected-but-missing evidence classes (§22).
@@ -65,22 +67,23 @@ Per the STSE↔STEE Reconciliation Contract: the broker **sits between** the two
 **Relevance score for signal `s` given condition `C`:**
 
 ```
-Relevance(s | C) = 100 · ( Σ wᵢ·termᵢ ) / Σ wᵢ        (all termᵢ ∈ [0,1], all from REAL sources)
+Relevance(s | C) = 100 · ( Σ wᵢ·termᵢ ) / Σ wᵢ        (all termᵢ ∈ [0,1], all from REAL per-signal/domain sources)
 
-  domainMatch(s,C)   = 1 if s.domain ∈ C.activeDomains ; 0.5 if adjacent ; 0 otherwise
-  magnitude(s)       = s.confidence / 100                         (§16-normalized, real)
-  recency(s)         = decayFactor(s.ts, s.decay)                 (real timestamp + decay tier)
-  independence(s)    = computeSCI(s).independence                 (STEE, real; null ⇒ withhold)
-  contradiction(s,C) = computeStructuralDivergence(s vs C read)   (real; contradictions are HIGH value)
-  earliness(s)       = 1 − consensus(s)                           (§19 inversion via getLRPrior class)
+  domainMatch(s,C)   = 1 if s.domain ∈ C.domains ; 0 otherwise          (real: signal domain vs condition domains)
+  magnitude(s)       = clamp01(s.fs)                                     (real per-signal fidelity score)
+  recency(s)         = 0.5^( age(s.ts) / HALF_LIFE_MS )                  (real timestamp; HALF_LIFE_MS = 6h)
+  contradiction(s)   = 1 if getQueryDomainPressure(s.domain).polarity==='fracture' else 0   (real; fracture vs consensus = HIGH value)
+  earliness(s)       = 1 − clamp01( getQueryDomainPressure(s.domain).signalCount / EARLY_SATURATION )   (real; §19 inversion — fewer signals = less obvious. EARLY_SATURATION = 20)
 
-Initial weights (calibratable via WO-2062, but DEFINED here — not TBD):
-  w_domain=0.25  w_magnitude=0.20  w_independence=0.15  w_contradiction=0.15  w_earliness=0.15  w_recency=0.10
+Initial weights (calibratable via WO-2062, DEFINED here — not TBD):
+  w_domain=0.30  w_magnitude=0.25  w_recency=0.15  w_contradiction=0.15  w_earliness=0.15
 ```
+
+groundedness(s) = mean of the present `s.fidelity` sub-fields (real observed fraction, §18); falls back to `s.fs` if `fidelity` absent.
 
 **servedDimension** ∈ { CRITICAL_SIGNAL, LEADING_INDICATOR, CONTRADICTION, OPPORTUNITY_RISK } — the condition→evidence-requirements classes named in the Founder brainstorm doc. Each signal is tagged with the dimension it most serves.
 
-**Withhold gate (§19 — load-bearing):** if `magnitude(s)==0` OR `independence(s)` is null (no SCI), `relevanceScore` is **withheld** (`withheld:true`, not ranked as relevant). A signal with no grounded magnitude or no independent confirmation is never surfaced as "relevant." Relevance is never fabricated.
+**Withhold gate (§19 — load-bearing):** if `magnitude(s)==0` or `s.fs` is null/undefined, `relevanceScore` is **withheld** (`withheld:true`, excluded from the ranked set). A signal with no grounded strength is never surfaced as "relevant." Relevance is never fabricated.
 
 **Absence encoding (§22):** for each `servedDimension` the condition expects, if no pooled signal serves it, emit a classified ABSENCE entry — `STRUCTURAL` (can't exist here), `TEMPORAL` (expected, not yet observed), or `ANOMALOUS` (expected + historically present, now missing). Absence is a first-class output, never silence.
 
@@ -93,12 +96,11 @@ Normalization: output conforms to 0–100 signal scale (§16).
 
 | File | Change | Unchanged |
 |------|--------|-----------|
-| `src/engine/relevancebroker.js` (NEW) | `computeRelevance(condition, signals, opts)` → `CandidateRelevance[]`: the formula, withhold gate, absence encoding | — |
-| `src/engine/searchenvironmentstate.js` | REUSE `computeSES` as condition input (read-only) | its computation |
-| `src/engine/structuralconfirmation.js` | REUSE `computeSCI` / `computeStructuralDivergence` (read-only) | its computation |
-| `src/engine/domaingravity.js` | REUSE `getQueryDomainPressure` / `getAllDomainPressures` (read-only) | its computation |
-| `src/engine/runtimeobservablestore.js` | REUSE `getObservations` for pooled signals (read-only) | its computation |
-| `src/engine/pathstore.js` | REUSE `getLRPrior` for the earliness/non-consensus prior (read-only) | its computation |
+| `src/engine/relevancebroker.js` (NEW) | `computeRelevance(condition, signals)` → `{ ranked: CandidateRelevance[], absence: Absence[] }`: the formula, withhold gate, absence encoding | — |
+| `src/engine/searchenvironmentstate.js` | REUSE `computeSES` output as condition input (read-only) | its computation |
+| `src/engine/domaingravity.js` | REUSE `getQueryDomainPressure` for polarity + signalCount (read-only) | its computation |
+
+Not used in slice 1 (shape-mismatch, deferred): `getObservations` (env snapshot, not signals), `computeSCI`/`computeStructuralDivergence` (graph-level), `getLRPrior` (leverage prior, not consensus). Field-level independence via `evidenceindependence.js` is a slice-1.1 groundedness enhancement.
 
 No new ingestion. No new HN fetcher (existing `usehnsignals`/`fetchHNTop` already ingest HN; the broker reads the pool, it does not fetch).
 
