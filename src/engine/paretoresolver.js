@@ -11,7 +11,7 @@ import { comparableDimensions } from './compositionvectors.js';
 
 // A dominates B only on the dimensions BOTH populated. If there is no overlap at all,
 // the two are incomparable — neither dominates, both survive independently.
-function dominatesVector(vecA, vecB) {
+export function dominatesVector(vecA, vecB) {
   const dims = comparableDimensions(vecA, vecB);
   if (dims.length === 0) return false; // nothing to compare on — cannot claim dominance
   let strictlyBetter = false;

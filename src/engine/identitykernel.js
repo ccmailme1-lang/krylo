@@ -47,7 +47,7 @@ function fnv32(str) {
   return (h >>> 0).toString(16).padStart(8, '0');
 }
 
-function computeVersionHash(nodes, edges) {
+export function computeVersionHash(nodes, edges) {
   const nodeStr = Array.from(nodes.keys()).sort().join('|');
   const edgeStr = edges.map(e => `${e.from}~${e.type}~${e.to}`).sort().join('|');
   return fnv32(nodeStr + '::' + edgeStr);
