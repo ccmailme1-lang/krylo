@@ -158,8 +158,30 @@ export default function SESCard({ ses = null, width = 300 }) {
 
   return (
     <div style={{ width: '100%', position: 'relative', fontFamily: DISPLAY, color: TEXT }}>
-      {/* ── header: weather + time (scales with s) ── */}
-      <div style={{ padding: `${px(16, 10)}px ${px(20, 12)}px ${px(14, 9)}px`, borderBottom: `1px solid ${EDGE}`, background: 'linear-gradient(180deg,rgba(255,255,255,0.02),transparent)' }}>
+      {/* ── glance gauges — always on top (the quick read) ── */}
+      <div style={{ padding: `${px(10, 7)}px ${px(8, 5)}px 0` }}>
+        <svg viewBox={`0 0 ${vbW} ${vbH}`} width="100%" role="img" aria-label="Search Environment State gauges" style={{ display: 'block' }}>
+          {rowEls}
+        </svg>
+      </div>
+
+      {/* ── fold handle: a little lime staple — drop it to check weather + date/time ── */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end',
+                    padding: `0 ${px(14, 10)}px ${folded ? px(6, 4) : px(2, 2)}px` }}>
+        <span
+          onClick={() => setFolded((f) => !f)}
+          onMouseDown={(e) => e.stopPropagation()}
+          role="button" aria-label={folded ? 'Show weather & time' : 'Hide weather & time'}
+          style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer',
+                   padding: `${px(4, 4)}px ${px(8, 7)}px` }}
+        >
+          <span style={{ width: px(15, 11), height: px(2.5, 2), borderRadius: 2, background: LIME, opacity: 0.6 }} />
+        </span>
+      </div>
+
+      {/* ── weather + date/time module — drops down on demand (glance-first) ── */}
+      {!folded && (
+      <div style={{ padding: `${px(14, 9)}px ${px(20, 12)}px ${px(16, 10)}px`, borderTop: `1px solid ${EDGE}` }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: px(8, 4) }}>
             <svg width={px(28, 18)} height={px(28, 18)} viewBox="0 0 24 24" style={{ stroke: TEXT, strokeWidth: 1.5, fill: 'none', opacity: 0.82 }}>
@@ -195,28 +217,6 @@ export default function SESCard({ ses = null, width = 300 }) {
           </div>
         </div>
       </div>
-      {/* ── fold handle: a little lime staple. Weather/time header stays; the dials fold
-             DOWN. The staple persists when folded so you know the gauges are still there. ── */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end',
-                    padding: `0 ${px(14, 10)}px ${folded ? px(4, 3) : 0}px` }}>
-        <span
-          onClick={() => setFolded((f) => !f)}
-          onMouseDown={(e) => e.stopPropagation()}
-          role="button" aria-label={folded ? 'Expand gauges' : 'Fold gauges'}
-          style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer',
-                   padding: `${px(7, 6)}px ${px(8, 7)}px` }}
-        >
-          <span style={{ width: px(15, 11), height: px(2.5, 2), borderRadius: 2, background: LIME, opacity: 0.6 }} />
-        </span>
-      </div>
-
-      {/* ── dial row (SVG auto-scales to width) — folds down ── */}
-      {!folded && (
-        <div style={{ padding: `0 ${px(8, 5)}px ${px(16, 10)}px` }}>
-          <svg viewBox={`0 0 ${vbW} ${vbH}`} width="100%" role="img" aria-label="Search Environment State gauges" style={{ display: 'block' }}>
-            {rowEls}
-          </svg>
-        </div>
       )}
 
       {/* ── KRYL-1024 metric picker — tap a dial to choose what it monitors ── */}
