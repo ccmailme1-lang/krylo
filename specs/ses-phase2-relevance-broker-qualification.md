@@ -5,7 +5,14 @@ Founder confirmation: "SES design. this is EXACTLY what it is." → This item is
 Role of this note: qualification gate before WO generation.
 
 ## Disposition
-**Qualified — this is the completion of the SES design.** WO-ready pending scope framing (§ Positioning).
+**Qualified — this is the completion of the SES design.** **CLEARED FOR WO GENERATION** (STSE↔STEE Reconciliation Contract, 2026-07-11) — pending scope framing (§ Positioning).
+
+## Authority-boundary position (per Reconciliation Contract)
+The Relevance Broker sits BETWEEN the two engines and is the ONLY layer allowed to weight strategic relevance:
+`SES/STSE ("what conditions exist?") → Relevance Broker ("what deserves attention?") → Retrieval → STEE ("how reliable is this?") → HUD`
+- **May consume** both STSE (environment state) and STEE (evidence quality). **May modify neither.**
+- Owns "strategic relevance weighting" exclusively (STSE must not; STEE must not — STEE emitting "this indicates an opportunity" is a contract violation).
+- Note the contract names the environment engine **STSE** (= `searchenvironmentstate.js`, SES). See `stee-qualification-note.md` Gate 2 for the STSE acronym-collision flag (this ≠ KRYL-1002 STSE).
 
 ## What it actually is
 The **Optimized Information Surface** — a relevance *broker*. Given the SES-detected condition, it surfaces evidence by **decision-value to that emerging condition** (not topic retrieval):
