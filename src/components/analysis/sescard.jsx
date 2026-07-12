@@ -173,10 +173,19 @@ export default function SESCard({ ses = null, weather = null, onSetLocation, wid
 
   return (
     <div style={{ width: '100%', position: 'relative', fontFamily: DISPLAY, color: TEXT }}>
-      {/* ── drag grip: top-left corner handle. Moves the card — does NOT stopPropagation,
-             so mousedown bubbles to the pod wrapper's drag. Always present, both states. ── */}
+      {/* ── drag grips: top-left + top-right corner handles. Moves the card — does NOT
+             stopPropagation, so mousedown bubbles to the pod wrapper's drag. Always present. ── */}
       <div title="Drag to move" role="button" aria-label="Move card"
            style={{ position: 'absolute', top: px(4, 3), left: px(4, 3), zIndex: 4,
+                    padding: px(6, 5), cursor: 'grab', lineHeight: 0 }}>
+        <svg width={px(11, 9)} height={px(15, 12)} viewBox="0 0 8 12">
+          <circle cx="2" cy="2" r="1" fill={FAINT} /><circle cx="6" cy="2" r="1" fill={FAINT} />
+          <circle cx="2" cy="6" r="1" fill={FAINT} /><circle cx="6" cy="6" r="1" fill={FAINT} />
+          <circle cx="2" cy="10" r="1" fill={FAINT} /><circle cx="6" cy="10" r="1" fill={FAINT} />
+        </svg>
+      </div>
+      <div title="Drag to move" role="button" aria-label="Move card"
+           style={{ position: 'absolute', top: px(4, 3), right: px(4, 3), zIndex: 4,
                     padding: px(6, 5), cursor: 'grab', lineHeight: 0 }}>
         <svg width={px(11, 9)} height={px(15, 12)} viewBox="0 0 8 12">
           <circle cx="2" cy="2" r="1" fill={FAINT} /><circle cx="6" cy="2" r="1" fill={FAINT} />

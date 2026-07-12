@@ -1462,7 +1462,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_TELEMETRY, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
               <span>Validation Engine</span>
-              <span>v3.8.0</span>
+              <span>v3.9.0</span>
             </div>
           </div>
 

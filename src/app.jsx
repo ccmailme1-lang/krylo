@@ -85,6 +85,7 @@ import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
+import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import { resolveGeo }         from './engine/georesolver.js';
 import { detectPersonaFromProfile } from './engine/lensrouter.js';
 const SignalMap = signalmap;
@@ -1196,6 +1197,7 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
+          {surfaceActivated && <FloatingToolbar />}
 
 
           {/* AnalysisField — ConeMap only. No ACTIVE mode. */}
