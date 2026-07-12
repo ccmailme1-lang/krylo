@@ -45,7 +45,23 @@ function servedDimension({ domainMatch, magnitude, contradiction, earliness }) {
 // computeRelevance(condition, signals) → { ranked: CandidateRelevance[], absence: Absence[] }
 // Pure & read-only. `signals` is returned unmutated.
 export function computeRelevance(condition = {}, signals = [], now = Date.now()) {
-  const domains = Array.isArray(condition.domains) ? condition.domains : [];
+  const domains = Array.isArray(condition.domains) ? condition.domains
+    : (Array.isArray(condition.affectedDomains) ? condition.affectedDomains : []);
+
+  // Field conditioning (§ "rank against the SES field"): the environment state shifts
+  // the weights — a volatile field makes fracture/earliness matter more, a dense/active
+  // field makes raw magnitude matter more. Same signals re-rank as the field changes.
+  const vol = clamp01((condition?.narrativeVolatility?.value ?? 0) / 100);
+  const den = clamp01((condition?.signalDensity?.value ?? 0) / 100);
+  const w = {
+    domain:        W.domain,
+    magnitude:     W.magnitude * (1 + den),
+    recency:       W.recency,
+    contradiction: W.contradiction * (1 + vol),
+    earliness:     W.earliness * (1 + vol),
+  };
+  const wSum = w.domain + w.magnitude + w.recency + w.contradiction + w.earliness;
+
   const ranked = [];
 
   for (let i = 0; i < signals.length; i++) {
@@ -63,12 +79,18 @@ export function computeRelevance(condition = {}, signals = [], now = Date.now())
     const pressure    = s?.domain ? getQueryDomainPressure(s.domain) : { polarity: 'constructive', signalCount: 0 };
     const domainMatch = domains.length && s?.domain ? (domains.includes(s.domain) ? 1 : 0) : 0;
     const recency     = Math.pow(0.5, Math.max(0, now - signalTs(s)) / HALF_LIFE_MS);
-    const contradiction = pressure.polarity === 'fracture' && pressure.signalCount > 0 ? 1 : 0;
-    const earliness   = 1 - clamp01((pressure.signalCount ?? 0) / EARLY_SATURATION);
+    // Prefer the signal's OWN dynamics when carried (cones supply real polarity/crowding);
+    // fall back to the locked-domain field pressure otherwise.
+    const contradiction = (s?.polarity != null)
+      ? (s.polarity === 'fracture' ? 1 : 0)
+      : (pressure.polarity === 'fracture' && pressure.signalCount > 0 ? 1 : 0);
+    const earliness   = (s?.crowding != null)
+      ? 1 - clamp01(s.crowding)
+      : 1 - clamp01((pressure.signalCount ?? 0) / EARLY_SATURATION);
 
-    const raw = W.domain * domainMatch + W.magnitude * magnitude + W.recency * recency
-              + W.contradiction * contradiction + W.earliness * earliness;
-    const relevanceScore = Math.round((100 * raw) / W_SUM);
+    const raw = w.domain * domainMatch + w.magnitude * magnitude + w.recency * recency
+              + w.contradiction * contradiction + w.earliness * earliness;
+    const relevanceScore = Math.round((100 * raw) / wSum);
     const dimension = servedDimension({ domainMatch, magnitude, contradiction, earliness });
 
     ranked.push({

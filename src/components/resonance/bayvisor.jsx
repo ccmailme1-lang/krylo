@@ -1,8 +1,11 @@
 // BayVisor — six independent floating HUD panels
 // Posture: COLLAPSED (26px header strip) → EXPANDED (248px full HUD)
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import { BAY_MAP } from "../../engine/cones.js";
+import { computeRelevance } from "../../engine/relevancebroker.js";
+import { computeSES }       from "../../engine/searchenvironmentstate.js";
+import { getObservations }  from "../../engine/runtimeobservablestore.js";
 import { useBayStore, MODULE_TYPES } from "../../store/usebaystore.js";
 
 const COLOR_OPTIONS = [
@@ -231,7 +234,7 @@ function ColorModule({ bayNum }) {
 }
 
 /* ── MODULE BODY ─────────────────────────────────────────────────────────── */
-function ModuleBody({ module, d, cone, assignment, color, pct, bayNum }) {
+function ModuleBody({ module, d, cone, assignment, color, pct, bayNum, relevance }) {
   const label = {
     HEADLINE:  'HEADLINE',
     METRICS:   'METRICS',
@@ -364,6 +367,12 @@ function ModuleBody({ module, d, cone, assignment, color, pct, bayNum }) {
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.20em' }}>SIGNAL SCORE</span>
                 <span style={{ fontFamily: MONO, fontSize: 10, color: LIME }}>{pct}<span style={{ fontSize: 8, color: DIM, marginLeft: 1 }}>%</span></span>
               </div>
+              {relevance && !relevance.withheld && (
+                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.20em' }}>RELEVANCE · SES</span>
+                  <span style={{ fontFamily: MONO, fontSize: 10, color: LIME }}>{relevance.score}<span style={{ fontSize: 8, color: DIM, marginLeft: 3 }}>#{relevance.rank}</span></span>
+                </div>
+              )}
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.20em' }}>VELOCITY</span>
                 <span style={{ fontFamily: MONO, fontSize: 10, color: BRT }}>
@@ -477,7 +486,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct, bayNum }) {
 }
 
 /* ── BAY PANEL ───────────────────────────────────────────────────────────── */
-function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum }) {
+function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum, relevance }) {
   const [titleHovered, setTitleHovered] = useState(false);
   const [modIdx, setModIdx] = useState(0);
 
@@ -546,7 +555,7 @@ function BayPanel({ d, cone, assignment, isPremium, isExpanded, onToggle, bayNum
       </div>
 
       {/* ── MODULE BODY ── */}
-      <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} bayNum={bayNum} />
+      <ModuleBody module={activeModule} d={d} cone={cone} assignment={assignment} color={color} pct={pct} bayNum={bayNum} relevance={relevance} />
 
       {/* ── FOOTER ── */}
       {/* [<] 16px lime · MODULE NAME 13px lime · [>] 16px lime | C01·SYNCED 11px lime */}
@@ -579,6 +588,28 @@ export default function BayVisor({ cones = {}, isPremium = false }) {
 
   const toggle = (bayNum) => setExpanded(e => ({ ...e, [bayNum]: !e[bayNum] }));
 
+  // KRYL-1026 Slice 2 — rank the cones against the SES field via the Relevance Broker.
+  // Each cone's signal is built from its OWN real data (value, trend, alerts); the SES
+  // field conditions the weighting inside the broker. No faked cone→domain map.
+  const relevance = useMemo(() => {
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+    const signals = domains.map(d => {
+      const c   = cones[BAY_MAP[d.id]] ?? {};
+      const raw = typeof c.value === 'number' ? c.value : 0;
+      const fs  = raw > 1 ? clamp01(raw / 100) : clamp01(raw);
+      return {
+        id: d.id, domain: d.type, fs, ts: Date.now(),
+        crowding: fs,                                              // higher current signal = more obvious → lower earliness edge
+        polarity: (c.alerts?.length ?? 0) > 0 ? 'fracture' : 'constructive',
+      };
+    });
+    const condition = computeSES({ observations: getObservations(), query: '', domains: [] });
+    const { ranked } = computeRelevance(condition, signals);
+    const map = {};
+    ranked.forEach((r, i) => { map[r.signalId] = { score: r.relevanceScore, dim: r.servedDimension, rank: i + 1, withheld: r.withheld }; });
+    return map;
+  }, [cones]);
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, width: '100%', padding: '0 4px' }}>
       {domains.map(d => {
@@ -587,6 +618,7 @@ export default function BayVisor({ cones = {}, isPremium = false }) {
           <BayPanel
             key={d.id}
             d={d}
+            relevance={relevance[d.id]}
             cone={cones[BAY_MAP[d.id]]}
             assignment={bays[bayNum]?.assignment}
             isPremium={isPremium}
