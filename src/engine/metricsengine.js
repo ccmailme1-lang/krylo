@@ -104,13 +104,19 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
     groundedness: Math.min(1, lrPrior.n / 15), // rises with N; saturates at ~N=15
   } : null;
 
+  // KRYL-1015 (§19/§22): withheld economics carry value: null so NO downstream surface can
+  // render a fabricated dollar — structurally impossible, not gated at each render site.
+  const cacWithheld  = cacGnd  < ECONOMICS_GROUNDEDNESS_FLOOR;
+  const roasWithheld = roasGnd < ECONOMICS_GROUNDEDNESS_FLOOR;
+  const ltvWithheld  = ltvGnd  < ECONOMICS_GROUNDEDNESS_FLOOR;
+
   return {
     signal:      { value: signalVal,      groundedness: signalGnd },
     validity:    { value: validityVal,    groundedness: validityGnd },
     convergence: { value: convergenceVal, groundedness: convergenceGnd, queryRelevant, state: convLabel },
-    cac:  { value: cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: 'MODELED', withheld: cacGnd  < ECONOMICS_GROUNDEDNESS_FLOOR },
-    roas: { value: roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED', withheld: roasGnd < ECONOMICS_GROUNDEDNESS_FLOOR },
-    ltv:  { value: ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED', withheld: ltvGnd  < ECONOMICS_GROUNDEDNESS_FLOOR },
+    cac:  { value: cacWithheld  ? null : cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: 'MODELED', withheld: cacWithheld },
+    roas: { value: roasWithheld ? null : roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED', withheld: roasWithheld },
+    ltv:  { value: ltvWithheld  ? null : ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED', withheld: ltvWithheld },
     leverageRealization: lr,
     // SCI (8th) + SPS (9th) — populated when EvidenceGraph exists (WO-2004/2005B pipeline)
     sci: sciData?.sci ?? null,

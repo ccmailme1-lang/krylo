@@ -17,7 +17,7 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
-import { findCheapestFuel, isPetroQuery, petroType } from '../../engine/petrolocator.js';
+import { findCheapestFuel, findAverageFuel, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -411,8 +411,13 @@ export default function TargetPacket() {
     if (!isPetroQuery(q)) { setPetro(null); return; }
     let alive = true;
     setPetro({ loading: true });
-    findCheapestFuel({ type: petroType(q) })
-      .then(r => { if (alive) setPetro(r); })
+    const type = petroType(q);
+    // Station price (Zyla, paid) first; fall back to the free EIA regional average.
+    findCheapestFuel({ type })
+      .then(r => {
+        if (r && !r.withheld) { if (alive) setPetro(r); return; }
+        return findAverageFuel({ type }).then(a => { if (alive) setPetro(a); });
+      })
       .catch(() => { if (alive) setPetro({ withheld: true, reason: 'ERROR' }); });
     return () => { alive = false; };
   }, [session?.query]);
@@ -879,8 +884,9 @@ export default function TargetPacket() {
             {[
               { label: 'SIGNAL ACCURACY',  value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
               { label: normalizeToProjectionLanguage('DECISION OUTCOME', stateType), value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
-              { label: 'ROAS',             value: metrics ? `${metrics.roas.value}x · ${metrics.roas.label}` : '—' },
-              { label: 'CAC',              value: metrics ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : '—' },
+              // KRYL-1015: economics gate on .withheld — never render a fabricated $ (esp. on a real named person). §19/§22.
+              { label: 'ROAS',             value: (metrics && !metrics.roas.withheld) ? `${metrics.roas.value}x · ${metrics.roas.label}` : (metrics ? 'UNGROUNDED' : '—') },
+              { label: 'CAC',              value: (metrics && !metrics.cac.withheld && metrics.cac.value != null) ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : (metrics ? 'UNGROUNDED' : '—') },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>{label}</span>
