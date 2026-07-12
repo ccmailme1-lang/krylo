@@ -7,19 +7,45 @@
 
 import { computeVersionHash } from './identitykernel.js';
 import { dominatesVector }    from './paretoresolver.js';
+import { computeSCI }         from './structuralconfirmation.js';
 
 // ── Projection (AM-01) — read-only view of the event's nodes/edges ──────────────
+// Preserves node OBJECTS (id → node) so truth-integrity (SCI) can read evidenceType.
 function projectionOf(event) {
   const nm = event?.nodes;
-  const nodeIds = nm instanceof Map ? Array.from(nm.keys())
-    : Array.isArray(nm) ? nm.map(n => n?.id ?? n)
-    : (nm && typeof nm === 'object') ? Object.keys(nm)
-    : [];
+  const nodeObjs = new Map();
+  let nodeIds;
+  if (nm instanceof Map) {
+    nodeIds = Array.from(nm.keys());
+    for (const [k, v] of nm) nodeObjs.set(k, v);
+  } else if (Array.isArray(nm)) {
+    nodeIds = nm.map(n => n?.id ?? n);
+    for (const n of nm) if (n && typeof n === 'object' && n.id != null) nodeObjs.set(n.id, n);
+  } else if (nm && typeof nm === 'object') {
+    nodeIds = Object.keys(nm);
+    for (const k of nodeIds) nodeObjs.set(k, nm[k]);
+  } else {
+    nodeIds = [];
+  }
   const edges = Array.isArray(event?.edges) ? event.edges : [];
   const rootSeeds = (Array.isArray(event?.rootSeeds) && event.rootSeeds.length)
     ? event.rootSeeds
     : inferRoots(nodeIds, edges);
-  return { nodeIds, edges, rootSeeds };
+  return { nodeIds, nodeObjs, edges, rootSeeds };
+}
+
+// ── Truth integrity (STEE's namesake) — SCI over the sub-graph a candidate REACHES.
+// §22 absence-is-signal: if reached nodes carry no evidenceType, integrity is NOT
+// evaluable → return null (never a fabricated integrity score). §19 withhold-beats-fabricate.
+function integrityOf(reachedSet, nodeObjs) {
+  const nodes = new Map();
+  for (const id of reachedSet) {
+    const o = nodeObjs.get(id);
+    if (o && typeof o === 'object' && o.evidenceType) nodes.set(id, o);
+  }
+  if (nodes.size === 0) return null;
+  const sci = computeSCI({ nodes });
+  return sci ? parseFloat((sci.score / 10).toFixed(4)) : null; // SCI score 0–10 → [0,1]
 }
 
 // Root seeds = nodes with no incoming edge (fallback: first node).
@@ -53,13 +79,16 @@ const coverageOf = (roots, edges, total) => (total === 0 ? 0 : reachable(roots, 
 function generateCandidates(P) {
   const total = P.nodeIds.length;
   const fullCoverage = coverageOf(P.rootSeeds, P.edges, total);
-  const mk = (edges, id) => ({
-    id, edges,
-    objectives: {
-      coverage:  coverageOf(P.rootSeeds, edges, total),
+  const mk = (edges, id) => {
+    const reached   = reachable(P.rootSeeds, edges);
+    const integrity = integrityOf(reached, P.nodeObjs);   // null when not evaluable (§22)
+    const objectives = {
+      coverage:  total === 0 ? 0 : reached.size / total,
       parsimony: P.edges.length ? 1 - edges.length / P.edges.length : 0,
-    },
-  });
+    };
+    if (integrity !== null) objectives.integrity = integrity; // 3rd Pareto axis — truth integrity
+    return { id, edges, objectives };
+  };
   const candidates = [mk(P.edges, 'full')];
   for (let i = 0; i < P.edges.length; i++) {
     const subset = P.edges.filter((_, j) => j !== i);
@@ -70,7 +99,12 @@ function generateCandidates(P) {
   return candidates;
 }
 
-const vec = (c) => [c.objectives.coverage, c.objectives.parsimony];
+// Objective vector: {coverage, parsimony} plus integrity when it was evaluable this run.
+// Consistent across candidates (same node pool) → dominatesVector compares equal dimensions.
+const vec = (c) => {
+  const o = c.objectives;
+  return o.integrity != null ? [o.coverage, o.parsimony, o.integrity] : [o.coverage, o.parsimony];
+};
 
 // ── exploreTopology(event) → { frontier, dominated, projectionHash, isolationVerified }
 // Pure & read-only. The input event is returned unmutated.
@@ -96,5 +130,7 @@ export function exploreTopology(event = {}) {
     dominated,                                 // audit trail — who beat whom
     projectionHash: hashBefore,
     isolationVerified: hashBefore === hashAfter,
+    // §22: were candidates evaluated on truth integrity, or only topology? Surfaced, not hidden.
+    integrityEvaluated: candidates.some(c => c.objectives.integrity != null),
   };
 }
