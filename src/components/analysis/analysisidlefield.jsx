@@ -3,6 +3,7 @@ import HelpMark                       from '../shared/helpmark.jsx';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
 import IntelligenceBrief              from './intelligencebrief.jsx';
+import { isPetroQuery }               from '../../engine/petrolocator.js';
 import ReconDashboard                 from './recondashboard.jsx';
 import CausalImpactView               from './causalimpactview.jsx';
 import SESCard                        from './sescard.jsx';
@@ -1468,11 +1469,15 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
 
           {/* Session results */}
-          {hasSession && (
+          {hasSession && (() => {
+            // Gas Go hidden perk — the fuel template owns the full pane; hide the Brief column.
+            const petroMode = isPetroQuery(activeSession?.query ?? '');
+            return (
             <>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: '38%', bottom: 0, zIndex: 10, background: '#000' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: petroMode ? 0 : '38%', bottom: 0, zIndex: 10, background: '#000' }}>
                 <TargetPacket />
               </div>
+              {!petroMode && (
               <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
                 <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0, background: '#000' }}>
                   {['BRIEF', 'RECON', 'IMPACT'].map(tab => (
@@ -1497,8 +1502,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     : <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={activeSession?.query} /></div>}
                 </div>
               </div>
+              )}
             </>
-          )}
+            );
+          })()}
 
           {/* SIGNAL QUERY — idle only */}
           {!hasSession && (

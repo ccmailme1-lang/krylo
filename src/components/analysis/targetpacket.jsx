@@ -18,6 +18,7 @@ import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
 import { findCheapestFuel, isPetroQuery, petroType } from '../../engine/petrolocator.js';
+import PetroTemplate from './petrotemplate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -498,6 +499,10 @@ export default function TargetPacket() {
       </div>
     );
   }
+
+  // Gas Go hidden perk — hand the whole pane to the dedicated fuel template,
+  // bypassing the analysis frame (no INSUFFICIENT/NO PATHS/REFORMULATE noise).
+  if (isPetroQuery(session?.query ?? '')) return <PetroTemplate petro={petro} />;
 
   return (
     <div style={{
