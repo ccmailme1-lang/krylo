@@ -65,6 +65,30 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/fuel — DEV proxy for Petro Locator. Zyla per-station prices (PAID).
+  // Key from specs/petro_locator (or ZYLA_FUEL_KEY env), server-side, never echoed.
+  if (req.method === 'GET' && req.url.startsWith('/api/fuel')) {
+    const u    = new URL(req.url, 'http://localhost');
+    const zip  = u.searchParams.get('zip');
+    const type = u.searchParams.get('type') || 'regular';
+    if (!zip) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'MISSING_ZIP' })); return; }
+    let key = process.env.ZYLA_FUEL_KEY || '';
+    if (!key) { try { key = require('fs').readFileSync(require('path').join(__dirname, 'specs', 'petro_locator'), 'utf8').trim(); } catch {} }
+    if (!key) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['ZYLA_FUEL_KEY'] })); return; }
+    const preq = require('https').request({
+      hostname: 'zylalabs.com',
+      path: `/api/4808/gas+price+locator+api/5997/get+pices?zip=${encodeURIComponent(zip)}&type=${encodeURIComponent(type)}`,
+      method: 'GET',
+      headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + key },
+    }, up => {
+      let b = ''; up.on('data', c => b += c);
+      up.on('end', () => { res.writeHead(up.statusCode || 200, { 'Content-Type': 'application/json' }); res.end(b); });
+    });
+    preq.on('error', e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'FUEL upstream: ' + e.message })); });
+    preq.end();
+    return;
+  }
+
   // GET /api/feed — ETR headlines for ticker tape (6 categories)
   if (req.method === 'GET' && req.url === '/api/feed') {
     const feed = [

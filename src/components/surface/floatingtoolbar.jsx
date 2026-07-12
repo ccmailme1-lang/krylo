@@ -7,7 +7,7 @@ const MONO = "'IBM Plex Mono', monospace";
 const BANDS = ['#66FF00', '#FFD400', '#FF3B30', '#FF2D9B']; // placeholder bands
 
 const bar = {
-  position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%)',
+  position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%) scale(0.9)', transformOrigin: 'top center',
   zIndex: 40, display: 'flex', alignItems: 'center', gap: 4,
   padding: '5px 8px', borderRadius: 10,
   background: 'rgba(58,59,64,0.94)', border: '1px solid rgba(255,255,255,0.12)',

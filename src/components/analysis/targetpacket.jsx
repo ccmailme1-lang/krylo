@@ -17,6 +17,7 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
+import { findCheapestFuel, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -401,6 +402,20 @@ export default function TargetPacket() {
 
   const synthesis = useMemo(() => synthesizeQuery(session), [session]);
 
+  // Petro Locator (hidden utility, isolated from the engine): a "cheapest fuel near
+  // me" query resolves to a live cheapest-station lookup. Withholds, never fabricates.
+  const [petro, setPetro] = useState(null);
+  useEffect(() => {
+    const q = session?.query ?? '';
+    if (!isPetroQuery(q)) { setPetro(null); return; }
+    let alive = true;
+    setPetro({ loading: true });
+    findCheapestFuel({ type: petroType(q) })
+      .then(r => { if (alive) setPetro(r); })
+      .catch(() => { if (alive) setPetro({ withheld: true, reason: 'ERROR' }); });
+    return () => { alive = false; };
+  }, [session?.query]);
+
   const entity      = getDisplayEntity(session?.query ?? '').toUpperCase() || 'AWAITING SIGNAL';
   const confScore   = synthesis?.confidence ?? 0.78;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
@@ -630,6 +645,33 @@ export default function TargetPacket() {
 
               {/* ── Scrollable content — ASSEMBLANCE + LeverageField + DIC in single scroll */}
               <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+              {petro && (
+                <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: LIME, textTransform: 'uppercase' }}>⛽ Closest Cheapest Gas</div>
+                  {petro.loading && <div style={{ fontFamily: MONO, fontSize: 9, color: DIM }}>Locating…</div>}
+                  {petro.withheld && (
+                    <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.45)' }}>
+                      {petro.reason === 'LOCATION_UNAVAILABLE' ? 'Location unavailable — allow location access.'
+                        : petro.reason === 'ZIP_UNRESOLVED'     ? "Couldn't resolve your ZIP from location."
+                        : petro.reason === 'NO_STATION_DATA'    ? 'No local station data (feed pending subscription).'
+                        : 'Lookup failed.'}
+                      <span style={{ fontSize: 7, color: DIM, marginLeft: 6, letterSpacing: '0.1em' }}>[{petro.reason}]</span>
+                    </div>
+                  )}
+                  {!petro.loading && !petro.withheld && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: SERIF, fontSize: 15, color: BRT }}>{petro.station}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 18, color: LIME }}>{petro.price}<span style={{ fontSize: 9, color: DIM, marginLeft: 3 }}>/gal</span></span>
+                      </div>
+                      <div style={{ fontFamily: MONO, fontSize: 9, color: MID }}>{petro.address}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>
+                        {(petro.type ?? '').toUpperCase()} · ZIP {petro.zip} · AREA AVG {petro.average ?? '—'} · LOW {petro.lowest ?? '—'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px', display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {alternatives.length === 0 && (() => {
                   const q = session?.query?.trim() ?? '';

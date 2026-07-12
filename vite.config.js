@@ -15,6 +15,12 @@ export default defineConfig({
   server: {
     hmr: false,
     proxy: {
+      // Petro Locator — dev fuel proxy runs on the local mock-server (holds the key)
+      '/api/fuel': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
       '/api/stream': {
         target: 'https://krylo.org',
         ws: true,

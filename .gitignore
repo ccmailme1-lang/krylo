@@ -54,3 +54,5 @@ codec/target/
 
 # Session transcripts / restore files — may contain secrets
 restore/
+specs/petro_locator
+specs/eia.key

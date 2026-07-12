@@ -443,6 +443,41 @@ function handleFredProxy(req, res) {
   proxy.end();
 }
 
+// ── Fuel proxy — Zyla per-station prices, key server-side only (Petro Locator) ──
+// PAID. Repoint the path/host to the chosen per-station Zyla API on subscribe.
+function handleFuelProxy(req, res) {
+  const u    = new URL(req.url, 'http://localhost');
+  const zip  = u.searchParams.get('zip');
+  const type = u.searchParams.get('type') || 'regular';
+  if (!zip) return send(res, 400, { error: 'MISSING_ZIP' });
+  const apiKey = process.env.ZYLA_FUEL_KEY ?? '';
+  if (!apiKey) return send(res, 503, { error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['ZYLA_FUEL_KEY'] });
+  const cacheKey = `fuel:${zip}:${type}`;
+  const hit = getCached(cacheKey, 6 * 3_600_000); // rates post daily — 6h TTL is plenty
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+  const options = {
+    hostname: 'zylalabs.com',
+    path:     `/api/4808/gas+price+locator+api/5997/get+pices?zip=${encodeURIComponent(zip)}&type=${encodeURIComponent(type)}`,
+    method:   'GET',
+    headers:  { 'Accept': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = '';
+    upstream.on('data', chunk => { body += chunk; });
+    upstream.on('end', () => {
+      setCached(cacheKey, upstream.statusCode, body);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body); // Zyla body only — the key is never echoed
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'FUEL upstream: ' + err.message }));
+  proxy.end();
+}
+
 // ── EIA proxy — server-side fetch, cached (WO-1877) ──────────────────────────
 function handleEiaProxy(req, res) {
   const qs  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
@@ -1191,6 +1226,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/fuel')                          return handleFuelProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
