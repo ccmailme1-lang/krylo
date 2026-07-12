@@ -69,3 +69,83 @@ export function petroType(q = '') {
   if (/\bmid.?grade\b/.test(s)) return 'mid-grade';
   return 'regular';
 }
+
+// ── EIA Average Fallback (KRYL-1027 free tier) ───────────────────────────────
+// Free weekly regional retail average (EIA prices dataset). The FLOOR under the
+// paid Zyla station layer: shown when a station price is unavailable/withheld.
+// Regional-average ONLY — never a per-station claim. Withholds, never fabricates.
+// Spec: specs/KRYL-1027-eia-average-slice-spec.md.
+
+// EIA product codes (validated 2026-07-12).
+const EIA_PRODUCT = { regular: 'EPMR', premium: 'EPMP', 'mid-grade': 'EPMM', diesel: 'EPD2D' };
+
+// Full state name → EIA duoarea. Covered states use their state code (scope STATE);
+// all others fall to their PADD region (scope PADD). Unknown → NUS (NATIONAL).
+const STATE_DUOAREA = {
+  california: 'SCA', colorado: 'SCO', florida: 'SFL', massachusetts: 'SMA',
+  minnesota: 'SMN', 'new york': 'SNY', ohio: 'SOH', texas: 'STX', washington: 'SWA',
+  // PADD 1A — New England
+  connecticut: 'R1X', maine: 'R1X', 'new hampshire': 'R1X', 'rhode island': 'R1X', vermont: 'R1X',
+  // PADD 1B — Central Atlantic
+  delaware: 'R1Y', 'district of columbia': 'R1Y', maryland: 'R1Y', 'new jersey': 'R1Y', pennsylvania: 'R1Y',
+  // PADD 1C — Lower Atlantic
+  georgia: 'R1Z', 'north carolina': 'R1Z', 'south carolina': 'R1Z', virginia: 'R1Z', 'west virginia': 'R1Z',
+  // PADD 2 — Midwest
+  illinois: 'R20', indiana: 'R20', iowa: 'R20', kansas: 'R20', kentucky: 'R20', michigan: 'R20',
+  missouri: 'R20', nebraska: 'R20', 'north dakota': 'R20', oklahoma: 'R20', 'south dakota': 'R20',
+  tennessee: 'R20', wisconsin: 'R20',
+  // PADD 3 — Gulf Coast
+  alabama: 'R30', arkansas: 'R30', louisiana: 'R30', mississippi: 'R30', 'new mexico': 'R30',
+  // PADD 4 — Rocky Mountain
+  idaho: 'R40', montana: 'R40', utah: 'R40', wyoming: 'R40',
+  // PADD 5 — West Coast
+  alaska: 'R50', arizona: 'R50', hawaii: 'R50', nevada: 'R50', oregon: 'R50',
+};
+
+function scopeOf(duoarea) {
+  if (duoarea === 'NUS') return 'NATIONAL';
+  return duoarea[0] === 'S' ? 'STATE' : 'PADD';
+}
+
+// lat/lon → US state name via Nominatim (free, no key). Null on failure.
+async function coordsToState(lat, lon) {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=8&addressdetails=1`,
+      { headers: { 'Accept': 'application/json' } }
+    );
+    const j = await r.json();
+    const s = j?.address?.state;
+    return s ? String(s).toLowerCase() : null;
+  } catch { return null; }
+}
+
+// findAverageFuel({ type }) → { kind:'AVG', scope, area, average, period, type, currency, source }
+// or { withheld:true, reason }. Regional average only — never a station price.
+export async function findAverageFuel({ type = 'regular' } = {}) {
+  const loc = await geolocate();
+  if (!loc) return { withheld: true, reason: 'LOCATION_UNAVAILABLE' };
+  const state   = await coordsToState(loc.lat, loc.lon);
+  const duoarea = (state && STATE_DUOAREA[state]) || 'NUS';   // fail up to national
+  const product = EIA_PRODUCT[type] || EIA_PRODUCT.regular;
+  const qs =
+    'frequency=weekly&data%5B0%5D=value' +
+    `&facets%5Bproduct%5D%5B%5D=${product}&facets%5Bduoarea%5D%5B%5D=${duoarea}` +
+    '&sort%5B0%5D%5Bcolumn%5D=period&sort%5B0%5D%5Bdirection%5D=desc&length=1';
+  let row = null;
+  try {
+    const r = await fetch(`/api/eia-fuel?${qs}`);
+    if (r.ok) { const j = await r.json(); row = j?.response?.data?.[0] ?? null; }
+  } catch { /* withhold below */ }
+  if (!row || row.value == null) return { withheld: true, reason: 'NO_REGIONAL_DATA' };
+  return {
+    kind:     'AVG',
+    scope:    scopeOf(duoarea),
+    area:     row['area-name'] || 'U.S.',
+    average:  Number(row.value),
+    period:   row.period,
+    type,
+    currency: 'USD',
+    source:   'EIA',
+  };
+}

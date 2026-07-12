@@ -508,6 +508,40 @@ function handleEiaProxy(req, res) {
   proxy.end();
 }
 
+// ── EIA fuel-price proxy (KRYL-1027) — retail Gasoline & Diesel prices ────────
+// Distinct dataset from the stocks proxy above (pri/gnd, not stoc/wstk).
+// Strips the echoed api_key from EIA's response body before returning.
+function handleEiaFuelProxy(req, res) {
+  const qs  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+  const key = 'eiafuel:' + qs;
+  const hit = getCached(key, EIA_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+  const apiKey  = process.env.EIA_API_KEY ?? '';
+  const options = {
+    hostname: 'api.eia.gov',
+    path:     '/v2/petroleum/pri/gnd/data/' + qs + (qs ? '&' : '?') + 'api_key=' + apiKey,
+    method:   'GET',
+    headers:  { 'Accept': 'application/json' },
+  };
+  const proxy = https.request(options, upstream => {
+    let body = '';
+    upstream.on('data', chunk => { body += chunk; });
+    upstream.on('end', () => {
+      // EIA echoes the key in request.params.api_key — never let it reach the browser.
+      const safe = body.replace(/"api_key":"[^"]*"/g, '"api_key":"[REDACTED]"');
+      setCached(key, upstream.statusCode, safe);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(safe);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'EIA fuel upstream: ' + err.message }));
+  proxy.end();
+}
+
 // ── Finnhub proxy — server-side fetch, cached ────────────────────────────────
 function handleFinnhubProxy(req, res) {
   const qs    = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
@@ -1226,6 +1260,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/eia-fuel')                      return handleEiaFuelProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fuel')                          return handleFuelProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);

@@ -55,8 +55,9 @@ export default function PetroTemplate({ petro }) {
         {petro?.withheld && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, animation: 'gasgo-rise 320ms ease' }}>
             <div style={{ fontFamily: SERIF, fontSize: 15, color: BRT }}>
-              {petro.reason === 'LOCATION_UNAVAILABLE' ? 'Allow location access to find stations near you.'
-                : petro.reason === 'ZIP_UNRESOLVED'     ? "Couldn't pin your location to a ZIP."
+              {petro.reason === 'LOCATION_UNAVAILABLE' ? 'Allow location access to find fuel prices near you.'
+                : petro.reason === 'ZIP_UNRESOLVED'     ? "Couldn't pin your location."
+                : petro.reason === 'NO_REGIONAL_DATA'   ? 'No regional price data available right now.'
                 : petro.reason === 'NO_STATION_DATA'    ? 'Station prices aren’t live yet.'
                 : 'Lookup unavailable.'}
             </div>
@@ -66,7 +67,29 @@ export default function PetroTemplate({ petro }) {
           </div>
         )}
 
-        {petro && !petro.loading && !petro.withheld && (
+        {/* EIA regional average — the free floor (no station claim) */}
+        {petro && petro.kind === 'AVG' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
+            <div style={{
+              position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
+              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10,
+              background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
+              boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
+            }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.34em', color: LIME }}>◆ {petro.scope} AVERAGE</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
+                <span style={{ fontFamily: SERIF, fontSize: 24, color: BRT }}>{petro.area}</span>
+                <span style={{ fontFamily: MONO, fontSize: 30, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(petro.average).toFixed(2)}<span style={{ fontSize: 12, color: DIM, marginLeft: 4, textShadow: 'none' }}>/gal</span></span>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 11, color: MID }}>{(petro.type ?? '').toUpperCase()} · week of {petro.period}</div>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.16em' }}>
+              SOURCE: EIA · WEEKLY REGIONAL AVERAGE — NOT A PER-STATION PRICE
+            </div>
+          </div>
+        )}
+
+        {petro && !petro.loading && !petro.withheld && petro.kind !== 'AVG' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
             <div style={{
               position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
