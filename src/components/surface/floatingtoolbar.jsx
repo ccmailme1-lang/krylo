@@ -33,9 +33,6 @@ const div = { width: 1, height: 18, background: 'rgba(255,255,255,0.14)', margin
 export default function FloatingToolbar() {
   return (
     <div style={bar}>
-      <button style={btn} title="Selection">⊙</button>
-      <button style={btn} title="Erase selection">⌫</button>
-      <div style={div} />
       {LENSES.map(({ id, g }) => (
         <div key={id} title={id}
           style={{ position: 'relative', width: 26, height: 26, borderRadius: 6,
