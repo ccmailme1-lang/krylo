@@ -4,7 +4,16 @@ import React from 'react';
 // (what fills them is TBD). Structure mirrors the reference: left actions ·
 // addable tool slots w/ color bands · add / remove / anchor. Non-functional stub.
 const MONO = "'IBM Plex Mono', monospace";
-const BANDS = ['#66FF00', '#FFD400', '#FF3B30', '#FF2D9B']; // placeholder bands
+// Perceptual viewport lenses — glyph per operator; name shows on hover (title).
+const LENSES = [
+  { id: 'OBSERVE',     g: '◉' },
+  { id: 'SIGNAL',      g: '↯' },
+  { id: 'FLOW',        g: '⇢' },
+  { id: 'PRESSURE',    g: '⧖' },
+  { id: 'CONVERGENCE', g: '⬡' },
+  { id: 'DRIFT',       g: '↝' },
+  { id: 'OPPORTUNITY', g: '⟡' },
+];
 
 const bar = {
   position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%) scale(0.9)', transformOrigin: 'top center',
@@ -27,13 +36,12 @@ export default function FloatingToolbar() {
       <button style={btn} title="Selection">⊙</button>
       <button style={btn} title="Erase selection">⌫</button>
       <div style={div} />
-      {BANDS.map((c, i) => (
-        <div key={i} title={`Slot ${i + 1} (placeholder)`}
+      {LENSES.map(({ id, g }) => (
+        <div key={id} title={id}
           style={{ position: 'relative', width: 26, height: 26, borderRadius: 6,
                    background: 'rgba(255,255,255,0.05)', display: 'flex',
-                   alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{i + 1}</span>
-          <span style={{ position: 'absolute', bottom: 2, left: 4, right: 4, height: 2, borderRadius: 1, background: c }} />
+                   alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+          <span style={{ fontFamily: MONO, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{g}</span>
         </div>
       ))}
       <div style={div} />
