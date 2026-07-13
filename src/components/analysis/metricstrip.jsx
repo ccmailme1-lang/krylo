@@ -185,31 +185,8 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       tileMode:     'active',
       title:        defTitle('ltv'),
     },
-    {
-      label:        'LR-Prior',
-      display:      lr ? `${lr.avgLR}× N=${lr.n}` : '— N<5',
-      groundedness: lr?.groundedness ?? 0,
-      tag:          lr ? null : 'RECORDING',
-      tileMode:     'active',
-      title:        defTitle('leverageRealization'),
-    },
-    {
-      label:        'S.DENSITY',
-      display:      sci ? `${sci.score}/10` : '—',
-      groundedness: sci?.groundedness ?? 0,
-      tag:          sci ? null : null,
-      tileMode:     sciMode,
-      phaseDot:     phaseDotStyle, // WO-2015: dot lives on this tile
-      title:        defTitle('sci'),
-    },
-    {
-      label:        'SPS',
-      display:      sps ? `${sps.avgLR}× N=${sps.n}` : '— N<5',
-      groundedness: sps ? Math.min(1, sps.n / 5) : 0,
-      tag:          sps ? null : null,
-      tileMode:     spsMode,
-      title:        defTitle('sps'),
-    },
+    // Metrics after LTV removed per Founder directive 2026-07-12 (LR-Prior / S.DENSITY / SPS).
+    // Strip ends at LTV. The metrics still compute in metricsengine; this trims render only.
   ];
 
   // DEF-1870 — placement fix: omit named tiles for this instance only (e.g. the
