@@ -75,9 +75,12 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
             fontFamily: MONO, fontSize: 11, color: LIME,
             fontWeight: 700, letterSpacing: '0.04em',
           }}>{display}</span>
-          <span style={{
-            fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.1em',
-          }}>{`${Math.round(groundedness * 100)}%`}</span>
+          {/* DEF-1880: withheld/valueless tile must not leak a groundedness % */}
+          {display !== '—' && (
+            <span style={{
+              fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.1em',
+            }}>{`${Math.round(groundedness * 100)}%`}</span>
+          )}
         </div>
       </div>
     );
@@ -106,9 +109,12 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
           fontFamily: MONO, fontSize: 11, color: BRT,
           fontWeight: 600, letterSpacing: '0.04em',
         }}>{display}</span>
-        <span style={{
-          fontFamily: MONO, fontSize: 8, color: gc, letterSpacing: '0.1em',
-        }}>{pct}</span>
+        {/* DEF-1880: withheld/valueless tile must not leak a groundedness % */}
+        {display !== '—' && (
+          <span style={{
+            fontFamily: MONO, fontSize: 8, color: gc, letterSpacing: '0.1em',
+          }}>{pct}</span>
+        )}
       </div>
     </div>
   );
@@ -293,7 +299,7 @@ function TileWithDot(props) {
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
         <span style={{ fontFamily: MONO, fontSize: 11, color: BRT2, fontWeight: 600, letterSpacing: '0.04em' }}>{display}</span>
-        <span style={{ fontFamily: MONO, fontSize: 8, color: gc, letterSpacing: '0.1em' }}>{pct}</span>
+        {display !== '—' && <span style={{ fontFamily: MONO, fontSize: 8, color: gc, letterSpacing: '0.1em' }}>{pct}</span>}
       </div>
     </div>
   );
