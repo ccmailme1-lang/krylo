@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { usePrism } from '../../context/PrismContext.jsx';
 
 // Floating Lens Ribbon — top-center, square, float. Seven perceptual viewport lenses;
 // glyph per operator, name on hover (title). Active lens is LIT (lime + underline) —
@@ -31,14 +32,15 @@ const btn = {
 const div = { width: 1, height: 18, background: 'rgba(255,255,255,0.14)', margin: '0 2px' };
 
 export default function FloatingToolbar() {
-  const [active, setActive] = useState('OBSERVE'); // default posture / ground zero
+  const { state, dispatch } = usePrism();
+  const active = state?.activeLens ?? 'OBSERVE'; // default posture / ground zero
 
   return (
     <div style={bar}>
       {LENSES.map(({ id, g }) => {
         const isActive = id === active;
         return (
-          <button key={id} title={id} onClick={() => setActive(id)} aria-pressed={isActive}
+          <button key={id} title={id} onClick={() => dispatch({ type: 'SET_LENS', payload: id })} aria-pressed={isActive}
             style={{ position: 'relative', width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
                      background: isActive ? 'rgba(102,255,0,0.12)' : 'rgba(255,255,255,0.05)',
                      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }}>

@@ -2,6 +2,7 @@
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
 import React from 'react';
 import ConeMap from '../spine/conemap.jsx';
+import { usePrism } from '../../context/PrismContext.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -22,6 +23,8 @@ export default function AnalysisField({
   dollyKey,
   coneColorOverrides,
 }) {
+  const { state } = usePrism();
+  const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
       <button
@@ -52,6 +55,7 @@ export default function AnalysisField({
         maxCones={maxCones}
         dollyKey={dollyKey}
         coneColorOverrides={coneColorOverrides}
+        viewportLens={viewportLens}
       />
     </div>
   );

@@ -19,10 +19,13 @@ const initialState = {
   status:           'AMBIENT',  // AMBIENT | THINKING | ORACLE
   activeRefraction: null,
   rawSignal:        '',
+  activeLens:       'OBSERVE',  // KRYL-1034 perceptual viewport lens — default posture / ground zero
 };
 
 function prismReducer(state, action) {
   switch (action.type) {
+    case 'SET_LENS':
+      return { ...state, activeLens: action.payload };
     case 'START_INHALE':
       return {
         ...state,

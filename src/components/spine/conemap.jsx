@@ -58,6 +58,24 @@ const THEME_COLOR = {
   unicorn_purple: PURPLE_TIER, // HIGH CONVERGENCE
 };
 
+// KRYL-1034 — perceptual viewport lens glyphs. Suspended HUD floats a per-cone read of the
+// ACTIVE lens; cone FILL color stays convergence (locked §6) — additive, not a recolor.
+const LENS_GLYPH = { OBSERVE:'◉', SIGNAL:'↯', FLOW:'⇢', PRESSURE:'⧖', CONVERGENCE:'⬡', DRIFT:'↝', OPPORTUNITY:'⟡' };
+
+// lensRead — the cone's grounded read for a lens, or a §22 withheld state when no facet exists.
+// OBSERVE/SIGNAL/PRESSURE/CONVERGENCE map to data the cone already carries (grounded).
+// FLOW/DRIFT/OPPORTUNITY have no cone-level facet yet → AWAITING (withheld, not faked).
+function lensRead(lens, { domain, pressure, volatility, v }) {
+  const P = Math.round(pressure ?? 0);
+  switch (lens) {
+    case 'OBSERVE':     return { text: `${(domain ?? '').toUpperCase()} · P${P}`, grounded: true };
+    case 'SIGNAL':      return { text: v?.text ?? '—', grounded: v?.text != null };
+    case 'PRESSURE':    return { text: `P ${P}`, grounded: true };
+    case 'CONVERGENCE': return { text: resolveConvergenceState(pressure, volatility).label, grounded: true };
+    default:            return { text: 'AWAITING', grounded: false }; // FLOW / DRIFT / OPPORTUNITY (§22)
+  }
+}
+
 // Resolves a cone's live pressure/volatility to a classifier state + fill color.
 // The only place a convergence vector is built — Cone and ComparePanel both call this.
 function resolveConvergenceState(pressure, volatility) {
@@ -85,7 +103,7 @@ function arcThesis(a, b) {
   return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
 }
 
-function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null }) {
+function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'OBSERVE' }) {
   const bays       = useBayStore(s => s.bays);
   const hoveredBay = useBayStore(s => s.hoveredBay);
   const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
@@ -202,6 +220,24 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           </div>
         </div>
       </Html>
+
+      {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
+          Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
+      {(() => {
+        const g = LENS_GLYPH[viewportLens] ?? '◉';
+        const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v });
+        return (
+          <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
+            <div style={{
+              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.14em',
+              whiteSpace: 'nowrap', textTransform: 'uppercase', userSelect: 'none',
+              color: r.grounded ? LIME : 'rgba(255,255,255,0.3)', opacity: flashOpacity,
+            }}>
+              {g} {viewportLens} · {r.text}
+            </div>
+          </Html>
+        );
+      })()}
     </group>
   );
 }
@@ -1682,7 +1718,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0 }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE' }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1960,6 +1996,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
                 index={i}
                 isSelected={state.domain === selectedDomain}
                 kalshiSignal={kalshiSignal}
+                viewportLens={viewportLens}
               />
             </group>
           );
@@ -2005,7 +2042,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
 
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, dollyKey = 0, coneColorOverrides = {} }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2194,6 +2231,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           kalshiSignals={kalshiSignals}
           carouselRef={carouselRef}
           dollyKey={dollyKey}
+          viewportLens={viewportLens}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
