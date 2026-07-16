@@ -54,6 +54,40 @@ const mockRecords = (query) => [
   },
 ];
 
+// KRYL-1052 — GDELT narrative proxy cache + serialized queue (respects 1-req/5s upstream limit)
+const gdeltCache = new Map();          // q -> { ts, articles }
+const GDELT_TTL  = 10 * 60 * 1000;     // 10 min
+let gdeltChain   = Promise.resolve();  // serialization chain
+let lastGdeltAt  = 0;
+
+function fetchGdelt(q) {
+  return new Promise(resolve => {
+    const path = `/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&format=json&maxrecords=250&timespan=24h`;
+    const preq = require('https').request({
+      hostname: 'api.gdeltproject.org', path, method: 'GET',
+      headers: { 'Accept': 'application/json', 'User-Agent': 'krylo-narrative-facet/1.0' },
+    }, up => {
+      let b = ''; up.on('data', c => b += c);
+      up.on('end', () => { let a = []; try { const j = JSON.parse(b); if (Array.isArray(j.articles)) a = j.articles; } catch {} resolve(a); });
+    });
+    preq.on('error', () => resolve([]));
+    preq.end();
+  });
+}
+
+function enqueueGdelt(q) {
+  const run = async () => {
+    const wait = Math.max(0, 5500 - (Date.now() - lastGdeltAt)); // >5s per GDELT's stated limit
+    if (wait) await new Promise(r => setTimeout(r, wait));
+    lastGdeltAt = Date.now();
+    const articles = await fetchGdelt(q);
+    gdeltCache.set(q, { ts: Date.now(), articles });
+    return articles;
+  };
+  gdeltChain = gdeltChain.then(run, run);
+  return gdeltChain;
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -86,6 +120,23 @@ const server = http.createServer((req, res) => {
     });
     preq.on('error', e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'FUEL upstream: ' + e.message })); });
     preq.end();
+    return;
+  }
+
+  // GET /api/gdelt-doc — KRYL-1052 DEV proxy for the NARRATIVE facet producer.
+  // GDELT DOC 2.0 article list (keyless, public). GDELT rate-limits to 1 req / 5s, so the
+  // proxy caches per-query (10 min TTL) and serializes upstream calls ≥5.2s apart. Six
+  // domain queries populate progressively on first load, then instant from cache. Any
+  // failure/rate-limit degrades to an empty list → producer returns null → admission
+  // withholds (never fabricates coverage that isn't there).
+  if (req.method === 'GET' && req.url.startsWith('/api/gdelt-doc')) {
+    const u = new URL(req.url, 'http://localhost');
+    const q = u.searchParams.get('q') || '';
+    if (!q) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'MISSING_Q' })); return; }
+    const send = (articles) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ articles })); };
+    const cached = gdeltCache.get(q);
+    if (cached && (Date.now() - cached.ts) < GDELT_TTL) { send(cached.articles); return; }
+    enqueueGdelt(q).then(send);
     return;
   }
 

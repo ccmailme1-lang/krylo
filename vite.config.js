@@ -21,6 +21,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // KRYL-1052 — NARRATIVE facet: GDELT proxy on the local mock-server (keyless).
+      // Must precede the '/api' catch-all so it resolves locally, not to krylo.org.
+      '/api/gdelt-doc': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
       '/api/stream': {
         target: 'https://krylo.org',
         ws: true,

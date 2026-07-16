@@ -166,10 +166,14 @@ export function admitComparison(a, b, policy = null) {
 // facetA/facetB are ROLE names resolved from a domain's facet set. Adding a grounded facet
 // makes every existing lens work over it — no new comparator code.
 export const DIVERGENCE_LENSES = Object.freeze({
-  DRIFT:       { facetA: 'STRUCTURAL', facetB: 'NARRATIVE',        render: 'reality-vs-story',
-                 direction: { A_ahead: 'STRUCTURE_LEADS', B_ahead: 'NARRATIVE_LEADS' } },
-  OPPORTUNITY: { facetA: 'STRUCTURAL', facetB: 'PEER_STRUCTURAL',  render: 'edge-vs-peer',
-                 direction: { A_ahead: 'HOLDS_EDGE', B_ahead: 'PEER_AHEAD' } },
+  DRIFT:       { facetA: 'STRUCTURAL', facetB: 'NARRATIVE',
+                 relationship: 'STRUCTURAL_VS_NARRATIVE_DIVERGENCE',
+                 // margin = structuralIntensity − narrativeIntensity; renderer reads the
+                 // LABEL, never the sign. ALIGNED = within as-diff parity band.
+                 direction: { A_ahead: 'STRUCTURE_LEADS', B_ahead: 'NARRATIVE_LEADS', parity: 'ALIGNED' } },
+  OPPORTUNITY: { facetA: 'STRUCTURAL', facetB: 'PEER_STRUCTURAL',
+                 relationship: 'STRUCTURAL_VS_PEER_DIVERGENCE',
+                 direction: { A_ahead: 'HOLDS_EDGE', B_ahead: 'PEER_AHEAD', parity: 'AT_PARITY' } },
 });
 export const DIVERGENCE_LENS_IDS = Object.freeze(Object.keys(DIVERGENCE_LENSES));
 
@@ -199,9 +203,10 @@ export function computeDivergence(lensId, facets = {}, policy = null) {
   // 3. Grounded divergence — magnitude + doctrine-defined direction.
   const dir = cmp.winner === 'A' ? lens.direction.A_ahead
             : cmp.winner === 'B' ? lens.direction.B_ahead
-            : 'PARITY';
+            : (lens.direction.parity ?? 'PARITY');
   return Object.freeze({
     lens: lensId, withheld: false, withholding_reason: null,
+    relationship: lens.relationship ?? null,
     direction: dir, margin: Math.abs(cmp.leverage_margin),
     facetA: a.facet_id, facetB: b.facet_id, ontology: a.ontology,
   });

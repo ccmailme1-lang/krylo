@@ -16,6 +16,7 @@ import LeverageTowers             from '../surface/leveragetowers.jsx';
 import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
+import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
 
 let _carouselStopped = false;
 
@@ -64,15 +65,20 @@ const LENS_GLYPH = { OBSERVE:'◉', SIGNAL:'↯', FLOW:'⇢', PRESSURE:'⧖', CO
 
 // lensRead — the cone's grounded read for a lens, or a §22 withheld state when no facet exists.
 // OBSERVE/SIGNAL/PRESSURE/CONVERGENCE map to data the cone already carries (grounded).
-// FLOW/DRIFT/OPPORTUNITY have no cone-level facet yet → AWAITING (withheld, not faked).
-function lensRead(lens, { domain, pressure, volatility, v }) {
+// DRIFT consumes a real divergence result (STRUCTURAL vs NARRATIVE facet) computed outside
+// the Canvas; withheld → AWAITING. FLOW/OPPORTUNITY have no producer yet → AWAITING (§22).
+function lensRead(lens, { domain, pressure, volatility, v, drift }) {
   const P = Math.round(pressure ?? 0);
   switch (lens) {
     case 'OBSERVE':     return { text: `${(domain ?? '').toUpperCase()} · P${P}`, grounded: true };
     case 'SIGNAL':      return { text: v?.text ?? '—', grounded: v?.text != null };
     case 'PRESSURE':    return { text: `P ${P}`, grounded: true };
     case 'CONVERGENCE': return { text: resolveConvergenceState(pressure, volatility).label, grounded: true };
-    default:            return { text: 'AWAITING', grounded: false }; // FLOW / DRIFT / OPPORTUNITY (§22)
+    case 'DRIFT': {
+      if (!drift || drift.withheld) return { text: 'AWAITING', grounded: false }; // absence → withhold, never faked
+      return { text: `${drift.direction} Δ${Math.round(drift.margin)}`, grounded: true };
+    }
+    default:            return { text: 'AWAITING', grounded: false }; // FLOW / OPPORTUNITY (§22)
   }
 }
 
@@ -103,7 +109,7 @@ function arcThesis(a, b) {
   return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
 }
 
-function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'OBSERVE' }) {
+function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'OBSERVE', drift = null }) {
   const bays       = useBayStore(s => s.bays);
   const hoveredBay = useBayStore(s => s.hoveredBay);
   const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
@@ -225,7 +231,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
       {(() => {
         const g = LENS_GLYPH[viewportLens] ?? '◉';
-        const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v });
+        const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
         return (
           <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
             <div style={{
@@ -1718,7 +1724,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE' }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE', divergenceByDomain = {} }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -1997,6 +2003,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
                 isSelected={state.domain === selectedDomain}
                 kalshiSignal={kalshiSignal}
                 viewportLens={viewportLens}
+                drift={divergenceByDomain[state.domain] ?? null}
               />
             </group>
           );
@@ -2068,6 +2075,10 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     }
     return { coneState: state, rawDomains: sixDomain };
   }, [signals, maxCones, coneColorOverrides]);
+
+  // KRYL-1052 — DRIFT divergence per domain, computed outside the Canvas. Gated on the
+  // active lens so GDELT is only queried when DRIFT is selected. Withheld → HUD AWAITING.
+  const divergenceByDomain = useDriftDivergence(coneState, viewportLens === 'DRIFT');
 
   if (!coneState.length) {
     return (
@@ -2232,6 +2243,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           carouselRef={carouselRef}
           dollyKey={dollyKey}
           viewportLens={viewportLens}
+          divergenceByDomain={divergenceByDomain}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
