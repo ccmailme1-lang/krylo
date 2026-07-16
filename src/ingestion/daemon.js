@@ -17,9 +17,9 @@ const tanhProxy = (p) => Math.abs(Math.tanh(p / 500));
 // ── FRED adapter — macro signals ─────────────────────────────────────────────
 // Series: UNRATE (unemployment), CPIAUCSL (CPI), DGS10 (10Y treasury yield)
 const FRED_SERIES = [
-  { id: 'UNRATE',   label: 'UNEMPLOYMENT',   domain: 'financial', source: 'financial' },
-  { id: 'CPIAUCSL', label: 'CPI-INFLATION',  domain: 'financial', source: 'financial' },
-  { id: 'DGS10',    label: 'TREASURY-10Y',   domain: 'market',    source: 'market'    },
+  { id: 'UNRATE',   label: 'UNEMPLOYMENT',   domain: 'capital', source: 'capital' },
+  { id: 'CPIAUCSL', label: 'CPI-INFLATION',  domain: 'capital', source: 'capital' },
+  { id: 'DGS10',    label: 'TREASURY-10Y',   domain: 'technology',    source: 'technology'    },
 ];
 
 async function fetchFRED() {
@@ -49,9 +49,9 @@ async function fetchFRED() {
 // ── Finnhub adapter — market signals ─────────────────────────────────────────
 // Symbols: SPY (S&P 500), QQQ (Nasdaq), IWM (Russell 2000)
 const FINNHUB_SYMBOLS = [
-  { symbol: 'SPY',  label: 'SP500',   domain: 'market',    source: 'market'    },
-  { symbol: 'QQQ',  label: 'NASDAQ',  domain: 'operating', source: 'operating' },
-  { symbol: 'IWM',  label: 'RUSSELL', domain: 'market',    source: 'market'    },
+  { symbol: 'SPY',  label: 'SP500',   domain: 'technology',    source: 'technology'    },
+  { symbol: 'QQQ',  label: 'NASDAQ',  domain: 'ownership', source: 'ownership' },
+  { symbol: 'IWM',  label: 'RUSSELL', domain: 'technology',    source: 'technology'    },
 ];
 
 async function fetchFinnhub() {

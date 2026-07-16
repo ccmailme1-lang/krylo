@@ -7,14 +7,16 @@ import { classifyConvergenceState, detectFragilityPhase } from './convergencecla
 import { BAY_MAP } from './cones.js';
 
 // ── Chip domain → cone key mapping ───────────────────────────────────────────
+// KRYL-1064 — targets are canonical §17 cone keys (was pillar). Keys are life-domain chips
+// (a valid input taxonomy) projecting onto the six canonical forces.
 const CHIP_DOMAIN_TO_CONE = {
-  BUSINESS:    'operating',
-  INVESTMENTS: 'financial',
-  HOME:        'personal',
+  BUSINESS:    'ownership',
+  INVESTMENTS: 'capital',
+  HOME:        'media',
   EDUCATION:   'knowledge',
-  CAR:         'market',
-  VACATION:    'time',
-  GENERAL:     'financial',
+  CAR:         'technology',
+  VACATION:    'labor',
+  GENERAL:     'capital',
 };
 
 // ── Mock OLP candidates (Phase A) ────────────────────────────────────────────
@@ -73,7 +75,7 @@ function computeChipAlignment(selectedChips, activeCones) {
   let count = 0;
 
   selectedChips.forEach(({ chip, score = 1, domain = 'BUSINESS' }) => {
-    const coneKey = CHIP_DOMAIN_TO_CONE[domain?.toUpperCase()] ?? 'financial';
+    const coneKey = CHIP_DOMAIN_TO_CONE[domain?.toUpperCase()] ?? 'capital';
     const cone    = activeCones[coneKey];
     if (!cone) return;
 
