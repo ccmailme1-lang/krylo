@@ -17,6 +17,7 @@ import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
+import { DOMAIN_ALIASES }           from '../../engine/ontology.js';
 
 let _carouselStopped = false;
 
@@ -261,16 +262,14 @@ const COMPOSITION = [
   { name: 'OWNERSHIP', pct:  8 },
 ];
 
-// 6-domain → 6-pillar surface mapping (WO-1717: market + knowledge promoted)
-const DOMAIN_TO_PILLAR = {
-  capital:    'financial',
-  ownership:  'operating',
-  knowledge:  'knowledge',
-  technology: 'market',
-  labor:      'time',
-  media:      'personal',
-};
-const CANONICAL_PILLARS = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
+// KRYL-1064 Phase 2 — canonical → pillar mapping now SOURCED from the single ontology module
+// (was a local literal, WO-1717). Values are byte-identical; conemap no longer owns this taxonomy.
+const DOMAIN_TO_PILLAR = Object.fromEntries(
+  Object.entries(DOMAIN_ALIASES.surface).map(([canon, alias]) => [canon, alias.toLowerCase()]),
+);
+// Ordered display view of the pillar aliases (cone layout order is a surface concern, kept explicit).
+const PILLAR_DISPLAY_ORDER = ['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge'];
+const CANONICAL_PILLARS = PILLAR_DISPLAY_ORDER.map(d => DOMAIN_TO_PILLAR[d]);
 
 function aggregateToPillars(domainState) {
   const acc = {};
@@ -433,7 +432,7 @@ const MOCK_PROVENANCE = {
 
 const EMA_ALPHA = 0.18;
 
-const PILLAR_INDEX = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
+const PILLAR_INDEX = CANONICAL_PILLARS; // KRYL-1064 — single-sourced from ontology (identical order)
 
 // WO-1348 — Multi-Bay Comparative Analysis panel
 function ComparePanel() {
