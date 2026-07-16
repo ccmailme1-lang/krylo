@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-// Floating segmented toolbar — top-center, gray HUD. PLACEHOLDER slots for now
-// (what fills them is TBD). Structure mirrors the reference: left actions ·
-// addable tool slots w/ color bands · add / remove / anchor. Non-functional stub.
+// Floating Lens Ribbon — top-center, square, float. Seven perceptual viewport lenses;
+// glyph per operator, name on hover (title). Active lens is LIT (lime + underline) —
+// default OBSERVE, unmistakable (Founder frame 2026-07-15). Tap = change lens.
 const MONO = "'IBM Plex Mono', monospace";
-// Perceptual viewport lenses — glyph per operator; name shows on hover (title).
+const LIME = '#66FF00';
 const LENSES = [
   { id: 'OBSERVE',     g: '◉' },
   { id: 'SIGNAL',      g: '↯' },
@@ -31,16 +31,23 @@ const btn = {
 const div = { width: 1, height: 18, background: 'rgba(255,255,255,0.14)', margin: '0 2px' };
 
 export default function FloatingToolbar() {
+  const [active, setActive] = useState('OBSERVE'); // default posture / ground zero
+
   return (
     <div style={bar}>
-      {LENSES.map(({ id, g }) => (
-        <div key={id} title={id}
-          style={{ position: 'relative', width: 26, height: 26, borderRadius: 6,
-                   background: 'rgba(255,255,255,0.05)', display: 'flex',
-                   alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-          <span style={{ fontFamily: MONO, fontSize: 13, color: 'rgba(255,255,255,0.65)' }}>{g}</span>
-        </div>
-      ))}
+      {LENSES.map(({ id, g }) => {
+        const isActive = id === active;
+        return (
+          <button key={id} title={id} onClick={() => setActive(id)} aria-pressed={isActive}
+            style={{ position: 'relative', width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
+                     background: isActive ? 'rgba(102,255,0,0.12)' : 'rgba(255,255,255,0.05)',
+                     display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }}>
+            <span style={{ fontFamily: MONO, fontSize: 13, color: isActive ? LIME : 'rgba(255,255,255,0.55)' }}>{g}</span>
+            {/* active lens LIT — unmistakable underline */}
+            {isActive && <span style={{ position: 'absolute', left: 4, right: 4, bottom: 2, height: 2, background: LIME, borderRadius: 1 }} />}
+          </button>
+        );
+      })}
       <div style={div} />
       <button style={btn} title="Add tool">＋</button>
       <button style={btn} title="Remove tool">✕</button>
