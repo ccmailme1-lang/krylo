@@ -87,6 +87,7 @@ import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
+import StickyTape             from './components/surface/stickytape.jsx';
 import { resolveGeo }         from './engine/georesolver.js';
 import { detectPersonaFromProfile } from './engine/lensrouter.js';
 const SignalMap = signalmap;
@@ -1191,6 +1192,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
+      <StickyTape />
 
       {/* ── Surface Bay ───────────────────────────────────────── */}
 

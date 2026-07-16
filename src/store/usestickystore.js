@@ -1,0 +1,36 @@
+// usestickystore.js — KRYL-1051 Sticky-Tape. Free-drop user annotations on the canvas.
+// User content ONLY — never system intelligence. Persists to sessionStorage; rides the
+// premium export via getStickies(). Free-drop (not node/cone-anchored) per Founder 2026-07-16.
+
+import { create } from 'zustand';
+
+const KEY = 'krylo_stickies_v1';
+const load = () => { try { return JSON.parse(sessionStorage.getItem(KEY)) ?? []; } catch { return []; } };
+const save = (arr) => { try { sessionStorage.setItem(KEY, JSON.stringify(arr)); } catch {} };
+
+export const useStickyStore = create((set, get) => ({
+  tapeMode: false,                       // dispenser armed → next canvas click drops a note
+  stickies: load(),
+
+  toggleTapeMode: ()   => set(s => ({ tapeMode: !s.tapeMode })),
+  setTapeMode:    (v)  => set({ tapeMode: !!v }),
+
+  addSticky: (x, y) => {
+    const s = { id: 'sticky-' + Date.now(), x, y, text: '', ts: Date.now() };
+    const next = [...get().stickies, s];
+    save(next); set({ stickies: next });
+    return s.id;
+  },
+  updateSticky: (id, patch) => {
+    const next = get().stickies.map(s => s.id === id ? { ...s, ...patch } : s);
+    save(next); set({ stickies: next });
+  },
+  removeSticky: (id) => {
+    const next = get().stickies.filter(s => s.id !== id);
+    save(next); set({ stickies: next });
+  },
+  clearStickies: () => { save([]); set({ stickies: [] }); },
+}));
+
+// For the premium export path — returns the user's saved stickies.
+export const getStickies = () => useStickyStore.getState().stickies;
