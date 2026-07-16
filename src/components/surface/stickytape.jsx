@@ -9,7 +9,6 @@ import { useStickyStore } from '../../store/usestickystore.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const NOTE_COLOR = '#4FD1C5';            // blue sticky
-const LONG_PRESS_MS = 550;
 const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default minimal size on open; user-resizable
 const MIN_W = 21, MIN_H = 36;            // minimized tab
 
@@ -18,31 +17,26 @@ function StickyNote({ note }) {
   const remove = useStickyStore(s => s.removeSticky);
   const st = useRef({ moved: false, deleted: false, timer: null });
 
-  // Drag via window listeners → moves anywhere. longPress = hold to delete (confirmed);
-  // clickOpen = tap (no drag/no delete) opens the minimized tab to full size.
+  // Drag via window listeners → moves anywhere. clickOpen = tap (no drag) opens the tab to full size.
   const startDrag = (e, opts = {}) => {
     if (e.target.tagName === 'TEXTAREA' || e.target.dataset.role) return;
     const off = { dx: e.clientX - note.x, dy: e.clientY - note.y };
-    const s = st.current; s.moved = false; s.deleted = false;
-    if (opts.longPress) s.timer = setTimeout(() => {
-      s.deleted = true; if (window.confirm('Delete this note?')) remove(note.id);
-    }, LONG_PRESS_MS);
+    const s = st.current; s.moved = false;
     const move = (ev) => {
-      if (!s.moved && Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 3) {
-        s.moved = true;
-        if (s.timer) { clearTimeout(s.timer); s.timer = null; }
-      }
+      if (!s.moved && Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 3) s.moved = true;
       if (s.moved) update(note.id, { x: ev.clientX - off.dx, y: ev.clientY - off.dy });
     };
     const up = () => {
-      if (s.timer) { clearTimeout(s.timer); s.timer = null; }
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (opts.clickOpen && !s.moved && !s.deleted) update(note.id, { min: false });
+      if (opts.clickOpen && !s.moved) update(note.id, { min: false });
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
   };
+
+  // Right-click → confirm → delete (original way).
+  const confirmDelete = (e) => { e.preventDefault(); if (window.confirm('Delete this note?')) remove(note.id); };
 
   // Resize the open card from the bottom-right handle → persists w/h.
   const startResize = (e) => {
@@ -57,11 +51,11 @@ function StickyNote({ note }) {
     window.addEventListener('pointerup', up);
   };
 
-  // Minimized tab: tap opens, drag moves, long-press deletes, hover shows title.
+  // Minimized tab: tap opens, drag moves, right-click deletes, hover shows title.
   if (note.min) {
     return (
-      <div title={note.text || 'note'}
-        onPointerDown={(e) => startDrag(e, { longPress: true, clickOpen: true })}
+      <div title={note.text || 'note'} onContextMenu={confirmDelete}
+        onPointerDown={(e) => startDrag(e, { clickOpen: true })}
         style={{
           position: 'fixed', left: note.x, top: note.y, width: MIN_W, height: MIN_H, zIndex: 9998,
           background: NOTE_COLOR, boxShadow: '0 3px 10px rgba(0,0,0,0.5)', cursor: 'grab', pointerEvents: 'auto',
@@ -71,7 +65,7 @@ function StickyNote({ note }) {
 
   // Open card: minimal size, resizable, drag from body; × (top-right) closes to minimized.
   return (
-    <div onPointerDown={(e) => startDrag(e)}
+    <div onPointerDown={(e) => startDrag(e)} onContextMenu={confirmDelete}
       style={{
         position: 'fixed', left: note.x, top: note.y,
         width: note.w ?? OPEN_MIN_W, height: note.h ?? OPEN_MIN_H, zIndex: 9998,
