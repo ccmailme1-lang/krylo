@@ -60,3 +60,26 @@ export const DOMAIN_PROJECTION_MAP = Object.freeze(
       Object.freeze({ source_domain, display_group, surface, version: ONTOLOGY_VERSION })),
   ),
 );
+
+// ── Approved DERIVED-VIEW surfaces (KRYL-1064, Founder-classified 2026-07-16) ──
+// These carry their OWN input/content taxonomy — they are NOT cone surfaces and NOT the §17
+// domain model. Forcing §17 onto them (e.g. a news filter by "OWNERSHIP") would degrade them.
+// They project onto canonical where they touch the cone/signal pipeline; their display taxonomy
+// is intentional and approved. Do not "normalize" these to §17 — that classification is settled.
+export const DERIVED_VIEW_SURFACES = Object.freeze({
+  oracleview_v2: Object.freeze({
+    kind: 'life-planning input form',
+    taxonomy: Object.freeze(['INVESTMENTS', 'EDUCATION', 'CAR', 'HOME', 'BUSINESS', 'VACATION']),
+    projects_via: 'acquisitionbroker.CHIP_DOMAIN_TO_CONE (→ canonical §17)',
+  }),
+  feedsbay: Object.freeze({
+    kind: 'news-category filter',
+    taxonomy: Object.freeze(['FINANCIAL', 'MARKET', 'LEGAL', 'HEALTH', 'CAREER', 'TECHNOLOGY']),
+    projects_via: 'feedsbay cone-domain → feeds-category map',
+  }),
+  leveragetowers: Object.freeze({
+    kind: 'leverage visualization',
+    taxonomy: Object.freeze(['FINANCIAL', 'MARKET', 'HOME', 'TECHNOLOGY', 'HEALTH', 'SIGNAL']),
+    projects_via: 'signal domain match',
+  }),
+});
