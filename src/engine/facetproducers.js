@@ -5,10 +5,10 @@
 //
 //   STRUCTURAL — the observed STRUCTURAL FIELD (operational/economic pressure), read from
 //                the surfacerouter shared pool. producer_id 'surfacerouter'.
-//   NARRATIVE  — the observed INFORMATION FIELD (coverage attention), read from GDELT DOC
-//                2.0. producer_id 'gdelt-narrative'. NEVER routed through surfacerouter —
-//                a dedicated fetch keeps its source_set_hash distinct, so it can't share
-//                lineage with STRUCTURAL and self-withhold.
+//   NARRATIVE  — the observed INFORMATION FIELD (coverage attention), read from NewsAPI.ai
+//                (Event Registry). producer_id 'eventregistry-narrative'. NEVER routed through
+//                surfacerouter — a dedicated fetch keeps its source_set_hash distinct, so it
+//                can't share lineage with STRUCTURAL and self-withhold.
 //
 // SEMANTIC BOUNDARY (locked, Founder 2026-07-16): GDELT is NOT "truth". Structural is NOT
 // "reality". Both are grounded OBSERVATIONS of different fields. DRIFT is the measured
@@ -24,18 +24,29 @@ import { makeSignalFacet } from './signalfacet.js';
 
 export const DOMAIN_ACTIVITY_INTENSITY = 'DOMAIN_ACTIVITY_INTENSITY';
 
-// GDELT query topic per canonical domain. Generic domain-scoped for the proof; subject-
-// scoped queries (subject × domain) are a follow-on refinement, not part of this slice.
+// Narrative keyword per canonical domain — SINGLE high-frequency terms. Event Registry
+// phrase-matches multi-word keywords, collapsing compound topics to ~0; single terms give
+// robust 24h volumes. Domain-scoped for the proof; subject × domain is a follow-on.
 export const DOMAIN_TOPIC = Object.freeze({
-  TECHNOLOGY: 'technology innovation',
-  CAPITAL:    'capital markets investment',
-  KNOWLEDGE:  'research science',
-  LABOR:      'labor employment workforce',
-  MEDIA:      'media coverage attention',
-  OWNERSHIP:  'acquisition merger ownership',
+  TECHNOLOGY: 'technology',
+  CAPITAL:    'investment',
+  KNOWLEDGE:  'research',
+  LABOR:      'employment',
+  MEDIA:      'media',
+  OWNERSHIP:  'acquisition',
 });
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// Coverage volume → narrative intensity (0–100). DERIVED, not tuned: log-scaled because 24h
+// keyword coverage spans orders of magnitude (observed ~4.9k–37k across domains), against a
+// FIXED saturation ceiling of 100,000 articles/24h (log10 = 5) = maximal single-topic
+// attention. Re-derivable by any inspector from that one anchor. count 0 → 0 (→ withhold).
+export const COVERAGE_SATURATION_LOG = 5; // log10(100000)
+export function coverageToIntensity(count) {
+  const n = Math.max(0, count | 0);
+  return clamp(Math.round(100 * Math.log10(n + 1) / COVERAGE_SATURATION_LOG), 0, 100);
+}
 
 // A minimal as-diff SignalUnit carrying a single 0–100 intensity. velocity/window are 0:
 // DRIFT consumes only leverage_margin (a magnitude on projected intensity) + winner, so no
@@ -77,23 +88,22 @@ export function makeStructuralFacet({ domain, intensity, volatility = 0, confide
   });
 }
 
-// ── NARRATIVE facet — observed information field (GDELT DOC 2.0) ───────────────
+// ── NARRATIVE facet — observed information field (Event Registry) ──────────────
 // captureNarrative does its OWN fetch and returns the observation (or null). It never
 // calls surfaceRouter — that is the independence guarantee, by construction.
 export async function captureNarrative(domain, topic = DOMAIN_TOPIC[domain] ?? domain) {
   try {
-    const res = await fetch(`/api/gdelt-doc?q=${encodeURIComponent(topic)}`);
+    const res = await fetch(`/api/news-doc?q=${encodeURIComponent(topic)}`);
     if (!res.ok) return null;
-    const data     = await res.json();
-    const articles = Array.isArray(data.articles) ? data.articles : [];
-    const count    = articles.length;
-    // Zero coverage = insufficient narrative evidence → return null → facet absent →
-    // admission withholds (FACET_UNAVAILABLE). Absence produces withholding, never a
-    // fabricated intensity of 0 masquerading as a real reading.
+    const data  = await res.json();
+    const count = Number(data.totalResults) || 0;   // 24h coverage volume — the countable signal
+    // Zero coverage = insufficient narrative evidence → null → facet absent → admission
+    // withholds. Absence produces withholding, never a fabricated intensity masquerading as real.
     if (count === 0) return null;
-    const intensity  = clamp(Math.round((count / 200) * 100), 0, 100);
-    const confidence = clamp(0.3 + Math.min(1, count / 100) * 0.6, 0, 1);
-    const source_refs = articles.slice(0, 5).map(a => a.url).filter(Boolean);
+    const intensity   = coverageToIntensity(count);
+    const confidence  = clamp(0.3 + Math.min(1, count / 5000) * 0.6, 0, 1); // more coverage → firmer read
+    const source_refs = (data.source_refs ?? [])
+      .map(r => r.url ?? r.uri).filter(Boolean).slice(0, 5);
     return { domain, intensity, coverage_count: count, confidence, source_refs, query: topic };
   } catch {
     return null; // network/proxy failure → absence → withhold (never fabricate)
@@ -107,22 +117,22 @@ export function makeNarrativeFacet({ domain, observation, ts = Date.now() }) {
     facet_id:        `narrative:${domain}:${ts}`,
     domain_id:       domain,
     ontology:        DOMAIN_ACTIVITY_INTENSITY,
-    producer_id:     'gdelt-narrative',
-    source_set_hash: 'narrative-gdelt',
+    producer_id:     'eventregistry-narrative',
+    source_set_hash: 'narrative-eventregistry',
     lineage_id:      `narrative:${domain}`,
     timestamp:       ts,
     provenance: {
       field:     'narrative',
       semantics: 'observed information-field attention',
-      source:    'GDELT DOC 2.0',
+      source:    'NewsAPI.ai (Event Registry) — 24h coverage volume',
       query,
     },
     signal_unit: intensityUnit(domain, intensity),
     confidence,
     repro: {
-      config:           { query, timespan: '24h', formula: 'min(100, count/200*100)' },
+      config:           { query, timespan: '24h', formula: '100*log10(totalResults+1)/5' },
       source_refs,
-      producer_version: 'gdelt-narrative-1.0.0',
+      producer_version: 'eventregistry-narrative-1.0.0',
     },
     constraints: { coverage_count },
   });

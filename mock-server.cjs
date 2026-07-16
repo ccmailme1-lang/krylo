@@ -54,38 +54,46 @@ const mockRecords = (query) => [
   },
 ];
 
-// KRYL-1052 — GDELT narrative proxy cache + serialized queue (respects 1-req/5s upstream limit)
-const gdeltCache = new Map();          // q -> { ts, articles }
-const GDELT_TTL  = 10 * 60 * 1000;     // 10 min
-let gdeltChain   = Promise.resolve();  // serialization chain
-let lastGdeltAt  = 0;
+// KRYL-1052 — NARRATIVE proxy (NewsAPI.ai / Event Registry). Key held server-side (env or
+// specs/NEWS API.env), NEVER echoed to the client. Cached per-query (10 min TTL) to conserve
+// the token quota. Returns { totalResults, source_refs }; any failure → 0 → producer withholds.
+const erCache = new Map();          // q -> { ts, payload }
+const ER_TTL  = 10 * 60 * 1000;     // 10 min
 
-function fetchGdelt(q) {
+function erKey() {
+  if (process.env.EVENTREGISTRY_KEY) return process.env.EVENTREGISTRY_KEY.trim();
+  try {
+    const raw = require('fs').readFileSync(require('path').join(__dirname, 'specs', 'NEWS API.env'), 'utf8');
+    return (raw.match(/[0-9a-fA-F-]{36}/) || [])[0] || '';
+  } catch { return ''; }
+}
+
+function fetchEventRegistry(q) {
   return new Promise(resolve => {
-    const path = `/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&format=json&maxrecords=250&timespan=24h`;
+    const key = erKey();
+    if (!key) return resolve({ totalResults: 0, source_refs: [] });
+    const y = new Date(Date.now() - 24 * 3600 * 1000).toISOString().slice(0, 10);
+    const t = new Date().toISOString().slice(0, 10);
+    const path = `/api/v1/article/getArticles?apiKey=${encodeURIComponent(key)}`
+      + `&keyword=${encodeURIComponent(q)}&lang=eng&dateStart=${y}&dateEnd=${t}`
+      + `&articlesCount=5&articlesSortBy=date&resultType=articles&dataType=news`;
     const preq = require('https').request({
-      hostname: 'api.gdeltproject.org', path, method: 'GET',
+      hostname: 'eventregistry.org', path, method: 'GET',
       headers: { 'Accept': 'application/json', 'User-Agent': 'krylo-narrative-facet/1.0' },
     }, up => {
       let b = ''; up.on('data', c => b += c);
-      up.on('end', () => { let a = []; try { const j = JSON.parse(b); if (Array.isArray(j.articles)) a = j.articles; } catch {} resolve(a); });
+      up.on('end', () => {
+        try {
+          const A = (JSON.parse(b).articles) || {};
+          const source_refs = (A.results || []).slice(0, 5)
+            .map(a => ({ uri: a.uri, url: a.url, source: a.source?.title, date: a.date }));
+          resolve({ totalResults: A.totalResults ?? 0, source_refs });
+        } catch { resolve({ totalResults: 0, source_refs: [] }); }
+      });
     });
-    preq.on('error', () => resolve([]));
+    preq.on('error', () => resolve({ totalResults: 0, source_refs: [] }));
     preq.end();
   });
-}
-
-function enqueueGdelt(q) {
-  const run = async () => {
-    const wait = Math.max(0, 5500 - (Date.now() - lastGdeltAt)); // >5s per GDELT's stated limit
-    if (wait) await new Promise(r => setTimeout(r, wait));
-    lastGdeltAt = Date.now();
-    const articles = await fetchGdelt(q);
-    gdeltCache.set(q, { ts: Date.now(), articles });
-    return articles;
-  };
-  gdeltChain = gdeltChain.then(run, run);
-  return gdeltChain;
 }
 
 const server = http.createServer((req, res) => {
@@ -123,20 +131,17 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // GET /api/gdelt-doc — KRYL-1052 DEV proxy for the NARRATIVE facet producer.
-  // GDELT DOC 2.0 article list (keyless, public). GDELT rate-limits to 1 req / 5s, so the
-  // proxy caches per-query (10 min TTL) and serializes upstream calls ≥5.2s apart. Six
-  // domain queries populate progressively on first load, then instant from cache. Any
-  // failure/rate-limit degrades to an empty list → producer returns null → admission
-  // withholds (never fabricates coverage that isn't there).
-  if (req.method === 'GET' && req.url.startsWith('/api/gdelt-doc')) {
+  // GET /api/news-doc — KRYL-1052 DEV proxy for the NARRATIVE facet producer (Event Registry).
+  // Returns { totalResults, source_refs }. totalResults = 24h coverage volume for the keyword
+  // → the producer's countable narrative intensity. Cached; failure → 0 → withhold (never faked).
+  if (req.method === 'GET' && req.url.startsWith('/api/news-doc')) {
     const u = new URL(req.url, 'http://localhost');
     const q = u.searchParams.get('q') || '';
     if (!q) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'MISSING_Q' })); return; }
-    const send = (articles) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ articles })); };
-    const cached = gdeltCache.get(q);
-    if (cached && (Date.now() - cached.ts) < GDELT_TTL) { send(cached.articles); return; }
-    enqueueGdelt(q).then(send);
+    const send = (payload) => { res.writeHead(200, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(payload)); };
+    const cached = erCache.get(q);
+    if (cached && (Date.now() - cached.ts) < ER_TTL) { send(cached.payload); return; }
+    fetchEventRegistry(q).then(payload => { erCache.set(q, { ts: Date.now(), payload }); send(payload); });
     return;
   }
 
