@@ -24,17 +24,10 @@ export function isCanonicalDomain(d) {
 // (or migrating one, Phase 2) means adding aliases here, not a new domain list in the component.
 // 'surface' is seeded from conemap.jsx DOMAIN_TO_PILLAR (WO-1717); other surfaces are populated
 // as they migrate in KRYL-1064 (Phase 2).
-export const DOMAIN_ALIASES = Object.freeze({
-  surface: Object.freeze({
-    capital:    'FINANCIAL',
-    ownership:  'OPERATING',
-    knowledge:  'KNOWLEDGE',
-    technology: 'MARKET',
-    labor:      'TIME',
-    media:      'PERSONAL',
-  }),
-  // oracleview / leveragetowers / feedsbay — added during Phase 2 migration (KRYL-1064)
-});
+// No active aliases — Founder ratified CANONICAL everywhere (KRYL-1064), so every surface displays
+// the canonical §17 name. The alias infrastructure below remains for any FUTURE surface that gets an
+// approved display alias; adding one means adding an entry here, never a new domain list in a component.
+export const DOMAIN_ALIASES = Object.freeze({});
 
 // displayLabel(canonicalDomain, surface) → alias string, or the canonical name (uppercased)
 // when the surface has no alias for it. Never invents a domain — only relabels a canonical one.

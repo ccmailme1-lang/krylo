@@ -17,7 +17,7 @@ import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
-import { DOMAIN_ALIASES }           from '../../engine/ontology.js';
+import { CANONICAL_DOMAINS }        from '../../engine/ontology.js';
 
 let _carouselStopped = false;
 
@@ -262,63 +262,53 @@ const COMPOSITION = [
   { name: 'OWNERSHIP', pct:  8 },
 ];
 
-// KRYL-1064 Phase 2 — canonical → pillar mapping now SOURCED from the single ontology module
-// (was a local literal, WO-1717). Values are byte-identical; conemap no longer owns this taxonomy.
-const DOMAIN_TO_PILLAR = Object.fromEntries(
-  Object.entries(DOMAIN_ALIASES.surface).map(([canon, alias]) => [canon, alias.toLowerCase()]),
-);
-// Ordered display view of the pillar aliases (cone layout order is a surface concern, kept explicit).
-const PILLAR_DISPLAY_ORDER = ['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge'];
-const CANONICAL_PILLARS = PILLAR_DISPLAY_ORDER.map(d => DOMAIN_TO_PILLAR[d]);
+// KRYL-1064 — cones speak the CANONICAL §17 vocabulary end-to-end (Founder: canonical everywhere).
+// The WO-1717 pillar relabel is retired; domain identity IS the canonical name. CANONICAL_ORDER is
+// the fixed cone layout order (positions preserved from the pillar era) — a permutation of §17.
+const CANONICAL_ORDER = ['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge'];
 
-function aggregateToPillars(domainState) {
-  const acc = {};
-  CANONICAL_PILLARS.forEach(p => { acc[p] = { pressure: [], volatility: [] }; });
-  domainState.forEach(s => {
-    const pillar = DOMAIN_TO_PILLAR[s.domain];
-    if (!pillar) return;
-    acc[pillar].pressure.push(s.pressure ?? 0);
-    acc[pillar].volatility.push(s.volatility ?? 0);
+// Orders the (already-canonical) domain state into the six cones, fixed layout order, default-filled.
+function orderCanonicalCones(domainState) {
+  const byCanon = new Map(domainState.map(s => [s.domain, s]));
+  return CANONICAL_ORDER.map(d => {
+    const s = byCanon.get(d) ?? {};
+    return { domain: d, pressure: s.pressure ?? 0, volatility: s.volatility ?? 0 };
   });
-  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-  return CANONICAL_PILLARS.map(p => ({
-    domain: p,
-    pressure:   avg(acc[p].pressure),
-    volatility: avg(acc[p].volatility),
-  }));
 }
 
 // Per-lens composition — reweighted to 4 pillars. Sums to 100. Phase A heuristic.
+// KRYL-1064 — canonical §17 names (was pillar: OPERATING→OWNERSHIP, FINANCIAL→CAPITAL,
+// PERSONAL→MEDIA, TIME→LABOR). Percentages are the existing Phase-A heuristic, unchanged.
 const LENS_COMPOSITION = {
   INVESTOR: [
-    { name: 'OPERATING', pct: 43 },
-    { name: 'FINANCIAL', pct: 36 },
-    { name: 'PERSONAL',  pct: 12 },
-    { name: 'TIME',      pct:  9 },
+    { name: 'OWNERSHIP', pct: 43 },
+    { name: 'CAPITAL',   pct: 36 },
+    { name: 'MEDIA',     pct: 12 },
+    { name: 'LABOR',     pct:  9 },
   ],
   REALTOR: [
-    { name: 'FINANCIAL', pct: 36 },
-    { name: 'OPERATING', pct: 24 },
-    { name: 'PERSONAL',  pct: 18 },
-    { name: 'TIME',      pct: 22 },
+    { name: 'CAPITAL',   pct: 36 },
+    { name: 'OWNERSHIP', pct: 24 },
+    { name: 'MEDIA',     pct: 18 },
+    { name: 'LABOR',     pct: 22 },
   ],
   ATHLETE: [
-    { name: 'PERSONAL',  pct: 35 },
-    { name: 'FINANCIAL', pct: 29 },
-    { name: 'OPERATING', pct: 24 },
-    { name: 'TIME',      pct: 12 },
+    { name: 'MEDIA',     pct: 35 },
+    { name: 'CAPITAL',   pct: 29 },
+    { name: 'OWNERSHIP', pct: 24 },
+    { name: 'LABOR',     pct: 12 },
   ],
   SALES: [
-    { name: 'FINANCIAL', pct: 33 },
-    { name: 'OPERATING', pct: 32 },
-    { name: 'PERSONAL',  pct: 22 },
-    { name: 'TIME',      pct: 13 },
+    { name: 'CAPITAL',   pct: 33 },
+    { name: 'OWNERSHIP', pct: 32 },
+    { name: 'MEDIA',     pct: 22 },
+    { name: 'LABOR',     pct: 13 },
   ],
   LEGAL: [
-    { name: 'OPERATING', pct: 44 },
-    { name: 'FINANCIAL', pct: 42 },
-    { name: 'PERSONAL',  pct:  8 },
-    { name: 'TIME',      pct:  6 },
+    { name: 'OWNERSHIP', pct: 44 },
+    { name: 'CAPITAL',   pct: 42 },
+    { name: 'MEDIA',     pct:  8 },
+    { name: 'LABOR',     pct:  6 },
   ],
 };
 
@@ -432,7 +422,7 @@ const MOCK_PROVENANCE = {
 
 const EMA_ALPHA = 0.18;
 
-const PILLAR_INDEX = CANONICAL_PILLARS; // KRYL-1064 — single-sourced from ontology (identical order)
+const PILLAR_INDEX = CANONICAL_ORDER; // KRYL-1064 — canonical §17 identity, fixed cone order
 
 // WO-1348 — Multi-Bay Comparative Analysis panel
 function ComparePanel() {
@@ -617,7 +607,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   const isReplay    = timeOffset > 0;
   const hoursBack   = Math.round(timeOffset * 24);
 
-  const ALL_DOMAINS = ['FINANCIAL','MARKET','KNOWLEDGE','PERSONAL','OPERATING','TIME'];
+  const ALL_DOMAINS = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1064 — canonical set from ontology
   const leaderboard = (() => {
     const map = {};
     for (const c of coneState) {
@@ -999,8 +989,8 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
 
       {(() => {
         const MAX_EMITTERS = 6;
-        const pillar       = (cone.domain ?? '').toLowerCase();
-        const activeSources = rawDomains.filter(d => DOMAIN_TO_PILLAR[d.domain] === pillar && (d.pressure ?? 0) > 0).length;
+        const canon        = (cone.domain ?? '').toLowerCase();
+        const activeSources = rawDomains.filter(d => (d.domain ?? '').toLowerCase() === canon && (d.pressure ?? 0) > 0).length;
         const D  = Math.round((activeSources / MAX_EMITTERS) * 100);
         const E  = Math.round((1 - (cone.pressure ?? 0) / 100) * (cone.volatility ?? 0) * 100);
         const LE = Math.round((1 - (cone.pressure ?? 0) / 100) * (1 - D / 100) * (1 - E / 100) * 100);
@@ -2061,7 +2051,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     const aggregated = aggregateSignals(normalized);
     const byDomain = new Map(aggregated.map(s => [s.domain, s]));
     const sixDomain = CANONICAL_FEEDERS.map(d => byDomain.get(d) ?? { domain: d, pressure: 0, volatility: 0 });
-    let state = aggregateToPillars(sixDomain);
+    let state = orderCanonicalCones(sixDomain);
     if (Object.keys(coneColorOverrides).length) {
       state = state.map(c => {
         const bayNum = PILLAR_INDEX.indexOf(c.domain) + 1;
@@ -2255,10 +2245,9 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         const flaggedBays = Object.values(baysForResonance).filter(b => b.compareFlag && b.assignment);
         if (flaggedBays.length < 2) return null;
         // Map bayId → cone domain via PILLAR_INDEX (bayId = pillarIdx + 1)
-        const PILLAR_INDEX_LOCAL = ['financial', 'operating', 'time', 'personal', 'market', 'knowledge'];
         const arcNodes = flaggedBays
           .map(b => {
-            const domain = PILLAR_INDEX_LOCAL[b.id - 1];
+            const domain = PILLAR_INDEX[b.id - 1];
             if (!domain) return null;
             const hud = hudList.find(h => h.domain === domain);
             return hud ? { ...hud, title: b.assignment.title } : null;

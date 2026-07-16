@@ -29,7 +29,8 @@ export function useDriftDivergence(coneState, active) {
       const structural = makeStructuralFacet({
         domain, intensity: c.pressure ?? 0, volatility: c.volatility ?? 0,
       });
-      const observation = await captureNarrative(domain, DOMAIN_TOPIC[domain] ?? domain);
+      // domains are canonical (§17) now — DOMAIN_TOPIC is keyed by UPPERCASE canonical
+      const observation = await captureNarrative(domain, DOMAIN_TOPIC[String(domain).toUpperCase()] ?? domain);
       if (cancelled) return;
       const narrative = makeNarrativeFacet({ domain, observation }); // null if no evidence
       const result    = computeDivergence('DRIFT', { STRUCTURAL: structural, NARRATIVE: narrative });
