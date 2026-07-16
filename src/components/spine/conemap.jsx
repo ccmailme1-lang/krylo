@@ -696,15 +696,17 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         const sig    = Math.round(cone.pressure ?? 0);
         const vol    = cone.volatility ?? 0.4;
         const domainKey = (cone.domain ?? '').toLowerCase();
+        // KRYL-1064 — keyed by canonical §17 (was pillar: financial→capital, operating→ownership,
+        // time→labor, personal→media, market→technology). Each cone keeps its exact prior rows.
         const DOMAIN_SIGNALS = {
-          financial: ['INTEREST RATE','EQUITY FLOW','CREDIT SPREAD','LIQUIDITY','YIELD CURVE'],
-          operating: ['THROUGHPUT','LATENCY INDEX','ERROR RATE','CAPACITY USE','DEPLOY VEL'],
-          time:      ['SESSION DEPTH','DECAY RATE','RECENCY BIAS','HORIZON COMPRESS','TEMPO'],
-          personal:  ['CAREER VEL','SKILL GAP','NETWORK DENSITY','LEVERAGE RATIO','TIME COMPRESS'],
-          market:    ['SENTIMENT','COVERAGE VEL','NARRATIVE IDX','AMPLIF RATE','CONSENSUS'],
-          knowledge: ['SOURCE DEPTH','CROSS-REF RATE','SIGNAL DECAY','NOVELTY IDX','VERIF RATE'],
+          capital:    ['INTEREST RATE','EQUITY FLOW','CREDIT SPREAD','LIQUIDITY','YIELD CURVE'],
+          ownership:  ['THROUGHPUT','LATENCY INDEX','ERROR RATE','CAPACITY USE','DEPLOY VEL'],
+          labor:      ['SESSION DEPTH','DECAY RATE','RECENCY BIAS','HORIZON COMPRESS','TEMPO'],
+          media:      ['CAREER VEL','SKILL GAP','NETWORK DENSITY','LEVERAGE RATIO','TIME COMPRESS'],
+          technology: ['SENTIMENT','COVERAGE VEL','NARRATIVE IDX','AMPLIF RATE','CONSENSUS'],
+          knowledge:  ['SOURCE DEPTH','CROSS-REF RATE','SIGNAL DECAY','NOVELTY IDX','VERIF RATE'],
         };
-        const mockRows = (DOMAIN_SIGNALS[domainKey] ?? DOMAIN_SIGNALS.financial).map((label, i) => ({
+        const mockRows = (DOMAIN_SIGNALS[domainKey] ?? DOMAIN_SIGNALS.capital).map((label, i) => ({
           label, signal: Math.max(8, Math.round(sig * (1 - i * 0.08) + (i % 3) * 5)),
           vol: ['HIGH','MED','LOW','MED','HIGH'][i % 5], dir: [1,1,-1,1,0][i % 5],
         }));

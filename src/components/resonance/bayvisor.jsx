@@ -33,13 +33,15 @@ const DOMAIN_METRIC = {
   C06: { label: 'COMPOSITE',      value: '—',     unit: ''   },
 };
 
+// KRYL-1064 — canonical §17 (was name=pillar / type=ad-hoc). name = display, type = domain
+// identity fed to the broker (line ~601); both canonical so the visor matches the cones.
 const domains = [
-  { id: "C01", name: "FINANCIAL",  type: "CAPITAL"      },
-  { id: "C02", name: "OPERATING",  type: "EXECUTION"    },
-  { id: "C03", name: "TIME",       type: "TEMPORAL"     },
-  { id: "C04", name: "PERSONAL",   type: "IDENTITY"     },
-  { id: "C05", name: "MARKET",     type: "SIGNAL"       },
-  { id: "C06", name: "KNOWLEDGE",  type: "INTELLIGENCE" },
+  { id: "C01", name: "CAPITAL",    type: "CAPITAL"     },
+  { id: "C02", name: "OWNERSHIP",  type: "OWNERSHIP"   },
+  { id: "C03", name: "LABOR",      type: "LABOR"       },
+  { id: "C04", name: "MEDIA",      type: "MEDIA"       },
+  { id: "C05", name: "TECHNOLOGY", type: "TECHNOLOGY"  },
+  { id: "C06", name: "KNOWLEDGE",  type: "KNOWLEDGE"   },
 ];
 
 /* ── CORNER RETICLES ─────────────────────────────────────────────────────── */
