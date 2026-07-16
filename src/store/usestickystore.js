@@ -16,7 +16,7 @@ export const useStickyStore = create((set, get) => ({
   setTapeMode:    (v)  => set({ tapeMode: !!v }),
 
   addSticky: (x, y) => {
-    const s = { id: 'sticky-' + Date.now(), x, y, text: '', ts: Date.now() };
+    const s = { id: 'sticky-' + Date.now(), x, y, text: '', min: true, ts: Date.now() }; // default minimized
     const next = [...get().stickies, s];
     save(next); set({ stickies: next });
     return s.id;
