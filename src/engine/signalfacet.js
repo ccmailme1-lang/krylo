@@ -19,6 +19,7 @@ export function makeSignalFacet({
   facet_id, domain_id, ontology, producer_id, source_set_hash,
   lineage_id = null, dependency_graph = [], timestamp = Date.now(),
   provenance = null, signal_unit, confidence = null, constraints = {},
+  repro = null,
 }) {
   if (!facet_id || !domain_id || !ontology || !producer_id)
     throw new Error('SignalFacet: facet_id/domain_id/ontology/producer_id required');
@@ -31,6 +32,10 @@ export function makeSignalFacet({
     dependency_graph: Object.freeze([...dependency_graph]),
     timestamp, provenance, signal_unit, confidence,
     constraints: Object.freeze({ ...constraints }),
+    // repro = the executable recipe (config + source refs + producer version) that
+    // regenerates this exact signal_unit. Provenance says WHERE it came from; repro
+    // is what lets an auditor RE-DERIVE it. See checkReproducibility.
+    repro: repro ? Object.freeze({ ...repro }) : null,
   });
 }
 
@@ -44,6 +49,23 @@ export function checkIndependence(a, b) {
   if ((a.dependency_graph ?? []).includes(b.producer_id) ||
       (b.dependency_graph ?? []).includes(a.producer_id)) return 'DECLARED_DEPENDENCY';
   if (a.ontology !== b.ontology)                    return 'ONTOLOGY_CONTAMINATION'; // no valid shared space
+  return null;
+}
+
+// ── Reproducibility Validator (fourth invariant — audit trust) ────────────────
+// Returns a classified reason when a facet cannot be regenerated from its declared
+// provenance, else null. Independence says two facets don't share ancestry;
+// reproducibility says each facet's ancestry is REAL and RECORDED — a facet that
+// cannot be re-derived from (producer + source set + config + timestamp) is a
+// claim without a receipt, and SHALL NOT participate in divergence.
+export function checkReproducibility(f) {
+  if (!f)                  return 'FACET_UNAVAILABLE';
+  if (!f.producer_id)      return 'NO_PRODUCER';
+  if (!f.source_set_hash)  return 'NO_SOURCE_SET';    // nothing to re-read from
+  if (!f.timestamp)        return 'NO_TIMESTAMP';     // no as-of point to reconstruct
+  const r = f.repro;
+  if (!r || r.config == null || r.source_refs == null || !r.producer_version)
+    return 'NOT_REPRODUCIBLE';                         // no executable recipe on record
   return null;
 }
 
@@ -68,6 +90,12 @@ export function computeDivergence(lensId, facets = {}) {
   // 1. Independence + ontology gate — fail closed BEFORE any comparison runs.
   const bar = checkIndependence(a, b);
   if (bar) return withheld(lensId, bar);
+
+  // 1b. Reproducibility gate — a facet that cannot be re-derived from its recorded
+  //     provenance is a claim without a receipt and SHALL NOT participate (§audit,
+  //     fail-closed). Sits beside independence as the second trust boundary.
+  const ra = checkReproducibility(a); if (ra) return withheld(lensId, `A_${ra}`);
+  const rb = checkReproducibility(b); if (rb) return withheld(lensId, `B_${rb}`);
 
   // 2. Universal comparator. as-diff independently withholds on unresolved ontology / incomparability.
   let cmp;
