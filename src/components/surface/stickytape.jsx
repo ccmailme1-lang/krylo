@@ -86,20 +86,26 @@ export default function StickyTape() {
           position: 'fixed', left: 8, top: '58%', zIndex: 9999, cursor: 'pointer',
           display: 'flex', flexDirection: 'column', alignItems: 'center', userSelect: 'none',
         }}>
-        <div style={{ position: 'relative', width: 54, height: 42 }}>
-          {/* the note curling up out of the slot — the one real visual cue */}
+        <div style={{ position: 'relative', width: 52, height: 44 }}>
+          {/* note curling out of the scoop mouth */}
           <div style={{
-            position: 'absolute', left: '50%', bottom: 14, width: 34, height: tapeMode ? 32 : 22,
-            transform: 'translateX(-50%) rotate(4deg)', transformOrigin: 'bottom center',
-            background: NOTE_COLOR, borderRadius: '1px 9px 1px 1px',
+            position: 'absolute', left: '50%', bottom: 19, width: 28, height: tapeMode ? 30 : 20,
+            transform: 'translateX(-50%) rotate(5deg)', transformOrigin: 'bottom center',
+            background: NOTE_COLOR, borderRadius: '1px 9px 2px 2px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.4)', transition: 'height .15s ease', zIndex: 1,
           }} />
-          {/* base — flat + dark, blends into the nav */}
+          {/* black hood scoop — smooth domed mound blending into the nav; paper exits the intake mouth */}
           <div style={{
-            position: 'absolute', left: 0, bottom: 0, width: 54, height: 26, zIndex: 2,
-            background: '#0e0e0f', borderRadius: 6, border: '1px solid rgba(255,255,255,0.05)',
+            position: 'absolute', left: 0, bottom: 0, width: 52, height: 26, zIndex: 2,
+            background: 'radial-gradient(130% 100% at 50% 100%, #232326 0%, #050505 78%)',
+            borderRadius: '50% 50% 7px 7px / 95% 95% 7px 7px',
           }}>
-            <div style={{ position: 'absolute', top: -2, left: 7, right: 7, height: 6, background: '#000', borderRadius: 3 }} />
+            {/* intake mouth — dark recessed opening the paper feeds through */}
+            <div style={{
+              position: 'absolute', top: 3, left: '50%', transform: 'translateX(-50%)',
+              width: 26, height: 8, background: '#000', borderRadius: '50%',
+              boxShadow: 'inset 0 2px 3px rgba(0,0,0,0.9)',
+            }} />
           </div>
         </div>
       </div>
