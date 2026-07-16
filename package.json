@@ -12,6 +12,8 @@
     "dev:ablinq": "yarn workspace @krylo/ablinq-audit-desk dev",
     "dev:nooma": "yarn workspace @krylo/nooma-engine dev",
     "dev:root": "vite",
+    "check:ontology": "node scripts/check-domain-ontology.mjs",
+    "prebuild": "node scripts/check-domain-ontology.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "preflight": "node scripts/preflight.js",

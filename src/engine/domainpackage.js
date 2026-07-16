@@ -5,7 +5,8 @@
 // No additional top-level structures permitted.
 
 // Six domains — locked per CLAUDE.md §6
-export const DOMAINS = ['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP'];
+import { CANONICAL_DOMAINS } from './ontology.js';
+export const DOMAINS = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
 
 // Forbidden fields: Decision Invariant names must never appear in domain output
 const INVARIANT_NAMES = [

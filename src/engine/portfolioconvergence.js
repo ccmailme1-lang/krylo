@@ -9,7 +9,8 @@
 //               platform inflection fires at ≥3 simultaneous convergences, Fs≥0.70.
 // Depends on: WO-1725 Phase A (COMPLETE), WO-1126A (COMPLETE), WO-1336 (COMPLETE).
 
-const ALL_DOMAINS       = ['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP'];
+import { CANONICAL_DOMAINS } from './ontology.js';
+const ALL_DOMAINS       = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
 const BUILDING_GATE     = 50;   // signal > 50 = BUILDING CONVERGENCE proxy
 const CONFIDENCE_GATE   = 0.70; // Fs gate per WO spec
 const INFLECTION_DOMAINS = 3;   // minimum simultaneous convergences for platform bet

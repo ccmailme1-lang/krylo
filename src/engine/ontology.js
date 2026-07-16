@@ -19,6 +19,10 @@ export function isCanonicalDomain(d) {
   return CANON_SET.has(String(d ?? '').toLowerCase());
 }
 
+// Cone layout order — a permutation of the canonical set (fixed left-to-right cone positions).
+// Lives here so no component owns its own domain-list literal (KRYL-1065).
+export const CONE_DISPLAY_ORDER = Object.freeze(['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge']);
+
 // ── Alias layer — canonical id → per-surface display label ────────────────────
 // A surface RENDERS the display label but RESOLVES to the canonical domain. Adding a surface
 // (or migrating one, Phase 2) means adding aliases here, not a new domain list in the component.

@@ -29,7 +29,8 @@ const GRID_ALPHA = 0.04;
 
 // Six locked domains, evenly spaced around the field — same order used
 // everywhere else in the codebase (domainpackage.js's DOMAINS).
-const DOMAIN_ORDER = ['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP'];
+import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
+const DOMAIN_ORDER = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
 
 function domainAngle(domain) {
   const idx = DOMAIN_ORDER.indexOf(domain);

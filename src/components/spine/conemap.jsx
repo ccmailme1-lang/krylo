@@ -17,7 +17,7 @@ import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
-import { CANONICAL_DOMAINS }        from '../../engine/ontology.js';
+import { CANONICAL_DOMAINS, CONE_DISPLAY_ORDER } from '../../engine/ontology.js';
 
 let _carouselStopped = false;
 
@@ -265,7 +265,7 @@ const COMPOSITION = [
 // KRYL-1064 — cones speak the CANONICAL §17 vocabulary end-to-end (Founder: canonical everywhere).
 // The WO-1717 pillar relabel is retired; domain identity IS the canonical name. CANONICAL_ORDER is
 // the fixed cone layout order (positions preserved from the pillar era) — a permutation of §17.
-const CANONICAL_ORDER = ['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge'];
+const CANONICAL_ORDER = CONE_DISPLAY_ORDER; // KRYL-1065 — sourced from ontology (no local domain list)
 
 // Orders the (already-canonical) domain state into the six cones, fixed layout order, default-filled.
 function orderCanonicalCones(domainState) {
@@ -2037,7 +2037,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   );
 }
 
-const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
+const CANONICAL_FEEDERS = CANONICAL_DOMAINS; // KRYL-1065 — sourced from ontology (no local domain list)
 
 
 export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {

@@ -23,7 +23,8 @@ export const FRACTURE_POLARITY_THRESHOLD = 0.40;
 export const GRAVITY_TIE_THRESHOLD = 0.15;
 
 // 6 locked signal domains (§6 / §16)
-const SIGNAL_DOMAINS = ['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP'];
+import { CANONICAL_DOMAINS } from './ontology.js';
+const SIGNAL_DOMAINS = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
 
 // Query domain → signal domain bridge
 // Covers all DOMAIN_SCORE_PATTERNS keys + resolvePrimary() output labels.

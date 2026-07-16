@@ -6,7 +6,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { HIGH_CONVERGENCE_FLOOR, COUNTER_SIGNAL_CEILING } from './signalconstants.js';
 
-export const EQ_DOMAINS = ['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP'];
+import { CANONICAL_DOMAINS } from './ontology.js';
+export const EQ_DOMAINS = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
 const PERSISTENCE_THRESHOLD_MS = 72 * 60 * 60 * 1000; // CALIBRATE: 72h investor default (WO-1821)
 const DISPLACEMENT_MARGIN      = 8;                    // CALIBRATE: challenger composite score gap
 const HYSTERESIS_TICKS         = 3;                    // ticks challenger must hold before displacement fires

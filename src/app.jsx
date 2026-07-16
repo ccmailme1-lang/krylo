@@ -22,6 +22,7 @@ import { useFredSignals }    from './hooks/usefredsignals.js';
 import { useEdgarSignals }  from './hooks/useedgarsignals.js';
 import { useKalshiSignals } from './hooks/usekalshisignals.js';
 import { runFinancialMarketSync }  from './engine/connectors/financialmarketconnector.js';
+import { CANONICAL_DOMAINS }        from './engine/ontology.js';
 import { runEconomicFlowSync }     from './engine/connectors/economicflowconnector.js';
 import { runSupplyChainSync }      from './engine/connectors/supplychainconnector.js';
 import { runPatentsViewSync }      from './engine/connectors/patentsviewconnector.js';
@@ -105,7 +106,7 @@ const OracleView     = oracleview;
 
 const MARQUEE_SEED      = 'workplace layoffs culture conflict';
 const LENS_LIST         = ['INVESTOR', 'REALTOR', 'ATHLETE', 'SALES', 'LEGAL'];
-const CANONICAL_FEEDERS = ['technology', 'capital', 'knowledge', 'labor', 'media', 'ownership'];
+const CANONICAL_FEEDERS = CANONICAL_DOMAINS; // KRYL-1065 — sourced from ontology (no local domain list)
 const MONO              = "'IBM Plex Mono', monospace";
 const LIME              = '#66FF00';
 const MICRO_SIGNALS = {
