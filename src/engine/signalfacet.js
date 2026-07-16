@@ -69,6 +69,50 @@ export function checkReproducibility(f) {
   return null;
 }
 
+// ── Comparison Admission Engine (governs WHETHER; AS-DIFF governs WHAT) ────────
+// Separation of concerns: admission decides if a comparison is allowed and emits a
+// structured AdmissionDecision BEFORE any numeric computation. AS-DIFF (asdiff.js)
+// stays mathematically pure — it only ever sees admitted pairs. New trust rules
+// (freshness, licensing, jurisdiction, confidence floors) extend HERE, not there.
+// Those are deliberately NOT built: each needs a Founder-set threshold; inventing
+// one now would be fabricated math on an unused surface (§11a bottle test #5).
+export const INVARIANT = Object.freeze({
+  AVAILABILITY: 'AVAILABILITY', COMPARABILITY: 'COMPARABILITY',
+  ORTHOGONALITY: 'ORTHOGONALITY', REPRODUCIBILITY: 'REPRODUCIBILITY',
+});
+const REASON_INVARIANT = Object.freeze({
+  FACET_UNAVAILABLE:      INVARIANT.AVAILABILITY,
+  ONTOLOGY_CONTAMINATION: INVARIANT.COMPARABILITY,
+  INCOMPARABLE:           INVARIANT.COMPARABILITY,
+  SHARED_LINEAGE:         INVARIANT.ORTHOGONALITY,
+  OVERLAPPING_SOURCE:     INVARIANT.ORTHOGONALITY,
+  DECLARED_DEPENDENCY:    INVARIANT.ORTHOGONALITY,
+  NO_PRODUCER:            INVARIANT.REPRODUCIBILITY,
+  NO_SOURCE_SET:          INVARIANT.REPRODUCIBILITY,
+  NO_TIMESTAMP:           INVARIANT.REPRODUCIBILITY,
+  NOT_REPRODUCIBLE:       INVARIANT.REPRODUCIBILITY,
+});
+
+function decision(status, reason = null, side = null) {
+  return Object.freeze({
+    status, reason, side,
+    invariant: reason ? (REASON_INVARIANT[reason] ?? null) : null,
+  });
+}
+
+// Ordered gates — each eliminates a distinct class of invalid comparison. The order
+// is doctrinal: a pair that isn't even in the same ontology is meaningless regardless
+// of independence, so comparability is checked before orthogonality.
+export function admitComparison(a, b) {
+  if (!a || !b)                       return decision('WITHHELD', 'FACET_UNAVAILABLE');       // availability
+  if (a.ontology !== b.ontology)      return decision('WITHHELD', 'ONTOLOGY_CONTAMINATION');  // comparability
+  const indep = checkIndependence(a, b);
+  if (indep && indep !== 'ONTOLOGY_CONTAMINATION') return decision('WITHHELD', indep);        // orthogonality
+  const ra = checkReproducibility(a); if (ra) return decision('WITHHELD', ra, 'A');           // reproducibility
+  const rb = checkReproducibility(b); if (rb) return decision('WITHHELD', rb, 'B');
+  return decision('ADMITTED');
+}
+
 // ── Declarative Lens Registry (lenses are config, not code) ───────────────────
 // facetA/facetB are ROLE names resolved from a domain's facet set. Adding a grounded facet
 // makes every existing lens work over it — no new comparator code.
@@ -87,21 +131,20 @@ export function computeDivergence(lensId, facets = {}) {
   if (!lens) throw new Error(`divergence: unknown lens '${lensId}'`);
   const a = facets[lens.facetA], b = facets[lens.facetB];
 
-  // 1. Independence + ontology gate — fail closed BEFORE any comparison runs.
-  const bar = checkIndependence(a, b);
-  if (bar) return withheld(lensId, bar);
+  // 1. Admission — availability → comparability → orthogonality → reproducibility.
+  //    Fail closed BEFORE any comparison runs; the decision is structured + auditable.
+  const adm = admitComparison(a, b);
+  if (adm.status === 'WITHHELD') {
+    const reason = adm.side ? `${adm.side}_${adm.reason}` : adm.reason;
+    return withheld(lensId, reason, adm.invariant);
+  }
 
-  // 1b. Reproducibility gate — a facet that cannot be re-derived from its recorded
-  //     provenance is a claim without a receipt and SHALL NOT participate (§audit,
-  //     fail-closed). Sits beside independence as the second trust boundary.
-  const ra = checkReproducibility(a); if (ra) return withheld(lensId, `A_${ra}`);
-  const rb = checkReproducibility(b); if (rb) return withheld(lensId, `B_${rb}`);
-
-  // 2. Universal comparator. as-diff independently withholds on unresolved ontology / incomparability.
+  // 2. Universal comparator — only ever sees admitted pairs. as-diff still independently
+  //    withholds on unresolved ontology / incomparability (comparability, post-projection).
   let cmp;
   try { cmp = compareSignals(a.signal_unit, b.signal_unit); }
-  catch { return withheld(lensId, 'COMPARE_ERROR'); }
-  if (cmp.ontology_gap || cmp.incomparability_flag) return withheld(lensId, 'INCOMPARABLE');
+  catch { return withheld(lensId, 'COMPARE_ERROR', null); }
+  if (cmp.ontology_gap || cmp.incomparability_flag) return withheld(lensId, 'INCOMPARABLE', INVARIANT.COMPARABILITY);
 
   // 3. Grounded divergence — magnitude + doctrine-defined direction.
   const dir = cmp.winner === 'A' ? lens.direction.A_ahead
@@ -114,6 +157,6 @@ export function computeDivergence(lensId, facets = {}) {
   });
 }
 
-function withheld(lens, reason) {
-  return Object.freeze({ lens, withheld: true, withholding_reason: reason, direction: null, margin: null });
+function withheld(lens, reason, invariant = null) {
+  return Object.freeze({ lens, withheld: true, withholding_reason: reason, invariant, direction: null, margin: null });
 }
