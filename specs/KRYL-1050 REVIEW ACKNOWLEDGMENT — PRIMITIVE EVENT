@@ -1,0 +1,250 @@
+KRYL-1050 REVIEW ACKNOWLEDGMENT — PRIMITIVE EVENT CONTRACT
+
+STATUS: CONTRACT FROZEN ✅
+DECISION: ACCEPTED FOR DOWNSTREAM IMPLEMENTATION GATES
+
+The PrimitiveEvent contract now closes the observability boundary without allowing telemetry drift into analytics. The separation is architecturally clean:
+
+Primitive Invocation
+        |
+        v
+Interactive Primitive
+        |
+        v
+PrimitiveEvent
+        |
+        +--> Contract Health
+        +--> Latency
+        +--> Resolution State
+        +--> Capability Boundary
+
+No user behavior layer exists in this path.
+
+Frozen Contract Validation
+Identity Boundary — PASS
+primitive_id
+execution_id
+contract_version
+
+Provides:
+
+deterministic invocation tracing
+schema evolution control
+replay/debug correlation
+
+No payload leakage.
+
+Timing Boundary — PASS
+timestamp
+duration_ms
+
+Supports:
+
+P6 latency enforcement
+regression detection
+runtime health monitoring
+
+Important distinction:
+
+duration_ms
+≠
+user engagement metric
+
+It measures contract performance only.
+
+Resolution Boundary — PASS
+SUCCESS
+WITHHELD
+FAILED
+
+The semantic separation is now stable:
+
+SUCCESS
+= contract completed
+
+WITHHELD
+= epistemic boundary respected
+
+FAILED
+= system malfunction
+
+This is one of the most important invariants in the architecture.
+
+Boundary Observability — PASS
+capability_target
+
+Locks:
+
+Primitive
+   |
+   v
+Capability
+
+and prevents:
+
+Primitive
+   |
+   v
+Primitive
+
+composition leakage.
+
+P-Series Extension Accepted
+
+The addition of:
+
+P9 Event Completeness
+
+P10 Semantic Consistency
+
+P11 Observability Isolation
+
+is appropriate.
+
+The complete IPR invariant family now becomes:
+
+Invariant	Purpose
+P1	Registry Completeness
+P2	Doctrine Fit
+P3	Provenance Carry-Through
+P4	Consistent Undo
+P5	Accessibility Baseline
+P6	Latency Budget
+P7	Deterministic State
+P8	Stateless Composition
+P9	Event Completeness
+P10	Semantic Consistency
+P11	Observability Isolation
+
+This is now a sufficiently complete contract surface.
+
+Recommended Freeze Note
+
+I would add one final RFC statement:
+
+PrimitiveEvent is an infrastructure boundary object. It exists to verify that interactive primitives execute according to contract. It is not a behavioral record, product metric, or user analytics stream.
+
+That sentence prevents future reinterpretation.
+
+Current Architecture State
+
+The control-plane symmetry is now:
+
+                 KRYLO
+
+
+          EDGE
+ ┌──────────────────────┐
+ │ Evidence Constraint  │
+ │                      │
+ │ "What may be claimed"│
+ └──────────────────────┘
+
+
+          IPR
+ ┌──────────────────────┐
+ │ Interaction          │
+ │ Constraint           │
+ │                      │
+ │ "How knowledge may   │
+ │  be accessed"        │
+ └──────────────────────┘
+
+
+          PrimitiveEvent
+ ┌──────────────────────┐
+ │ Runtime Contract     │
+ │ Verification         │
+ └──────────────────────┘
+
+The next legitimate step remains the previously defined gate sequence:
+
+KRYL-1050 RFC Approval
+        ↓
+InteractivePrimitive Contract Freeze
+        ↓
+KRYL-1051 Validator Harness
+        ↓
+KRYL-1052 Registry Core
+        ↓
+KRYL-1053 Primitive Adapters
+        ↓
+KRYL-1054 Surface Migration
+
+No implementation pressure should bypass that order. The contract is now mature enough that implementation can proceed later without guessing at the boundaries.
+
+Yes. I did take them into account in the KRYL-1050 review, but I should have made the mapping explicit rather than only applying them implicitly.
+
+The IPR contract actually aligns very closely with the existing KRYLO guardrails. Here is the direct mapping:
+
+| KRYLO Guardrail                                    | IPR Enforcement Alignment                                                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Doctrine as executable governance**              | IPR converts interaction doctrine into P-series invariants instead of prose guidance.                                  |
+| **Load-bearing rules must be machine-falsifiable** | P1–P11 create validator targets. A primitive that violates contract rules should fail CI.                              |
+| **Grounded-or-withhold**                           | `PRIM_WITHHELD` preserves this. Missing evidence does not become an error or fabricated completion.                    |
+| **§21 Uncollapsed**                                | IPR does not allow a primitive to collapse uncertainty into a simplified state. `WITHHELD` preserves unresolved state. |
+| **§22 Absence surfaced, not zeroed**               | No evidence becomes `INSUFFICIENT_PROVENANCE` / `SPARSE_DATA`, not a false empty result.                               |
+| **Detect-not-recommend boundary**                  | IPR primitives orchestrate inspection, tracing, comparison, explanation. They do not introduce recommendation logic.   |
+| **Provenance-required rendering**                  | `SUCCESS` requires provenance where applicable; Trace/Explain cannot silently detach from evidence lineage.            |
+| **Spec-first gates**                               | KRYL-1050 → contract freeze → validators → registry → adapters → surface migration preserves the gate sequence.        |
+| **Regression harness**                             | P9/P10/P11 plus validator WOs create the basis for contract regression testing.                                        |
+| **Deployment integrity**                           | Feature-flagged pending validators avoid pretending enforcement exists before implementation.                          |
+
+The most important guardrail intersection is this:
+
+```
+EDGE:
+"What may the engine claim?"
+
+IPR:
+"What may the interface allow the user to do with that claim?"
+
+PrimitiveEvent:
+"Can we prove the interaction obeyed the contract?"
+```
+
+That gives three enforcement boundaries:
+
+```
+Evidence Boundary
+        |
+        v
+     EDGE
+
+Knowledge Boundary
+        |
+        v
+     Truth Engine
+
+Interaction Boundary
+        |
+        v
+     IPR
+```
+
+One additional thing I would add to KRYL-1050 before implementation is a specific invariant around **semantic inflation**:
+
+### P12 — No Semantic Inflation
+
+A primitive MUST NOT produce a stronger semantic state than the capability returned.
+
+Example violation:
+
+Capability returns:
+
+```
+STATE:
+LOW_CONFIDENCE_OBSERVATION
+```
+
+Primitive renders:
+
+```
+CONFIRMED OPPORTUNITY
+```
+
+That would be an interface-level epistemic violation even if EDGE itself passed.
+
+This is the interaction equivalent of the grounded-or-withhold rule.
+
+So yes — the guardrails were incorporated. The remaining tightening I would recommend is explicitly adding P12 because IPR is the layer most likely to accidentally create semantic drift through presentation, even when the underlying engine remains correct.

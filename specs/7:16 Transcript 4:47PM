@@ -1,0 +1,45 @@
+7/16 Transcript 4:47PM
+
+  That means future work changes from:                                                                                                                 
+                                                                                                                                                       
+  > "Build a new analytics engine."                                                                                                                    
+                                                                                                                                                       
+  to                                                                                                                                                   
+                                                                                                                                                       
+  > "Ground a new SignalFacet producer and register a new lens."                                                                                       
+                                                                                                                                                       
+  That's a substantial reduction in future engineering effort and a cleaner separation of responsibilities.                                            
+                                                                                                                                                       
+  ### I would consider one addition                                                                                                                    
+                                                                                                                                                       
+  Since KRYLO already emphasizes provenance and CI-enforced doctrine, I'd add a fourth architectural invariant alongside the independence check:       
+                                                                                                                                                       
+  > **Every SignalFacet must be reproducible from its declared provenance.**                                                                           
+                                                                                                                                                       
+  In practice, that means a facet should be regenerable from the recorded sources, configuration, and timestamp. If it cannot be reconstructed, it     
+  cannot participate in divergence analysis.                                                                                                           
+                                                                                                                                                       
+  That complements your existing invariants:                                                                                                           
+                                                                                                                                                       
+  * **Grounded-or-Withhold** → don't fabricate results.                                                                                                
+  * **Orthogonality** → don't compare dependent observations.                                                                                          
+  * **Provenance** → know where observations came from.                                                                                                
+  * **Reproducibility** → be able to regenerate any observation for audit.                                                                             
+                                                                                                                                                       
+  Taken together, those four properties make the SignalFacet layer a solid foundation for the rest of KRYLO rather than just a convenience             
+  abstraction.                                                                                                                                         
+  ⎿  Interrupted · What should Claude do instead?
+
+❯ /compact                                                                                                                                             
+
+❯ /compact                                                                                                                                             
+
+✻ Compacting conversation… 
+  ▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱ 16%
+  ⎿  Tip: Use git worktrees to run multiple Claude sessions in parallel.
+                                                                                                          Context low (1% remaining) · /model opus[1m]
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯ 
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · esc to interrupt · ← for agents
+  ⧉  aal-hud

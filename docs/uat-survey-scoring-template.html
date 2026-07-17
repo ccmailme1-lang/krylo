@@ -1,0 +1,151 @@
+<title>KRYLO · WSJF Prioritization</title>
+<style>
+  :root{
+    --bg:#050506; --panel:#0c0c0d; --row:#0e0e10; --edge:rgba(255,255,255,0.09); --edge2:rgba(255,255,255,0.055);
+    --lime:#66FF00; --text:#ededea; --dim:rgba(224,224,220,0.55); --faint:rgba(255,255,255,0.4);
+    --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",monospace;
+    --disp:"Space Grotesk","IBM Plex Sans",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#0c0c0e 0%,var(--bg) 55%);color:var(--text);
+    font-family:var(--disp);min-height:100vh;padding:34px 18px 80px;line-height:1.5}
+  .wrap{max-width:960px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:0.3em;color:var(--faint);text-transform:uppercase}
+  h1{font-size:clamp(22px,4vw,32px);font-weight:700;margin:4px 0 2px;letter-spacing:0.3px}
+  .formula{font-family:var(--mono);font-size:12.5px;color:var(--dim);margin:0 0 6px}
+  .formula b{color:var(--lime);font-weight:400}
+  .note{font-family:var(--mono);font-size:11.5px;color:var(--dim);background:rgba(255,255,255,0.02);
+    border:1px solid var(--edge2);border-left:2px solid var(--lime);border-radius:8px;padding:10px 14px;margin:14px 0 20px}
+  .note b{color:var(--text);font-weight:400}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap}
+  .legend{font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:0.06em}
+  .legend .you{color:var(--lime)}
+  button{font-family:var(--mono);font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim);
+    background:transparent;border:1px solid var(--edge);border-radius:8px;padding:7px 12px;cursor:pointer}
+  button:hover{color:var(--text);border-color:var(--faint)}
+  .tbl{width:100%;border-collapse:collapse;overflow:hidden;border:1px solid var(--edge);border-radius:14px}
+  thead th{font-family:var(--mono);font-size:9.5px;letter-spacing:0.12em;text-transform:uppercase;color:var(--faint);
+    text-align:center;padding:11px 6px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--edge)}
+  thead th.l{text-align:left;padding-left:16px}
+  thead th.you{color:var(--lime)}
+  tbody tr{border-bottom:1px solid var(--edge2)}
+  tbody tr:last-child{border-bottom:none}
+  td{padding:11px 6px;text-align:center;vertical-align:middle;font-variant-numeric:tabular-nums}
+  td.l{text-align:left;padding-left:16px}
+  .rank{font-family:var(--disp);font-weight:700;font-size:18px;color:var(--faint);width:34px}
+  .rank.top{color:var(--lime)}
+  .key{font-family:var(--mono);font-size:11px;color:var(--dim);white-space:nowrap}
+  .item{font-weight:600;font-size:14px}
+  .why{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px;line-height:1.45;max-width:400px}
+  .fx{color:var(--lime)}
+  .given{font-family:var(--mono);font-size:13px;color:var(--dim)}
+  select{font-family:var(--mono);font-size:13px;background:#0a0a0a;color:var(--lime);border:1px solid rgba(102,255,0,0.35);
+    border-radius:7px;padding:6px 4px;text-align:center;cursor:pointer;min-width:52px;font-variant-numeric:tabular-nums}
+  select:focus{outline:none;border-color:var(--lime)}
+  select.empty{color:var(--faint);border-color:var(--edge)}
+  .cod{font-family:var(--mono);font-size:13px;color:var(--dim)}
+  .wsjf{font-family:var(--disp);font-weight:700;font-size:17px;color:var(--faint)}
+  .wsjf.on{color:var(--lime)}
+  tr.unscored{opacity:0.62}
+  .foot{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:16px;text-align:center;letter-spacing:0.04em}
+  @media(max-width:680px){ .why{display:none} .item{font-size:12.5px} td,thead th{padding:8px 3px} }
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">KRYLO · Prioritization</p>
+  <h1>WSJF — score each, it ranks live</h1>
+  <p class="formula">WSJF = ( <b>Business Value</b> + <b>Time Criticality</b> + Risk/Opportunity ) ÷ Job Size &nbsp;·&nbsp; Fibonacci 1·2·3·5·8·13·20 · higher = do first</p>
+
+  <div class="note">
+    <b>Three synergies to weigh:</b> KRYL-977 <span class="fx">is</span> the Closure Primitive's Loop-1 calibration home; KRYL-978 <span class="fx">is</span> its Loop-2 home — building them builds 1022's landing pads. · KRYL-1018 (Confirmation-Velocity) measures the <span class="fx">paydirt gap</span> itself — lead-time to consensus. · KRYL-981 is the revenue item; that BV is entirely yours.
+  </div>
+
+  <div class="bar">
+    <div class="legend"><span class="you">BV · TC = yours to set</span> &nbsp;|&nbsp; JS · RO = strawman (editable) &nbsp;|&nbsp; scores auto-save</div>
+    <button id="reset">Reset scores</button>
+  </div>
+
+  <table class="tbl">
+    <thead><tr>
+      <th>#</th><th class="l">Work item</th><th>JS</th><th>RO</th>
+      <th class="you">BV</th><th class="you">TC</th><th>CoD</th><th>WSJF</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <p class="foot" id="foot">Set Business Value + Time Criticality on each row · the table re-sorts by WSJF as you go</p>
+</div>
+
+<script>
+  const FIB=[1,2,3,5,8,13,20];
+  const ITEMS=[
+    {k:"KRYL-1022",n:"Observation Closure Primitive",js:13,ro:13,w:"Ratified doctrine's first build — extends CanonicalEvent + wires 2 calibration loops (Loop 2 exists, Loop 1 new). The self-regulation moat."},
+    {k:"KRYL-977", n:"Modality-Weighted Evidence Reliability",js:5,ro:8,w:"IS 1022's Loop-1 home (source/modality reliability). READY-FOR-DEV."},
+    {k:"KRYL-978", n:"Path Memory Retrieval",js:5,ro:8,w:"IS 1022's Loop-2 home — historical frequency / LR-prior surface, builds on pathstore. READY-FOR-DEV."},
+    {k:"KRYL-981", n:"Perception-as-a-Service",js:8,ro:13,w:"Revenue framing = the paydirt / $$$. BV entirely yours. SPEC-LOCKED."},
+    {k:"KRYL-1018",n:"Confirmation-Velocity scoring",js:5,ro:8,w:"Measures lead-time to consensus = the paydirt GAP. First Perception-dimension slice."},
+    {k:"KRYL-1006",n:"CRE Diff Engine — slice 1",js:5,ro:5,w:"CRE north-star, reuses as-diff. Peer-set resolution + one-vs-many."},
+    {k:"KRYL-976", n:"Cross-Domain Structural Fingerprint",js:5,ro:5,w:"Expose structural fingerprints across domains. Perception synergy."},
+    {k:"KRYL-1023",n:"SES weather feed",js:5,ro:3,w:"geolocation / city-state → API. Reflects the search's terrain; reuses mature ingestion."},
+    {k:"KRYL-1024",n:"SES configurable dial swap",js:3,ro:3,w:"Configurable dials via the DNA-card mechanism. Guest personalization."},
+    {k:"KRYL-980", n:"Why-trace legibility audit",js:2,ro:3,w:"Concept-level 'why' trace — small join, mostly existing. Trust / legibility."},
+    {k:"KRYL-987", n:"Decision Translation Layer",js:2,ro:3,w:"Canonical packaging contract. Already in Review (near-done)."},
+  ];
+  const KEY="krylo_wsjf_v1";
+  let store={};
+  try{ store=JSON.parse(localStorage.getItem(KEY)||"{}"); }catch(e){}
+
+  function opt(v,sel){ return `<option value="${v}" ${v==sel?"selected":""}>${v}</option>`; }
+  function sel(item,field){
+    const v=(store[item.k]&&store[item.k][field]!=null)?store[item.k][field]:(field==="js"||field==="ro"?item[field]:"");
+    const empty=(v===""||v==null)?"empty":"";
+    let o=`<option value="" ${v===""?"selected":""}>–</option>`+FIB.map(f=>opt(f,v)).join("");
+    return `<select class="${empty}" data-k="${item.k}" data-f="${field}">${o}</select>`;
+  }
+  function vals(item){
+    const s=store[item.k]||{};
+    const js=(s.js!=null?s.js:item.js), ro=(s.ro!=null?s.ro:item.ro), bv=s.bv, tc=s.tc;
+    const scored=(bv!=null&&bv!==""&&tc!=null&&tc!==""&&js);
+    const cod=scored?(Number(bv)+Number(tc)+Number(ro)):null;
+    const wsjf=scored?(cod/Number(js)):null;
+    return {js,ro,bv,tc,cod,wsjf,scored};
+  }
+  function render(){
+    const withV=ITEMS.map(it=>({it,...vals(it)}));
+    withV.sort((a,b)=>{
+      if(a.scored&&b.scored) return b.wsjf-a.wsjf;
+      if(a.scored) return -1; if(b.scored) return 1; return 0;
+    });
+    let rank=0, anyScored=false;
+    document.getElementById("rows").innerHTML=withV.map(r=>{
+      const it=r.it; let rk="–";
+      if(r.scored){ rank++; rk=rank; anyScored=true; }
+      const top=(r.scored&&rank<=3)?"top":"";
+      return `<tr class="${r.scored?"":"unscored"}">
+        <td class="rank ${top}">${rk}</td>
+        <td class="l"><div class="key">${it.k}</div><div class="item">${it.n}</div><div class="why">${it.w}</div></td>
+        <td>${sel(it,"js")}</td>
+        <td>${sel(it,"ro")}</td>
+        <td>${sel(it,"bv")}</td>
+        <td>${sel(it,"tc")}</td>
+        <td class="cod">${r.cod!=null?r.cod:"–"}</td>
+        <td class="wsjf ${r.scored?"on":""}">${r.wsjf!=null?r.wsjf.toFixed(2):"–"}</td>
+      </tr>`;
+    }).join("");
+    document.getElementById("foot").textContent = anyScored
+      ? "Ranked by WSJF · keep scoring — unscored rows sink to the bottom"
+      : "Set Business Value + Time Criticality on each row · the table re-sorts by WSJF as you go";
+    document.querySelectorAll("select").forEach(s=>s.addEventListener("change",onChange));
+  }
+  function onChange(e){
+    const k=e.target.dataset.k, f=e.target.dataset.f, v=e.target.value;
+    store[k]=store[k]||{};
+    if(v==="") delete store[k][f]; else store[k][f]=Number(v);
+    try{ localStorage.setItem(KEY,JSON.stringify(store)); }catch(e){}
+    render();
+  }
+  document.getElementById("reset").addEventListener("click",()=>{
+    if(!confirm("Clear all scores?"))return;
+    store={}; try{ localStorage.removeItem(KEY); }catch(e){} render();
+  });
+  render();
+</script>

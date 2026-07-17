@@ -1,0 +1,683 @@
+KRYL-1041 — EDGE Semantic Layer Contract & Enforcement Framework
+
+Type: Architecture Work Order / RFC
+Status: Architecture Review Ready
+Classification: [SYS] Core Operating Constraint
+Version Impact: v3.10.0 candidate after implementation
+Current Baseline: f35f998
+Current Version: v3.9.0
+Implementation Status: Deferred pending architecture approval
+
+Decision Request
+
+Approve:
+
+EDGE Semantic Layer Contract and authorize implementation planning under E1–E7 enforcement constraints.
+
+Objective
+
+Introduce EDGE as a first-class semantic layer that identifies evidence-backed structural asymmetries while preventing:
+
+unsupported inference
+forward prediction
+execution leakage
+certainty inflation
+
+EDGE describes system structure.
+
+EDGE does not produce actions.
+
+Architecture Placement
+Signal
+  ↓
+Identity Kernel
+  ↓
+CanonicalEvent
+  ↓
+Evidence Layer
+  ↓
+EDGE Semantic Layer
+  ↓
+Structural Confirmation
+  ↓
+Projection / Rendering
+Doctrine Contract
+EDGE MAY
+classify evidence-backed structural relationships
+expose structural asymmetries
+preserve uncertainty states
+attach provenance
+provide semantic context
+EDGE MUST NOT
+predict outcomes
+generate recommendations
+create execution instructions
+calculate returns
+create alpha signals
+bypass Evidence Layer
+Enforcement Invariants
+E1 — Evidence Required
+
+Failure:
+
+EDGE_WITHOUT_EVIDENCE
+
+Requirement:
+
+Every EDGE classification requires ≥1 evidence reference.
+
+E2 — Provenance Required
+
+Failure:
+
+EDGE_UNTRACEABLE
+
+Requirement:
+
+Every EDGE classification requires:
+
+source
+timestamp
+lineage
+E3 — Execution Boundary
+
+Failure:
+
+EDGE_EXECUTION_BOUNDARY_BREACH
+
+EDGE payload cannot contain:
+
+buy
+sell
+order
+position
+allocate
+target_price
+recommendation
+E4 — Unknown Preservation
+
+Failure:
+
+EDGE_FALSE_CERTAINTY
+
+Supported states:
+
+EDGE_UNKNOWN
+EDGE_ABSENT
+EDGE_OBSERVED
+EDGE_CONTESTED
+EDGE_STALE
+
+Unknown cannot collapse into classification.
+
+E5 — Layer Direction
+
+Failure:
+
+EDGE_LAYER_INVERSION
+
+Allowed:
+
+Evidence → EDGE
+Identity → EDGE
+CanonicalEvent → EDGE
+
+Forbidden:
+
+EDGE → Evidence Creation
+EDGE → Recommendation
+EDGE → Execution
+E6 — Semantic Escalation Prevention
+
+Failure:
+
+EDGE_SEMANTIC_ESCALATION
+
+Requirement:
+
+EDGE confidence cannot exceed evidence-supported confidence.
+
+E7 — Evidence Boundary Preservation
+
+Failure:
+
+EDGE_FORWARD_INFERENCE
+
+Requirement:
+
+EDGE may derive classifications from evidence-backed relationships but may not introduce unsupported facts, causal claims, or future-state assertions.
+
+Ontology Boundary
+Allowed Mechanisms
+LIQUIDITY_IMBALANCE
+SUPPLY_CONSTRAINT
+NETWORK_DEPENDENCY
+REGULATORY_GATE
+OWNERSHIP_CONCENTRATION
+CAPACITY_CONSTRAINT
+INFORMATION_ASYMMETRY
+OPTION_CONVEXITY
+TIMING_WINDOW
+Rejected Outcomes
+PRICE_EXPANSION
+BULLISH_SIGNAL
+WINNER_PATTERN
+RISK_FREE_RETURN
+ALPHA_SIGNAL
+
+Reason:
+
+MECHANISM ≠ OUTCOME
+Source of Truth
+
+Required:
+
+EDGE_INVARIANT_REGISTRY
+        ↓
+Validator
+        ↓
+Tests
+        ↓
+CI Gate
+
+The registry is authoritative.
+
+Documentation and tests cannot independently define invariant lists.
+
+CI Acceptance Criteria
+
+Build fails on:
+
+missing evidence
+missing provenance
+execution leakage
+unknown-state collapse
+dependency inversion
+confidence inflation
+forward inference
+Child Work Orders (Deferred)
+KRYL-1042 — EDGE Data Model
+
+Deliver:
+
+EdgePayload
+EdgeNode
+EdgeState
+EvidenceLink
+Provenance model
+KRYL-1043 — EDGE Validator
+
+Deliver:
+
+validateEdgePayload()
+E1–E7 enforcement
+KRYL-1044 — EDGE Ontology
+
+Deliver:
+
+ontology/edge.yaml
+
+with mechanism-only taxonomy.
+
+KRYL-1045 — EDGE Projection Layer
+
+Deliver:
+
+CanonicalEvent
+        ↓
+EdgeProjection
+        ↓
+EdgeProfile
+
+No execution path.
+
+KRYL-1046 — EDGE CI Enforcement
+
+Deliver:
+
+invariant registry tests
+regression harness
+schema validation
+dependency checks
+Definition of Done
+Architecture approval received
+E1–E7 accepted
+Registry implemented as source of truth
+CI gates operational
+Provenance mandatory
+Unknown states preserved
+No forward inference possible
+No execution leakage possible
+v3.10.0 release candidate prepared
+
+If your Jira ticket does not contain this level of structure yet, I would update KRYL-1041 before the panel vote. The ticket should be the durable artifact; the chat should not be the source of truth.
+KRYL-1041 Updates
+Add Documentation Example
+
+Add to:
+
+docs/architecture/edge-semantic-layer.md
+
+Section:
+
+Example Edge Projection
+
+Example:
+
+{
+  "event_id": "EVT-2026-00491",
+  "edge_profile": [
+    {
+      "edge_id": "EDGE-STRUCT-001",
+      "domain": "STRUCTURAL",
+      "relation": "LIQUIDITY_IMBALANCE",
+      "state": "EDGE_OBSERVED",
+      "confidence": 0.78,
+      "evidence_links": [
+        "EV-992"
+      ],
+      "provenance": {
+        "source": "SEC_FILING",
+        "timestamp": "2026-07-13T16:00:00Z"
+      }
+    }
+  ]
+}
+
+Important note:
+
+The output is:
+
+"A liquidity imbalance structure was observed."
+
+It is not:
+
+"This creates a trading opportunity."
+
+That distinction belongs in the contract.
+
+Add E7 — No Forward Inference
+
+I agree this deserves explicit status.
+
+E7 — Evidence Boundary Preservation
+
+Failure:
+
+EDGE_FORWARD_INFERENCE
+
+Rule:
+
+EDGE may classify relationships present in evidence but may not create new facts, causal claims, or evidence artifacts.
+
+Allowed:
+
+Evidence:
+Low available float
++
+Increased demand indicators
+
+EDGE:
+Liquidity imbalance observed
+
+Not allowed:
+
+EDGE:
+Future price increase likely
+
+Test:
+
+test('E7: EDGE_FORWARD_INFERENCE - Cannot create unsupported facts', () => {
+  const payload = {
+    classification: "LIQUIDITY_IMBALANCE",
+    derived_claims: [
+      "future_price_increase"
+    ]
+  };
+
+  expect(() => validateEdgePayload(payload))
+    .toThrow("EDGE_FORWARD_INFERENCE");
+});
+
+This is an important addition because E6 controls certainty magnitude, while E7 controls semantic direction.
+
+Ontology Relations
+
+I would approve adding relations, but rename them.
+
+Avoid:
+
+ASYM_HIGH_VOLATILITY
+
+because it begins describing an observed market outcome.
+
+Prefer:
+
+STRUCTURAL_RELATIONS
+
+├── SUPPLY_CONSTRAINT
+├── LIQUIDITY_IMBALANCE
+├── OWNERSHIP_CONCENTRATION
+├── CAPACITY_CONSTRAINT
+├── TIMING_WINDOW
+├── REGULATORY_GATE
+├── INFORMATION_ASYMMETRY
+├── NETWORK_DEPENDENCY
+└── OPTION_CONVEXITY
+
+Why?
+
+Because these are mechanisms.
+
+They can exist before an outcome appears.
+
+Example:
+
+Supply Constraint
+        ↓
+possible volatility expression
+
+The first is KRYLO territory.
+
+The second is interpretation.
+
+Updated Invariant Set
+
+The contract becomes:
+
+E1 Evidence Required
+E2 Provenance Required
+E3 Execution Boundary
+E4 Unknown Preservation
+E5 Layer Direction
+E6 Semantic Escalation Prevention
+E7 Evidence Boundary Preservation
+
+This is a stronger contract.
+
+Approval Recommendation
+
+With those three changes:
+
+✅ approve KRYL-1041
+✅ create child implementation WOs
+✅ begin implementation planning
+✅ defer v3.10.0 stamp until merge
+
+The addition of E7 is especially valuable. It closes the gap between:
+
+"don't be too confident" (E6)
+
+and
+
+"don't invent a fact that wasn't observed" (E7)
+
+Those are different failure modes, and separating them is exactly the type of precision the doctrine requires.
+
+Suggested based on your interests
+Ad
+
+KRYL-1041 — EDGE Semantic Layer Contract & Enforcement Framework
+
+Type: Architecture / Work Order
+Status: Approved Pending Architecture Review
+Version Impact: v3.10.0 candidate (after implementation)
+Baseline: f35f998
+Scope: Design + implementation authorization boundary
+
+Objective
+
+Introduce EDGE as a first-class semantic layer that identifies evidence-backed structural asymmetries without creating recommendation, prediction, or execution behavior.
+
+EDGE answers:
+
+"What structural conditions exist around this event?"
+
+EDGE does not answer:
+
+"What should someone do?"
+
+Architecture Contract
+Pipeline Position
+Signal
+  ↓
+Identity Kernel
+  ↓
+CanonicalEvent
+  ↓
+Evidence Layer
+  ↓
+EDGE Semantic Layer
+  ↓
+Structural Confirmation
+  ↓
+Projection / Rendering
+Non-Goals
+
+EDGE MUST NOT:
+
+generate recommendations
+produce trade actions
+rank opportunities
+calculate expected returns
+create portfolio instructions
+infer certainty beyond evidence
+EDGE Enforcement Invariants
+
+All implementations MUST enforce:
+
+E1 — Evidence Required
+
+Failure:
+
+EDGE_WITHOUT_EVIDENCE
+
+Rule:
+
+Every EDGE classification requires ≥1 evidence reference.
+
+E2 — Provenance Required
+
+Failure:
+
+EDGE_UNTRACEABLE
+
+Rule:
+
+Every EDGE classification requires:
+
+source
+timestamp
+lineage
+E3 — Execution Boundary
+
+Failure:
+
+EDGE_EXECUTION_BOUNDARY_BREACH
+
+Rule:
+
+EDGE payloads cannot contain execution semantics:
+
+Forbidden:
+
+buy
+sell
+order
+position
+allocate
+target_price
+recommendation
+E4 — Unknown Preservation
+
+Failure:
+
+EDGE_FALSE_CERTAINTY
+
+Rule:
+
+EDGE must support:
+
+EDGE_UNKNOWN
+EDGE_ABSENT
+EDGE_OBSERVED
+EDGE_CONTESTED
+EDGE_STALE
+
+Unknown cannot silently become classified.
+
+E5 — Layer Direction
+
+Failure:
+
+EDGE_LAYER_INVERSION
+
+Allowed:
+
+Evidence → EDGE
+Identity → EDGE
+CanonicalEvent → EDGE
+
+Forbidden:
+
+EDGE → Execution
+EDGE → Recommendation
+EDGE → Evidence Creation
+E6 — Semantic Escalation Prevention
+
+Failure:
+
+EDGE_SEMANTIC_ESCALATION
+
+Rule:
+
+EDGE confidence cannot exceed evidence-supported confidence.
+
+CI Acceptance Criteria
+
+The build fails if:
+
+Doctrine Tests
+grounded-or-withheld violated
+unsupported EDGE emitted
+recommendation leakage detected
+uncertainty collapsed
+Regression Tests
+
+Historical event corpus must preserve:
+
+identical EDGE classifications
+evidence links
+provenance paths
+Schema Tests
+
+EDGE payloads must:
+
+validate schema
+round-trip serialization
+maintain lineage
+Deliverables
+KRYL-1041.1 — EDGE Data Model
+
+Owner: Data Architecture
+
+Deliver:
+
+EdgePayload
+EdgeNode
+EdgeState
+EvidenceLink
+Provenance
+KRYL-1041.2 — EDGE Validator
+
+Owner: Validation
+
+Deliver:
+
+validateEdgePayload()
+
+with E1-E6 enforcement.
+
+KRYL-1041.3 — EDGE Ontology
+
+Owner: Architecture
+
+Deliver:
+
+/ontology/edge.yaml
+
+Initial domains:
+
+STRUCTURAL
+INFORMATIONAL
+TEMPORAL
+NETWORK
+REGULATORY
+FINANCIAL
+OPTIONALITY
+CAPACITY
+BEHAVIORAL
+KRYL-1041.4 — EDGE Projection Layer
+
+Owner: Engine
+
+Deliver:
+
+CanonicalEvent
+        ↓
+EdgeProjection
+        ↓
+EdgeProfile
+
+No execution paths.
+
+KRYL-1041.5 — CI Doctrine Enforcement
+
+Owner: Platform
+
+Deliver:
+
+invariant test suite
+regression harness
+dependency checks
+KRYL-1041.6 — Documentation
+
+Owner: Architecture
+
+Deliver:
+
+docs/architecture/edge-semantic-layer.md
+
+Containing:
+
+contract
+invariants
+dependency model
+failure codes
+Definition of Done
+
+EDGE is complete when:
+
+✅ RFC approved
+✅ E1-E6 tests passing
+✅ CI blocks invariant violations
+✅ Provenance mandatory
+✅ Unknown states preserved
+✅ No execution leakage
+✅ Historical regression suite passing
+✅ v3.10.0 release notes updated
+
+Recommended Jira relationship
+KRYL-1041
+EDGE Semantic Layer Contract
+        |
+        +-- KRYL-1041.1 Data Model
+        +-- KRYL-1041.2 Validator
+        +-- KRYL-1041.3 Ontology
+        +-- KRYL-1041.4 Projection
+        +-- KRYL-1041.5 CI Enforcement
+        +-- KRYL-1041.6 Documentation
+
+That gives you a buildable work order while preserving the original intent: the thing being shipped is not "EDGE"; the thing being shipped is an EDGE capability that cannot violate its own doctrine.
+
+Ad

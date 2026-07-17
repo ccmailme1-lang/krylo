@@ -1,0 +1,182 @@
+{
+  "meta": {
+    "schema": "KRYLO-CONSULTING-EXPORT-v1752",
+    "generated": "2026-07-08T10:21:04.954Z",
+    "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+    "export_gate": {
+      "fs_required": 0.7,
+      "fs_actual": 0.71,
+      "tier": "ESTIMATED",
+      "passed": true
+    },
+    "state_type": "analytical",
+    "model_version": "WO1336.L1-L4.WO1341.v1+WO1751.v2+WO1752.v1",
+    "time_frozen": "2026-07-08T10:21:04.954Z",
+    "runtime_state": "EXPORTED",
+    "artifact_hash": "djb2:1bf6808f"
+  },
+  "subject": {
+    "entity": "BUY HOUSE IN DENVER, CO",
+    "lens": "OPEN",
+    "domain": "GENERAL",
+    "date": "2026-07-08",
+    "as_of": "06:21:04 EST"
+  },
+  "intelligence": {
+    "bluf": "Open-lens query: \"Buy house in Denver, CO\". Fidelity: ESTIMATED. Signal routed to general analysis. Specificity is the primary driver of output quality.",
+    "purpose": "Open-lens analysis for: \"Buy house in Denver, CO\". No domain anchor detected — directional signals generated.",
+    "five_ws": [
+      {
+        "w": "WHO",
+        "answer": "Decision-maker with open-lens query. No specific counterparty or market detected."
+      },
+      {
+        "w": "WHAT",
+        "answer": "\"Buy house in Denver, CO\" — domain: GENERAL. No specific financial instrument or decision point identified."
+      },
+      {
+        "w": "WHEN",
+        "answer": "Timeline not specified. A defined horizon increases analytical precision significantly."
+      },
+      {
+        "w": "WHERE",
+        "answer": "No geographic or market-specific context detected in query."
+      },
+      {
+        "w": "WHY",
+        "answer": "Open queries generate broad signal scan — useful for orientation but lower precision than anchored queries."
+      }
+    ],
+    "evidence": [
+      "Query processed. Lens: OPEN. Domain routing: GENERAL.",
+      "No specific amounts, timelines, or named instruments detected.",
+      "Fidelity: ESTIMATED — sufficient for directional analysis.",
+      "Adding specific parameters raises fidelity to VALIDATED tier."
+    ],
+    "assumptions": [
+      "Query represents an active decision point requiring analysis.",
+      "No prior session context carried — fresh analysis."
+    ],
+    "assessment": "\"Buy house in Denver, CO\" provides insufficient specificity for high-precision output. The system has generated directional signals from available context. For precise action scoring, add: a specific decision (buy vs lease, invest vs pay off), a dollar amount, and a timeline.",
+    "alternative_view": "Open-lens queries are appropriate for orientation and exploration. If the decision is not yet defined, broad signal framing is a valid first step.",
+    "outlook": [
+      {
+        "probability": 0.6,
+        "label": "Refined query with parameters produces high-precision actionable output"
+      },
+      {
+        "probability": 0.3,
+        "label": "Broad signals directionally useful for initial orientation"
+      },
+      {
+        "probability": 0.1,
+        "label": "Insufficient specificity — output remains directional only"
+      }
+    ]
+  },
+  "courses_of_action": [
+    {
+      "num": 1,
+      "verb": "REDUCE",
+      "action": "Reduce exposure to high-volatility positions within the primary domain.",
+      "horizon": "0–24h",
+      "confidence": 0.88,
+      "impact": "HIGH",
+      "rationale": "Structural lock condition met; fracture window opens within observation horizon."
+    },
+    {
+      "num": 2,
+      "verb": "HEDGE",
+      "action": "Establish asymmetric hedge against cross-domain propagation vectors.",
+      "horizon": "24–72h",
+      "confidence": 0.71,
+      "impact": "MEDIUM",
+      "rationale": "Secondary node activation suggests contagion pathway to adjacent verticals."
+    },
+    {
+      "num": 3,
+      "verb": "MONITOR",
+      "action": "Monitor liquidity rotation confirmation signals for secondary validation.",
+      "horizon": "ONGOING",
+      "confidence": 0.58,
+      "impact": "SUPPORTING",
+      "rationale": "Alternative viewpoint cannot be fully discounted without additional temporal data."
+    }
+  ],
+  "threats": [
+    {
+      "label": "Low specificity → low precision",
+      "level": "HIGH",
+      "color": "#66FF00"
+    },
+    {
+      "label": "No time horizon → no urgency frame",
+      "level": "MEDIUM",
+      "color": "#007FFF"
+    },
+    {
+      "label": "Open lens → broad recommendations",
+      "level": "MEDIUM",
+      "color": "#007FFF"
+    }
+  ],
+  "opportunities": [
+    "Refine with a specific decision, amount, or deadline for higher-precision output.",
+    "Select your situation type (Buying a Home, Career Move, etc.) to anchor analysis.",
+    "Add a capital floor to enable affordability and leverage calculations."
+  ],
+  "provenance": {
+    "source": "KRYLO_CAUSAL_OS_WO1336",
+    "fidelity_score": 0.71,
+    "fidelity_tier": "ESTIMATED",
+    "causal_chain": [
+      "WO-1336",
+      "WO-1341",
+      "WO-1751",
+      "WO-1752"
+    ],
+    "domain_attribution": "GENERAL",
+    "acquisition_state": "UNKNOWN",
+    "signal_sources": [],
+    "note": "Every claim in this document is traceable to the KRYLO Causal OS provenance DAG (WO-1336)."
+  },
+  "runtime_fingerprint": {
+    "engineVersion": "3.7.2",
+    "woChain": [
+      "WO-1336",
+      "WO-1341",
+      "WO-1751",
+      "WO-1752"
+    ],
+    "fs": 0.71
+  },
+  "signal_snapshot": {
+    "primarySignal": "GENERAL",
+    "confidence": 0.71,
+    "convergence": 0.71,
+    "signals": []
+  },
+  "evidence_graph": {
+    "nodes": [
+      {
+        "id": "node_causal_os",
+        "domain": "CAUSAL_OS",
+        "weight": 1,
+        "sources": [
+          "WO-1336"
+        ]
+      }
+    ],
+    "edges": []
+  },
+  "domains": {
+    "GENERAL": {
+      "active": true,
+      "domain": "GENERAL",
+      "fs": 0.71,
+      "tier": "ESTIMATED",
+      "state_type": "analytical",
+      "lens": "OPEN"
+    }
+  }
+}

@@ -1,0 +1,275 @@
+WO-2048 — Structural Dependency Graph Engine
+
+Purpose:
+
+Detect globally important dependency nodes before they become narrative events.
+
+Inputs:
+
+supply chain data
+infrastructure permits
+trade flows
+energy demand
+capital expenditure
+regulatory changes
+
+Outputs:
+
+Dependency Node Card
+
+ENTITY:
+Taiwan Semiconductor Fabrication
+
+Role:
+Global AI Compute Enabler
+
+Centrality:
+0.94
+
+Redundancy:
+0.18
+
+Replacement Horizon:
+5-10 years
+
+Signal:
+Structural Concentration
+
+Confidence:
+HIGH
+The interesting KRYLO angle
+
+The obvious Bloomberg/Quartz interpretation is:
+
+"Taiwan is important."
+
+KRYLO's interpretation is:
+
+"A hidden dependency node has unusually high global leverage. Watch the flows around it."
+
+That distinction matters.
+
+The former is news.
+
+The latter is intelligence.
+
+This is very aligned with your Precursor Resonance → Constraint Detection → Leverage Surface pipeline.
+
+Suggested based on your interests
+Ad
+Today 6:15 AM
+See where i'm going with this 
+
+Yes. I see the direction.
+
+The important shift in this screen is that KRYLO is not becoming a semiconductor tracker. The semiconductor example is simply a stress test showing what the interface is actually built to do.
+
+Your UI already has the primitives:
+
+Intent Strength Mapping
+Horizon Scrubber
+Forensic Matrix Fields
+Signal Scope
+Precursor / Risks / Opportunities / Contradictions filters
+
+The missing layer is the one exposed by the Taiwan example:
+
+The user enters a question → KRYLO discovers the hidden dependency field
+
+Example:
+
+User enters:
+
+"AI infrastructure opportunity"
+
+A normal system returns:
+
+NVIDIA
+AMD
+data centers
+AI stocks
+
+KRYLO should expand:
+
+AI INFRASTRUCTURE
+
+VISIBLE LAYER
+──────────────
+GPU demand
+Cloud growth
+AI applications
+
+
+HIDDEN DEPENDENCY LAYER
+──────────────
+Advanced fabrication
+      ↓
+TSMC capacity
+      ↓
+EUV lithography
+      ↓
+ASML
+      ↓
+Specialty materials
+      ↓
+Energy availability
+      ↓
+Grid expansion
+
+
+CONSTRAINT LAYER
+──────────────
+Where does the system break first?
+
+That is the "connections most people don't see" capability.
+
+Looking at your screenshot, the key thing is the large empty analysis canvas.
+
+That is where this belongs.
+
+Not a dashboard.
+Not a list.
+A field reconstruction.
+
+Something like:
+
+              AI COMPUTE EXPANSION
+
+                    ●
+                   / \
+                  /   \
+                 /     \
+        FAB CAPACITY   ENERGY
+             ●            ●
+            /              \
+           /                \
+       MATERIALS        GRID BUILDOUT
+           ●                ●
+
+          CONSTRAINT RESONANCE
+                 82
+
+The system is showing:
+
+"Here is the structure surrounding your question."
+
+The other thing I notice: your left panel already has the seed of this.
+
+Forensic Matrix Fields
+
+Currently:
+
+CAPITAL
+TECH
+KNOW
+LABOR
+OWNERSHIP
+MEDIA
+
+This is actually more powerful if those become forces, not categories.
+
+Example:
+
+TECH
+ └ Semiconductor capacity
+
+CAPITAL
+ └ CapEx migration
+
+LABOR
+ └ Specialized engineering scarcity
+
+OWNERSHIP
+ └ Geographic concentration
+
+MEDIA
+ └ Narrative lag
+
+Then KRYLO can detect:
+
+"Narrative is late relative to structural movement."
+
+That is the Precursor Resonance concept.
+
+The biggest opportunity I see:
+
+Add "Dependency Mode" as a search behavior
+
+Current:
+
+WHAT ARE YOU FOCUSED ON?
+
+User thinks about a topic.
+
+KRYLO asks:
+
+WHAT SYSTEM DO YOU WANT TO UNDERSTAND?
+
+Then internally:
+
+Topic
+ ↓
+Entities
+ ↓
+Relationships
+ ↓
+Constraints
+ ↓
+Dependencies
+ ↓
+Leverage surfaces
+
+The Taiwan semiconductor example becomes a perfect demo:
+
+Input:
+
+"Why is AI infrastructure important?"
+
+Output:
+
+KRYLO FINDING:
+
+AI growth has a hidden dependency concentration.
+
+PRIMARY NODE:
+Advanced semiconductor fabrication
+
+CENTRALITY:
+HIGH
+
+SUBSTITUTION:
+LOW
+
+TIME TO REPLACE:
+LONG
+
+SIGNAL STATE:
+BUILDING CONVERGENCE
+
+NOT A PREDICTION.
+STRUCTURAL EXPOSURE MAP.
+
+The reason this fits your architecture is it does not violate your doctrine.
+
+It does not say:
+
+buy this
+sell this
+Taiwan will fail
+chips will crash
+
+It says:
+
+"Here is the structure. Here are the dependencies. Here is where leverage accumulates."
+
+The screen you posted is actually closer to a personal strategic intelligence interface than a market terminal.
+
+The next evolution is not adding more widgets.
+
+It is making that empty center canvas become the relationship field where KRYLO reveals invisible connections.
+
+Ad
+Chats with attachments paused
+You’ve used all your messages with Instant until 9:18 AM. Upgrade to keep working with files and images here, or start a new chat to continue with a lower quality model.
+New chat
+Upgrade

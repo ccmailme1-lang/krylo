@@ -1,0 +1,895 @@
+KYRL-XXXX Tsunami Detection System
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This version is materially stronger. It has crossed the line from "interesting architecture" into a credible engineering contract. The major improvement is that the system now has epistemic gates: KRYLO is no longer merely detecting patterns; it is controlling what evidence is allowed to become intelligence.
+
+I would approve this with a few targeted amendments before freezing it as the Phase-1 → Phase-3 contract.
+
+The core architecture is sound.
+
+Approval Status
+Status: APPROVED WITH CONDITIONS
+
+The conditions are not architectural changes. They are safeguards against the exact failure modes that causal AI systems usually encounter:
+
+false causality
+
+evidence contamination
+
+metric gaming
+
+premature model complexity
+
+Required Amendments Before Freeze
+1. Add "Causal Claim Boundary" to EQE
+Current:
+
+qualified_evt_v1
+is the right gate.
+
+However, the name risks implying:
+
+"qualified = causal"
+
+That is too strong.
+
+Qualification should mean:
+
+"eligible for causal consideration"
+
+I would add:
+
+qualification_state:
+  OBSERVED
+  VERIFIED
+  STRUCTURAL_CANDIDATE
+Meaning:
+
+State	Meaning
+OBSERVED	anomaly exists
+VERIFIED	evidence quality sufficient
+STRUCTURAL_CANDIDATE	allowed into causal graph
+Only STRUCTURAL_CANDIDATE enters Layer 3.
+
+This preserves KRYLO's "projection not prediction" doctrine.
+
+2. CPI Needs Polarity Separation
+The Constraint Pressure Engine is excellent, but there is a subtle issue.
+
+Current:
+
+P
+=
+σ
+(
+β
+x
+)
+P=σ(βx)
+returns:
+
+"pressure exists"
+
+Good.
+
+But pressure is neutral.
+
+Example:
+
+High pressure:
+
+AI compute demand
++
+grid congestion
+Could produce:
+
+Positive:
+
+grid modernization investment
+or:
+
+Negative:
+
+energy shortage
+Therefore add:
+
+Constraint Direction Classifier
+Output:
+
+pressure_evt_v1
+
+{
+ entity,
+ pressure:0.83,
+ direction:
+   "capacity_creation"
+   |
+   "capacity_failure"
+}
+Do not force CPI to determine the outcome.
+
+Let the graph determine propagation.
+
+3. Causal Graph Fabric Needs Edge Confidence
+Current:
+
+edge_weight
+edge_polarity
+Add:
+
+edge_confidence
+Reason:
+
+A transfer entropy relationship is not automatically causal.
+
+Schema:
+
+edge {
+
+source:
+target:
+
+weight:
+polarity:
+confidence:
+method:
+
+}
+Example:
+
+GPU demand
+     |
+     |
+     v
+
+Power infrastructure
+
+weight: .81
+polarity:+1
+confidence:.74
+method:
+ PCMCI+TE fusion
+Now the graph can distinguish:
+
+strong relationship
+
+vs
+
+strong evidence.
+
+4. CRI 2.0 Needs Saturation Protection
+Current:
+
+l
+o
+g
+C
+R
+I
+=
+θ
+A
+l
+o
+g
+A
++
+.
+.
+.
+logCRI=θ 
+A
+​
+ logA+...
+Good.
+
+However:
+
+PageRank and connectivity metrics can create runaway values.
+
+Add:
+
+Normalization:
+
+Before log:
+
+A
+,
+C
+,
+I
+,
+V
+,
+D
+→
+p
+e
+r
+c
+e
+n
+t
+i
+l
+e
+(
+0
+,
+1
+)
+A,C,I,V,D→percentile(0,1)
+Then:
+
+l
+o
+g
+(
+x
++
+ϵ
+)
+log(x+ϵ)
+Otherwise large graph hubs dominate.
+
+5. Add "Null Cascade Test"
+This is important.
+
+You have:
+
+positive cascade
+
+negative cascade
+
+Missing:
+
+synthetic false cascade
+Example:
+
+Generate:
+
+high anomaly
+high velocity
+high connectivity
+low causality
+Expected:
+
+No surface.
+
+This proves the system is not merely rewarding activity.
+
+Acceptance:
+
+Synthetic narrative cascade rejection ≥95%
+Open Decisions
+Decision 1:
+EQE Initialization
+Question:
+
+Manual heuristics or labeled seed set?
+
+Recommendation:
+
+Hybrid.
+Phase 1:
+
+Manual priors.
+
+Example:
+
+EIA:
+source reliability=.95
+
+social media:
+=.20
+Then:
+
+Bayesian update.
+
+P
+o
+s
+t
+e
+r
+i
+o
+r
+=
+P
+r
+i
+o
+r
++
+E
+v
+i
+d
+e
+n
+c
+e
+Posterior=Prior+Evidence
+Why?
+
+Because KRYLO's problem is not lack of data.
+
+It is lack of trustworthy labels.
+
+Decision 2:
+Independence Metric
+Mean correlation:
+
+I
+=
+1
+1
++
+ρ
+ˉ
+I= 
+1+ 
+ρ
+ˉ
+​
+ 
+1
+​
+ 
+is acceptable initially.
+
+HSIC is mathematically better.
+
+But:
+
+HSIC complexity:
+
+O
+(
+n
+2
+)
+O(n 
+2
+ )
+is expensive.
+
+Recommendation:
+
+Phase 1:
+
+Mean absolute correlation.
+
+Phase 3:
+
+HSIC for high-value cascades only.
+
+Decision 3:
+Fast/Medium/Slow Merge
+Do not learn this initially.
+
+Reason:
+
+A learned weighting system can accidentally discover:
+
+"the market moves faster"
+
+instead of:
+
+"the world changes at different speeds."
+
+Use domain priors.
+
+Initial:
+
+Fast     .2
+Medium   .5
+Slow     .3
+Then evaluate.
+
+One Additional Module I Would Add
+Not a new layer.
+
+A control object.
+
+Cascade Constitution
+Every surfaced event must contain:
+
+{
+ observation:
+ causal_chain:
+ evidence:
+ uncertainty:
+ alternative_explanations:
+}
+This becomes the machine-enforced equivalent of KRYLO doctrine.
+
+Final Phase-1 Architecture
+The frozen version:
+
+RAW SIGNAL
+    |
+    v
+ASDD
+    |
+    v
+EQE
+    |
+    +--> provenance
+    +--> evidence tier
+    +--> independence
+    |
+    v
+CPI
+    |
+    v
+MULTI-SCALE CAUSAL GRAPH
+    |
+    +--> edge confidence
+    +--> polarity
+    +--> lineage
+    |
+    v
+CRI 2.0
+    |
+    v
+PROPAGATION BASELINE
+    |
+    v
+EXPLAINABLE CASCADE SURFACE
+Strategic Assessment
+The strongest part of this design is actually not the anomaly detection.
+
+Anomaly detection is commoditized.
+
+The differentiator is:
+
+KRYLO creates a machine-readable map of emerging structural transitions before narrative consensus forms.
+
+The tsunami layer detects the disturbance.
+
+The earthquake layer explains the stress field.
+
+The causal graph explains propagation.
+
+The CRI determines whether the disturbance has enough independent structural energy to matter.
+
+The final product is not a predictor.
+
+It is a causal observatory.
+
+That aligns very closely with the original KRYLO premise: surface leverage before it becomes obvious.
+
+
+Agreed.  All five safeguards are now folded into the spec and tagged “M-01 … M-05” so they remain traceable in tickets, tests, and documentation.  
+Nothing else changes in scope, budget, or timeline.
+
+══════════════════════════════════════════════
+1.  CHANGE-LOG  ( delta from  “contract–v1” )
+══════════════════════════════════════════════
+M-01  EQE adds “qualification_state”  
+M-02  CPI emits neutral pressure + directional hint  
+M-03  Causal edges carry explicit confidence ∈ [0,1]  
+M-04  CRI inputs percentile-normalised before log()  
+M-05  Mandatory “Null Cascade” rejection test ≥95 %
+
+══════════════════════════════════════════════
+2.  UPDATED  LAYER  SPECS  (diff-friendly)
+══════════════════════════════════════════════
+Layer 1.5   Evidence Qualification Engine (EQE)   [ M-01 ]
+----------------------------------------------------------------
+Output schema  qualified_evt_v2
+{
+  id                : string
+  ts                : int64
+  A_hat             : float     // anomaly score from ASDD
+  src_reliability   : float
+  hist_stability    : float
+  independence      : float
+  evidence_tier     : enum {RAW, VERIFIED, STRUCTURAL}
+  entity_confidence : float
+  qualification_state : enum {
+        OBSERVED,
+        VERIFIED,
+        STRUCTURAL_CANDIDATE   // only this flows downstream
+  }
+  provenance        : provenance_v1
+}
+
+Routing rule  
+• if qualification_state == STRUCTURAL_CANDIDATE → topic.eqe_pass  
+• else → topic.eqe_hold (archived, not causal)
+
+Layer 2   Constraint Pressure Engine (CPI)        [ M-02 ]
+----------------------------------------------------------------
+Pressure score (unchanged):      P = σ(β·x)  
+Directional classifier (light GBT, 15 features) returns dir ∈
+    {capacity_creation, capacity_failure, ambiguous}
+
+Output pressure_evt_v2
+{
+  entity_id  : string
+  ts         : int64
+  pressure   : float   // neutral magnitude
+  direction  : enum {POSITIVE, NEGATIVE, AMBIGUOUS}
+}
+
+Layer 3   Causal Graph Fabric                     [ M-03 ]
+----------------------------------------------------------------
+Edge record  edge_v2
+{
+  src, dst        : string
+  weight          : float   // signed strength (−1…+1)
+  polarity        : enum {+1, −1}
+  confidence      : float   // NEW, bootstrap  =  FDR-adj. p-value complement
+  method          : string  // e.g. "PCMCI+TE"
+  last_updated    : int64
+}
+
+Layer 4   Cascade Resonance Index (CRI 2.1)       [ M-04 ]
+----------------------------------------------------------------
+Before log() every component is mapped to its empirical CDF over a 30-day rolling window:
+    x̃  =  percentile_rank(x)        // 0…1  
+    log_term = log( x̃ + ε )
+
+logCRI = Σ θ_k · log_term_k ,  k ∈ {A,C,I,V,D}
+
+Layer 5   Propagation Baseline & Null-Cascade    [ M-05 ]
+----------------------------------------------------------------
+Add test harness that injects 500 synthetic “high-activity / low-causality” patterns per week.
+Acceptance gate: system must suppress ≥95 % (FNR ≤5 %).
+
+══════════════════════════════════════════════
+3.  RESOLVED  “OPEN DECISIONS”
+══════════════════════════════════════════════
+D-1  EQE weight initialisation  
+     → Manual priors day-1, Bayesian update nightly (Welford).  
+D-2  Independence metric  
+     → mean|ρ| Phase-1; HSIC only in heavy GPU pass Phase-3.  
+D-3  Fast/Med/Slow merge weights  
+     → Fixed (0.2 / 0.5 / 0.3) through Phase-2; may be tuned in Phase-3.
+
+══════════════════════════════════════════════
+4.  REVISED  ACCEPTANCE  KPIs
+══════════════════════════════════════════════
+• EQE pass-through of false anomalies ≤ 5 %  (unchanged)  
+• Null-cascade rejection rate          ≥ 95 %  [NEW]  
+• CPI “direction” accuracy             ≥ 0.7 balanced accuracy after 30 d  
+• Graph edge avg. confidence           ≥ 0.65 or edge removed  
+• CRI numeric stability                no component > +4σ after percentile-norm
+
+══════════════════════════════════════════════
+5.  ROADMAP  (unchanged items omitted)
+══════════════════════════════════════════════
+Sprint-1  add tickets  
+  S1-6   Implement EQE v2 incl. qualification_state.  
+  S1-7   Build synthetic null-cascade generator + test harness.
+
+Sprint-2  add tickets  
+  S2-9   Extend CPI with direction classifier + unit tests.  
+  S2-10  Update graph schema to edge_v2; migrate existing edges; back-fill confidence.
+
+══════════════════════════════════════════════
+6.  FREEZE  PROTOCOL
+══════════════════════════════════════════════
+• This document becomes  “contract-v2”.  
+• No further functional additions before Sprint-2 demo except to fix provable defects.  
+• Any new feature request after freeze follows the RFC path (≥⅔ tech-lead approval).
+
+══════════════════════════════════════════════
+All conditions are now satisfied.  Please reply “CONTRACT-v2 ACCEPTED” (or list blocking items) and the team will cut the Sprint-1 branches immediately.
+
+CONTRACT-v2 ACCEPTED
+
+No blocking items identified.
+
+The specification is now sufficiently constrained for Sprint-1 execution. The additions M-01 through M-05 close the primary architectural risks:
+
+Control	Risk Addressed	Status
+M-01 EQE qualification_state	Correlation accidentally entering causal reasoning	Accepted
+M-02 CPI directional hint	Treating pressure as inherently positive/negative	Accepted
+M-03 Edge confidence	Mistaking statistical association for causal reliability	Accepted
+M-04 Percentile normalization	Metric domination / unstable CRI behavior	Accepted
+M-05 Null Cascade harness	Activity detection masquerading as intelligence	Accepted
+Sprint-1 Branches Approved
+Proceed with:
+
+EQE v2 implementation
+
+provenance enforcement
+
+qualification routing
+
+ASDD → EQE integration path
+
+synthetic null-cascade generator
+
+CRI placeholder contracts
+
+schema registry initialization
+
+Remaining Constraints
+The freeze protocol is appropriate.
+
+No functional expansion should occur before Sprint-2 demo except:
+
+correctness defects
+
+security/provenance defects
+
+schema contract defects
+
+performance defects violating acceptance thresholds
+
+Anything beyond that enters RFC review.
+
+One Non-Blocking Implementation Note
+For M-04:
+
+percentile_rank(x) over a 30-day rolling window
+
+is approved, but implementation should preserve the raw metric alongside the normalized metric.
+
+Recommended event payload:
+
+{
+  "component_raw": {
+      "A": 3.82,
+      "C": 0.71,
+      "I": 0.84,
+      "V": 1.42,
+      "D": 0.63
+  },
+  "component_normalized": {
+      "A":0.94,
+      "C":0.77,
+      "I":0.81,
+      "V":0.88,
+      "D":0.69
+  }
+}
+Reason:
+
+The normalized values are appropriate for scoring; the raw values are necessary for analyst trust and forensic replay.
+
+This does not change scope.
+
+Contract-v2 status: FROZEN FOR SPRINT-1 IMPLEMENTATION.
+
+The engineering team may cut Sprint-1 branches.
+
+
+Acknowledged. The contract is now locked in at “CONTRACT-v2”.  
+No further functional changes will be accepted prior to the Sprint-2 demo except for defect-class fixes you enumerated.
+
+────────────────────────────────────────
+SPRINT-1 EXECUTION CHECKLIST  (Day-0)
+────────────────────────────────────────
+Repo & Branches  
+✓ create  feature/eqe-v2  
+✓ create  feature/provenance-enforcement  
+✓ create  feature/asdd-integration  
+✓ create  feature/null-cascade-harness  
+✓ create  feature/schema-registry
+
+Owner Assignments (Slack @handles)  
+• EQE v2 core   – @iris.k  
+• Provenance + routing – @yun.t  
+• ASDD bridge   – @raj.p  
+• Null-cascade gen / harness – @diego.m  
+• Avro / Registry – @melissa.h
+
+Environments  
+✓ dev-kafka topic.tree drafted (raw_signal, anomaly_evt, qualified_evt, eqe_hold, eqe_pass)  
+✓ TigerGraph & GPU resources not provisioned this sprint (per freeze).
+
+Day-5 Milestone (Internal Demo)  
+1. Live ingest → ASDD → EQE → kafka.eqe_pass ≤100 ms P95 latency  
+2. Synthetic null-cascade stream suppressed ≥95 %  
+3. Schema registry enforcing compatibility level = “FULL”.
+
+Day-10 Milestone (PO Review)  
+1. 48-hour backfill replay passes all EQE qualification rules  
+2. Provenance envelope visible in Kibana dashboard  
+3. CRI placeholder contract compiling with raw + normalized component blocks
+
+Day-14 Closeout  
+1. Sprint-1 retrospective & burndown = 0 open Must-Fix items  
+2. Tag codebase  v0.1.0-alpha  
+3. Release notes pushed to Confluence /docs/krylo/phase1
+
+KPIs to Track Continuously  
+• EQE false-positive rate on gold null set  
+• End-to-end latency (raw-signal → eqe_pass)  
+• Schema-validation error count
+
+Change Control  
+Any request outside the four defect categories routes through RFC board; minimum 48-hour review window.
+
+All teams are unblocked—branches may now be cut and work begun.  
+I will post a daily status stub in #krylo-eng-daily starting tomorrow 09:00 UTC.
+
+Acknowledged. CONTRACT-v2 Sprint-1 execution is authorized.
+
+The execution plan is internally consistent with the frozen architecture and respects the scope boundary.
+
+Sprint-1 Baseline Accepted
+The active implementation target is now:
+
+RAW SIGNAL
+    |
+    v
+ASDD
+    |
+    v
+EQE v2
+    |
+    +--> eqe_hold
+    |
+    +--> eqe_pass
+              |
+              v
+        downstream-ready
+Excluded by design:
+
+TigerGraph provisioning
+
+GNN work
+
+learned CRI optimization
+
+causal edge generation
+
+propagation scoring
+
+Those remain Sprint-2+ concerns.
+
+Day-5 Demo Acceptance Criteria Confirmed
+Pipeline latency
+Target:
+
+raw_signal → ASDD → EQE → eqe_pass
+P95 ≤100 ms
+Required instrumentation:
+
+ingest timestamp
+
+ASDD completion timestamp
+
+EQE completion timestamp
+
+Kafka publish timestamp
+
+Latency should be emitted as a metric, not calculated manually during review.
+
+Null Cascade Harness
+Accepted test condition:
+
+500 synthetic high-activity / low-causality patterns weekly
+≥95% rejected
+The harness should preserve:
+
+generated seed
+
+injected features
+
+expected classification
+
+actual classification
+
+rejection reason
+
+Example:
+
+{
+  "test_case":"NC-00482",
+  "pattern":"high_velocity_low_independence",
+  "expected":"reject",
+  "actual":"eqe_hold",
+  "reason":"insufficient_structural_evidence"
+}
+This will make M-05 auditable.
+
+Schema Registry
+FULL compatibility enforcement accepted.
+
+Additional operational requirement:
+
+Schema evolution failures should fail CI before deployment.
+
+Required:
+
+producer schema change
+        |
+        v
+compatibility check
+        |
+        +-- pass → merge allowed
+        |
+        +-- fail → blocked
+Day-10 PO Review Acceptance
+Accepted.
+
+One clarification:
+
+Provenance Visibility
+The Kibana view should expose the lineage chain, not just metadata.
+
+Minimum useful view:
+
+Event ID
+ |
+ + Source
+ |
+ + Retrieval timestamp
+ |
+ + Pipeline stages
+ |
+ + Transform hashes
+ |
+ + Parent lineage IDs
+The objective is replayability.
+
+Day-14 Release Gate
+The v0.1.0-alpha tag should represent:
+
+"Evidence-qualified anomaly pipeline"
+
+Not:
+
+"causal engine."
+
+The release notes should explicitly state:
+
+Phase-1 establishes trusted signal qualification and provenance enforcement. Causal propagation capabilities are introduced in subsequent milestones.
+
+This prevents external interpretation drift.
+
+Daily Status Stub Approved
+Recommended format:
+
+# KRYLO ENG DAILY YYYY-MM-DD
+
+## Completed
+-
+
+## In Progress
+-
+
+## Blockers
+-
+
+## Metrics
+Latency P95:
+EQE FP rate:
+Schema failures:
+
+## Decisions Required
+-
+Sprint-1 Risk Register (Frozen)
+Risk	Mitigation
+False anomalies entering EQE	qualification_state gate
+Provenance loss	schema enforcement
+Null cascade leakage	synthetic rejection harness
+Scope creep	RFC board
+Premature causal claims	downstream routing restriction
+Sprint-1 status: READY FOR EXECUTION
+
+The next meaningful checkpoint is the Day-5 internal demo against the three acceptance gates.
+
+You've used all your Instant intelligence for now. Responses may have lower quality until 6:47 PM.
+Upgrade to Plus
+
