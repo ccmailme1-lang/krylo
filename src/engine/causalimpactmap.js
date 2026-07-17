@@ -20,6 +20,7 @@
 // is a thin follow-up wrapper; step 1 is the traversal engine itself.
 
 import { TYPED_EDGES, NODE_LABELS } from './entitytopologyregistry.js';
+import { stampChain } from './causalepistemicstamp.js'; // KRYL-1074 — epistemic skin on the impact edges
 
 function normId(name) {
   return String(name ?? '').toUpperCase().replace(/[\s-]/g, '_');
@@ -112,6 +113,9 @@ export function toImpactViewModel(map) {
   }
   const levels = [...byDepth.keys()].sort((a, b) => a - b).map(depth => ({ depth, edges: byDepth.get(depth) }));
   const grounded = map.impacts.filter(i => i.grounded).length;
+  // KRYL-1074 — epistemic rollup over the impact edges. groundedness (§18 H1) is live; status floors
+  // at PROJECTED (no invariance data on this substrate); mode unknown (no AR/EDL yet). Orthogonal (§23).
+  const stamp = stampChain(map.impacts);
   return {
     subject:   map.nodes[0]?.label ?? map.subject,
     reached:   map.reached,
@@ -121,5 +125,6 @@ export function toImpactViewModel(map) {
     empty:     map.impacts.length === 0,
     note:      map.note ?? null,
     levels,
+    epistemic: { groundedness: stamp.groundedness, band: stamp.band, statusFloor: stamp.statusFloor, modeProfile: stamp.modeProfile },
   };
 }
