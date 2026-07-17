@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 const MONO = "'IBM Plex Mono', monospace";
 const LED = '#66FF00';
 const CLOCK_W = 96, CLOCK_H = 56;
-const SNAP = 40;         // proximity (px) at which clocks snap together
+const SNAP = 180;        // proximity (px) at which clocks snap together — strong pull from a few inches
 const KEY = 'krylo_worldclock_pos_v1';
 
 const CLOCKS = [

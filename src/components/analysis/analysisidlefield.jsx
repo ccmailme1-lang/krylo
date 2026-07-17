@@ -6,7 +6,7 @@ import IntelligenceBrief              from './intelligencebrief.jsx';
 import { isPetroQuery }               from '../../engine/petrolocator.js';
 import ReconDashboard                 from './recondashboard.jsx';
 import CausalImpactView               from './causalimpactview.jsx';
-import SESCard                        from './sescard.jsx';
+// SESCard removed — replaced by world clocks
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
 import { computePositionVector }      from '../../engine/positioningengine.js';
@@ -1572,24 +1572,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 )}
 
-                {/* ── KRYL-1010 SES pod (draggable, left of search box) ── */}
-                <div
-                  data-ses-pod
-                  onMouseDown={onSesMouseDown}
-                  style={{
-                    position: 'fixed', left: sesPos.x, top: sesPos.y, zIndex: 40,
-                    width: 265, maxWidth: 'calc(100vw - 32px)', userSelect: 'none',
-                    cursor: sesDragRef.current ? 'grabbing' : 'grab',
-                    // same surface treatment as the search box
-                    background: 'rgba(10,10,10,0.96)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: 22,
-                    overflow: 'hidden',
-                    boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
-                  }}
-                >
-                  <SESCard ses={ambientSes} weather={weather} onSetLocation={onSetLocation} width={265} />
-                </div>
+                {/* SES gauge pod removed — replaced by the world clocks */}
 
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
                 <div style={{
