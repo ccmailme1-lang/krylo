@@ -556,7 +556,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     setAssignInput('');
     setCandOpen(false);
     setCandInput('');
-    setTopTab(cone?.domain ? 'cone' : 'domain');
+    setTopTab('domain'); // default view = Domain (was: Cone when a cone was selected)
   }, [cone?.domain]);
 
   React.useEffect(() => {
