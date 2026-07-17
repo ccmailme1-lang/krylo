@@ -1,6 +1,8 @@
 // usestickystore.js — KRYL-1051 Sticky-Tape. Free-drop user annotations on the canvas.
 // User content ONLY — never system intelligence. Persists to sessionStorage; rides the
-// premium export via getStickies(). Free-drop (not node/cone-anchored) per Founder 2026-07-16.
+// premium export via getStickies(). Free-drop by default; a note may OPTIONALLY be attached to a
+// cone (note.coneDomain = §17 domain) — it then shows only when that cone is selected. Attachment
+// is a durable semantic tag, not a screen-position pin (per Founder 2026-07-17, supersedes 07-16).
 
 import { create } from 'zustand';
 

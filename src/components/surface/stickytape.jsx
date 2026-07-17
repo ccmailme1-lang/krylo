@@ -16,7 +16,7 @@ const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default (minimal) open size; user-re
 const TAB_W = 21, TAB_H = 36;            // ghost tab while dragging off the dispenser
 const LONG_PRESS_MS = 500;
 
-function StickyNote({ note }) {
+function StickyNote({ note, activeConeDomain }) {
   const update = useStickyStore(s => s.updateSticky);
   const remove = useStickyStore(s => s.removeSticky);
   const st = useRef({ moved: false, longFired: false });
@@ -64,22 +64,43 @@ function StickyNote({ note }) {
   // Right-click → menu (Delete) → confirm. The normal-file path.
   const onCtx = (e) => { e.preventDefault(); setMenu(false); setCtx({ x: e.clientX, y: e.clientY }); };
 
-  // Long-press color palette (shared by both states).
+  // Long-press menu: color swatches + attach/detach to the selected cone.
+  const attach = () => { if (activeConeDomain) { update(note.id, { coneDomain: activeConeDomain }); setMenu(false); } };
+  const detach = () => { update(note.id, { coneDomain: null }); setMenu(false); };
   const colorMenu = menu && (
     <>
       <div onPointerDown={() => setMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
       <div style={{
-        position: 'fixed', left: note.x, top: note.y + 34, zIndex: 10000, display: 'flex', gap: 6, padding: 6,
-        background: '#111', border: '1px solid rgba(255,255,255,0.18)', boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+        position: 'fixed', left: note.x, top: note.y + 34, zIndex: 10000, display: 'flex', flexDirection: 'column', gap: 8, padding: 8,
+        background: '#111', border: '1px solid rgba(255,255,255,0.18)', boxShadow: '0 4px 12px rgba(0,0,0,0.6)', minWidth: 150,
       }}>
-        {COLORS.map(col => (
-          <div key={col} title={col}
-            onPointerDown={(e) => { e.stopPropagation(); update(note.id, { color: col }); setMenu(false); }}
-            style={{
-              width: 18, height: 18, background: col, cursor: 'pointer',
-              border: col === color ? '2px solid #fff' : '1px solid rgba(0,0,0,0.35)',
-            }} />
-        ))}
+        <div style={{ display: 'flex', gap: 6 }}>
+          {COLORS.map(col => (
+            <div key={col} title={col}
+              onPointerDown={(e) => { e.stopPropagation(); update(note.id, { color: col }); setMenu(false); }}
+              style={{
+                width: 18, height: 18, background: col, cursor: 'pointer',
+                border: col === color ? '2px solid #fff' : '1px solid rgba(0,0,0,0.35)',
+              }} />
+          ))}
+        </div>
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: 6 }}>
+          {note.coneDomain ? (
+            <div onPointerDown={(e) => { e.stopPropagation(); detach(); }}
+              style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.72)', cursor: 'pointer' }}>
+              ⊘ Detach from {note.coneDomain.toUpperCase()}
+            </div>
+          ) : activeConeDomain ? (
+            <div onPointerDown={(e) => { e.stopPropagation(); attach(); }}
+              style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: '#66FF00', cursor: 'pointer' }}>
+              ⛓ Attach to {activeConeDomain.toUpperCase()}
+            </div>
+          ) : (
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.35)' }}>
+              Select a cone to attach
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
@@ -137,6 +158,11 @@ function StickyNote({ note }) {
             filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.6))',
           }}>
           <NotebookPen size={22} color={color} strokeWidth={2} />
+          {note.coneDomain && (
+            <span style={{ position: 'absolute', bottom: -3, fontFamily: MONO, fontSize: 6, letterSpacing: '0.04em', color, whiteSpace: 'nowrap' }}>
+              {note.coneDomain.slice(0, 4).toUpperCase()}
+            </span>
+          )}
         </div>
         {colorMenu}{ctxMenu}{confirmBox}
       </>
@@ -153,7 +179,10 @@ function StickyNote({ note }) {
           display: 'flex', flexDirection: 'column', cursor: 'grab', pointerEvents: 'auto', overflow: 'hidden',
         }}>
         <div onDoubleClick={() => update(note.id, { min: true })}
-          style={{ display: 'flex', justifyContent: 'flex-end', padding: '2px 4px' }}>
+          style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 4px' }}>
+          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.1em', color: 'rgba(26,26,26,0.6)', paddingLeft: 3 }}>
+            {note.coneDomain ? `▸ ${note.coneDomain.toUpperCase()}` : ''}
+          </span>
           <span data-role="collapse" onClick={(e) => { e.stopPropagation(); update(note.id, { min: true }); }}
             style={{ cursor: 'pointer', fontFamily: MONO, fontSize: 13, color: '#1A1A1A', lineHeight: 1, padding: '2px 5px' }}>×</span>
         </div>
@@ -173,7 +202,7 @@ function StickyNote({ note }) {
   );
 }
 
-export default function StickyTape() {
+export default function StickyTape({ activeConeDomain = null }) {
   const stickies    = useStickyStore(s => s.stickies);
   const addSticky   = useStickyStore(s => s.addSticky);
   const restoreLast = useStickyStore(s => s.restoreLast);
@@ -206,7 +235,9 @@ export default function StickyTape() {
 
   return (
     <>
-      {stickies.map(n => <StickyNote key={n.id} note={n} />)}
+      {/* A note shows if it's free (no cone) or its cone is the one currently selected. */}
+      {stickies.filter(n => !n.coneDomain || n.coneDomain === activeConeDomain)
+        .map(n => <StickyNote key={n.id} note={n} activeConeDomain={activeConeDomain} />)}
 
       {/* Dispenser — 'NOTES' above a slot with a paper tab. Drag off it to place a note. */}
       <div onPointerDown={startPlace} title="Drag to place a note"
