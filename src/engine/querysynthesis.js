@@ -136,7 +136,7 @@ const DOMAIN_SCORE_PATTERNS = {
   RETIREMENT:      [/retire/, /401k/, /\bira\b/, /pension/, /social security/, /withdrawal/, /nest egg/],
   CAREER:          [/\bjob\b/, /career/, /salary/, /\boffer\b/, /negotiat/, /hire/, /compensation/, /\braise\b/, /\brole\b/, /\bplayer\b/, /streamer/, /creator/, /esports/],
   EXPENSE_REDUCTION: [/fixed income/, /expense/, /\bbill\b/, /medicare/, /medicaid/, /struggling/, /\bsenior\b/],
-  HEALTH:          [/disability/, /therapy/, /adaptive/, /nonprofit/, /donation/, /grant/, /\bhealth\b/],
+  HEALTH:          [/disability/, /therapy/, /adaptive/, /\bhealth\b/], // DEF-1900: nonprofit/donation/grant de-bundled (generic capital, not health)
 };
 
 function scoreDomains(q) {

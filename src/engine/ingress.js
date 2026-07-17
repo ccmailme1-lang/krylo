@@ -72,8 +72,9 @@ export const PROTECTED_ENTITY_REGISTRY = {
     'disability', 'developmental delay', 'aba therapy', 'sensory processing',
     'adaptive mobility', 'pediatric therapy', 'adaptive program', 'cyshcn',
     'early intervention', 'iep ', ' iep', 'hcbs', 'dme funding',
-    'nonprofit', '501c3', '501(c)(3)', 'foundation', 'donation', 'grant',
-    'fundraising', 'charitable', 'endowment',
+    // DEF-1900: generic nonprofit/charity CAPITAL terms removed from this HARD-LOCK — they were
+    // force-locking every 'start a nonprofit' query into the pediatric-disability HEALTH matrix
+    // (Medicaid HCBS / IEP / 'child with mobility impairment'). Genuine medical terms above still lock.
   ],
   CRISIS: [
     'eviction notice', 'foreclosure notice', 'suicidal', 'domestic abuse',

@@ -23,7 +23,7 @@ const DOMAIN_KEYWORDS = {
   legal:        ['contract', 'litigation', 'compliance', 'regulation', 'clause', 'jurisdiction', 'statute', 'precedent', 'liability', 'settlement'],
   procurement:  ['vendor', 'rfp', 'supply chain', 'bid', 'sourcing', 'logistics', 'inventory', 'sku', 'lead time', 'purchase order'],
   negotiation:  ['engineer', 'manager', 'senior', 'staff', 'principal', 'startup', 'salary', 'compensation', 'offer', 'base', 'raleigh', 'equity', 'vesting', 'hire', 'role', 'leveling'],
-  health:       ['nonprofit', '501c3', 'foundation', 'donation', 'grant', 'fundraising', 'disability', 'down syndrome', 'medicaid', 'therapy', 'adaptive', 'charitable', 'endowment'],
+  health:       ['disability', 'down syndrome', 'medicaid', 'therapy', 'adaptive'], // DEF-1900: de-bundled generic nonprofit/charity capital (see nonprofit_signal); those no longer force HEALTH
 };
 
 // Lookup table — keyword → signal type. Pure membership check, no weighting logic.
