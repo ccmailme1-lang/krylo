@@ -1204,7 +1204,7 @@ export default function App() {
       {navMode === 'analysis' && <WorldClocks />}
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
-      <StickyTape activeConeDomain={activeCone} />
+      <StickyTape activeConeDomain={activeCone} currentPage={navMode} />
 
       {/* ── Surface Bay ───────────────────────────────────────── */}
 

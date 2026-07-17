@@ -22,8 +22,10 @@ export const useStickyStore = create((set, get) => ({
   toggleTapeMode: ()   => set(s => ({ tapeMode: !s.tapeMode })),
   setTapeMode:    (v)  => set({ tapeMode: !!v }),
 
-  addSticky: (x, y) => {
-    const s = { id: 'sticky-' + Date.now(), x, y, text: '', ts: Date.now() }; // opens full (industry standard)
+  addSticky: (x, y, page = null) => {
+    // page = the nav page the note was created on; the note shows ONLY on that page (stays put when
+    // you switch pages/tables). null = unbound (legacy notes) → shown everywhere for back-compat.
+    const s = { id: 'sticky-' + Date.now(), x, y, text: '', ts: Date.now(), page }; // opens full (industry standard)
     const next = [...get().stickies, s];
     save(next); set({ stickies: next });
     return s.id;

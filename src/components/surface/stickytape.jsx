@@ -207,7 +207,7 @@ function StickyNote({ note }) {
   );
 }
 
-export default function StickyTape({ activeConeDomain = null }) {
+export default function StickyTape({ activeConeDomain = null, currentPage = null }) {
   const stickies    = useStickyStore(s => s.stickies);
   const addSticky   = useStickyStore(s => s.addSticky);
   const restoreLast = useStickyStore(s => s.restoreLast);
@@ -235,7 +235,7 @@ export default function StickyTape({ activeConeDomain = null }) {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       setGhost(null);
-      addSticky(ev.clientX - OPEN_MIN_W / 2, ev.clientY - 14);
+      addSticky(ev.clientX - OPEN_MIN_W / 2, ev.clientY - 14, currentPage); // bind to the page it was dropped on
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -243,8 +243,8 @@ export default function StickyTape({ activeConeDomain = null }) {
 
   return (
     <>
-      {/* A note shows if it's free (no cone) or its cone is the one currently selected. */}
-      {stickies.filter(n => !n.coneDomain || n.coneDomain === activeConeDomain)
+      {/* A note shows only on its origin page (n.page), and only if free or its cone is selected. */}
+      {stickies.filter(n => (n.page == null || n.page === currentPage) && (!n.coneDomain || n.coneDomain === activeConeDomain))
         .map(n => <StickyNote key={n.id} note={n} />)}
 
       {/* Armed → prompt the user to tap a cone. */}
