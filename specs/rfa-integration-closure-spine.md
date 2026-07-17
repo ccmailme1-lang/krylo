@@ -146,6 +146,18 @@ reasons in-JS today; the DB decision is out of scope for this spec.
 *dependency* order. Do NOT justify parallelism via monotonicity (rejected above); justify it via the
 partial order alone.
 
+**Properties adopted (sound):**
+- **Idempotence within a cycle:** κ∘α is idempotent given no new information — re-closing the same
+  candidate set over the same boundary yields the same H1. (Prevents boundary churn.)
+- **Reversibility (retractable morphism Σ ⇄ L):** a closure can be retracted and the boundary
+  reopened *without losing provenance* — this is the formal statement of "reversible reasoning" and
+  is exactly what makes violation-recovery (Stage 6) non-destructive rather than a model wipe.
+
+**Illustrative, NON-BINDING** (shape only; not a committed interface): observe → `{κ_id, H0_id}`;
+hypothesis fetch → `{mode, status, provenance}`; closure violation → spawns a new abduction over Σ′.
+Node/edge model: nodes = {observation, hypothesis}; edges = {supports, refutes, expects_absent}.
+Concrete API + persistence are deferred to build-time WOs, not frozen here.
+
 ## 6. Build order (when authorized)
 
 substrate → RLR (registry) → AR (abduce) → Constraint Fabric (close) → EDL (deduce) →
