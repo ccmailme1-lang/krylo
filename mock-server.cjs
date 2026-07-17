@@ -96,6 +96,15 @@ function fetchEventRegistry(q) {
   });
 }
 
+// EIA API key (free, instant at eia.gov) — env or specs/EIA API.env, server-side, never echoed.
+function eiaKey() {
+  if (process.env.EIA_API_KEY) return process.env.EIA_API_KEY.trim();
+  try {
+    const raw = require('fs').readFileSync(require('path').join(__dirname, 'specs', 'EIA_API_KEY.env'), 'utf8');
+    return (raw.match(/[0-9a-zA-Z]{30,}/) || [])[0] || '';
+  } catch { return ''; }
+}
+
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -127,6 +136,28 @@ const server = http.createServer((req, res) => {
       up.on('end', () => { res.writeHead(up.statusCode || 200, { 'Content-Type': 'application/json' }); res.end(b); });
     });
     preq.on('error', e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'FUEL upstream: ' + e.message })); });
+    preq.end();
+    return;
+  }
+
+  // GET /api/eia-fuel — FREE EIA weekly retail fuel prices (regional-average FLOOR for Gas Go POC).
+  // Real data, Tier-1 authoritative, provenance = EIA. Regional average only — never a per-station
+  // claim (that is the paid Zyla layer on /api/fuel). Forwards the client's querystring to EIA v2 with
+  // the api_key appended server-side. 503 with the missing var when no key — withhold, never fabricate.
+  if (req.method === 'GET' && req.url.startsWith('/api/eia-fuel')) {
+    const key = eiaKey();
+    if (!key) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['EIA_API_KEY'] })); return; }
+    const qs = req.url.split('?')[1] || '';
+    const preq = require('https').request({
+      hostname: 'api.eia.gov',
+      path: `/v2/petroleum/pri/gnd/data/?${qs}&api_key=${encodeURIComponent(key)}`,
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    }, up => {
+      let b = ''; up.on('data', c => b += c);
+      up.on('end', () => { res.writeHead(up.statusCode || 200, { 'Content-Type': 'application/json' }); res.end(b); });
+    });
+    preq.on('error', e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'EIA-FUEL upstream: ' + e.message })); });
     preq.end();
     return;
   }
