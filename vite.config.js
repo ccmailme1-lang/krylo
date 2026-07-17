@@ -21,6 +21,13 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Gas Go POC — free EIA regional-average floor on the local mock-server (EIA key server-side).
+      // MUST precede the '/api' catch-all so it resolves locally, not to production.
+      '/api/eia-fuel': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
       // KRYL-1052 — NARRATIVE facet: Event Registry proxy on the local mock-server (key
       // held server-side). Must precede the '/api' catch-all so it resolves locally.
       '/api/news-doc': {
