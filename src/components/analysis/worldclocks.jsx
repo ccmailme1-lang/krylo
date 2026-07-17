@@ -51,15 +51,18 @@ export default function WorldClocks() {
     const others = posRef.current.map((p, j) => (j === i ? null : p)); // fixed during this drag
     const move = (ev) => {
       let nx = ev.clientX - off.dx, ny = ev.clientY - off.dy;
-      // magnetic: if a rough edge lines up with another clock, snap flush + align rows
+      // magnetic: snap flush to the NEAREST clock's edge (never on top of one)
+      let best = null, bestDist = SNAP;
       for (const p of others) {
         if (!p) continue;
-        if (Math.abs(ny - p.y) < SNAP) {
-          if (Math.abs((nx + CLOCK_W) - p.x) < SNAP) { nx = p.x - CLOCK_W; ny = p.y; break; } // snap to its left
-          if (Math.abs(nx - (p.x + CLOCK_W)) < SNAP) { nx = p.x + CLOCK_W; ny = p.y; break; } // snap to its right
-          if (Math.abs(nx - p.x) < SNAP)            { nx = p.x;            ny = p.y; break; } // stack aligned
-        }
+        if (Math.abs(ny - p.y) >= SNAP) continue;           // same row / cluster
+        const leftX = p.x - CLOCK_W, rightX = p.x + CLOCK_W; // the two flush slots
+        const dL = Math.hypot(nx - leftX, ny - p.y);
+        const dR = Math.hypot(nx - rightX, ny - p.y);
+        if (dL < bestDist) { bestDist = dL; best = { x: leftX, y: p.y }; }
+        if (dR < bestDist) { bestDist = dR; best = { x: rightX, y: p.y }; }
       }
+      if (best) { nx = best.x; ny = best.y; }
       setPos(prev => prev.map((p, k) => (k === i ? { x: nx, y: ny } : p)));
     };
     const up = () => {
