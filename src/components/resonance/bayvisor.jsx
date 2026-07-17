@@ -304,7 +304,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct, bayNum, relevance
                     const vmin  = Math.min(...vels), vmax = Math.max(...vels), vrange = vmax - vmin || 1;
                     const W = 100, H = 38;
                     const pts   = vels.map((v, i) => ({
-                      x: (i / (vels.length - 1)) * W,
+                      x: (i / Math.max(vels.length - 1, 1)) * W, // guard: vels.length===1 (t.length===2) → /0 → NaN
                       y: H - ((v - vmin) / vrange) * (H - 4) - 2,
                     }));
                     const line  = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
@@ -331,7 +331,7 @@ function ModuleBody({ module, d, cone, assignment, color, pct, bayNum, relevance
                     const tmin  = Math.min(...t), tmax = Math.max(...t), trange = tmax - tmin || 1;
                     const W = 100, H = 38;
                     const pts   = t.map((v, i) => ({
-                      x: (i / (t.length - 1)) * W,
+                      x: (i / Math.max(t.length - 1, 1)) * W, // defensive: mirror the velocity-chart guard
                       y: H - ((v - tmin) / trange) * (H - 4) - 2,
                     }));
                     const line  = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
