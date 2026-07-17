@@ -34,16 +34,38 @@ export function groundednessBand(pct) {
   return 'red';
 }
 
+// Ladder order (low → high). CLOSED and CONFIRMED are reachable only by later organs (completeness
+// justification / intervention); this module can promote no higher than CORROBORATED.
+const LADDER = [STATUS.PROJECTED, STATUS.CORROBORATED, STATUS.CLOSED, STATUS.CONFIRMED];
+
 /**
- * stampEdge(edge) — label one causal edge. Pure; no mutation of the input.
- * @param {Object} edge — a Causal Impact Map impact: { from, to, type, source, grounded, ... }
- * @returns {Object} { from, to, type, mode, status, provenanceBacked, reason }
+ * invariance(record) — the Clark-completion / paper-fn-2 observational test. THRESHOLD-FREE (strict):
+ * the biconditional α ↔ β holds iff, across the record, α-present ALWAYS carried the effect AND
+ * α-absent NEVER did, on non-empty samples of both. Any noise tolerance is a RUNTIME_POLICY concern,
+ * NEVER baked into this core invariant (§11a: invariants have no knobs).
+ * @param {Object|null} record — { presentTotal, presentWithEffect, absentTotal, absentWithEffect }
+ * @returns {Object} { holds, necessary, sufficient, reason? }
  */
-export function stampEdge(edge = {}) {
+export function invariance(record) {
+  if (!record) return { holds: false, reason: 'NO_RECORD' };
+  const { presentTotal = 0, presentWithEffect = 0, absentTotal = 0, absentWithEffect = 0 } = record;
+  if (presentTotal <= 0 || absentTotal <= 0) return { holds: false, reason: 'INSUFFICIENT_SAMPLE' };
+  const sufficient = presentWithEffect === presentTotal; // α present → effect present
+  const necessary  = absentWithEffect === 0;             // α absent  → effect absent
+  return { holds: sufficient && necessary, necessary, sufficient };
+}
+
+/**
+ * stampEdge(edge, record) — label one causal edge. Pure; no mutation of the input.
+ * @param {Object} edge   — a Causal Impact Map impact: { from, to, type, source, grounded, ... }
+ * @param {Object|null} record — optional present/absent record for the invariance test (default null)
+ * @returns {Object} { from, to, type, mode, status, provenanceBacked, invariance, reason }
+ */
+export function stampEdge(edge = {}, record = null) {
   const provenanceBacked = !!edge.grounded; // real source (not UNKNOWN/absent) — §22 tentative otherwise
-  // Status: no invariance test on this substrate → cannot rise past PROJECTED honestly.
-  const status = STATUS.PROJECTED;
-  // Mode: no reasoning-origin tag on registry edges → unknown until AR/EDL exist.
+  const inv = invariance(record);           // null record → { holds:false } → floors at PROJECTED (fail-safe)
+  const status = inv.holds ? STATUS.CORROBORATED : STATUS.PROJECTED;
+  // Mode: no reasoning-origin tag on registry edges → unknown until AR/EDL exist. Never guessed.
   const mode = null;
   return {
     from: edge.from ?? null,
@@ -52,40 +74,51 @@ export function stampEdge(edge = {}) {
     mode,
     status,
     provenanceBacked,
-    reason: provenanceBacked
-      ? 'PROVENANCE_BACKED — observed source; invariance untested (status floors at PROJECTED)'
-      : 'TENTATIVE — no provenance (§22 absence); PROJECTED, 0 groundedness',
+    invariance: record ? inv : null,
+    reason: inv.holds
+      ? 'CORROBORATED — invariance holds (present→effect AND absent→¬effect)'
+      : provenanceBacked
+        ? 'PROVENANCE_BACKED — observed source; invariance untested/failed → PROJECTED'
+        : 'TENTATIVE — no provenance (§22 absence); PROJECTED, 0 groundedness',
   };
 }
 
 /**
- * stampChain(edges) — stamp a set of causal edges and roll up the two axes.
+ * stampChain(edges, opts) — stamp a set of causal edges and roll up the two axes.
  * @param {Array} edges — impacts[] from buildImpactMap (or any {grounded,...}[])
+ * @param {Object} [opts] — { recordFor: (edge) => record|null } supplies invariance records per edge
  * @returns {Object} {
- *   edges[], count, provenanceBackedCount,
- *   groundedness, band,                 // AXIS-adjacent: observed fraction (§18 H1)
- *   statusFloor, modeProfile            // the two axes' rollup (both PROJECTED/unknown this slice)
+ *   edges[], count, provenanceBackedCount, corroboratedCount,
+ *   groundedness, band,     // observed fraction (§18 H1) — DECOUPLED from status
+ *   statusFloor, modeProfile
  * }
  */
-export function stampChain(edges = []) {
+export function stampChain(edges = [], { recordFor = null } = {}) {
   const list = Array.isArray(edges) ? edges : [];
-  const stamped = list.map(stampEdge);
+  const stamped = list.map(e => stampEdge(e, recordFor ? recordFor(e) : null));
   const count = stamped.length;
   const provenanceBackedCount = stamped.filter(e => e.provenanceBacked).length;
+  const corroboratedCount     = stamped.filter(e => e.status === STATUS.CORROBORATED).length;
 
-  // §18 H1: groundedness = Σ(observed weight) / Σ(all weight). Edges are unweighted here → counts.
+  // §18 H1: groundedness = Σ(observed weight) / Σ(all weight). Edges unweighted → counts. Observed =
+  // provenance-backed (NOT status): provenance-backing and invariance-survival are different claims (§23).
   const groundedness = count === 0 ? 0 : Math.round((provenanceBackedCount / count) * 100);
 
-  // Mode profile — all unknown until a reasoning stage tags origins.
+  // Status floor = the lowest rung present (PROJECTED unless every edge cleared invariance).
+  const statusFloor = count === 0
+    ? STATUS.PROJECTED
+    : LADDER[Math.min(...stamped.map(e => LADDER.indexOf(e.status)))];
+
   const modeProfile = { [MODE.ABDUCTION]: 0, [MODE.DEDUCTION]: 0, [MODE.INDUCTION]: 0, unknown: count };
 
   return {
     edges: stamped,
     count,
     provenanceBackedCount,
+    corroboratedCount,
     groundedness,                 // 0 on empty (fail-safe): no edges → nothing observed
     band: groundednessBand(groundedness),
-    statusFloor: STATUS.PROJECTED, // rises to CORROBORATED with invariance, CLOSED with completeness
+    statusFloor,
     modeProfile,
   };
 }
