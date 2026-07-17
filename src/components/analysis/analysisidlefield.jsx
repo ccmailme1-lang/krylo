@@ -1714,7 +1714,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
             <span>FRAME <span style={{ color: 'rgba(102,255,0,0.7)' }}>{frameId}</span></span>
             <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
-            <span>{projectedState.label}</span>
+            {/* DEF-1875: track the live session state like the header (was stuck on projectedState → stale badge) */}
+            <span>{hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}</span>
             {packets.length > 0 && (
               <>
                 <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
