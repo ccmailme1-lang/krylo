@@ -72,7 +72,7 @@ export default function PetroTemplate({ petro }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
             <div style={{
               position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
-              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10,
+              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 460,
               background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
               boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
             }}>
@@ -93,7 +93,7 @@ export default function PetroTemplate({ petro }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
             <div style={{
               position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
-              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10,
+              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 460,
               background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
               boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
             }}>

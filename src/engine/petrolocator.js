@@ -104,8 +104,15 @@ const STATE_DUOAREA = {
 
 function scopeOf(duoarea) {
   if (duoarea === 'NUS') return 'NATIONAL';
-  return duoarea[0] === 'S' ? 'STATE' : 'PADD';
+  return duoarea[0] === 'S' ? 'STATE' : 'REGIONAL'; // never surface "PADD" to the user
 }
+
+// EIA duoarea → friendly display name (no PADD jargon). States title-case their own name.
+const AREA_FRIENDLY = {
+  R1X: 'New England', R1Y: 'Central Atlantic', R1Z: 'Lower Atlantic',
+  R20: 'Midwest', R30: 'Gulf Coast', R40: 'Rocky Mountain', R50: 'West Coast', NUS: 'United States',
+};
+const titleCase = (s) => String(s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
 // lat/lon → US state name via Nominatim (free, no key). Null on failure.
 async function coordsToState(lat, lon) {
@@ -141,7 +148,7 @@ export async function findAverageFuel({ type = 'regular' } = {}) {
   return {
     kind:     'AVG',
     scope:    scopeOf(duoarea),
-    area:     row['area-name'] || 'U.S.',
+    area:     AREA_FRIENDLY[duoarea] || titleCase(row['area-name']) || 'United States',
     average:  Number(row.value),
     period:   row.period,
     type,
