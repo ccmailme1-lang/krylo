@@ -37,6 +37,11 @@ ladder instead of a binary:
 - **PROJECTED** — hypothesized; no observed backing. (§22 fail-safe default.)
 - **CORROBORATED** — survived observational invariance across the record (α-present → β AND
   α-absent → ¬β). Strictly stronger than prediction-confirmed; NOT interventional. Buildable now.
+- **CLOSED** — completeness of the cause set justified within a bounded domain (Clark completion /
+  explanatory closure) ⇒ assert α↔β ⇒ backward inference (¬β ⊢ ¬α) becomes *deduction*, and a
+  closure-violation detector is armed (a break = §22 anomalous absence = new-cause discovery).
+  Obtained observationally, no intervention. Sound ONLY while the closed-world assumption holds for
+  that domain — every closure is scoped and revocable. See `rfa-integration-closure-spine.md`.
 - **CONFIRMED** — survived intervention (do-calculus). KRYLO is a pure observer today — "doing is
   not reducible to seeing" (Pearl, cited in the paper) — so this rung is **stubbed**: a defined
   state nothing can currently reach, gated on a future capability to act. Filed to §19.
@@ -82,7 +87,7 @@ Per edge (two orthogonal axes, §23):
 ```
 { from, to,
   mode:   'ABDUCTION' | 'DEDUCTION' | 'INDUCTION',   // AXIS 1 — inference kind
-  status: 'PROJECTED' | 'CORROBORATED' | 'CONFIRMED', // AXIS 2 — survival ladder
+  status: 'PROJECTED' | 'CORROBORATED' | 'CLOSED' | 'CONFIRMED', // AXIS 2 — survival ladder
   weight,                        // existing edge weight (unchanged)
   evidenceRef,                   // CanonicalEvent id(s) / grounded-signal ref, or null
   invariance                     // { present, absent } counts from the record, or null
