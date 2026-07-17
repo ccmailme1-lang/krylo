@@ -88,6 +88,8 @@ import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import StickyTape             from './components/surface/stickytape.jsx';
+import ProfilePicker          from './components/surface/profilepicker.jsx';
+import { getActiveProfile }   from './store/useprofilestore.js';
 import { resolveGeo }         from './engine/georesolver.js';
 import { detectPersonaFromProfile } from './engine/lensrouter.js';
 const SignalMap = signalmap;
@@ -825,8 +827,9 @@ export default function App() {
 
     const sessionId = `session_${timestamp}`;
     const lens = detectedLens ?? '10K View';
-    createSession(sessionId, lens, q, { source, node_id, domain, routing_target });
-    emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target });
+    const profileId = getActiveProfile(); // KRYL-1029 — tag the session to the active tester
+    createSession(sessionId, lens, q, { source, node_id, domain, routing_target, profileId });
+    emitTelemetry({ type: 'session_open', sessionId, source, query: q, timestamp, node_id, domain, routing_target, profileId });
     // KRYL-1001 — background processing (cone assignment) populates analysis
     // without switching the view; only the foreground path navigates.
     if (navigate) setNavMode('analysis');
@@ -1192,6 +1195,9 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* KRYL-1029 — light test-account sign-in (pick screen + active badge) */}
+      <ProfilePicker />
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
       <StickyTape />
