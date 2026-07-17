@@ -526,7 +526,7 @@ export default function TargetPacket() {
 
         {/* Left: Primary Signal */}
         <div style={{
-          flex: 1.5, padding: '20px 24px',
+          flex: 1.5, minWidth: 0, padding: '20px 24px', // DEF-300: minWidth:0 lets this flex column shrink so long titles wrap, not overflow
           borderRight: `1px solid ${BORDER}`,
           display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
         }}>
@@ -534,7 +534,7 @@ export default function TargetPacket() {
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
               Primary Signal
             </div>
-            <div style={{ fontFamily: SERIF, fontSize: 22, color: BRT, lineHeight: 1.2, marginBottom: 12 }}>
+            <div style={{ fontFamily: SERIF, fontSize: 22, color: BRT, lineHeight: 1.2, marginBottom: 12, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
               {entity}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
