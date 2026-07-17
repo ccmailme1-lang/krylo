@@ -35,6 +35,7 @@ export function deltasToObservations(data, { signal, series = null, source = 'EI
       ts: rows[i].period,
       present: delta < 0, // DRAWDOWN present / BUILD absent — data-defined, no invented threshold
       confidence,
+      tier: 1, // EIA = authoritative gov/regulatory source (can corroborate)
       provenance: { source, series, period: rows[i].period },
       context: { delta, value: cur * 1000, direction: delta < 0 ? 'DRAWDOWN' : 'BUILD' },
     });

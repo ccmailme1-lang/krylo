@@ -30,11 +30,12 @@ export function createFabric() {
  * @param obs { signal, ts, present:boolean, confidence?, provenance?, context? }
  * Ignores malformed input (present must be an explicit boolean — no coercion; unknown stays unknown).
  */
-export function observe(fabric, { signal, ts, present, confidence = null, provenance = null, context = null } = {}) {
+export function observe(fabric, { signal, ts, present, confidence = null, provenance = null, context = null, tier = null } = {}) {
   if (!fabric?.buckets || !signal || ts == null || typeof present !== 'boolean') return fabric;
   const key = String(ts);
   if (!fabric.buckets.has(key)) fabric.buckets.set(key, new Map());
-  fabric.buckets.get(key).set(up(signal), { present, confidence, provenance, context });
+  // tier: 1 authoritative (gov/regulatory), 2 commercial (licensed), 3 crowd/observational. null = unmarked.
+  fabric.buckets.get(key).set(up(signal), { present, confidence, provenance, context, tier });
   return fabric;
 }
 
@@ -42,9 +43,9 @@ export function observe(fabric, { signal, ts, present, confidence = null, proven
  * observeRow(fabric, row) — Observation Normalizer for a time-aligned state row (his "good" table shape):
  * @param row { ts, states: { SIGNAL: boolean, ... }, confidence?, provenance?, context? }
  */
-export function observeRow(fabric, { ts, states = {}, confidence = null, provenance = null, context = null } = {}) {
+export function observeRow(fabric, { ts, states = {}, confidence = null, provenance = null, context = null, tier = null } = {}) {
   for (const [signal, present] of Object.entries(states)) {
-    if (typeof present === 'boolean') observe(fabric, { signal, ts, present, confidence, provenance, context });
+    if (typeof present === 'boolean') observe(fabric, { signal, ts, present, confidence, provenance, context, tier });
   }
   return fabric;
 }
@@ -59,15 +60,17 @@ export function buildInvarianceRecord(fabric, alpha, beta, { minCounterstates = 
   if (!fabric?.buckets) return null;
   const A = up(alpha), B = up(beta);
   let presentTotal = 0, presentWithEffect = 0, absentTotal = 0, absentWithEffect = 0;
+  let evidenceTier = null; // weakest-link tier across contributing evidence (higher = weaker; null ignored)
   for (const states of fabric.buckets.values()) {
     const a = states.get(A), b = states.get(B);
     if (!a || !b) continue; // need explicit obs of BOTH (§22: unobserved ≠ absent)
+    for (const t of [a.tier, b.tier]) if (t != null) evidenceTier = evidenceTier == null ? t : Math.max(evidenceTier, t);
     if (a.present === true)      { presentTotal++; if (b.present === true) presentWithEffect++; }
     else if (a.present === false) { absentTotal++; if (b.present === true) absentWithEffect++; }
   }
   // DOCTRINE: no invariance claim without both presence AND absence counterstates at/above the floor.
   if (presentTotal < minCounterstates || absentTotal < minCounterstates) return null;
-  return { presentTotal, presentWithEffect, absentTotal, absentWithEffect };
+  return { presentTotal, presentWithEffect, absentTotal, absentWithEffect, evidenceTier };
 }
 
 /**

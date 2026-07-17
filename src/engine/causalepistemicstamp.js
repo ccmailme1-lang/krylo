@@ -64,7 +64,13 @@ export function invariance(record) {
 export function stampEdge(edge = {}, record = null) {
   const provenanceBacked = !!edge.grounded; // real source (not UNKNOWN/absent) — §22 tentative otherwise
   const inv = invariance(record);           // null record → { holds:false } → floors at PROJECTED (fail-safe)
-  const status = inv.holds ? STATUS.CORROBORATED : STATUS.PROJECTED;
+  // Evidence-tier cap (Founder doctrine): CORROBORATED needs authoritative/commercial evidence (Tier ≤ 2).
+  // Tier-3 (crowd/observational, e.g. Gas Go) can only POINT attention, never corroborate. Unmarked (null)
+  // is not assumed crowd — mark crowd feeds Tier 3 to invoke the cap. "Observe, don't assert."
+  const evidenceTier = record && record.evidenceTier != null ? record.evidenceTier : null;
+  const authoritative = evidenceTier == null || evidenceTier <= 2;
+  const tier3Candidate = inv.holds && !authoritative; // invariance holds but only on Tier-3 data
+  const status = (inv.holds && authoritative) ? STATUS.CORROBORATED : STATUS.PROJECTED;
   // Mode: no reasoning-origin tag on registry edges → unknown until AR/EDL exist. Never guessed.
   const mode = null;
   return {
@@ -75,11 +81,15 @@ export function stampEdge(edge = {}, record = null) {
     status,
     provenanceBacked,
     invariance: record ? inv : null,
-    reason: inv.holds
-      ? 'CORROBORATED — invariance holds (present→effect AND absent→¬effect)'
-      : provenanceBacked
-        ? 'PROVENANCE_BACKED — observed source; invariance untested/failed → PROJECTED'
-        : 'TENTATIVE — no provenance (§22 absence); PROJECTED, 0 groundedness',
+    evidenceTier,
+    tier3Candidate,
+    reason: (inv.holds && authoritative)
+      ? 'CORROBORATED — invariance holds (present→effect AND absent→¬effect), Tier ≤ 2 evidence'
+      : tier3Candidate
+        ? 'TIER3_CANDIDATE — invariance holds on Tier-3 (crowd/observational) data only; a look-here signal, validate with an authoritative source before asserting'
+        : provenanceBacked
+          ? 'PROVENANCE_BACKED — observed source; invariance untested/failed → PROJECTED'
+          : 'TENTATIVE — no provenance (§22 absence); PROJECTED, 0 groundedness',
   };
 }
 
@@ -99,6 +109,7 @@ export function stampChain(edges = [], { recordFor = null } = {}) {
   const count = stamped.length;
   const provenanceBackedCount = stamped.filter(e => e.provenanceBacked).length;
   const corroboratedCount     = stamped.filter(e => e.status === STATUS.CORROBORATED).length;
+  const tier3CandidateCount   = stamped.filter(e => e.tier3Candidate).length; // look-here signals, not corroboration
 
   // §18 H1: groundedness = Σ(observed weight) / Σ(all weight). Edges unweighted → counts. Observed =
   // provenance-backed (NOT status): provenance-backing and invariance-survival are different claims (§23).
@@ -116,6 +127,7 @@ export function stampChain(edges = [], { recordFor = null } = {}) {
     count,
     provenanceBackedCount,
     corroboratedCount,
+    tier3CandidateCount,
     groundedness,                 // 0 on empty (fail-safe): no edges → nothing observed
     band: groundednessBand(groundedness),
     statusFloor,
