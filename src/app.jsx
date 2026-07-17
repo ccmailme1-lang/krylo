@@ -1200,8 +1200,8 @@ export default function App() {
       {/* KRYL-1029 — light test-account sign-in (pick screen + active badge) */}
       <ProfilePicker />
 
-      {/* World clocks — draggable, magnetic (snap together in proximity) */}
-      <WorldClocks />
+      {/* World clocks — analysis page only */}
+      {navMode === 'analysis' && <WorldClocks />}
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
       <StickyTape />
