@@ -89,6 +89,7 @@ import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import StickyTape             from './components/surface/stickytape.jsx';
 import ProfilePicker          from './components/surface/profilepicker.jsx';
+import WorldClocks            from './components/analysis/worldclocks.jsx';
 import { getActiveProfile }   from './store/useprofilestore.js';
 import { resolveGeo }         from './engine/georesolver.js';
 import { detectPersonaFromProfile } from './engine/lensrouter.js';
@@ -1198,6 +1199,9 @@ export default function App() {
 
       {/* KRYL-1029 — light test-account sign-in (pick screen + active badge) */}
       <ProfilePicker />
+
+      {/* World clocks — draggable, magnetic (snap together in proximity) */}
+      <WorldClocks />
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
       <StickyTape />
