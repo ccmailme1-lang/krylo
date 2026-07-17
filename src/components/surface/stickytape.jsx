@@ -2,8 +2,8 @@
 // Industry-standard treatment: drag off the NOTES dispenser to place a note; notes open FULL;
 // drag anywhere; resize from the corner handle; DOUBLE-CLICK the header (or ×) collapses to a
 // small blue NotebookPen ICON; LONG-PRESS a note (or its icon) opens color options; RIGHT-CLICK
-// deletes (no confirm) with Cmd/Ctrl+Z undo. Persists to sessionStorage; getStickies() rides the
-// premium export.
+// opens a menu → Delete → confirm. Cmd/Ctrl+Z undoes the last delete. Persists to sessionStorage;
+// getStickies() rides the premium export.
 
 import React, { useRef, useState, useEffect } from 'react';
 import { NotebookPen } from 'lucide-react';
@@ -20,13 +20,16 @@ function StickyNote({ note }) {
   const update = useStickyStore(s => s.updateSticky);
   const remove = useStickyStore(s => s.removeSticky);
   const st = useRef({ moved: false, longFired: false });
-  const [menu, setMenu] = useState(false);
+  const [menu, setMenu] = useState(false);      // long-press color palette
+  const [ctx, setCtx]   = useState(null);       // right-click menu position {x,y}
+  const [confirm, setConfirm] = useState(false); // delete confirmation
   const w = note.w ?? OPEN_MIN_W;
   const color = note.color ?? NOTE_COLOR;
 
   // Drag via window listeners → moves anywhere. clickOpen = tap on the collapsed icon expands it.
   // A hold with no movement (LONG_PRESS_MS) opens the color menu instead of dragging/expanding.
   const startDrag = (e, opts = {}) => {
+    if (e.button === 2) return; // right-click handled by onContextMenu
     if (e.target.tagName === 'TEXTAREA' || e.target.dataset.role) return;
     const off = { dx: e.clientX - note.x, dy: e.clientY - note.y };
     const s = st.current; s.moved = false; s.longFired = false;
@@ -58,7 +61,8 @@ function StickyNote({ note }) {
     window.addEventListener('pointerup', up);
   };
 
-  const del = (e) => { e.preventDefault(); remove(note.id); }; // right-click; undo via Cmd/Ctrl+Z
+  // Right-click → menu (Delete) → confirm. The normal-file path.
+  const onCtx = (e) => { e.preventDefault(); setMenu(false); setCtx({ x: e.clientX, y: e.clientY }); };
 
   // Long-press color palette (shared by both states).
   const colorMenu = menu && (
@@ -80,11 +84,51 @@ function StickyNote({ note }) {
     </>
   );
 
-  // Collapsed: small blue NotebookPen icon (tap to expand, long-press for colors).
+  // Right-click context menu → Delete.
+  const ctxMenu = ctx && (
+    <>
+      <div onPointerDown={() => setCtx(null)} onContextMenu={(e) => { e.preventDefault(); setCtx(null); }}
+        style={{ position: 'fixed', inset: 0, zIndex: 10000 }} />
+      <div style={{
+        position: 'fixed', left: ctx.x, top: ctx.y, zIndex: 10001, minWidth: 120,
+        background: '#141414', border: '1px solid rgba(255,255,255,0.18)', boxShadow: '0 6px 18px rgba(0,0,0,0.6)',
+      }}>
+        <div onPointerDown={(e) => { e.stopPropagation(); setCtx(null); setConfirm(true); }}
+          style={{
+            fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'rgba(255,120,120,0.95)',
+            padding: '8px 12px', cursor: 'pointer',
+          }}>Delete</div>
+      </div>
+    </>
+  );
+
+  // Delete confirmation dialog.
+  const confirmBox = confirm && (
+    <>
+      <div style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'rgba(0,0,0,0.55)' }} />
+      <div style={{
+        position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', zIndex: 10002,
+        background: '#141414', border: '1px solid rgba(255,255,255,0.18)', padding: '18px 20px',
+        display: 'flex', flexDirection: 'column', gap: 14, minWidth: 220,
+      }}>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.85)' }}>Delete this note?</div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button onPointerDown={() => setConfirm(false)}
+            style={{ fontFamily: MONO, fontSize: 11, padding: '6px 12px', cursor: 'pointer',
+              background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.2)' }}>Cancel</button>
+          <button onPointerDown={() => { setConfirm(false); remove(note.id); }}
+            style={{ fontFamily: MONO, fontSize: 11, padding: '6px 12px', cursor: 'pointer',
+              background: 'rgba(255,80,80,0.14)', color: 'rgba(255,120,120,0.95)', border: '1px solid rgba(255,80,80,0.5)' }}>Delete</button>
+        </div>
+      </div>
+    </>
+  );
+
+  // Collapsed: small blue NotebookPen icon (tap to expand, long-press for colors, right-click to delete).
   if (note.min) {
     return (
       <>
-        <div title={note.text || 'note'} onContextMenu={del}
+        <div title={note.text || 'note'} onContextMenu={onCtx}
           onPointerDown={(e) => startDrag(e, { clickOpen: true })}
           onDoubleClick={() => update(note.id, { min: false })}
           style={{
@@ -94,15 +138,15 @@ function StickyNote({ note }) {
           }}>
           <NotebookPen size={22} color={color} strokeWidth={2} />
         </div>
-        {colorMenu}
+        {colorMenu}{ctxMenu}{confirmBox}
       </>
     );
   }
 
-  // Full note: drag from body; double-click header (or ×) collapses; right-click deletes; corner resize.
+  // Full note: drag from body; double-click header (or ×) collapses; right-click → delete; corner resize.
   return (
     <>
-      <div onPointerDown={(e) => startDrag(e)} onContextMenu={del}
+      <div onPointerDown={(e) => startDrag(e)} onContextMenu={onCtx}
         style={{
           position: 'fixed', left: note.x, top: note.y, width: w, height: note.h ?? OPEN_MIN_H, zIndex: 9998,
           background: color, color: '#1A1A1A', boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
@@ -124,7 +168,7 @@ function StickyNote({ note }) {
             background: 'linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.35) 45%)',
           }} />
       </div>
-      {colorMenu}
+      {colorMenu}{ctxMenu}{confirmBox}
     </>
   );
 }
@@ -135,7 +179,7 @@ export default function StickyTape() {
   const restoreLast = useStickyStore(s => s.restoreLast);
   const [ghost, setGhost] = useState(null);
 
-  // Cmd/Ctrl+Z restores the last deleted note (standard undo, no confirm dialog on delete).
+  // Cmd/Ctrl+Z restores the last deleted note.
   useEffect(() => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) restoreLast();
