@@ -8,10 +8,10 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LED = '#66FF00';
-const CLOCK_W = 96, CLOCK_H = 56;
+const CLOCK_W = 82, CLOCK_H = 48; // −15% from 96×56
 const GAP = 6;    // edges within this = "attached" (same group)
 const SNAP = 72;  // snap flush when a moving edge comes within this of another clock
-const KEY = 'krylo_worldclock_pos_v2'; // v2 — discards any corrupt v1 positions
+const KEY = 'krylo_worldclock_pos_v3'; // v3 — new default row below the header
 
 const CLOCKS = [
   { city: 'NEW YORK',  tz: 'America/New_York' },
@@ -32,7 +32,7 @@ const vw = () => (typeof window !== 'undefined' ? window.innerWidth : 1400);
 const vh = () => (typeof window !== 'undefined' ? window.innerHeight : 900);
 
 // default: one clean row, top-right, in listed order (NY · London · Hong Kong · Tokyo)
-const defaults = () => CLOCKS.map((_, i) => ({ x: vw() - (CLOCKS.length - i) * CLOCK_W - 24, y: 80 }));
+const defaults = () => CLOCKS.map((_, i) => ({ x: vw() - (CLOCKS.length - i) * CLOCK_W - 24, y: 200 }));
 
 const clampPt = (p) => ({
   x: Math.max(0, Math.min(p.x, vw() - CLOCK_W)),
@@ -192,11 +192,11 @@ export default function WorldClocks() {
               background: '#0a0a0a', border: '1px solid rgba(102,255,0,0.15)', cursor: 'grab', userSelect: 'none',
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
             }}>
-            <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.14em', color: 'rgba(102,255,0,0.55)', marginBottom: 3 }}>{c.city}</div>
-            <div style={{ fontFamily: MONO, fontSize: 15, fontWeight: 700, color: LED, textShadow: '0 0 6px rgba(102,255,0,0.55)', lineHeight: 1 }}>
+            <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.14em', color: 'rgba(102,255,0,0.55)', marginBottom: 3 }}>{c.city}</div>
+            <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: LED, textShadow: '0 0 6px rgba(102,255,0,0.55)', lineHeight: 1 }}>
               {hh}<span style={{ opacity: blink ? 1 : 0.25 }}>:</span>{mm}
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 10, color: LED, textShadow: '0 0 5px rgba(102,255,0,0.5)', letterSpacing: '0.08em', marginTop: 2 }}>{date}</div>
+            <div style={{ fontFamily: MONO, fontSize: 8.5, color: LED, textShadow: '0 0 5px rgba(102,255,0,0.5)', letterSpacing: '0.08em', marginTop: 2 }}>{date}</div>
           </div>
         );
       })}
