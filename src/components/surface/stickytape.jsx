@@ -1,36 +1,45 @@
 // stickytape.jsx — KRYL-1051 Sticky-Tape. Left-nav dispenser + free-drop annotation layer.
 // Industry-standard treatment: drag off the NOTES dispenser to place a note; notes open FULL;
 // drag anywhere; resize from the corner handle; DOUBLE-CLICK the header (or ×) collapses to a
-// title bar showing the text; RIGHT-CLICK deletes (no confirm) with Cmd/Ctrl+Z undo. Persists to
-// sessionStorage; getStickies() rides the premium export.
+// small blue NotebookPen ICON; LONG-PRESS a note (or its icon) opens color options; RIGHT-CLICK
+// deletes (no confirm) with Cmd/Ctrl+Z undo. Persists to sessionStorage; getStickies() rides the
+// premium export.
 
 import React, { useRef, useState, useEffect } from 'react';
+import { NotebookPen } from 'lucide-react';
 import { useStickyStore } from '../../store/usestickystore.js';
 
 const MONO = "'IBM Plex Mono', monospace";
-const NOTE_COLOR = '#4FD1C5';            // blue sticky
+const NOTE_COLOR = '#4FD1C5';            // default sticky blue
+const COLORS = ['#4FD1C5', '#66FF00', '#FF69B4']; // long-press palette: blue · lime · hot pink (Founder-approved)
 const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default (minimal) open size; user-resizable
 const TAB_W = 21, TAB_H = 36;            // ghost tab while dragging off the dispenser
+const LONG_PRESS_MS = 500;
 
 function StickyNote({ note }) {
   const update = useStickyStore(s => s.updateSticky);
   const remove = useStickyStore(s => s.removeSticky);
-  const st = useRef({ moved: false });
+  const st = useRef({ moved: false, longFired: false });
+  const [menu, setMenu] = useState(false);
   const w = note.w ?? OPEN_MIN_W;
+  const color = note.color ?? NOTE_COLOR;
 
-  // Drag via window listeners → moves anywhere. clickOpen = tap on the collapsed bar expands it.
+  // Drag via window listeners → moves anywhere. clickOpen = tap on the collapsed icon expands it.
+  // A hold with no movement (LONG_PRESS_MS) opens the color menu instead of dragging/expanding.
   const startDrag = (e, opts = {}) => {
     if (e.target.tagName === 'TEXTAREA' || e.target.dataset.role) return;
     const off = { dx: e.clientX - note.x, dy: e.clientY - note.y };
-    const s = st.current; s.moved = false;
+    const s = st.current; s.moved = false; s.longFired = false;
+    const timer = setTimeout(() => { if (!s.moved) { s.longFired = true; setMenu(true); } }, LONG_PRESS_MS);
     const move = (ev) => {
-      if (!s.moved && Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 3) s.moved = true;
+      if (!s.moved && Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 3) { s.moved = true; clearTimeout(timer); }
       if (s.moved) update(note.id, { x: ev.clientX - off.dx, y: ev.clientY - off.dy });
     };
     const up = () => {
+      clearTimeout(timer);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (opts.clickOpen && !s.moved) update(note.id, { min: false });
+      if (opts.clickOpen && !s.moved && !s.longFired) update(note.id, { min: false });
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -51,49 +60,72 @@ function StickyNote({ note }) {
 
   const del = (e) => { e.preventDefault(); remove(note.id); }; // right-click; undo via Cmd/Ctrl+Z
 
-  // Collapsed: title bar showing the text (double-click / tap to expand).
+  // Long-press color palette (shared by both states).
+  const colorMenu = menu && (
+    <>
+      <div onPointerDown={() => setMenu(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
+      <div style={{
+        position: 'fixed', left: note.x, top: note.y + 34, zIndex: 10000, display: 'flex', gap: 6, padding: 6,
+        background: '#111', border: '1px solid rgba(255,255,255,0.18)', boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+      }}>
+        {COLORS.map(col => (
+          <div key={col} title={col}
+            onPointerDown={(e) => { e.stopPropagation(); update(note.id, { color: col }); setMenu(false); }}
+            style={{
+              width: 18, height: 18, background: col, cursor: 'pointer',
+              border: col === color ? '2px solid #fff' : '1px solid rgba(0,0,0,0.35)',
+            }} />
+        ))}
+      </div>
+    </>
+  );
+
+  // Collapsed: small blue NotebookPen icon (tap to expand, long-press for colors).
   if (note.min) {
     return (
-      <div title={note.text || 'note'} onContextMenu={del}
-        onPointerDown={(e) => startDrag(e, { clickOpen: true })}
-        onDoubleClick={() => update(note.id, { min: false })}
-        style={{
-          position: 'fixed', left: note.x, top: note.y, width: w, height: 22, zIndex: 9998,
-          background: NOTE_COLOR, color: '#1A1A1A', boxShadow: '0 3px 10px rgba(0,0,0,0.5)',
-          cursor: 'grab', pointerEvents: 'auto', display: 'flex', alignItems: 'center', overflow: 'hidden',
-        }}>
-        <span style={{
-          flex: 1, fontFamily: MONO, fontSize: 10, padding: '0 6px',
-          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-        }}>{note.text || 'note'}</span>
-      </div>
+      <>
+        <div title={note.text || 'note'} onContextMenu={del}
+          onPointerDown={(e) => startDrag(e, { clickOpen: true })}
+          onDoubleClick={() => update(note.id, { min: false })}
+          style={{
+            position: 'fixed', left: note.x, top: note.y, width: 30, height: 30, zIndex: 9998,
+            cursor: 'grab', pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            filter: 'drop-shadow(0 2px 5px rgba(0,0,0,0.6))',
+          }}>
+          <NotebookPen size={22} color={color} strokeWidth={2} />
+        </div>
+        {colorMenu}
+      </>
     );
   }
 
   // Full note: drag from body; double-click header (or ×) collapses; right-click deletes; corner resize.
   return (
-    <div onPointerDown={(e) => startDrag(e)} onContextMenu={del}
-      style={{
-        position: 'fixed', left: note.x, top: note.y, width: w, height: note.h ?? OPEN_MIN_H, zIndex: 9998,
-        background: NOTE_COLOR, color: '#1A1A1A', boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
-        display: 'flex', flexDirection: 'column', cursor: 'grab', pointerEvents: 'auto', overflow: 'hidden',
-      }}>
-      <div onDoubleClick={() => update(note.id, { min: true })}
-        style={{ display: 'flex', justifyContent: 'flex-end', padding: '2px 4px' }}>
-        <span data-role="collapse" onClick={(e) => { e.stopPropagation(); update(note.id, { min: true }); }}
-          style={{ cursor: 'pointer', fontFamily: MONO, fontSize: 13, color: '#1A1A1A', lineHeight: 1, padding: '2px 5px' }}>×</span>
+    <>
+      <div onPointerDown={(e) => startDrag(e)} onContextMenu={del}
+        style={{
+          position: 'fixed', left: note.x, top: note.y, width: w, height: note.h ?? OPEN_MIN_H, zIndex: 9998,
+          background: color, color: '#1A1A1A', boxShadow: '0 6px 18px rgba(0,0,0,0.5)',
+          display: 'flex', flexDirection: 'column', cursor: 'grab', pointerEvents: 'auto', overflow: 'hidden',
+        }}>
+        <div onDoubleClick={() => update(note.id, { min: true })}
+          style={{ display: 'flex', justifyContent: 'flex-end', padding: '2px 4px' }}>
+          <span data-role="collapse" onClick={(e) => { e.stopPropagation(); update(note.id, { min: true }); }}
+            style={{ cursor: 'pointer', fontFamily: MONO, fontSize: 13, color: '#1A1A1A', lineHeight: 1, padding: '2px 5px' }}>×</span>
+        </div>
+        <textarea value={note.text} onChange={(e) => update(note.id, { text: e.target.value })} placeholder="note…"
+          style={{
+            flex: 1, resize: 'none', border: 'none', outline: 'none', background: 'transparent', color: '#1A1A1A',
+            fontFamily: MONO, fontSize: 11, lineHeight: 1.4, padding: '0 8px 8px', cursor: 'text',
+          }} />
+        <div data-role="resize" onPointerDown={startResize}
+          style={{
+            position: 'absolute', right: 0, bottom: 0, width: 12, height: 12, cursor: 'nwse-resize',
+            background: 'linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.35) 45%)',
+          }} />
       </div>
-      <textarea value={note.text} onChange={(e) => update(note.id, { text: e.target.value })} placeholder="note…"
-        style={{
-          flex: 1, resize: 'none', border: 'none', outline: 'none', background: 'transparent', color: '#1A1A1A',
-          fontFamily: MONO, fontSize: 11, lineHeight: 1.4, padding: '0 8px 8px', cursor: 'text',
-        }} />
-      <div data-role="resize" onPointerDown={startResize}
-        style={{
-          position: 'absolute', right: 0, bottom: 0, width: 12, height: 12, cursor: 'nwse-resize',
-          background: 'linear-gradient(135deg, transparent 45%, rgba(0,0,0,0.35) 45%)',
-        }} />
-    </div>
+      {colorMenu}
+    </>
   );
 }
 
