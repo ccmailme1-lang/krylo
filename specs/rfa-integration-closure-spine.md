@@ -158,6 +158,59 @@ hypothesis fetch → `{mode, status, provenance}`; closure violation → spawns 
 Node/edge model: nodes = {observation, hypothesis}; edges = {supports, refutes, expects_absent}.
 Concrete API + persistence are deferred to build-time WOs, not frozen here.
 
+## 5c. What we pull from the advanced causal theories (and what we refuse)
+
+The point of surveying SCM / ALP / Mental Models / Integrated Causal-Evidential is NOT to add a
+fifth engine. It is to stop inventing and instantiate known, solver-backed formalisms — with
+KRYLO's epistemic-groundedness discipline as the skin those frameworks lack.
+
+- **ALP (Abductive Logic Programming) — the load-bearing pull.** ALP = ⟨background theory,
+  abducibles, integrity constraints⟩ with negation-as-failure NATIVE. This IS our core:
+  **Constraint Fabric (KRYL-1070) = the ⟨abducibles, integrity-constraints⟩ pair.** Abducibles =
+  what may be hypothesized (the closure candidate set); integrity constraints = forbidden
+  combinations. A hypothesis set violating a constraint is **eliminated** (§21 route-don't-aggregate:
+  eliminate, never down-weight). Our absence test (EDL/§22) is ALP's negation-as-failure. Framing:
+  the heavy-hitter build is **ALP instantiated + epistemic stamp**, not a novel cathedral — decades
+  of theory and solvers behind it, and the defensible IP line.
+- **SCM (Pearl) — the latent pull, first half only.** SCM's division of labor: abduction
+  *instantiates the unobserved background state* (exogenous U); deduction via do-calculus computes
+  interventions. **Take the abduction half:** AR must output *latent* causes explicitly (its
+  `latent_factors` field), each flagged `latent:true` and **capped at CORROBORATED** — you cannot
+  CLOSE over what you cannot observe. **Refuse the interventional half:** do-calculus = the CONFIRMED
+  rung, already stubbed (KRYLO is an observer). Consistent, no new fence needed.
+- **Integrated Causal/Evidential — the argumentation pull.** Stage 4 (ARGUE) is a formal
+  argumentation framework (support / refute / attack, Dung-style) that resolves competing survivors
+  WITHOUT collapsing to a scalar (§21). Maps directly onto the adopted edge model
+  {supports, refutes, expects_absent}.
+- **Mental Models — confirmatory only.** Keep multiple models live and surface the possibility
+  distribution (already KRYL-1003). Take the principle; spend no new build.
+
+**Refused across the board:** anything requiring intervention / do() (KRYLO observes, does not act);
+any single-scalar collapse of competing explanations (§21); any monotone-up status ladder (§5b).
+
+## 5d. Doctrine backing — hardened positions
+
+Each KRYLO position is now an instantiation of an established, citable formalism (borrowed =
+defensible) — EXCEPT the epistemic-groundedness discipline, which the base frameworks lack
+(original = the moat).
+
+| KRYLO position | Established backing | Hardens against |
+|---|---|---|
+| Detect, don't predict (§11a) | Cialdea Mayer & Pirri 1996 "abduction is not deduction-in-reverse"; Thórisson-Talbot 2018 §4.1 asymmetry; Pearl "doing ≠ seeing" | "detection is a limitation" — it's the honest boundary of an observer without do() |
+| Absence-is-signal (§22) | Clark 1978 negation-as-failure + completion (closed-world negation); ALP; absence as predicate, not NULL | false-neutrality bias (missing ≠ 0) |
+| Route-don't-aggregate (§21) | ALP integrity-constraint elimination; Dung 1995 argumentation (resolve without scalar collapse) | hidden averaging artifacts |
+| Orthogonal axes (§23) | Peirce inference-mode categories ⊥ evidence state; SCM separates graph from distribution | confidence inflation via double-counting |
+| Closure scoped + revocable | domain-relative CWA (logic programming); Wang — insufficient knowledge & resources (open world) | overclaiming completeness |
+| Status revises downward (self-heal, §5b) | non-monotonic reasoning (Reiter/McCarthy); AGM belief revision 1985 | the monotonicity trap |
+| CORROBORATED = invariance | Mill's method of difference; Peters-Bühlmann-Meinshausen 2016 invariant causal prediction; paper fn-2 (necessary + sufficient) | "just correlation" |
+| **Epistemic stamp — realized/projected + groundedness (§18)** | **NONE — original.** ALP / SCM / Mental-Models carry no groundedness discipline | this is the differentiator, not a borrowing |
+
+**Strategic read.** The borrowed spine (ALP + SCM-latent + Dung argumentation + non-monotonic
+revision) makes us *defensible* — decades of proof behind every move; a reviewer cannot call it
+hand-waving. The one thing we ADD — the epistemic-groundedness skin (how much of each edge is
+observed vs projected, stamped and gated) — is the *moat*: none of the source frameworks do it.
+**Harden on the borrowed; differentiate on the added.**
+
 ## 6. Build order (when authorized)
 
 substrate → RLR (registry) → AR (abduce) → Constraint Fabric (close) → EDL (deduce) →
