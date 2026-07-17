@@ -9,6 +9,7 @@ const KEY = 'krylo_active_tester_v1';
 // Preset test accounts. Rename to your real testers. active:false = OFF (code won't work) until
 // activated case-by-case — flip active:true for an account when you hand it out.
 export const TEST_PROFILES = Object.freeze([
+  { id: 'xs', name: 'Founder', active: true }, // always on — never locks the Founder out
   { id: 't01', name: 'Tester 01', active: false },
   { id: 't02', name: 'Tester 02', active: false },
   { id: 't03', name: 'Tester 03', active: false },
