@@ -16,6 +16,7 @@ export default function AnalysisField({
   selection,
   clickEvent,
   onSelectCone,
+  onActiveConeChange,
   onArcClick,
   maxCones,
   dollyKey,
@@ -46,6 +47,7 @@ export default function AnalysisField({
         selectedDomain={selection}
         clickEvent={clickEvent}
         onSelectCone={onSelectCone}
+        onActiveConeChange={onActiveConeChange}
         topoMode={topoMode}
         onArcClick={onArcClick}
         maxCones={maxCones}

@@ -34,7 +34,7 @@ function StickyNote({ note }) {
     if (e.button === 2) return; // right-click handled by onContextMenu
     if (e.target.tagName === 'TEXTAREA' || e.target.dataset.role) return;
     const off = { dx: e.clientX - note.x, dy: e.clientY - note.y };
-    const s = st.current; s.moved = false; s.longFired = false;
+    const s = st.current; s.moved = false; s.longFired = false; s.suppressOpen = false;
     const timer = setTimeout(() => { if (!s.moved) { s.longFired = true; setMenu(true); } }, LONG_PRESS_MS);
     const move = (ev) => {
       if (!s.moved && Math.abs(ev.clientX - e.clientX) + Math.abs(ev.clientY - e.clientY) > 3) { s.moved = true; clearTimeout(timer); }
@@ -44,7 +44,7 @@ function StickyNote({ note }) {
       clearTimeout(timer);
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
-      if (opts.clickOpen && !s.moved && !s.longFired) update(note.id, { min: false });
+      if (opts.clickOpen && !s.moved && !s.longFired && !s.suppressOpen) update(note.id, { min: false });
     };
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
@@ -64,7 +64,7 @@ function StickyNote({ note }) {
   };
 
   // Right-click → menu (Delete) → confirm. The normal-file path.
-  const onCtx = (e) => { e.preventDefault(); setMenu(false); setCtx({ x: e.clientX, y: e.clientY }); };
+  const onCtx = (e) => { e.preventDefault(); st.current.suppressOpen = true; setMenu(false); setCtx({ x: e.clientX, y: e.clientY }); };
 
   // Long-press menu: color swatches + attach (arm → tap a cone) / detach.
   const detach = () => { update(note.id, { coneDomain: null }); setMenu(false); };

@@ -675,6 +675,7 @@ export default function App() {
   const [analysisQuery, setAnalysisQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
   const [selection, setSelection]       = useState(null);
+  const [activeCone, setActiveCone]     = useState(null); // cone currently shown in the InspectionPanel (drives sticky attach/visibility)
   const [clickEvent, setClickEvent]     = useState(null);
   const activeSessionId       = useAnalysisStore(s => s.activeSessionId);
   const sessions              = useAnalysisStore(s => s.sessions);
@@ -1203,7 +1204,7 @@ export default function App() {
       {navMode === 'analysis' && <WorldClocks />}
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
-      <StickyTape activeConeDomain={selection} />
+      <StickyTape activeConeDomain={activeCone} />
 
       {/* ── Surface Bay ───────────────────────────────────────── */}
 
@@ -1224,11 +1225,12 @@ export default function App() {
               onTopoToggle={() => setTopoMode(m => !m)}
               selection={selection}
               clickEvent={clickEvent}
-              onSelectCone={(d) => {
-                setSelection(d);
-                // if a note is armed ("tap cone to attach"), bind it to the tapped cone
+              onSelectCone={setSelection}
+              onActiveConeChange={(dom) => {
+                setActiveCone(dom);
+                // if a note is armed ("tap cone to attach"), bind it to the cone now in view
                 const st = useStickyStore.getState();
-                if (st.armedId) { st.updateSticky(st.armedId, { coneDomain: d }); st.disarm(); }
+                if (st.armedId && dom) { st.updateSticky(st.armedId, { coneDomain: dom }); st.disarm(); }
               }}
               maxCones={surfaceActivated ? undefined : 3}
               dollyKey={surfaceEntryCount}

@@ -2013,7 +2013,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = CANONICAL_DOMAINS; // KRYL-1065 — sourced from ontology (no local domain list)
 
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2068,6 +2068,9 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
     : null;
   const selectedCone = manualPick ?? autoHighest;
   const activeDomain = selectedCone?.domain;
+
+  // Report the currently-active cone domain up (drives sticky-note attach/visibility).
+  React.useEffect(() => { onActiveConeChange?.(activeDomain ?? null); }, [activeDomain]);
 
   // Wave 2 event stream + persistent log + paired flow arcs
   const events = useEventStream(coneState);
