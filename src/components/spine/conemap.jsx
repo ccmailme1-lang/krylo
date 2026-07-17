@@ -649,36 +649,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         maxHeight:     'calc(100vh - 320px)',
         overflowY:     'hidden',
       }}>
-      {/* Search preview — entity loaded from search, pending bay assignment */}
-      {searchPreview && (
-        <div style={{ marginBottom: 12, padding: '10px 12px', border: `1px solid ${LIME}33`, background: `${LIME}08` }}>
-          <div style={{ fontSize: 9, color: `${LIME}88`, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 4 }}>Signal Loaded</div>
-          <div style={{ fontSize: 13, color: LIME, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 10 }}>{searchPreview.title}</div>
-          {!bayPickerOpen ? (
-            <button
-              onClick={() => setBayPickerOpen(true)}
-              style={{ width: '100%', padding: '6px 0', background: 'transparent', border: `1px solid ${LIME}55`, color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.25em', textTransform: 'uppercase', cursor: 'pointer' }}
-              onMouseEnter={e => { e.currentTarget.style.background = `${LIME}18`; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-            >SAVE TO BAY →</button>
-          ) : (
-            <div>
-              <div style={{ fontSize: 9, color: `${LIME}66`, letterSpacing: '0.2em', marginBottom: 6 }}>SELECT BAY</div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {[1,2,3,4,5,6].map(n => (
-                  <button key={n}
-                    onClick={() => { assignToBay(n, searchPreview); setBayPickerOpen(false); setHoveredBay(null); onSearchPreviewSave?.(); }}
-                    onMouseEnter={e => { e.currentTarget.style.background = `${LIME}22`; setHoveredBay(n); }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredBay(null); }}
-                    style={{ flex: 1, padding: '5px 0', background: 'transparent', border: `1px solid ${LIME}44`, color: LIME, fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, cursor: 'pointer' }}
-                  >{n}</button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Search-preview "SIGNAL LOADED → SELECT BAY" block removed (old treatment). */}
 
       {/* DOMAIN | CONE toggle */}
       <div style={{ display: 'flex', marginBottom: 12, borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
