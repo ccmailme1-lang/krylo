@@ -14,6 +14,10 @@ export const useStickyStore = create((set, get) => ({
   tapeMode: false,                       // dispenser armed → next canvas click drops a note
   stickies: load(),
   lastDeleted: null,                     // last removed note, for Cmd/Ctrl+Z undo
+  armedId: null,                         // note waiting for a cone tap to attach to ("tap cone to attach")
+
+  armNote: (id) => set({ armedId: id }),
+  disarm:  ()   => set({ armedId: null }),
 
   toggleTapeMode: ()   => set(s => ({ tapeMode: !s.tapeMode })),
   setTapeMode:    (v)  => set({ tapeMode: !!v }),

@@ -16,13 +16,15 @@ const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default (minimal) open size; user-re
 const TAB_W = 21, TAB_H = 36;            // ghost tab while dragging off the dispenser
 const LONG_PRESS_MS = 500;
 
-function StickyNote({ note, activeConeDomain }) {
-  const update = useStickyStore(s => s.updateSticky);
-  const remove = useStickyStore(s => s.removeSticky);
+function StickyNote({ note }) {
+  const update  = useStickyStore(s => s.updateSticky);
+  const remove  = useStickyStore(s => s.removeSticky);
+  const armNote = useStickyStore(s => s.armNote);
   const st = useRef({ moved: false, longFired: false });
   const [menu, setMenu] = useState(false);      // long-press color palette
   const [ctx, setCtx]   = useState(null);       // right-click menu position {x,y}
   const [confirm, setConfirm] = useState(false); // delete confirmation
+  const [hover, setHover] = useState(false);    // hover tooltip on the collapsed icon
   const w = note.w ?? OPEN_MIN_W;
   const color = note.color ?? NOTE_COLOR;
 
@@ -64,8 +66,7 @@ function StickyNote({ note, activeConeDomain }) {
   // Right-click → menu (Delete) → confirm. The normal-file path.
   const onCtx = (e) => { e.preventDefault(); setMenu(false); setCtx({ x: e.clientX, y: e.clientY }); };
 
-  // Long-press menu: color swatches + attach/detach to the selected cone.
-  const attach = () => { if (activeConeDomain) { update(note.id, { coneDomain: activeConeDomain }); setMenu(false); } };
+  // Long-press menu: color swatches + attach (arm → tap a cone) / detach.
   const detach = () => { update(note.id, { coneDomain: null }); setMenu(false); };
   const colorMenu = menu && (
     <>
@@ -90,14 +91,10 @@ function StickyNote({ note, activeConeDomain }) {
               style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.72)', cursor: 'pointer' }}>
               ⊘ Detach from {note.coneDomain.toUpperCase()}
             </div>
-          ) : activeConeDomain ? (
-            <div onPointerDown={(e) => { e.stopPropagation(); attach(); }}
-              style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: '#66FF00', cursor: 'pointer' }}>
-              ⛓ Attach to {activeConeDomain.toUpperCase()}
-            </div>
           ) : (
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: 'rgba(255,255,255,0.35)' }}>
-              Select a cone to attach
+            <div onPointerDown={(e) => { e.stopPropagation(); armNote(note.id); setMenu(false); }}
+              style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: '#66FF00', cursor: 'pointer' }}>
+              ⛓ Tap cone to attach
             </div>
           )}
         </div>
@@ -149,9 +146,10 @@ function StickyNote({ note, activeConeDomain }) {
   if (note.min) {
     return (
       <>
-        <div title={note.text || 'note'} onContextMenu={onCtx}
+        <div onContextMenu={onCtx}
           onPointerDown={(e) => startDrag(e, { clickOpen: true })}
           onDoubleClick={() => update(note.id, { min: false })}
+          onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
           style={{
             position: 'fixed', left: note.x, top: note.y, width: 30, height: 30, zIndex: 9998,
             cursor: 'grab', pointerEvents: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -162,6 +160,13 @@ function StickyNote({ note, activeConeDomain }) {
             <span style={{ position: 'absolute', bottom: -3, fontFamily: MONO, fontSize: 6, letterSpacing: '0.04em', color, whiteSpace: 'nowrap' }}>
               {note.coneDomain.slice(0, 4).toUpperCase()}
             </span>
+          )}
+          {hover && note.text && (
+            <div style={{
+              position: 'absolute', left: 34, top: 2, zIndex: 10002, maxWidth: 220, pointerEvents: 'none',
+              background: '#111', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.85)',
+              fontFamily: MONO, fontSize: 9, lineHeight: 1.4, letterSpacing: '0.04em', padding: '5px 8px', whiteSpace: 'normal',
+            }}>{note.text}</div>
           )}
         </div>
         {colorMenu}{ctxMenu}{confirmBox}
@@ -206,16 +211,19 @@ export default function StickyTape({ activeConeDomain = null }) {
   const stickies    = useStickyStore(s => s.stickies);
   const addSticky   = useStickyStore(s => s.addSticky);
   const restoreLast = useStickyStore(s => s.restoreLast);
+  const armedId     = useStickyStore(s => s.armedId);
+  const disarm      = useStickyStore(s => s.disarm);
   const [ghost, setGhost] = useState(null);
 
-  // Cmd/Ctrl+Z restores the last deleted note.
+  // Cmd/Ctrl+Z restores the last deleted note; Esc cancels an armed attach.
   useEffect(() => {
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) restoreLast();
+      if (e.key === 'Escape' && armedId) disarm();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [restoreLast]);
+  }, [restoreLast, armedId, disarm]);
 
   // Click-drag off the dispenser → ghost follows the cursor → drop a note where you release.
   const startPlace = (e) => {
@@ -237,7 +245,16 @@ export default function StickyTape({ activeConeDomain = null }) {
     <>
       {/* A note shows if it's free (no cone) or its cone is the one currently selected. */}
       {stickies.filter(n => !n.coneDomain || n.coneDomain === activeConeDomain)
-        .map(n => <StickyNote key={n.id} note={n} activeConeDomain={activeConeDomain} />)}
+        .map(n => <StickyNote key={n.id} note={n} />)}
+
+      {/* Armed → prompt the user to tap a cone. */}
+      {armedId && (
+        <div onPointerDown={disarm} style={{
+          position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 10001,
+          background: '#111', border: '1px solid rgba(102,255,0,0.4)', color: '#66FF00', cursor: 'pointer',
+          fontFamily: MONO, fontSize: 10, letterSpacing: '0.16em', padding: '6px 14px',
+        }}>TAP A CONE TO ATTACH · ESC TO CANCEL</div>
+      )}
 
       {/* Dispenser — 'NOTES' above a slot with a paper tab. Drag off it to place a note. */}
       <div onPointerDown={startPlace} title="Drag to place a note"

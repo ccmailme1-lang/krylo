@@ -88,6 +88,7 @@ import { emitTelemetry }      from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import StickyTape             from './components/surface/stickytape.jsx';
+import { useStickyStore }     from './store/usestickystore.js';
 import ProfilePicker          from './components/surface/profilepicker.jsx';
 import WorldClocks            from './components/analysis/worldclocks.jsx';
 import { getActiveProfile }   from './store/useprofilestore.js';
@@ -1223,7 +1224,12 @@ export default function App() {
               onTopoToggle={() => setTopoMode(m => !m)}
               selection={selection}
               clickEvent={clickEvent}
-              onSelectCone={setSelection}
+              onSelectCone={(d) => {
+                setSelection(d);
+                // if a note is armed ("tap cone to attach"), bind it to the tapped cone
+                const st = useStickyStore.getState();
+                if (st.armedId) { st.updateSticky(st.armedId, { coneDomain: d }); st.disarm(); }
+              }}
               maxCones={surfaceActivated ? undefined : 3}
               dollyKey={surfaceEntryCount}
               onArcClick={(a, b) => {
