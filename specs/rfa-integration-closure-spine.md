@@ -97,6 +97,55 @@ open (unobservable variables always present — the paper's own premise). Theref
 - Sibling docs stay in their lanes: this = the loop (how engines plug in); the stamp spec = the skin
   (how edges are labeled). Neither re-implements the other.
 
+## 5b. Formal contract, the three freezes, and one rejected property
+
+**IP thesis (one sentence):** *Closure is the reversible boundary condition that converts abductive
+possibility into deductive testability while preserving open-world discovery through violation
+recovery.* This is why the system collapses into neither a prediction engine nor a static knowledge
+graph — it is a self-repairing causal-perception fabric.
+
+**Operator sketch** (Σ = open-world hypothesis space, O = observation):
+```
+α abduce   H0 = α(O) ⊆ Σ            candidates, all PROJECTED
+κ close     H1 = κ(H0 | B)           B = Constraint-Fabric boundary; H1 finite, decidable
+δ deduce    H2 ⊆ H1                  survivors: forward-consistent AND pass the absence test
+ω argue     H3 = ω(H2, Evid)         ranked lattice, lineage preserved (no scalar collapse, §21)
+ε stamp     H4 = ε(H3)               {(h, mode, status)} — two orthogonal axes (§23)
+violation   ∀h∈H4 status ∉ {CORROBORATED,CLOSED,CONFIRMED} ⇒ κ broken ⇒ re-abduce over Σ′
+```
+
+**REJECTED property — monotonicity.** An external audit claimed the pipeline is monotone in
+information gain ("status can only rise, never fall, until κ is violated"). **False, and harmful if
+built.** Abduction is non-monotonic; the absence test (§22 / EDL) exists precisely to *demote*.
+- **Append-only:** the closure boundary and provenance. These never mutate; they version.
+- **Revisable DOWNWARD:** hypothesis *status*. A later failed absence/deduction test must be able to
+  knock CORROBORATED (or CLOSED) back down. A monotone-up ladder cannot self-correct — it only
+  accretes — which is the opposite of a healing organism.
+
+**The three freezes (spec must nail before organ-by-organ build):**
+1. **Versioned closure boundaries.** Every κ carries `κ_id` (UUID + timestamp); every downstream
+   artifact carries the `κ_id` it was reasoned under, so a boundary shift is a diff/merge, not a
+   silent overwrite. (Realizes "scoped + revocable"; sits on the existing `ProvenanceDAG`.)
+2. **Immutable evidence addressing.** Evidence items get content-hash addresses so lineage survives
+   repeated κ-revisions in constant time. **Reuse `src/engine/identitykernel.js` FNV-1a — do not
+   invent a new hasher.**
+3. **Absence as an explicit predicate.** "Expected but missing" evidence is a first-class token
+   (`⟂_expected`), never NULL — closed-world negation, computable, not a nullity. This is §22 made
+   executable and is what makes EDL solvable.
+
+**Deduction correctness note.** δ keeps a candidate on positive support AND on the absence test read
+correctly: expected-evidence *absent* WEAKENS the candidate (diagnostic), it does not gate survival
+on expected-evidence *present*. (Corrects the audit's inverted `¬(¬O_expected)`.)
+
+**FENCED — storage vendor.** The property-graph *model* (nodes = observations|hypotheses; edges =
+supports|refutes|expects_absent) is adopted as a conceptual shape. A property-graph *database*
+(Neo4j et al.) is NOT — that is heavy infra of the same class already deferred in KRYL-1043. KRYLO
+reasons in-JS today; the DB decision is out of scope for this spec.
+
+**Scheduling.** Stages form a dependency DAG (→ RDG, KRYL-1068) and may run in parallel on
+*dependency* order. Do NOT justify parallelism via monotonicity (rejected above); justify it via the
+partial order alone.
+
 ## 6. Build order (when authorized)
 
 substrate → RLR (registry) → AR (abduce) → Constraint Fabric (close) → EDL (deduce) →
