@@ -674,7 +674,6 @@ export default function App() {
   const [analysisQuery, setAnalysisQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
   const [selection, setSelection]       = useState(null);
-  const [searchPreview, setSearchPreview] = useState(null);
   const [clickEvent, setClickEvent]     = useState(null);
   const activeSessionId       = useAnalysisStore(s => s.activeSessionId);
   const sessions              = useAnalysisStore(s => s.sessions);
@@ -1063,7 +1062,6 @@ export default function App() {
       if (!q) return;
       setNavMode('surface');
       setSurfaceActivated(true);
-      setSearchPreview({ id: q, title: q, source: 'search' });
       setSelection('technology');
       // WO-2019 topic connectors — fire on each query submit
       runGithubSync(q).catch(() => {});
@@ -1228,10 +1226,7 @@ export default function App() {
               onSelectCone={setSelection}
               maxCones={surfaceActivated ? undefined : 3}
               dollyKey={surfaceEntryCount}
-              searchPreview={searchPreview}
-              onSearchPreviewSave={() => setSearchPreview(null)}
               onArcClick={(a, b) => {
-                setSearchPreview({ id: `${a} ${b}`, title: `${a} ${b}`, source: 'arc' });
                 setSelection('technology');
               }}
               coneColorOverrides={coneColorOverrides}

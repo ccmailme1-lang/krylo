@@ -16,8 +16,6 @@ export default function AnalysisField({
   selection,
   clickEvent,
   onSelectCone,
-  searchPreview,
-  onSearchPreviewSave,
   onArcClick,
   maxCones,
   dollyKey,
@@ -50,8 +48,6 @@ export default function AnalysisField({
         onSelectCone={onSelectCone}
         topoMode={topoMode}
         onArcClick={onArcClick}
-        searchPreview={searchPreview}
-        onSearchPreviewSave={onSearchPreviewSave}
         maxCones={maxCones}
         dollyKey={dollyKey}
         coneColorOverrides={coneColorOverrides}

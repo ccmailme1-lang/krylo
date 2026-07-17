@@ -514,7 +514,7 @@ function ComparePanel() {
   );
 }
 
-export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], searchPreview = null, onSearchPreviewSave = null }) {
+export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [] }) {
   const [tab, setTab]         = React.useState('stats');
   const [topTab, setTopTab]   = React.useState('domain');
   const emaRef                = React.useRef({});
@@ -527,7 +527,6 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   const [isEditing,   setIsEditing]   = React.useState(false);
   const [candOpen,      setCandOpen]      = React.useState(false);
   const [candInput,     setCandInput]     = React.useState('');
-  const [bayPickerOpen, setBayPickerOpen] = React.useState(false);
   const [panelSearch,   setPanelSearch]   = React.useState(false);
   const [panelInput,    setPanelInput]    = React.useState('');
   const [panelResult,   setPanelResult]   = React.useState(null);
@@ -2014,7 +2013,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = CANONICAL_DOMAINS; // KRYL-1065 — sourced from ontology (no local domain list)
 
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, searchPreview = null, onSearchPreviewSave = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2266,7 +2265,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} searchPreview={searchPreview} onSearchPreviewSave={onSearchPreviewSave} />
+          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} />
         </>,
         document.getElementById('krylo-hud-root')
       )}
