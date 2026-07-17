@@ -519,6 +519,7 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   const [topTab, setTopTab]   = React.useState('domain');
   const emaRef                = React.useRef({});
   const prevDomain            = React.useRef(null);
+  const firstView             = React.useRef(true); // first panel load defaults to Domain view
   const panelRef              = React.useRef(null);
   const searchInputRef        = React.useRef(null);
   const [xraySnap,    setXraySnap]    = React.useState(null);
@@ -556,7 +557,9 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     setAssignInput('');
     setCandOpen(false);
     setCandInput('');
-    setTopTab('domain'); // default view = Domain (was: Cone when a cone was selected)
+    // page load → default to Domain; afterwards, selecting a cone opens the Cone view
+    setTopTab(firstView.current ? 'domain' : (cone?.domain ? 'cone' : 'domain'));
+    firstView.current = false;
   }, [cone?.domain]);
 
   React.useEffect(() => {
