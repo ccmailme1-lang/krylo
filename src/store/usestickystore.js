@@ -11,12 +11,13 @@ const save = (arr) => { try { sessionStorage.setItem(KEY, JSON.stringify(arr)); 
 export const useStickyStore = create((set, get) => ({
   tapeMode: false,                       // dispenser armed → next canvas click drops a note
   stickies: load(),
+  lastDeleted: null,                     // last removed note, for Cmd/Ctrl+Z undo
 
   toggleTapeMode: ()   => set(s => ({ tapeMode: !s.tapeMode })),
   setTapeMode:    (v)  => set({ tapeMode: !!v }),
 
   addSticky: (x, y) => {
-    const s = { id: 'sticky-' + Date.now(), x, y, text: '', min: true, ts: Date.now() }; // default minimized
+    const s = { id: 'sticky-' + Date.now(), x, y, text: '', ts: Date.now() }; // opens full (industry standard)
     const next = [...get().stickies, s];
     save(next); set({ stickies: next });
     return s.id;
@@ -26,8 +27,16 @@ export const useStickyStore = create((set, get) => ({
     save(next); set({ stickies: next });
   },
   removeSticky: (id) => {
-    const next = get().stickies.filter(s => s.id !== id);
-    save(next); set({ stickies: next });
+    const cur = get().stickies;
+    const victim = cur.find(s => s.id === id);
+    const next = cur.filter(s => s.id !== id);
+    save(next); set({ stickies: next, lastDeleted: victim });
+  },
+  restoreLast: () => {                    // Cmd/Ctrl+Z undo of the last delete
+    const v = get().lastDeleted;
+    if (!v) return;
+    const next = [...get().stickies, v];
+    save(next); set({ stickies: next, lastDeleted: null });
   },
   clearStickies: () => { save([]); set({ stickies: [] }); },
 }));
