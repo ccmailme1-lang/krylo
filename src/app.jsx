@@ -1201,7 +1201,7 @@ export default function App() {
       <ProfilePicker />
 
       {/* World clocks — analysis page only */}
-      {navMode === 'analysis' && <WorldClocks />}
+      {navMode === 'analysis' && !activeSessionId && <WorldClocks />}
 
       {/* KRYL-1051 — Sticky-Tape: global left-rail dispenser + free-drop notes */}
       <StickyTape activeConeDomain={activeCone} currentPage={navMode} />
