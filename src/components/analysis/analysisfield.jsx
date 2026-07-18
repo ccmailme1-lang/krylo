@@ -32,7 +32,7 @@ function AnalysisField({
   if (viewportLens === 'SIGNAL') {
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
-        <SignalMap data={replayedSignals ?? signals ?? []} isActive contained />
+        <SignalMap data={(replayedSignals ?? signals ?? []).slice(0, 300)} isActive contained />
       </div>
     );
   }

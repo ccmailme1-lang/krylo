@@ -2062,9 +2062,17 @@ function Scene({ signals, alertMode, captureRef, lockedIdx, setLockedIdx, select
     geometry.attributes.aIdentityColor.needsUpdate = true;
     geometry.attributes.aDebugColor.needsUpdate   = true;
 
+    // Corroboration bridges are an O(n²) all-pairs search. With a large node set this generated
+    // millions of edge objects and CRASHED the tab (Chrome "Aw Snap / Error 5" OOM) BEFORE the map
+    // could paint — the real root cause of the blank/never-rendering Signal Map. Bound the pair
+    // search to a fixed node budget (nodes still all render; only the bridge pairing is capped) so
+    // it can never OOM regardless of input size. Hard cap on edge count as a second guard.
+    const EDGE_NODE_CAP = 200;   // <= 200² ≈ 20k pairs, always safe
+    const EDGE_LIST_CAP = 4000;  // hard ceiling on emitted bridges
+    const edgeN = Math.min(primaries.length, EDGE_NODE_CAP);
     const edgeList = [];
-    for (let a = 0; a < primaries.length; a++) {
-      for (let b = a + 1; b < primaries.length; b++) {
+    for (let a = 0; a < edgeN && edgeList.length < EDGE_LIST_CAP; a++) {
+      for (let b = a + 1; b < edgeN && edgeList.length < EDGE_LIST_CAP; b++) {
         if (primaries[a].pos.distanceTo(primaries[b].pos) < BOUNDS * 1.3) {
           const avgFs = (primaries[a].fs + primaries[b].fs) / 2;
           edgeList.push({ key: `e-${a}-${b}`, nodeA: a, nodeB: b, avgFs, start: primaries[a].pos.clone(), end: primaries[b].pos.clone() });
