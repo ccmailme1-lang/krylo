@@ -4134,7 +4134,7 @@ function handleConsoleKey(e) {
     </div>
 </div>
 
-<div id="session-modal">
+<div id="session-modal" onclick="if(event.target===this)_closeSessionModal()">
     <div class="sm-box">
         <div class="sm-titlebar">
             <span class="sm-title">Sessions</span>
