@@ -3451,14 +3451,24 @@ export default function SignalMap({ data, signalMapData, isActive = false, onSel
     return () => window.removeEventListener('keydown', handler);
   }, [triggerCapture]);
 
-  // KRYL-225: Ready-gate — confirm container has layout before mounting Canvas
-  // Also stamps sessionStorage so health check passes even after navigating away
+  // KRYL-225: Ready-gate — confirm container has layout before mounting Canvas.
+  // FIX (2026-07-18): the old one-shot check ran once on mount; if the container was 0-height at that
+  // instant (layout not settled / flex sizing / hidden parent), canvasReady stayed false FOREVER and
+  // the Canvas never mounted → permanent blank map. Replaced with a ResizeObserver that promotes
+  // canvasReady the moment the container acquires a real size, then disconnects.
   useEffect(() => {
-    if (containerRef.current?.offsetHeight > 0) {
-      setCanvasReady(true);
-    }
-    try { sessionStorage.setItem('krylo_canvas_init', '1'); } catch {}
+    const node = containerRef.current;
+    if (!node) return;
+    if (node.offsetHeight > 0 && node.offsetWidth > 0) { setCanvasReady(true); return; }
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) { setCanvasReady(true); observer.disconnect(); }
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
   }, []);
+
+  useEffect(() => { try { sessionStorage.setItem('krylo_canvas_init', '1'); } catch {} }, []);
 
   return (
     <div

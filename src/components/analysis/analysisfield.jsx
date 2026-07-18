@@ -2,6 +2,7 @@
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
 import React from 'react';
 import ConeMap from '../spine/conemap.jsx';
+import SignalMap from '../spine/spinemap.jsx'; // Signal lens → node map in Region C (LSC-001)
 import { usePrism } from '../../context/PrismContext.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -24,6 +25,18 @@ function AnalysisField({
 }) {
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
+
+  // LSC-001 — the Signal lens swaps Region C to the node map (spinemap). Single Canvas at a time:
+  // the cone map unmounts and the SignalMap mounts (no second WebGL context). `contained` keeps it
+  // inside this Region-C container; `isActive` enables its raycast/hover.
+  if (viewportLens === 'SIGNAL') {
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
+        <SignalMap data={replayedSignals ?? signals ?? []} isActive contained />
+      </div>
+    );
+  }
+
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
       <button
