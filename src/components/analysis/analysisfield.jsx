@@ -2,6 +2,7 @@
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
 import React from 'react';
 import ConeMap from '../spine/conemap.jsx';
+import { LENS_EMBEDS, isEmbedLens } from '../../config/lensembeds.js';
 import { usePrism } from '../../context/PrismContext.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -24,6 +25,29 @@ function AnalysisField({
 }) {
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
+
+  // LSC-001 Region C — a lens with a Flourish embed renders it as an iframe (no WebGL); until a URL
+  // is wired it shows an "awaiting embed" slot. Lenses not in the embed map fall through to the cone map.
+  if (isEmbedLens(viewportLens)) {
+    const url = LENS_EMBEDS[viewportLens];
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
+        {url ? (
+          <iframe title={viewportLens} src={url}
+                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
+        ) : (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+                        alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.26em', color: LIME }}>{viewportLens} LENS</div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)' }}>AWAITING FLOURISH EMBED</div>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)', marginTop: 6 }}>
+              paste the embed URL into src/config/lensembeds.js
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
