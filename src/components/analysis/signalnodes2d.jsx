@@ -59,12 +59,13 @@ export default function SignalNodes2D({ signals = [] }) {
     const wrap = wrapRef.current, canvas = canvasRef.current;
     if (!wrap || !canvas) return;
     const ctx = canvas.getContext('2d');
-    let raf, W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let raf, W = 0, H = 0;
 
     const resize = () => {
       const r = wrap.getBoundingClientRect();
-      W = r.width; H = r.height;
-      canvas.width = W * dpr; canvas.height = H * dpr;
+      W = Math.round(r.width); H = Math.round(r.height);
+      const dpr = window.devicePixelRatio || 1; // full DPR (uncapped) — crisp on retina/hi-dpi
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
       canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       // seed positions from home coords once we know the box
