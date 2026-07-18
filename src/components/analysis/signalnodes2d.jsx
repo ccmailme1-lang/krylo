@@ -36,8 +36,9 @@ export default function SignalNodes2D({ signals = [] }) {
         id, fs, con,
         label: String(s.title ?? s.domain ?? s.source ?? id).slice(0, 40),
         hx: hash01(id), hy: hash01(id + '_y'),     // home 0..1
-        vx: (hash01(id + 'vx') - 0.5) * 0.15,       // gentle drift px/frame
-        vy: (hash01(id + 'vy') - 0.5) * 0.15,
+        vx: (hash01(id + 'vx') - 0.5) * 0.6,        // visible drift px/frame
+        vy: (hash01(id + 'vy') - 0.5) * 0.6,
+        phase: hash01(id + 'ph') * Math.PI * 2,     // per-node pulse offset — nodes breathe, not frozen
         x: 0, y: 0,
         r: 2 + fs * 7,                              // radius by significance
       };
@@ -78,6 +79,7 @@ export default function SignalNodes2D({ signals = [] }) {
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       const nodes = nodesRef.current;
+      const now = performance.now() / 1000;
       // drift + soft-wrap (seed home position on first sight so nodes never pile in the corner)
       for (const n of nodes) {
         if (n.x === 0 && n.y === 0 && W && H) { n.x = n.hx * W; n.y = n.hy * H; }
@@ -100,16 +102,17 @@ export default function SignalNodes2D({ signals = [] }) {
           }
         }
       }
-      // nodes
+      // nodes — each breathes on its own phase so the field reads as alive, not frozen
       for (const n of nodes) {
         const hovered = hoverRef.current === n;
+        const pulse = 0.5 + 0.5 * Math.sin(now * 1.6 + (n.phase ?? 0));
+        const rr = (n.r + (hovered ? 2 : 0)) * (0.82 + pulse * 0.36);
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r + (hovered ? 2 : 0), 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, rr, 0, Math.PI * 2);
         ctx.shadowColor = LIME;
-        ctx.shadowBlur = n.ambient ? 4 : 8 + n.fs * 10;
-        ctx.fillStyle = n.ambient
-          ? `rgba(102,255,0,${(0.10 + n.con * 0.15).toFixed(3)})`
-          : `rgba(102,255,0,${(0.35 + n.con * 0.6).toFixed(3)})`;
+        ctx.shadowBlur = (n.ambient ? 4 : 8 + n.fs * 10) * (0.7 + pulse * 0.6);
+        const baseA = n.ambient ? (0.10 + n.con * 0.15) : (0.35 + n.con * 0.6);
+        ctx.fillStyle = `rgba(102,255,0,${(baseA * (0.72 + pulse * 0.5)).toFixed(3)})`;
         ctx.fill();
       }
       ctx.shadowBlur = 0;
