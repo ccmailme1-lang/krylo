@@ -2,7 +2,7 @@
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
 import React from 'react';
 import ConeMap from '../spine/conemap.jsx';
-import SignalMap from '../spine/spinemap.jsx'; // Signal lens → node map in Region C (LSC-001)
+import SignalMap from '../spine/signalmap.jsx'; // Signal lens → node map (correct lime-node map, baseline_v63)
 import { usePrism } from '../../context/PrismContext.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -32,7 +32,7 @@ function AnalysisField({
   if (viewportLens === 'SIGNAL') {
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
-        <SignalMap data={(replayedSignals ?? signals ?? []).slice(0, 300)} isActive contained />
+        <SignalMap data={replayedSignals ?? signals ?? []} />
       </div>
     );
   }
