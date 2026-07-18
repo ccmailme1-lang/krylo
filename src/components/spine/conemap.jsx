@@ -2184,6 +2184,29 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
   const [localClick, setLocalClick] = useState(null);
   const activeClick = localClick ?? clickEvent;
 
+  // PERF (cone-rotation jerk): memoize the 3D scene so the 100ms HUD refresh (setHudList) and other
+  // ConeMap re-renders don't reconcile the whole cone tree every tick. useFrame rotation keeps running;
+  // this only stops the periodic React re-render that was dropping a frame. Recomputes only on real
+  // scene-input changes (signal/selection/lens/etc.). hudList is intentionally NOT a dependency.
+  const coneSceneEl = useMemo(() => (
+    <ConeScene
+      coneState={coneState}
+      selectedDomain={activeDomain}
+      clickEvent={activeClick}
+      onSelectCone={onSelectCone}
+      events={events}
+      flows={flows}
+      topoMode={topoMode}
+      onArcClick={onArcClick}
+      hudRef={hudRef}
+      kalshiSignals={kalshiSignals}
+      carouselRef={carouselRef}
+      dollyKey={dollyKey}
+      viewportLens={viewportLens}
+      divergenceByDomain={divergenceByDomain}
+    />
+  ), [coneState, activeDomain, activeClick, onSelectCone, events, flows, topoMode, onArcClick, hudRef, kalshiSignals, carouselRef, dollyKey, viewportLens, divergenceByDomain]);
+
   return (
     <div
       ref={containerRef}
@@ -2196,22 +2219,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       }}
     >
       <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }} onCreated={onCanvasCreated}>
-        <ConeScene
-          coneState={coneState}
-          selectedDomain={activeDomain}
-          clickEvent={activeClick}
-          onSelectCone={onSelectCone}
-          events={events}
-          flows={flows}
-          topoMode={topoMode}
-          onArcClick={onArcClick}
-          hudRef={hudRef}
-          kalshiSignals={kalshiSignals}
-          carouselRef={carouselRef}
-          dollyKey={dollyKey}
-          viewportLens={viewportLens}
-          divergenceByDomain={divergenceByDomain}
-        />
+        {coneSceneEl}
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
           target={[0, 2.4, 0]}
