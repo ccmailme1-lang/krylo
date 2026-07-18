@@ -21,11 +21,14 @@ const CLOCKS = [
 ];
 
 function read(now, tz) {
-  const time = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
-  const p = new Intl.DateTimeFormat('en-GB', { timeZone: tz, month: '2-digit', day: '2-digit' }).formatToParts(now);
-  const mm = p.find(x => x.type === 'month')?.value ?? '--';
-  const dd = p.find(x => x.type === 'day')?.value ?? '--';
-  return { time, date: `${mm}-${dd}` };
+  const tp = new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: true }).formatToParts(now);
+  const g  = t => tp.find(x => x.type === t)?.value ?? '--';
+  const tzName = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' })
+    .formatToParts(now).find(x => x.type === 'timeZoneName')?.value ?? '';
+  const dp = new Intl.DateTimeFormat('en-GB', { timeZone: tz, month: '2-digit', day: '2-digit' }).formatToParts(now);
+  const mo = dp.find(x => x.type === 'month')?.value ?? '--';
+  const dd = dp.find(x => x.type === 'day')?.value ?? '--';
+  return { hh: g('hour'), mm: g('minute'), ap: g('dayPeriod'), tz: tzName, date: `${mo}-${dd}` };
 }
 
 const vw = () => (typeof window !== 'undefined' ? window.innerWidth : 1400);
@@ -183,8 +186,7 @@ export default function WorldClocks() {
   return (
     <>
       {CLOCKS.map((c, i) => {
-        const { time, date } = read(now, c.tz);
-        const [hh, mm] = time.split(':');
+        const { hh, mm, ap, tz, date } = read(now, c.tz);
         return (
           <div key={c.city} onPointerDown={(e) => startDrag(i, e)} onDoubleClick={resetAll}
             style={{
@@ -194,9 +196,9 @@ export default function WorldClocks() {
             }}>
             <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.14em', color: 'rgba(102,255,0,0.55)', marginBottom: 3 }}>{c.city}</div>
             <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: LED, textShadow: '0 0 6px rgba(102,255,0,0.55)', lineHeight: 1 }}>
-              {hh}<span style={{ opacity: blink ? 1 : 0.25 }}>:</span>{mm}
+              {hh}<span style={{ opacity: blink ? 1 : 0.25 }}>:</span>{mm}<span style={{ fontSize: 7, marginLeft: 2, opacity: 0.85 }}>{ap}</span>
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 8.5, color: LED, textShadow: '0 0 5px rgba(102,255,0,0.5)', letterSpacing: '0.08em', marginTop: 2 }}>{date}</div>
+            <div style={{ fontFamily: MONO, fontSize: 7.5, color: LED, textShadow: '0 0 5px rgba(102,255,0,0.5)', letterSpacing: '0.06em', marginTop: 2 }}>{tz} · {date}</div>
           </div>
         );
       })}
