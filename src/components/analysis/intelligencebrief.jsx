@@ -19,6 +19,7 @@ import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import WhyThisMatters from './whythismatters.jsx';
+import PerceptionRisk from './perceptionrisk.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 import { arbitrateHP } from '../../engine/hptiergate.js';
@@ -932,6 +933,7 @@ export default function IntelligenceBrief() {
         </Panel>
         <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
         <WhyThisMatters metrics={metrics} />
+        <PerceptionRisk metrics={metrics} dynamics={dynamics} />
 
 
         {/* 01 · BLUF */}
