@@ -18,6 +18,7 @@ import { computeMetrics }        from '../../engine/metricsengine.js';
 import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
+import WhyThisMatters from './whythismatters.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 import { arbitrateHP } from '../../engine/hptiergate.js';
@@ -930,6 +931,7 @@ export default function IntelligenceBrief() {
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
         <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
+        <WhyThisMatters metrics={metrics} />
 
 
         {/* 01 · BLUF */}
