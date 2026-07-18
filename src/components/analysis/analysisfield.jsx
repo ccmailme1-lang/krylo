@@ -7,7 +7,7 @@ import { usePrism } from '../../context/PrismContext.jsx';
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 
-export default function AnalysisField({
+function AnalysisField({
   signals,
   replayedSignals,
   selectedLens,
@@ -58,3 +58,8 @@ export default function AnalysisField({
     </div>
   );
 }
+
+// PERF (cone-rotation freeze): memoized so frequent SSE-driven App re-renders (useframestream) don't
+// re-render the cone Canvas when AnalysisField's props are unchanged. Plain-component boundary — safe
+// (worst case it re-renders as before); NOT an R3F-element memo (that caused the stale-scene glitch).
+export default React.memo(AnalysisField);

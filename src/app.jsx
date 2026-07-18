@@ -878,6 +878,16 @@ export default function App() {
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const activeCones = useMemo(() => buildActiveCones(liveSignals, coneColorOverrides), [liveSignals, coneColorOverrides]);
 
+  // PERF (cone-rotation freeze): stable callbacks so React.memo(AnalysisField) can skip re-rendering
+  // the cone Canvas on the frequent SSE-driven App re-renders (useframestream fires setState per frame).
+  const handleTopoToggle       = useCallback(() => setTopoMode(m => !m), []);
+  const handleActiveConeChange = useCallback((dom) => {
+    setActiveCone(dom);
+    const st = useStickyStore.getState();
+    if (st.armedId && dom) { st.updateSticky(st.armedId, { coneDomain: dom }); st.disarm(); }
+  }, []);
+  const handleArcClick         = useCallback(() => { setSelection('technology'); }, []);
+
   // Analysis Bay domain node field — real "full signal access" (per Founder
   // direction: Analysis sees ALL, not a filtered subset). liveSignals above
   // only covers mergedRecords' sources (pool/hn/frame/ingest/fred/edgar/
@@ -1222,21 +1232,14 @@ export default function App() {
               replayedSignals={replayedSignals}
               selectedLens={selectedLens}
               topoMode={topoMode}
-              onTopoToggle={() => setTopoMode(m => !m)}
+              onTopoToggle={handleTopoToggle}
               selection={selection}
               clickEvent={clickEvent}
               onSelectCone={setSelection}
-              onActiveConeChange={(dom) => {
-                setActiveCone(dom);
-                // if a note is armed ("tap cone to attach"), bind it to the cone now in view
-                const st = useStickyStore.getState();
-                if (st.armedId && dom) { st.updateSticky(st.armedId, { coneDomain: dom }); st.disarm(); }
-              }}
+              onActiveConeChange={handleActiveConeChange}
               maxCones={surfaceActivated ? undefined : 3}
               dollyKey={surfaceEntryCount}
-              onArcClick={(a, b) => {
-                setSelection('technology');
-              }}
+              onArcClick={handleArcClick}
               coneColorOverrides={coneColorOverrides}
             />
           </div>
