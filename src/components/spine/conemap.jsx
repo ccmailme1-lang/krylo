@@ -11,6 +11,7 @@ import * as THREE from 'three';
 import { aggregateSignals }       from '../../engine/aggregation.js';
 import { encodeCone }             from '../../engine/coneencoding.js';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import StateDistribution from '../analysis/statedistribution.jsx';
 import LeverageLattice            from './leveragelattice.jsx';
 import LeverageTowers             from '../surface/leveragetowers.jsx';
 import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
@@ -90,6 +91,14 @@ function resolveConvergenceState(pressure, volatility) {
   const vector    = { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: 0.7 };
   const { label, theme } = classifyConvergenceState(vector, 0.8);
   return { label, color: THEME_COLOR[theme] ?? BLUE_TIER };
+}
+
+// KRYL-1003 — the classifier stateId for a cone, via the SAME vector convention as above (one
+// source, no drift). Feeds the field state-distribution over the whole cone population.
+function convergenceStateId(pressure, volatility) {
+  const leverageN = (pressure ?? 0) / 100;
+  const vector    = { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: 0.7 };
+  return classifyConvergenceState(vector, 0.8).stateId;
 }
 
 const ARC_THESIS = {
@@ -665,6 +674,8 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
       </div>
 
       {topTab === 'domain' && (() => {
+        // KRYL-1003 — real state-distribution over the whole cone field (N = cones, no simulation).
+        const fieldStateIds = coneState.map(c => convergenceStateId(c.pressure, c.volatility));
         const domain = (cone.domain ?? '').toUpperCase();
         const sig    = Math.round(cone.pressure ?? 0);
         const vol    = cone.volatility ?? 0.4;
@@ -694,6 +705,9 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         const maxAbs=Math.max(...leaderboard.map(d=>d.abs),1);
         return (
           <div>
+            <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <StateDistribution stateIds={fieldStateIds} label="FIELD CONVERGENCE" />
+            </div>
             <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>ATTENTION STACK</div>
               {mockRows.map((r,i)=>(<div key={r.label} style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{color:'rgba(255,255,255,0.2)',fontSize:7,minWidth:10}}>{i+1}</span><span style={{flex:1,fontSize:7,color:'rgba(255,255,255,0.65)',letterSpacing:'0.06em',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{r.label}</span><span style={{fontSize:8,color:'#fff',minWidth:22,textAlign:'right'}}>{r.signal}</span><span style={{fontSize:7,color:r.vol==='HIGH'?'#ff4444':r.vol==='MED'?'#ffaa00':LIME,minWidth:24}}>{r.vol}</span><span style={{fontSize:7,color:r.dir>0?LIME:r.dir<0?'#ff4444':'rgba(255,255,255,0.3)'}}>{r.dir>0?'↑':r.dir<0?'↓':'—'}</span></div>))}
