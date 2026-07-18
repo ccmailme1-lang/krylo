@@ -77,8 +77,9 @@ export default function SignalNodes2D({ signals = [] }) {
     const draw = () => {
       ctx.clearRect(0, 0, W, H);
       const nodes = nodesRef.current;
-      // drift + soft-wrap
+      // drift + soft-wrap (seed home position on first sight so nodes never pile in the corner)
       for (const n of nodes) {
+        if (n.x === 0 && n.y === 0 && W && H) { n.x = n.hx * W; n.y = n.hy * H; }
         n.x += n.vx; n.y += n.vy;
         if (n.x < 0) n.x += W; else if (n.x > W) n.x -= W;
         if (n.y < 0) n.y += H; else if (n.y > H) n.y -= H;
