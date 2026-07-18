@@ -165,3 +165,45 @@ export function toTopologyNodeId(ref) {
 export function listByDomain(domain) {
   return REGISTRY.filter(e => e.domainTags.includes(domain));
 }
+
+/**
+ * validateRegistry(registry) → { valid, errors[] }
+ * KRYL-1007 — the registry is the single source of entity truth, so its integrity is load-bearing.
+ * A duplicate identifier or an alias that resolves to two entities is SILENT corruption: a lookup
+ * returns the wrong entity and every downstream join inherits it (§23 orthogonality — one alias must
+ * map to exactly one identity). This is a data-integrity gate, callable from CI. Checks:
+ *   1. no duplicate CIK (edgar) or ticker across entities
+ *   2. no normalized alias/name colliding across entities
+ *   3. every entity has a canonicalId + at least one domainTag
+ */
+export function validateRegistry(registry = REGISTRY) {
+  const errors = [];
+  const seenId = {};        // `${source}:${id}` → canonicalId
+  const aliasOwner = {};    // normalized alias → canonicalId
+
+  for (const e of registry) {
+    if (!e.canonicalId) errors.push(`entity "${e.canonicalName ?? '?'}" missing canonicalId`);
+    if (!e.domainTags?.length) errors.push(`${e.canonicalId}: no domainTags`);
+
+    for (const source of ['edgar', 'ticker', 'fec', 'uei', 'lei']) {
+      const raw = e.identifiers?.[source];
+      if (raw == null) continue;
+      const norm = source === 'edgar' ? String(raw).replace(/^0+/, '') : String(raw).toUpperCase();
+      const k = `${source}:${norm}`;
+      if (seenId[k] && seenId[k] !== e.canonicalId) {
+        errors.push(`duplicate ${source} ${raw}: ${seenId[k]} and ${e.canonicalId}`);
+      }
+      seenId[k] = e.canonicalId;
+    }
+
+    for (const a of [e.canonicalName, ...(e.aliases ?? [])]) {
+      const na = normalize(a);
+      if (!na) continue;
+      if (aliasOwner[na] && aliasOwner[na] !== e.canonicalId) {
+        errors.push(`alias "${a}" collides: ${aliasOwner[na]} and ${e.canonicalId}`);
+      }
+      aliasOwner[na] = e.canonicalId;
+    }
+  }
+  return { valid: errors.length === 0, errors };
+}
