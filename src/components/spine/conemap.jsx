@@ -2013,6 +2013,49 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 const CANONICAL_FEEDERS = CANONICAL_DOMAINS; // KRYL-1065 — sourced from ontology (no local domain list)
 
 
+// PERF (cone-rotation jerk): HUD-position sampling isolated in a leaf so its 100ms tick re-renders
+// ONLY these arcs, never ConeMap/ConeScene. Consumes hudRef (written each frame by ConeScene's HUD
+// projector). Does NOT touch the 3D scene — so no stale-render glitch (unlike memoizing the scene).
+function ResonanceArcs({ hudRef, baysForResonance }) {
+  const [hudList, setHudList] = useState([]);
+  useEffect(() => {
+    const id = setInterval(() => { setHudList(hudRef.current ? [...hudRef.current] : []); }, 100);
+    return () => clearInterval(id);
+  }, [hudRef]);
+  const flaggedBays = Object.values(baysForResonance).filter(b => b.compareFlag && b.assignment);
+  if (flaggedBays.length < 2) return null;
+  const arcNodes = flaggedBays
+    .map(b => {
+      const domain = PILLAR_INDEX[b.id - 1];
+      if (!domain) return null;
+      const hud = hudList.find(h => h.domain === domain);
+      return hud ? { ...hud, title: b.assignment.title } : null;
+    })
+    .filter(Boolean);
+  if (arcNodes.length < 2) return null;
+  const pairs = [];
+  for (let i = 0; i < arcNodes.length; i++) {
+    for (let j = i + 1; j < arcNodes.length; j++) {
+      pairs.push([arcNodes[i], arcNodes[j]]);
+    }
+  }
+  return (
+    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
+      {pairs.map(([a, b], idx) => {
+        const mx = (a.x + b.x) / 2;
+        const my = Math.min(a.y, b.y) - 60;
+        return (
+          <g key={idx}>
+            <path d={`M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`} fill="none" stroke="rgba(102,255,0,0.55)" strokeWidth="1" strokeDasharray="6 3" />
+            <circle cx={mx} cy={my} r={3} fill="rgba(102,255,0,0.6)" />
+            <text x={mx + 5} y={my - 4} fill="rgba(102,255,0,0.7)" fontSize={7} fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.15em">RESONANCE</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
@@ -2173,13 +2216,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
 
   const baysForResonance = useBayStore(s => s.bays);
   const hudRef     = useRef([]);
-  const [hudList, setHudList] = useState([]);
-  useEffect(() => {
-    const id = setInterval(() => {
-      setHudList(hudRef.current ? [...hudRef.current] : []);
-    }, 100);
-    return () => clearInterval(id);
-  }, []);
+  // hudList state + its 100ms sampler moved into <ResonanceArcs> (leaf) so it no longer re-renders the scene.
 
   const [localClick, setLocalClick] = useState(null);
   const activeClick = localClick ?? clickEvent;
@@ -2218,51 +2255,8 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
         />
       </Canvas>
 
-      {/* WO-1349 — Cross-bay resonance arcs for COMPARE-flagged bays */}
-      {(() => {
-        const flaggedBays = Object.values(baysForResonance).filter(b => b.compareFlag && b.assignment);
-        if (flaggedBays.length < 2) return null;
-        // Map bayId → cone domain via PILLAR_INDEX (bayId = pillarIdx + 1)
-        const arcNodes = flaggedBays
-          .map(b => {
-            const domain = PILLAR_INDEX[b.id - 1];
-            if (!domain) return null;
-            const hud = hudList.find(h => h.domain === domain);
-            return hud ? { ...hud, title: b.assignment.title } : null;
-          })
-          .filter(Boolean);
-        if (arcNodes.length < 2) return null;
-        const pairs = [];
-        for (let i = 0; i < arcNodes.length; i++) {
-          for (let j = i + 1; j < arcNodes.length; j++) {
-            pairs.push([arcNodes[i], arcNodes[j]]);
-          }
-        }
-        return (
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 10 }}>
-            {pairs.map(([a, b], idx) => {
-              const mx = (a.x + b.x) / 2;
-              const my = Math.min(a.y, b.y) - 60;
-              return (
-                <g key={idx}>
-                  <path
-                    d={`M${a.x},${a.y} Q${mx},${my} ${b.x},${b.y}`}
-                    fill="none"
-                    stroke="rgba(102,255,0,0.55)"
-                    strokeWidth="1"
-                    strokeDasharray="6 3"
-                  />
-                  <circle cx={mx} cy={my} r={3} fill="rgba(102,255,0,0.6)" />
-                  <text x={mx + 5} y={my - 4} fill="rgba(102,255,0,0.7)" fontSize={7}
-                    fontFamily="'IBM Plex Mono', monospace" letterSpacing="0.15em">
-                    RESONANCE
-                  </text>
-                </g>
-              );
-            })}
-          </svg>
-        );
-      })()}
+      {/* WO-1349 — Cross-bay resonance arcs (leaf-isolated so its 100ms HUD sampling doesn't re-render the scene) */}
+      <ResonanceArcs hudRef={hudRef} baysForResonance={baysForResonance} />
 
       {/* InspectionPanel + ComparePanel portaled to root z:20 overlay */}
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
