@@ -66,7 +66,6 @@ import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
-import LensCanvas         from './components/surface/lenscanvas.jsx'; // LSC-001 region C (defaults to cone map)
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -1226,10 +1225,9 @@ export default function App() {
           {surfaceActivated && <FloatingToolbar />}
 
 
-          {/* LSC-001 region C — the one swappable Primary Rendering slot. Defaults every lens to the
-              cone map (AnalysisField); per-lens surfaces slot in behind their lens id. */}
+          {/* AnalysisField — ConeMap only. No ACTIVE mode. */}
           <div style={{ position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear' }}>
-            <LensCanvas
+            <AnalysisField
               signals={liveSignals}
               replayedSignals={replayedSignals}
               selectedLens={selectedLens}
