@@ -7,7 +7,7 @@
 // map for lenses not listed here). A real URL string → that lens renders the Flourish viz in Region C.
 export const LENS_EMBEDS = Object.freeze({
   SIGNAL:      null, // e.g. 'https://flo.uri.sh/visualisation/XXXXXXX/embed'
-  FLOW:        null,
+  FLOW:        'https://flo.uri.sh/visualisation/29728063/embed', // Sankey — domain flows
   PRESSURE:    null,
   CONVERGENCE: null,
   DRIFT:       null,
