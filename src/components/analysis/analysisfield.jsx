@@ -31,10 +31,12 @@ function AnalysisField({
   if (isEmbedLens(viewportLens)) {
     const url = LENS_EMBEDS[viewportLens];
     return (
-      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {url ? (
+          // centered square — sized off the shorter axis so the chord has breathing room and clears the toolbar
           <iframe title={viewportLens} src={url}
-                  style={{ width: '100%', height: '100%', border: 'none', display: 'block' }} />
+                  style={{ width: 'min(58vmin, 70%)', height: 'min(58vmin, 70%)', border: 'none', display: 'block' }} />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
                         alignItems: 'center', justifyContent: 'center', gap: 10 }}>
