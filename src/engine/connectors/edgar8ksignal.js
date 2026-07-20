@@ -82,6 +82,14 @@ function buildSignals(eventMeta) {
       domain,
       signal,
       confidence,
+      // KRYL-1093 — reconvergence tagging. One source event fans out into several domain
+      // signals here. They cross into the domain field independently and recombine downstream,
+      // where nothing could previously tell them apart from genuinely independent evidence.
+      // originId groups the siblings; fanout > 1 marks a signal as one of a set, not a source
+      // in its own right. Consumers computing cross-domain agreement must collapse on originId.
+      originId:   realityObjectId,
+      fanout:     domains.length,
+      fanoutIndex: i,
       fs:         parseFloat((signal / 100).toFixed(3)),
       decay:      DECAY.DAILY,
       ts:         ts ?? Date.now(),

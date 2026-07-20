@@ -177,11 +177,16 @@ export function createCanonicalEvent({
   identityId,
   lineageRoot,
   timeWindow  = { start: new Date(), end: null },
+  // KRYL-1092 — stable key for the entity this event is attributed to (e.g. a canonical entity
+  // id or a CIK). Enforced as an absolute gate in shouldMerge(). Null means attribution is
+  // unknown; the merge gate then does not fire.
+  entityKey   = null,
   getAnchorStrength,
 } = {}) {
   const graph  = buildGraph(nodes, edges, rootSeeds, getAnchorStrength);
   const event  = {
     identityId:         identityId ?? crypto.randomUUID(),
+    entityKey,
     currentVersionHash: graph.versionHash,
     evidenceGraph:      graph,
     timeWindow,
@@ -199,14 +204,58 @@ export function createCanonicalEvent({
 
 // ── Structural similarity ─────────────────────────────────────────────────────
 
-// Jaccard similarity on evidenceType sets — fast, inspectable, no ML.
-function computeStructuralSimilarity(graphA, graphB) {
-  const typesA = new Set(Array.from(graphA.nodes.values()).map(n => n.evidenceType));
-  const typesB = new Set(Array.from(graphB.nodes.values()).map(n => n.evidenceType));
-  const intersection = [...typesA].filter(t => typesB.has(t)).length;
-  const union        = new Set([...typesA, ...typesB]).size;
+// Jaccard similarity — fast, inspectable, no ML.
+//
+// KRYL-1092: this compared evidenceType sets ONLY. Two events sharing a type scored 1.0 even
+// with no evidence in common, so any single-evidence-type source (every connector in this
+// codebase) produced a constant 1.0 and similarity stopped discriminating at all.
+//
+// Now a weighted blend of two terms over data already present in the graph:
+//   SHARED EVIDENCE — OVERLAP COEFFICIENT over node seedIds: |A ∩ B| / min(|A|,|B|).
+//     Deliberately not Jaccard. Jaccard divides by the union, so it penalises size asymmetry —
+//     a 20-node event and a 2-node event sharing both of the smaller one's nodes scores 0.10,
+//     even though the smaller event is entirely contained in the larger. Event graphs grow at
+//     different rates by nature (one filer accumulates filings faster than another), so
+//     asymmetry is normal and must not read as dissimilarity. Overlap coefficient is the
+//     standard measure for containment and answers the actual question: is one event's evidence
+//     already inside the other's?
+//   SHARED TYPE     — Jaccard over evidenceType sets. Symmetric and small, so Jaccard is right
+//     here. Same-kind-of-evidence is real but weak on its own; it is what the function used to
+//     return outright.
+//
+// Weighting: shared evidence dominates, and type agreement alone can no longer clear the 0.60
+// merge floor (0.30 × 1.0 = 0.30). Nothing is inferred — both terms are set operations over ids
+// already in the graph.
+const SIMILARITY_WEIGHT_EVIDENCE = 0.70;
+const SIMILARITY_WEIGHT_TYPE     = 0.30;
+
+function jaccard(setA, setB) {
+  const union = new Set([...setA, ...setB]).size;
   if (union === 0) return 0;
-  return intersection / union;
+  return [...setA].filter(x => setB.has(x)).length / union;
+}
+
+function overlapCoefficient(setA, setB) {
+  const smaller = Math.min(setA.size, setB.size);
+  if (smaller === 0) return 0;
+  return [...setA].filter(x => setB.has(x)).length / smaller;
+}
+
+function computeStructuralSimilarity(graphA, graphB) {
+  const nodesA = Array.from(graphA.nodes.values());
+  const nodesB = Array.from(graphB.nodes.values());
+  if (nodesA.length === 0 || nodesB.length === 0) return 0;
+
+  const evidenceSim = overlapCoefficient(
+    new Set(nodesA.map(n => n.seedId)),
+    new Set(nodesB.map(n => n.seedId)),
+  );
+  const typeSim = jaccard(
+    new Set(nodesA.map(n => n.evidenceType)),
+    new Set(nodesB.map(n => n.evidenceType)),
+  );
+
+  return SIMILARITY_WEIGHT_EVIDENCE * evidenceSim + SIMILARITY_WEIGHT_TYPE * typeSim;
 }
 
 // Temporal overlap [0–1] normalized to the longer span.
@@ -232,6 +281,19 @@ function hasStructuralNodes(event) {
 // ── Merge / Split ─────────────────────────────────────────────────────────────
 
 export function shouldMerge(eventA, eventB, thresholds = DEFAULT_THRESHOLDS) {
+  // KRYL-1092 — absolute entity gate. Sits ABOVE the similarity score and is never mixed into
+  // it (§21, cirgate.js precedent: absolute gates sit above blended scores).
+  //
+  // Two events attributed to different entities are not the same event, however similar their
+  // evidence looks. computeStructuralSimilarity() compares evidenceType SETS only, so any two
+  // events from a single-evidence-type source score 1.0 for every pair — every 8-K is
+  // SEC_FILING, so without this gate temporal overlap is the only thing standing between
+  // unrelated companies and a merge.
+  //
+  // A null entityKey on either side means attribution is unknown; the gate does not fire, which
+  // preserves the pre-existing behaviour for callers that never set one.
+  if (eventA.entityKey && eventB.entityKey && eventA.entityKey !== eventB.entityKey) return false;
+
   const structuralFloor = (hasStructuralNodes(eventA) || hasStructuralNodes(eventB))
     ? Math.min(thresholds.tau_structural + STRUCTURAL_SIMILARITY_BOOST, 0.90)
     : thresholds.tau_structural;

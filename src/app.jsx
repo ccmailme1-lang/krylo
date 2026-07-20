@@ -54,6 +54,7 @@ import { runGdeltSync }            from './engine/connectors/gdeltconnector.js';
 import { runRedditSync }           from './engine/connectors/redditconnector.js';
 import { runEdgar8KSync }          from './engine/connectors/edgar8kconnector.js';
 import { runEdgar8KSignalSync }    from './engine/connectors/edgar8ksignal.js';
+import { runEdgar8KEvidenceSync }  from './engine/connectors/edgar8kevidence.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';
 import TargetPacket        from './components/analysis/targetpacket.jsx';
@@ -749,11 +750,17 @@ export default function App() {
     runFecSync().catch(() => {});
     runCensusSync().catch(() => {});
 
-    // WO-2047/2051 — EDGAR 8-K pipeline: connector then signal integration, 5-min cadence
-    runEdgar8KSync().then(() => runEdgar8KSignalSync()).catch(() => {});
+    // WO-2047/2051 — EDGAR 8-K pipeline: connector then signal integration, 5-min cadence.
+    // KRYL-1091 — evidence adapter runs off the same processed events, parallel to the signal
+    // path (not chained to it): signals feed cones, evidence nodes feed the CanonicalEvent graph.
+    runEdgar8KSync()
+      .then(() => { runEdgar8KSignalSync(); runEdgar8KEvidenceSync(); })
+      .catch(() => {});
 
     const topoId    = setInterval(() => runNetworkTopologySync().catch(() => {}), 10 * 60 * 1000);
-    const edgar8kId = setInterval(() => runEdgar8KSync().then(() => runEdgar8KSignalSync()).catch(() => {}), 5 * 60 * 1000);
+    const edgar8kId = setInterval(() => runEdgar8KSync()
+      .then(() => { runEdgar8KSignalSync(); runEdgar8KEvidenceSync(); })
+      .catch(() => {}), 5 * 60 * 1000);
     const marketId  = setInterval(() => runFinancialMarketSync().catch(() => {}),  4 * 60 * 60 * 1000);
     const weeklyId  = setInterval(() => runEiaSync().catch(() => {}), 7 * 24 * 60 * 60 * 1000);
     const dailyId   = setInterval(() => {

@@ -15,8 +15,24 @@ import { createObject, weightForClass, OBJECT_TYPE, EPISTEMIC_STATE } from '../r
 import { EPISTEMIC_CLASS } from '../evidencetiers.js';
 
 const EDGAR_BASE    = '/api/edgar';
-const LOOKBACK_DAYS = 1;
+// KRYL-1094 — was 1. A single-day window returns zero on every weekend and market holiday,
+// which is indistinguishable from an outage and made the connector look permanently down.
+// 7 days always spans business days. Re-fetching costs nothing: _processed dedups by accession,
+// so already-seen filings are skipped, and MAX_HITS still caps volume per call.
+const LOOKBACK_DAYS = 7;
 const MAX_HITS      = 40;
+
+// KRYL-1094 — one retry with backoff. SEC rate-limits by IP; a single 429/503 previously
+// blanked the whole cycle until the next 5-minute tick.
+const FETCH_RETRIES  = 1;
+const RETRY_DELAY_MS = 1500;
+
+// Absence is a classified state (§22), never a silent empty array.
+export const SYNC_STATUS = Object.freeze({
+  OK:           'OK',            // fetch succeeded, filings returned
+  EMPTY_WINDOW: 'EMPTY_WINDOW',  // fetch succeeded, no filings in range — real, not a failure
+  FETCH_FAILED: 'FETCH_FAILED',  // could not reach the source — absence is unknown, not zero
+});
 
 // ── 8-K Item → Event Class map ────────────────────────────────────────────────
 // Deterministic — no inference. Unknown items → UNKNOWN_MATERIAL_EVENT; never discarded.
@@ -135,10 +151,19 @@ async function fetch8KFilings() {
     hits:      String(MAX_HITS),
   });
 
-  const res = await fetch(`${EDGAR_BASE}?${params}`);
-  if (!res.ok) throw new Error(`EDGAR 8-K fetch HTTP ${res.status}`);
-  const json = await res.json();
-  return json.hits?.hits ?? [];
+  let lastErr;
+  for (let attempt = 0; attempt <= FETCH_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+    try {
+      const res = await fetch(`${EDGAR_BASE}?${params}`);
+      if (!res.ok) throw new Error(`EDGAR 8-K fetch HTTP ${res.status}`);
+      const json = await res.json();
+      return json.hits?.hits ?? [];
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr;
 }
 
 // ── Process single filing ─────────────────────────────────────────────────────
@@ -220,8 +245,13 @@ export async function runEdgar8KSync() {
   try {
     hits = await fetch8KFilings();
   } catch (err) {
+    // KRYL-1094 — a failed fetch is NOT an empty window. Previously both returned the same
+    // empty shape, so an outage and a quiet Sunday were indistinguishable to every caller.
     _deadLetter.push({ phase: 'FETCH', error: err.message, ts: Date.now() });
-    return { processed: [], total: 0, new: 0, skipped: 0, deadLetter: _deadLetter.length };
+    console.warn('[EDGAR 8-K] fetch failed —', err.message);
+    return { processed: [], total: 0, new: 0, skipped: 0,
+             status: SYNC_STATUS.FETCH_FAILED, error: err.message,
+             deadLetter: _deadLetter.length };
   }
 
   const processed = [];
@@ -240,6 +270,7 @@ export async function runEdgar8KSync() {
     total:      hits.length,
     new:        processed.length,
     skipped:    hits.length - processed.length,
+    status:     hits.length === 0 ? SYNC_STATUS.EMPTY_WINDOW : SYNC_STATUS.OK,
     deadLetter: _deadLetter.length,
   };
 }

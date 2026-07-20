@@ -141,6 +141,12 @@ class SurfaceRouter {
       if (!e.topology?.length) return e;
       const hasOverlap = e.topology.some(t => batchSources.has(t));
       if (!hasOverlap) return e;
+      // KRYL-1093 — reconvergence guard. A fan-out sibling (one source event emitted into
+      // several domains, e.g. a BANKRUPTCY 8-K hitting both capital and ownership) is not
+      // independent corroboration of itself. Amplify the primary emission only; siblings
+      // cross unamplified. Without this, a single filing that fans out inflates its own
+      // confidence the moment its source gains a topology entry.
+      if ((e.fanout ?? 1) > 1 && (e.fanoutIndex ?? 0) > 0) return e;
       return {
         ...e,
         confidence: e.confidence !== undefined
