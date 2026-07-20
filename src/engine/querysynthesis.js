@@ -4,6 +4,7 @@
 import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
 import { resolveMCV }   from './mcvresolver.js';
+import { synthCanonical } from './canonicalresolution.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -4116,6 +4117,42 @@ export function synthesizeQuery(session) {
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
     return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, ses };
+  }
+
+  // KRYL-1080/1089/1091 — INSTITUTIONAL RESOLUTION.
+  // When the life-domain ladder abstains (GENERAL), an institutional/structural query used to
+  // fall to synthGeneral — a canned template with static confidence 0.71 + mock momentum.
+  // Instead, route to the canonical resolver: it classifies to one of the six real domains and
+  // synthesizes ONLY from the live signal field, or WITHHOLDS (§22). No template, no static
+  // number. Life-domain queries (AUTO/RETIREMENT/etc.) never reach here — this fires only on
+  // the exact GENERAL-abstain path that produced the fabrication.
+  if (vector.primary === 'GENERAL' && !domainLock) {
+    const canon = synthCanonical(query);
+    if (canon.withheld) {
+      // Domain may have resolved but the live field carries no signal — state it, don't fake it.
+      return {
+        queryDomain: (canon.primary ? canon.primary.toUpperCase() : 'AMBIGUOUS'),
+        domainVector: vector, resolutionEligible: false,
+        canonical: canon, withheldReason: canon.reason, ses,
+      };
+    }
+    const cw = {};
+    for (const [d, v] of Object.entries(canon.classification.weights)) cw[d.toUpperCase()] = v;
+    return {
+      queryDomain: canon.primary.toUpperCase(),
+      domainVector: { ...vector, primary: canon.primary.toUpperCase(), weights: cw,
+                      coActive: canon.coActive.map(d => d.toUpperCase()) },
+      resolutionEligible: true,
+      stateLabel:  canon.stateLabel,
+      confidence:  canon.confidence,             // DERIVED from live magnitude
+      momentum:    canon.momentum,               // DERIVED cross-sectional; h1/h24 null (no series)
+      direction:   canon.direction,
+      signalCount: canon.signalCount,
+      provenance:  canon.provenance,             // 'LIVE_DOMAIN_FIELD' — never a template
+      grounded:    true,
+      canonical:   canon,
+      ses,
+    };
   }
   // WO-1867 numeric binding: a REAL_ESTATE price must anchor to purchase/dwelling
   // context AND be a plausible residential magnitude. Stated assets/income (e.g.
