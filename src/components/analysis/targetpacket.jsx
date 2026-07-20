@@ -17,7 +17,7 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
-import { findCheapestFuel, findAverageFuel, isPetroQuery, petroType } from '../../engine/petrolocator.js';
+import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -413,11 +413,13 @@ export default function TargetPacket() {
   // Petro Locator (hidden utility, isolated from the engine): a "cheapest fuel near
   // me" query resolves to a live cheapest-station lookup. Withholds, never fabricates.
   const [petro, setPetro] = useState(null);
+  const [stations, setStations] = useState(null);   // KRYL-1076 — real OSM station field
   useEffect(() => {
     const q = session?.query ?? '';
-    if (!isPetroQuery(q)) { setPetro(null); return; }
+    if (!isPetroQuery(q)) { setPetro(null); setStations(null); return; }
     let alive = true;
     setPetro({ loading: true });
+    setStations(null);
     const type = petroType(q);
     // Station price (Zyla, paid) first; fall back to the free EIA regional average.
     findCheapestFuel({ type })
@@ -426,6 +428,11 @@ export default function TargetPacket() {
         return findAverageFuel({ type }).then(a => { if (alive) setPetro(a); });
       })
       .catch(() => { if (alive) setPetro({ withheld: true, reason: 'ERROR' }); });
+    // KRYL-1076 — real station LOCATIONS (OSM), independent of the price path. The map renders
+    // whenever locations resolve, even if the price path withholds.
+    findNearbyStations()
+      .then(s => { if (alive) setStations(s && !s.withheld ? s : null); })
+      .catch(() => { if (alive) setStations(null); });
     return () => { alive = false; };
   }, [session?.query]);
 
@@ -514,7 +521,7 @@ export default function TargetPacket() {
 
   // Gas Go hidden perk — hand the whole pane to the dedicated fuel template,
   // bypassing the analysis frame (no INSUFFICIENT/NO PATHS/REFORMULATE noise).
-  if (isPetroQuery(session?.query ?? '')) return <PetroTemplate petro={petro} />;
+  if (isPetroQuery(session?.query ?? '')) return <PetroTemplate petro={petro} stations={stations} />;
 
   return (
     <div style={{

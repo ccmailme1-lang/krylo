@@ -38,6 +38,69 @@ function parseCheapest(data) {
   };
 }
 
+// KRYL-1076 — real nearby fuel-station LOCATIONS from OpenStreetMap Overpass (amenity=fuel,
+// keyless, CORS-ok). Locations only — Overpass does NOT carry prices. Price stays the EIA
+// regional average, labeled as such. When a per-station price feed goes live, it attaches to
+// these existing pins by proximity, no rework.
+const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+
+// Haversine distance in miles — for sorting pins by nearness, no external dep.
+function milesBetween(lat1, lon1, lat2, lon2) {
+  const R = 3958.8, toRad = d => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// findNearbyStations({ radiusMeters, limit }) → { kind:'STATIONS', origin, stations:[...] }
+// or { withheld:true, reason }. Real OSM locations, sorted nearest-first. Never fabricates.
+export async function findNearbyStations({ radiusMeters = 8000, limit = 12 } = {}) {
+  const loc = await geolocate();
+  if (!loc) return { withheld: true, reason: 'LOCATION_UNAVAILABLE' };
+
+  // Overpass QL — fuel amenities (nodes + ways) within radius of the user.
+  const q = `[out:json][timeout:25];
+    (node["amenity"="fuel"](around:${radiusMeters},${loc.lat},${loc.lon});
+     way["amenity"="fuel"](around:${radiusMeters},${loc.lat},${loc.lon}););
+    out center ${limit * 3};`;
+
+  let elements = [];
+  try {
+    const r = await fetch(OVERPASS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain', 'Accept': 'application/json' },
+      body: q,
+    });
+    if (!r.ok) return { withheld: true, reason: 'NO_STATION_DATA' };
+    const j = await r.json();
+    elements = Array.isArray(j?.elements) ? j.elements : [];
+  } catch {
+    return { withheld: true, reason: 'NO_STATION_DATA' };
+  }
+
+  const stations = elements
+    .map(el => {
+      const lat = el.lat ?? el.center?.lat;
+      const lon = el.lon ?? el.center?.lon;
+      if (lat == null || lon == null) return null;
+      const t = el.tags ?? {};
+      return {
+        id:    `${el.type}/${el.id}`,
+        name:  t.name || t.brand || t.operator || 'Fuel station',
+        brand: t.brand || null,
+        lat, lon,
+        miles: milesBetween(loc.lat, loc.lon, lat, lon),
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.miles - b.miles)
+    .slice(0, limit);
+
+  if (!stations.length) return { withheld: true, reason: 'NO_STATION_DATA' };
+  return { kind: 'STATIONS', origin: { lat: loc.lat, lon: loc.lon }, stations };
+}
+
 // findCheapestFuel({ type }) → { station, address, price, average, lowest, zip, type }
 // or { withheld: true, reason }. Never fabricates.
 export async function findCheapestFuel({ type = 'regular' } = {}) {

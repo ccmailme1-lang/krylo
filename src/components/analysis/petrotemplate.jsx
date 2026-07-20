@@ -1,4 +1,5 @@
 import React from 'react';
+import GasGoMap from './gasgomap.jsx';
 
 // PetroTemplate — the "Gas Go" hidden perk. A dedicated fuel surface that takes over
 // the analysis pane: closest + cheapest fuel near you, styled as an unlocked easter-egg.
@@ -16,7 +17,7 @@ const KEYFRAMES = `
 @keyframes gasgo-rise  { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 `;
 
-export default function PetroTemplate({ petro }) {
+export default function PetroTemplate({ petro, stations }) {
   const pending = !petro || petro.loading;
   return (
     <div style={{
@@ -45,6 +46,10 @@ export default function PetroTemplate({ petro }) {
 
       {/* body */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', padding: 26, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        {/* KRYL-1076 — real station field (OSM). Renders whenever locations resolve, independent
+            of the price path, so a withheld price no longer leaves a blank card (TEST-010). */}
+        {stations?.stations?.length > 0 && <GasGoMap data={stations} />}
+
         {pending && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, animation: 'gasgo-rise 300ms ease' }}>
             <span style={{ width: 9, height: 9, borderRadius: '50%', border: `1px solid ${LIME}`, animation: 'gasgo-pulse 1s ease-in-out infinite' }} />
