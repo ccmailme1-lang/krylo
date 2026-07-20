@@ -2,7 +2,13 @@
 // CALIBRATE: review thresholds after live data integration.
 // Do not redefine these in other files — import from here.
 
-export const HIGH_CONVERGENCE_FLOOR = 75;  // locked from convergenceclassifier.js D>=0.75
+// Floor on DOMAIN SCORE (0–100). Locked by WO-1821.
+// KRYL-1088: the previous comment here claimed this was "locked from convergenceclassifier.js
+// D>=0.75". It is not derivable from that. D is m_checksum fidelity on a 0–1 scale; this floor
+// is applied to domain score on a 0–100 scale (happypathdisplacementengine.js). Different
+// quantity, different scale — the digits matched, the derivation does not. Value unchanged;
+// only the false justification is removed. Any recalibration is a WO-1821 decision.
+export const HIGH_CONVERGENCE_FLOOR = 75;
 export const COUNTER_SIGNAL_CEILING = 30;  // live calibration pass required
 
 // Minimum statistical power contract — WO-1825.

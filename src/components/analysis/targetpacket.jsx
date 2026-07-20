@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
-import { useEntitySignal }   from '../../hooks/useEntitySignal.js';
+import { useEntitySignal, ENTITY_SIGNAL_STATUS } from '../../hooks/useEntitySignal.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
 import LeverageField         from './leveragefield.jsx';
@@ -183,7 +183,7 @@ function useDomainHeadline(domain, active) {
 function DomainCard({ bayId, domainLabel }) {
   const bay         = useBayStore(s => s.bays[bayId]);
   const entityTitle = bay?.assignment?.title ?? null;
-  const { pressure, volatility, loading } = useEntitySignal(entityTitle);
+  const { pressure, volatility, resolved, status } = useEntitySignal(entityTitle);
   const headline    = useDomainHeadline(domainLabel, true);
 
   return (
@@ -204,7 +204,7 @@ function DomainCard({ bayId, domainLabel }) {
         </div>
         <SignalCluster entityTitle={entityTitle} pressure={pressure} volatility={volatility} loading={!headline && !entityTitle} headline={headline} />
       </div>
-      {entityTitle && !loading && (
+      {entityTitle && resolved && (
         <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
           <div style={{ fontSize: 9, color: LIME, fontFamily: MONO }}>
             PRESSURE <span style={{ color: '#fff' }}>{pressure}</span>
@@ -212,6 +212,13 @@ function DomainCard({ bayId, domainLabel }) {
           <div style={{ fontSize: 9, color: DIM, fontFamily: MONO }}>
             VOL <span style={{ color: '#fff' }}>{(volatility * 100).toFixed(1)}σ</span>
           </div>
+        </div>
+      )}
+      {/* KRYL-1085 — an unresolved lookup is stated, not hidden. Silence would read as
+          "no pressure" rather than "no reading" (§20/§22). */}
+      {entityTitle && status === ENTITY_SIGNAL_STATUS.UNAVAILABLE && (
+        <div style={{ fontSize: 9, color: DIM, fontFamily: MONO, letterSpacing: '0.14em', marginTop: 4 }}>
+          NO SIGNAL RESOLVED FOR THIS ENTITY
         </div>
       )}
       {headline && (

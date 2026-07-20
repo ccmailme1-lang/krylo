@@ -84,7 +84,13 @@ function buildSignalSnapshot(session, pendingAcquisition, fs) {
     primarySignal: (tensor?.domain ?? 'UNKNOWN').toUpperCase(),
     // fs is the authoritative export fidelity — must equal provenance.fidelity_score exactly
     confidence:    parseFloat(fs.toFixed(6)),
-    convergence:   parseFloat((tensor?.convergenceScore ?? tensor?.fidelityScore ?? 0).toFixed(6)),
+    // KRYL-1088: convergence used to fall back to fidelityScore, then to 0 — two different
+    // quantities shipped under one field name, with 0 (a real reading) standing in for absence.
+    // Absent convergence now exports as null. consultingimport.js:281 already reads it as
+    // `?? null`, and app.jsx:922 sets the same precedent: unrecorded, not fabricated.
+    convergence:   typeof tensor?.convergenceScore === 'number'
+                     ? parseFloat(tensor.convergenceScore.toFixed(6))
+                     : null,
     signals: sources.map((s, i) => ({
       id:     s.insight
                 ? s.insight.slice(0, 32).replace(/\s+/g, '_').toLowerCase()

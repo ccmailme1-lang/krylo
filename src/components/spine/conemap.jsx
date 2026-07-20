@@ -84,21 +84,47 @@ function lensRead(lens, { domain, pressure, volatility, v, drift }) {
   }
 }
 
+// KRYL-1088 — a cone holds exactly two measurements: pressure and volatility. The classifier
+// takes four axes, so this call site fills D and A from the same pressure value and pins T to
+// a constant. Consequences of that, stated rather than left implicit:
+//
+//   · D and A are one variable. convergenceclassifier.js:31 tests `D >= 0.75 && A >= 0.75`,
+//     which at a cone is a single condition presented as two (§23).
+//   · T = 0.7 is not a measurement. It makes `T >= 0.6` always pass, and — because
+//     convergenceclassifier.js:27 requires `T < 0.5` — it makes TURBULENT CONVERGENCE
+//     UNREACHABLE at a cone. The §6 signal_blue state cannot render on the cone map.
+//
+// Under this vector the five-state classifier reduces, at a cone, to:
+//     HIGH  → pressure >= 75 && volatility <= 0.6
+//     LOW   → pressure <  40
+//     INSUF → pressure <  10
+//     BUILDING → everything else
+//     TURBULENT → never
+//
+// Behaviour here is unchanged pending the axis decision in KRYL-1088. This consolidates the
+// two copies that previously built this vector inline, so the "one source, no drift" claim
+// below is actually true.
+const CONE_VECTOR_T = 0.7;          // placeholder constant, not a temporal measurement
+const CONE_TELEMETRY_CONFIDENCE = 0.8;
+
+function coneConvergenceVector(pressure, volatility) {
+  const leverageN = (pressure ?? 0) / 100;
+  return { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: CONE_VECTOR_T };
+}
+
 // Resolves a cone's live pressure/volatility to a classifier state + fill color.
 // The only place a convergence vector is built — Cone and ComparePanel both call this.
 function resolveConvergenceState(pressure, volatility) {
-  const leverageN = (pressure ?? 0) / 100;
-  const vector    = { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: 0.7 };
-  const { label, theme } = classifyConvergenceState(vector, 0.8);
+  const { label, theme } = classifyConvergenceState(
+    coneConvergenceVector(pressure, volatility), CONE_TELEMETRY_CONFIDENCE);
   return { label, color: THEME_COLOR[theme] ?? BLUE_TIER };
 }
 
-// KRYL-1003 — the classifier stateId for a cone, via the SAME vector convention as above (one
-// source, no drift). Feeds the field state-distribution over the whole cone population.
+// KRYL-1003 — the classifier stateId for a cone, via the SAME vector as above (one source,
+// no drift). Feeds the field state-distribution over the whole cone population.
 function convergenceStateId(pressure, volatility) {
-  const leverageN = (pressure ?? 0) / 100;
-  const vector    = { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: 0.7 };
-  return classifyConvergenceState(vector, 0.8).stateId;
+  return classifyConvergenceState(
+    coneConvergenceVector(pressure, volatility), CONE_TELEMETRY_CONFIDENCE).stateId;
 }
 
 const ARC_THESIS = {
@@ -157,10 +183,13 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
     }
   }, [state.colorOverride]);
 
-  // WO-1340: entity signal override — hook fetches live entity data; falls back to ambient while loading
-  const { pressure: entityPressure, volatility: entityVolatility, loading: entityLoading } = useEntitySignal(assignment?.title ?? null);
-  const activePressure   = (assignment && !entityLoading) ? entityPressure   : (state.pressure   ?? 0);
-  const activeVolatility = (assignment && !entityLoading) ? entityVolatility : (state.volatility ?? 0.5);
+  // WO-1340: entity signal override — hook fetches live entity data.
+  // KRYL-1085: gate on RESOLVED, not on "finished loading". A failed or incomplete lookup
+  // is unresolved, and the cone falls back to the domain's ambient reading rather than
+  // rendering a placeholder as if it were the entity's measurement.
+  const { pressure: entityPressure, volatility: entityVolatility, resolved: entityResolved } = useEntitySignal(assignment?.title ?? null);
+  const activePressure   = entityResolved ? entityPressure   : (state.pressure   ?? 0);
+  const activeVolatility = entityResolved ? entityVolatility : (state.volatility ?? 0.5);
 
   const { height, radius } = encodeCone({ ...state, pressure: activePressure, volatility: activeVolatility }, { focusId: null });
   const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
