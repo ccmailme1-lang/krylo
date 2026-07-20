@@ -1,0 +1,25 @@
+Signal,Confidence,Significance,Magnitude,Domain
+Rate Environment,88,82,74,CAPITAL
+Credit Spreads,71,64,55,CAPITAL
+M2 Velocity,63,55,48,CAPITAL
+Private Credit Flux,79,73,66,CAPITAL
+Adoption Rate,85,90,82,TECHNOLOGY
+Patent Velocity,74,68,60,TECHNOLOGY
+Deploy Signal,66,61,52,TECHNOLOGY
+Compute Demand,92,95,88,TECHNOLOGY
+Control Shift,69,58,50,OWNERSHIP
+Asset Concentration,76,71,64,OWNERSHIP
+Supply Constraint,54,49,44,OWNERSHIP
+Board Positioning,48,44,39,OWNERSHIP
+Labor Pressure,72,66,58,LABOR
+Hire Velocity,58,52,47,LABOR
+Wage Flux,51,47,41,LABOR
+Strike Density,43,39,36,LABOR
+News Velocity,77,70,62,MEDIA
+Narrative Shift,81,84,73,MEDIA
+Message Spend,62,57,50,MEDIA
+Attention Saturation,49,45,40,MEDIA
+Research Density,67,60,53,KNOWLEDGE
+Citation Flux,59,53,46,KNOWLEDGE
+Talent Migration,70,64,57,KNOWLEDGE
+Standard Formation,46,41,37,KNOWLEDGE

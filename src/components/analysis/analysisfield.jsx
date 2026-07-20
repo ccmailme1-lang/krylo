@@ -8,6 +8,12 @@ import { usePrism } from '../../context/PrismContext.jsx';
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 
+// ── LENS EMBED SIZING CONTRACT (LOCKED) ────────────────────────────────────────
+// Every Flourish lens embed renders in ONE identical panel, centered in Region C.
+// Do not size lenses individually. To resize ALL lenses, change these two numbers.
+// Target footprint = the cone-map content box (measured 1025 × 565 px, ~16:9).
+const LENS_EMBED = Object.freeze({ maxWidth: 900, maxHeight: 565 });
+
 function AnalysisField({
   signals,
   replayedSignals,
@@ -34,9 +40,12 @@ function AnalysisField({
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden',
                     display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {url ? (
-          // centered square — sized off the shorter axis so the chord has breathing room and clears the toolbar
+          // sized by the locked LENS_EMBED contract — identical 1025×565 panel for every lens
           <iframe title={viewportLens} src={url}
-                  style={{ width: 'min(58vmin, 70%)', height: 'min(58vmin, 70%)', border: 'none', display: 'block' }} />
+                  style={{ width: '100%', height: '100%',
+                           maxWidth: `${LENS_EMBED.maxWidth}px`,
+                           maxHeight: `${LENS_EMBED.maxHeight}px`,
+                           border: 'none', display: 'block' }} />
         ) : (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
                         alignItems: 'center', justifyContent: 'center', gap: 10 }}>

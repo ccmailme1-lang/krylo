@@ -1,0 +1,55 @@
+Signal,Domain,Corroboration,Weight
+Rate Environment,CAPITAL,86,74
+Credit Spreads,CAPITAL,71,55
+M2 Velocity,CAPITAL,68,48
+Private Credit Flux,CAPITAL,79,66
+Yield Curve Torsion,CAPITAL,72,52
+Liquidity Drain,CAPITAL,69,60
+Refi Wave,CAPITAL,74,58
+Covenant Stress,CAPITAL,66,45
+Buyback Pace,CAPITAL,70,50
+Duration Risk,CAPITAL,73,54
+Adoption Rate,TECHNOLOGY,91,82
+Patent Velocity,TECHNOLOGY,74,60
+Deploy Signal,TECHNOLOGY,72,52
+Compute Demand,TECHNOLOGY,94,88
+Model Release Cadence,TECHNOLOGY,76,64
+Infra Buildout,TECHNOLOGY,71,58
+Talent Inflow,TECHNOLOGY,73,55
+Open Source Pull,TECHNOLOGY,69,49
+Chip Supply,TECHNOLOGY,70,51
+API Traffic,TECHNOLOGY,75,62
+Control Shift,OWNERSHIP,69,50
+Asset Concentration,OWNERSHIP,72,64
+Supply Constraint,OWNERSHIP,66,44
+Board Positioning,OWNERSHIP,63,39
+Activist Stake,OWNERSHIP,71,57
+Buy-Side Rotation,OWNERSHIP,68,52
+Insider Flow,OWNERSHIP,74,60
+Float Compression,OWNERSHIP,67,46
+Labor Pressure,LABOR,68,58
+Hire Velocity,LABOR,64,47
+Wage Flux,LABOR,62,41
+Strike Density,LABOR,59,36
+Union Drive,LABOR,66,50
+Attrition Rate,LABOR,70,53
+Contract Cycle,LABOR,65,44
+Skills Gap,LABOR,71,56
+News Velocity,MEDIA,70,62
+Narrative Shift,MEDIA,83,73
+Message Spend,MEDIA,67,50
+Attention Saturation,MEDIA,64,40
+Sentiment Turn,MEDIA,72,58
+Creator Migration,MEDIA,69,52
+Channel Fragmentation,MEDIA,66,45
+Virality Index,MEDIA,73,60
+Research Density,KNOWLEDGE,66,53
+Citation Flux,KNOWLEDGE,68,46
+Talent Migration,KNOWLEDGE,71,57
+Standard Formation,KNOWLEDGE,63,37
+Grant Flow,KNOWLEDGE,69,51
+Preprint Velocity,KNOWLEDGE,72,58
+Curriculum Shift,KNOWLEDGE,65,43
+Cross-Field Cite,KNOWLEDGE,70,54
+Peer Consensus,KNOWLEDGE,74,61
+Replication Rate,KNOWLEDGE,67,47

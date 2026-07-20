@@ -21,10 +21,11 @@ ignite the selection in lime.**
 ---
 
 ## 1 · SIGNAL — Situational Awareness
-> Design a **network / scatter constellation** — signals as points floating on black. Point
-> **size = significance**, hairline links between related signals. Default: the whole field is dim
-> and even. On hover/select, the chosen signal (or domain) and its links **ignite lime** while the
-> rest recede to near-black. A star map you can focus. `[STYLE BLOCK]`
+> Design a **network / scatter constellation** — a field of points floating on black, each a signal.
+> **Point size = significance, glow/brightness = confidence**, hairline links between related signals.
+> Default: the whole field is dim and even. On hover/select, the chosen signal (or domain) and its
+> links **ignite lime** while the rest recede to near-black. Sparse, elegant — a star map you can
+> focus. `[STYLE BLOCK]`
 
 ## 2 · FLOW — Movement Analysis
 > Design a **directional-highlighting chord diagram** for six domains (Capital, Ownership, Labor,

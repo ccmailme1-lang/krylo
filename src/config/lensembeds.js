@@ -6,9 +6,9 @@
 // null = not wired yet → the lens shows an "awaiting embed" placeholder (or falls back to the cone
 // map for lenses not listed here). A real URL string → that lens renders the Flourish viz in Region C.
 export const LENS_EMBEDS = Object.freeze({
-  SIGNAL:      null, // e.g. 'https://flo.uri.sh/visualisation/XXXXXXX/embed'
+  SIGNAL:      'https://flo.uri.sh/visualisation/29733311/embed', // Signal Strength heatmap — 6 domains × time (% of peak)
   FLOW:        'https://flo.uri.sh/visualisation/29731380/embed', // Capital-lime directional chord — domain flows
-  PRESSURE:    null,
+  PRESSURE:    'https://flo.uri.sh/visualisation/29733840/embed', // Constraint radar — 6 domains × time envelope (% of ceiling)
   CONVERGENCE: null,
   DRIFT:       null,
   OPPORTUNITY: null,
