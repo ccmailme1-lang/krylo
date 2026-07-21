@@ -1,4 +1,4 @@
-// causalepistemicstamp.js — KRYL-1074 slice 1. The epistemic "skin" over causal edges.
+// causalepistemicstamp.js — KRYL-1074 slice 1 + KRYL-1095. The epistemic "skin" over causal edges.
 //
 // Labels each causal edge on TWO ORTHOGONAL axes (§23) and never blends them:
 //   AXIS 1 — mode:   ABDUCTION | DEDUCTION | INDUCTION   (asymmetry-weighted, Thorisson-Talbot 2018)
@@ -6,15 +6,19 @@
 // Rollup carries a groundedness % (§18 H1: Σ observed / Σ all) computed SEPARATELY from status.
 //
 // HONEST SCOPE OF THIS SLICE (substrate reality, not aspiration):
-//   The only causal substrate that exists today is the Causal Impact Map (KRYL-1011): static typed
-//   edges carrying { source, grounded } but NO invariance history and NO reasoning-origin tag.
-//   Therefore, on this substrate:
+//   The base Causal Impact Map (KRYL-1011) carries static typed edges with { source, grounded } but
+//   NO invariance history. Therefore, on that substrate:
 //     • groundedness IS available now — from the `grounded` flag (edge has real provenance).
 //     • status cannot honestly rise above PROJECTED — CORROBORATED needs the invariance test
 //       (α-present→β AND α-absent→¬β), which registry edges do not carry. Claiming CORROBORATED
 //       off mere provenance-backing would be the fabrication trap. So the ladder floors at PROJECTED.
-//     • mode is UNKNOWN — abduction/deduction/induction is derived from a reasoning-origin tag that
-//       only AR (KRYL-1069) / EDL (KRYL-1071) produce. Until those land, mode is null, not guessed.
+//
+//   MODE — REASONING-ORIGIN ATTRIBUTION (KRYL-1095): mode is the logical operator the PRODUCING
+//   reasoning mechanism used to derive the edge. It is EMITTED AT SOURCE on edge.mode — never
+//   inferred, guessed, or recomputed here (Rule 1). An edge whose mechanism does not declare a mode,
+//   or declares a value outside the MODE enum, is stamped null — null means "the originating
+//   mechanism did not declare a reasoning operator," NOT unknown / low-confidence / failed (Rule 2/3).
+//   mode is ORTHOGONAL (§23): it never touches provenance, invariance, status, or groundedness (Rule 5).
 //
 //   SPEC REFINEMENT (feed back to KRYL-1074): groundedness is decoupled from status. Provenance-
 //   backing (observed → counts toward groundedness) and invariance survival (→ CORROBORATED) are
@@ -26,6 +30,18 @@
 
 export const MODE   = Object.freeze({ ABDUCTION: 'ABDUCTION', DEDUCTION: 'DEDUCTION', INDUCTION: 'INDUCTION' });
 export const STATUS = Object.freeze({ PROJECTED: 'PROJECTED', CORROBORATED: 'CORROBORATED', CLOSED: 'CLOSED', CONFIRMED: 'CONFIRMED' });
+
+// The only legal reasoning operators. Anything else on edge.mode is treated as undeclared (→ null).
+const VALID_MODES = new Set([MODE.ABDUCTION, MODE.DEDUCTION, MODE.INDUCTION]);
+
+/**
+ * normalizeMode(m) — KRYL-1095 Rule 2/3. Pass through a declared, recognized reasoning operator;
+ * everything else (undefined, null, or any value outside the MODE enum) → null. Never guesses,
+ * never defaults to a mode. Null is an explicit "not declared" state, not an error or "unknown".
+ */
+function normalizeMode(m) {
+  return VALID_MODES.has(m) ? m : null;
+}
 
 // §18 groundedness bands (locked): green > 70, amber 40–70, red < 40.
 export function groundednessBand(pct) {
@@ -57,7 +73,9 @@ export function invariance(record) {
 
 /**
  * stampEdge(edge, record) — label one causal edge. Pure; no mutation of the input.
- * @param {Object} edge   — a Causal Impact Map impact: { from, to, type, source, grounded, ... }
+ * @param {Object} edge   — a Causal Impact Map impact: { from, to, type, source, grounded, mode?, ... }
+ *                          edge.mode (optional) is the reasoning operator declared by the producing
+ *                          mechanism (KRYL-1095). Absent/unrecognized → null (never guessed).
  * @param {Object|null} record — optional present/absent record for the invariance test (default null)
  * @returns {Object} { from, to, type, mode, status, provenanceBacked, invariance, reason }
  */
@@ -71,8 +89,9 @@ export function stampEdge(edge = {}, record = null) {
   const authoritative = evidenceTier == null || evidenceTier <= 2;
   const tier3Candidate = inv.holds && !authoritative; // invariance holds but only on Tier-3 data
   const status = (inv.holds && authoritative) ? STATUS.CORROBORATED : STATUS.PROJECTED;
-  // Mode: no reasoning-origin tag on registry edges → unknown until AR/EDL exist. Never guessed.
-  const mode = null;
+  // Mode (KRYL-1095): source-emitted reasoning operator, validated to the MODE enum. Orthogonal to
+  // status — a null mode never changes the ladder, and a declared mode never promotes it.
+  const mode = normalizeMode(edge.mode);
   return {
     from: edge.from ?? null,
     to: edge.to ?? null,
@@ -120,7 +139,13 @@ export function stampChain(edges = [], { recordFor = null } = {}) {
     ? STATUS.PROJECTED
     : LADDER[Math.min(...stamped.map(e => LADDER.indexOf(e.status)))];
 
-  const modeProfile = { [MODE.ABDUCTION]: 0, [MODE.DEDUCTION]: 0, [MODE.INDUCTION]: 0, unknown: count };
+  // Mode profile (KRYL-1095): the REAL distribution of declared reasoning operators. `unknown` counts
+  // edges whose producing mechanism did not declare a mode — never a blanket `count` default.
+  const modeProfile = { [MODE.ABDUCTION]: 0, [MODE.DEDUCTION]: 0, [MODE.INDUCTION]: 0, unknown: 0 };
+  for (const e of stamped) {
+    if (e.mode && VALID_MODES.has(e.mode)) modeProfile[e.mode] += 1;
+    else modeProfile.unknown += 1;
+  }
 
   return {
     edges: stamped,
