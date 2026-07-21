@@ -19,6 +19,7 @@ import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
+import WhyTracePanel from './whytracepanel.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -437,7 +438,11 @@ export default function TargetPacket() {
   }, [session?.query]);
 
   const entity      = getDisplayEntity(session?.query ?? '').toUpperCase() || 'AWAITING SIGNAL';
-  const confScore   = synthesis?.confidence ?? 0.78;
+  // KRYL-1089: confidence is grounded only when the engine measured it. The old `?? 0.78`
+  // fabricated a number whenever the seam withheld — that was the "new 78% constant". When
+  // fidelity is UNGROUNDED / confidence is null, there is NO score to show.
+  const confGrounded = synthesis?.fidelity !== 'UNGROUNDED' && typeof synthesis?.confidence === 'number';
+  const confScore   = confGrounded ? synthesis.confidence : null;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   // DEF-1863: nothing in this pipeline produces an observed/closed outcome yet — default PROJECTION.
   const stateType   = synthesis?.stateType ?? STATE_TYPE.PROJECTION;
@@ -456,7 +461,7 @@ export default function TargetPacket() {
 
   const revelationStep  = 3;
   const { profiles: lensProfiles, rfe: lensRfe } = useMemo(() => routeLens(session), [session]);
-  const hpScore         = Math.round(confScore * 100);
+  const hpScore         = confGrounded ? Math.round(confScore * 100) : null;
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
@@ -564,10 +569,10 @@ export default function TargetPacket() {
                 <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.1em' }}>
                   Confidence
                 </span>
-                <span style={{ fontFamily: MONO, fontSize: 12, color: LIME, letterSpacing: '0.1em' }}>
-                  {confScore.toFixed(2)}
+                <span style={{ fontFamily: MONO, fontSize: 12, color: confGrounded ? LIME : DIM, letterSpacing: '0.1em' }}>
+                  {confGrounded ? confScore.toFixed(2) : 'UNGROUNDED'}
                 </span>
-                <ConfidenceBar value={confScore} color={LIME} />
+                {confGrounded && <ConfidenceBar value={confScore} color={LIME} />}
               </div>
             </div>
             {(synthesis?.timeHorizon || synthesis?.impactLevel) && (
@@ -843,6 +848,9 @@ export default function TargetPacket() {
           </div>
         </div>
       </div>
+
+      {/* ── KRYL-2101: WHY · STRUCTURAL PROVENANCE (universal, not lens-gated) ── */}
+      <WhyTracePanel entity={entity} />
 
       {/* ── WO-1835: CEO COMPETITIVE EDGE BRIEF ──────────────────────────── */}
       {lensRfe?.state !== 'UNCLASSIFIED' && session?.lens?.toUpperCase() === 'CEO' && lensProfiles[0]?.lensId === 'DEFENDER' && hpScore >= 65 && (() => {
