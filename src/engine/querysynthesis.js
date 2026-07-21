@@ -4,7 +4,7 @@
 import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
 import { resolveMCV }   from './mcvresolver.js';
-import { synthCanonical } from './canonicalresolution.js';
+import { synthCanonical, groundSignalMetrics } from './canonicalresolution.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -4098,6 +4098,7 @@ import { classifyAmbiguity } from './domainambiguitygate.js';
 import { checkRealEstateEligibility, checkAutoEligibility } from './ienbg.js';
 import { computeSES } from './searchenvironmentstate.js';
 import { getObservations } from './runtimeobservablestore.js';
+import { STATE_TYPE } from './statecontract.js'; // DEF-1863 — hard state contract, engine-declared
 import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
 
 export function synthesizeQuery(session) {
@@ -4116,7 +4117,7 @@ export function synthesizeQuery(session) {
   const ses = computeSES({ observations: getObservations(), query, domains: Object.keys(vector.weights || {}) });
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
-    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, ses };
+    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, stateType: STATE_TYPE.PROJECTION, ses };
   }
 
   // KRYL-1080/1089/1091 — INSTITUTIONAL RESOLUTION.
@@ -4143,6 +4144,7 @@ export function synthesizeQuery(session) {
       domainVector: { ...vector, primary: canon.primary.toUpperCase(), weights: cw,
                       coActive: canon.coActive.map(d => d.toUpperCase()) },
       resolutionEligible: true,
+      stateType:   STATE_TYPE.PROJECTION,         // DEF-1863 — inferred from signals, never TERMINAL
       stateLabel:  canon.stateLabel,
       confidence:  canon.confidence,             // DERIVED from live magnitude
       momentum:    canon.momentum,               // DERIVED cross-sectional; h1/h24 null (no series)
@@ -4194,6 +4196,22 @@ export function synthesizeQuery(session) {
 
   // WO-1870: report the domain that ACTUALLY synthesized — no header/body contradiction.
   const effectiveDomain = SYNTH_MAP[vector.primary] ? vector.primary : 'GENERAL';
+
+  // KRYL-1089 — SINGLE GROUNDING SEAM. Every synthesizer (all ~29 life-domain templates) emits
+  // a static confidence + static momentum. Replace them here, at the one point they all pass
+  // through, with values MEASURED from the live signal field — or mark UNGROUNDED and null them
+  // out (§22). No template's fabricated number reaches the render. Prose/arithmetic untouched.
+  const grounded = groundSignalMetrics(query);
+  const groundedMetrics = grounded.grounded
+    ? { confidence: grounded.confidence, momentum: grounded.momentum,
+        fidelity: 'MEASURED', metricProvenance: grounded.provenance,
+        signalDirection: grounded.direction }
+    : { confidence: null, momentum: null,
+        fidelity: 'UNGROUNDED', metricProvenance: grounded.reason };
+
   // KRYL-1010: SES computed at intake above; attach here (annotation only, no score mutation).
-  return { ...result, queryDomain: effectiveDomain, domainVector: vector, actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses };
+  return { ...result, ...groundedMetrics,
+           stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
+           queryDomain: effectiveDomain, domainVector: vector,
+           actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses };
 }
