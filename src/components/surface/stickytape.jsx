@@ -1,19 +1,19 @@
 // stickytape.jsx — KRYL-1051 Sticky-Tape. Left-nav dispenser + free-drop annotation layer.
-// Industry-standard treatment: drag off the NOTES dispenser to place a note; notes open FULL;
-// drag anywhere; resize from the corner handle; DOUBLE-CLICK the header (or ×) collapses to a
-// small blue NotebookPen ICON; LONG-PRESS a note (or its icon) opens color options; RIGHT-CLICK
-// opens a menu → Delete → confirm. Cmd/Ctrl+Z undoes the last delete. Persists to sessionStorage;
-// getStickies() rides the premium export.
+// Industry-standard treatment: CLICK the NOTES dispenser to drop a note at a default location;
+// notes open FULL; drag anywhere; resize from the corner handle; DOUBLE-CLICK the header (or ×)
+// collapses to a small lime NotebookPen ICON; LONG-PRESS a note (or its icon) opens color options;
+// RIGHT-CLICK opens a menu → Delete → confirm. Cmd/Ctrl+Z undoes the last delete. Persists to
+// sessionStorage; getStickies() rides the premium export.
 
 import React, { useRef, useState, useEffect } from 'react';
 import { NotebookPen } from 'lucide-react';
 import { useStickyStore } from '../../store/usestickystore.js';
 
 const MONO = "'IBM Plex Mono', monospace";
-const NOTE_COLOR = '#4FD1C5';            // default sticky blue
+const NOTE_COLOR = '#66FF00';            // default sticky lime (Founder 2026-07-22)
 const COLORS = ['#4FD1C5', '#66FF00', '#FF69B4']; // long-press palette: blue · lime · hot pink (Founder-approved)
 const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default (minimal) open size; user-resizable
-const TAB_W = 21, TAB_H = 36;            // ghost tab while dragging off the dispenser
+const DEFAULT_X = 140, DEFAULT_Y = 160;  // fixed drop point for a dispenser click (Founder 2026-07-22)
 const LONG_PRESS_MS = 500;
 
 function StickyNote({ note }) {
@@ -213,7 +213,7 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
   const restoreLast = useStickyStore(s => s.restoreLast);
   const armedId     = useStickyStore(s => s.armedId);
   const disarm      = useStickyStore(s => s.disarm);
-  const [ghost, setGhost] = useState(null);
+  const [dispHover, setDispHover] = useState(false); // matches .lnav-item hover treatment
 
   // Cmd/Ctrl+Z restores the last deleted note; Esc cancels an armed attach.
   useEffect(() => {
@@ -225,21 +225,8 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
     return () => window.removeEventListener('keydown', onKey);
   }, [restoreLast, armedId, disarm]);
 
-  // Click-drag off the dispenser → ghost follows the cursor → drop a note where you release.
-  const startPlace = (e) => {
-    e.preventDefault();
-    const pos = (ev) => ({ x: ev.clientX - TAB_W / 2, y: ev.clientY - TAB_H / 2 });
-    setGhost(pos(e));
-    const move = (ev) => setGhost(pos(ev));
-    const up = (ev) => {
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-      setGhost(null);
-      addSticky(ev.clientX - OPEN_MIN_W / 2, ev.clientY - 14, currentPage); // bind to the page it was dropped on
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
+  // Click the dispenser → drop a new note at a fixed default location, bound to the current page.
+  const placeDefault = () => addSticky(DEFAULT_X, DEFAULT_Y, currentPage);
 
   return (
     <>
@@ -256,28 +243,28 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
         }}>TAP A CONE TO ATTACH · ESC TO CANCEL</div>
       )}
 
-      {/* Dispenser — 'NOTES' above a slot with a paper tab. Drag off it to place a note. */}
-      <div onPointerDown={startPlace} title="Drag to place a note"
+      {/* Dispenser — 'NOTES' above a gray-outline sticky-note icon, matching the left-nav icon
+          vocabulary (stroke-only, opacity 0.3 → 0.7 on hover, same as .lnav-item). Click drops a
+          new note at a fixed default location — no drag. */}
+      <div onClick={placeDefault} title="New note"
+        onMouseEnter={() => setDispHover(true)} onMouseLeave={() => setDispHover(false)}
         style={{
-          position: 'fixed', left: 20, top: '62%', zIndex: 9999, cursor: 'grab', userSelect: 'none',
+          position: 'fixed', left: 20, top: '62%', zIndex: 9999, cursor: 'pointer', userSelect: 'none',
           display: 'flex', flexDirection: 'column', alignItems: 'center',
+          opacity: dispHover ? 0.7 : 0.3, transition: 'opacity 0.2s',
         }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', marginBottom: 5, color: 'rgba(255,255,255,0.55)' }}>NOTES</span>
-        <div style={{ width: 46, height: 11, background: '#111', borderRadius: 2, border: '1px solid rgba(255,255,255,0.28)', position: 'relative' }}>
-          <div style={{
-            position: 'absolute', left: '50%', top: 6, transform: 'translateX(-50%)', width: 28, height: 18,
-            background: NOTE_COLOR, clipPath: 'polygon(0 0, 100% 0, 100% 76%, 50% 100%, 0 76%)', boxShadow: '0 3px 6px rgba(0,0,0,0.5)',
-          }} />
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', marginBottom: 5, color: 'rgba(255,255,255,0.85)' }}>NOTES</span>
+        <div style={{ width: 46, height: 9, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)' }} />
+        <div style={{ width: 32, height: 32, borderRadius: 3, border: '1px solid rgba(255,255,255,0.55)', marginTop: -3, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="3" width="12" height="12" rx="1" />
+            <line x1="5.5" y1="6.5" x2="12.5" y2="6.5" />
+            <line x1="5.5" y1="9" x2="12.5" y2="9" />
+            <line x1="5.5" y1="11.5" x2="10" y2="11.5" />
+            <rect x="5" y="12.5" width="1.6" height="1.6" fill="rgba(255,255,255,0.85)" stroke="none" />
+          </svg>
         </div>
       </div>
-
-      {/* ghost preview while dragging off the dispenser */}
-      {ghost && (
-        <div style={{
-          position: 'fixed', left: ghost.x, top: ghost.y, width: TAB_W, height: TAB_H, zIndex: 9997,
-          background: NOTE_COLOR, opacity: 0.55, pointerEvents: 'none',
-        }} />
-      )}
     </>
   );
 }
