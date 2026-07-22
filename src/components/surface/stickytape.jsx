@@ -253,17 +253,16 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: dispHover ? 0.7 : 0.3, transition: 'opacity 0.2s',
         }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', marginBottom: 5, color: 'rgba(255,255,255,0.85)' }}>NOTES</span>
-        <div style={{ width: 46, height: 9, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)' }} />
-        <div style={{ width: 32, height: 32, borderRadius: 3, border: '1px solid rgba(255,255,255,0.55)', marginTop: -3, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="12" height="12" rx="1" />
-            <line x1="5.5" y1="6.5" x2="12.5" y2="6.5" />
-            <line x1="5.5" y1="9" x2="12.5" y2="9" />
-            <line x1="5.5" y1="11.5" x2="10" y2="11.5" />
-            <rect x="5" y="12.5" width="1.6" height="1.6" fill="rgba(255,255,255,0.85)" stroke="none" />
-          </svg>
-        </div>
+        <div style={{ width: 58, height: 10, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)', background: '#000', position: 'relative', zIndex: 2 }} />
+        <svg viewBox="0 0 18 18" width="28" height="28" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round"
+          style={{ marginTop: -7, position: 'relative', zIndex: 3, background: '#000' }}>
+          <rect x="2" y="2" width="14" height="14" rx="1" />
+          <line x1="5" y1="6" x2="13" y2="6" />
+          <line x1="5" y1="9" x2="13" y2="9" />
+          <line x1="5" y1="12" x2="9" y2="12" />
+          <rect x="5" y="4" width="4" height="3" />
+        </svg>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.26em', marginTop: 5, color: 'rgba(255,255,255,0.85)' }}>NOTES</span>
       </div>
     </>
   );
