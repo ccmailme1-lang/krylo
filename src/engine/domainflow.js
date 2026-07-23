@@ -6,10 +6,10 @@
 // Output matches the confirmed Flourish structure exactly:
 //   Source, Target, Count   (directional: A→B and B→A are distinct rows)
 
-import { CANONICAL_DOMAINS } from './canonicalontology.js';
+import { CANONICAL_DOMAINS } from './ontology.js';
 
-const DOMAINS = (CANONICAL_DOMAINS ?? ['CAPITAL', 'OWNERSHIP', 'LABOR', 'MEDIA', 'TECHNOLOGY', 'KNOWLEDGE'])
-  .map(d => String(d).toUpperCase());
+// §17 single source (KRYL-1065): domains come from ontology.js — no literal fallback.
+const DOMAINS = CANONICAL_DOMAINS.map(d => String(d).toUpperCase());
 
 const up = d => String(d ?? '').toUpperCase();
 
