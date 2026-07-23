@@ -3,6 +3,8 @@
 // buildEnvelope() freezes arbitration state at CommitEvent time.
 // storeEnvelope() uses add() not put() — no mutation permitted.
 
+import { sealAllOpen } from './convergencefingerprint.js';
+
 const DB_NAME    = 'krylo_lineage';
 const DB_VERSION = 1;
 const STORE_NAME = 'envelopes';
@@ -52,6 +54,12 @@ export function buildEnvelope(tensor, commitEvent) {
   if (!arb) throw new Error('buildEnvelope: tensor.arbitration is missing');
   if (!arb.requestId) throw new Error('buildEnvelope: arbitration.requestId is missing');
 
+  // KRYL-1097 — seal trigger + replay exposure. Commit is the completion event: freeze the
+  // convergence trajectories observed during the session and attach them to the (immutable)
+  // replay envelope as read-only metadata (FR-6). analysisId links each fingerprint to this
+  // analysis. Seals only what the producer already recorded; adds no convergence computation.
+  const convergenceFingerprints = sealAllOpen({ analysisId: arb.requestId });
+
   return Object.freeze({
     schemaVersion: '1.0.0',
     eventId:  arb.requestId,
@@ -78,5 +86,7 @@ export function buildEnvelope(tensor, commitEvent) {
       floor:   tensor.floor     ?? 0,
       domains: Object.freeze([...(tensor.domains ?? [])]),
     }),
+    // KRYL-1097 — read-only convergence provenance (already-frozen fingerprints)
+    convergenceFingerprints: Object.freeze(convergenceFingerprints),
   });
 }

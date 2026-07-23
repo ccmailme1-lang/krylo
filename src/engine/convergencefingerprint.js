@@ -111,6 +111,16 @@ export function sealFingerprint(executionId, provenance = {}) {
   return fingerprint;
 }
 
+/**
+ * sealAllOpen — seal every currently-open trajectory. Called at a completion event
+ * (commit/envelope build) to freeze the convergence observed during the session.
+ * @param {{analysisId?:string, replayId?:string}} provenance — applied to each sealed fingerprint
+ * @returns {object[]} frozen fingerprints (one per open execution)
+ */
+export function sealAllOpen(provenance = {}) {
+  return [...openTrajectories.keys()].map(execId => sealFingerprint(execId, provenance));
+}
+
 /** getFingerprint — read-only retrieval by id (FR-6). */
 export function getFingerprint(fingerprintId) {
   return registry.get(fingerprintId) ?? null;
