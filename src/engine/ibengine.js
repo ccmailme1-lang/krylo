@@ -55,11 +55,19 @@ export function collapseToDecisionCandidates(lfosValidated) {
     }
   }
 
-  // ── Step 2: Rank — descending by collapsedScore ───────────────────────────
-  admitted.sort((a, b) =>
-    computeCollapsedScore(b.rbcsScore, b.survivalProbability, b.propagationStability) -
-    computeCollapsedScore(a.rbcsScore, a.survivalProbability, a.propagationStability)
-  );
+  // ── Step 2: Rank — descending by collapsedScore, deterministic tie-break ───
+  // KRYL-1105 (G-F): on equal collapsedScore, order previously fell back to input
+  // arrival order — non-deterministic across runs. Secondary key = ascending branchId
+  // (raw code-point compare, locale-independent) gives a total order: identical input
+  // → identical ranking every run. collapsedScore is already rounded to 4dp, so equal
+  // to 4dp is a true tie. branchId is the stable trace identity — no new hash needed.
+  admitted.sort((a, b) => {
+    const sb = computeCollapsedScore(b.rbcsScore, b.survivalProbability, b.propagationStability);
+    const sa = computeCollapsedScore(a.rbcsScore, a.survivalProbability, a.propagationStability);
+    if (sb !== sa) return sb - sa;
+    const ab = String(a.branchId), bb = String(b.branchId);
+    return ab < bb ? -1 : ab > bb ? 1 : 0;
+  });
 
   // ── Step 3: Cap — top IB_TOP_N ───────────────────────────────────────────
   const capped   = admitted.slice(0, IB_TOP_N);
