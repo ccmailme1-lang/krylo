@@ -19,6 +19,7 @@
 
 import { buildSignalUnit, compareSignals } from './asdiff.js';
 import { parse7PointSchema } from './pliengine.js';
+import { computeDivergenceSurface } from './divergencesurface.js';
 
 // Slice 1 hardcoded peer set (KRYL-1006). Automated peer-set resolution is a follow-up.
 export const HARDCODED_PEER_SETS = {
@@ -82,5 +83,30 @@ export function runComparativeDiff(anchor, { peers } = {}) {
     grounding: 'PROVISIONAL — placeholder SignalUnits (identical inputs → PARITY by design). '
              + 'Real per-entity data sourcing pending (KRYL-1006 follow-up).',
     results,
+  };
+}
+
+/**
+ * runDivergenceSurface — all-pairs leverage divergence across a set of entities (the field view).
+ * Builds one SignalUnit per entity (REUSE buildPlaceholderUnit) and feeds the whole field to
+ * computeDivergenceSurface, which reuses asdiff.compareSignals. Distinct from runComparativeDiff:
+ * no anchor — every pair is compared and per-item divergence surfaced ("who diverges most").
+ * Same PROVISIONAL grounding: placeholder units (identical inputs → PARITY) until real per-entity
+ * data sourcing lands (KRYL-1006). The pipeline is live; the data is provisional.
+ *
+ * @param {string[]} entities
+ * @returns {{ entities:string[], grounding:string, surface:object }}
+ */
+export function runDivergenceSurface(entities = []) {
+  const list = (entities ?? []).map(e => (e ?? '').toUpperCase()).filter(Boolean);
+  if (list.length < 2) {
+    return { entities: list, grounding: 'INSUFFICIENT_ENTITIES', surface: computeDivergenceSurface([]) };
+  }
+  const units = list.map(buildPlaceholderUnit);
+  return {
+    entities:  list,
+    grounding: 'PROVISIONAL — placeholder SignalUnits (identical inputs → PARITY by design). '
+             + 'Real per-entity data sourcing pending (KRYL-1006 follow-up).',
+    surface:   computeDivergenceSurface(units),
   };
 }
