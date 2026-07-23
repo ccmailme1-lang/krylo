@@ -12,6 +12,11 @@
 
 export const FINGERPRINT_VECTOR_VERSION = 1; // bump only if the artifact field set/order changes
 
+// Bound on concurrently-open (unsealed) trajectories. The producer path has no seal
+// trigger yet, so without a cap a long session would grow openTrajectories unbounded.
+// Oldest-open is evicted first (insertion-ordered Map).
+export const MAX_OPEN_EXECUTIONS = 64;
+
 // in-progress trajectories — mutable ONLY until sealed
 const openTrajectories = new Map(); // executionId → [{ state, score, ts }]
 // sealed registry — immutable
@@ -44,9 +49,30 @@ export function recordConvergenceSample(executionId, { state, score, ts = Date.n
   if (byExecution.has(executionId)) {
     throw new Error(`convergencefingerprint: execution ${executionId} is sealed — immutable (FR-3)`);
   }
-  if (!openTrajectories.has(executionId)) openTrajectories.set(executionId, []);
+  if (!openTrajectories.has(executionId)) {
+    // evict oldest open trajectory if at cap (seal-less producer safety)
+    if (openTrajectories.size >= MAX_OPEN_EXECUTIONS) {
+      openTrajectories.delete(openTrajectories.keys().next().value);
+    }
+    openTrajectories.set(executionId, []);
+  }
   openTrajectories.get(executionId).push({ state, score, ts });
   return openTrajectories.get(executionId).length;
+}
+
+/**
+ * recordConvergenceTransition — producer-path helper for hot call sites (oraclesignal, render).
+ * Records only when the convergence STATE changes from the last sample (dedupe), so the
+ * trajectory holds transitions, not every render. Never throws into the caller: a sealed or
+ * unrecordable execution returns false instead of raising.
+ * @returns {boolean|null} true = recorded transition · null = deduped (no change) · false = sealed/skipped
+ */
+export function recordConvergenceTransition(executionId, { state, score, ts = Date.now() }) {
+  if (byExecution.has(executionId)) return false; // already sealed — do not throw into a hot path
+  const existing = openTrajectories.get(executionId);
+  if (existing && existing.length && existing[existing.length - 1].state === state) return null; // no change
+  recordConvergenceSample(executionId, { state, score, ts });
+  return true;
 }
 
 /**

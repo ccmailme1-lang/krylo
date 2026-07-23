@@ -4,6 +4,7 @@
 // UI is forbidden from computing scores. This function is the only place that derives them.
 
 import { classifyConvergenceState, applyTransitionPolicy } from './convergenceclassifier.js';
+import { recordConvergenceTransition } from './convergencefingerprint.js';
 
 const clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
 
@@ -91,6 +92,13 @@ export function normalizeToOracleSignal(signal, { applyHysteresis = false } = {}
   // value: canonical 0-1 signal quality score
   // signal.fs and signal.score are synonymous 0-1 trust metrics
   const value = clamp(signal.fs ?? signal.score ?? 0, 0, 1);
+
+  // KRYL-1097 — producer: record the observed convergence transition for the focused signal.
+  // Display/hysteresis path only (not bulk node loops), identified signals only, dedupe on
+  // state-change. Side-effect only — never throws, never touches the derived value above (FR-5).
+  if (applyHysteresis && signal.id != null) {
+    recordConvergenceTransition(signal.id, { state: convergenceResult.label, score: value });
+  }
 
   return {
     id:           signal.id ?? `os_${Date.now()}`,
