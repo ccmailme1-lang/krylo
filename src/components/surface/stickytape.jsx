@@ -253,8 +253,8 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: dispHover ? 0.7 : 0.3, transition: 'opacity 0.2s',
         }}>
-        <div style={{ width: 58, height: 10, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)', background: '#000', position: 'relative', zIndex: 2 }} />
-        <svg viewBox="0 0 18 18" width="28" height="28" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.2" strokeLinecap="round"
+        <div style={{ width: 43, height: 10, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)', background: '#000', position: 'relative', zIndex: 2 }} />
+        <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="white" strokeWidth="1.2" strokeLinecap="round"
           style={{ marginTop: -7, position: 'relative', zIndex: 3, background: '#000' }}>
           <rect x="2" y="2" width="14" height="14" rx="1" />
           <line x1="5" y1="6" x2="13" y2="6" />
