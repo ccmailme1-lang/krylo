@@ -8,6 +8,7 @@ const LIME   = '#66FF00';
 const BORDER = 'rgba(26,26,26,1)';
 
 const LENS_OPTIONS = ['INVESTOR','REALTOR','ATHLETE','SALES','LEGAL','RETIREMENT','GENERAL'];
+const VIEW_OPTIONS = ['DOMAIN','CONE'];
 
 function SettingsRow({ label, value, type, options, onChange }) {
   const [toggled, setToggled]   = useState(value === true || value === 'ON');
@@ -136,6 +137,20 @@ export default function SettingsPanel() {
             type="select"
             options={LENS_OPTIONS}
             onChange={v => update('defaultLens', v)}
+          />
+        </div>
+
+        {/* DEFAULT VIEW */}
+        <div style={{ marginTop: 28 }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.24em', marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${BORDER}` }}>
+            DEFAULT VIEW
+          </div>
+          <SettingsRow
+            label="Inspection Panel"
+            value={profile.defaultView}
+            type="select"
+            options={VIEW_OPTIONS}
+            onChange={v => update('defaultView', v)}
           />
         </div>
 

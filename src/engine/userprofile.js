@@ -3,6 +3,7 @@ const STORAGE_KEY = 'krylo_user_profile';
 
 export const DEFAULT_PROFILE = {
   defaultLens:                'GENERAL',
+  defaultView:                'DOMAIN',   // hero inspection panel default: DOMAIN | CONE
   signalSensitivityThreshold: 70,
   signalWindow:               '72H',
   autoAdvance:                true,

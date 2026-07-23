@@ -15,6 +15,7 @@ import StateDistribution from '../analysis/statedistribution.jsx';
 import LeverageLattice            from './leveragelattice.jsx';
 import LeverageTowers             from '../surface/leveragetowers.jsx';
 import { useBayStore, DOMAIN_ABBR } from '../../store/usebaystore.js';
+import { loadProfile } from '../../engine/userprofile.js';
 import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
@@ -595,7 +596,8 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     setCandOpen(false);
     setCandInput('');
     // page load → default to Domain; afterwards, selecting a cone opens the Cone view
-    setTopTab(firstView.current ? 'domain' : (cone?.domain ? 'cone' : 'domain'));
+    // Domain is the default view; a personal setting (profile.defaultView) may override to Cone.
+    setTopTab(loadProfile().defaultView === 'CONE' ? 'cone' : 'domain');
     firstView.current = false;
   }, [cone?.domain]);
 
