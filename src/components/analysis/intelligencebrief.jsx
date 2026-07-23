@@ -19,6 +19,7 @@ import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import WhyThisMatters from './whythismatters.jsx';
+import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
 import PerceptionRisk from './perceptionrisk.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
@@ -298,6 +299,14 @@ export default function IntelligenceBrief() {
   const { engineState }           = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
   const hp                        = arbitrateHP(engineState, synthesis);
+  // KRYL-1113 — counter-evidence must never assert false absence (§20/§22). Engine decides the
+  // state; this render is a sink. evaluated = HP monitoring ran (engineState present);
+  // counter-signals = surfaced unicorn alerts. Empty + evaluated => "none found" (honest);
+  // never a hardcoded absence.
+  const hpCounter                 = computeCounterEvidenceState({ evaluated: !!engineState, contradictions: alerts });
+  const hpCounterValue            = hpCounter.state === COUNTER_EVIDENCE_STATE.FOUND
+    ? `${hpCounter.contradictions.length} counter-signal${hpCounter.contradictions.length === 1 ? '' : 's'}`
+    : hpCounter.label;
   const [outcomeInput, setOutcomeInput] = useState(null); // { convictionId, pathId, value, followed }
   const lrPrior = useMemo(() => {
     if (!synthesis || synthesis.resolutionEligible === false) return null;
@@ -407,7 +416,7 @@ export default function IntelligenceBrief() {
               { label: 'CONVERGENCE', value: 'HIGH — sustained' },
               { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
               { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
-              { label: 'COUNTER',     value: 'None above threshold' },
+              { label: 'COUNTER',     value: hpCounterValue },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
@@ -596,7 +605,7 @@ export default function IntelligenceBrief() {
                   { label: 'CONVERGENCE', value: 'HIGH — sustained' },
                   { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
                   { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
-                  { label: 'COUNTER',     value: 'None above threshold' },
+                  { label: 'COUNTER',     value: hpCounterValue },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
@@ -1062,7 +1071,7 @@ export default function IntelligenceBrief() {
                   { label: 'CONVERGENCE', value: 'HIGH — sustained' },
                   { label: 'VELOCITY',    value: hpSnapshot.current.velocity },
                   { label: 'SCORE',       value: `${hpSnapshot.current.peakScore.toFixed(0)} / 100` },
-                  { label: 'COUNTER',     value: 'None above threshold' },
+                  { label: 'COUNTER',     value: hpCounterValue },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
