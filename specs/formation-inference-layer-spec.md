@@ -1,6 +1,6 @@
 # Formation Inference Layer — Spec (Enhanced Draft for Review)
 
-WO/KRYL: **TBD (Founder to assign)**
+WO/KRYL: **KRYL-1117** (Epic) — https://krylo.atlassian.net/browse/KRYL-1117
 Status: DRAFT — for review, discussion, finalization
 Author of record: Founder (Mr. XS). This draft structures the decisions; rulings are the Founder's.
 Date: 2026-07-25 (enhanced 2026-07-25 — incorporates architecture + math review passes)
@@ -209,15 +209,14 @@ E_DUPLICATE        // identical (label,domain,evidenceRef) already included
 E = C * Q * Ḡ                                       // multiplicative only (§18)
 assert iff E >= FORMATION_EXISTENCE_FLOOR
 ```
-Any thin leg craters E → withhold. **FORMATION_EXISTENCE_FLOOR is BUILD BLOCKED — Founder must set**
-(proposed 0.30, mirroring IB-survival / commit floors).
+Any thin leg craters E → withhold. **FORMATION_EXISTENCE_FLOOR = 0.30 — LOCKED (Founder, 2026-07-25)**
+(mirrors IB-survival / commit floors).
 
-**Open semantic (Decision #7b — Founder ruling required):** Q as defined penalizes *internal tension* — a
-formation defined by *opposing* domain pressures (tech↑ vs capital↓) scores low Q and withholds. If KRYLO's
-meaning of a formation is **alignment**, Q is correct as-is. If it is **structural organization** (tension
-can define a formation), Q needs a tension-tolerant variant. Also: E is currently **scale-invariant**
-(doubling all magnitudes leaves E unchanged) — existence is structural, not intensity-gated. Both are
-doctrine calls, not math calls. Flagged, not decided.
+**Decision #7b — Q semantics: ALIGNMENT — RULED (Founder, 2026-07-25).** Q stands **as-is**: net÷gross
+reinforcement. A formation defined by *opposing* domain pressures (tech↑ vs capital↓) scores low Q and
+**withholds by design** — internal tension is not a formation under KRYLO's meaning; coherent directional
+pressure is. E remains **scale-invariant** (existence is structural, not intensity-gated) — accepted as a
+consequence of the alignment ruling. No tension-tolerant variant is built.
 
 ### 6.8 Temporal attributes (Decision #6)
 
@@ -369,6 +368,108 @@ export function getAllSignals(windowMs = DEFAULT_WINDOW_MS) {
 **Classification:** substrate fix, not a refactor. Restores the ontology — formations emerge from signal
 relationships, not precomputed domain judgments. Builds independently of #4 (floor) and #7b (Q semantics).
 
+## 13b. PLC-001 — Prospectus Layout Contract (Information Architecture)
+
+**Canonical genre — dossier, not dashboard:**
+> KRYLO prospectus surfaces follow a **dossier architecture**: a structured analytical profile centered on
+> an observed formation, supported by evidence, relationships, trajectory, and unresolved questions.
+
+The object shifts from "tell me about this thing" to **"reveal the structure forming here."** Reading order
+is **conclusion-first** — the assessment leads, detail nests, receipts anchor the bottom.
+
+**Reading order (top → bottom):**
+1. **Identity header** — formation name, participating domains, status, observed window. (§1)
+2. **Analyst Brief hero** — a compressed *structural fingerprint*, not a summary: state · E · evidence count
+   · top unresolved. (§2) — this is the CB-Insights "Outlook/Highlights" slot, re-purposed.
+3. **Dossier body** — the 12 sections as analyst cards (below).
+4. **Structural Context rail** — related domains (the graph) + adjacent formations (the scouting network /
+   resonance). (§6, §6.9)
+5. **Evidence & receipts** — every claim drills to its source. (§11)
+
+**Dossier section map** (his FORMATION PROFILE reconciled to our 12 sections + the lens→section contract):
+
+| Dossier card | Our section | Lens |
+|---|---|---|
+| Identity — *what emerged* | §1 | frame |
+| Signal Signature — *what patterns exist* | §3 Anatomy / §4 Field | Convergence / Flow |
+| Structural Assessment — *why it matters* | §2 | Perception |
+| Domain Pressure | §9 Pressure Map | Pressure |
+| Evidence Card — *what supports it* | §11 | Signal |
+| Trajectory — *how it is changing* | §8 / §10 | Drift — **withheld today** (see note) |
+| Open Questions — *what remains unknown* | §5 Unknowns-equivalent + withheld set | frame |
+| Structural Context (rail) | §6 Relationships / §6.9 Resonance | Opportunity |
+
+**Card behavior (uniform):** each card is an *analytical instrument*, not a KPI tile.
+- **Grounded card** → the number/structure **+ a drill-to-receipt hinge** ("view receipts →").
+- **Withheld card** → §22 classified absence + reason, same visual weight (silence is shown, not hidden).
+- **E is never a lone number** — it renders with its legs C · Q · Ḡ exposed (the CB-Insights Mosaic
+  sub-score pattern: headline + components + Avg-vs-subject bar).
+- Progressive disclosure everywhere (the "View More" behavior).
+
+**Two guardian annotations (keep the genre without breaking locked rules):**
+- **Domains stay ⊆ the six.** Illustrative labels like "Energy," "Grid Load," "Compute Infrastructure"
+  are **particle labels**; the domain chips render canonical domains only (technology / capital / …). A
+  header reads *FORMATION: Grid-Load + AI-Infrastructure Pressure · Domains: TECHNOLOGY · CAPITAL* — never
+  "Domain: Energy" (Decision #1).
+- **Trajectory / historical path / directional deltas (↑34%) are §22 TEMPORAL absence today.** No
+  time-series substrate exists (§6.8), so those cards render classified absence, not an invented trend or
+  arrow. The dossier *slot* is reserved; the data is honest.
+
+## 13c. VIC-001 — Prospectus / Scouting Report Visual Intent Contract
+
+**Purpose:** define the intended artifact *character* of KRYLO prospectus surfaces — not a design system.
+The interface should feel like an **analyst instrument**, not a consumer dashboard.
+
+**Prospectus qualities** — communicate authority, permanence, structured reasoning, investment-grade
+analysis, traceable claims. Reader feels: *"This is a documented assessment of an emerging structure,"* not
+*"This is a live analytics dashboard."*
+
+**Scouting-report qualities** — communicate discovery, comparative evaluation, signal recognition,
+strengths/weaknesses, trajectory. Reader feels: *"An expert analyst has identified something worth
+examining."*
+
+**Information presentation model — the Formation Dossier / Analyst Brief:**
+```
+FORMATION PROFILE
+  Identity            ├── what emerged
+  Signal Signature    ├── what patterns exist
+  Structural Assessment ├── why it matters
+  Evidence Card       ├── what supports it
+  Trajectory          ├── how it is changing   (§22 absence until substrate)
+  Open Questions      ├── what remains unknown
+```
+
+**Genre reference set (Founder-supplied):** institutional Private Placement Memorandum · investor factsheet
+(Barclays "About …") · CB Insights Scouting Report. These set the *character* — full-document editorial
+hierarchy, filled tables, structure diagrams, footnoted provenance. Palette and type remain the designer's.
+
+**Visual behavior — intent only.**
+Encourage: editorial hierarchy · structured sections · evidence cards · analyst annotations · comparative
+panels · historical context · receipt trails.
+Avoid: generic BI dashboards · KPI tiles as the primary experience · marketing/landing-page aesthetics ·
+decorative visualization without analytical purpose · **predictive language** (CB Insights *sells*
+intelligence; KRYLO *exposes perception*).
+
+**Anti-pattern — LOCKED (Founder, 2026-07-25):** the **lens-embed treatment must NOT be the prospectus
+skin** — i.e. black ground + gray hairline dividers + lime accents scattered "here and there." That
+combination reads as a Flourish chart embed, not an investment-grade document, and it is the reason
+yesterday's surface failed. The prospectus is a **native document surface**, distinct from the Flourish
+lens embeds that the locked *lens-style-standard* governs; VIC-001 governs the prospectus.
+
+**Palette discipline (consistent with §6, not a new rule):** lime appears **only as a live-state mark**
+(§6 semantics — live/constructive, high emissive dominance, rare by rule). It is never a border, never
+decoration, never "spread." Removing decorative lime is not a departure from doctrine — it *enforces* it.
+The document's authority comes from editorial hierarchy and structure, not from accent color. The actual
+palette (grounds, ink, structural fills) is the designer's call, per the reference genre above.
+
+**Emotional target:** between **Morningstar research reports** and a **professional scouting dossier**. Not
+a pitch deck. Not a spreadsheet. Not a news article. **A research artifact.**
+
+**The boundary (why this is a contract, not a design):** the spec says *"the prospectus has this analytical
+character."* The **designer** decides how that becomes typography, spacing, color, motion, and composition.
+This gives the vibe without another invent-a-layout situation — engineering implements a contract, it does
+not originate a look.
+
 ## 14. File Map
 
 | File | New/Change | Responsibility |
@@ -385,8 +486,8 @@ relationships, not precomputed domain judgments. Builds independently of #4 (flo
 
 1. Reduces ambiguity? **YES** — one bounded formation or `null`, formal predicate.
 2. Single dominant output? **YES** — `Formation | null`.
-3. All boundaries defined? **BLOCKED** — needs `FORMATION_EXISTENCE_FLOOR`.
-4. No undefined dependencies? **BLOCKED** — floor + polarity-exposure confirmation.
+3. All boundaries defined? **YES** — `FORMATION_EXISTENCE_FLOOR = 0.30` (LOCKED).
+4. No undefined dependencies? **YES** — floor locked; polarity accessor shipped (§13a, committed 2481467).
 5. Does not increase expressive flexibility in core? **YES** — additive; core sensing untouched.
 
 ## 16. Golden QA set (objective regression — recompute to 1e-6)
@@ -416,22 +517,19 @@ Plus property tests for INV-7…INV-10 and every §8 impossibility. Build fails 
 
 ```
 #1  Domain model         LOCKED — subset of the six.
-#2  Inclusion boundary   Proposed: formal predicate + exclusion enum (§6.2/§6.6).        Confirm.
-#3  Grounded edge subset Proposed: co-presence only ships; rest §22.                     Confirm.
-#4  Existence confidence E = C·Q·Ḡ. FLOOR = BUILD BLOCKED.                               SET THE FLOOR.
-#5  Identity             Proposed: direct WO-2004 reuse (FORMATION-ID-001).              Confirm reuse vs wrapper.
-#6  Temporal attrs       §22 TEMPORAL absence until substrate.                           Confirm.
-#7a Graph model          Newly adopted: formation IS a graph (§6).                       Confirm / veto.
-#7b Q semantics          Alignment (as-is) vs tension-tolerant; scale-invariance (§6.7). RULE.
-    Polarity exposure    VERIFIED (2026-07-25): getAllDomainPressures() exposes polarity+magnitude
-                         per DOMAIN (magnitude 0–100 → ÷100). Per-PARTICLE is NOT exposed — the pool
-                         is pre-collapsed (domaingravity.js:116–120: mean confidence + majority-vote
-                         polarity). Q needs uncollapsed particles (§6.4) and feeding a pre-aggregate
-                         into formationExists() is a soft §21 tension + reintroduces voting.
-                         FIX (additive, non-breaking): add a read-only pool accessor
-                         (getDomainSignals/getAllSignals) so the engine computes Q from raw particles.
+#2  Inclusion boundary   LOCKED — formal predicate + exclusion enum (§6.2/§6.6).
+#3  Grounded edge subset LOCKED — co-presence only ships; rest §22.
+#4  Existence confidence LOCKED — E = C·Q·Ḡ, FLOOR = 0.30 (Founder, 2026-07-25).
+#5  Identity             LOCKED — direct WO-2004 reuse (FORMATION-ID-001).
+#6  Temporal attrs       LOCKED — §22 TEMPORAL absence until substrate.
+#7a Graph model          LOCKED — formation IS a graph (§6).
+#7b Q semantics          LOCKED — ALIGNMENT (net÷gross as-is); tension withholds; E scale-invariant
+                         (Founder, 2026-07-25).
+    Polarity exposure    RESOLVED — accessor shipped (§13a, committed 2481467). Engine reads raw
+                         particles via getDomainSignals/getAllSignals; normalizes confidence/100.
 ```
 
-BUILD-BLOCKED until #4 (floor) closes. Polarity-exposure resolved: add one additive read-only pool
-accessor (above); domain-level data is live today. #7a/#7b are the two calls that
-most shape the engine — your rulings there are the difference between a good engine and the best one.
+**BUILD-READY.** All decisions locked; substrate shipped. No open blockers.
+Remaining work is construction only: `formationinference.js` (predicate + C/Q/Ḡ/E + boundary),
+`perceptionread.js`, `formationprospectus.js` assembler, and `qa_formationinference.mjs` (golden set
++ INV/impossibility tests).
