@@ -73,18 +73,20 @@ function AnalysisField({
       if (s.read) return `${s.read.label ?? s.read.lens} ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
       return '—';
     };
-    // sub-score bars — the CB-Insights coordinated-metric signature (label · value · bar), §6 mono, no lime.
+    // one metric row (optional leg-key · value · bar) — the CB-Insights coordinated-metric signature,
+    // §6 mono, no lime. Value is a grounded 0..1 read; the bar is that read, nothing invented.
+    const BarRow = ({ k, v }) => (
+      <div style={{ display: 'grid', gridTemplateColumns: k != null ? '18px 40px 1fr' : '40px 1fr', alignItems: 'center', gap: 10 }}>
+        {k != null && <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>{k}</span>}
+        <span style={{ fontFamily: MONO, fontSize: 12, color: INK, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(2)}</span>
+        <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+          <span style={{ position: 'absolute', inset: 0, width: `${Math.round(v * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
+        </span>
+      </div>
+    );
     const Bars = ({ pairs }) => (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 2 }}>
-        {pairs.map(([k, v]) => (
-          <div key={k} style={{ display: 'grid', gridTemplateColumns: '18px 40px 1fr', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>{k}</span>
-            <span style={{ fontFamily: MONO, fontSize: 12, color: INK, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(2)}</span>
-            <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
-              <span style={{ position: 'absolute', inset: 0, width: `${Math.round(v * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
-            </span>
-          </div>
-        ))}
+        {pairs.map(([k, v]) => <BarRow key={k} k={k} v={v} />)}
       </div>
     );
     const Body = ({ s }) => {
@@ -94,6 +96,16 @@ function AnalysisField({
         return <Bars pairs={[['E', s.existence], ['C', s.cohesion], ['Q', s.pressureCoherence], ['Ḡ', s.avgGroundedness]]} />;
       if (NARRATIVE.has(s.id))
         return <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>{dataBody(s)}</div>;
+      // grounded scalar read (Anatomy · Field · Pressure · Drift · Evidence): prose label + its bar.
+      if (s.read && typeof s.read.value === 'number')
+        return (
+          <div>
+            <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.6, letterSpacing: '0.02em', color: DIM, marginBottom: 12 }}>
+              {s.read.label ?? s.read.lens}
+            </div>
+            <BarRow v={s.read.value} />
+          </div>
+        );
       return <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>{dataBody(s)}</div>;
     };
     const Label = ({ s }) => (
@@ -107,10 +119,15 @@ function AnalysisField({
     const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
     const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
       'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
+    // §17 canonical six, ticker order. Each renders a domain card: participating (in the formation) is
+    // grounded/lit; the rest surface as §22 ABSENT. The value slot is intentionally empty — filled later.
+    const CANON = [['C01', 'CAPITAL'], ['C02', 'OWNERSHIP'], ['C03', 'LABOR'],
+      ['C04', 'MEDIA'], ['C05', 'TECHNOLOGY'], ['C06', 'KNOWLEDGE']];
+    const inFormation = new Set(byId.STRUCTURAL_IDENTITY?.participatingDomains ?? []);
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 940, minHeight: '100%', padding: '40px 44px 72px', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
           {prospectus && prospectus.live ? (
             <>
               {/* hero — conclusion-first, full width */}
@@ -125,10 +142,30 @@ function AnalysisField({
                 <span>{prospectus.header.evidenceCount} signals</span>
               </div>
               {byId.STRUCTURAL_IDENTITY && (
-                <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: DIM, marginBottom: 34 }}>
+                <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: DIM, marginBottom: 30 }}>
                   {byId.STRUCTURAL_IDENTITY.participatingDomains?.join('   ·   ')}
                 </div>
               )}
+
+              {/* domain cards — the six §17 domains as a coordinated 3-col grid. Participating domains are
+                  lit (in the formation); the rest surface as §22 ABSENT. Value slot left empty to fill. */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
+                {CANON.map(([cid, name]) => {
+                  const inF = inFormation.has(name);
+                  return (
+                    <div key={cid} style={{ ...CARD, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 108 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT }}>{cid}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.06em', color: inF ? INK : DIM }}>{name}</div>
+                      <div style={{ flex: 1, minHeight: 20 }} />{/* value slot — empty, to fill */}
+                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em',
+                                    color: inF ? LIME : FAINT, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {inF && <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME }} />}
+                        {inF ? 'IN FORMATION' : 'ABSENT · §22'}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
 
               {/* executive brief — full width, serif */}
               {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
@@ -157,12 +194,23 @@ function AnalysisField({
                 </div>
               )}
 
-              {/* coordinated panel grid — whitespace-separated, no borders */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 48, rowGap: 34, marginBottom: 40 }}>
-                {GRID.filter((id) => byId[id]).map((id) => (
-                  <div key={id} style={CARD}><Label s={byId[id]} /><Body s={byId[id]} /></div>
-                ))}
-              </div>
+              {/* coordinated panel mesh — hairline-separated contiguous cells (the CBI sectioned wall).
+                  Borders come from the 1px gap over a hairline ground; cells paint dark on top. Last cell
+                  spans full width when the count is odd, so no empty hairline box shows. */}
+              {(() => {
+                const cells = GRID.filter((id) => byId[id]);
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1,
+                                background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)', marginBottom: 40 }}>
+                    {cells.map((id, i) => (
+                      <div key={id} style={{ background: '#000', padding: '18px 20px',
+                                             gridColumn: i === cells.length - 1 && cells.length % 2 === 1 ? '1 / -1' : undefined }}>
+                        <Label s={byId[id]} /><Body s={byId[id]} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* conclusion — full width, serif */}
               {byId.STRUCTURAL_INTELLIGENCE_CONCLUSION && (
