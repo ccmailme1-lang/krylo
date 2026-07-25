@@ -6,6 +6,7 @@ import { LENS_EMBEDS, isEmbedLens } from '../../config/lensembeds.js';
 import { usePrism } from '../../context/PrismContext.jsx';
 import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js';
 import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
+import { getDomainSignals } from '../../engine/domaingravity.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -28,6 +29,7 @@ const LENS_CAPTIONS = Object.freeze({
 function AnalysisField({
   signals,
   replayedSignals,
+  history,
   selectedLens,
   topoMode,
   onTopoToggle,
@@ -46,12 +48,44 @@ function AnalysisField({
   // ── OPPORTUNITY (sell layer) → live Structural Intelligence Prospectus (KRYL-1117).
   // buildLiveProspectus runs the chain: signal pool → perception → inference → assembler.
   const opportunityActive = viewportLens === 'OPPORTUNITY';
-  const prospectus = useMemo(
-    () => (opportunityActive ? buildLiveProspectus({ now: Date.now() }) : null),
-    [opportunityActive, signals, replayedSignals],
-  );
+  // OPPORTUNITY snapshot: the live prospectus + per-domain decision-driving readings, both from the SAME
+  // pool (getDomainSignals is the §13a read-only accessor — display-only aggregation, §21-allowed). No fab.
+  const opp = useMemo(() => {
+    if (!opportunityActive) return null;
+    const prospectus = buildLiveProspectus({ now: Date.now() });
+    const domainStats = {};
+    let magSum = 0, magN = 0;
+    for (const d of CANONICAL_DOMAINS) {
+      const sigs = getDomainSignals(d);
+      const count = sigs.length;
+      if (!count) { domainStats[d.toUpperCase()] = { count: 0, mag: null, direction: 'absent' }; continue; }
+      const mag = sigs.reduce((s, x) => s + (x.confidence ?? 0) / 100, 0) / count;               // signal strength 0..1
+      const net = sigs.reduce((s, x) => s + (x.polarity === 'fracture' ? -1 : 1) * ((x.confidence ?? 0) / 100), 0);
+      domainStats[d.toUpperCase()] = { count, mag, direction: net === 0 ? 'mixed' : net > 0 ? 'constructive' : 'fracture' };
+      magSum += mag; magN += 1;
+    }
+    const fieldAvg = magN ? magSum / magN : 0;   // grounded field mean — the honest "Avg" baseline (re-derivable)
+    return { prospectus, domainStats, fieldAvg };
+  }, [opportunityActive, signals, replayedSignals]);
+
+  // History line — grounded from the replay frame log (§13a / usereplay: the same 24H series the surface
+  // scrubs). Per frame = mean signal_score across that frame's signals → a real (ts, v) series. Self-scaled
+  // at render. < 2 points → the line withholds (TEMPORAL absence, §22), never a fabricated trend.
+  const historySeries = useMemo(() => {
+    if (!opportunityActive) return [];
+    return (history ?? [])
+      .filter((f) => f && Number.isFinite(f.ts))
+      .map((f) => {
+        const vals = (f.signals ?? []).map((s) => s?.signal_score).filter(Number.isFinite);
+        return vals.length ? { ts: f.ts, v: vals.reduce((a, b) => a + b, 0) / vals.length } : null;
+      })
+      .filter(Boolean);
+  }, [opportunityActive, history]);
 
   if (opportunityActive) {
+    const prospectus = opp?.prospectus ?? null;
+    const domainStats = opp?.domainStats ?? {};
+    const fieldAvg = opp?.fieldAvg ?? 0;
     // OPPORTUNITY report surface (KRYL-1117). Dark §6 palette (no color change). §5 dual voice:
     // SERIF synthesis (narrative) / MONO data. VIC-001: institutional research artifact — hierarchy and
     // spacing carry it, no gray-border cards, lime is a live-state mark only.
@@ -66,6 +100,14 @@ function AnalysisField({
       EVIDENCE_FOUNDATION: 'Evidence Foundation', STRUCTURAL_INTELLIGENCE_CONCLUSION: 'Conclusion',
     };
     const NARRATIVE = new Set(['EXECUTIVE_STRUCTURAL_ASSESSMENT', 'STRUCTURAL_INTELLIGENCE_CONCLUSION']);
+    // Researched factor semantics (scoutingreport.js five-lens set — not invented). Drives the factor cards.
+    const FACTOR_DESC = {
+      EVIDENCE_FOUNDATION: 'How hot the field is — signal density.',
+      FORMATION_ANATOMY: 'How strongly the signals agree — convergence.',
+      PRESSURE_MAP: 'How constrained the field is — capacity in use.',
+      STRUCTURAL_FIELD: 'Which way the field is moving — directional flow.',
+      STRUCTURAL_DRIFT: 'Structure pulling away from narrative — the early tell.',
+    };
     const dataBody = (s) => {
       if (s.statement) return s.statement;
       if (s.note) return s.note;
@@ -90,6 +132,26 @@ function AnalysisField({
         {pairs.map(([k, v]) => <BarRow key={k} k={k} v={v} />)}
       </div>
     );
+    // grounded History line (replay frames, self-scaled). < 2 points → withholds (§22 TEMPORAL), never faked.
+    const HistoryLine = ({ series }) => {
+      if (!series || series.length < 2)
+        return (
+          <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em', color: FAINT }}>
+            HISTORY WITHHELD · TEMPORAL §22
+          </div>
+        );
+      const vs = series.map((p) => p.v);
+      const min = Math.min(...vs), max = Math.max(...vs), span = (max - min) || 1;
+      const W = 100, H = 40;
+      const pts = series.map((p, i) =>
+        `${((i / (series.length - 1)) * W).toFixed(2)},${(H - ((p.v - min) / span) * H).toFixed(2)}`).join(' ');
+      return (
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: 120, display: 'block' }}>
+          <polyline points={pts} fill="none" stroke="rgba(245,245,247,0.6)" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+        </svg>
+      );
+    };
     const Body = ({ s }) => {
       if (s.state !== 'GROUNDED')
         return <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.03em', color: FAINT }}>Withheld — {s.reason} · {s.absence}</div>;
@@ -97,14 +159,20 @@ function AnalysisField({
         return <Bars pairs={[['E', s.existence], ['C', s.cohesion], ['Q', s.pressureCoherence], ['Ḡ', s.avgGroundedness]]} />;
       if (NARRATIVE.has(s.id))
         return <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>{dataBody(s)}</div>;
-      // grounded scalar read (Anatomy · Field · Pressure · Drift · Evidence): prose label + its bar.
+      // grounded scalar read (the five researched lenses): description + reading + bar + groundedness.
       if (s.read && typeof s.read.value === 'number')
         return (
           <div>
+            {FACTOR_DESC[s.id] && (
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.5, letterSpacing: '0.02em', color: FAINT, marginBottom: 10 }}>{FACTOR_DESC[s.id]}</div>
+            )}
             <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.6, letterSpacing: '0.02em', color: DIM, marginBottom: 12 }}>
               {s.read.label ?? s.read.lens}
             </div>
             <BarRow v={s.read.value} />
+            {Number.isFinite(s.read.groundedness) && (
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.10em', color: FAINT, marginTop: 8 }}>GROUNDED {Math.round(s.read.groundedness * 100)}%</div>
+            )}
           </div>
         );
       return <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>{dataBody(s)}</div>;
@@ -128,7 +196,7 @@ function AnalysisField({
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 72px', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 72px', boxSizing: 'border-box', zoom: 0.9 }}>
           {prospectus && prospectus.live ? (
             <>
               {/* hero — conclusion-first, full width */}
@@ -148,16 +216,44 @@ function AnalysisField({
                 </div>
               )}
 
-              {/* domain cards — the six §17 domains as a coordinated 3-col grid. Participating domains are
-                  lit (in the formation); the rest surface as §22 ABSENT. Value slot left empty to fill. */}
+              {/* executive summary — LEAD OFF, full width, serif */}
+              {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
+                <div style={{ ...CARD, marginBottom: 40 }}>
+                  <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+                  <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+                </div>
+              )}
+
+              {/* domain bays — the six §17 domains as a coordinated 3-col grid. Each block is a MACRO-level
+                  summary highlight of its domain, grounded from the same pool the formation reads: signal
+                  strength (hero score) + band, net direction (§20 polarity), evidence count, field baseline.
+                  No-signal bays surface §22 absence, never a zero. Formation membership = the chip. */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
                 {CANON.map(([cid, name]) => {
                   const inF = inFormation.has(name);
+                  const st = domainStats[name] ?? { count: 0, mag: null, direction: 'absent' };
+                  const band = st.mag == null ? '' : st.mag >= 0.75 ? 'HIGH' : st.mag >= 0.40 ? 'MODERATE' : 'LOW';
                   return (
-                    <div key={cid} style={{ ...CARD, display: 'flex', flexDirection: 'column', gap: 8, minHeight: 108 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT }}>{cid}</div>
-                      <div style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.06em', color: inF ? INK : DIM }}>{name}</div>
-                      <div style={{ flex: 1, minHeight: 20 }} />{/* value slot — empty, to fill */}
+                    <div key={cid} style={{ ...CARD, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 150 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT }}>{cid}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: inF ? INK : DIM }}>{name}</span>
+                      </div>
+                      {st.count ? (
+                        <>
+                          {/* macro domain-level posture — band + §20 direction, the decimal demotes to the bar */}
+                          <div style={{ fontFamily: MONO, fontSize: 15, letterSpacing: '0.04em', color: INK, lineHeight: 1.3 }}>
+                            {band} · {st.direction.toUpperCase()}
+                          </div>
+                          <BarRow v={st.mag} />
+                          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.03em', color: DIM }}>
+                            {st.count} signal{st.count === 1 ? '' : 's'} · field {fieldAvg.toFixed(2)}
+                          </div>
+                        </>
+                      ) : (
+                        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT, marginTop: 4 }}>NO SIGNAL · §22</div>
+                      )}
+                      <div style={{ flex: 1 }} />
                       <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em',
                                     color: inF ? LIME : FAINT, display: 'flex', alignItems: 'center', gap: 6 }}>
                         {inF && <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME }} />}
@@ -168,13 +264,27 @@ function AnalysisField({
                 })}
               </div>
 
-              {/* executive brief — full width, serif */}
-              {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
-                <div style={{ ...CARD, marginBottom: 40 }}>
-                  <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
-                  <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+              {/* mosaic overall — formation composite (E) + grounded History line (replay frames, §22-honest). */}
+              <div style={{ ...CARD, marginBottom: 40, display: 'grid', gridTemplateColumns: 'minmax(160px, 240px) 1fr', gap: 32, alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 12 }}>OVERALL</div>
+                  <div style={{ fontFamily: MONO, fontSize: 40, color: INK, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                    {prospectus.header.existence?.toFixed(2)}
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: DIM, marginTop: 10 }}>{prospectus.header.state}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em', color: FAINT, marginTop: 4 }}>
+                    {Math.round(prospectus.header.coverage * 100)}% coverage · {prospectus.header.evidenceCount} signals
+                  </div>
                 </div>
-              )}
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 8,
+                                display: 'flex', justifyContent: 'space-between' }}>
+                    <span>HISTORY</span>
+                    <span>{historySeries.length} FRAMES</span>
+                  </div>
+                  <HistoryLine series={historySeries} />
+                </div>
+              </div>
 
               {/* structural relationships — the formation graph = proof surface (KRYL-1118). Flourish slot. */}
               {byId.STRUCTURAL_RELATIONSHIPS && (

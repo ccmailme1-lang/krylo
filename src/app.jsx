@@ -1266,6 +1266,7 @@ export default function App() {
             <AnalysisField
               signals={liveSignals}
               replayedSignals={replayedSignals}
+              history={history}
               selectedLens={selectedLens}
               topoMode={topoMode}
               onTopoToggle={handleTopoToggle}
