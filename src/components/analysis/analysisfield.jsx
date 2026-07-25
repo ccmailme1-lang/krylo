@@ -65,62 +65,85 @@ function AnalysisField({
       if (s.statement) return s.statement;
       if (s.note) return s.note;
       if (s.id === 'STRUCTURAL_IDENTITY') return s.participatingDomains.join('  ·  ');
-      if (s.id === 'FORMATION_PROPERTIES')
-        return `E ${s.existence.toFixed(2)}    C ${s.cohesion.toFixed(2)}    Q ${s.pressureCoherence.toFixed(2)}    Ḡ ${s.avgGroundedness.toFixed(2)}`;
       if (s.id === 'STRUCTURAL_RELATIONSHIPS') return (s.edges ?? []).map(e => `${e.a} ↔ ${e.b}`).join('    ') || '—';
       if (s.read) return `${s.read.label ?? s.read.lens} ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
       return '—';
     };
+    // sub-score bars — the CB-Insights coordinated-metric signature (label · value · bar), §6 mono, no lime.
+    const Bars = ({ pairs }) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 2 }}>
+        {pairs.map(([k, v]) => (
+          <div key={k} style={{ display: 'grid', gridTemplateColumns: '18px 40px 1fr', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>{k}</span>
+            <span style={{ fontFamily: MONO, fontSize: 12, color: INK, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(2)}</span>
+            <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+              <span style={{ position: 'absolute', inset: 0, width: `${Math.round(v * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+    const Body = ({ s }) => {
+      if (s.state !== 'GROUNDED')
+        return <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.03em', color: FAINT }}>Withheld — {s.reason} · {s.absence}</div>;
+      if (s.id === 'FORMATION_PROPERTIES')
+        return <Bars pairs={[['E', s.existence], ['C', s.cohesion], ['Q', s.pressureCoherence], ['Ḡ', s.avgGroundedness]]} />;
+      if (NARRATIVE.has(s.id))
+        return <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>{dataBody(s)}</div>;
+      return <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>{dataBody(s)}</div>;
+    };
+    const Label = ({ s }) => (
+      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 10,
+                    display: 'flex', justifyContent: 'space-between' }}>
+        <span>{(TITLES[s.id] ?? s.id).toUpperCase()}</span>
+        <span style={{ color: s.state === 'GROUNDED' ? DIM : FAINT }}>{s.state === 'GROUNDED' ? '' : 'WITHHELD'}</span>
+      </div>
+    );
+    const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
+    const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
+      'STRUCTURAL_RELATIONSHIPS', 'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 720, minHeight: '100%', padding: '40px 36px 64px',
-                      boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: 940, minHeight: '100%', padding: '40px 44px 72px', boxSizing: 'border-box' }}>
           {prospectus && prospectus.live ? (
             <>
-              {/* hero — conclusion-first */}
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FAINT, marginBottom: 20 }}>
-                FORMATION PROSPECTUS
-              </div>
-              <div style={{ fontFamily: SERIF, fontSize: 34, lineHeight: 1.12, color: INK, letterSpacing: '0.01em', marginBottom: 16 }}>
-                {prospectus.title}
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: DIM,
-                            display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+              {/* hero — conclusion-first, full width */}
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FAINT, marginBottom: 18 }}>FORMATION PROSPECTUS</div>
+              <div style={{ fontFamily: SERIF, fontSize: 36, lineHeight: 1.1, color: INK, marginBottom: 14 }}>{prospectus.title}</div>
+              <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.05em', color: DIM, display: 'flex', alignItems: 'center', gap: 16, marginBottom: 10 }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: INK }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: LIME, display: 'inline-block' }} />
-                  {prospectus.header.state}
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: LIME }} />{prospectus.header.state}
                 </span>
                 <span>E {prospectus.header.existence?.toFixed(2)}</span>
                 <span>{Math.round(prospectus.header.coverage * 100)}% coverage</span>
                 <span>{prospectus.header.evidenceCount} signals</span>
               </div>
-              <div style={{ height: 1, background: 'rgba(245,245,247,0.10)', margin: '28px 0 36px' }} />
+              {byId.STRUCTURAL_IDENTITY && (
+                <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: DIM, marginBottom: 34 }}>
+                  {byId.STRUCTURAL_IDENTITY.participatingDomains?.join('   ·   ')}
+                </div>
+              )}
 
-              {/* dossier body */}
-              {prospectus.sections.map((s) => {
-                const withheld = s.state !== 'GROUNDED';
-                return (
-                  <div key={s.id} style={{ marginBottom: 30 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 9 }}>
-                      {(TITLES[s.id] ?? s.id).toUpperCase()}
-                    </div>
-                    {withheld ? (
-                      <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.04em', color: FAINT }}>
-                        Withheld — {s.reason} · {s.absence}
-                      </div>
-                    ) : NARRATIVE.has(s.id) ? (
-                      <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>
-                        {dataBody(s)}
-                      </div>
-                    ) : (
-                      <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>
-                        {dataBody(s)}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {/* executive brief — full width, serif */}
+              {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
+                <div style={{ marginBottom: 40 }}>
+                  <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+                  <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+                </div>
+              )}
+
+              {/* coordinated panel grid — whitespace-separated, no borders */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 48, rowGap: 34, marginBottom: 40 }}>
+                {GRID.filter((id) => byId[id]).map((id) => (
+                  <div key={id}><Label s={byId[id]} /><Body s={byId[id]} /></div>
+                ))}
+              </div>
+
+              {/* conclusion — full width, serif */}
+              {byId.STRUCTURAL_INTELLIGENCE_CONCLUSION && (
+                <div><Label s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /><Body s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /></div>
+              )}
             </>
           ) : (
             <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.18em', color: FAINT,
