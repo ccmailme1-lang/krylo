@@ -47,47 +47,85 @@ function AnalysisField({
   );
 
   if (opportunityActive) {
-    // FUNCTIONAL DATA VIEW ONLY — VIC-001/PLC-001 visual design is the Founder's (§15). This renders the
-    // live prospectus (neutral text) so the pipeline is testable; the designed skin drops onto this data.
-    const sectionBody = (s) => {
-      if (s.state !== 'GROUNDED') return `withheld — ${s.reason} (${s.absence})`;
+    // OPPORTUNITY report surface (KRYL-1117). Dark §6 palette (no color change). §5 dual voice:
+    // SERIF synthesis (narrative) / MONO data. VIC-001: institutional research artifact — hierarchy and
+    // spacing carry it, no gray-border cards, lime is a live-state mark only.
+    const SERIF = "Georgia, 'Times New Roman', serif";
+    const INK = '#F5F5F7', DIM = 'rgba(245,245,247,0.60)', FAINT = 'rgba(245,245,247,0.34)';
+    const TITLES = {
+      STRUCTURAL_IDENTITY: 'Structural Identity', EXECUTIVE_STRUCTURAL_ASSESSMENT: 'Executive Assessment',
+      FORMATION_ANATOMY: 'Formation Anatomy', STRUCTURAL_FIELD: 'Structural Field',
+      FORMATION_PROPERTIES: 'Formation Properties', STRUCTURAL_RELATIONSHIPS: 'Structural Relationships',
+      FORMATION_RESONANCE: 'Formation Resonance', STRUCTURAL_DRIFT: 'Structural Drift',
+      PRESSURE_MAP: 'Pressure Map', FORMATION_TRAJECTORY: 'Formation Trajectory',
+      EVIDENCE_FOUNDATION: 'Evidence Foundation', STRUCTURAL_INTELLIGENCE_CONCLUSION: 'Conclusion',
+    };
+    const NARRATIVE = new Set(['EXECUTIVE_STRUCTURAL_ASSESSMENT', 'STRUCTURAL_INTELLIGENCE_CONCLUSION']);
+    const dataBody = (s) => {
       if (s.statement) return s.statement;
       if (s.note) return s.note;
-      if (s.id === 'STRUCTURAL_IDENTITY') return `${s.participatingDomains.join(' · ')} — ${s.status}`;
+      if (s.id === 'STRUCTURAL_IDENTITY') return s.participatingDomains.join('  ·  ');
       if (s.id === 'FORMATION_PROPERTIES')
-        return `E=${s.existence.toFixed(2)} · C=${s.cohesion.toFixed(2)} · Q=${s.pressureCoherence.toFixed(2)} · Ḡ=${s.avgGroundedness.toFixed(2)}`;
-      if (s.id === 'STRUCTURAL_RELATIONSHIPS') return (s.edges ?? []).map(e => `${e.a}↔${e.b}`).join('   ') || '—';
-      if (s.read) return `${s.read.label ?? s.read.lens} = ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
+        return `E ${s.existence.toFixed(2)}    C ${s.cohesion.toFixed(2)}    Q ${s.pressureCoherence.toFixed(2)}    Ḡ ${s.avgGroundedness.toFixed(2)}`;
+      if (s.id === 'STRUCTURAL_RELATIONSHIPS') return (s.edges ?? []).map(e => `${e.a} ↔ ${e.b}`).join('    ') || '—';
+      if (s.read) return `${s.read.label ?? s.read.lens} ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
       return '—';
     };
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: `${LENS_EMBED.maxWidth}px`, minHeight: '100%',
-                      padding: '18px 20px', boxSizing: 'border-box', fontFamily: MONO, color: '#fff' }}>
+        <div style={{ width: '100%', maxWidth: 720, minHeight: '100%', padding: '40px 36px 64px',
+                      boxSizing: 'border-box' }}>
           {prospectus && prospectus.live ? (
             <>
-              <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
-                FORMATION PROSPECTUS · FUNCTIONAL VIEW — DESIGN PENDING
+              {/* hero — conclusion-first */}
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FAINT, marginBottom: 20 }}>
+                FORMATION PROSPECTUS
               </div>
-              <div style={{ fontSize: 15, marginBottom: 4 }}>{prospectus.title}</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 18 }}>
-                {prospectus.header.state} · E={prospectus.header.existence?.toFixed(2)} · coverage{' '}
-                {Math.round(prospectus.header.coverage * 100)}% · {prospectus.header.evidenceCount} signals
+              <div style={{ fontFamily: SERIF, fontSize: 34, lineHeight: 1.12, color: INK, letterSpacing: '0.01em', marginBottom: 16 }}>
+                {prospectus.title}
               </div>
-              {prospectus.sections.map((s) => (
-                <div key={s.id} style={{ marginBottom: 13 }}>
-                  <div style={{ fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.5)' }}>
-                    {s.id} · {s.state}
+              <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: DIM,
+                            display: 'flex', alignItems: 'center', gap: 14, marginBottom: 8 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: INK }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: LIME, display: 'inline-block' }} />
+                  {prospectus.header.state}
+                </span>
+                <span>E {prospectus.header.existence?.toFixed(2)}</span>
+                <span>{Math.round(prospectus.header.coverage * 100)}% coverage</span>
+                <span>{prospectus.header.evidenceCount} signals</span>
+              </div>
+              <div style={{ height: 1, background: 'rgba(245,245,247,0.10)', margin: '28px 0 36px' }} />
+
+              {/* dossier body */}
+              {prospectus.sections.map((s) => {
+                const withheld = s.state !== 'GROUNDED';
+                return (
+                  <div key={s.id} style={{ marginBottom: 30 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 9 }}>
+                      {(TITLES[s.id] ?? s.id).toUpperCase()}
+                    </div>
+                    {withheld ? (
+                      <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.04em', color: FAINT }}>
+                        Withheld — {s.reason} · {s.absence}
+                      </div>
+                    ) : NARRATIVE.has(s.id) ? (
+                      <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>
+                        {dataBody(s)}
+                      </div>
+                    ) : (
+                      <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>
+                        {dataBody(s)}
+                      </div>
+                    )}
                   </div>
-                  <div style={{ fontSize: 12, lineHeight: 1.5, color: 'rgba(255,255,255,0.85)' }}>{sectionBody(s)}</div>
-                </div>
-              ))}
+                );
+              })}
             </>
           ) : (
-            <div style={{ fontSize: 11, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)',
+            <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.18em', color: FAINT,
                           height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {prospectus ? 'INSUFFICIENT SIGNAL — no formation detected' : 'AWAITING SIGNALS'}
+              {prospectus ? 'INSUFFICIENT SIGNAL — NO FORMATION DETECTED' : 'AWAITING SIGNALS'}
             </div>
           )}
         </div>

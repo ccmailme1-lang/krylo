@@ -252,6 +252,22 @@ formation (a frame section), not a `perceptionRead`. Producer/consumer boundary 
 perception↔inference contract test (`qa_perceptionread.mjs`, 23/23): routing through perception === feeding
 raw particles direct — the producer changes routing, not results (§21).
 
+### 6.11 CORRECTION — lens ≠ report (Lens Report Contract). Follow-up: KRYL-1118 (KRYL-1117A)
+
+**The prospectus is NOT the OPPORTUNITY lens output — it is the Opportunity-lens report TEMPLATE.** Each
+lens (SIGNAL/FLOW/PRESSURE/CONVERGENCE/DRIFT/OPPORTUNITY) owns its own **report** implementing a shared
+**Lens Report Contract (LRC)**. `formationprospectus.js` = the Opportunity-specific template; a lens-aware
+`lensreportassembler.js` delegates to it:
+```
+assembleLensReport({ lens, formation, evidence, artifacts })
+  → { reportIdentity, sections, artifactSlots, evidenceLinks }
+```
+**Artifacts/graphs are first-class evidence surfaces**, not decoration. Each section:
+`Observation → Explanation → Artifact → Evidence receipt`. Existing lens graphs (Signal Map, Flow graph,
+Pressure field, Convergence relationship graph, Drift timeline) become the embedded proof surfaces.
+Engine layer is unaffected (inference stays lens-agnostic). The current `analysisfield.jsx` OPPORTUNITY
+wiring is the functional interim; the LRC realignment is KRYL-1118.
+
 ---
 
 ## 7. Invariants (constitution-level — each becomes a property-based test)
