@@ -152,3 +152,22 @@ export function getAllDomainPressures(windowMs = DEFAULT_WINDOW_MS) {
   }
   return result;
 }
+
+// KRYL-XXXX — Raw domain signal access for the Formation Inference Layer (§21 route-don't-aggregate).
+// Read-only, windowed, shallow-copied particles. Does NOT collapse magnitude or vote on polarity —
+// the formation engine owns that (Q needs per-particle sign+confidence). computeDomainPressure() is
+// untouched; existing consumers are unaffected. No mutation path: _pool objects never escape by reference.
+export function getDomainSignals(domain, windowMs = DEFAULT_WINDOW_MS) {
+  const d      = (domain ?? '').toUpperCase();
+  const cutoff = Date.now() - windowMs;
+  return (_pool.get(d) ?? []).filter(s => s.ts >= cutoff).map(s => ({ domain: d, ...s }));
+}
+
+export function getAllSignals(windowMs = DEFAULT_WINDOW_MS) {
+  const cutoff = Date.now() - windowMs;
+  const out = [];
+  for (const [d, arr] of _pool) {
+    for (const s of arr) if (s.ts >= cutoff) out.push({ domain: d, ...s });
+  }
+  return out;
+}
