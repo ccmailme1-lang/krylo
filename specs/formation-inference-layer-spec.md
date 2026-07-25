@@ -240,10 +240,17 @@ fabricate). No route-leverage claim on coincidence.
 | Convergence | §3 Formation Anatomy | `convergenceRead` (reused) |
 | Drift | §8 Structural Drift | `driftRead` (reused) |
 | Opportunity | §7 Formation Resonance | Resonance (§6.9) |
-| Perception | §2 Executive Assessment | **NEW `perceptionRead`** (build-order #2) |
 
-Frame sections (§1 Identity, §5 Properties, §6 Relationships, §10 Trajectory, §12 Conclusion) are the
-container + cross-lens composites the assembler derives from the frozen graph.
+Frame sections (§1 Identity, **§2 Executive Assessment**, §5 Properties, §6 Relationships, §10 Trajectory,
+§12 Conclusion) are the container + cross-lens composites the assembler derives from the frozen formation.
+
+**Perception is UPSTREAM, not a section producer (reconciled — Founder chain, 2026-07-25).** The dependency
+chain is `Signal Pool → Perception Producer (perceptionread.js) → Formation Inference Core → Prospectus
+Assembly → Surface`. Perception *produces the perceived field that inference consumes* — it does not read
+the formation to write §2. **§2 Executive Assessment is therefore assembler-derived** from the frozen
+formation (a frame section), not a `perceptionRead`. Producer/consumer boundary locked by the
+perception↔inference contract test (`qa_perceptionread.mjs`, 23/23): routing through perception === feeding
+raw particles direct — the producer changes routing, not results (§21).
 
 ---
 
@@ -474,13 +481,14 @@ not originate a look.
 
 | File | New/Change | Responsibility |
 |------|-----------|----------------|
-| `src/engine/formationinference.js` | NEW | `formationExists(field)`→bool; `inferFormation(field)`→`Formation\|null` |
-| `src/engine/formationidentity.js` | NEW *(or direct WO-2004 reuse)* | FORMATION-ID-001 |
-| `src/engine/perceptionread.js` | NEW | Perception producer → §2 Executive Assessment |
-| `src/engine/formationprospectus.js` | NEW | assembler: formation + 7 producers → 12-section frozen prospectus |
+| `src/engine/formationinference.js` | DONE (427ff2b) | `formationExists`→bool; `inferFormation`→`Formation\|null` |
+| `src/engine/perceptionread.js` | DONE | UPSTREAM producer: `buildPerceptionField` (pool → uncollapsed particles → inference input) |
+| `src/engine/formationidentity.js` | NEW *(or direct WO-2004 reuse)* | FORMATION-ID-001 (topology id currently in engine core) |
+| `src/engine/formationprospectus.js` | NEW | assembler: formation + reused producers → 12-section frozen prospectus (§2 derived here) |
 | `src/components/analysis/scoutingreport.jsx` | reuse (render only) | renders the prospectus |
 | `scoutingreport.js` producers | reuse READ-ONLY | no change |
-| `qa_formationinference.mjs` | NEW | golden set (§16) + invariant/negative-proof tests |
+| `qa_formationinference.mjs` | DONE (55/55) | golden set (§16) + invariant/negative-proof tests |
+| `qa_perceptionread.mjs` | DONE (23/23) | perception↔inference producer/consumer contract |
 
 ## 15. Bottle Test (§11a)
 
