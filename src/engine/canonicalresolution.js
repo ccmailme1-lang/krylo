@@ -151,6 +151,61 @@ export function synthCanonical(query) {
   };
 }
 
+// ── Signal-metric grounding (KRYL-1089, single seam) ──────────────────────────
+// Every synthesizer in querysynthesis.js (all ~29 templates) emits a STATIC confidence and a
+// STATIC momentum. This replaces them uniformly at the one point they all pass through.
+//
+// Rule: classify the query to a canonical domain, read that domain's LIVE pressure.
+//   · live signal present → confidence = magnitude/100, momentum = cross-sectional delta,
+//     fidelity MEASURED. Real, re-derivable.
+//   · no live signal (or query doesn't classify) → UNGROUNDED. confidence/momentum are null;
+//     the caller must render UNGROUNDED, never a number. No static fallback (§22).
+//
+// The template's prose and any real arithmetic (loan math, etc.) are untouched — only the
+// signal-strength decoration is grounded or withheld.
+export function groundSignalMetrics(query) {
+  const cls = classifyCanonicalDomain(query);
+  if (!cls.resolved) {
+    return { grounded: false, fidelity: 'UNGROUNDED', confidence: null, momentum: null,
+             reason: 'NO_DOMAIN_EVIDENCE' };
+  }
+
+  const field = getAllDomainPressures();
+  const signalDomain = QUERY_TO_SIGNAL[cls.primary] ?? cls.primary;
+
+  // Boundary invariant (canonicalization guard): a classified canonical domain MUST resolve to a
+  // known signal-field key. If it doesn't, that's a CANONICALIZATION defect (e.g. the ownership vs
+  // OWNERSHIP casing regression) — a different failure mode from "no signal". Surface it as a
+  // DISTINCT reason so a broken lookup key can never again masquerade as a legitimate UNGROUNDED.
+  // (The old `?? getQueryDomainPressure()` fallback silently returned a zero-pressure object here,
+  // which is exactly what let the casing bug read as NO_LIVE_SIGNAL for a year.)
+  if (!(signalDomain in field)) {
+    return { grounded: false, fidelity: 'UNGROUNDED', confidence: null, momentum: null,
+             domain: cls.primary, reason: 'UNKNOWN_SIGNAL_DOMAIN', lookupKey: signalDomain };
+  }
+
+  const p = field[signalDomain];
+  if (!p || p.signalCount === 0) {
+    return { grounded: false, fidelity: 'UNGROUNDED', confidence: null, momentum: null,
+             domain: cls.primary, reason: 'NO_LIVE_SIGNAL' };
+  }
+
+  const active = Object.values(field).filter(d => d.signalCount > 0);
+  const mean = active.reduce((s, d) => s + d.magnitude, 0) / Math.max(active.length, 1);
+  const rel = p.magnitude - mean;
+
+  return {
+    grounded: true,
+    fidelity: 'MEASURED',
+    domain: cls.primary,
+    confidence: parseFloat((p.magnitude / 100).toFixed(3)),
+    momentum: { value: `${rel >= 0 ? '+' : ''}${Math.round(rel)}%`, basis: 'CROSS_SECTIONAL', h1: null, h24: null },
+    direction: p.polarity,
+    signalCount: p.signalCount,
+    provenance: 'LIVE_DOMAIN_FIELD',
+  };
+}
+
 // State band — pure function of measured magnitude + polarity. No hidden classifier, no mock.
 function deriveState(magnitude, polarity) {
   if (polarity === 'fracture') return magnitude >= 60 ? 'ACTIVE FRACTURE' : 'FRACTURE FORMING';
@@ -160,10 +215,11 @@ function deriveState(magnitude, polarity) {
   return 'INSUFFICIENT SIGNAL';
 }
 
-// Canonical query-domain → signal-domain (identity here; both use the canonical set, but kept
-// explicit so a future rename can't silently break the field lookup).
+// Canonical query-domain → signal-domain. The live pressure field (getAllDomainPressures) is keyed
+// by UPPERCASE signal domains (SIGNAL_DOMAINS = CANONICAL_DOMAINS.map(toUpperCase)), so this MUST map
+// to uppercase or `field[signalDomain]` misses and every query silently reports NO_LIVE_SIGNAL.
 const QUERY_TO_SIGNAL = Object.freeze(
-  Object.fromEntries(CANONICAL_DOMAINS.map(d => [d, d]))
+  Object.fromEntries(CANONICAL_DOMAINS.map(d => [d, d.toUpperCase()]))
 );
 
 export function groundSignalMetrics(query) {

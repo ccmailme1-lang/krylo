@@ -4,7 +4,7 @@
 import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
 import { resolveMCV }   from './mcvresolver.js';
-import { synthCanonical, groundSignalMetrics } from './canonicalresolution.js';
+import { synthCanonical, groundSignalMetrics, classifyCanonicalDomain } from './canonicalresolution.js';
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -4211,6 +4211,10 @@ export function synthesizeQuery(session) {
 
   // KRYL-1010: SES computed at intake above; attach here (annotation only, no score mutation).
   return { ...result, ...groundedMetrics,
+           // Always-present estimate: classification confidence (0–1) is computed for every query,
+           // so the UI never has to render an empty window — it shows this labeled EST when the
+           // signal-grounded confidence is null. Real number, honestly labeled, never fabricated.
+           classificationConfidence: classifyCanonicalDomain(query).confidence,
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
            queryDomain: effectiveDomain, domainVector: vector,
            actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses };

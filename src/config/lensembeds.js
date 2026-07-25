@@ -1,4 +1,6 @@
 // lensembeds.js — Flourish embed URL per lens (LSC-001 Region C).
+// STYLE: every lens conforms to specs/lens-style-standard.md (LOCKED 2026-07-24) —
+//   Midnight theme, #000 bg, IBM Plex Mono, stroke 2.5/1.5, lime = live state only, Height=Auto.
 // Each lens can render a published Flourish visualization as an iframe (no WebGL, renders every time,
 // live via Flourish's CSV feed). To wire a lens: publish the viz in Flourish → Export & Publish →
 // copy the embed URL (e.g. https://flo.uri.sh/visualisation/1234567/embed) → paste it below.
@@ -9,8 +11,8 @@ export const LENS_EMBEDS = Object.freeze({
   SIGNAL:      'https://flo.uri.sh/visualisation/29733311/embed', // Signal Strength heatmap — 6 domains × time (% of peak)
   FLOW:        'https://flo.uri.sh/visualisation/29731380/embed', // Capital-lime directional chord — domain flows
   PRESSURE:    'https://flo.uri.sh/visualisation/29733840/embed', // Constraint radar — 6 domains × time envelope (% of ceiling)
-  CONVERGENCE: null,
-  DRIFT:       null,
+  CONVERGENCE: 'https://flo.uri.sh/visualisation/29778450/embed', // Convergence/Divergence bands — perceived (MA) vs observed
+  DRIFT:       'https://flo.uri.sh/visualisation/29782797/embed', // Structural-vs-narrative slope per domain — MEDIA drift highlighted
   OPPORTUNITY: null,
 });
 

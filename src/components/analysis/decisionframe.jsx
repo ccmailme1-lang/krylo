@@ -91,7 +91,21 @@ function FrameRow({ label, value, dimValue }) {
 
 export default function DecisionFrameCard({ lensProfiles, hpScore, collapsed = false }) {
   const frames = resolveFrames(lensProfiles, hpScore);
-  if (!frames) return null;
+  // §22 — absence is a stated state, never a blank. Returning null left the parent row's
+  // reserved 220px as a black void beside the Signal Feed (the P1). State it instead, matching
+  // the WhyTracePanel absence pattern directly beneath this row.
+  if (!frames) {
+    return (
+      <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: `1px solid ${BORDER}` }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
+          Decision Translation · Insufficient Signal
+        </span>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: DIM, marginTop: 8, lineHeight: 1.5 }}>
+          No decision frame at this confidence — signal below threshold.
+        </div>
+      </div>
+    );
+  }
 
   const { primary, secondaries, resolutionPolicyApplied, isFallback } = frames;
 

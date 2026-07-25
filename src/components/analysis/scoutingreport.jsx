@@ -1,214 +1,227 @@
 // src/components/analysis/scoutingreport.jsx
-// THE SCOUTING REPORT — the sell-layer OPPORTUNITY surface (native, not a Flourish embed).
-// Spec: specs/sell-layer-opportunity-architecture.md §6a (FORM) + §6b (rollup) · specs/lens-contract.md
+// KRYLO DOMAIN INTELLIGENCE SURFACE (DIS) — the sell-layer OPPORTUNITY surface.
+// Spec: "KRYLO Domain Intelligence Surface v1.0" (Founder, 2026-07-24) · lens-contract.md
 //
-// This is the STOREFRONT: forward-leaning, singular, persuasive on top — with the proof door
-// (drill-down to the source lens) one click beneath every claim. It renders a report built by
-// src/engine/scoutingreport.js; it NEVER computes a metric or a takeaway itself (render-only sink).
+// Renders a Domain Intelligence Brief (src/engine/domainbrief.js). Render-only sink: it NEVER
+// computes a value or a state — the engine decides, React draws.
 //
-// STYLE: conforms to specs/lens-style-standard.md — #000 bg, IBM Plex Mono, #FFF text, lime marks
-// the live edge only, 0-decimal numbers. No new design decisions (§15) — Founder owns type/motion/
-// color refinement; this lays out the locked tokens into the spec's seven parts.
+// INFORMATION ARCHITECTURE (CB Insights model — borrowed for structure, not look):
+//   Insight → State → Forces → Patterns → Relationships → Contradictions → Unknowns → Watch → Evidence.
+//   Conclusion first, evidence last, progressive disclosure (each section drills to its receipt).
 //
-// THE SEVEN PARTS (spec §6a):
-//   1. Header — "Scouting Report" + Export / Copy link
-//   2. Provenance — generated-by + timestamp (Observation Law)
-//   3. Vitals — the domain's macro key-values
-//   4. Score row — composite leverage (multiplicative, §18) with coverage
-//   5. Prose summary — the macro read
-//   6. Key Takeaways — each cited to a source lens (the sell-to-proof hinge)
-//   7. Expandable detail rows — the drilled receipts behind the summary
+// STYLE: lens-style-standard.md (LOCKED) — #000 ground, IBM Plex Mono, #FFF text, #66FF00 lime marks
+// the LIVE structural state only, 0-decimal numbers. No new design decisions (§15).
+//
+// ALL LIVE DATA: a WITHHELD section renders as classified absence — never a fabricated value.
 import React, { useState } from 'react';
 
-const MONO = "'IBM Plex Mono', monospace";
-const LIME = '#66FF00';
+const MONO  = "'IBM Plex Mono', monospace";
+const LIME  = '#66FF00';
 const WHITE = '#FFFFFF';
-const DIM = 'rgba(255,255,255,0.45)';
-const FAINT = 'rgba(255,255,255,0.22)';
-const HAIR = 'rgba(255,255,255,0.12)'; // hairline dividers on black (no-fill card pattern)
+const DIM   = 'rgba(255,255,255,0.55)';
+const FAINT = 'rgba(255,255,255,0.28)';
+const GHOST = 'rgba(255,255,255,0.14)';
+const HAIR  = 'rgba(255,255,255,0.12)';
 
-const pct = n => (Number.isFinite(n) ? `${Math.round(n * 100)}` : '—'); // 0 decimals (§ style)
-const ts = ms => (Number.isFinite(ms) ? new Date(ms).toISOString().replace('T', ' ').slice(0, 19) + ' UTC' : '—');
+const pct = n => (Number.isFinite(n) ? `${Math.round(n * 100)}` : '—');
+const tstamp = ms => (Number.isFinite(ms) ? new Date(ms).toISOString().replace('T', ' ').slice(0, 16) + ' UTC' : '—');
+// lime = live structural state ONLY (§6). Anything not live/measured stays neutral.
+const liveHue = live => (live ? LIME : DIM);
 
-// Lime marks the live edge ONLY (§6 color law). A leverage read is "live" in its top band.
-const leverageIsLive = lev => lev?.state === 'GROUNDED' && Number.isFinite(lev.value) && lev.value >= 0.60;
-
-function Header({ report, onExport, onCopyLink }) {
+// ── header: the conclusion, first (CB Insights: intelligence-first) ─────────────────────────────
+function Header({ brief }) {
+  const h = brief.header;
   return (
-    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-        <span style={{ fontFamily: MONO, fontSize: 18, letterSpacing: '0.12em', color: WHITE }}>
-          {report.title}
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.22em', color: LIME }}>
-          {String(report.domain ?? '').toUpperCase()}
-        </span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 14, borderBottom: `1px solid ${HAIR}` }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: FAINT }}>
+            DOMAIN INTELLIGENCE BRIEF
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: 26, letterSpacing: '0.02em', color: WHITE, lineHeight: 1 }}>
+            {brief.domain}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Btn label="EXPORT" /><Btn label="COPY LINK" />
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <ActionButton label="EXPORT" onClick={onExport} />
-        <ActionButton label="COPY LINK" onClick={onCopyLink} />
+
+      {/* state · confidence · momentum · coverage — grounded readouts, lime only when live */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 34px', alignItems: 'flex-end' }}>
+        <Stat label="STRUCTURAL STATE" value={h.state} hue={liveHue(brief.live)} big />
+        <Stat label="CONFIDENCE" value={h.confidence == null ? '—' : `${pct(h.confidence)}%`} />
+        <Stat label="FIELD-RELATIVE" value={h.momentum ? h.momentum.value : '—'}
+              sub={h.momentum ? 'CROSS-SECTIONAL' : ''} />
+        <Stat label="EVIDENCE" value={`${h.coverage.signalCount} SIGNAL${h.coverage.signalCount === 1 ? '' : 'S'}`}
+              sub={`${h.coverage.activeDomains}/6 DOMAINS ACTIVE`} />
+      </div>
+      <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.12em', color: FAINT }}>
+        GENERATED BY {String(brief.generatedBy).toUpperCase()} · {tstamp(brief.generatedAt)} · {brief.coverage.grounded}/{brief.coverage.total} SECTIONS GROUNDED
       </div>
     </div>
   );
 }
 
-function ActionButton({ label, onClick }) {
+function Stat({ label, value, sub, hue = WHITE, big }) {
   return (
-    <button onClick={onClick}
-      style={{ background: 'transparent', border: `1px solid ${HAIR}`, color: DIM,
-               fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', padding: '6px 10px',
-               cursor: 'pointer' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', color: FAINT }}>{label}</span>
+      <span style={{ fontFamily: MONO, fontSize: big ? 16 : 14, color: hue, letterSpacing: '0.02em' }}>{value}</span>
+      {sub ? <span style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '0.12em', color: FAINT }}>{sub}</span> : null}
+    </div>
+  );
+}
+function Btn({ label }) {
+  return (
+    <button style={{ background: 'transparent', border: `1px solid ${GHOST}`, color: DIM,
+                     fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.18em', padding: '6px 10px', cursor: 'pointer' }}>
       {label}
     </button>
   );
 }
 
-function Provenance({ report }) {
+// ── a section card — one question, answered or explicitly withheld, drills to its receipt ───────
+function Section({ s, index }) {
+  const [open, setOpen] = useState(false);
+  const isWithheld = s.state === 'WITHHELD';
   return (
-    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: FAINT }}>
-      GENERATED BY {String(report.generatedBy ?? '').toUpperCase()} · {ts(report.generatedAt)}
-    </div>
-  );
-}
-
-function Vitals({ vitals }) {
-  const entries = Object.entries(vitals ?? {});
-  if (!entries.length) return null;
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 28px', paddingTop: 4 }}>
-      {entries.map(([k, v]) => (
-        <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', color: FAINT }}>{k.toUpperCase()}</span>
-          <span style={{ fontFamily: MONO, fontSize: 14, color: WHITE }}>
-            {typeof v === 'number' ? (Number.isInteger(v) ? v : v.toFixed(2)) : String(v)}
-          </span>
+    <div style={{ borderBottom: `1px solid ${HAIR}`, padding: '13px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+        <span style={{ fontFamily: MONO, fontSize: 9, color: FAINT, width: 20, flexShrink: 0 }}>
+          {String(index + 1).padStart(2, '0')}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: DIM }}>
+              {s.title.toUpperCase()}
+            </span>
+            <button onClick={() => setOpen(o => !o)}
+              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0,
+                       fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em',
+                       color: isWithheld ? FAINT : LIME,
+                       borderBottom: `1px solid ${isWithheld ? HAIR : 'rgba(102,255,0,0.35)'}` }}>
+              [{s.citation ?? s.absence}] {open ? '−' : '+'}
+            </button>
+          </div>
+          <div style={{ marginTop: 6 }}>
+            {isWithheld ? <Withheld s={s} /> : <Grounded s={s} />}
+          </div>
+          {open && (
+            <div style={{ marginTop: 10, paddingLeft: 12, borderLeft: `1px solid ${HAIR}` }}>
+              <div style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '0.16em', color: FAINT, marginBottom: 6 }}>
+                {isWithheld ? `WITHHELD · ${s.absence} ABSENCE` : `RECEIPT · DRILLS TO ${s.citation} LENS`}
+              </div>
+              <Receipt receipt={s.drill} />
+            </div>
+          )}
         </div>
-      ))}
+      </div>
     </div>
   );
 }
 
-// Score row — composite leverage + its components (§18 requires components always visible).
-function ScoreRow({ leverage }) {
-  const live = leverageIsLive(leverage);
-  const absent = leverage?.state !== 'GROUNDED';
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 32, borderTop: `1px solid ${HAIR}`,
-                  borderBottom: `1px solid ${HAIR}`, padding: '14px 0' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', color: FAINT }}>LEVERAGE</span>
-        <span style={{ fontFamily: MONO, fontSize: 34, lineHeight: 1, color: live ? LIME : WHITE }}>
-          {absent ? '—' : pct(leverage.value)}
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: FAINT }}>
-          {absent ? 'NO GROUNDED READ' : `${leverage.groundedCount}/${leverage.lensCount} LENSES · ${pct(leverage.coverage)}% COVERAGE`}
-        </span>
+// grounded body — renders whichever grounded shape the section carries
+function Grounded({ s }) {
+  const T = { fontFamily: MONO, fontSize: 12.5, lineHeight: 1.55, color: 'rgba(255,255,255,0.85)' };
+  if (s.text) return <p style={{ ...T, margin: 0 }}>{s.text}</p>;
+
+  if (s.id === 'STRUCTURAL_STATE') {
+    return (
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 24px' }}>
+        <Mini label="STATE" value={s.value} hue={LIME} />
+        <Mini label="DIRECTION" value={s.direction ?? '—'} />
+        <Mini label="CONFIDENCE" value={`${pct(s.confidence)}%`} />
+        <Mini label="TRAJECTORY" value="WITHHELD" hue={FAINT} sub="temporal" />
       </div>
-      {/* components — the number is re-derivable from these (§18) */}
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
-        {(leverage?.components ?? []).map(c => (
-          <div key={c.lens} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.12em', color: FAINT }}>{c.lens}</span>
-            <span style={{ fontFamily: MONO, fontSize: 14, color: WHITE }}>{pct(c.value)}</span>
+    );
+  }
+  if (s.id === 'CROSS_DOMAIN_INFLUENCE') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        {s.standings.map(o => (
+          <div key={o.domain} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ fontFamily: MONO, fontSize: 11, color: WHITE, width: 96 }}>{o.domain}</span>
+            <Bar value={o.magnitude} polarity={o.polarity} />
+            <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, width: 30, textAlign: 'right' }}>{Math.round(o.magnitude)}</span>
           </div>
         ))}
+        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: FAINT, marginTop: 2 }}>
+          AMPLIFY/SUPPRESS DIRECTION WITHHELD — NO DIRECTED FLOW
+        </span>
       </div>
-    </div>
-  );
+    );
+  }
+  if (s.id === 'UNKNOWNS') {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {s.items.length === 0
+          ? <span style={{ ...T }}>Every section grounded — nothing withheld.</span>
+          : s.items.map((it, i) => (
+              <div key={i} style={{ display: 'flex', gap: 10, fontFamily: MONO, fontSize: 11, color: DIM }}>
+                <span style={{ color: FAINT, width: 150 }}>{it.section}</span>
+                <span style={{ color: FAINT }}>{it.absence}</span>
+                <span>{it.reason}</span>
+              </div>
+            ))}
+      </div>
+    );
+  }
+  return <p style={{ ...T, margin: 0 }}>{JSON.stringify(s.value ?? s)}</p>;
 }
 
-function Prose({ text }) {
+function Withheld({ s }) {
   return (
-    <p style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.6, color: 'rgba(255,255,255,0.82)', margin: 0, maxWidth: 760 }}>
-      {text}
+    <p style={{ fontFamily: MONO, fontSize: 12, lineHeight: 1.5, color: DIM, margin: 0 }}>
+      {s.question} — <span style={{ color: FAINT }}>withheld.</span> {s.reason.replace(/_/g, ' ').toLowerCase()}.
     </p>
   );
 }
 
-// A single takeaway: forward-leaning line + its citation tag. Clicking expands the receipt —
-// that expansion IS the sell-to-proof door: the storefront line, one click from its ledger read.
-function Takeaway({ t }) {
-  const [open, setOpen] = useState(false);
-  const withheld = t.state === 'WITHHELD';
+function Mini({ label, value, hue = WHITE, sub }) {
   return (
-    <div style={{ borderTop: `1px solid ${HAIR}`, padding: '10px 0' }}>
-      <button onClick={() => setOpen(o => !o)}
-        style={{ display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', textAlign: 'left',
-                 background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-        <span style={{ fontFamily: MONO, fontSize: 12, color: FAINT, width: 12, flexShrink: 0 }}>{open ? '–' : '+'}</span>
-        <span style={{ fontFamily: MONO, fontSize: 12.5, lineHeight: 1.55,
-                       color: withheld ? DIM : 'rgba(255,255,255,0.86)', flex: 1 }}>
-          {t.text}
-        </span>
-        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em',
-                       color: withheld ? FAINT : LIME, flexShrink: 0,
-                       border: `1px solid ${withheld ? HAIR : 'rgba(102,255,0,0.35)'}`, padding: '2px 6px' }}>
-          [{t.citation}]
-        </span>
-      </button>
-      {open && (
-        <div style={{ marginLeft: 22, marginTop: 8, paddingLeft: 12, borderLeft: `1px solid ${HAIR}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: FAINT, marginBottom: 6 }}>
-            {withheld ? `WITHHELD · ${t.absence ?? ''} ABSENCE` : 'RECEIPT'} — DRILLS TO {t.citation} LENS
-          </div>
-          <Receipt receipt={t.drill} />
-        </div>
-      )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontFamily: MONO, fontSize: 7.5, letterSpacing: '0.14em', color: FAINT }}>{label}</span>
+      <span style={{ fontFamily: MONO, fontSize: 12, color: hue }}>{value}</span>
+      {sub ? <span style={{ fontFamily: MONO, fontSize: 7, color: FAINT }}>{sub}</span> : null}
     </div>
   );
 }
-
-// The raw grounded read the citation resolves to — the proof, printed as key/values.
+function Bar({ value, polarity }) {
+  const w = Math.max(2, Math.min(100, value));
+  const hue = polarity === 'fracture' ? 'rgba(255,255,255,0.4)' : LIME;
+  return (
+    <div style={{ flex: 1, height: 4, background: 'rgba(255,255,255,0.08)', position: 'relative', maxWidth: 220 }}>
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${w}%`, background: hue, opacity: 0.75 }} />
+    </div>
+  );
+}
 function Receipt({ receipt }) {
-  const entries = Object.entries(receipt ?? {}).filter(([, v]) => v != null && v !== '');
+  const entries = Object.entries(receipt ?? {}).filter(([, v]) => v != null && v !== '' && typeof v !== 'object');
   if (!entries.length) return <span style={{ fontFamily: MONO, fontSize: 10, color: FAINT }}>no receipt</span>;
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '3px 14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '3px 16px' }}>
       {entries.map(([k, v]) => (
         <React.Fragment key={k}>
-          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: FAINT }}>{k}</span>
-          <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.75)' }}>{String(v)}</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: FAINT }}>{k}</span>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: 'rgba(255,255,255,0.78)' }}>{String(v)}</span>
         </React.Fragment>
       ))}
     </div>
   );
 }
 
-function EmptyState({ report }) {
-  return (
-    <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.08em', color: DIM, lineHeight: 1.6 }}>
-      No grounded lens read on {String(report.domain ?? '').toUpperCase()} yet.
-      <div style={{ fontSize: 9, color: FAINT, marginTop: 6 }}>
-        {report.unsupplied?.length ? `AWAITING: ${report.unsupplied.join(' · ')}` : ''}
-      </div>
-    </div>
-  );
-}
-
 /**
- * ScoutingReport — render one report object from src/engine/scoutingreport.js.
- * @param {{report: object, onExport?:Function, onCopyLink?:Function}} props
+ * ScoutingReport — renders a Domain Intelligence Brief (src/engine/domainbrief.js).
+ * (Filename retained for the OPPORTUNITY-lens mount; the surface is the Domain Intelligence Brief.)
  */
-export default function ScoutingReport({ report, onExport, onCopyLink }) {
+export default function ScoutingReport({ report }) {
   if (!report) return null;
-  const noGrounded = !report.takeaways?.some(t => t.state === 'GROUNDED');
-
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14, width: '100%', height: '100%',
-                  overflowY: 'auto', padding: '4px 2px', boxSizing: 'border-box' }}>
-      <Header report={report} onExport={onExport} onCopyLink={onCopyLink} />
-      <Provenance report={report} />
-      <Vitals vitals={report.vitals} />
-      <ScoreRow leverage={report.leverage} />
-      <Prose text={report.summary} />
-      <div>
-        <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: FAINT, marginBottom: 2 }}>
-          KEY TAKEAWAYS
-        </div>
-        {noGrounded && !report.takeaways?.length
-          ? <EmptyState report={report} />
-          : report.takeaways.map((t, i) => <Takeaway key={`${t.lens}-${i}`} t={t} />)}
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', height: '100%',
+                  overflowY: 'auto', padding: '6px 4px', boxSizing: 'border-box' }}>
+      <Header brief={report} />
+      {report.sections.map((s, i) => <Section key={s.id} s={s} index={i} />)}
     </div>
   );
 }

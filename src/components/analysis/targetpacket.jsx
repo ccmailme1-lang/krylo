@@ -443,6 +443,11 @@ export default function TargetPacket() {
   // fidelity is UNGROUNDED / confidence is null, there is NO score to show.
   const confGrounded = synthesis?.fidelity !== 'UNGROUNDED' && typeof synthesis?.confidence === 'number';
   const confScore   = confGrounded ? synthesis.confidence : null;
+  // Option A — no empty windows. Always present a value: grounded measurement when available,
+  // else the classification estimate (always computed), labeled EST so it's never passed off as measured.
+  const confEstimate  = typeof synthesis?.classificationConfidence === 'number' ? synthesis.classificationConfidence : null;
+  const confDisplay   = confGrounded ? confScore : confEstimate;
+  const confIsEstimate = !confGrounded && confDisplay != null;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   // DEF-1863: nothing in this pipeline produces an observed/closed outcome yet — default PROJECTION.
   const stateType   = synthesis?.stateType ?? STATE_TYPE.PROJECTION;
@@ -570,9 +575,9 @@ export default function TargetPacket() {
                   Confidence
                 </span>
                 <span style={{ fontFamily: MONO, fontSize: 12, color: confGrounded ? LIME : DIM, letterSpacing: '0.1em' }}>
-                  {confGrounded ? confScore.toFixed(2) : 'UNGROUNDED'}
+                  {confDisplay != null ? `${confDisplay.toFixed(2)}${confIsEstimate ? ' EST' : ''}` : 'UNCLASSIFIED'}
                 </span>
-                {confGrounded && <ConfidenceBar value={confScore} color={LIME} />}
+                {confDisplay != null && <ConfidenceBar value={confDisplay} color={confGrounded ? LIME : DIM} />}
               </div>
             </div>
             {(synthesis?.timeHorizon || synthesis?.impactLevel) && (
@@ -803,12 +808,7 @@ export default function TargetPacket() {
                 })()}
               </div>
 
-              {/* ── LeverageField */}
-              {synthesis?.leverage && (
-                <div style={{ borderBottom: `1px solid ${BORDER}`, padding: '14px 24px' }}>
-                  <LeverageField leverage={synthesis.leverage} />
-                </div>
-              )}
+              {/* ── LeverageField moved to the bottom-right panel (replaced the redundant Signal Feed) */}
 
               {/* ── Domain Isolation Console */}
               <DomainIsolationConsole />
@@ -822,29 +822,16 @@ export default function TargetPacket() {
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
+        {/* Leverage Field — moved here to replace the Signal Feed (that panel duplicated the
+            top-of-page header data: domain/state/confidence/signal/lens/horizon). */}
         <div style={{ flexShrink: 0, width: '45%', borderLeft: `1px solid ${BORDER}`, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '8px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Signal Feed</span>
-            <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(102,255,0,0.5)', letterSpacing: '0.18em', marginLeft: 'auto' }}>LIVE</span>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Leverage Field</span>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[
-              { label: 'PRIMARY DOMAIN',   value: synthesis?.queryDomain?.replace(/_/g,' ') ?? '—' },
-              // DEF-1875 — guest-facing STATE must reflect real resolution, not the
-              // default 'BUILDING CONVERGENCE' on an unresolved/ambiguous query (§19).
-              { label: 'STATE',            value: synthesis?.resolutionEligible === false ? 'INSUFFICIENT SIGNAL'
-                                                : synthesis?.queryDomain === 'AMBIGUOUS'    ? 'AMBIGUOUS'
-                                                : (stateLabel?.replace(/_/g,' ') ?? '—') },
-              { label: 'CONFIDENCE',       value: confScore ? `${(confScore * 100).toFixed(0)}%` : '—' },
-              { label: 'SIGNAL STRENGTH',  value: hpScore ? `${hpScore}` : '—' },
-              { label: 'LENS',             value: session?.lens ?? '—' },
-              { label: 'HORIZON',          value: session?.tensor?.horizon ?? '—' },
-            ].map(({ label, value }) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: `1px solid rgba(255,255,255,0.03)`, paddingBottom: 8 }}>
-                <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.18em' }}>{label}</span>
-                <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.7)', letterSpacing: '0.06em' }}>{value}</span>
-              </div>
-            ))}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+            {synthesis?.leverage
+              ? <LeverageField leverage={synthesis.leverage} />
+              : <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em' }}>No leverage signal</span>}
           </div>
         </div>
       </div>

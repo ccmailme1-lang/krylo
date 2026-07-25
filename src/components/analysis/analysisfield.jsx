@@ -99,6 +99,7 @@ function AnalysisField({
         <span style={{ color: s.state === 'GROUNDED' ? DIM : FAINT }}>{s.state === 'GROUNDED' ? '' : 'WITHHELD'}</span>
       </div>
     );
+    const CARD = { border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' };
     const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
     const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
       'STRUCTURAL_RELATIONSHIPS', 'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
@@ -127,7 +128,7 @@ function AnalysisField({
 
               {/* executive brief — full width, serif */}
               {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
-                <div style={{ marginBottom: 40 }}>
+                <div style={{ ...CARD, marginBottom: 40 }}>
                   <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
                   <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
                 </div>
@@ -136,13 +137,13 @@ function AnalysisField({
               {/* coordinated panel grid — whitespace-separated, no borders */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', columnGap: 48, rowGap: 34, marginBottom: 40 }}>
                 {GRID.filter((id) => byId[id]).map((id) => (
-                  <div key={id}><Label s={byId[id]} /><Body s={byId[id]} /></div>
+                  <div key={id} style={CARD}><Label s={byId[id]} /><Body s={byId[id]} /></div>
                 ))}
               </div>
 
               {/* conclusion — full width, serif */}
               {byId.STRUCTURAL_INTELLIGENCE_CONCLUSION && (
-                <div><Label s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /><Body s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /></div>
+                <div style={CARD}><Label s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /><Body s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /></div>
               )}
             </>
           ) : (

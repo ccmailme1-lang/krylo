@@ -29,20 +29,9 @@ export default function ProfilePicker() {
     }
   }, [activeId, setActive]);
 
-  // Signed in → small badge (bottom-left), with a switch link.
-  if (activeId) {
-    const name = TEST_PROFILES.find(p => p.id === activeId)?.name ?? activeId;
-    return (
-      <div style={{
-        position: 'fixed', left: 12, bottom: 12, zIndex: 9999, fontFamily: MONO, fontSize: 9,
-        letterSpacing: '0.12em', color: 'rgba(255,255,255,0.42)', display: 'flex', alignItems: 'center',
-        gap: 6, userSelect: 'none',
-      }}>
-        <span>▪ {name.toUpperCase()}</span>
-        <span onClick={clear} style={{ cursor: 'pointer', color: 'rgba(255,255,255,0.3)', textDecoration: 'underline' }}>switch</span>
-      </div>
-    );
-  }
+  // Signed-in badge removed per Founder — no bottom-left "NAME · switch" indicator.
+  // Sign-in gate below is unchanged; session/link sign-in still works.
+  if (activeId) return null;
 
   const submit = () => {
     const c = code.trim().toLowerCase();

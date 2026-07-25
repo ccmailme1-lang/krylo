@@ -15,26 +15,55 @@ const BRT  = 'rgba(255,255,255,0.85)';
 
 // A single risk-component row: label · value (or WITHHELD) · optional groundedness · one-line meaning.
 function RiskRow({ label, value, unit = '', grounded, withheld, meaning }) {
+
+  function renderValue(input) {
+    if (input == null) return '—';
+
+    if (typeof input === 'object') {
+      // Structured velocity / formation object
+      if ('velocity' in input && 'direction' in input) {
+        return `${input.direction} ${Number(input.velocity).toFixed(2)}`;
+      }
+
+      // Generic structured object fallback
+      return JSON.stringify(input);
+    }
+
+    return input;
+  }
+
   return (
     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-      <span style={{ flex: '0 0 128px', fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: DIM }}>{label}</span>
+      <span style={{ flex: '0 0 128px', fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: DIM }}>
+        {label}
+      </span>
+
       {withheld ? (
-        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: DIM }}>WITHHELD · {meaning}</span>
+        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: DIM }}>
+          WITHHELD · {meaning}
+        </span>
       ) : (
         <>
-          <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, minWidth: 52 }}>{value}{unit}</span>
+          <span style={{ fontFamily: MONO, fontSize: 11, color: BRT, minWidth: 52 }}>
+            {renderValue(value)}{unit}
+          </span>
+
           {grounded != null && (
             <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: grounded >= 0.7 ? LIME : grounded >= 0.4 ? BLUE : DIM }}>
               {Math.round(grounded * 100)}% grounded
             </span>
           )}
-          {meaning && <span style={{ fontFamily: MONO, fontSize: 8, color: DIM }}>{meaning}</span>}
+
+          {meaning && (
+            <span style={{ fontFamily: MONO, fontSize: 8, color: DIM }}>
+              {meaning}
+            </span>
+          )}
         </>
       )}
     </div>
   );
 }
-
 // props: metrics (synthesis.metrics), dynamics (computeTruthDynamics output)
 export default function PerceptionRisk({ metrics, dynamics }) {
   const sci        = metrics?.sci ?? null;                       // structural confirmation

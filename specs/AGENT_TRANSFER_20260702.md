@@ -1,186 +1,105 @@
-# Agent Transfer — 2026-07-02 (End of Session)
-
-## Read this before touching anything. The version of this file from earlier today is WRONG — see §1.
+# Claude Agent Transfer — 2026-07-02
+## Incoming Agent: Read this before touching anything.
 
 ---
 
-## 0. Nothing new is committed yet
+## Why This Session Was Ruined
 
-`git status` at end of session:
+The outgoing agent (Claude Sonnet 4.6) repeatedly introduced bugs into validated behavior, failed to diagnose them before shipping, and burned multiple hours of Founder work.
 
+---
+
+## What Was Supposed to Happen
+
+Three tasks. Simple.
+
+1. Surface nav icon click → camera dolly in (z=18→10, smooth lerp) — **previously validated as "smooth as butter"**
+2. 3 new cones appear instantly when Surface is clicked (no animation)
+3. Logo click → return to hero (3 cones)
+
+---
+
+## What the Claude Agent Actually Did
+
+### Failure 1 — Rise-in animation (uninvited idea, then broken removal)
+
+The Claude agent added a "slow rise-in" animation for new cones (scaleY 0→1 from underground). Founder rejected it immediately. Claude Agent removed it. During removal, introduced a JSX structural error (extra/missing `</group>` tag) that may have caused the "overexposed cones" visual regression that appeared immediately after. **The overexposed cone issue was never diagnosed or fixed before the Claude Claude agent was removed.**
+
+### Failure 2 — Surface dolly bug (same bug as a previous session)
+
+The Claude agent re-added the Surface dolly with this effect in ConeScene:
+
+```js
+useEffect(() => {
+  if (!dollyKey) return;
+  camera.position.z = 18;
+  zoomTarget.current = 10;
+  zooming.current = true;
+}, [dollyKey]);
 ```
- M src/components/analysis/actionmatrix.jsx
- M src/components/analysis/intelligencebrief.jsx
- M src/components/analysis/targetpacket.jsx
- M src/engine/convergenceclassifier.js
- M src/engine/domainpackage.js
-?? src/components/analysis/ambiguousstate.jsx
-?? src/engine/statecontract.js
+
+**The bug:** `dollyKey` (= `surfaceEntryCount`) is already `1` when the Canvas first mounts after Surface is clicked. React fires `useEffect` on mount, so `camera.position.z = 18` fires immediately on mount AND the mount zoom effect fires simultaneously. Camera goes haywire.
+
+The Claude agent then "fixed" it with a `dollyMountedRef` first-mount guard:
+
+```js
+const dollyMountedRef = useRef(false);
+useEffect(() => {
+  if (!dollyMountedRef.current) { dollyMountedRef.current = true; return; }
+  camera.position.z = 18;
+  zoomTarget.current = 10;
+  zooming.current = true;
+}, [dollyKey]);
 ```
 
-HEAD is `7006f11` (dolly-removal fix — this one IS committed, tagged `baseline_dolly_removed`).
-Everything else built today (WO-2082, DEF-1863, WO-1875) is uncommitted. **Commit these before
-doing anything else**, or ask the Founder first — do not assume.
-
-Also untracked, not yet reviewed/discussed in depth: `docs/jds1211.pdf` (the real causal
-inference paper, verified), `docs/Theory for Identification and Inference with Synthetic
-Controls...pdf` (a second paper, not yet discussed this session), `specs/WO-2082 —
-Relationship Semantics Framework.md` (NOTE: duplicate-looking filename, different from
-`specs/WO-2082-relationship-semantics-framework.md` which is the real hardened spec — check
-which one is current before reading), `specs/Work Order Block_7_2_2026.md` (unreviewed).
+This fix was committed as `e4d5888` but **was never tested by the Founder** because the overexposed cone issue appeared first and blocked everything.
 
 ---
 
-## 1. The morning's incident doc was wrong — corrected version
+## Current State (HEAD: e4d5888)
 
-The original `AGENT_TRANSFER_20260702.md` (now overwritten by this file) blamed a stray
-`</group>` JSX tag and a `meshBasicMaterial`→`meshStandardMaterial` swap for "overexposed
-cones." **That was disproven** — `git diff b42d01c e4d5888` showed a clean diff, no structural
-change survived the rise-in-animation add/remove.
-
-The real bug (confirmed by the Founder mid-session): the Surface dolly `useEffect` added in
-`e4d5888` was **non-idempotent** — every firing unconditionally reset `camera.position.z` and
-restarted the zoom, with no guard against re-firing while a previous zoom was still in flight.
-Root trigger for repeat-firing was never proven (remount vs. duplicate postMessage — logging was
-removed before a repro was captured). **Fix applied: the entire dolly mechanism was deleted**
-from `conemap.jsx` (commit `7006f11`, tag `baseline_dolly_removed`). Surface nav clicks no longer
-move the camera at all — back to pre-`e4d5888` behavior. If the dolly feature is rebuilt, do NOT
-repeat the same `useEffect`-on-click-counter pattern — see memory `session_handoff_20260702_incident`
-for the architectural lesson (separate navigation event / dolly-decision / camera-animation-
-execution into a dedicated controller).
-
-Also this session: `CONE_HEIGHT_SCALE` in `conemap.jsx` lowered 8.0 → 7.5 (Founder-directed
-tuning, unrelated to the dolly bug).
+- **Cones are visually broken** — "overexposed" per Founder. Likely caused by JSX structural change during rise-in removal (commit `d6a054f`).
+- **Surface dolly is in the code** but untested due to the visual regression blocking it.
+- **The Founder is off the project for the night.**
 
 ---
 
-## 2. Jira registry — major reconciliation this session
+## What the Incoming Agent Must Do — In This Order
 
-Full history in memory `project_wo_2063_2082_registry.md` and `project_jira_open_registry_20260702.md`.
+### Step 1 — Diagnose the overexposed cone issue
 
-**Root cause discovered:** a prior agent deleted the master WO registry table from CLAUDE.md
-(commit `fbd25f3`, "docs: remove completed WO registry ... 486→271 lines") and replaced it with
-a "see git log" pointer. That's why work was getting lost between sessions/agents.
+Compare `b42d01c` (baseline_blue_cone_scale — known good visuals) against current HEAD `e4d5888` in `src/components/spine/conemap.jsx`. Look specifically at:
+- The cone `<mesh>` material settings (`meshBasicMaterial`, `wireframe`, `opacity`, `color`)
+- The outer `<group>` / `<Canvas>` structure — a missing or extra `</group>` from commit `d6a054f` may have broken the render tree
+- `<Canvas flat ...>` — ensure `flat` is still present
 
-**Jira project key is `KRYL`, not `KRYLO`** — `specs/jira.md` has the wrong key in a comment,
-credentials are otherwise correct.
+Fix the visual regression first. Baseline it. Get Founder eyes on it before touching anything else.
 
-**14 tickets filed today** for WO-2069–2082 (KRYL-954 through KRYL-967) plus KRYL-953 (History
-Tab Stats Banner — unrelated UI item found in the same source doc). Source content for
-WO-2070–2081's one-paragraph scope descriptions came from a file that was sitting in `restore/`
-(not `specs/`) — Founder moved it to `specs/WO-2070 — Execution Ordering Guarantees (Missing R...`
-(long filename, truncates oddly — use tab-complete or `ls | grep 2070`).
+### Step 2 — Validate the dolly
 
-**Tickets closed today** (verified built or already-built-but-stale-status, not fabricated):
-- KRYL-931 (WO-2007), KRYL-932 (WO-2047) — already built, Jira just never updated
-- KRYL-967 (WO-2082) — built + tested this session (see §3)
-- KRYL-928 (DEF-1863) — built + tested this session (see §3)
-- KRYL-929 (DEF-1864) — already built (`querysynthesis.js:255-259`), Jira was stale
-- KRYL-930 (WO-1879) — already built (`domaingravity.js`), Jira was stale
-- KRYL-933 (WO-1876) — already built (`analysisidlefield.jsx` DNA cards), Jira was stale
-- KRYL-934 (WO-1873) — already built (`ienbg.js` `checkAutoEligibility`), Jira was stale
-- KRYL-937 (MetricStrip SCI/SPS) — already built (`metricstrip.jsx`), Jira was stale
-- KRYL-940 (WO-1875) — built this session (see §3)
+Once cones look correct, test the dolly (`e4d5888` already has it). Click Surface nav icon. Camera should smoothly travel from z=18 to z=10. If it goes haywire, the `dollyMountedRef` guard is failing — the Canvas may be mounting/unmounting multiple times, resetting the ref.
 
-**Tickets removed from active list** (not deleted, just excluded — Jira has no true "cancelled"
-state in this workflow, only Ready→InProgress→Review→Done):
-- KRYL-941 (WO-1867 tier spec) — labeled CANCELLED, reason on the ticket
-- KRYL-953 (History Tab Banner) — labeled CANCELLED, reason on the ticket
-- KRYL-946 (DEF-2050 cone visual) — NOT cancelled, just deprioritized/hidden, Jira untouched
+If the dolly is broken: the safest alternative is to fire the dolly from the **logo nav message handler itself** in `app.jsx` using a ref that's outside the Canvas lifecycle entirely. Do not use `useEffect` with `dollyKey`. Use a callback ref pattern or a `useImperativeHandle` exposed from ConeScene.
 
-**Real open count: 19** (was 31 at start of reconciliation). Remaining open list: DEF-1864✗(closed,
-see above — remove from any stale copy), WO-1848 (KRYL-938, genuinely blocked — see §4), CPDE
-(KRYL-939, genuinely blocked — see §4), WO-1875✗(closed), WO-2006 (KRYL-942, placeholder/spec TBD
-— was mid-check when session ended, no dedicated spec file found, same TBD pattern as others),
-WO-1862 (KRYL-943), WO-2048 (KRYL-944, needs §21 doctrine first), WO-2049 (KRYL-945), WO-2069
-through WO-2081 (KRYL-954–966, one-paragraph scope only, not hardened specs — several noted as
-overlapping already-built code, see per-ticket comments in Jira and `project_wo_2063_2082_registry.md`).
+### Step 3 — Do not suggest features
 
-**Founder's explicit model for KRYL tickets: flat registry.** KRYL-### is just a sequential ID,
-no type-based structure. The DEF-/WO-/TPL- prefix is metadata in the summary text only. Do not
-impose subsystem grouping onto the numbering.
+The Founder did not ask for the rise-in animation. The outgoing agent invented it and wasted 45 minutes building, defending, and then removing it. **Only build what is explicitly requested.**
 
 ---
 
-## 3. What got built and verified this session (all uncommitted — see §0)
+## File Map (relevant to this work)
 
-**WO-2082 — Relationship Semantics Framework** (`src/engine/domainpackage.js`): `RELATION_TYPES`
-enum (MECHANISTIC/STRUCTURAL/INTERVENTIONAL) + `validateCausalMapEdge()`, wired into
-`validateDomainOutput()`. Grounded in a real paper (Wang/Richardson/Robins 2026, `docs/jds1211.pdf`,
-verified by direct read — the causalMap field was previously completely unconstrained). Tested:
-invalid `relationType` throws from `emitDomainOutput()`, valid edges seal correctly.
+- `src/components/spine/conemap.jsx` — ConeScene (dolly + cone render), Cone component (material/color)
+- `src/app.jsx` — `surfaceEntryCount` state, nav message handler, `dollyKey` prop
+- `src/components/analysis/analysisfield.jsx` — threads `dollyKey` to ConeMap
 
-**DEF-1863 — Hard State Contract** (`src/engine/statecontract.js` NEW,
-`src/engine/convergenceclassifier.js`, `src/components/analysis/targetpacket.jsx`): `STATE_TYPE`
-enum (TERMINAL/TRANSITIONAL/PROJECTION), `isTerminal()`, `normalizeToProjectionLanguage()`. All
-convergence classifier outputs now carry `stateType: PROJECTION` (nothing in the system currently
-produces an observed/closed outcome). CFO "DECISION OUTCOME" label and COO "adopt now" language
-gated through the normalizer. **Caught and fixed a real bug before shipping**: initial regex
-substitution corrupted "window" → "leaddow" (the "win"→"lead" replacement had no word boundary).
-Fixed with `\b` anchors — this is the same contamination class as the project's own WO-1724
-incident. Tested with edge cases (unresolved/completed/winning/window all correctly left alone).
+## Known Good Baseline
 
-**WO-1875 — Canonical AMBIGUOUS State** (`src/components/analysis/ambiguousstate.jsx` NEW,
-`actionmatrix.jsx`, `intelligencebrief.jsx`): single shared component + `AMBIGUOUS_COPY` constant,
-two variants (`compact`/`full`). `actionmatrix.jsx` now renders the shared component directly;
-`intelligencebrief.jsx` sources its `bluf`/`purpose` text from the same constant instead of a
-duplicated string. `targetpacket.jsx`'s inline status-chip label was deliberately left alone —
-different UI element (small pill, not a full empty-state block).
-
-All three build clean via `esbuild` (verified, not assumed).
+- `b42d01c` — `baseline_blue_cone_scale` — cones visually correct (blue/lime/purple/gray per pressure tier, CONE_HEIGHT_SCALE=8.0)
+- `e4d5888` — current HEAD — dolly code present, cone visuals broken
 
 ---
 
-## 4. Genuinely blocked — do not attempt to unblock with invented values
+## Final Note
 
-**WO-1848 (SV Groundedness, KRYL-938):** `specs/WO-1848-sv-groundedness.md` explicitly states
-`PENDING — BLOCKED`. Two undefined values: `θ` (structural similarity threshold), `G_max_capacity`
-(structural ceiling). **An externally-generated document tried to unblock this with invented
-values (θ=0.70, G_max_capacity=D×√D=14.697) — REJECTED, not applied.** No justification existed
-for that specific formula over any other. Real values must come from the Founder's actual
-judgment or empirical calibration, not a plausible-looking equation.
-
-**CPDE — Constraint Precursor Detection Engine (KRYL-939):** depends on 4 entirely unbuilt
-systems — WO-2041 Constraint Impact Engine, WO-2038 Simulation Engine, WO-2035 Truth Pressure
-Field, WO-2030 Attention Engine. Each exists only as a name + one sentence in
-`specs/structural detection engine.md`. No data model, no formula, no file map for any of them.
-**Also discovered: a WO-number collision** — the real, git-committed `WO-2041` (commit `fdaa963`)
-is "Entity Resolution Kernel," completely unrelated to the "WO-2041 Constraint Impact Engine"
-this CPDE spec depends on. Same number, two unrelated concepts from different planning sessions.
-
----
-
-## 5. Standing lesson for future agents (do not relearn this the hard way)
-
-Multiple times this session, long, fluent, well-formatted documents were pasted in — apparently
-generated by another AI tool — proposing new WOs or "fixes." Several were fabricated or
-misleading:
-- **WO-2094 ("Projection Constraint System")** — invented KRYLO subsystems that don't exist
-  ("Structural Coherence Engine," "Drift Monitor"). Never filed.
-- **A mismatched WO-2079 doc** — titled WO-2079 but was actually WO-2069+WO-2081's content merged,
-  and treated WO-2094 as if it were real infrastructure. Corrected, not filed as-is.
-- **WO-2083→2084→2085** — an unbounded chain of process-governing-process WOs (lifecycle policy →
-  policy validator → validator's graph filter → implied WO-2086 monitor), zero grounding in any
-  real repo file. Rejected outright — fails the project's own Bottle Test.
-- **θ=0.70 / G_max_capacity=14.697** for WO-1848 — invented numbers dressed in math notation.
-  Rejected.
-
-**The standing rule going forward** (saved to memory as `feedback_wo_grounding_requirement`,
-though note: writing that memory file specifically was correctly stopped by the Founder mid-session
-as an overstep — re-confirm before assuming it's saved): **no WO is real unless it maps to a
-concrete repository mutation** — an actual file to create or change. If a proposed WO's only
-output is another WO, a policy, or a description of behavior instead of a change to behavior,
-it isn't one. Verify every pasted "fix" or "spec" against the actual current file content (or
-git diff) before trusting it, the same way you'd distrust an unverified claim from anywhere else.
-
----
-
-## 6. Immediate next steps for whoever picks this up
-
-1. **Commit the uncommitted work** in §0 (or confirm with Founder first) — WO-2082, DEF-1863,
-   WO-1875 are real, tested, and currently only exist on disk.
-2. Finish the KRYL-942 (WO-2006, Interpretation Validation) check — was mid-investigation when
-   session ended, likely another placeholder-only case, not yet confirmed.
-3. Continue triaging KRYL-943 through KRYL-966 the same way — check real code/specs before
-   assuming anything is unbuilt, several have turned out to be stale-but-done today.
-4. Do not touch WO-1848 or CPDE (KRYL-938/939) without the Founder providing real spec content.
+The outgoing agent is aware it failed. It lacked the judgment to test before shipping, introduced the same class of bug twice in one session, and generated ideas the Founder never asked for. A more disciplined model is required.

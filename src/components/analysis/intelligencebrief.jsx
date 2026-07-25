@@ -348,10 +348,11 @@ export default function IntelligenceBrief() {
   useEffect(() => {
     if (!hp?.qualified || !alerts.length) return;
     const a = alerts[alerts.length - 1];
-    setHpLog(prev => [...prev, {
-      key: `signal_${a?.id ?? Date.now()}`, type: 'signal_event', ts: a?.ts ?? Date.now(),
-      label: 'DOMAIN ALERT', detail: a?.label ?? '—',
-    }]);
+    const key = `signal_${a?.id ?? a?.ts ?? 'na'}`;  // STABLE key (was Date.now() — never deduped)
+    setHpLog(prev => {
+      if (prev.some(e => e.key === key)) return prev; // idempotent — return same ref stops the re-render storm
+      return [...prev, { key, type: 'signal_event', ts: a?.ts ?? Date.now(), label: 'DOMAIN ALERT', detail: a?.label ?? '—' }].slice(-100); // bounded — no unbounded growth
+    });
   }, [alerts.length]);
   const monitorMap                = useThesisMonitor(convictions.active, engineState?.domainStates, hp);
   const calibration               = useMemo(() => computeCalibration(convictions.resolved), [convictions.resolved]);

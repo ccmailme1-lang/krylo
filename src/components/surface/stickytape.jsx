@@ -13,7 +13,7 @@ const MONO = "'IBM Plex Mono', monospace";
 const NOTE_COLOR = '#66FF00';            // default sticky lime (Founder 2026-07-22)
 const COLORS = ['#4FD1C5', '#66FF00', '#FF69B4']; // long-press palette: blue · lime · hot pink (Founder-approved)
 const OPEN_MIN_W = 120, OPEN_MIN_H = 80; // default (minimal) open size; user-resizable
-const DEFAULT_X = 140, DEFAULT_Y = 160;  // fixed drop point for a dispenser click (Founder 2026-07-22)
+const DEFAULT_X = 150, DEFAULT_Y_PCT = 0.55;  // lower-left clear band, well below the hero quote
 const LONG_PRESS_MS = 500;
 
 function StickyNote({ note }) {
@@ -226,7 +226,7 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
   }, [restoreLast, armedId, disarm]);
 
   // Click the dispenser → drop a new note at a fixed default location, bound to the current page.
-  const placeDefault = () => addSticky(DEFAULT_X, DEFAULT_Y, currentPage);
+  const placeDefault = () => addSticky(DEFAULT_X, Math.round(window.innerHeight * DEFAULT_Y_PCT), currentPage);
 
   return (
     <>
@@ -253,15 +253,8 @@ export default function StickyTape({ activeConeDomain = null, currentPage = null
           display: 'flex', flexDirection: 'column', alignItems: 'center',
           opacity: dispHover ? 0.7 : 0.3, transition: 'opacity 0.2s',
         }}>
-        <div style={{ width: 43, height: 10, borderRadius: 2, border: '1px solid rgba(255,255,255,0.55)', background: '#000', position: 'relative', zIndex: 2 }} />
-        <svg viewBox="0 0 18 18" width="18" height="18" fill="none" stroke="white" strokeWidth="1.2" strokeLinecap="round"
-          style={{ marginTop: -7, position: 'relative', zIndex: 3, background: '#000' }}>
-          <rect x="2" y="2" width="14" height="14" rx="1" />
-          <line x1="5" y1="6" x2="13" y2="6" />
-          <line x1="5" y1="9" x2="13" y2="9" />
-          <line x1="5" y1="12" x2="9" y2="12" />
-          <rect x="5" y="4" width="4" height="3" />
-        </svg>
+        <img src="/assets/paper-stack.png" alt="Notes" width="24" height="24"
+          style={{ display: 'block' }} />
         <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.26em', marginTop: 5, color: 'rgba(255,255,255,0.85)' }}>NOTES</span>
       </div>
     </>
