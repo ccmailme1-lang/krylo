@@ -15,6 +15,10 @@ const LIME = '#66FF00';
 // Target footprint = the cone-map content box (measured 1025 × 565 px, ~16:9).
 const LENS_EMBED = Object.freeze({ maxWidth: 900, maxHeight: 565 });
 
+// KRYL-1118 — prospectus graph artifact. Paste the Flourish graph chart URL here to wedge it into the
+// Structural Relationships block (the formation's proof surface). null → shows an empty artifact slot.
+const FORMATION_GRAPH_EMBED = null;
+
 // Per-lens caption — the "why" line beneath the embed. Legend + colors stay in Flourish.
 const LENS_CAPTIONS = Object.freeze({
   CONVERGENCE: 'The gap between the signal and its expected trend — it widens as they diverge, closes as they converge.',
@@ -102,7 +106,7 @@ function AnalysisField({
     const CARD = { border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' };
     const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
     const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
-      'STRUCTURAL_RELATIONSHIPS', 'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
+      'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
@@ -131,6 +135,25 @@ function AnalysisField({
                 <div style={{ ...CARD, marginBottom: 40 }}>
                   <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
                   <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
+                </div>
+              )}
+
+              {/* structural relationships — the formation graph = proof surface (KRYL-1118). Flourish slot. */}
+              {byId.STRUCTURAL_RELATIONSHIPS && (
+                <div style={{ ...CARD, marginBottom: 40 }}>
+                  <Label s={byId.STRUCTURAL_RELATIONSHIPS} />
+                  <Body s={byId.STRUCTURAL_RELATIONSHIPS} />
+                  <div style={{ marginTop: 16, height: 340, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
+                    {FORMATION_GRAPH_EMBED ? (
+                      <iframe title="formation-graph" src={FORMATION_GRAPH_EMBED}
+                              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none' }} />
+                    ) : (
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: FAINT }}>
+                        GRAPH ARTIFACT · SET FORMATION_GRAPH_EMBED
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
