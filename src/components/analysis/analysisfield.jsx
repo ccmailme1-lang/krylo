@@ -2,13 +2,9 @@
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
 import React, { useMemo } from 'react';
 import ConeMap from '../spine/conemap.jsx';
-import ScoutingReport from './scoutingreport.jsx';
 import { LENS_EMBEDS, isEmbedLens } from '../../config/lensembeds.js';
 import { usePrism } from '../../context/PrismContext.jsx';
-import { aggregateSignals } from '../../engine/aggregation.js';
-import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
-import { buildScoutingReportForDomain } from '../../engine/scoutingreportproducer.js';
-import { useDriftDivergence } from '../../hooks/usedriftdivergence.js';
+import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -42,47 +38,58 @@ function AnalysisField({
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
 
-  // ── OPPORTUNITY (sell layer) — derive live cone state so the Scouting Report has real reads.
-  // Hooks run every render (unconditional), but the work is gated on the OPPORTUNITY lens so the
-  // GDELT drift query only fires when the storefront is actually open.
+  // ── OPPORTUNITY (sell layer) → live Structural Intelligence Prospectus (KRYL-1117).
+  // buildLiveProspectus runs the chain: signal pool → perception → inference → assembler.
   const opportunityActive = viewportLens === 'OPPORTUNITY';
-  const coneState = useMemo(() => {
-    if (!opportunityActive) return [];
-    const normalized = (replayedSignals ?? signals ?? []).map(sig => ({
-      domain: sig.domain ?? sig.source ?? 'signal',
-      leverage: (sig.fs ?? 0) * 100,
-      volatility: sig.fidelity?.e_viral ?? 0,
-    }));
-    const byDomain = new Map(aggregateSignals(normalized).map(s => [s.domain, s]));
-    return CANONICAL_DOMAINS.map(d => byDomain.get(d) ?? { domain: d, pressure: 0, volatility: 0 });
-  }, [opportunityActive, signals, replayedSignals]);
-
-  const driftByDomain = useDriftDivergence(coneState, opportunityActive);
-
-  const scoutingReport = useMemo(() => {
-    if (!opportunityActive || !coneState.length) return null;
-    // Sell layer is SINGULAR (spec §3) — foreground one domain: the selection, else the hottest.
-    const chosen = coneState.find(c => c.domain === selection)
-      ?? [...coneState].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0))[0];
-    if (!chosen) return null;
-    return buildScoutingReportForDomain(chosen.domain, {
-      pressure: chosen.pressure, volatility: chosen.volatility,
-      drift: driftByDomain[chosen.domain] ?? null,
-    });
-  }, [opportunityActive, coneState, selection, driftByDomain]);
+  const prospectus = useMemo(
+    () => (opportunityActive ? buildLiveProspectus({ now: Date.now() }) : null),
+    [opportunityActive, signals, replayedSignals],
+  );
 
   if (opportunityActive) {
+    // FUNCTIONAL DATA VIEW ONLY — VIC-001/PLC-001 visual design is the Founder's (§15). This renders the
+    // live prospectus (neutral text) so the pipeline is testable; the designed skin drops onto this data.
+    const sectionBody = (s) => {
+      if (s.state !== 'GROUNDED') return `withheld — ${s.reason} (${s.absence})`;
+      if (s.statement) return s.statement;
+      if (s.note) return s.note;
+      if (s.id === 'STRUCTURAL_IDENTITY') return `${s.participatingDomains.join(' · ')} — ${s.status}`;
+      if (s.id === 'FORMATION_PROPERTIES')
+        return `E=${s.existence.toFixed(2)} · C=${s.cohesion.toFixed(2)} · Q=${s.pressureCoherence.toFixed(2)} · Ḡ=${s.avgGroundedness.toFixed(2)}`;
+      if (s.id === 'STRUCTURAL_RELATIONSHIPS') return (s.edges ?? []).map(e => `${e.a}↔${e.b}`).join('   ') || '—';
+      if (s.read) return `${s.read.label ?? s.read.lens} = ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
+      return '—';
+    };
     return (
-      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden',
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: `${LENS_EMBED.maxWidth}px`, height: '100%',
-                      padding: '18px 20px', boxSizing: 'border-box' }}>
-          {scoutingReport
-            ? <ScoutingReport report={scoutingReport} />
-            : <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)',
-                            height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                AWAITING SIGNALS
-              </div>}
+        <div style={{ width: '100%', maxWidth: `${LENS_EMBED.maxWidth}px`, minHeight: '100%',
+                      padding: '18px 20px', boxSizing: 'border-box', fontFamily: MONO, color: '#fff' }}>
+          {prospectus && prospectus.live ? (
+            <>
+              <div style={{ fontSize: 8, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.4)', marginBottom: 10 }}>
+                FORMATION PROSPECTUS · FUNCTIONAL VIEW — DESIGN PENDING
+              </div>
+              <div style={{ fontSize: 15, marginBottom: 4 }}>{prospectus.title}</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 18 }}>
+                {prospectus.header.state} · E={prospectus.header.existence?.toFixed(2)} · coverage{' '}
+                {Math.round(prospectus.header.coverage * 100)}% · {prospectus.header.evidenceCount} signals
+              </div>
+              {prospectus.sections.map((s) => (
+                <div key={s.id} style={{ marginBottom: 13 }}>
+                  <div style={{ fontSize: 9, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.5)' }}>
+                    {s.id} · {s.state}
+                  </div>
+                  <div style={{ fontSize: 12, lineHeight: 1.5, color: 'rgba(255,255,255,0.85)' }}>{sectionBody(s)}</div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <div style={{ fontSize: 11, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.35)',
+                          height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {prospectus ? 'INSUFFICIENT SIGNAL — no formation detected' : 'AWAITING SIGNALS'}
+            </div>
+          )}
         </div>
       </div>
     );
