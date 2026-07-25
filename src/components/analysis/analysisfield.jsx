@@ -5,6 +5,7 @@ import ConeMap from '../spine/conemap.jsx';
 import { LENS_EMBEDS, isEmbedLens } from '../../config/lensembeds.js';
 import { usePrism } from '../../context/PrismContext.jsx';
 import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js';
+import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -17,7 +18,7 @@ const LENS_EMBED = Object.freeze({ maxWidth: 900, maxHeight: 565 });
 
 // KRYL-1118 — prospectus graph artifact. Paste the Flourish graph chart URL here to wedge it into the
 // Structural Relationships block (the formation's proof surface). null → shows an empty artifact slot.
-const FORMATION_GRAPH_EMBED = null;
+const FORMATION_GRAPH_EMBED = 'https://flo.uri.sh/visualisation/29783600/embed'; // placeholder scatter — swap id to replace
 
 // Per-lens caption — the "why" line beneath the embed. Legend + colors stay in Flourish.
 const LENS_CAPTIONS = Object.freeze({
@@ -119,10 +120,10 @@ function AnalysisField({
     const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
     const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
       'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
-    // §17 canonical six, ticker order. Each renders a domain card: participating (in the formation) is
-    // grounded/lit; the rest surface as §22 ABSENT. The value slot is intentionally empty — filled later.
-    const CANON = [['C01', 'CAPITAL'], ['C02', 'OWNERSHIP'], ['C03', 'LABOR'],
-      ['C04', 'MEDIA'], ['C05', 'TECHNOLOGY'], ['C06', 'KNOWLEDGE']];
+    // §17 canonical six, sourced from ontology (KRYL-1065) so order can't drift — ends on OWNERSHIP.
+    // Each renders a domain card: participating (in the formation) is grounded/lit; the rest surface as
+    // §22 ABSENT. The value slot is intentionally empty — filled later.
+    const CANON = CANONICAL_DOMAINS.map((d, i) => [`C0${i + 1}`, d.toUpperCase()]);
     const inFormation = new Set(byId.STRUCTURAL_IDENTITY?.participatingDomains ?? []);
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
