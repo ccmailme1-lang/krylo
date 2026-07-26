@@ -1,6 +1,10 @@
 # KRYL-1118A — PRESSURE Report Design Spec
 
-STATUS: Spec only — not built. Sent for review before implementation, per Founder request.
+STATUS: Built (analysisfield.jsx). v2 — refined per Founder review: path (A) confirmed
+("Pressure₀ — Structural Pressure Indicator," not "proxy"), pressureScore/dataCompleteness/
+modelConfidence kept strictly separate (§23 orthogonality — never `score × confidence`),
+asymptotic language not "infinite pressure," no "Critical" label (KRYLO observes, doesn't
+alarm), Model Completeness added as its own section. 7 sections, not 6.
 
 ## 1. What PRESSURE measures
 

@@ -8,6 +8,7 @@ import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js
 import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 import { getDomainSignals } from '../../engine/domaingravity.js';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import { computeVesselPressure } from '../../engine/pressurevessel.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -896,6 +897,164 @@ function AnalysisField({
                 <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Observable activity intensity across all six macro domains.</div>
                 <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Relative signal magnitude and observation depth.</div>
                 <div><span style={{ color: SFAINT, marginRight: 8 }}>WITHHELD</span>Meaning, direction, future structural change, or outcome.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // PRESSURE lens — macro field-level report (LRC). Reuses the REAL computeVesselPressure engine
+  // (pressurevessel.js, P=nRT/V) rather than reimplementing the math. Pressure₀ — Structural Pressure
+  // Indicator: n (signal mass) is AVAILABLE (real, from confidence); T (heat/velocity) is PARTIAL
+  // (confidence reused as a stand-in — no independent velocity reading exists in the pool); V
+  // (structural slack) is derived from the real magnitude spread. pressureScore, dataCompleteness,
+  // and modelConfidence are kept as SEPARATE fields (§23 orthogonality) — never blended into one number.
+  if (viewportLens === 'PRESSURE') {
+    const PINK = '#F5F5F7', PDIM = 'rgba(245,245,247,0.60)', PFAINT = 'rgba(245,245,247,0.34)';
+    const pRows = CANONICAL_DOMAINS.map((d) => {
+      const name = d.toUpperCase();
+      const sigs = getDomainSignals(d);
+      if (!sigs.length) return { name, count: 0 };
+      // Pressure₀ mapping: confidence stands in for BOTH magnitude and velocity (T is PARTIAL, not
+      // independently observed). computeVesselPressure expects magnitude 0..100, velocity any scale.
+      const vp = computeVesselPressure(sigs.map((s) => ({ magnitude: s.confidence ?? 0, velocity: s.confidence ?? 0 })));
+      const dataCompleteness = sigs.length >= 2 ? 0.67 : 0.34; // n=AVAILABLE, V=AVAILABLE(if≥2 sigs) or WITHHELD, T=always PARTIAL
+      const modelConfidence = dataCompleteness >= 0.6 ? 'MEDIUM' : 'LOW'; // Pressure₀ never reaches HIGH — T is never independently observed
+      const band = vp.gauge >= 66 ? 'CONSTRAINED' : vp.gauge >= 33 ? 'ELEVATED' : vp.gauge > 0 ? 'ACCUMULATING' : 'LOW PRESSURE';
+      return { name, count: sigs.length, ...vp, dataCompleteness, modelConfidence, band };
+    });
+    const pReporting = pRows.filter((r) => r.count > 0);
+    const pFieldGauge = pReporting.length ? pReporting.reduce((s, r) => s + r.gauge, 0) / pReporting.length : 0;
+    const pConstrained = pReporting.filter((r) => r.band === 'CONSTRAINED').map((r) => r.name);
+    const pElevated = pReporting.filter((r) => r.band === 'ELEVATED').map((r) => r.name);
+    const pAccumulating = pReporting.filter((r) => r.band === 'ACCUMULATING').map((r) => r.name);
+    const pLow = pReporting.filter((r) => r.band === 'LOW PRESSURE').map((r) => r.name);
+    const PSecLabel = ({ num, title }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: PFAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: PDIM, margin: '4px 0 16px' }}>{title}</div>
+      </>
+    );
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+
+          {/* 01 STRUCTURAL PRESSURE OVERVIEW */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: PFAINT, marginBottom: 14 }}>PRESSURE REPORT · 01 OVERVIEW</div>
+          <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: PINK, marginBottom: 16 }}>
+            Structural Pressure Report
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: PDIM, marginBottom: 12, maxWidth: 760 }}>
+            Measures constraint — the relationship between accumulated signal mass and available structural
+            capacity, not activity alone. Pressure asymptotically increases as available capacity approaches
+            its floor; it is a structural indicator, not a physical singularity.
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em', color: PFAINT, marginBottom: 34 }}>
+            Current output: Pressure₀ — Structural Pressure Indicator (not the full Pressure₁ gauge — see §06).
+          </div>
+
+          {/* 02 PRESSURE FIELD MAP — heat wash, all six domains */}
+          <div style={{ marginBottom: 34 }}>
+            <PSecLabel num="02" title="PRESSURE FIELD MAP" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
+                          background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)' }}>
+              {pRows.map((r) => (
+                <div key={r.name} style={{ background: `rgba(245,245,247,${((r.gauge ?? 0) / 100 * 0.30).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: PDIM, marginBottom: 10 }}>{r.name}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 22, color: PINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>
+                    {r.count ? `${Math.round(r.gauge)}%` : '—'}
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: PFAINT }}>{r.count ? r.band : 'NO SIGNAL · §22'}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 03 DOMAIN CONSTRAINT SURFACE — pressureScore, dataCompleteness, modelConfidence kept separate */}
+          <div style={{ marginBottom: 34 }}>
+            <PSecLabel num="03" title="DOMAIN CONSTRAINT SURFACE" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)' }}>
+              {pRows.map((r, i, arr) => (
+                <div key={r.name} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 90px 110px 90px', alignItems: 'center', gap: 14,
+                                          padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: PDIM }}>{r.name}</span>
+                  {r.count ? (
+                    <>
+                      <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+                        <span style={{ position: 'absolute', inset: 0, width: `${Math.round(r.gauge)}%`, background: 'rgba(245,245,247,0.55)' }} />
+                      </span>
+                      <span style={{ fontFamily: MONO, fontSize: 10, color: PINK, textAlign: 'right' }}>{Math.round(r.gauge)}%</span>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: PFAINT, textAlign: 'right' }}>{Math.round(r.dataCompleteness * 100)}% complete</span>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: PFAINT, textAlign: 'right' }}>{r.modelConfidence}</span>
+                    </>
+                  ) : (
+                    <span style={{ fontFamily: MONO, fontSize: 10, color: PFAINT, gridColumn: '2 / -1' }}>NO SIGNAL · §22</span>
+                  )}
+                </div>
+              ))}
+              <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr 90px 110px 90px', gap: 14, padding: '8px 16px' }}>
+                <span />
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', color: PFAINT }}>GAUGE</span>
+                <span />
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', color: PFAINT, textAlign: 'right' }}>DATA</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.08em', color: PFAINT, textAlign: 'right' }}>MODEL</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 04 PRESSURE COMPOSITION — field-wide band grouping, descriptive not alarmist (no "Critical") */}
+          <div style={{ marginBottom: 34 }}>
+            <PSecLabel num="04" title="PRESSURE COMPOSITION" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+              {[['CONSTRAINED', pConstrained], ['ELEVATED', pElevated], ['ACCUMULATING', pAccumulating], ['LOW PRESSURE', pLow]].map(([label, list]) => (
+                <div key={label}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: PFAINT, marginBottom: 10 }}>{label}</div>
+                  {list.length ? list.map((n) => (
+                    <div key={n} style={{ fontFamily: MONO, fontSize: 11, color: PDIM, lineHeight: 1.8 }}>{n}</div>
+                  )) : <div style={{ fontFamily: MONO, fontSize: 11, color: PFAINT }}>—</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 05 CAPACITY SLACK — field-wide gauge average, the denominator made visible */}
+          <div style={{ marginBottom: 34 }}>
+            <PSecLabel num="05" title="CAPACITY SLACK" />
+            <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr', alignItems: 'center', gap: 10, maxWidth: 400 }}>
+              <span style={{ fontFamily: MONO, fontSize: 12, color: PINK, fontVariantNumeric: 'tabular-nums' }}>{Math.round(pFieldGauge)}%</span>
+              <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+                <span style={{ position: 'absolute', inset: 0, width: `${Math.round(pFieldGauge)}%`, background: 'rgba(245,245,247,0.55)' }} />
+              </span>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.04em', color: PFAINT, marginTop: 8 }}>Field-wide gauge average — % of rated ceiling in use.</div>
+          </div>
+
+          {/* 06 MODEL COMPLETENESS — unique to PRESSURE, states which inputs are real vs. stand-in */}
+          <div style={{ marginBottom: 34 }}>
+            <PSecLabel num="06" title="MODEL COMPLETENESS" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: PDIM }}>
+                <div><span style={{ color: LIME, marginRight: 10 }}>AVAILABLE</span>Structural Mass (n) — real, from observed signal confidence.</div>
+                <div><span style={{ color: PFAINT, marginRight: 10 }}>PARTIAL</span>Heat / Velocity (T) — confidence reused as a stand-in; no independent velocity reading exists.</div>
+                <div><span style={{ color: PFAINT, marginRight: 10 }}>PARTIAL</span>Capacity Slack (V) — derived from magnitude spread; strongest with more observations.</div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em', color: PFAINT, marginTop: 14 }}>
+                Current output is a Pressure Indicator, not the full Pressure gauge.
+              </div>
+            </div>
+          </div>
+
+          {/* 07 OBSERVATION BOUNDARY */}
+          <div>
+            <PSecLabel num="07" title="OBSERVATION BOUNDARY" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: PDIM }}>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Signal mass and constraint gauge per domain and field-wide.</div>
+                <div><span style={{ color: PFAINT, marginRight: 8 }}>WITHHELD</span>Independently observed heat/velocity — no such reading exists in the pool.</div>
+                <div><span style={{ color: PFAINT, marginRight: 8 }}>WITHHELD</span>Future constraint change, outcome, or alert-level judgment.</div>
               </div>
             </div>
           </div>
