@@ -479,6 +479,55 @@ function AnalysisField({
 
   // LSC-001 Region C — a lens with a Flourish embed renders it as an iframe (no WebGL); until a URL
   // is wired it shows an "awaiting embed" slot. Lenses not in the embed map fall through to the cone map.
+  // DRIFT lens — own report shell (LRC — each lens owns its report). computeDivergence('DRIFT', …)
+  // needs STRUCTURAL + NARRATIVE SignalFacets per domain (signalfacet.js); the live pool only carries
+  // one undifferentiated confidence/polarity reading — no facet split exists yet. Every domain WITHHOLDS
+  // honestly (§22 STRUCTURAL absence) rather than fabricate a divergence number. Flourish DRIFT chart
+  // (the real structure-vs-narrative visualization) is the centerpiece proof surface.
+  if (viewportLens === 'DRIFT') {
+    const driftUrl = LENS_EMBEDS.DRIFT;
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: 'rgba(245,245,247,0.34)', marginBottom: 14 }}>DRIFT REPORT</div>
+          <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: '#F5F5F7', marginBottom: 16 }}>
+            Structural Drift Report
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(245,245,247,0.60)', marginBottom: 28, maxWidth: 720 }}>
+            The gap between structure and narrative — where the field is moving before the story catches up.
+            Per-domain divergence requires STRUCTURAL and NARRATIVE facets (signalfacet.js); the live pool
+            does not yet carry that split, so every domain below withholds honestly rather than guess.
+          </div>
+          <div style={{ border: '1px solid rgba(245,245,247,0.16)', marginBottom: 28 }}>
+            {CANONICAL_DOMAINS.map((d, i, arr) => (
+              <div key={d} style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 14, padding: '12px 16px',
+                                    borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: 'rgba(245,245,247,0.60)' }}>{d.toUpperCase()}</span>
+                <span style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.03em', color: 'rgba(245,245,247,0.34)' }}>
+                  WITHHELD — NO_STRUCTURAL_NARRATIVE_FACET_SPLIT · STRUCTURAL
+                </span>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(245,245,247,0.34)', marginBottom: 12 }}>
+            STRUCTURE VS NARRATIVE — FIELD VIEW
+          </div>
+          <div style={{ height: 560, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
+            {driftUrl ? (
+              <iframe title="drift-field" src={driftUrl}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none' }} />
+            ) : (
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: 'rgba(245,245,247,0.34)' }}>
+                AWAITING FLOURISH EMBED
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isEmbedLens(viewportLens)) {
     const url = LENS_EMBEDS[viewportLens];
     return (
