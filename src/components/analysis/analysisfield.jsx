@@ -86,9 +86,9 @@ function AnalysisField({
     const prospectus = opp?.prospectus ?? null;
     const domainStats = opp?.domainStats ?? {};
     const fieldAvg = opp?.fieldAvg ?? 0;
-    // OPPORTUNITY report surface (KRYL-1117). Dark §6 palette (no color change). §5 dual voice:
-    // SERIF synthesis (narrative) / MONO data. VIC-001: institutional research artifact — hierarchy and
-    // spacing carry it, no gray-border cards, lime is a live-state mark only.
+    // OPPORTUNITY report surface (KRYL-1117/KRYL-1118A — Intelligence Narrative structure, 2026-07-26).
+    // Dark §6 palette. §5 dual voice: SERIF synthesis (narrative) / MONO data. Every section below is
+    // grounded in prospectus/domainStats/historySeries — no hand-authored prose, no invented data.
     const SERIF = "Georgia, 'Times New Roman', serif";
     const INK = '#F5F5F7', DIM = 'rgba(245,245,247,0.60)', FAINT = 'rgba(245,245,247,0.34)';
     const TITLES = {
@@ -99,46 +99,21 @@ function AnalysisField({
       PRESSURE_MAP: 'Pressure Map', FORMATION_TRAJECTORY: 'Formation Trajectory',
       EVIDENCE_FOUNDATION: 'Evidence Foundation', STRUCTURAL_INTELLIGENCE_CONCLUSION: 'Conclusion',
     };
-    const NARRATIVE = new Set(['EXECUTIVE_STRUCTURAL_ASSESSMENT', 'STRUCTURAL_INTELLIGENCE_CONCLUSION']);
-    // Researched factor semantics (scoutingreport.js five-lens set — not invented). Drives the factor cards.
-    const FACTOR_DESC = {
-      EVIDENCE_FOUNDATION: 'How hot the field is — signal density.',
-      FORMATION_ANATOMY: 'How strongly the signals agree — convergence.',
-      PRESSURE_MAP: 'How constrained the field is — capacity in use.',
-      STRUCTURAL_FIELD: 'Which way the field is moving — directional flow.',
-      STRUCTURAL_DRIFT: 'Structure pulling away from narrative — the early tell.',
-    };
-    const dataBody = (s) => {
-      if (s.statement) return s.statement;
-      if (s.note) return s.note;
-      if (s.id === 'STRUCTURAL_IDENTITY') return s.participatingDomains.join('  ·  ');
-      if (s.id === 'STRUCTURAL_RELATIONSHIPS') return (s.edges ?? []).map(e => `${e.a} ↔ ${e.b}`).join('    ') || '—';
-      if (s.read) return `${s.read.label ?? s.read.lens} ${typeof s.read.value === 'number' ? s.read.value.toFixed(2) : s.read.value}`;
-      return '—';
-    };
-    // one metric row (optional leg-key · value · bar) — the CB-Insights coordinated-metric signature,
-    // §6 mono, no lime. Value is a grounded 0..1 read; the bar is that read, nothing invented.
-    const BarRow = ({ k, v }) => (
-      <div style={{ display: 'grid', gridTemplateColumns: k != null ? '18px 40px 1fr' : '40px 1fr', alignItems: 'center', gap: 10 }}>
-        {k != null && <span style={{ fontFamily: MONO, fontSize: 11, color: FAINT }}>{k}</span>}
+    const BarRow = ({ v }) => (
+      <div style={{ display: 'grid', gridTemplateColumns: '40px 1fr', alignItems: 'center', gap: 10 }}>
         <span style={{ fontFamily: MONO, fontSize: 12, color: INK, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(2)}</span>
         <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
           <span style={{ position: 'absolute', inset: 0, width: `${Math.round(v * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
         </span>
       </div>
     );
-    const Bars = ({ pairs }) => (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginTop: 2 }}>
-        {pairs.map(([k, v]) => <BarRow key={k} k={k} v={v} />)}
-      </div>
-    );
     // grounded History line (replay frames, self-scaled). < 2 points → withholds (§22 TEMPORAL), never faked.
-    const HistoryLine = ({ series }) => {
+    const HistoryLine = ({ series, h = 120 }) => {
       if (!series || series.length < 2)
         return (
-          <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em', color: FAINT }}>
-            HISTORY WITHHELD · TEMPORAL §22
+          <div style={{ height: h, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: FAINT }}>
+            HISTORY WITHHELD · §22
           </div>
         );
       const vs = series.map((p) => p.v);
@@ -147,151 +122,241 @@ function AnalysisField({
       const pts = series.map((p, i) =>
         `${((i / (series.length - 1)) * W).toFixed(2)},${(H - ((p.v - min) / span) * H).toFixed(2)}`).join(' ');
       return (
-        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: 120, display: 'block' }}>
-          <polyline points={pts} fill="none" stroke="rgba(245,245,247,0.6)" strokeWidth="0.8" vectorEffect="non-scaling-stroke" />
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ width: '100%', height: h, display: 'block' }}>
+          <defs><linearGradient id="opp-hist-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="rgba(245,245,247,0.24)" /><stop offset="1" stopColor="rgba(245,245,247,0)" />
+          </linearGradient></defs>
+          <polygon points={`0,${H} ${pts} 100,${H}`} fill="url(#opp-hist-fill)" />
+          <polyline points={pts} fill="none" stroke="rgba(245,245,247,0.75)" strokeWidth="0.9" vectorEffect="non-scaling-stroke" />
         </svg>
       );
     };
-    const Body = ({ s }) => {
-      if (s.state !== 'GROUNDED')
-        return <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.03em', color: FAINT }}>Withheld — {s.reason} · {s.absence}</div>;
-      if (s.id === 'FORMATION_PROPERTIES')
-        return <Bars pairs={[['E', s.existence], ['C', s.cohesion], ['Q', s.pressureCoherence], ['Ḡ', s.avgGroundedness]]} />;
-      if (NARRATIVE.has(s.id))
-        return <div style={{ fontFamily: SERIF, fontSize: 17, lineHeight: 1.6, color: INK }}>{dataBody(s)}</div>;
-      // grounded scalar read (the five researched lenses): description + reading + bar + groundedness.
-      if (s.read && typeof s.read.value === 'number')
-        return (
-          <div>
-            {FACTOR_DESC[s.id] && (
-              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.5, letterSpacing: '0.02em', color: FAINT, marginBottom: 10 }}>{FACTOR_DESC[s.id]}</div>
-            )}
-            <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.6, letterSpacing: '0.02em', color: DIM, marginBottom: 12 }}>
-              {s.read.label ?? s.read.lens}
-            </div>
-            <BarRow v={s.read.value} />
-            {Number.isFinite(s.read.groundedness) && (
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.10em', color: FAINT, marginTop: 8 }}>GROUNDED {Math.round(s.read.groundedness * 100)}%</div>
-            )}
-          </div>
-        );
-      return <div style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.7, letterSpacing: '0.02em', color: DIM }}>{dataBody(s)}</div>;
-    };
-    const Label = ({ s }) => (
-      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 10,
-                    display: 'flex', justifyContent: 'space-between' }}>
-        <span>{(TITLES[s.id] ?? s.id).toUpperCase()}</span>
-        <span style={{ color: s.state === 'GROUNDED' ? DIM : FAINT }}>{s.state === 'GROUNDED' ? '' : 'WITHHELD'}</span>
-      </div>
-    );
     const CARD = { border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' };
+    const SecLabel = ({ num, title, right }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: FAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: DIM, margin: '4px 0 16px',
+                      display: 'flex', justifyContent: 'space-between' }}>
+          <span>{title}</span><span style={{ color: DIM }}>{right}</span>
+        </div>
+      </>
+    );
     const byId = Object.fromEntries((prospectus?.sections ?? []).map((s) => [s.id, s]));
-    const GRID = ['FORMATION_ANATOMY', 'FORMATION_PROPERTIES', 'PRESSURE_MAP', 'EVIDENCE_FOUNDATION',
-      'STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT', 'FORMATION_RESONANCE', 'FORMATION_TRAJECTORY'];
     // §17 canonical six, sourced from ontology (KRYL-1065) so order can't drift — ends on OWNERSHIP.
-    // Each renders a domain card: participating (in the formation) is grounded/lit; the rest surface as
-    // §22 ABSENT. The value slot is intentionally empty — filled later.
     const CANON = CANONICAL_DOMAINS.map((d, i) => [`C0${i + 1}`, d.toUpperCase()]);
     const inFormation = new Set(byId.STRUCTURAL_IDENTITY?.participatingDomains ?? []);
+
+    // RISK FACTORS (§20 direction honesty) — DETECTED downside, equal authority, never predicted loss.
+    const risks = [];
+    const fractures = CANON.filter(([, n]) => domainStats[n]?.direction === 'fracture').map(([, n]) => n);
+    if (fractures.length) risks.push(['FRACTURE', `${fractures.join(', ')} under fracture-polarity pressure.`]);
+    const blind = ['STRUCTURAL_FIELD', 'STRUCTURAL_DRIFT'].filter((id) => byId[id] && byId[id].state !== 'GROUNDED').map((id) => TITLES[id]);
+    if (blind.length) risks.push(['BLIND SPOT', `${blind.join(' & ')} ungrounded — field movement unobserved.`]);
+    const outside = CANON.filter(([, n]) => !inFormation.has(n)).map(([, n]) => n);
+    if (outside.length) risks.push(['COVERAGE', `${outside.join(', ')} outside the formation — concentration risk.`]);
+    const silent = CANON.filter(([, n]) => (domainStats[n]?.count ?? 0) === 0).map(([, n]) => n);
+    if (silent.length) risks.push(['ABSENCE', `No signal in ${silent.join(', ')} (§22) — unobserved, not safe.`]);
+    risks.push(['STRUCTURAL', 'Co-presence edges only — mechanism unproven.']);
+
+    // QUALIFICATION DOCTRINE (2026-07-26) — Signal primary, Evidence-count tiebreaker near the floor.
+    // Never a blended score (§18). Ties project_domain_qualification_doctrine.
+    const QUAL_FLOOR = 0.40, NEAR_FLOOR_MARGIN = 0.05;
+    const qualified = CANON
+      .filter(([, n]) => (domainStats[n]?.mag ?? -1) >= QUAL_FLOOR)
+      .sort(([, a], [, b]) => (domainStats[b].mag - domainStats[a].mag) || (domainStats[b].count - domainStats[a].count));
+    const qualRankOf = Object.fromEntries(qualified.map(([, n], i) => [n, i + 1]));
+    const qualLabel = (name) => {
+      const st = domainStats[name];
+      if (!st || st.mag == null || st.mag < QUAL_FLOOR) return 'BELOW FLOOR';
+      const near = st.mag - QUAL_FLOOR <= NEAR_FLOOR_MARGIN ? ' · NEAR FLOOR' : '';
+      return `QUAL ${qualRankOf[name]}${near}`;
+    };
+
+    // §22 grounded vs withheld sections — feeds Confidence Boundary (09).
+    const allSections = prospectus?.sections ?? [];
+    const supportedSections = allSections.filter((s) => s.state === 'GROUNDED' && s.id !== 'STRUCTURAL_INTELLIGENCE_CONCLUSION');
+    const unresolvedSections = allSections.filter((s) => s.state !== 'GROUNDED');
+
+    // Formation Timeline substrate — the SAME real replay-frame series (historySeries) that feeds the
+    // History sparkline (01/03). Samples up to 6 real points; only first/last get a structurally-true
+    // label (OBSERVED/CURRENT) — no invented phase names (Expansion/Acceleration/etc are not derivable).
+    const timelinePoints = (() => {
+      if (historySeries.length < 2) return null;
+      const n = Math.min(6, historySeries.length);
+      const idxs = [...new Set(Array.from({ length: n }, (_, i) => Math.round(i * (historySeries.length - 1) / (n - 1))))];
+      return idxs.map((idx, i) => ({ ...historySeries[idx], label: i === 0 ? 'OBSERVED' : i === idxs.length - 1 ? 'CURRENT' : null }));
+    })();
+
+    const fp = byId.EXECUTIVE_STRUCTURAL_ASSESSMENT?.fingerprint;
+    const observedThrough = [...inFormation]
+      .map((n) => [n, domainStats[n]?.count ?? 0]).filter(([, c]) => c > 0)
+      .sort((a, b) => b[1] - a[1]).map(([n, c]) => `${c} ${n} signal${c === 1 ? '' : 's'}`).join(' · ');
+
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto',
                     display: 'flex', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 72px', boxSizing: 'border-box', zoom: 0.9 }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
           {prospectus && prospectus.live ? (
             <>
-              {/* hero — conclusion-first, full width */}
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FAINT, marginBottom: 18 }}>FORMATION PROSPECTUS</div>
-              <div style={{ fontFamily: SERIF, fontSize: 36, lineHeight: 1.1, color: INK, marginBottom: 14 }}>{prospectus.title}</div>
-              <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.05em', color: DIM, display: 'flex', alignItems: 'center', gap: 16, marginBottom: 10 }}>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, color: INK }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: LIME }} />{prospectus.header.state}
-                </span>
-                <span>E {prospectus.header.existence?.toFixed(2)}</span>
-                <span>{Math.round(prospectus.header.coverage * 100)}% coverage</span>
-                <span>{prospectus.header.evidenceCount} signals</span>
-              </div>
-              {byId.STRUCTURAL_IDENTITY && (
-                <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: DIM, marginBottom: 30 }}>
-                  {byId.STRUCTURAL_IDENTITY.participatingDomains?.join('   ·   ')}
-                </div>
-              )}
-
-              {/* executive summary — LEAD OFF, full width, serif */}
-              {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
-                <div style={{ ...CARD, marginBottom: 40 }}>
-                  <Label s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
-                  <Body s={byId.EXECUTIVE_STRUCTURAL_ASSESSMENT} />
-                </div>
-              )}
-
-              {/* domain bays — the six §17 domains as a coordinated 3-col grid. Each block is a MACRO-level
-                  summary highlight of its domain, grounded from the same pool the formation reads: signal
-                  strength (hero score) + band, net direction (§20 polarity), evidence count, field baseline.
-                  No-signal bays surface §22 absence, never a zero. Formation membership = the chip. */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
-                {CANON.map(([cid, name]) => {
-                  const inF = inFormation.has(name);
-                  const st = domainStats[name] ?? { count: 0, mag: null, direction: 'absent' };
-                  const band = st.mag == null ? '' : st.mag >= 0.75 ? 'HIGH' : st.mag >= 0.40 ? 'MODERATE' : 'LOW';
-                  return (
-                    <div key={cid} style={{ ...CARD, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 150 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT }}>{cid}</span>
-                        <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.06em', color: inF ? INK : DIM }}>{name}</span>
-                      </div>
-                      {st.count ? (
-                        <>
-                          {/* macro domain-level posture — band + §20 direction, the decimal demotes to the bar */}
-                          <div style={{ fontFamily: MONO, fontSize: 15, letterSpacing: '0.04em', color: INK, lineHeight: 1.3 }}>
-                            {band} · {st.direction.toUpperCase()}
-                          </div>
-                          <BarRow v={st.mag} />
-                          <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.03em', color: DIM }}>
-                            {st.count} signal{st.count === 1 ? '' : 's'} · field {fieldAvg.toFixed(2)}
-                          </div>
-                        </>
-                      ) : (
-                        <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT, marginTop: 4 }}>NO SIGNAL · §22</div>
-                      )}
-                      <div style={{ flex: 1 }} />
-                      <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.16em',
-                                    color: inF ? LIME : FAINT, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {inF && <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME }} />}
-                        {inF ? 'IN FORMATION' : 'ABSENT · §22'}
-                      </div>
+              {/* 01 FORMATION OVERVIEW — hero: title + domains left, OVERALL score cluster right */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr minmax(200px, 280px)', gap: 20, alignItems: 'start', marginBottom: 28 }}>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FAINT, marginBottom: 14 }}>FORMATION PROSPECTUS · 01 OVERVIEW</div>
+                  <div style={{ fontFamily: SERIF, fontSize: 28, lineHeight: 1.15, color: INK, marginBottom: 12 }}>{prospectus.title}</div>
+                  {byId.STRUCTURAL_IDENTITY && (
+                    <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.12em', color: DIM }}>
+                      {byId.STRUCTURAL_IDENTITY.participatingDomains?.join('   ·   ')}
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* mosaic overall — formation composite (E) + grounded History line (replay frames, §22-honest). */}
-              <div style={{ ...CARD, marginBottom: 40, display: 'grid', gridTemplateColumns: 'minmax(160px, 240px) 1fr', gap: 32, alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 12 }}>OVERALL</div>
-                  <div style={{ fontFamily: MONO, fontSize: 40, color: INK, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
-                    {prospectus.header.existence?.toFixed(2)}
-                  </div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: DIM, marginTop: 10 }}>{prospectus.header.state}</div>
-                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.04em', color: FAINT, marginTop: 4 }}>
-                    {Math.round(prospectus.header.coverage * 100)}% coverage · {prospectus.header.evidenceCount} signals
-                  </div>
+                  )}
                 </div>
                 <div>
-                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT, marginBottom: 8,
-                                display: 'flex', justifyContent: 'space-between' }}>
-                    <span>HISTORY</span>
-                    <span>{historySeries.length} FRAMES</span>
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: FAINT }}>OVERALL</span>
+                    <span style={{ fontFamily: MONO, fontSize: 30, color: INK, fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                      {prospectus.header.existence?.toFixed(2)}
+                    </span>
                   </div>
-                  <HistoryLine series={historySeries} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8, fontFamily: MONO, fontSize: 9, letterSpacing: '0.05em', color: INK }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME }} />{prospectus.header.state}
+                    <span style={{ color: FAINT, marginLeft: 'auto' }}>{Math.round(prospectus.header.coverage * 100)}% · {prospectus.header.evidenceCount} sig</span>
+                  </div>
+                  <HistoryLine series={historySeries} h={44} />
                 </div>
               </div>
 
-              {/* structural relationships — the formation graph = proof surface (KRYL-1118). Flourish slot. */}
+              {/* 02 FORMATION THESIS — assembler-derived, not hand-authored */}
+              {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT && (
+                <div style={{ marginBottom: 34 }}>
+                  <SecLabel num="02" title="FORMATION THESIS" />
+                  <div style={{ fontFamily: SERIF, fontSize: 19, lineHeight: 1.65, color: INK }}>
+                    {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT.statement}
+                    {observedThrough && (
+                      <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: DIM, marginTop: 16, lineHeight: 1.7 }}>
+                        Observed through: {observedThrough}.
+                      </div>
+                    )}
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.06em', color: FAINT, marginTop: 10 }}>
+                      Boundary: trajectory and future outcome are not yet observable — see §11 Structural Outlook.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 03 STRUCTURAL STATE — 6 tiles */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="03" title="STRUCTURAL STATE" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+                  {[
+                    ['FORMATION', prospectus.header.state],
+                    ['SIGNAL DENSITY', String(prospectus.header.evidenceCount)],
+                    ['EVIDENCE DEPTH', `${CANON.filter(([, n]) => (domainStats[n]?.count ?? 0) > 0).length} domains`],
+                    ['DOMAIN COVERAGE', `${inFormation.size} / 6 fields`],
+                    ['RELATIONSHIP COHERENCE', byId.FORMATION_ANATOMY?.read?.value != null ? byId.FORMATION_ANATOMY.read.value.toFixed(2) : '—'],
+                    ['OBSERVED WINDOW', `${historySeries.length} frames`],
+                  ].map(([label, val], i, arr) => (
+                    <div key={label} style={{ padding: '16px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                      <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>{label}</div>
+                      <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 04 DOMAIN FORMATION MATRIX — dot field map, replaces the old bay-strip */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="04" title="DOMAIN FORMATION MATRIX" />
+                <div style={{ border: '1px solid rgba(245,245,247,0.16)' }}>
+                  {CANON.map(([, name], i, arr) => {
+                    const st = domainStats[name] ?? { count: 0, mag: null, direction: 'absent' };
+                    const filled = Math.round((st.mag ?? 0) * 5);
+                    return (
+                      <div key={name} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 160px 90px', alignItems: 'center', gap: 14,
+                                                padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: inFormation.has(name) ? INK : DIM }}>{name}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.1em' }}>
+                          <span style={{ color: INK }}>{'●'.repeat(filled)}</span>
+                          <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
+                        </span>
+                        <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.06em', color: DIM }}>
+                          {st.count ? `${st.mag >= 0.75 ? 'HIGH' : st.mag >= 0.40 ? 'MODERATE' : 'LOW'} · ${st.direction.toUpperCase()}` : 'NO SIGNAL · §22'}
+                        </span>
+                        <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.04em', color: FAINT, textAlign: 'right' }}>{qualLabel(name)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {byId.STRUCTURAL_RELATIONSHIPS?.edges?.length > 0 && (
+                  <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.05em', color: DIM, marginTop: 12 }}>
+                    Primary relationship: <span style={{ color: INK }}>{byId.STRUCTURAL_RELATIONSHIPS.edges.map(e => `${e.a} ↔ ${e.b}`).join('  ·  ')}</span> (co-presence, §22 — 9 of 10 connection properties ungrounded)
+                  </div>
+                )}
+              </div>
+
+              {/* 05 TOP FORMATIONS — top 3 by qualification doctrine (Signal primary, Evidence tiebreak) */}
+              {qualified.length > 0 && (
+                <div style={{ marginBottom: 34 }}>
+                  <SecLabel num="05" title="TOP FORMATIONS" />
+                  <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, qualified.length)}, 1fr)`, gap: 12 }}>
+                    {qualified.slice(0, 3).map(([cid, name]) => {
+                      const st = domainStats[name];
+                      const delta = st.mag - fieldAvg;
+                      return (
+                        <div key={cid} style={{ ...CARD, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <span style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.08em', color: INK }}>{name}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 22, color: INK, fontVariantNumeric: 'tabular-nums' }}>{st.mag.toFixed(2)}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.55, color: DIM }}>
+                            {st.count} signals, {delta >= 0 ? '+' : ''}{delta.toFixed(2)} vs field baseline of {fieldAvg.toFixed(2)}.
+                          </span>
+                          <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.04em', color: FAINT }}>field {fieldAvg.toFixed(2)}</span>
+                          <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.12em', color: LIME, marginTop: 'auto' }}>
+                            {inFormation.has(name) ? 'IN FORMATION' : qualLabel(name)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 06 EVIDENCE CHAIN — 3-col, no charts */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="06" title="EVIDENCE CHAIN" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  <div style={CARD}>
+                    <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.05em', color: INK, marginBottom: 8 }}>Evidence Foundation</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, color: DIM, lineHeight: 1.7 }}>
+                      {prospectus.header.evidenceCount} signals total<br />
+                      {inFormation.size} of 6 domains represented<br />
+                      {byId.STRUCTURAL_RELATIONSHIPS?.edges?.length ?? 0} edges (co-presence only)
+                    </div>
+                  </div>
+                  <div style={CARD}>
+                    <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.05em', color: INK, marginBottom: 8 }}>Groundedness</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, color: DIM, lineHeight: 1.7 }}>
+                      {Math.round((byId.FORMATION_PROPERTIES?.avgGroundedness ?? 0) * 100)}% grounded (Ḡ={(byId.FORMATION_PROPERTIES?.avgGroundedness ?? 0).toFixed(2)})<br />
+                      No projected/assumed inputs<br />
+                      Pass-through pool reads only
+                    </div>
+                  </div>
+                  <div style={CARD}>
+                    <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.05em', color: INK, marginBottom: 8 }}>Latest Observation</div>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, color: DIM, lineHeight: 1.7 }}>
+                      {historySeries.length} replay frames captured<br />
+                      Most recent frame: current<br />
+                      Window: rolling, live pool
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 07 STRUCTURAL RELATIONSHIP FIELD — full-width hero graph (KRYL-1118). Flourish slot. */}
               {byId.STRUCTURAL_RELATIONSHIPS && (
-                <div style={{ ...CARD, marginBottom: 40 }}>
-                  <Label s={byId.STRUCTURAL_RELATIONSHIPS} />
-                  <Body s={byId.STRUCTURAL_RELATIONSHIPS} />
-                  <div style={{ marginTop: 16, height: 340, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ marginBottom: 34 }}>
+                  <SecLabel num="07" title="STRUCTURAL RELATIONSHIP FIELD" />
+                  <div style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: DIM, marginBottom: 14 }}>
+                    Co-presence edges only; 9 of 10 connection properties ungrounded (§22). Evidence-backed relationships only.
+                  </div>
+                  <div style={{ height: 640, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
                     {FORMATION_GRAPH_EMBED ? (
                       <iframe title="formation-graph" src={FORMATION_GRAPH_EMBED}
                               style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none' }} />
@@ -305,28 +370,101 @@ function AnalysisField({
                 </div>
               )}
 
-              {/* coordinated panel mesh — hairline-separated contiguous cells (the CBI sectioned wall).
-                  Borders come from the 1px gap over a hairline ground; cells paint dark on top. Last cell
-                  spans full width when the count is odd, so no empty hairline box shows. */}
-              {(() => {
-                const cells = GRID.filter((id) => byId[id]);
-                return (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1,
-                                background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)', marginBottom: 40 }}>
-                    {cells.map((id, i) => (
-                      <div key={id} style={{ background: '#000', padding: '18px 20px',
-                                             gridColumn: i === cells.length - 1 && cells.length % 2 === 1 ? '1 / -1' : undefined }}>
-                        <Label s={byId[id]} /><Body s={byId[id]} />
+              {/* 08 FORMATION TIMELINE — grounded in the same replay-frame substrate as the History sparkline
+                  (01/03). Real (ts,v) points, sampled; only first/last carry a structurally-true label. */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="08" title="FORMATION TIMELINE" right={timelinePoints ? `${historySeries.length} FRAMES` : 'WITHHELD'} />
+                {timelinePoints ? (
+                  <div style={{ display: 'flex', borderTop: '1px solid rgba(245,245,247,0.16)', paddingTop: 18 }}>
+                    {timelinePoints.map((p, i) => (
+                      <div key={p.ts} style={{ flex: 1, textAlign: 'center', position: 'relative' }}>
+                        <span style={{ position: 'absolute', top: -23, left: '50%', width: 5, height: 5, borderRadius: '50%',
+                                       background: p.label === 'CURRENT' ? LIME : FAINT, transform: 'translateX(-50%)' }} />
+                        <div style={{ fontFamily: MONO, fontSize: 12, color: INK, fontVariantNumeric: 'tabular-nums' }}>{p.v.toFixed(2)}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: p.label ? INK : DIM, marginTop: 4 }}>
+                          {p.label ?? new Date(p.ts).toLocaleTimeString()}
+                        </div>
                       </div>
                     ))}
                   </div>
-                );
-              })()}
+                ) : (
+                  <div style={{ fontFamily: MONO, fontSize: 11.5, letterSpacing: '0.03em', color: FAINT, borderTop: '1px solid rgba(245,245,247,0.16)', paddingTop: 16 }}>
+                    Withheld — {byId.FORMATION_TRAJECTORY?.reason ?? 'NO_TIME_SERIES'} · {byId.FORMATION_TRAJECTORY?.absence ?? 'TEMPORAL'}
+                  </div>
+                )}
+              </div>
 
-              {/* conclusion — full width, serif */}
-              {byId.STRUCTURAL_INTELLIGENCE_CONCLUSION && (
-                <div style={CARD}><Label s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /><Body s={byId.STRUCTURAL_INTELLIGENCE_CONCLUSION} /></div>
-              )}
+              {/* 09 CONFIDENCE BOUNDARY — §22 grounded-or-withhold, editorial framing */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="09" title="CONFIDENCE BOUNDARY" />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={CARD}>
+                    <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LIME, marginBottom: 12 }}>SUPPORTED</div>
+                    {supportedSections.map((s) => (
+                      <div key={s.id} style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.9, color: DIM }}>
+                        <span style={{ color: INK, marginRight: 6 }}>✓</span>{TITLES[s.id] ?? s.id}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={CARD}>
+                    <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FAINT, marginBottom: 12 }}>UNRESOLVED</div>
+                    {unresolvedSections.map((s) => (
+                      <div key={s.id} style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.9, color: DIM }}>
+                        <span style={{ color: INK, marginRight: 6 }}>?</span>{TITLES[s.id] ?? s.id}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* 10 RISKS / LIMITATIONS — own section (§20), no longer folded into the thesis */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="10" title="RISKS / LIMITATIONS" right={`${risks.length} DETECTED`} />
+                <div style={CARD}>
+                  {risks.map(([tag, text], i) => (
+                    <div key={tag} style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 16,
+                                            padding: '9px 0', borderBottom: i < risks.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', color: DIM }}>{tag}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.5, color: INK }}>{text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 11 STRUCTURAL OUTLOOK — 3-layer, derived from fingerprint + qualified rank, not authored */}
+              <div style={{ marginBottom: 34 }}>
+                <SecLabel num="11" title="STRUCTURAL OUTLOOK" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+                  <div style={{ borderLeft: `2px solid ${LIME}`, paddingLeft: 16 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', color: FAINT, marginBottom: 8 }}>OBSERVED</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: DIM }}>
+                      A {fp?.domains?.length ?? inFormation.size}-domain {fp?.direction ?? 'constructive'} alignment exists today at E={(fp?.existence ?? prospectus.header.existence).toFixed(2)}, grounded in {fp?.evidenceCount ?? prospectus.header.evidenceCount} live signals.
+                    </div>
+                  </div>
+                  <div style={{ borderLeft: '2px solid rgba(245,245,247,0.16)', paddingLeft: 16 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', color: FAINT, marginBottom: 8 }}>FORMING</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: DIM }}>
+                      {qualified.length ? `${qualified.slice(0, 2).map(([, n]) => n).join(' and ')} carry the deepest evidence and highest signal strength — the structure's strongest legs.` : 'No domain currently clears the qualification floor.'}
+                    </div>
+                  </div>
+                  <div style={{ borderLeft: '2px solid rgba(245,245,247,0.16)', paddingLeft: 16 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.14em', color: FAINT, marginBottom: 8 }}>UNRESOLVED</div>
+                    <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.6, color: DIM }}>
+                      {unresolvedSections.length ? `${unresolvedSections.map((s) => TITLES[s.id] ?? s.id).join(', ')} cannot be concluded — no time-series substrate yet.` : 'All sections currently grounded.'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 12 APPENDIX */}
+              <div>
+                <SecLabel num="12" title="APPENDIX" />
+                <div style={{ fontFamily: MONO, fontSize: 10.5, color: FAINT, lineHeight: 1.7 }}>
+                  Formation ID: {byId.STRUCTURAL_IDENTITY?.formationId ?? '—'}<br />
+                  Generated: {prospectus.generatedAt ? new Date(prospectus.generatedAt).toISOString() : '—'} by {prospectus.generatedBy}<br />
+                  Citation: {byId.EXECUTIVE_STRUCTURAL_ASSESSMENT?.citation ?? 'formation-inference-engine'}
+                </div>
+              </div>
             </>
           ) : (
             <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.18em', color: FAINT,
