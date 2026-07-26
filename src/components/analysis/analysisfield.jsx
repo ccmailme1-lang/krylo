@@ -45,14 +45,16 @@ function AnalysisField({
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
 
-  // ── OPPORTUNITY (sell layer) → live Structural Intelligence Prospectus (KRYL-1117).
-  // buildLiveProspectus runs the chain: signal pool → perception → inference → assembler.
+  // ── Lens Report Contract (KRYL-1118A) — OPPORTUNITY is the template; every reporting lens
+  // (SIGNAL/FLOW/PRESSURE/CONVERGENCE/DRIFT) gets its OWN report built from the SAME real domain
+  // data, not a stripped-down placeholder. domainStats/fieldAvg are lens-agnostic pool reads
+  // (§13a getDomainSignals) — every report lens reuses them; only the OPPORTUNITY full prospectus
+  // assembly (buildLiveProspectus) is OPPORTUNITY-specific.
+  const REPORT_LENSES = new Set(['OPPORTUNITY', 'SIGNAL', 'FLOW', 'PRESSURE', 'CONVERGENCE', 'DRIFT']);
   const opportunityActive = viewportLens === 'OPPORTUNITY';
-  // OPPORTUNITY snapshot: the live prospectus + per-domain decision-driving readings, both from the SAME
-  // pool (getDomainSignals is the §13a read-only accessor — display-only aggregation, §21-allowed). No fab.
+  const reportLensActive = REPORT_LENSES.has(viewportLens);
   const opp = useMemo(() => {
-    if (!opportunityActive) return null;
-    const prospectus = buildLiveProspectus({ now: Date.now() });
+    if (!reportLensActive) return null;
     const domainStats = {};
     let magSum = 0, magN = 0;
     for (const d of CANONICAL_DOMAINS) {
@@ -65,14 +67,15 @@ function AnalysisField({
       magSum += mag; magN += 1;
     }
     const fieldAvg = magN ? magSum / magN : 0;   // grounded field mean — the honest "Avg" baseline (re-derivable)
+    const prospectus = opportunityActive ? buildLiveProspectus({ now: Date.now() }) : null;
     return { prospectus, domainStats, fieldAvg };
-  }, [opportunityActive, signals, replayedSignals]);
+  }, [reportLensActive, opportunityActive, signals, replayedSignals]);
 
   // History line — grounded from the replay frame log (§13a / usereplay: the same 24H series the surface
   // scrubs). Per frame = mean signal_score across that frame's signals → a real (ts, v) series. Self-scaled
   // at render. < 2 points → the line withholds (TEMPORAL absence, §22), never a fabricated trend.
   const historySeries = useMemo(() => {
-    if (!opportunityActive) return [];
+    if (!reportLensActive) return [];
     return (history ?? [])
       .filter((f) => f && Number.isFinite(f.ts))
       .map((f) => {
@@ -80,7 +83,7 @@ function AnalysisField({
         return vals.length ? { ts: f.ts, v: vals.reduce((a, b) => a + b, 0) / vals.length } : null;
       })
       .filter(Boolean);
-  }, [opportunityActive, history]);
+  }, [reportLensActive, history]);
 
   if (opportunityActive) {
     const prospectus = opp?.prospectus ?? null;

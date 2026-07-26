@@ -16,6 +16,10 @@ const LENSES = [
   { id: 'OPPORTUNITY', g: '⟡' },
 ];
 
+// Display label override — internal routing id stays 'OPPORTUNITY' everywhere (viewportLens checks,
+// lensembeds.js, analysisfield.jsx) but the lens is titled OWNERSHIP on-screen (Founder correction).
+const LABELS = { OPPORTUNITY: 'OWNERSHIP' };
+
 const bar = {
   position: 'fixed', top: 64, left: '50%', transform: 'translateX(-50%) scale(0.9)', transformOrigin: 'top center',
   zIndex: 40, display: 'flex', alignItems: 'center', gap: 4,
@@ -40,7 +44,7 @@ export default function FloatingToolbar() {
       {LENSES.map(({ id, g }) => {
         const isActive = id === active;
         return (
-          <button key={id} title={id} onClick={() => dispatch({ type: 'SET_LENS', payload: id })} aria-pressed={isActive}
+          <button key={id} title={LABELS[id] ?? id} onClick={() => dispatch({ type: 'SET_LENS', payload: id })} aria-pressed={isActive}
             style={{ position: 'relative', width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
                      background: isActive ? 'rgba(102,255,0,0.12)' : 'rgba(255,255,255,0.05)',
                      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }}>
