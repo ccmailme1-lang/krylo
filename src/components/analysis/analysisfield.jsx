@@ -839,9 +839,12 @@ function AnalysisField({
                           background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)' }}>
               {sRows.map((r) => {
                 const filled = Math.round(r.mag * 5);
+                // heat wash — monochrome white-opacity intensity scaled to real magnitude (0..~0.30).
+                // Same technique as the History line's shaded fill — no new hue, no semantic color.
                 return (
-                  <div key={r.name} style={{ background: '#000', padding: '20px 18px', textAlign: 'center' }}>
+                  <div key={r.name} style={{ background: `rgba(245,245,247,${(r.mag * 0.30).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
                     <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: SDIM, marginBottom: 10 }}>{r.name}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 22, color: SINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>{r.mag.toFixed(2)}</div>
                     <div style={{ fontFamily: MONO, fontSize: 16, letterSpacing: '0.14em' }}>
                       <span style={{ color: SINK }}>{'●'.repeat(filled)}</span>
                       <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
