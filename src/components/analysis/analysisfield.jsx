@@ -492,83 +492,130 @@ function AnalysisField({
     const dDomainStats = opp?.domainStats ?? {};
     const dFieldAvg = opp?.fieldAvg ?? 0;
     const DINK = '#F5F5F7', DDIM = 'rgba(245,245,247,0.60)', DFAINT = 'rgba(245,245,247,0.34)';
-    // Drift Summary — field-wide aggregate (as built for Structural State), the genuinely DRIFT-relevant
-    // read we can compute honestly: momentum across the whole field, not a per-domain divergence figure.
+    // Drift Summary / State Matrix inputs — the genuinely DRIFT-relevant reads we can compute honestly:
+    // momentum across the whole field, not a per-domain divergence figure (that needs facets we don't have).
     const dNames = CANONICAL_DOMAINS.map((d) => d.toUpperCase());
     const dReporting = dNames.filter((n) => (dDomainStats[n]?.count ?? 0) > 0);
     const dConstructive = dReporting.filter((n) => dDomainStats[n].direction === 'constructive').length;
     const dFracture = dReporting.filter((n) => dDomainStats[n].direction === 'fracture').length;
     const dFieldDirection = dFracture > dConstructive ? 'FRACTURE-LEANING' : dConstructive > dFracture ? 'CONSTRUCTIVE-LEANING' : 'MIXED';
+    const dTotalSignals = dReporting.reduce((s, n) => s + (dDomainStats[n]?.count ?? 0), 0);
+    // top domains by signal strength — real ranking, feeds the interpretation paragraph (derived, not authored)
+    const dTop = [...dReporting].sort((a, b) => dDomainStats[b].mag - dDomainStats[a].mag).slice(0, 3);
+    const DSecLabel = ({ num, title }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: DFAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: DDIM, margin: '4px 0 16px' }}>{title}</div>
+      </>
+    );
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+
+          {/* 01 OVERVIEW */}
           <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: DFAINT, marginBottom: 14 }}>DRIFT REPORT · 01 OVERVIEW</div>
           <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: DINK, marginBottom: 16 }}>
             Structural Drift Report
           </div>
-          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: DDIM, marginBottom: 28, maxWidth: 760 }}>
-            The gap between structure and narrative — where the field is moving before the story catches up.
-            Signal strength below is the same grounded read used across every lens (§13a pool). The
-            structure-vs-narrative divergence figure itself needs STRUCTURAL+NARRATIVE facets not yet
-            split in the pool — flagged per domain, not blanked.
-          </div>
-          {/* drift summary — field-wide, as built for Structural State on the OWNERSHIP report */}
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DFAINT, marginBottom: 12 }}>DRIFT SUMMARY — FIELD AS A WHOLE</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', border: '1px solid rgba(245,245,247,0.16)', marginBottom: 28 }}>
-            {[
-              ['FIELD DIRECTION', dFieldDirection],
-              ['CONSTRUCTIVE DOMAINS', String(dConstructive)],
-              ['FRACTURE DOMAINS', String(dFracture)],
-              ['REPORTING DOMAINS', `${dReporting.length} / 6`],
-              ['FIELD SIGNAL AVG', dFieldAvg.toFixed(2)],
-              ['DIVERGENCE FIGURE', 'PENDING §22'],
-            ].map(([label, val], i, arr) => (
-              <div key={label} style={{ padding: '16px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
-                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: DFAINT, marginBottom: 8 }}>{label}</div>
-                <div style={{ fontFamily: MONO, fontSize: 14, color: DINK }}>{val}</div>
-              </div>
-            ))}
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: DDIM, marginBottom: 34, maxWidth: 760 }}>
+            Structural Drift measures the degree to which observed structural conditions diverge from
+            prevailing representation across the domain field. Quantified divergence remains withheld
+            until independent structural and narrative facets are available (§22).
           </div>
 
-          {/* domain formation matrix — same dot field map as the OWNERSHIP report, real per-domain data */}
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DFAINT, marginBottom: 12 }}>PER-DOMAIN SIGNAL</div>
-          <div style={{ border: '1px solid rgba(245,245,247,0.16)', marginBottom: 28 }}>
-            {CANONICAL_DOMAINS.map((d, i, arr) => {
-              const name = d.toUpperCase();
-              const st = dDomainStats[name] ?? { count: 0, mag: null, direction: 'absent' };
-              const filled = Math.round((st.mag ?? 0) * 5);
-              return (
-                <div key={d} style={{ display: 'grid', gridTemplateColumns: '160px 1fr 200px 170px', alignItems: 'center', gap: 14,
-                                      padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: DDIM }}>{name}</span>
-                  <span style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.1em' }}>
-                    <span style={{ color: DINK }}>{'●'.repeat(filled)}</span>
-                    <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
-                  </span>
-                  <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.06em', color: DDIM }}>
-                    {st.count ? `${st.mag >= 0.75 ? 'HIGH' : st.mag >= 0.40 ? 'MODERATE' : 'LOW'} · ${st.count} sig · field ${dFieldAvg.toFixed(2)}` : 'NO SIGNAL · §22'}
-                  </span>
-                  <span style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.04em', color: DFAINT, textAlign: 'right' }}>
-                    DIVERGENCE PENDING §22
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DFAINT, marginBottom: 12 }}>
-            STRUCTURE VS NARRATIVE — FIELD VIEW
-          </div>
-          <div style={{ height: 560, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
-            {driftUrl ? (
-              <iframe title="drift-field" src={driftUrl}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none' }} />
-            ) : (
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: DFAINT }}>
-                AWAITING FLOURISH EMBED
+          {/* 02 STRUCTURAL INTERPRETATION — analyst-voice, derived from real domainStats, not authored */}
+          <div style={{ marginBottom: 34 }}>
+            <DSecLabel num="02" title="STRUCTURAL INTERPRETATION" />
+            <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, lineHeight: 1.6, color: DINK }}>
+              The field demonstrates {dFieldDirection.toLowerCase().replace('-', ' ')} alignment —
+              {dConstructive} of {dReporting.length} reporting domains constructive, {dFracture} fracture.
+              {dTop.length > 0 && ` The strongest observable signal is concentrated within: ${dTop.join(', ')}.`}
+              <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.05em', color: DFAINT, marginTop: 14 }}>
+                Divergence measurement: WITHHELD §22
               </div>
-            )}
+            </div>
           </div>
+
+          {/* 03 DRIFT STATE MATRIX — 8-cell 4x2 field-state grid (not KPIs — dimensions of the drift relationship) */}
+          <div style={{ marginBottom: 34 }}>
+            <DSecLabel num="03" title="DRIFT STATE MATRIX" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+              {[
+                ['STRUCTURAL STATE', dFieldDirection, 'Observed condition'],
+                ['REPRESENTED STATE', 'UNAVAILABLE', 'No narrative facet source'],
+                ['RELATIONSHIP STATE', 'PENDING §22', 'Structure ↔ narrative'],
+                ['MOVEMENT STATE', dFieldDirection, 'Directional tendency'],
+                ['FIELD COVERAGE', `${dReporting.length} / 6`, 'Domains represented'],
+                ['SIGNAL PRESENCE', dFieldAvg.toFixed(2), 'Field signal strength'],
+                ['FACET AVAILABILITY', 'STRUCTURAL ✓ · NARRATIVE ✕', 'Divergence computable?'],
+                ['EVIDENCE DEPTH', String(dTotalSignals), 'Total observed signals'],
+              ].map(([label, val, sub], i) => (
+                <div key={label} style={{ padding: '16px 14px', borderRight: (i + 1) % 4 !== 0 ? '1px solid rgba(245,245,247,0.10)' : 'none',
+                                          borderBottom: i < 4 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: DFAINT, marginBottom: 8 }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 13, color: DINK, marginBottom: 4 }}>{val}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, color: DFAINT }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 04 DOMAIN DRIFT SURFACE — the six §17 domains, real signal + honest narrative/drift caveats */}
+          <div style={{ marginBottom: 34 }}>
+            <DSecLabel num="04" title="DOMAIN DRIFT SURFACE" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)' }}>
+              {CANONICAL_DOMAINS.map((d, i, arr) => {
+                const name = d.toUpperCase();
+                const st = dDomainStats[name] ?? { count: 0, mag: null, direction: 'absent' };
+                const filled = Math.round((st.mag ?? 0) * 5);
+                return (
+                  <div key={d} style={{ display: 'grid', gridTemplateColumns: '150px 100px 1fr 130px 100px', alignItems: 'center', gap: 14,
+                                        padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: DDIM }}>{name}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.1em' }}>
+                      <span style={{ color: DINK }}>{'●'.repeat(filled)}</span>
+                      <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 9.5, letterSpacing: '0.03em', color: DDIM }}>
+                      Observed: {st.count ? `${st.mag >= 0.75 ? 'High' : st.mag >= 0.40 ? 'Moderate' : 'Low'} structural signal (${st.count} sig)` : 'No signal · §22'}
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.03em', color: DFAINT }}>Narrative: Unavailable</span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.03em', color: DFAINT, textAlign: 'right' }}>Drift: Pending</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 05 STRUCTURE VS NARRATIVE FIELD — the hero visualization, the reveal */}
+          <div style={{ marginBottom: 34 }}>
+            <DSecLabel num="05" title="STRUCTURE VS NARRATIVE FIELD" />
+            <div style={{ height: 560, background: 'rgba(245,245,247,0.03)', position: 'relative', overflow: 'hidden' }}>
+              {driftUrl ? (
+                <iframe title="drift-field" src={driftUrl}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none' }} />
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: DFAINT }}>
+                  AWAITING FLOURISH EMBED
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 06 ANALYSIS BOUNDARY — SUPPORTED / WITHHELD / REQUIRED (§22 grounded-or-withhold, editorial framing) */}
+          <div>
+            <DSecLabel num="06" title="ANALYSIS BOUNDARY" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: DDIM }}>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Structural signal detected across {dReporting.length} of 6 domains.</div>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Field direction reads {dFieldDirection.toLowerCase().replace('-', ' ')} ({dConstructive} constructive, {dFracture} fracture).</div>
+                <div><span style={{ color: DFAINT, marginRight: 8 }}>WITHHELD</span>Structure-vs-narrative divergence cannot be calculated.</div>
+                <div><span style={{ color: DFAINT, marginRight: 8 }}>REQUIRED</span>Independent STRUCTURAL and NARRATIVE facets per domain (signalfacet.js).</div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     );

@@ -1,7 +1,9 @@
 # KRYL-1118A — DRIFT Report Design Spec
 
-STATUS: Built (analysisfield.jsx, commit eef3c07). This is the as-built spec, written after
-implementation per Founder request, to lock the shape before further iteration.
+STATUS: Built (analysisfield.jsx). v2 — superseded the 6-tile/4-section draft (commit eef3c07)
+after Founder refinement: 8-cell Drift State Matrix + analyst-voice Structural Interpretation +
+Analysis Boundary section. This is the as-built spec, written to lock the shape before further
+iteration.
 
 ## 1. Doctrine — why DRIFT gets its own form
 
@@ -27,19 +29,30 @@ clone the 12-section list onto a lens whose underlying concept doesn't support i
 - Tile-summary grid: `repeat(6, 1fr)`, hairline-divided cells, 8.5px label / 14-15px value
 - Page frame: `maxWidth: 1180`, `zoom: 0.9` (10% scale-down, matches the HTML mock)
 
-## 3. DRIFT section order (as built)
+## 3. DRIFT section order (as built, v2)
 
-1. **Header** — eyebrow "DRIFT REPORT · 01 OVERVIEW", title "Structural Drift Report" (serif, 28px),
-   one-paragraph description of what DRIFT measures + the honest facet-gap caveat.
-2. **Drift Summary** — field-wide aggregate tile row (6 tiles, same grid as OWNERSHIP's Structural
-   State): FIELD DIRECTION (constructive-leaning / fracture-leaning / mixed, derived from domain
-   direction counts), CONSTRUCTIVE DOMAINS (count), FRACTURE DOMAINS (count), REPORTING DOMAINS
-   (N/6), FIELD SIGNAL AVG (fieldAvg), DIVERGENCE FIGURE ("PENDING §22" — honest, not fabricated).
-3. **Per-Domain Signal** — the six §17 domains (ontology order), each row: name, dot rating (real
-   signal magnitude), band/count/field-baseline text, and a small per-row "DIVERGENCE PENDING §22"
-   tag. Real data throughout — only the divergence figure itself is flagged, never the whole row.
-4. **Structure vs Narrative — Field View** — the real Flourish DRIFT chart (`visualisation/29782797`,
-   a slope chart), full-width, `560px`, centerpiece proof surface.
+1. **01 Overview** — eyebrow, title "Structural Drift Report" (serif, 28px), one-paragraph
+   description of what DRIFT measures + the honest facet-gap caveat.
+2. **02 Structural Interpretation** — analyst-voice paragraph (serif, 18px), the human-interpretation
+   layer. Fully DERIVED, never hand-authored: field direction lean, constructive/fracture counts,
+   top-3 domains by real signal magnitude, and an explicit "Divergence measurement: WITHHELD §22" line.
+3. **03 Drift State Matrix** — 8-cell 4×2 grid. NOT arbitrary KPIs — the 8 dimensions of the drift
+   *relationship* itself: STRUCTURAL STATE, REPRESENTED STATE (honestly "UNAVAILABLE" — no narrative
+   facet source exists), RELATIONSHIP STATE ("PENDING §22"), MOVEMENT STATE, FIELD COVERAGE, SIGNAL
+   PRESENCE, FACET AVAILABILITY ("STRUCTURAL ✓ · NARRATIVE ✕" — makes the limitation visible), EVIDENCE
+   DEPTH. Each cell: label / value / one-line sub-caption.
+4. **04 Domain Drift Surface** — the six §17 domains, each row: dot rating (real signal magnitude),
+   "Observed: [band] structural signal (N sig)" (real), "Narrative: Unavailable" (honest), "Drift:
+   Pending" (honest). Instrument-panel register, not prose.
+5. **05 Structure vs Narrative Field** — the real Flourish DRIFT chart (`visualisation/29782797`, a
+   slope chart), full-width, `560px`. The reveal / proof surface.
+6. **06 Analysis Boundary** — SUPPORTED / WITHHELD / REQUIRED list (§22 grounded-or-withhold, lime for
+   supported, faint for withheld/required). Derived from real domain counts + the honest facet gap —
+   this doubles as the "Limitations" content, not a separate 7th section.
+
+**Structural device (locked):** the report has two layers — the analyst-voice interpretation (02) and
+the instrument-panel measurement (03/04). The 8-square matrix must never replace the interpretation
+paragraph, and the paragraph must never assert what the matrix can't back up.
 
 ## 4. Data sources (grounded vs. pending)
 
