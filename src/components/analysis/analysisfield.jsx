@@ -9,6 +9,7 @@ import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 import { getDomainSignals } from '../../engine/domaingravity.js';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 import { computeVesselPressure } from '../../engine/pressurevessel.js';
+import { computeDomainFlow } from '../../engine/domainflow.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -1055,6 +1056,132 @@ function AnalysisField({
                 <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Signal mass and constraint gauge per domain and field-wide.</div>
                 <div><span style={{ color: PFAINT, marginRight: 8 }}>WITHHELD</span>Independently observed heat/velocity — no such reading exists in the pool.</div>
                 <div><span style={{ color: PFAINT, marginRight: 8 }}>WITHHELD</span>Future constraint change, outcome, or alert-level judgment.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // FLOW lens — macro field-level report (LRC). No directed-edge source exists anywhere in the system
+  // yet (getDomainSignals is flat per-domain; formation edges are undirected co-presence only). Rather
+  // than fake a direction, FLOW ships as a READINESS INSTRUMENT: R = DirectedEdgeCoverage × avgGroundedness.
+  // Honestly zero today (no edge source → real edges=[]), but the formula/schema is live and will light
+  // up the moment a real source→target connector exists. "The engine should earn the arrow before
+  // drawing the arrow."
+  if (viewportLens === 'FLOW') {
+    const FINK = '#F5F5F7', FDIM = 'rgba(245,245,247,0.60)', FFAINT = 'rgba(245,245,247,0.34)';
+    const fD = CANONICAL_DOMAINS.length;                       // 6
+    const fMaxDirected = fD * (fD - 1);                         // 30 — every possible A→B, A≠B
+    const fRealEdges = [];                                      // real call — no edge source exists → honestly empty
+    const fRows = computeDomainFlow(fRealEdges);                // real function, real (empty) result
+    const fCoverage = fRealEdges.length / fMaxDirected;         // 0 today — not fabricated, literal
+    const fAvgGroundedness = fRealEdges.length ? 1 : 0;         // no edges → nothing to average
+    const fReadiness = fCoverage * fAvgGroundedness;            // R = DC × ḡ
+    const FSecLabel = ({ num, title, right }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: FFAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: FDIM, margin: '4px 0 16px',
+                      display: 'flex', justifyContent: 'space-between' }}>
+          <span>{title}</span><span style={{ color: FDIM }}>{right}</span>
+        </div>
+      </>
+    );
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+
+          {/* 01 MACRO FLOW OVERVIEW */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: FFAINT, marginBottom: 14 }}>FLOW REPORT · 01 OVERVIEW</div>
+          <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: FINK, marginBottom: 16 }}>
+            Structural Flow Report
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: FDIM, marginBottom: 34, maxWidth: 760 }}>
+            Measures directional structural movement between domains — a weighted directed graph
+            (source → target, weight, groundedness, timestamp). No directed-edge source exists in the
+            system yet; this report is a readiness instrument, not a fabricated graph.
+          </div>
+
+          {/* 02 FLOW READINESS — the hero, R = Directed Edge Coverage x avgGroundedness. Real, honestly zero. */}
+          <div style={{ marginBottom: 34 }}>
+            <FSecLabel num="02" title="FLOW READINESS" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '20px 22px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, marginBottom: 18 }}>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FFAINT, marginBottom: 8 }}>DIRECTED EDGE COVERAGE</div>
+                  <div style={{ fontFamily: MONO, fontSize: 20, color: FINK, fontVariantNumeric: 'tabular-nums' }}>{Math.round(fCoverage * 100)}%</div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, color: FFAINT, marginTop: 4 }}>{fRealEdges.length} / {fMaxDirected} possible edges observed</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FFAINT, marginBottom: 8 }}>GROUNDED DIRECTIONAL RELATIONSHIPS</div>
+                  <div style={{ fontFamily: MONO, fontSize: 20, color: FINK, fontVariantNumeric: 'tabular-nums' }}>{fRealEdges.length}</div>
+                </div>
+                <div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FFAINT, marginBottom: 8 }}>READINESS SCORE</div>
+                  <div style={{ fontFamily: MONO, fontSize: 20, color: FINK, fontVariantNumeric: 'tabular-nums' }}>{fReadiness.toFixed(2)}</div>
+                </div>
+              </div>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.12em', color: FFAINT, borderTop: '1px solid rgba(245,245,247,0.10)', paddingTop: 14 }}>
+                STATUS: WITHHELD §22
+              </div>
+            </div>
+          </div>
+
+          {/* 03 DIRECTIONAL RELATIONSHIP FIELD — the hero graph, only drawn when readiness earns it */}
+          <div style={{ marginBottom: 34 }}>
+            <FSecLabel num="03" title="DIRECTIONAL RELATIONSHIP FIELD" />
+            <div style={{ height: 200, border: '1px solid rgba(245,245,247,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FFAINT, textAlign: 'center' }}>
+                NO DIRECTED EDGES OBSERVED<br />
+                <span style={{ fontSize: 8.5 }}>The arrow is earned, not drawn — this field activates at readiness &gt; 0.</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 04 DOMAIN FLOW BALANCE — NetFlow (Outflow - Inflow) per domain. Reserved: needs real edges. */}
+          <div style={{ marginBottom: 34 }}>
+            <FSecLabel num="04" title="DOMAIN FLOW BALANCE" right="WITHHELD" />
+            <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.7, color: FFAINT }}>
+              NetFlow (Nₛ = Outflowₛ − Inflowₛ) per domain requires observed directed edges. States a
+              relative structural pull ("Technology exhibits greater outbound connectivity"), never a
+              claim of outcome ("Technology wins") — reserved until Directed Edge Coverage &gt; 0.
+            </div>
+          </div>
+
+          {/* 05 FLOW DRIVERS — the target schema (not computed data): what a real edge will carry */}
+          <div style={{ marginBottom: 34 }}>
+            <FSecLabel num="05" title="FLOW DRIVERS — TARGET SCHEMA" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+              {[['SOURCE', 'Origin of movement'], ['TARGET', 'Destination of movement'], ['WEIGHT', 'Movement magnitude'],
+                ['GROUNDEDNESS', 'Evidence quality'], ['TIMESTAMP', 'Persistence / change']].map(([label, sub], i, arr) => (
+                <div key={label} style={{ padding: '14px 12px', borderRight: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: FDIM, marginBottom: 6 }}>{label}</div>
+                  <div style={{ fontFamily: MONO, fontSize: 8.5, color: FFAINT }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 06 TEMPORAL PERSISTENCE — Flow Persistence formula, reserved for v2, field held not computed */}
+          <div style={{ marginBottom: 34 }}>
+            <FSecLabel num="06" title="TEMPORAL PERSISTENCE" right="RESERVED — v2" />
+            <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.7, color: FFAINT }}>
+              Flow Persistence (P𝒻 = persistent edges / observed edges) will distinguish a single-cycle
+              directional read from a sustained one (e.g. Capital → Infrastructure observed once vs. 18
+              cycles). Field reserved; not computed in v1 — no observed edges exist to persist.
+            </div>
+          </div>
+
+          {/* 07 OBSERVATION BOUNDARY */}
+          <div>
+            <FSecLabel num="07" title="OBSERVATION BOUNDARY" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: FDIM }}>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Flow Readiness measurement itself (coverage, edge count, score) — real, computed now.</div>
+                <div><span style={{ color: FFAINT, marginRight: 8 }}>WITHHELD</span>Direction, magnitude, or movement between any domains.</div>
+                <div><span style={{ color: FFAINT, marginRight: 8 }}>WITHHELD</span>Domain Flow Balance (NetFlow) and Temporal Persistence.</div>
               </div>
             </div>
           </div>

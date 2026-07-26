@@ -1,6 +1,8 @@
 # KRYL-1118A — FLOW Report Design Spec
 
-STATUS: Spec only — not built. Sent for review before implementation.
+STATUS: Built (analysisfield.jsx). v2 — refined per Founder review into a READINESS INSTRUMENT:
+R = Directed Edge Coverage × avgGroundedness (DC = |E| / D(D-1) = 0/30 today, honestly zero, not
+fabricated). "The engine should earn the arrow before drawing the arrow." 7 sections, not 5.
 
 ## 1. What FLOW measures
 
