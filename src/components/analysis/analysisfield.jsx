@@ -7,6 +7,7 @@ import { usePrism } from '../../context/PrismContext.jsx';
 import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js';
 import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 import { getDomainSignals } from '../../engine/domaingravity.js';
+import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -612,6 +613,178 @@ function AnalysisField({
                 <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Field direction reads {dFieldDirection.toLowerCase().replace('-', ' ')} ({dConstructive} constructive, {dFracture} fracture).</div>
                 <div><span style={{ color: DFAINT, marginRight: 8 }}>WITHHELD</span>Structure-vs-narrative divergence cannot be calculated.</div>
                 <div><span style={{ color: DFAINT, marginRight: 8 }}>REQUIRED</span>Independent STRUCTURAL and NARRATIVE facets per domain (signalfacet.js).</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // CONVERGENCE lens — macro field-level report (LRC). CONVERGENCE already has a real, working
+  // classifier (classifyConvergenceState, WO-1126A.v2) — the SAME one that colors the cones. Vector
+  // built the same way scoutingreportproducer.js's coneConvergenceVector does (D=A=pressure/100,
+  // T=0.5 pin, telemetryConfidence=0.7) so a domain's state here can never disagree with its cone.
+  // Volatility is the REAL stddev of that domain's confidence readings — not invented. Macro framing:
+  // the field is the subject ("the macro TECHNOLOGY domain contributes to..."), never a per-entity score.
+  if (viewportLens === 'CONVERGENCE') {
+    const cDomainStats = opp?.domainStats ?? {};
+    const CINK = '#F5F5F7', CDIM = 'rgba(245,245,247,0.60)', CFAINT = 'rgba(245,245,247,0.34)';
+    const CONE_T = 0.5, CONE_CONF = 0.7; // matches conemap.jsx pin (scoutingreportproducer.js CONE_VECTOR_T / CONE_TELEMETRY_CONFIDENCE)
+    const STATE_COLOR = { // §6 CONVERGENCE STATE COLOR + MOTION SEMANTICS — locked tokens, not new paint
+      'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a',
+      'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
+    };
+    const cRows = CANONICAL_DOMAINS.map((d) => {
+      const name = d.toUpperCase();
+      const st = cDomainStats[name] ?? { count: 0, mag: null };
+      if (!st.count) return { name, count: 0, state: null };
+      const sigs = getDomainSignals(d);
+      const vals = sigs.map((s) => (s.confidence ?? 0) / 100);
+      const meanV = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const volatility = vals.length > 1
+        ? Math.sqrt(vals.reduce((s2, v) => s2 + (v - meanV) ** 2, 0) / vals.length)
+        : 0; // single reading → zero observed volatility, not invented
+      const D = st.mag, A = st.mag; // matches coneConvergenceVector's own D=A=leverageN simplification
+      const cls = classifyConvergenceState({ D, V: volatility, A, T: CONE_T }, CONE_CONF);
+      return { name, count: st.count, mag: st.mag, volatility, ...cls };
+    });
+    const cReporting = cRows.filter((r) => r.count > 0);
+    const cStateCounts = {};
+    for (const r of cReporting) cStateCounts[r.label] = (cStateCounts[r.label] ?? 0) + 1;
+    const cDominant = Object.entries(cStateCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'INSUFFICIENT SIGNAL';
+    const cContributors = cReporting.filter((r) => r.label === cDominant).map((r) => r.name);
+    const cFieldD = cReporting.length ? cReporting.reduce((s, r) => s + r.mag, 0) / cReporting.length : 0;
+    const cFieldV = cReporting.length ? cReporting.reduce((s, r) => s + r.volatility, 0) / cReporting.length : 0;
+    const CSecLabel = ({ num, title }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: CFAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: CDIM, margin: '4px 0 16px' }}>{title}</div>
+      </>
+    );
+    const CBar = ({ v }) => (
+      <div style={{ display: 'grid', gridTemplateColumns: '36px 1fr', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontFamily: MONO, fontSize: 11, color: CINK, fontVariantNumeric: 'tabular-nums' }}>{v.toFixed(2)}</span>
+        <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+          <span style={{ position: 'absolute', inset: 0, width: `${Math.round(v * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
+        </span>
+      </div>
+    );
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+
+          {/* 01 MACRO STATE OVERVIEW */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: CFAINT, marginBottom: 14 }}>CONVERGENCE REPORT · 01 MACRO STATE</div>
+          <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: CINK, marginBottom: 10 }}>
+            Structural Convergence Report
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: STATE_COLOR[cDominant] }} />
+            <span style={{ fontFamily: MONO, fontSize: 15, letterSpacing: '0.04em', color: CINK }}>{cDominant}</span>
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: CDIM, marginBottom: 34, maxWidth: 760 }}>
+            Measures whether independent macro forces are accumulating, conflicting, or failing to align
+            across the structural environment. Classification: PROJECTION — a telemetry-derived state, not
+            an observed or asserted outcome (DEF-1863). Scope: macro structural field, not any single domain.
+          </div>
+
+          {/* 02 CONVERGENCE THESIS — derived, not authored */}
+          <div style={{ marginBottom: 34 }}>
+            <CSecLabel num="02" title="CONVERGENCE THESIS" />
+            <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 18, lineHeight: 1.6, color: CINK }}>
+              {cContributors.length > 0
+                ? `The macro field reads ${cDominant.toLowerCase()} — ${cContributors.join(', ')} contribute to the current classification, out of ${cReporting.length} reporting domains.`
+                : 'No domain currently reports sufficient signal to classify the macro field.'}
+              <div style={{ fontFamily: MONO, fontSize: 10.5, letterSpacing: '0.05em', color: CFAINT, marginTop: 14 }}>
+                The classification reflects current telemetry patterns, not future certainty.
+              </div>
+            </div>
+          </div>
+
+          {/* 03 DOMAIN STATE LANDSCAPE — the field is the subject; domains contribute, they are not scored */}
+          <div style={{ marginBottom: 34 }}>
+            <CSecLabel num="03" title="DOMAIN STATE LANDSCAPE" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)' }}>
+              {cRows.map((r, i, arr) => {
+                const filled = r.count ? Math.round((r.mag ?? 0) * 5) : 0;
+                return (
+                  <div key={r.name} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 190px 60px', alignItems: 'center', gap: 14,
+                                            padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                    <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: CDIM }}>macro {r.name.toLowerCase()}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 13, letterSpacing: '0.1em' }}>
+                      <span style={{ color: CINK }}>{'●'.repeat(filled)}</span>
+                      <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 10, letterSpacing: '0.03em', color: CDIM }}>
+                      {r.count ? <><span style={{ width: 5, height: 5, borderRadius: '50%', background: STATE_COLOR[r.label] }} />{r.label}</> : 'NO SIGNAL · §22'}
+                    </span>
+                    <span style={{ fontFamily: MONO, fontSize: 9, color: CFAINT, textAlign: 'right' }}>{r.count} sig</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 04 STATE DISTRIBUTION FIELD — the five states become visible as a field-wide tally */}
+          <div style={{ marginBottom: 34 }}>
+            <CSecLabel num="04" title="CONVERGENCE STATE DISTRIBUTION" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['HIGH CONVERGENCE', 'BUILDING CONVERGENCE', 'TURBULENT CONVERGENCE', 'LOW SIGNAL YIELD', 'INSUFFICIENT SIGNAL'].map((label) => (
+                <div key={label} style={{ display: 'grid', gridTemplateColumns: '180px 1fr', alignItems: 'center', gap: 14 }}>
+                  <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: CDIM }}>{label}</span>
+                  <span>{Array.from({ length: cStateCounts[label] ?? 0 }).map((_, i) => (
+                    <span key={i} style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: STATE_COLOR[label], marginRight: 8 }} />
+                  ))}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 05 CONVERGENCE DRIVERS — the D/V/A/T model, field-average, components not the formula as hero */}
+          <div style={{ marginBottom: 34 }}>
+            <CSecLabel num="05" title="CONVERGENCE DRIVERS" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 24, maxWidth: 640 }}>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>DENSITY (field avg)</div>
+                <CBar v={cFieldD} />
+              </div>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>VOLATILITY (field avg)</div>
+                <CBar v={cFieldV} />
+              </div>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>ALIGNMENT (field avg)</div>
+                <CBar v={cFieldD} />
+              </div>
+              <div>
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>TEMPORAL (pinned)</div>
+                <CBar v={CONE_T} />
+              </div>
+            </div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: CFAINT, marginTop: 12 }}>stateType: PROJECTION (DEF-1863)</div>
+          </div>
+
+          {/* 06 TEMPORAL PERSISTENCE — real hysteresis constant, framed macro */}
+          <div style={{ marginBottom: 34 }}>
+            <CSecLabel num="06" title="TEMPORAL PERSISTENCE" />
+            <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.7, color: CDIM }}>
+              Current classification persists through 3 observation cycles before the display updates
+              (convergenceclassifier.js hysteresis buffer). Purpose: prevent transient macro fluctuations
+              from appearing as structural transitions. Stable display does not indicate certainty.
+            </div>
+          </div>
+
+          {/* 07 PROJECTION BOUNDARY — DEF-1863, mandatory and prominent */}
+          <div>
+            <CSecLabel num="07" title="PROJECTION BOUNDARY" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: CDIM }}>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Current macro telemetry vectors — density, volatility, alignment, temporal.</div>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Current convergence classification per domain and field-wide.</div>
+                <div><span style={{ color: CFAINT, marginRight: 8 }}>WITHHELD</span>Future macro outcome.</div>
+                <div><span style={{ color: CFAINT, marginRight: 8 }}>WITHHELD</span>Specific winners or losers.</div>
               </div>
             </div>
           </div>
