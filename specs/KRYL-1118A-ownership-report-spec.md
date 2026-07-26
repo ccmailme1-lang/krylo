@@ -50,8 +50,36 @@ Founder-directed restructure (2026-07-26), superseding an earlier flat dashboard
                               STRUCTURAL — own section, not folded into the thesis
 11 Structural Outlook      — 3-layer (OBSERVED / FORMING / UNRESOLVED), derived from the
                               executiveAssessment fingerprint + qualified rank, not authored
-12 Appendix                — Formation ID, generation timestamp/attribution, citation
+12 Formation Readiness     — REPORT-LAYER ONLY diagnostics (2026-07-27, see §4a). Answers a
+                              different question than the engine's E ("is this formation
+                              sufficiently evidenced to claim," not "how aligned is it")
+13 Appendix                — Formation ID, generation timestamp/attribution, citation
 ```
+
+## 4a. Formation Readiness (§12) — engine boundary, locked
+
+Founder-reviewed decision (2026-07-27): an external proposal to redefine the engine's Q from
+`alignment` to `Q = EvidenceCoverage × RelationshipSupport × TemporalStability` was **rejected** —
+correctly identified as an ontology migration, not a math improvement, since it would change
+formation existence thresholds, historical E values, ranking, and every downstream lens's read of
+formation strength. **`formationinference.js` stays exactly as-is: Q means alignment, E = C×Q×Ḡ
+unchanged, verified zero-diff after this section was added.**
+
+Instead, two of the three proposed components are surfaced as **report-layer-only diagnostics**,
+computed entirely in `analysisfield.jsx`, answering a genuinely different question from the engine
+("is this formation sufficiently evidenced to claim" vs. "how aligned is it"):
+
+- **Evidence Coverage** — real: `evidenceCount / N_REQ` (N_REQ=30, explicitly Founder-configurable,
+  not a universal constant), clamped to [0,1].
+- **Temporal Stability** — real: `1 − σ/μ` of the same `historySeries` the History sparkline (§01)
+  already uses, clamped to [0,1]; `μ < 0.0001 → TS=0` (floating-point-noise guard); `<2` frames →
+  honestly withheld (§22), not computed.
+- **Relationship Support** — explicitly WITHHELD, always. No source exists anywhere (engine or
+  report layer) for directional/structural relationship properties. Never fabricated, never used
+  to gate the engine's E — this is the discipline that keeps the section additive, not corrupting.
+
+**Naming rule (locked):** never call this "Qualification Score" — that implies replacing Q. Titled
+"Formation Readiness," framed as diagnostics, not a second formation score.
 
 ## 4. Locked invariants (do not silently reset on a future shell change)
 

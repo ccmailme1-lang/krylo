@@ -462,9 +462,55 @@ function AnalysisField({
                 </div>
               </div>
 
-              {/* 12 APPENDIX */}
+              {/* 12 FORMATION READINESS — report-layer qualification diagnostics ONLY. formationinference.js
+                  is UNCHANGED: Q still means alignment, E is still C x Q x Gbar, computed exactly as before.
+                  This section answers a DIFFERENT question ("is this formation sufficiently evidenced to
+                  claim?") from the engine's question ("how structurally aligned is it?"). EC and TS are
+                  real, computed here from real data; RS is honestly withheld — no source exists anywhere. */}
+              {(() => {
+                const N_REQ = 30; // Founder-configurable evidence floor, not a universal constant
+                const ec = Math.min(1, (prospectus.header.evidenceCount ?? 0) / N_REQ);
+                let ts = null;
+                if (historySeries.length >= 2) {
+                  const vs = historySeries.map((p) => p.v);
+                  const mu = vs.reduce((a, b) => a + b, 0) / vs.length;
+                  if (mu < 0.0001) { ts = 0; }
+                  else {
+                    const sigma = Math.sqrt(vs.reduce((s2, v) => s2 + (v - mu) ** 2, 0) / vs.length);
+                    ts = Math.max(0, Math.min(1, 1 - sigma / mu));
+                  }
+                }
+                return (
+                  <div style={{ marginBottom: 40 }}>
+                    <SecLabel num="12" title="FORMATION READINESS" right="REPORT DIAGNOSTICS" />
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: DIM, marginBottom: 18, maxWidth: 700 }}>
+                      Answers a different question than E: not "how aligned is this formation" (the engine's
+                      Q), but "is it sufficiently evidenced to claim." Engine output is unchanged by this section.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+                      <div style={{ padding: '16px 14px', borderRight: '1px solid rgba(245,245,247,0.10)' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>EVIDENCE COVERAGE</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{ec.toFixed(2)}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{prospectus.header.evidenceCount} / {N_REQ} req. signals</div>
+                      </div>
+                      <div style={{ padding: '16px 14px', borderRight: '1px solid rgba(245,245,247,0.10)' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>TEMPORAL STABILITY</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{ts != null ? ts.toFixed(2) : '—'}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{ts != null ? `1 − σ/μ across ${historySeries.length} frames` : 'WITHHELD · §22 · <2 frames'}</div>
+                      </div>
+                      <div style={{ padding: '16px 14px' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>RELATIONSHIP SUPPORT</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: FAINT }}>WITHHELD</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>§22 · required directional/structural relationship properties unavailable</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 13 APPENDIX */}
               <div>
-                <SecLabel num="12" title="APPENDIX" />
+                <SecLabel num="13" title="APPENDIX" />
                 <div style={{ fontFamily: MONO, fontSize: 10.5, color: FAINT, lineHeight: 1.7 }}>
                   Formation ID: {byId.STRUCTURAL_IDENTITY?.formationId ?? '—'}<br />
                   Generated: {prospectus.generatedAt ? new Date(prospectus.generatedAt).toISOString() : '—'} by {prospectus.generatedBy}<br />
