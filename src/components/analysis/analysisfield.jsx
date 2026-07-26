@@ -794,6 +794,114 @@ function AnalysisField({
     );
   }
 
+  // SIGNAL lens — macro field-level report (LRC). SIGNAL is the ground layer — pure observable
+  // activity intensity, no classification, no state colors, no ranking language. All six domains
+  // shown equally. domainStats.mag IS the signal read (scoutingreport.js signalRead: value=pressure/100);
+  // count is observation depth. Nothing new computed — this is the leanest lens by design.
+  if (viewportLens === 'SIGNAL') {
+    const sDomainStats = opp?.domainStats ?? {};
+    const SINK = '#F5F5F7', SDIM = 'rgba(245,245,247,0.60)', SFAINT = 'rgba(245,245,247,0.34)';
+    const sRows = CANONICAL_DOMAINS.map((d) => {
+      const name = d.toUpperCase();
+      const st = sDomainStats[name] ?? { count: 0, mag: null };
+      const band = !st.count ? null : st.mag >= 0.75 ? 'HIGH' : st.mag >= 0.40 ? 'MODERATE' : 'LOW';
+      return { name, count: st.count, mag: st.mag ?? 0, band };
+    });
+    const sReporting = sRows.filter((r) => r.count > 0);
+    const sHigh = sReporting.filter((r) => r.band === 'HIGH').map((r) => r.name);
+    const sMod = sReporting.filter((r) => r.band === 'MODERATE').map((r) => r.name);
+    const sLow = sReporting.filter((r) => r.band === 'LOW').map((r) => r.name);
+    const SSecLabel = ({ num, title }) => (
+      <>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: SFAINT }}>{num}</div>
+        <div style={{ fontFamily: MONO, fontSize: 12, letterSpacing: '0.16em', color: SDIM, margin: '4px 0 16px' }}>{title}</div>
+      </>
+    );
+    return (
+      <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
+
+          {/* 01 MACRO SIGNAL OVERVIEW */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', color: SFAINT, marginBottom: 14 }}>SIGNAL REPORT · 01 MACRO OVERVIEW</div>
+          <div style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, color: SINK, marginBottom: 16 }}>
+            Structural Signal Report
+          </div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: SDIM, marginBottom: 34, maxWidth: 760 }}>
+            Measures the observable intensity of structural activity across all six macro domains.
+            SIGNAL represents observation, not interpretation — it does not answer why activity is
+            occurring, where it is moving, or whether it converges into a formation.
+          </div>
+
+          {/* 02 COMPLETE STRUCTURAL ACTIVITY FIELD — all six domains, equal treatment, no ranking */}
+          <div style={{ marginBottom: 34 }}>
+            <SSecLabel num="02" title="COMPLETE STRUCTURAL ACTIVITY FIELD" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
+                          background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)' }}>
+              {sRows.map((r) => {
+                const filled = Math.round(r.mag * 5);
+                return (
+                  <div key={r.name} style={{ background: '#000', padding: '20px 18px', textAlign: 'center' }}>
+                    <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: SDIM, marginBottom: 10 }}>{r.name}</div>
+                    <div style={{ fontFamily: MONO, fontSize: 16, letterSpacing: '0.14em' }}>
+                      <span style={{ color: SINK }}>{'●'.repeat(filled)}</span>
+                      <span style={{ color: 'rgba(245,245,247,0.15)' }}>{'○'.repeat(5 - filled)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 03 DOMAIN SIGNAL MATRIX — all domains, equal rows */}
+          <div style={{ marginBottom: 34 }}>
+            <SSecLabel num="03" title="DOMAIN SIGNAL MATRIX" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)' }}>
+              {sRows.map((r, i, arr) => (
+                <div key={r.name} style={{ display: 'grid', gridTemplateColumns: '150px 1fr 100px 130px', alignItems: 'center', gap: 14,
+                                          padding: '12px 16px', borderBottom: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.04em', color: SDIM }}>{r.name}</span>
+                  <span style={{ height: 3, background: 'rgba(245,245,247,0.10)', position: 'relative' }}>
+                    <span style={{ position: 'absolute', inset: 0, width: `${Math.round(r.mag * 100)}%`, background: 'rgba(245,245,247,0.55)' }} />
+                  </span>
+                  <span style={{ fontFamily: MONO, fontSize: 11, color: SINK, fontVariantNumeric: 'tabular-nums', textAlign: 'right' }}>{r.mag.toFixed(2)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: SFAINT, textAlign: 'right' }}>{r.count} observation{r.count === 1 ? '' : 's'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 04 ACTIVITY DISTRIBUTION — field state description, not "top domains" */}
+          <div style={{ marginBottom: 34 }}>
+            <SSecLabel num="04" title="ACTIVITY DISTRIBUTION" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+              {[['HIGH ACTIVITY', sHigh], ['MODERATE ACTIVITY', sMod], ['LOW ACTIVITY', sLow]].map(([label, list]) => (
+                <div key={label}>
+                  <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: SFAINT, marginBottom: 10 }}>{label}</div>
+                  {list.length ? list.map((n) => (
+                    <div key={n} style={{ fontFamily: MONO, fontSize: 11, color: SDIM, lineHeight: 1.8 }}>{n}</div>
+                  )) : <div style={{ fontFamily: MONO, fontSize: 11, color: SFAINT }}>—</div>}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 05 OBSERVATION BOUNDARY */}
+          <div>
+            <SSecLabel num="05" title="OBSERVATION BOUNDARY" />
+            <div style={{ border: '1px solid rgba(245,245,247,0.16)', padding: '18px 20px' }}>
+              <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 2, color: SDIM }}>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Observable activity intensity across all six macro domains.</div>
+                <div><span style={{ color: LIME, marginRight: 8 }}>SUPPORTED</span>Relative signal magnitude and observation depth.</div>
+                <div><span style={{ color: SFAINT, marginRight: 8 }}>WITHHELD</span>Meaning, direction, future structural change, or outcome.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
   if (isEmbedLens(viewportLens)) {
     const url = LENS_EMBEDS[viewportLens];
     return (
