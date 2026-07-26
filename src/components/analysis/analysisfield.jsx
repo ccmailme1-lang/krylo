@@ -492,6 +492,13 @@ function AnalysisField({
     const dDomainStats = opp?.domainStats ?? {};
     const dFieldAvg = opp?.fieldAvg ?? 0;
     const DINK = '#F5F5F7', DDIM = 'rgba(245,245,247,0.60)', DFAINT = 'rgba(245,245,247,0.34)';
+    // Drift Summary — field-wide aggregate (as built for Structural State), the genuinely DRIFT-relevant
+    // read we can compute honestly: momentum across the whole field, not a per-domain divergence figure.
+    const dNames = CANONICAL_DOMAINS.map((d) => d.toUpperCase());
+    const dReporting = dNames.filter((n) => (dDomainStats[n]?.count ?? 0) > 0);
+    const dConstructive = dReporting.filter((n) => dDomainStats[n].direction === 'constructive').length;
+    const dFracture = dReporting.filter((n) => dDomainStats[n].direction === 'fracture').length;
+    const dFieldDirection = dFracture > dConstructive ? 'FRACTURE-LEANING' : dConstructive > dFracture ? 'CONSTRUCTIVE-LEANING' : 'MIXED';
     return (
       <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'auto', display: 'flex', justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 1180, minHeight: '100%', padding: '40px 48px 80px', boxSizing: 'border-box', zoom: 0.9 }}>
@@ -505,7 +512,26 @@ function AnalysisField({
             structure-vs-narrative divergence figure itself needs STRUCTURAL+NARRATIVE facets not yet
             split in the pool — flagged per domain, not blanked.
           </div>
+          {/* drift summary — field-wide, as built for Structural State on the OWNERSHIP report */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DFAINT, marginBottom: 12 }}>DRIFT SUMMARY — FIELD AS A WHOLE</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', border: '1px solid rgba(245,245,247,0.16)', marginBottom: 28 }}>
+            {[
+              ['FIELD DIRECTION', dFieldDirection],
+              ['CONSTRUCTIVE DOMAINS', String(dConstructive)],
+              ['FRACTURE DOMAINS', String(dFracture)],
+              ['REPORTING DOMAINS', `${dReporting.length} / 6`],
+              ['FIELD SIGNAL AVG', dFieldAvg.toFixed(2)],
+              ['DIVERGENCE FIGURE', 'PENDING §22'],
+            ].map(([label, val], i, arr) => (
+              <div key={label} style={{ padding: '16px 14px', borderRight: i < arr.length - 1 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: DFAINT, marginBottom: 8 }}>{label}</div>
+                <div style={{ fontFamily: MONO, fontSize: 14, color: DINK }}>{val}</div>
+              </div>
+            ))}
+          </div>
+
           {/* domain formation matrix — same dot field map as the OWNERSHIP report, real per-domain data */}
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DFAINT, marginBottom: 12 }}>PER-DOMAIN SIGNAL</div>
           <div style={{ border: '1px solid rgba(245,245,247,0.16)', marginBottom: 28 }}>
             {CANONICAL_DOMAINS.map((d, i, arr) => {
               const name = d.toUpperCase();
