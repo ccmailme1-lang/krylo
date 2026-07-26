@@ -1,6 +1,6 @@
 // AnalysisField — ConeMap surface. Single state: always renders 6 domain bays.
 // ACTIVE/TACTICAL/NodeMapCanvas modes killed (WO-1344 routing supersedes them).
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import ConeMap from '../spine/conemap.jsx';
 import { LENS_EMBEDS, isEmbedLens } from '../../config/lensembeds.js';
 import { usePrism } from '../../context/PrismContext.jsx';
@@ -47,6 +47,12 @@ function AnalysisField({
 }) {
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
+
+  // CONVERGENCE hysteresis buffer (report-layer only — classifyConvergenceState stays a black box,
+  // untouched). Per-domain sliding window, k=3, S_w = mode(H_w); ties resolved by earliest-appearance
+  // in the window. Does NOT reuse convergenceclassifier.js's module-level applyTransitionPolicy buffer
+  // (that's a single global singleton — unsafe for 6 concurrent per-domain histories).
+  const convergenceHistoryRef = useRef({});
 
   // ── Lens Report Contract (KRYL-1118A) — OPPORTUNITY is the template; every reporting lens
   // (SIGNAL/FLOW/PRESSURE/CONVERGENCE/DRIFT) gets its OWN report built from the SAME real domain
@@ -684,10 +690,28 @@ function AnalysisField({
       'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a',
       'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
     };
+    // Hysteresis: S_w = mode(H_w) over a k=3 sliding window per domain, ties broken by earliest
+    // appearance in the window. Startup frames (<k observed) are backfilled with INSUFFICIENT SIGNAL
+    // so flicker is naturally suppressed rather than shown raw. Classifier itself is untouched.
+    const K = 3;
+    const debounce = (domain, rawLabel) => {
+      const hist = convergenceHistoryRef.current;
+      const h = (hist[domain] ??= []);
+      h.push(rawLabel);
+      if (h.length > K) h.shift();
+      const filled = h.length < K ? [...Array(K - h.length).fill('INSUFFICIENT SIGNAL'), ...h] : h;
+      const counts = {}, firstSeen = {};
+      filled.forEach((s, i) => { counts[s] = (counts[s] ?? 0) + 1; if (!(s in firstSeen)) firstSeen[s] = i; });
+      let best = filled[0], bestCount = -1, bestFirst = Infinity;
+      for (const s of Object.keys(counts)) {
+        if (counts[s] > bestCount || (counts[s] === bestCount && firstSeen[s] < bestFirst)) { best = s; bestCount = counts[s]; bestFirst = firstSeen[s]; }
+      }
+      return best;
+    };
     const cRows = CANONICAL_DOMAINS.map((d) => {
       const name = d.toUpperCase();
       const st = cDomainStats[name] ?? { count: 0, mag: null };
-      if (!st.count) return { name, count: 0, state: null };
+      if (!st.count) return { name, count: 0, state: null, label: debounce(name, 'INSUFFICIENT SIGNAL') };
       const sigs = getDomainSignals(d);
       const vals = sigs.map((s) => (s.confidence ?? 0) / 100);
       const meanV = vals.reduce((a, b) => a + b, 0) / vals.length;
@@ -696,7 +720,8 @@ function AnalysisField({
         : 0; // single reading → zero observed volatility, not invented
       const D = st.mag, A = st.mag; // matches coneConvergenceVector's own D=A=leverageN simplification
       const cls = classifyConvergenceState({ D, V: volatility, A, T: CONE_T }, CONE_CONF);
-      return { name, count: st.count, mag: st.mag, volatility, ...cls };
+      const debouncedLabel = debounce(name, cls.label); // S_w — what the report displays
+      return { name, count: st.count, mag: st.mag, volatility, ...cls, rawLabel: cls.label, label: debouncedLabel };
     });
     const cReporting = cRows.filter((r) => r.count > 0);
     const cStateCounts = {};
@@ -818,9 +843,10 @@ function AnalysisField({
           <div style={{ marginBottom: 34 }}>
             <CSecLabel num="06" title="TEMPORAL PERSISTENCE" />
             <div style={{ fontFamily: MONO, fontSize: 11, lineHeight: 1.7, color: CDIM }}>
-              Current classification persists through 3 observation cycles before the display updates
-              (convergenceclassifier.js hysteresis buffer). Purpose: prevent transient macro fluctuations
-              from appearing as structural transitions. Stable display does not indicate certainty.
+              Displayed state is debounced over a k=3 sliding window per domain (S_w = mode of the last
+              3 classifications; ties resolved by earliest appearance). Applied to every state shown on
+              this report, not merely described. Purpose: prevent transient macro fluctuations from
+              appearing as structural transitions. Stable display does not indicate certainty.
             </div>
           </div>
 

@@ -1,8 +1,27 @@
 # KRYL-1118A — CONVERGENCE Report Design Spec
 
-STATUS: Built (analysisfield.jsx). Retroactive spec — this lens was built after an in-chat
-doctrine explanation but before a written spec file existed. Written now to bring it into the
-same documentation standard as OWNERSHIP/DRIFT/PRESSURE/FLOW.
+STATUS: Built (analysisfield.jsx). v2 — added a real hysteresis/debounce layer (2026-07-27) on top
+of the v1 build. Retroactive spec — this lens was built after an in-chat doctrine explanation but
+before a written spec file existed. Written now to bring it into the same documentation standard
+as OWNERSHIP/DRIFT/PRESSURE/FLOW.
+
+## 1a. Hysteresis / debounce (v2, report-layer only)
+
+An external math blueprint proposed a color remap alongside the debounce formula — **the color
+remap was rejected**: it used `SIGNAL_AMBER`, which is permanently banned (§15: *"BANNED FOREVER
+... Amber — any shade, any hex, any name"*), plus an invented `SIGNAL_EMERALD` token and a
+reassignment of blue/lime that didn't match the actual locked §6 palette. The report keeps its
+original, correct §6 color tokens (§3 below) — unchanged.
+
+The debounce math itself was sound and is now implemented: `S_w = mode(H_w)` over a per-domain
+k=3 sliding window (ties broken by earliest appearance in the window; startup frames backfilled
+with INSUFFICIENT SIGNAL so flicker is naturally suppressed rather than shown raw). Held in a
+`useRef` keyed by domain name — **not** `convergenceclassifier.js`'s own `applyTransitionPolicy`
+buffer, which is a single module-level singleton unsafe for 6 concurrent per-domain histories.
+The classifier (`classifyConvergenceState`) itself remains an untouched black box; debouncing is
+purely a report-layer transform on its raw output. Every state shown on the report (Domain State
+Landscape, State Distribution, Thesis, Macro Overview) reads the debounced `S_w`, not the raw
+per-render classification.
 
 ## 1. What CONVERGENCE measures
 
