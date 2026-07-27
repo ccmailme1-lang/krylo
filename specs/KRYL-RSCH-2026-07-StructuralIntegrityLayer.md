@@ -1,12 +1,31 @@
 # KRYL-RSCH-2026-07 — Structural Integrity Layer
 
-**Status:** Research Note (NOT an implementation ticket) — **FROZEN**
+**Status:** Research Note (NOT an implementation ticket) — **FROZEN v0.2**
 **Reviewed:** 2026-07-27
 **Disposition:** ✅ Freeze, with scope locked
 
 ---
 
-## Scope decision (read this first — governs everything below)
+## v0.2 — the critical invariant (read this first, governs every metric below)
+
+> **InterpretationStrength(F_after) ≤ InterpretationStrength(F_before), for any formation F.**
+
+Structural Integrity metrics may **preserve, reduce, or quarantine** a formation's evidential
+authority. They may **never increase** it. In plain language: the layer can expose weakness; it
+cannot manufacture confidence. This is the lock that prevents a future implementer from doing
+`high SCI stability + high RCC = upgrade formation confidence` — the same semantic drift this
+whole layer exists to prevent, arriving through a side door instead of the front one.
+
+Three supporting rules, all enforced by that one invariant:
+- `g_e` (groundedness) remains the **sole source of evidential authority** — this layer never
+  raises it, never overrides a lens floor, never injects an artifact.
+- **Read-only.** No evidence creation, no edge creation, no training loop.
+- **Edge semantics are strict, not decaying:** an edge exists only while every supporting
+  evidence node stays valid AND the `g_e` floor is met AND relationship conditions hold. The
+  instant any of those fails, `E = false` — zero residual lifetime, no decay period, no memory
+  artifact pretending the relationship still exists ("no ghost topology").
+
+## Scope decision (still governs everything below, unchanged from v0.1)
 
 > **Internal Assurance Layer, not Universal Reasoning Auditor.**
 
@@ -109,6 +128,74 @@ with broad observational coverage" — a real, useful distinction UE alone can't
 required now** — park in a Deferred Metrics appendix; add to β as a 6th element only if leadership
 wants explicit coverage exposed independently.
 
+## 6a. Signal Admission Integrity (v0.2)
+
+**Nested σ-envelope, immutable windows.** A signal is admitted only when it satisfies the
+dispersion envelope of every active window simultaneously. Window definitions are frozen platform
+records, stored explicitly so the environment stays deterministic across replays, not just the
+math:
+```
+window_id | window_size | sampling_rule | κ
+```
+Without this, the formula is deterministic but the environment it runs in isn't — two replays
+could silently use different `W_short/medium/long` and produce different results for reasons
+invisible to the inspector.
+
+**`g_e`-weighted coincidence, normalized.** Absolute thresholds are wrong here — a domain with 3
+authoritative streams and a domain with 300 low-authority streams must not have different
+admission behavior just from stream count. Locked form:
+```
+Σ_k g_e^(k) · 𝟙(|t_k − t_0| ≤ Δt) / S_max ≥ τ
+```
+`S_max` = theoretical maximum weighted sum for the domain — authority-weighted, not
+volume-weighted. A hundred weak streams cannot outvote three strongly grounded ones.
+
+**Quarantine ledger.** Every rejection writes an immutable record (payload hash, rejecting
+windows, contributing `g_e` values, timestamp) — a first-class native artifact, not a silent drop.
+
+## 6b. Signal Transformation Integrity (v0.2)
+
+**Snapshot object — the replay anchor.**
+```
+Snapshot
+├── raw evidence IDs
+├── g_e set
+├── μ̂
+├── σ̂
+├── normalization version
+└── divergence inputs
+```
+All downstream metrics compute exclusively from these versioned, grounded snapshots. This is
+what gives "why did this formation change?" an actual answer — every input to every computation
+is reconstructible.
+
+**Divergence gate — asymmetry matters.** `P` = current distribution, `Q` = reference distribution.
+KL can explode when `Q` has zero probability where `P` exists — an unbounded, asymmetric metric
+must never be a hard structural decision. Locked split:
+- `D_KL(P‖Q)` — **diagnostic only.**
+- `D_JS(P‖Q) < ε` — **the sole bounded release criterion** (JS is symmetric and finite).
+
+## 6c. Relationship Integrity Mapping (v0.2)
+
+**Naming correction (locked):** "Gated Cross-Mapping (GCDM)," not "Convergent Cross-Mapping."
+"Convergent" implies causal inference — KRYLO detects, it doesn't assert causation. The layer
+says *"given grounded evidence, these structures maintain an acceptable relationship,"* never
+*"A causes B."*
+
+**Skill gate:** geometric reconstruction skill `ρ` accepted only when `ḡ_e · ρ ≥ 0.40`.
+
+**Directional + magnitude gate:**
+```
+cos θ > 0.7   AND   min(‖v_i‖,‖v_j‖) / max(‖v_i‖,‖v_j‖) > 0.5
+```
+
+**Strict evidence collapse (no ghost topology):**
+```
+E_ij ≡ (∀k valid(wT_k)) ∧ (g_e floor met) ∧ (relationship conditions hold)
+```
+Any single failure forces `E_ij = false` — no decay period, no residual topology pretending the
+edge still exists.
+
 ## 7. Guardrails & Non-Goals
 
 - No forward prediction, recommendation, or market-risk scoring.
@@ -128,10 +215,24 @@ wants explicit coverage exposed independently.
 
 ## 9. Status
 
+| Area | Result |
+|---|---|
+| Ontology fit | ✅ |
+| Provenance fit | ✅ |
+| Determinism | ✅ |
+| Replayability | ✅ |
+| Doctrine compliance | ✅ |
+| Mathematical coherence | ✅ |
+| Product boundary | ✅ |
+
+**This is not a reasoning engine — it is an instrument-calibration layer for KRYLO's own
+perception instruments.** It reports whether the instruments, relationships, and interpretations
+remain structurally coherent. It never asserts truth and never increases interpretive strength.
+
 Research Note only. No engine ticket. No file placement in `src/engine/` until an explicit
 implementation ticket is opened, scoped, and Founder-approved — same governance gate as the
 Uncertainty Envelope note.
 
 ---
 
-*End of research note — frozen 2026-07-27.*
+*End of research note — frozen v0.2, 2026-07-27.*
