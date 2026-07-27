@@ -13,6 +13,7 @@ import { computeDomainFlow } from '../../engine/domainflow.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { inferFormation } from '../../engine/formationinference.js';
 import { computeSCI, sciBand, computeISI, computeRCC } from '../../engine/structuralintegrity.js';
+import { computeEQ, computeOC, computeRR, computeMA, computeUE } from '../../engine/uncertaintyenvelope.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -587,9 +588,50 @@ function AnalysisField({
                 );
               })()}
 
-              {/* 14 APPENDIX */}
+              {/* 14 UNCERTAINTY ENVELOPE — KRYL-RSCH-2026-07 implementation, wired (not left dead in
+                  src/engine/). EQ/OC real from data already on this page; RR real (derived from the
+                  doctrine's own stated "1 of 10 connection properties grounded" fact when edges
+                  exist); MA always null — no validation/hold-out dataset exists anywhere in KRYLO.
+                  computeUE requires all four legs — MA=null means UE honestly shows WITHHELD, not
+                  a silently-defaulted score. That withheld state is the correct, visible output. */}
+              {(() => {
+                const eq = computeEQ([byId.FORMATION_PROPERTIES?.avgGroundedness].filter(Number.isFinite));
+                const oc = computeOC(supportedSections.length, allSections.length);
+                const edgeCount = byId.STRUCTURAL_RELATIONSHIPS?.edges?.length ?? 0;
+                const rr = computeRR(edgeCount > 0 ? [0.10] : []); // 1 of 10 connection properties grounded (co-presence only)
+                const ma = computeMA(null); // no holdout dataset — always withheld
+                const ue = computeUE({ EQ: eq, OC: oc, RR: rr, MA: ma });
+                return (
+                  <div style={{ marginBottom: 40 }}>
+                    <SecLabel num="14" title="UNCERTAINTY ENVELOPE" right={ue.ue != null ? ue.band : 'WITHHELD'} />
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: DIM, marginBottom: 18, maxWidth: 700 }}>
+                      "If missing or weak evidence arrived, how far could this interpretation move?"
+                      Epistemic stability, not probability of truth — UE = EQ × OC × RR × MA.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+                      {[
+                        ['EQ', eq, 'Evidence quality (Ḡ)'],
+                        ['OC', oc, 'Observation completeness'],
+                        ['RR', rr, 'Relationship reliability'],
+                        ['MA', ma, 'No holdout dataset'],
+                      ].map(([label, val, sub], i) => (
+                        <div key={label} style={{ padding: '16px 14px', borderRight: i < 3 ? '1px solid rgba(245,245,247,0.10)' : 'none' }}>
+                          <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>{label}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 15, color: val != null ? INK : FAINT }}>{val != null ? val.toFixed(2) : 'WITHHELD'}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{sub}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: FAINT, marginTop: 12 }}>
+                      {ue.ue != null ? `UE = ${ue.ue.toFixed(3)} — ${ue.band}` : `UE: WITHHELD — no Model Adequacy source (${ue.withheld.join(', ')})`}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 15 APPENDIX */}
               <div>
-                <SecLabel num="14" title="APPENDIX" />
+                <SecLabel num="15" title="APPENDIX" />
                 <div style={{ fontFamily: MONO, fontSize: 10.5, color: FAINT, lineHeight: 1.7 }}>
                   Formation ID: {byId.STRUCTURAL_IDENTITY?.formationId ?? '—'}<br />
                   Generated: {prospectus.generatedAt ? new Date(prospectus.generatedAt).toISOString() : '—'} by {prospectus.generatedBy}<br />

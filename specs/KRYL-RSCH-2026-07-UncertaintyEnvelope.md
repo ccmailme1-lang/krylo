@@ -1,9 +1,13 @@
 # KRYL-RSCH-2026-07 — Uncertainty Envelope
 
-**Status:** Research Note (NOT an implementation ticket) — **FROZEN**
+**Status:** **BUILT AND WIRED** (2026-07-27) — `src/engine/uncertaintyenvelope.js`, rendered in the
+OWNERSHIP report §14. EQ/OC/RR are real, computed from data already on that page. MA is always
+null (no holdout/validation dataset exists anywhere in KRYLO), so UE itself always displays
+WITHHELD today — that is the correct, honest, VISIBLE output, not a silently-defaulted score and
+not a dead unreferenced module.
 **Author:** Model Playground / Math Track
 **Reviewed:** 2026-07-27 (two feedback passes incorporated)
-**Disposition:** ✅ Freeze
+**Disposition:** ✅ Freeze (spec) — built and wired (code)
 
 ---
 
