@@ -97,8 +97,16 @@ class SurfaceRouter {
   }
 
   unsubscribe(surfaceId) {
-    const sub = this._subs.get(surfaceId);
-    if (sub) sub.active = false;
+    // Full teardown, not a flag flip. Leaving _registry/_clusters populated after unmount meant
+    // a remounted surface (same surfaceId) inherited stale event snapshots — _resolveOp then
+    // compared fresh live signals against those stale snapshots, saw "unchanged", and returned
+    // null (no-op), so the handler never fired on remount and the surface rendered as if no
+    // signal existed at all. Nothing else in this class reads an inactive-but-present entry
+    // (grepped: .active is only set here and checked as a skip-guard in _route/triggerReconcile,
+    // both no-ops equally on a deleted key), so full deletion is safe.
+    this._subs.delete(surfaceId);
+    this._registry.delete(surfaceId);
+    this._clusters.delete(surfaceId);
   }
 
   setBackpressure(state) {

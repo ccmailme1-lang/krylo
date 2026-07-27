@@ -21,7 +21,7 @@ const LIME = '#66FF00';
 // Viridis interpolation (Founder-directed, 2026-07-27) — vibrant multi-stop heat-map color for
 // SIGNAL/PRESSURE intensity fields, matching the referenced faceted-heatmap standard. t ∈ [0,1].
 const VIRIDIS_STOPS = [
-  [0.00, 68, 1, 84], [0.25, 59, 82, 139], [0.50, 33, 145, 140], [0.75, 94, 201, 98], [1.00, 190, 200, 55],
+  [0.00, 68, 1, 84], [0.25, 59, 82, 139], [0.50, 33, 145, 140], [0.75, 94, 201, 98], [1.00, 186, 218, 85],
 ];
 function viridis(t) {
   const c = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
@@ -1357,14 +1357,26 @@ function AnalysisField({
             </div>
           </div>
 
-          {/* 03 DIRECTIONAL RELATIONSHIP FIELD — the hero graph, only drawn when readiness earns it */}
+          {/* 03 DIRECTIONAL RELATIONSHIP FIELD — KRYLO's own directed-edge computation is honestly
+              empty (no real edge data sourced yet, same gap as elsewhere). Rather than show a
+              permanent withheld box, this reuses the FLOW lens's own published Flourish chart
+              (LENS_EMBEDS.FLOW — "Capital-lime directional chord — domain flows"), the same real,
+              live, already-wired visualization the main viewport shows for this lens (LSC-001). */}
           <div style={{ marginBottom: 34 }}>
             <FSecLabel num="03" title="DIRECTIONAL RELATIONSHIP FIELD" />
-            <div style={{ height: 200, border: '1px solid rgba(245,245,247,0.16)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FFAINT, textAlign: 'center' }}>
-                NO DIRECTED EDGES OBSERVED<br />
-                <span style={{ fontSize: 8.5 }}>The arrow is earned, not drawn — this field activates at readiness &gt; 0.</span>
-              </div>
+            <div style={{ height: LENS_EMBED.maxHeight, maxWidth: LENS_EMBED.maxWidth, margin: '0 auto',
+                          border: '1px solid rgba(245,245,247,0.16)', position: 'relative', overflow: 'hidden' }}>
+              {LENS_EMBEDS.FLOW ? (
+                <iframe title="flow-directional-chord" src={LENS_EMBEDS.FLOW}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: 'calc(100% + 42px)', border: 'none', display: 'block' }} />
+              ) : (
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: FFAINT, textAlign: 'center' }}>
+                    NO DIRECTED EDGES OBSERVED<br />
+                    <span style={{ fontSize: 8.5 }}>The arrow is earned, not drawn — this field activates at readiness &gt; 0.</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

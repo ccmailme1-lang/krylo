@@ -829,7 +829,7 @@ export default function TargetPacket() {
           (decisionframe.jsx); reserving 220px regardless left that column mostly black void.
           Row now sizes to real content (Leverage Field's actual height when it's the taller side). */}
       <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex' }}>
-        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
         {/* Leverage Field — moved here to replace the Signal Feed (that panel duplicated the
@@ -838,10 +838,14 @@ export default function TargetPacket() {
           <div style={{ padding: '8px 14px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: BRT, textTransform: 'uppercase' }}>Leverage Field</span>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column' }}>
             {synthesis?.leverage
               ? <LeverageField leverage={synthesis.leverage} />
-              : <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em' }}>No leverage signal</span>}
+              : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${BORDER}` }}>
+                  <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em' }}>No leverage signal</span>
+                </div>
+              )}
           </div>
         </div>
       </div>

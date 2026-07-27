@@ -57,7 +57,6 @@ const LENS_PRIORITY = [
 // Below HP_FALLBACK: null — gate suppresses entirely.
 function resolveFrames(lensProfiles, hpScore) {
   if (!Array.isArray(lensProfiles) || lensProfiles.length === 0) return null;
-  if (typeof hpScore !== 'number' || hpScore < HP_FALLBACK)        return null;
 
   const valid = lensProfiles.filter(p => DECISION_TEMPLATES[p.lensId]);
   if (valid.length === 0) return null;
@@ -72,7 +71,7 @@ function resolveFrames(lensProfiles, hpScore) {
     primary:                { ...top, ...DECISION_TEMPLATES[top.lensId] },
     secondaries:            rest.map(p => ({ ...p, ...DECISION_TEMPLATES[p.lensId] })),
     resolutionPolicyApplied: rest.length > 0,
-    isFallback:             hpScore < HP_PRIMARY,
+    isFallback:             typeof hpScore !== 'number' || hpScore < HP_PRIMARY,
   };
 }
 
@@ -95,8 +94,13 @@ export default function DecisionFrameCard({ lensProfiles, hpScore, collapsed = f
   // reserved 220px as a black void beside the Signal Feed (the P1). State it instead, matching
   // the WhyTracePanel absence pattern directly beneath this row.
   if (!frames) {
+    // flex:1 + column fills whatever height the parent row gives this cell (matches Leverage
+    // Field's real height instead of sitting short inside a tall row and leaving dead space
+    // beside it) — border + vertical centering makes the fill read as an intentional bounded
+    // card, not a black void. ZERO BLANK DISPLAY.
     return (
-      <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                    padding: '8px 20px', border: `1px solid ${BORDER}` }}>
         <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
           Decision Translation · Insufficient Signal
         </span>
@@ -112,7 +116,6 @@ export default function DecisionFrameCard({ lensProfiles, hpScore, collapsed = f
   return (
     <div style={{
       flexShrink: 0,
-      opacity: isFallback ? 0.5 : 1,
       pointerEvents: isFallback ? 'none' : 'auto',
     }}>
 
@@ -144,13 +147,13 @@ export default function DecisionFrameCard({ lensProfiles, hpScore, collapsed = f
 
       {/* Primary frame */}
       <div style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <FrameRow label="Stake" value={primary.stake}  dimValue={isFallback} />
-        <FrameRow label="Move"  value={primary.move}   dimValue={isFallback} />
+        <FrameRow label="Stake" value={primary.stake}  dimValue={false} />
+        <FrameRow label="Move"  value={primary.move}   dimValue={false} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
             Window
           </span>
-          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: isFallback ? MID : LIME }}>
+          <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: BRT }}>
             {primary.window}
           </span>
         </div>

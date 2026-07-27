@@ -600,7 +600,7 @@ function AnalysisLensPage({ lens, leaderboardState }) {
 // Renders SignalMap overlay for viewMode='signalmap' OR xrayOpen on assigned bays.
 // X-RAY mode: targeted — triggers setquery for that subject, shows focused signal map.
 // SIGMAP mode: ambient — full live signal map for the assignment.
-function BaySignalMapProjection({ signals, xraySignals = [] }) {
+function BaySignalMapProjection({ signals, xraySignals = [], resetKey }) {
   const bays = useBayStore(s => s.bays);
   const bayList = Object.values(bays);
   // X-RAY takes priority; fall back to signalmap mode
@@ -640,7 +640,7 @@ function BaySignalMapProjection({ signals, xraySignals = [] }) {
         )}
       </div>
       <div style={{ position: 'absolute', inset: 0, top: 32 }}>
-        <SignalMap data={isXray ? xraySignals : signals} isActive={true} />
+        <SignalMap key={resetKey} data={isXray ? xraySignals : signals} isActive={true} />
       </div>
     </div>
   );
@@ -1054,7 +1054,10 @@ export default function App() {
     return () => window.removeEventListener('message', onNavMessage);
   }, [activeSession]);
 
-  // krylo-reset: logo tap — global state reset + iframe reload
+  // krylo-reset: logo tap / recycle button — global state reset + iframe reload
+  // mapResetKey forces a full unmount+remount of the Signal Map (Canvas/WebGL/Three scene) —
+  // fixes the stale-state error after leaving and returning to the map, without a full page reload.
+  const [mapResetKey, setMapResetKey] = useState(0);
   useEffect(() => {
     function onReset(ev) {
       if (ev.data?.type !== 'krylo-reset') return;
@@ -1066,6 +1069,7 @@ export default function App() {
       setAnalysisPage(0);
       setAnalysisQuery('');
       setSearchQuery('');
+      setMapResetKey(k => k + 1);
       if (iframeRef.current) iframeRef.current.src = iframeRef.current.src;
     }
     window.addEventListener('message', onReset);
@@ -1299,7 +1303,7 @@ export default function App() {
           {/* WO-1718A: Surface Panel — removed from hero per Founder */}
 
           {/* WO-1344D: Bay projection overlay (xray/signalmap modes) */}
-          <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} />
+          <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} resetKey={mapResetKey} />
 
 
           {/* WO-1344B: Assignment Intent Modal */}

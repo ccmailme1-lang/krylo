@@ -20,6 +20,7 @@ import { computeMetrics }        from '../../engine/metricsengine.js';
 import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
+import ComparativeField from './comparativefield.jsx';
 import WhyThisMatters from './whythismatters.jsx';
 import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
 import PerceptionRisk from './perceptionrisk.jsx';
@@ -381,9 +382,15 @@ export default function IntelligenceBrief() {
     );
   }
 
-  // Non-hook derived values — safe here, session is guaranteed non-null
-  const brief = buildBrief(session, synthesis, hp);
+  // Non-hook derived values — safe here, session is guaranteed non-null.
+  // COMPARATIVE synthesis (diff command) has no buildBrief-compatible shape — skip it.
+  const isComparative = synthesis?.mode === 'COMPARATIVE';
+  const brief = isComparative ? null : buildBrief(session, synthesis, hp);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
+
+  if (isComparative) {
+    return <ComparativeField diff={synthesis.diff} />;
+  }
 
   return (
     <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -559,26 +566,21 @@ export default function IntelligenceBrief() {
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
             </span>
+            {/* HP indicator — one icon, two states. Cone-trail SVG doubles as the trigger:
+                lime/static by default, purple/blinking when qualified. No separate unicorn asset. */}
             <svg width="22" height="18" viewBox="0 0 22 18" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ transform: 'rotate(2deg)', position: 'relative', top: 1 }}>
-              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill="#66FF00" fillOpacity="1"/>
-              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill="#66FF00" fillOpacity="0.72"/>
-              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill="#66FF00" fillOpacity="0.48"/>
-              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill="#66FF00" fillOpacity="0.28"/>
-            </svg>
-            <div
               onClick={() => { if (!hpSnapshot.current) return; setHpOpen(true); setHpDismissed(false); setTimeout(() => { if (scrollBodyRef.current) scrollBodyRef.current.scrollTop = 0; }, 80); }}
               style={{
+                transform: 'rotate(2deg)', position: 'relative', top: 1,
                 cursor: hpSnapshot.current ? 'pointer' : 'default',
-                display: 'flex', alignItems: 'center',
+                opacity: hp?.qualified ? 1 : hpSnapshot.current ? 0.5 : 1,
                 animation: hp?.qualified ? 'ib-blink 1.4s ease-in-out infinite' : 'none',
-                opacity: hp?.qualified ? 1 : hpSnapshot.current ? 0.5 : 0,
-                visibility: hpSnapshot.current ? 'visible' : 'hidden',
-                pointerEvents: hpSnapshot.current ? 'auto' : 'none',
-              }}
-            >
-              <img src="/unicorn.png" alt="" style={{ width: 19, height: 19, pointerEvents: 'none', filter: 'invert(1) sepia(1) hue-rotate(240deg) saturate(3) brightness(1.1)' }} />
-            </div>
+              }}>
+              <ellipse cx="4"  cy="15" rx="5.5" ry="3.2" transform="rotate(-8 4 15)"  fill={hpSnapshot.current ? '#8A2BE2' : '#66FF00'} fillOpacity="1"/>
+              <ellipse cx="10" cy="10" rx="4.2" ry="2.5" transform="rotate(-8 10 10)" fill={hpSnapshot.current ? '#8A2BE2' : '#66FF00'} fillOpacity="0.72"/>
+              <ellipse cx="16" cy="6"  rx="3.0" ry="1.8" transform="rotate(-8 16 6)"  fill={hpSnapshot.current ? '#8A2BE2' : '#66FF00'} fillOpacity="0.48"/>
+              <ellipse cx="20" cy="3"  rx="1.9" ry="1.1" transform="rotate(-8 20 3)"  fill={hpSnapshot.current ? '#8A2BE2' : '#66FF00'} fillOpacity="0.28"/>
+            </svg>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <button

@@ -4100,10 +4100,36 @@ import { computeSES } from './searchenvironmentstate.js';
 import { getObservations } from './runtimeobservablestore.js';
 import { STATE_TYPE } from './statecontract.js'; // DEF-1863 — hard state contract, engine-declared
 import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
+import { runPairwiseDiff } from './crediff.js';
+
+// ── Diff command (WO-DRAFT-comparative-diff-command) ───────────────────────────
+// Recognizes exactly one phrase shape: "diff A and/vs/versus/& B". No separator (bare
+// "diff A B") is rejected as ambiguous and falls through to normal single-entity routing,
+// where it is classified on its own merits (DEF-1864) — no special-casing needed.
+const DIFF_COMMAND_RE = /^diff\s+(.+?)\s+(?:and|vs\.?|versus|&)\s+(.+)$/i;
+
+export function parseDiffCommand(query) {
+  if (typeof query !== 'string') return null;
+  const m = query.trim().match(DIFF_COMMAND_RE);
+  if (!m) return null;
+  const entityA = m[1].trim();
+  const entityB = m[2].trim();
+  if (!entityA || !entityB) return null;
+  return { entityA, entityB };
+}
 
 export function synthesizeQuery(session) {
   if (!session) return null;
-  const query   = session.query ?? '';
+  const query = session.query ?? '';
+
+  // Diff command short-circuit — checked first, before any single-entity routing. Non-match
+  // falls through to the existing logic below, unchanged.
+  const diffCmd = parseDiffCommand(query);
+  if (diffCmd) {
+    const diff = runPairwiseDiff(diffCmd.entityA, diffCmd.entityB);
+    return { mode: 'COMPARATIVE', queryDomain: 'COMPARATIVE', resolutionEligible: diff.resolved, diff };
+  }
+
   const mcv     = resolveMCV(query, session);
   const numbers = extractNumbers(query);
   // WO-1878: when user explicitly locked a domain via chip selection, bypass keyword detection.

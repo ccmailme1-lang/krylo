@@ -695,12 +695,18 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         {[{ key: 'domain', label: 'DOMAIN' }, { key: 'cone', label: 'CONE' }].map(t => (
           <button key={t.key} onClick={() => setTopTab(t.key)} style={{
             flex: 1, background: 'transparent', border: 'none',
-            borderBottom: topTab === t.key ? `1px solid ${LIME}` : '1px solid transparent',
             color: topTab === t.key ? LIME : 'rgba(255,255,255,0.3)',
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 8, letterSpacing: '0.22em',
             padding: '0 0 6px 0', cursor: 'pointer', transition: 'color 150ms',
-          }}>{t.label}</button>
+          }}>
+            <span style={{ position: 'relative', display: 'inline-block' }}>
+              {t.label}
+              {topTab === t.key && (
+                <span style={{ position: 'absolute', left: 0, right: 0, bottom: -6, height: 1, background: LIME }} />
+              )}
+            </span>
+          </button>
         ))}
       </div>
 
