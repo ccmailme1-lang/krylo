@@ -235,4 +235,14 @@ Uncertainty Envelope note.
 
 ---
 
+## Addendum (2026-07-27) — unrelated UI note, logged here per Founder request because i didn't follow direction as origingally informed. 
+
+Recycle button added to the end of the floating lens menu (`floatingtoolbar.jsx`). Wired to the
+existing `krylo-reset` `postMessage` handler already in `app.jsx` (logo-tap: global state reset +
+iframe reload) — reuses the real, pre-existing mechanism, no new reset logic invented. Committed
+`3c7178d`. Unrelated to the Structural Integrity Layer content above; logged here only because
+that's where it was requested.
+
+---
+
 *End of research note — frozen v0.2, 2026-07-27.*
