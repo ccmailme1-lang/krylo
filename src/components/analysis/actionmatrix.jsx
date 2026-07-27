@@ -9,7 +9,6 @@ import { getDisplayEntity }        from '../../utils/formatters.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
 import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
-import MetricStrip                from './metricstrip.jsx';
 import { useMetricVisibility }    from '../../hooks/useMetricVisibility.js';
 import { getLRPrior }             from '../../engine/pathstore.js';
 import AmbiguousState             from './ambiguousstate.jsx';
@@ -219,8 +218,10 @@ export default function ActionMatrix() {
         </div>
       </div>
 
-      {/* ── WO-1868: Metric Strip ──────────────────────────────────────────── */}
-      <MetricStrip metrics={metrics} visibility={visibility} hide={['LR-Prior']} />
+      {/* MetricStrip removed — duplicate of the one intelligencebrief.jsx already renders in the
+          same scrollable Brief panel (Founder: "3rd attempt to address this... remove it if it
+          can't produce"). The strip's real data isn't recomputed here, it's the same six metrics
+          repeated. */}
 
       {/* ── Structural Friction alert — injected pre-hero when HIGH_FRICTION */}
       {showFriction && <FrictionCard friction={structuralFriction} />}

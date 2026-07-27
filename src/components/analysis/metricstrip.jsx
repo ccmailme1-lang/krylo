@@ -41,7 +41,7 @@ function gColor(gnd) {
 function Tile({ label, display, groundedness, tag, tileMode = 'active', title }) {
   if (tileMode === 'dormant') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 3, marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: DORMANT,
@@ -56,7 +56,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
 
   if (tileMode === 'critical') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
           <span style={{
             fontFamily: MONO, fontSize: 7, color: LIME,
@@ -67,6 +67,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
             <span style={{
               fontFamily: MONO, fontSize: 6, color: LIME,
               letterSpacing: '0.2em', textTransform: 'uppercase',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60,
             }}>{tag}</span>
           )}
         </div>
@@ -90,7 +91,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
   const gc  = gColor(groundedness);
   const pct = `${Math.round(groundedness * 100)}%`;
   return (
-    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div style={{ flex: 1, padding: '0 14px', minWidth: 72, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5, marginBottom: 3 }}>
         <span style={{
           fontFamily: MONO, fontSize: 7, color: DIM,
@@ -101,6 +102,7 @@ function Tile({ label, display, groundedness, tag, tileMode = 'active', title })
           <span style={{
             fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)',
             letterSpacing: '0.2em', textTransform: 'uppercase',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60,
           }}>{tag}</span>
         )}
       </div>
@@ -279,7 +281,7 @@ function TileWithDot(props) {
 
   if (tileMode === 'dormant') {
     return (
-      <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+      <div style={{ flex: 1, padding: '0 14px', minWidth: 72, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
           <span style={{ fontFamily: MONO, fontSize: 7, color: DORMANT, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
           <div style={phaseDot} />
@@ -290,12 +292,12 @@ function TileWithDot(props) {
   }
 
   return (
-    <div style={{ flex: 1, padding: '0 14px', minWidth: 72 }}>
+    <div style={{ flex: 1, padding: '0 14px', minWidth: 72, overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3 }}>
         <span style={{ fontFamily: MONO, fontSize: 7, color: DIM, letterSpacing: '0.28em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{label}</span>
         <div style={phaseDot} />
         <HelpMark text={title} />
-        {tag && <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase' }}>{tag}</span>}
+        {tag && <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.2em', textTransform: 'uppercase', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>{tag}</span>}
       </div>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
         <span style={{ fontFamily: MONO, fontSize: 11, color: BRT2, fontWeight: 600, letterSpacing: '0.04em' }}>{display}</span>

@@ -818,7 +818,10 @@ export default function TargetPacket() {
       </div>
 
       {/* ── DECISION TRANSLATION LAYER + ATTENTION STACK ────────────────── */}
-      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex', minHeight: 220 }}>
+      {/* No forced minHeight — a withheld Decision Translation card is already tight on its own
+          (decisionframe.jsx); reserving 220px regardless left that column mostly black void.
+          Row now sizes to real content (Leverage Field's actual height when it's the taller side). */}
+      <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, display: 'flex' }}>
         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
           <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
         </div>
