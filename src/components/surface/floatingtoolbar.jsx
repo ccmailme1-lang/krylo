@@ -28,6 +28,13 @@ const bar = {
   boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
   backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
 };
+// Recycle button — dispatches the SAME real krylo-reset message app.jsx already listens for
+// (logo-tap handler, app.jsx:1030-1045): global state reset + iframe reload. Reuses the existing
+// mechanism, no new reset logic invented.
+function fireKryloReset() {
+  window.postMessage({ type: 'krylo-reset' }, '*');
+}
+
 export default function FloatingToolbar() {
   const { state, dispatch } = usePrism();
   const active = state?.activeLens ?? 'OBSERVE'; // default posture / ground zero
@@ -47,6 +54,11 @@ export default function FloatingToolbar() {
           </button>
         );
       })}
+      <button key="recycle" title="Recycle — reset surface" onClick={fireKryloReset}
+        style={{ width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
+                 background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontFamily: MONO, fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>↻</span>
+      </button>
     </div>
   );
 }
