@@ -6,6 +6,16 @@ modelConfidence kept strictly separate (§23 orthogonality — never `score × c
 asymptotic language not "infinite pressure," no "Critical" label (KRYLO observes, doesn't
 alarm), Model Completeness added as its own section. 7 sections, not 6.
 
+**v2.1 bugfix (2026-07-27):** `computeVesselPressure`'s own contract (pressurevessel.js
+docstring: `signals: [{ magnitude:0–100, velocity?:0–1, confidence?:0–1 }]`) expects velocity
+on a 0–1 scale. The Pressure₀ mapping originally passed raw 0–100 confidence for both magnitude
+AND velocity — correct for magnitude, a 100x scale error for velocity, inflating T (heat) enough
+to blow every domain past `PV_CEILING` regardless of real data, pinning every gauge at 100%.
+Fixed to `velocity: confidence/100`. Verified with representative numbers: a light domain (2
+signals) now reads a real ~26%; a heavy domain (108 signals) still reads 100%, which is
+architecturally correct — `n` (signal mass) is a sum across signals by design, so accumulated
+volume genuinely maxing out capacity is the model's thesis, not a scale error.
+
 ## 1. What PRESSURE measures
 
 Unlike SIGNAL (raw activity intensity) or CONVERGENCE (discrete state classification), PRESSURE is
