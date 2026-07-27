@@ -960,7 +960,7 @@ function AnalysisField({
                 // heat wash — monochrome white-opacity intensity scaled to real magnitude (0..~0.30).
                 // Same technique as the History line's shaded fill — no new hue, no semantic color.
                 return (
-                  <div key={r.name} style={{ background: `rgba(245,245,247,${(r.mag * 0.30).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
+                  <div key={r.name} style={{ background: `rgba(102,255,0,${(r.mag * 0.35).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
                     <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: SDIM, marginBottom: 10 }}>{r.name}</div>
                     <div style={{ fontFamily: MONO, fontSize: 22, color: SINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>{r.mag.toFixed(2)}</div>
                     <div style={{ fontFamily: MONO, fontSize: 16, letterSpacing: '0.14em' }}>
@@ -1079,7 +1079,7 @@ function AnalysisField({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
                           background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)' }}>
               {pRows.map((r) => (
-                <div key={r.name} style={{ background: `rgba(245,245,247,${((r.gauge ?? 0) / 100 * 0.30).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
+                <div key={r.name} style={{ background: `rgba(102,255,0,${((r.gauge ?? 0) / 100 * 0.35).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
                   <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: PDIM, marginBottom: 10 }}>{r.name}</div>
                   <div style={{ fontFamily: MONO, fontSize: 22, color: PINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>
                     {r.count ? `${Math.round(r.gauge)}%` : '—'}
