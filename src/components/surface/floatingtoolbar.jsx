@@ -28,13 +28,6 @@ const bar = {
   boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
   backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
 };
-const btn = {
-  fontFamily: MONO, fontSize: 12, width: 26, height: 26, borderRadius: 6,
-  border: 'none', background: 'transparent', color: 'rgba(255,255,255,0.55)',
-  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-};
-const div = { width: 1, height: 18, background: 'rgba(255,255,255,0.14)', margin: '0 2px' };
-
 export default function FloatingToolbar() {
   const { state, dispatch } = usePrism();
   const active = state?.activeLens ?? 'OBSERVE'; // default posture / ground zero
@@ -54,10 +47,6 @@ export default function FloatingToolbar() {
           </button>
         );
       })}
-      <div style={div} />
-      <button style={btn} title="Add tool">＋</button>
-      <button style={btn} title="Remove tool">✕</button>
-      <button style={btn} title="Anchor to top">↑</button>
     </div>
   );
 }
