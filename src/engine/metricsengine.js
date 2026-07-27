@@ -28,7 +28,11 @@ const ECONOMICS_GROUNDEDNESS_FLOOR = 0.70;
 
 // lrPrior: { avgLR, rank, n, earlyRatio } from pathstore.getLRPrior(), or null if N<5
 // sciData: { sci, sps } from structuralconfirmation.computeStructuralSuite(), or null if no EvidenceGraph yet
-export function computeMetrics(synthesis, hpState = null, persona = null, lrPrior = null, sciData = null) {
+// domainSignal: real field-average signal strength (0..1, from domaingravity.getDomainSignals — the
+// SAME real macro reading SIGNAL/PRESSURE/CONVERGENCE already use), or null if unavailable. Founder
+// directive 2026-07-27: an established/real domain has real macro data even without a specific query
+// number — factor it in and make the construct visible, not a flat unlabeled "MODELED".
+export function computeMetrics(synthesis, hpState = null, persona = null, lrPrior = null, sciData = null, domainSignal = null) {
   const ambiguous = !synthesis
     || synthesis?.resolutionEligible === false
     || synthesis?.queryDomain === 'AMBIGUOUS';
@@ -57,22 +61,30 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   // query-relevant → 80% grounded (live HP engine); ambient → 20% (field signal, not query-specific)
   const convergenceGnd = ambiguous ? 0 : (queryRelevant ? g(0.80, 1.0) : g(0.20, 1.0));
 
+  // Domain-scale factor — a real observed macro reading (field signal strength for the domain
+  // this query resolved to), NOT a fabricated industry benchmark. Direction: a domain running
+  // hotter (more real activity) plausibly carries more acquisition competition/cost — an
+  // explainable modeling assumption, same class as the existing confidence-based multiplier below,
+  // just with one more REAL input factored in instead of pure formula.
+  const hasDomainSignal = typeof domainSignal === 'number' && Number.isFinite(domainSignal);
+  const domainScale     = hasDomainSignal ? 0.7 + domainSignal * 0.6 : 1; // 0.7x–1.3x, 1x if absent
+
   // ── CAC — Generalized Acquisition Cost ────────────────────────────────────
   // H1 input weights (persona-neutral, H8):
   //   realized monetary: 0.60 | realized ancillary: 0.20 | modeled time: 0.20
   // Realized monetary: stated $ × 4% (transaction/decision cost estimate)
-  const cacModeled  = Math.round(120 + (1 - conf) * 80); // $120–$200 modeled range
+  const cacModeled  = Math.round((120 + (1 - conf) * 80) * domainScale); // $120–$200 baseline, domain-scaled
   const cacRealized = hasNums ? Math.round(firstNum * 0.04) : 0;
   const cacValue    = cacRealized + cacModeled;
-  const cacGnd      = g(hasNums ? 0.60 : 0, 1.0);
+  const cacGnd      = g((hasNums ? 0.60 : 0) + (hasDomainSignal ? 0.15 : 0), 1.0);
 
   // ── ROAS — Return on Acquisition Spend ────────────────────────────────────
   // Realized value captured = 0 at emission (no outcome yet).
   // H6: denominator (modeled spend) counts against groundedness.
   //   realized (either side): 0 | realized denominator if nums present: 0.25
-  const roasProjected = parseFloat((1.8 + conf * 2.5).toFixed(1));
+  const roasProjected = parseFloat(((1.8 + conf * 2.5) / domainScale).toFixed(1)); // hotter domain → thinner margin, same logic as CAC
   const roasValue     = roasProjected; // realized component = 0 at emission
-  const roasGnd       = g(hasNums ? 0.25 : 0, 1.0);
+  const roasGnd       = g((hasNums ? 0.25 : 0) + (hasDomainSignal ? 0.15 : 0), 1.0);
 
   // ── LTV — Lifetime Value ──────────────────────────────────────────────────
   // Pure projection at emission. Realized component = 0; rises as outcomes land.
@@ -81,7 +93,18 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   const annual       = cacValue * 0.35;
   const ltvProjected = Math.round(annual * (1 - Math.pow(1 + discountRate, -horizon)) / discountRate);
   const ltvValue     = ltvProjected;
-  const ltvGnd       = g(0, 1.0); // 0% grounded at emission — honest; rises as LR data accrues
+  // Still 0% grounded at emission from LR data (honest — no realized outcomes exist yet), but the
+  // domain-signal leg is real and legitimately raises it off a hard 0 when available.
+  const ltvGnd       = g(hasDomainSignal ? 0.15 : 0, 1.0);
+
+  // Construct label — what basis actually produced this number, made explicit rather than a flat
+  // "MODELED" for every case. Founder: "user should be aware of the construct."
+  const constructTag = (usesNums) => {
+    const parts = [];
+    if (usesNums) parts.push('QUERY-INPUT');
+    if (hasDomainSignal) parts.push('DOMAIN-SCALED');
+    return parts.length ? `MODELED · ${parts.join('+')}` : 'MODELED · BASELINE';
+  };
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const ltvCacRatio           = cacValue > 0 ? parseFloat((ltvValue / cacValue).toFixed(1)) : 0;
@@ -114,9 +137,9 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
     signal:      { value: signalVal,      groundedness: signalGnd },
     validity:    { value: validityVal,    groundedness: validityGnd },
     convergence: { value: convergenceVal, groundedness: convergenceGnd, queryRelevant, state: convLabel },
-    cac:  { value: cacWithheld  ? null : cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: 'MODELED', withheld: cacWithheld },
-    roas: { value: roasWithheld ? null : roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: 'MODELED', withheld: roasWithheld },
-    ltv:  { value: ltvWithheld  ? null : ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: 'MODELED', withheld: ltvWithheld },
+    cac:  { value: cacWithheld  ? null : cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: constructTag(hasNums), withheld: cacWithheld },
+    roas: { value: roasWithheld ? null : roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: constructTag(hasNums), withheld: roasWithheld },
+    ltv:  { value: ltvWithheld  ? null : ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: constructTag(false),   withheld: ltvWithheld },
     leverageRealization: lr,
     // SCI (8th) + SPS (9th) — populated when EvidenceGraph exists (WO-2004/2005B pipeline)
     sci: sciData?.sci ?? null,

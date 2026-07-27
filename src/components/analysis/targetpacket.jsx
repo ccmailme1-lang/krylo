@@ -14,7 +14,7 @@ import { computeMetrics }        from '../../engine/metricsengine.js';
 import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
 import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
-import { getAllDomainPressures } from '../../engine/domaingravity.js';
+import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
@@ -469,7 +469,14 @@ export default function TargetPacket() {
   const hpScore         = confGrounded ? Math.round(confScore * 100) : null;
   const { engineState } = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
-  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  // Real domain signal (0..1) — same accessor SIGNAL/PRESSURE/CONVERGENCE use. Factors real macro
+  // signal into CAC/ROAS/LTV instead of pure formula; construct made visible via the metric label.
+  const domainSignal    = useMemo(() => {
+    if (!synthesis?.queryDomain || synthesis.queryDomain === 'AMBIGUOUS') return null;
+    const dp = getQueryDomainPressure(synthesis.queryDomain);
+    return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
+  }, [synthesis?.queryDomain]);
+  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
   // Producer side of the domain metrics history store — records the real,
   // already-computed metrics object, tagged by domain. Never recomputes,
   // never fires speculatively — only when a real synthesis+domain exists.

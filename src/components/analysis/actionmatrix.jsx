@@ -11,6 +11,7 @@ import { computeMetrics }         from '../../engine/metricsengine.js';
 import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
 import { useMetricVisibility }    from '../../hooks/useMetricVisibility.js';
 import { getLRPrior }             from '../../engine/pathstore.js';
+import { getQueryDomainPressure } from '../../engine/domaingravity.js';
 import AmbiguousState             from './ambiguousstate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -168,7 +169,12 @@ export default function ActionMatrix() {
   const { engineState } = useHappyPathEngine();
   const stateLabel   = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   const lrPrior      = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
-  const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  const domainSignal = useMemo(() => {
+    if (!synthesis?.queryDomain || synthesis.queryDomain === 'AMBIGUOUS') return null;
+    const dp = getQueryDomainPressure(synthesis.queryDomain);
+    return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
+  }, [synthesis?.queryDomain]);
+  const metrics      = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
   const dynamics     = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility   = useMetricVisibility(metrics, dynamics);
   const actions      = synthesis?.actions ?? { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] };

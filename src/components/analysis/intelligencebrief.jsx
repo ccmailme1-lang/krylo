@@ -318,7 +318,15 @@ export default function IntelligenceBrief() {
     if (!synthesis || synthesis.resolutionEligible === false) return null;
     return getLRPrior({ domain: synthesis.queryDomain, stateLabel: synthesis.stateLabel ?? 'BUILDING CONVERGENCE', lens: session?.lens ?? 'GENERAL' });
   }, [synthesis, session?.lens]);
-  const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior), [synthesis, engineState, lrPrior]);
+  // Real domain signal (0..1) for the resolved query domain — same accessor SIGNAL/PRESSURE/
+  // CONVERGENCE already use. Founder 2026-07-27: factor real macro signal into CAC/ROAS/LTV instead
+  // of leaving them pure formula, and make the construct visible via the metric's label.
+  const domainSignal = useMemo(() => {
+    if (!synthesis?.queryDomain || synthesis.queryDomain === 'AMBIGUOUS') return null;
+    const dp = getQueryDomainPressure(synthesis.queryDomain);
+    return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
+  }, [synthesis?.queryDomain]);
+  const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
   const compositeMetrics          = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics                  = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility                = useMetricVisibility(metrics, dynamics);
