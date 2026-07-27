@@ -202,7 +202,9 @@ export default function IntelligenceBrief() {
           ?? session?.tensor?.confidence
           ?? 0;
   // KRYL-DEFECT-0001 — same real resolver WhyTracePanel uses, called with the same entity, so the
-  // export gate and the provenance panel can never disagree again.
+  // export gate and the provenance panel can never disagree again. `entity` here is a fresh local
+  // (buildBrief() computes its own copy in a separate function scope — this one is NOT shared).
+  const entity   = getDisplayEntity(session?.query ?? 'Unknown Signal');
   const whyTrace = useMemo(() => resolveWhyTrace(entity, getCanonicalEvents()), [entity]);
   const structuralAbsence = whyTrace.state === WT_STATE.STRUCTURAL_ABSENCE;
   const exportUnlocked = canExport(fs, session?.lens, structuralAbsence);
