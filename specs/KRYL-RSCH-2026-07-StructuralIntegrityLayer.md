@@ -1,8 +1,12 @@
 # KRYL-RSCH-2026-07 — Structural Integrity Layer
 
-**Status:** Research Note (NOT an implementation ticket) — **FROZEN v0.2**
+**Status:** **PARTIALLY IMPLEMENTED** (2026-07-27, Founder-directed) — `src/engine/
+structuralintegrity.js`, wired into the OWNERSHIP report §13. SCI, ISI, RCC are real, computed
+from real KRYLO data. **CSAT is NOT implemented** — honestly withheld in the UI
+(`csatReason: 'NO_SOLVER_INTEGRATED'`), no SAT/SMT solver dependency has been added. Do not report
+this as fully built or ready for end-to-end testing of all four metrics.
 **Reviewed:** 2026-07-27
-**Disposition:** ✅ Freeze, with scope locked
+**Disposition:** ✅ Freeze (spec), partial build (SCI/ISI/RCC only)
 
 ---
 

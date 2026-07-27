@@ -10,6 +10,9 @@ import { getDomainSignals } from '../../engine/domaingravity.js';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 import { computeVesselPressure } from '../../engine/pressurevessel.js';
 import { computeDomainFlow } from '../../engine/domainflow.js';
+import { buildPerceptionField } from '../../engine/perceptionread.js';
+import { inferFormation } from '../../engine/formationinference.js';
+import { computeSCI, sciBand, computeISI, computeRCC } from '../../engine/structuralintegrity.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -536,9 +539,57 @@ function AnalysisField({
                 );
               })()}
 
-              {/* 13 APPENDIX */}
+              {/* 13 STRUCTURAL INTEGRITY — KRYL-RSCH-2026-07 v0.2 implementation. Real SCI/ISI/RCC;
+                  CSAT honestly withheld (no SAT/SMT solver integrated). Read-only instrument
+                  calibration — never writes back to formationinference.js, never raises Gbar. */}
+              {(() => {
+                const domainReads = CANON.map(([, name]) => domainStats[name]).filter((d) => d?.count > 0);
+                const sci = computeSCI(domainReads);
+                const isi = computeISI(historySeries);
+                let rcc = null;
+                try {
+                  const field = buildPerceptionField({ now: Date.now() });
+                  if (field.particles.length) {
+                    const { rcc: r } = computeRCC(() => inferFormation(field.particles, { now: 1 }), 5);
+                    rcc = r;
+                  }
+                } catch { /* leave withheld on any failure — never fake a replay result */ }
+                return (
+                  <div style={{ marginBottom: 40 }}>
+                    <SecLabel num="13" title="STRUCTURAL INTEGRITY" right="INSTRUMENT CALIBRATION" />
+                    <div style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: DIM, marginBottom: 18, maxWidth: 700 }}>
+                      Audits coherence of the reasoning process, not the formation itself. Can only
+                      preserve, reduce, or quarantine evidential authority — never increase it.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', border: '1px solid rgba(245,245,247,0.16)' }}>
+                      <div style={{ padding: '16px 14px', borderRight: '1px solid rgba(245,245,247,0.10)' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>SCI</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{sci != null ? sci.toFixed(2) : '—'}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{sci != null ? `${sciBand(sci)} contradiction` : 'No polarized domains'}</div>
+                      </div>
+                      <div style={{ padding: '16px 14px', borderRight: '1px solid rgba(245,245,247,0.10)' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>CSAT</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: FAINT }}>WITHHELD</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>No SAT/SMT solver integrated</div>
+                      </div>
+                      <div style={{ padding: '16px 14px', borderRight: '1px solid rgba(245,245,247,0.10)' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>ISI</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{isi != null ? isi.toFixed(2) : '—'}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{isi != null ? `${historySeries.length} frames` : 'WITHHELD · §22 · <2 frames'}</div>
+                      </div>
+                      <div style={{ padding: '16px 14px' }}>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, letterSpacing: '0.1em', color: FAINT, marginBottom: 8 }}>RCC</div>
+                        <div style={{ fontFamily: MONO, fontSize: 15, color: INK }}>{rcc != null ? rcc.toFixed(2) : '—'}</div>
+                        <div style={{ fontFamily: MONO, fontSize: 8.5, color: FAINT, marginTop: 4 }}>{rcc != null ? '5x replay, canonical hash' : 'No particles to replay'}</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* 14 APPENDIX */}
               <div>
-                <SecLabel num="13" title="APPENDIX" />
+                <SecLabel num="14" title="APPENDIX" />
                 <div style={{ fontFamily: MONO, fontSize: 10.5, color: FAINT, lineHeight: 1.7 }}>
                   Formation ID: {byId.STRUCTURAL_IDENTITY?.formationId ?? '—'}<br />
                   Generated: {prospectus.generatedAt ? new Date(prospectus.generatedAt).toISOString() : '—'} by {prospectus.generatedBy}<br />
