@@ -14,6 +14,23 @@ import { computeDomainFlow } from '../../engine/domainflow.js';
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 
+// Viridis interpolation (Founder-directed, 2026-07-27) — vibrant multi-stop heat-map color for
+// SIGNAL/PRESSURE intensity fields, matching the referenced faceted-heatmap standard. t ∈ [0,1].
+const VIRIDIS_STOPS = [
+  [0.00, 68, 1, 84], [0.25, 59, 82, 139], [0.50, 33, 145, 140], [0.75, 94, 201, 98], [1.00, 253, 231, 37],
+];
+function viridis(t) {
+  const c = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
+  for (let i = 0; i < VIRIDIS_STOPS.length - 1; i++) {
+    const [t0, r0, g0, b0] = VIRIDIS_STOPS[i], [t1, r1, g1, b1] = VIRIDIS_STOPS[i + 1];
+    if (c >= t0 && c <= t1) {
+      const f = (c - t0) / (t1 - t0);
+      return `rgb(${Math.round(r0 + (r1 - r0) * f)}, ${Math.round(g0 + (g1 - g0) * f)}, ${Math.round(b0 + (b1 - b0) * f)})`;
+    }
+  }
+  return 'rgb(253, 231, 37)';
+}
+
 // ── LENS EMBED SIZING CONTRACT (LOCKED) ────────────────────────────────────────
 // Every Flourish lens embed renders in ONE identical panel, centered in Region C.
 // Do not size lenses individually. To resize ALL lenses, change these two numbers.
@@ -960,7 +977,7 @@ function AnalysisField({
                 // heat wash — monochrome white-opacity intensity scaled to real magnitude (0..~0.30).
                 // Same technique as the History line's shaded fill — no new hue, no semantic color.
                 return (
-                  <div key={r.name} style={{ background: `rgba(102,255,0,${(r.mag * 0.35).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
+                  <div key={r.name} style={{ background: viridis(r.mag), padding: '22px 18px', textAlign: 'center' }}>
                     <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: SDIM, marginBottom: 10 }}>{r.name}</div>
                     <div style={{ fontFamily: MONO, fontSize: 22, color: SINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>{r.mag.toFixed(2)}</div>
                     <div style={{ fontFamily: MONO, fontSize: 16, letterSpacing: '0.14em' }}>
@@ -1037,7 +1054,9 @@ function AnalysisField({
       if (!sigs.length) return { name, count: 0 };
       // Pressure₀ mapping: confidence stands in for BOTH magnitude and velocity (T is PARTIAL, not
       // independently observed). computeVesselPressure expects magnitude 0..100, velocity any scale.
-      const vp = computeVesselPressure(sigs.map((s) => ({ magnitude: s.confidence ?? 0, velocity: s.confidence ?? 0 })));
+      // computeVesselPressure's own contract: magnitude 0–100, velocity 0–1 (pressurevessel.js docstring).
+      // Confidence is 0–100 in the pool — correct for magnitude as-is, must be /100 for velocity.
+      const vp = computeVesselPressure(sigs.map((s) => ({ magnitude: s.confidence ?? 0, velocity: (s.confidence ?? 0) / 100 })));
       const dataCompleteness = sigs.length >= 2 ? 0.67 : 0.34; // n=AVAILABLE, V=AVAILABLE(if≥2 sigs) or WITHHELD, T=always PARTIAL
       const modelConfidence = dataCompleteness >= 0.6 ? 'MEDIUM' : 'LOW'; // Pressure₀ never reaches HIGH — T is never independently observed
       const band = vp.gauge >= 66 ? 'CONSTRAINED' : vp.gauge >= 33 ? 'ELEVATED' : vp.gauge > 0 ? 'ACCUMULATING' : 'LOW PRESSURE';
@@ -1079,7 +1098,7 @@ function AnalysisField({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1,
                           background: 'rgba(245,245,247,0.16)', border: '1px solid rgba(245,245,247,0.16)' }}>
               {pRows.map((r) => (
-                <div key={r.name} style={{ background: `rgba(102,255,0,${((r.gauge ?? 0) / 100 * 0.35).toFixed(3)})`, padding: '22px 18px', textAlign: 'center' }}>
+                <div key={r.name} style={{ background: viridis((r.gauge ?? 0) / 100), padding: '22px 18px', textAlign: 'center' }}>
                   <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.08em', color: PDIM, marginBottom: 10 }}>{r.name}</div>
                   <div style={{ fontFamily: MONO, fontSize: 22, color: PINK, fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>
                     {r.count ? `${Math.round(r.gauge)}%` : '—'}
