@@ -256,9 +256,16 @@ export function triggerDownload(payload) {
   setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
-// WO-1832 — EA Export Path: EA lens bypasses Fs gate — brief deliverable at qualification.
-// All other lenses retain the EXPORT_FS_GATE = 0.70 requirement.
-export function canExport(fs, lens) {
+// KRYL-DEFECT-0001 (2026-07-27) — the Fs numeric gate and whytraceresolver.js's STRUCTURAL_ABSENCE
+// state were two disconnected systems: a query could show "no structural evidence event recorded"
+// in the provenance panel while Fs/export unlocked anyway, since canExport() never checked
+// provenance at all. structuralAbsence is a hard gate, checked BEFORE the numeric score and BEFORE
+// the EA bypass — §22 grounded-or-withhold is a stronger invariant than either.
+//
+// WO-1832 — EA Export Path: EA lens bypasses the Fs *numeric* gate only — brief deliverable at
+// qualification. All other lenses retain the EXPORT_FS_GATE = 0.70 requirement.
+export function canExport(fs, lens, structuralAbsence = false) {
+  if (structuralAbsence) return false;
   if (typeof lens === 'string' && lens.toUpperCase() === 'EA') return true;
   return typeof fs === 'number' && fs >= EXPORT_FS_GATE;
 }

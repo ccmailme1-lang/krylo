@@ -12,6 +12,8 @@ import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../
 import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
+import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
+import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
 import { getTracker } from '../../engine/decisionvelocity.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
@@ -199,7 +201,11 @@ export default function IntelligenceBrief() {
           ?? session?.tensor?.fidelityScore
           ?? session?.tensor?.confidence
           ?? 0;
-  const exportUnlocked = canExport(fs, session?.lens);
+  // KRYL-DEFECT-0001 — same real resolver WhyTracePanel uses, called with the same entity, so the
+  // export gate and the provenance panel can never disagree again.
+  const whyTrace = useMemo(() => resolveWhyTrace(entity, getCanonicalEvents()), [entity]);
+  const structuralAbsence = whyTrace.state === WT_STATE.STRUCTURAL_ABSENCE;
+  const exportUnlocked = canExport(fs, session?.lens, structuralAbsence);
   const isImported     = session?.tensor?.isImported ?? false;
 
   // t₂ — decision terminal event: fires on allow OR deny whenever gate resolves
