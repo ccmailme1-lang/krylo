@@ -17,7 +17,7 @@ const LIME = '#66FF00';
 // Viridis interpolation (Founder-directed, 2026-07-27) — vibrant multi-stop heat-map color for
 // SIGNAL/PRESSURE intensity fields, matching the referenced faceted-heatmap standard. t ∈ [0,1].
 const VIRIDIS_STOPS = [
-  [0.00, 68, 1, 84], [0.25, 59, 82, 139], [0.50, 33, 145, 140], [0.75, 94, 201, 98], [1.00, 253, 231, 37],
+  [0.00, 68, 1, 84], [0.25, 59, 82, 139], [0.50, 33, 145, 140], [0.75, 94, 201, 98], [1.00, 190, 200, 55],
 ];
 function viridis(t) {
   const c = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0));
