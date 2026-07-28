@@ -234,6 +234,21 @@ export default function IntelligenceBrief() {
   const replayState = session?.tensor?.replayState ?? RUNTIME_STATE.LIVE;
   const replayMode  = replayState === RUNTIME_STATE.REPLAYING;
 
+  // Export Brief header button (krylo2-feed.html) — relays the SAME real state this component
+  // already computes (premium gate + exportUnlocked), so the header button is never a second,
+  // independently-guessed source of truth. Premium gate stays in effect at the new location.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('krylo-export-state-update', {
+      detail: { unlocked: exportUnlocked && !premiumLocked, premiumLocked, fs, gate: EXPORT_FS_GATE },
+    }));
+  }, [exportUnlocked, premiumLocked, fs]);
+
+  useEffect(() => {
+    function onTrigger() { handleExport(); }
+    window.addEventListener('krylo-export-trigger', onTrigger);
+    return () => window.removeEventListener('krylo-export-trigger', onTrigger);
+  }); // no deps — always the latest handleExport/exportUnlocked/session closure
+
   function handleExport() {
     if (!exportUnlocked || !session) return;
     const brief   = buildBrief(session, synthesis, hp);

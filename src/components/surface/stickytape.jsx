@@ -136,7 +136,7 @@ function StickyNote({ note }) {
               background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.7)', border: '1px solid rgba(255,255,255,0.2)' }}>Cancel</button>
           <button onPointerDown={() => { setConfirm(false); remove(note.id); }}
             style={{ fontFamily: MONO, fontSize: 11, padding: '6px 12px', cursor: 'pointer',
-              background: 'rgba(255,80,80,0.14)', color: 'rgba(255,120,120,0.95)', border: '1px solid rgba(255,80,80,0.5)' }}>Delete</button>
+              background: 'rgba(102,255,0,0.14)', color: 'rgba(102,255,0,0.95)', border: '1px solid rgba(102,255,0,0.5)' }}>Delete</button>
         </div>
       </div>
     </>
