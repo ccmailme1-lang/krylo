@@ -237,7 +237,7 @@ export default function IntelligenceBrief() {
   const replayMode  = replayState === RUNTIME_STATE.REPLAYING;
 
   function handleExport() {
-    if (!exportUnlocked || !session) return;
+    if (!session) return;
     const brief   = buildBrief(session, synthesis, hp);
     const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs, hp);
     triggerDownload(payload);
@@ -584,7 +584,7 @@ export default function IntelligenceBrief() {
       </div>
 
       {/* ── HAPPY PATH + EQ CANVAS — leadoff, directly under Oracle Kernel ── */}
-      <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)' }}>
+      <div style={{ flexShrink: 0, borderBottom: '1px solid rgba(102,255,0,0.12)', background: '#000', position: 'relative', zIndex: 5 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
@@ -611,13 +611,13 @@ export default function IntelligenceBrief() {
               onClick={handleExport}
               style={{
                 fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em',
-                textTransform: 'uppercase', cursor: exportUnlocked ? 'pointer' : 'default',
+                textTransform: 'uppercase', cursor: 'pointer',
                 background: 'transparent',
-                border: '1px solid rgba(0,127,255,0.3)',
+                border: '1px solid rgba(0,127,255,0.6)',
                 color: BLUE,
                 padding: '4.5px 12.5px',
                 transition: 'all 200ms ease',
-                opacity: exportUnlocked ? 1 : 0.4,
+                opacity: 1,
               }}
             >EXPORT BRIEF</button>
           </div>
