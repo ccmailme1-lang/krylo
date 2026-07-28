@@ -437,7 +437,11 @@ export default function TargetPacket() {
     return () => { alive = false; };
   }, [session?.query]);
 
-  const entity      = getDisplayEntity(session?.query ?? '').toUpperCase() || 'AWAITING SIGNAL';
+  // KRYL-DEFECT-0001 follow-up: was independently derived here (different fallback than
+  // intelligencebrief.jsx's export-gate computation) — under session-timing edge cases the two
+  // could disagree, showing STRUCTURAL ABSENCE here while the export gate unlocked. Matching
+  // intelligencebrief.jsx's exact derivation so this panel and the export gate can't diverge.
+  const entity      = getDisplayEntity(session?.query ?? 'Unknown Signal');
   // KRYL-1089: confidence is grounded only when the engine measured it. The old `?? 0.78`
   // fabricated a number whenever the seam withheld — that was the "new 78% constant". When
   // fidelity is UNGROUNDED / confidence is null, there is NO score to show.
@@ -565,7 +569,7 @@ export default function TargetPacket() {
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase', marginBottom: 10 }}>
               Primary Signal
             </div>
-            <div style={{ fontFamily: SERIF, fontSize: 22, color: BRT, lineHeight: 1.2, marginBottom: 12, overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+            <div style={{ fontFamily: SERIF, fontSize: 22, color: BRT, lineHeight: 1.2, marginBottom: 12, overflowWrap: 'anywhere', wordBreak: 'break-word', textTransform: 'uppercase' }}>
               {entity}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, flexWrap: 'wrap' }}>
