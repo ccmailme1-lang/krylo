@@ -30,6 +30,19 @@ export async function migrate() {
     );
     CREATE INDEX IF NOT EXISTS idx_execution_plans_plan_id  ON execution_plans (plan_id);
     CREATE INDEX IF NOT EXISTS idx_execution_plans_created  ON execution_plans (created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS tester_telemetry (
+      id           SERIAL PRIMARY KEY,
+      profile_id   TEXT,
+      session_id   TEXT,
+      event_type   TEXT        NOT NULL,
+      payload      JSONB       NOT NULL,
+      emitted_at   TIMESTAMPTZ NOT NULL,
+      received_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_tester_telemetry_profile  ON tester_telemetry (profile_id);
+    CREATE INDEX IF NOT EXISTS idx_tester_telemetry_session  ON tester_telemetry (session_id);
+    CREATE INDEX IF NOT EXISTS idx_tester_telemetry_received ON tester_telemetry (received_at DESC);
   `);
   console.log('[WO-1334] migration complete');
 }

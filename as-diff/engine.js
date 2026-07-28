@@ -171,6 +171,44 @@ async function handlePersistExecutionPlan(req, res) {
   }
 }
 
+// ── Tester telemetry — centralized log (batched) ─────────────────────────────
+// Client (src/engine/telemetry.js) still keeps its own localStorage copy;
+// this endpoint mirrors each event server-side so tester activity survives
+// past that one browser/device. Fire-and-forget from the client — a failed
+// POST never blocks the UI, it just means that batch stays local-only.
+
+async function handleTesterTelemetry(req, res) {
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { status: 'DB_WRITE_FAILED', error: 'Invalid JSON body' }); }
+
+  const events = Array.isArray(body?.events) ? body.events : null;
+  if (!events || events.length === 0) {
+    return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'events[] required' });
+  }
+
+  if (!pool) {
+    return send(res, 201, { status: 'DB_WRITE_SUCCESS', written: 0, note: 'no DB configured' });
+  }
+
+  try {
+    let written = 0;
+    for (const ev of events) {
+      if (!ev?.type || !ev?._emittedAt) continue;
+      await pool.query(
+        `INSERT INTO tester_telemetry (profile_id, session_id, event_type, payload, emitted_at)
+         VALUES ($1, $2, $3, $4, to_timestamp($5 / 1000.0))`,
+        [ev.profileId ?? null, ev.sessionId ?? null, ev.type, JSON.stringify(ev), ev._emittedAt]
+      );
+      written++;
+    }
+    send(res, 201, { status: 'DB_WRITE_SUCCESS', written });
+  } catch (err) {
+    console.error('[tester-telemetry] DB write failed:', err.message);
+    send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+  }
+}
+
 // ── WO-1721: Kalshi Live Feed ─────────────────────────────────────────────────
 
 const KALSHI_KEY  = process.env.KALSHI_API_KEY ?? '';
@@ -1257,6 +1295,7 @@ function routeRequest(req, res) {
 
   if (req.method === 'POST' && url === '/compare')                            return handleCompare(req, res);
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
+  if (req.method === 'POST' && url === '/api/tester-telemetry')              return handleTesterTelemetry(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);

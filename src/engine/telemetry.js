@@ -29,12 +29,40 @@ function persistLog(log) {
 
 const _log = loadPersistedLog();
 
+// Centralized mirror — batched, fire-and-forget. localStorage stays the source
+// of truth for this browser; the server copy is what lets tester activity be
+// analyzed after the fact instead of being stuck on one device.
+const SEND_INTERVAL_MS = 5_000;
+let _pending = [];
+let _flushTimer = null;
+
+function scheduleFlush() {
+  if (_flushTimer) return;
+  _flushTimer = setTimeout(flushPending, SEND_INTERVAL_MS);
+}
+
+function flushPending() {
+  _flushTimer = null;
+  if (_pending.length === 0) return;
+  const batch = _pending;
+  _pending = [];
+  fetch('/api/tester-telemetry', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ events: batch }),
+  }).catch(() => {
+    // Offline or API down — this batch stays local-only (already in localStorage above).
+  });
+}
+
 export function emitTelemetry(event) {
   const stamped = { ...event, _emittedAt: Date.now() };
   _log.push(stamped);
   if (_log.length > MAX_EVENTS) _log.splice(0, _log.length - MAX_EVENTS);
   persistLog(_log);
   validateSystemEvent(stamped);
+  _pending.push(stamped);
+  scheduleFlush();
   if (typeof window !== 'undefined' && window.__KRYLO_TELEMETRY_DEBUG__) {
     console.debug('[telemetry]', stamped);
   }
