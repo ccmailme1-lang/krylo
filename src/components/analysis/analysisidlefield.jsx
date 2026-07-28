@@ -983,7 +983,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     tensor.horizonMix         = frictionResult.horizonMix;
     tensor.structuralFriction = frictionResult.structuralFriction;
     // Phase B: attach synthesis before arbitration so generateCandidates has real content
-    tensor.domainLock    = selectedDomains[0] ?? null;
+    // GAP-24 fix: selectedDomains[0] is the raw 8-pill UI key (e.g. "FINANCIAL"), not a
+    // canonical domain — using it directly as domainLock made synthesizeQuery() skip
+    // detectDomain() entirely and hand a non-canonical label downstream, which had no real
+    // synthesizer and silently fell through to GENERAL regardless of what the query said.
+    // selectedLockedDomain (line ~732) is the already-computed, correctly-mapped canonical
+    // value for exactly this purpose — use that instead.
+    tensor.domainLock    = selectedLockedDomain ?? null;
     tensor.outputFilters = outputFilters;
     tensor.signalScope   = signalScope;
     tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain, tensor: { domainLock: tensor.domainLock } });
