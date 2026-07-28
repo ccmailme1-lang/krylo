@@ -159,14 +159,19 @@ function resolvePrimary(q, lens) {
   // "vehicle" is automotive only — exclude financial "investment/savings vehicle".
   // Brand names carry \b to stop substring bleed (kia∈Nokia/Slovakia, suv∈ inside words).
   const autoVehicleWord = /\bvehicle\b/.test(q) && !/(investment|savings|financial|funding|tax.advantaged|retirement)\s+vehicles?/.test(q);
+  // "lease" alone is ambiguous — car lease vs. apartment/property lease. Only count it as an
+  // AUTO signal on its own when another vehicle-context word co-occurs; a bare "lease" falls
+  // through to REAL_ESTATE / other checks below instead of forcing AUTO.
+  const leaseIsVehicle = /\blease\b/.test(q) &&
+    /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\bvehicle\b|\bdealer\b|\bdrive\b|\bmpg\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q);
   // WO-1872: if the only AUTO signal is a brand name (Tesla/Ford/Rivian etc.) and the query
   // carries explicit investment context, suppress AUTO — the brand is a ticker, not a vehicle.
   // Explicit vehicle terms (car/truck/lease/dealer/drive/mpg) override the suppression.
   const autoBrandOnly = !AUTO_EXPLICIT_VEHICLE.test(q) && !autoVehicleWord;
   if (
     (
-      /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
-      || autoVehicleWord
+      /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
+      || autoVehicleWord || leaseIsVehicle
     ) && !(INVESTMENT_CONTEXT.test(q) && autoBrandOnly)
   ) return 'AUTO';
   // Property/homestead tax exemptions, freezes, deferrals, rebates are senior cost-relief

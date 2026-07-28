@@ -113,7 +113,7 @@ function StickyNote({ note }) {
       }}>
         <div onPointerDown={(e) => { e.stopPropagation(); setCtx(null); setConfirm(true); }}
           style={{
-            fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'rgba(255,120,120,0.95)',
+            fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: 'rgba(102,255,0,0.95)',
             padding: '8px 12px', cursor: 'pointer',
           }}>Delete</div>
       </div>
