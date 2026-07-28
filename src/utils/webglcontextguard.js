@@ -35,8 +35,18 @@ export function useCanvasGuard() {
   const glRef = useRef(null);
   useEffect(() => () => {
     const gl = glRef.current;
-    if (!gl) return;
-    try { gl.forceContextLoss && gl.forceContextLoss(); } catch { /* noop */ }
+    if (!gl || gl.__ctxDisposed) return;
+    gl.__ctxDisposed = true;
+    // Real fix: the browser can lose the context on its own (resource pressure) before this
+    // cleanup ever runs. Calling forceContextLoss() on an already-lost context is what threw
+    // "WebGL: INVALID_OPERATION: loseContext: context already lost" (confirmed live,
+    // vendor-three-*.js, IC.forceContextLoss). Check isContextLost() first — an idempotency
+    // flag alone only guards OUR calls, not the browser's independent loss.
+    const rawCtx = typeof gl.getContext === 'function' ? gl.getContext() : null;
+    const alreadyLost = rawCtx && typeof rawCtx.isContextLost === 'function' && rawCtx.isContextLost();
+    if (!alreadyLost) {
+      try { gl.forceContextLoss && gl.forceContextLoss(); } catch { /* noop */ }
+    }
     try { gl.dispose && gl.dispose(); } catch { /* noop */ }
     glRef.current = null;
   }, []);
