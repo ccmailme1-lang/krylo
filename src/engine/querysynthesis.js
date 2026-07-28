@@ -4138,6 +4138,8 @@ export function synthesizeQuery(session) {
   const vector = domainLock
     ? { primary: domainLock, resolutionEligible: true, weights: { [domainLock]: 1.0 }, secondary: null }
     : detectDomain(query, session.lens);
+  // GAP-24 TEMP DIAGNOSTIC — remove once the divergence point is found.
+  console.log('[GAP-24 DIAGNOSTIC]', JSON.stringify({ query, domainLock, primary: vector.primary, weights: vector.weights, state: vector.state, resolutionEligible: vector.resolutionEligible }, null, 2));
   // KRYL-1010: SES is a PRECONDITION — computed at intake and attached to EVERY return
   // path (incl. AMBIGUOUS / withheld), where knowing the environment is noisy matters most.
   // Annotation only; never mutates a grounded score.
