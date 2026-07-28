@@ -4101,6 +4101,7 @@ import { getObservations } from './runtimeobservablestore.js';
 import { STATE_TYPE } from './statecontract.js'; // DEF-1863 — hard state contract, engine-declared
 import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
 import { runPairwiseDiff } from './crediff.js';
+import { resolveDecisionInputContract } from './matchDecisionInputContract.js';
 
 // ── Diff command (WO-DRAFT-comparative-diff-command) ───────────────────────────
 // Recognizes exactly one phrase shape: "diff A and/vs/versus/& B". No separator (bare
@@ -4144,6 +4145,26 @@ export function synthesizeQuery(session) {
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
     return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, stateType: STATE_TYPE.PROJECTION, ses };
+  }
+
+  // Decision Input Contract (WO: DIC, Real Estate pilot) — routing/attachment boundary only.
+  // No evidence retrieval, no formula execution here — that happens downstream in the Evidence
+  // Layer. Reuses the domain classification already computed above (vector.primary), not a
+  // second independent classification pass. Non-DIC domains fall through unchanged.
+  const dic = resolveDecisionInputContract(vector.primary);
+  if (dic) {
+    const fields = session.tensor?.fields ?? {};
+    const missingRequiredInputs = dic.required.filter(f => !(f.key in fields));
+    return {
+      queryDomain: vector.primary,
+      domainVector: vector,
+      resolutionEligible: true,
+      stateType: STATE_TYPE.PROJECTION,
+      ses,
+      decisionInputContract: dic,
+      missingRequiredInputs,
+      mode: missingRequiredInputs.length > 0 ? 'INSUFFICIENT_INPUT' : 'DIC_READY',
+    };
   }
 
   // KRYL-1080/1089/1091 — INSTITUTIONAL RESOLUTION.

@@ -21,6 +21,8 @@ import { computeCompositeMetrics } from '../../engine/compositemetrics.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import ComparativeField from './comparativefield.jsx';
+import { PartialAnswer, InsufficientInput } from '../../renderers/partialAnswerTemplates.jsx';
+import { resolveHomePurchaseEvidence } from '../../engine/homePurchaseEvidence.js';
 import WhyThisMatters from './whythismatters.jsx';
 import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
 import PerceptionRisk from './perceptionrisk.jsx';
@@ -397,14 +399,36 @@ export default function IntelligenceBrief() {
     );
   }
 
+  // Decision Input Contract (WO: DIC, Real Estate pilot) — replaces the generic "REFINE YOUR
+  // QUERY" fallback for domains that have a real DIC. Evidence retrieval is async and happens
+  // HERE, in the UI layer, never inside synthesizeQuery() itself (Zero Drift).
+  const [dicEvidence, setDicEvidence] = useState(null);
+  useEffect(() => {
+    if (synthesis?.mode !== 'DIC_READY') { setDicEvidence(null); return; }
+    let alive = true;
+    resolveHomePurchaseEvidence(synthesis.decisionInputContract, session?.tensor?.fields ?? {})
+      .then(result => { if (alive) setDicEvidence(result); });
+    return () => { alive = false; };
+  }, [synthesis?.mode, synthesis?.decisionInputContract, session?.tensor?.fields]);
+
   // Non-hook derived values — safe here, session is guaranteed non-null.
   // COMPARATIVE synthesis (diff command) has no buildBrief-compatible shape — skip it.
   const isComparative = synthesis?.mode === 'COMPARATIVE';
-  const brief = isComparative ? null : buildBrief(session, synthesis, hp);
+  const isDicPath = synthesis?.mode === 'INSUFFICIENT_INPUT' && !!synthesis?.decisionInputContract;
+  const isDicReady = synthesis?.mode === 'DIC_READY';
+  const brief = (isComparative || isDicPath || isDicReady) ? null : buildBrief(session, synthesis, hp);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   if (isComparative) {
     return <ComparativeField diff={synthesis.diff} />;
+  }
+  if (isDicPath) {
+    return <InsufficientInput missingRequiredInputs={synthesis.missingRequiredInputs} dic={synthesis.decisionInputContract} />;
+  }
+  if (isDicReady) {
+    return dicEvidence
+      ? <PartialAnswer evidence={dicEvidence} dic={synthesis.decisionInputContract} />
+      : null; // real fetch in flight — no fabricated interim content
   }
 
   return (
