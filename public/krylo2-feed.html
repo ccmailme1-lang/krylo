@@ -2453,12 +2453,6 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
         <span class="nav-time" id="nav-clock">--:--:-- EST</span>
     </div>
     <div class="nav-right">
-        <button id="nav-export" data-no-relay onclick="triggerExportBrief()" disabled
-            style="font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;
-                   background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.3);
-                   padding:4px 10px;cursor:default;transition:border-color 150ms,color 150ms;">
-            Export Brief
-        </button>
         <div class="nav-live">Live</div>
         <button data-no-relay onclick="window.parent.postMessage({type:'krylo-undo'},'*')" style="background:none;border:none;padding:0 4px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:13px;line-height:1;transition:color 120ms;" onmouseover="this.style.color='#66FF00'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">↩</button>
         <button data-no-relay onclick="window.parent.postMessage({type:'krylo-redo'},'*')" style="background:none;border:none;padding:0 4px;cursor:pointer;color:rgba(255,255,255,0.4);font-size:13px;line-height:1;transition:color 120ms;" onmouseover="this.style.color='#66FF00'" onmouseout="this.style.color='rgba(255,255,255,0.4)'">↪</button>
@@ -2499,24 +2493,6 @@ function cycleABSlot() {
     if (b) b.style.color = activeABSlot === 'B' ? '#ffffff' : 'rgba(255,255,255,0.28)';
 }
 
-// Export Brief — header button. State is owned by intelligencebrief.jsx (React) and relayed
-// here through app.jsx; this button is never a second, independently-guessed source of truth.
-// Premium gate stays in effect at this location, same as the panel it was moved from.
-function triggerExportBrief() {
-    var btn = document.getElementById('nav-export');
-    if (!btn || btn.disabled) return;
-    window.parent.postMessage({ type: 'krylo-export-trigger' }, '*');
-}
-window.addEventListener('message', function(e) {
-    if (!e.data || e.data.type !== 'krylo-export-state') return;
-    var btn = document.getElementById('nav-export');
-    if (!btn) return;
-    var unlocked = !!e.data.unlocked;
-    btn.disabled = !unlocked;
-    btn.style.cursor = unlocked ? 'pointer' : 'default';
-    btn.style.borderColor = unlocked ? 'rgba(102,255,0,0.4)' : 'rgba(255,255,255,0.15)';
-    btn.style.color = unlocked ? '#66FF00' : 'rgba(255,255,255,0.3)';
-});
 </script>
 <script>
 (function(){

@@ -1002,9 +1002,6 @@ export default function App() {
     function onNavMessage(ev) {
       if (ev.data?.type === 'krylo-undo') { window.dispatchEvent(new CustomEvent('krylo-undo')); return; }
       if (ev.data?.type === 'krylo-redo') { window.dispatchEvent(new CustomEvent('krylo-redo')); return; }
-      // Export Brief — header button (krylo2-feed.html) relays its click up here, we relay it
-      // back down to whichever component owns the real export logic (intelligencebrief.jsx).
-      if (ev.data?.type === 'krylo-export-trigger') { window.dispatchEvent(new CustomEvent('krylo-export-trigger')); return; }
       if (ev.data?.type === 'krylo-ribbon-select') {
         const { label, routing_target, velocity, systemic_state, leakage_risk, node_id } = ev.data;
         if (label) {
@@ -1077,19 +1074,6 @@ export default function App() {
     }
     window.addEventListener('message', onReset);
     return () => window.removeEventListener('message', onReset);
-  }, []);
-
-  // Export Brief header button — relays real export state (owned by intelligencebrief.jsx,
-  // premium gate + Fs/structuralAbsence) into the krylo2-feed.html iframe so its header button
-  // reflects the real, live state instead of a second, independently-guessed one.
-  useEffect(() => {
-    function onExportState(ev) {
-      iframeRef.current?.contentWindow?.postMessage(
-        { type: 'krylo-export-state', ...ev.detail }, '*'
-      );
-    }
-    window.addEventListener('krylo-export-state-update', onExportState);
-    return () => window.removeEventListener('krylo-export-state-update', onExportState);
   }, []);
 
   // X-RAY activation: isolated from activeQuery — uses dedicated xrayQuery state.
