@@ -36,6 +36,12 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   const ambiguous = !synthesis
     || synthesis?.resolutionEligible === false
     || synthesis?.queryDomain === 'AMBIGUOUS';
+  // KRYL-1125 — provenanceState is the single authority seam (computed once in
+  // synthesizeQuery(), never recomputed here). Unresolved provenance (no resolved canonical
+  // evidence trace for this entity — STRUCTURAL_ABSENCE is one manifestation, not the only one)
+  // must zero validity/Fs regardless of what upstream confidence/groundedness computed —
+  // ambient domain signal is not query evidence.
+  const unprovenanced = synthesis?.provenanceState != null && synthesis.provenanceState.resolved === false;
   const conf     = synthesis?.confidence ?? 0.5;
   const hasNums  = (synthesis?.inputNumbers?.length ?? 0) > 0;
   const firstNum = synthesis?.inputNumbers?.[0] ?? 0;
@@ -49,8 +55,10 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   // ── Validity ──────────────────────────────────────────────────────────────
   // Internal soundness of query resolution. Maps to synthesis.confidence.
   // Observed ~0.60 (live feeds in synthesis) | Assumed ~0.40 (heuristic defaults)
-  const validityVal = ambiguous ? 0 : conf;
-  const validityGnd = ambiguous ? 0 : g(0.60, 1.0);
+  // KRYL-1125 (EXPORT-001): unresolved provenance overrides confidence entirely — a hard clamp,
+  // not a blend. No amount of ambient/classification confidence substitutes for evidence.
+  const validityVal = (ambiguous || unprovenanced) ? 0 : conf;
+  const validityGnd = (ambiguous || unprovenanced) ? 0 : g(0.60, 1.0);
 
   // ── Convergence ───────────────────────────────────────────────────────────
   // Signal-field state ONLY. H4: do not overload with realized-vs-projected.

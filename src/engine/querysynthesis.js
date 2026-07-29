@@ -5,6 +5,19 @@ import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
 import { resolveMCV }   from './mcvresolver.js';
 import { synthCanonical, groundSignalMetrics, classifyCanonicalDomain } from './canonicalresolution.js';
+import { resolveWhyTrace, WT_STATE } from './whytraceresolver.js';
+import { getCanonicalEvents } from './connectors/edgar8kevidence.js';
+import { getDisplayEntity } from '../utils/formatters.js';
+
+// KRYL-1125 — single provenance authority seam. Computed once here, alongside SES, and attached
+// to every synthesis output as `provenanceState`. Downstream consumers (computeMetrics) read this
+// field; they must never call resolveWhyTrace() themselves — a second independent call site is
+// exactly the class of defect this closes (same fact, multiple calculators, multiple truths).
+function computeProvenanceState(query) {
+  const entity = getDisplayEntity(query);
+  const trace  = resolveWhyTrace(entity, getCanonicalEvents());
+  return { state: trace.state, resolved: trace.state === WT_STATE.RESOLVED, reason: trace.reason ?? null };
+}
 
 const LIME   = '#66FF00';
 const BLUE   = '#007FFF';
@@ -4149,9 +4162,12 @@ export function synthesizeQuery(session) {
   // path (incl. AMBIGUOUS / withheld), where knowing the environment is noisy matters most.
   // Annotation only; never mutates a grounded score.
   const ses = computeSES({ observations: getObservations(), query, domains: Object.keys(vector.weights || {}) });
+  // KRYL-1125 — computed once here, attached to every return path below. Never recomputed
+  // downstream (computeMetrics reads synthesis.provenanceState, it never calls resolveWhyTrace).
+  const provenanceState = computeProvenanceState(query);
   // DEF-1864: HOLD / resolutionEligible:false → AMBIGUOUS result, no synthesis run.
   if (!vector.resolutionEligible) {
-    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, stateType: STATE_TYPE.PROJECTION, ses };
+    return { queryDomain: 'AMBIGUOUS', domainVector: vector, resolutionEligible: false, stateType: STATE_TYPE.PROJECTION, ses, provenanceState };
   }
 
   // Decision Input Contract (WO: DIC, Real Estate pilot) — routing/attachment boundary only.
@@ -4167,7 +4183,7 @@ export function synthesizeQuery(session) {
       domainVector: vector,
       resolutionEligible: true,
       stateType: STATE_TYPE.PROJECTION,
-      ses,
+      ses, provenanceState,
       decisionInputContract: dic,
       missingRequiredInputs,
       mode: missingRequiredInputs.length > 0 ? 'INSUFFICIENT_INPUT' : 'DIC_READY',
@@ -4188,7 +4204,7 @@ export function synthesizeQuery(session) {
       return {
         queryDomain: (canon.primary ? canon.primary.toUpperCase() : 'AMBIGUOUS'),
         domainVector: vector, resolutionEligible: false,
-        canonical: canon, withheldReason: canon.reason, ses,
+        canonical: canon, withheldReason: canon.reason, ses, provenanceState,
       };
     }
     const cw = {};
@@ -4207,7 +4223,7 @@ export function synthesizeQuery(session) {
       provenance:  canon.provenance,             // 'LIVE_DOMAIN_FIELD' — never a template
       grounded:    true,
       canonical:   canon,
-      ses,
+      ses, provenanceState,
     };
   }
   // WO-1867 numeric binding: a REAL_ESTATE price must anchor to purchase/dwelling
@@ -4222,7 +4238,7 @@ export function synthesizeQuery(session) {
   if (vector.primary === 'REAL_ESTATE') {
     const elig = checkRealEstateEligibility(query);
     if (!elig.eligible) {
-      return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses };
+      return { queryDomain: 'REAL_ESTATE', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses, provenanceState };
     }
     // price bound → pass [price, down]; no price (only small scalars) → pass none so the
     // synthesizer uses its defaults rather than reading a bed/bath count as a price.
@@ -4233,7 +4249,7 @@ export function synthesizeQuery(session) {
   if (vector.primary === 'AUTO') {
     const elig = checkAutoEligibility(query);
     if (!elig.eligible) {
-      return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses };
+      return { queryDomain: 'AUTO', domainVector: vector, resolutionEligible: false, gate: elig.reason, ses, provenanceState };
     }
     synthNumbers = elig.price !== null ? (elig.down !== null ? [elig.price, elig.down] : [elig.price]) : [];
   }
@@ -4271,5 +4287,5 @@ export function synthesizeQuery(session) {
            classificationConfidence: classifyCanonicalDomain(query).confidence,
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
            queryDomain: effectiveDomain, domainVector: vector,
-           actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses };
+           actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses, provenanceState };
 }
