@@ -1039,6 +1039,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     signalShownRef.current = false;
     setMissingField(null);
     setOptCapResetKey(k => k + 1);
+    // GAP-24 root cause: a clicked domain pill locked tensor.domainLock for every subsequent
+    // query (bypassing detectDomain() entirely) because "new query" never cleared it. A stale
+    // lock with no real synthesizer silently falls back to GENERAL regardless of new query text.
+    setSelectedDomains([]);
   }
 
   function handleIntentChart(e) {
