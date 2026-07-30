@@ -27,7 +27,7 @@ export const FORMATION_STATE = Object.freeze({
 
 // A domain with no active signal has no formation — absence is a state, not a fabricated
 // "emerging" one (§22 absence-is-signal). Callers check for null before rendering anything.
-export function buildFormation({ domain, magnitude, state, cohesion, velocity, signalCount }) {
+export function buildFormation({ domain, magnitude, state, cohesion, velocity, velocityReason, signalCount }) {
   if (!Object.values(FORMATION_STATE).includes(state)) {
     throw new Error(`buildFormation: invalid state '${state}' — must be one of ${Object.values(FORMATION_STATE).join(', ')}`);
   }
@@ -36,7 +36,11 @@ export function buildFormation({ domain, magnitude, state, cohesion, velocity, s
     state,
     magnitude: parseFloat(magnitude.toFixed(1)),
     cohesion: parseFloat(cohesion.toFixed(3)),
-    velocity: parseFloat(velocity.toFixed(3)),
+    // Velocity is WITHHELD (null + reason), not manufactured, when the sampling interval is
+    // invalid (Δt < Δt_min) — a rate computed over a near-zero interval is meaningless
+    // amplification, not a real measurement. Never V=0 or a capped value as a stand-in.
+    velocity: velocity === null ? null : parseFloat(velocity.toFixed(3)),
+    velocity_reason: velocityReason ?? null,
     // Research Math — not yet instrumented. Explicit null + reason, never a fabricated proxy.
     evidence_depth: null,
     evidence_depth_reason: 'NOT_YET_INSTRUMENTED — requires Q_s/I_s/R_c/T_f, no evidence schema exists yet',

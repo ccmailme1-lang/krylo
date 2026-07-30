@@ -6,7 +6,20 @@ import { useCanvasGuard } from '../../utils/webglcontextguard.js';
 import { createPortal } from 'react-dom';
 import HelpMark from '../shared/helpmark.jsx';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls, Html, Line } from '@react-three/drei';
+import { adaptDomainToFormation } from '../../formationlayer/formationadapter.js';
+import { deriveRelationships, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
+
+// Connector Layer state colors — meaning is relationship state ONLY, never health/confidence/
+// sentiment (explicit doctrine note from the approved connector spec, 2026-07-30).
+const RELATIONSHIP_STATE_COLOR = {
+  [RELATIONSHIP_STATE.EMERGING]:   '#5ad1e8', // cool cyan
+  [RELATIONSHIP_STATE.CONVERGING]: '#007FFF', // signal_blue (locked palette)
+  [RELATIONSHIP_STATE.STABLE]:     'rgba(255,255,255,0.4)',
+  [RELATIONSHIP_STATE.WEAKENING]:  '#ffaa00',
+  [RELATIONSHIP_STATE.DIVERGING]:  '#ff4444',
+  [RELATIONSHIP_STATE.UNKNOWN]:    'rgba(255,255,255,0.15)',
+};
 import * as THREE from 'three';
 import { aggregateSignals }       from '../../engine/aggregation.js';
 import { encodeCone }             from '../../engine/coneencoding.js';
@@ -266,6 +279,37 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           </div>
         </div>
       </Html>
+
+      {/* Formation Representation Layer — floating HUD, same scene as the cone, not attached to
+          its geometry (positioned to the side, independent of coneHeight/radius). Sandboxed math
+          module (src/formationlayer/), read-only here — does not affect cone rendering/state.
+          Reports magnitude/cohesion/state (real) and velocity (real or WITHHELD, never faked). */}
+      {(() => {
+        const formation = adaptDomainToFormation(state.domain, activeVolatility);
+        if (!formation) {
+          return (
+            <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap' }}>
+                FORMATION · NO SIGNAL
+              </div>
+            </Html>
+          );
+        }
+        return (
+          <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.1em', whiteSpace: 'nowrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.55)' }}>
+              <div style={{ color: formation.state === 'stable' ? '#ffffff' : LIME, opacity: 0.9 }}>
+                {formation.state.toUpperCase()} FORMATION
+              </div>
+              <div>MAG <b style={{ color: '#fff' }}>{formation.magnitude}</b></div>
+              <div>COH <b style={{ color: '#fff' }}>{formation.cohesion.toFixed(2)}</b></div>
+              <div>VEL <b style={{ color: formation.velocity === null ? 'rgba(255,255,255,0.3)' : '#fff' }}>
+                {formation.velocity === null ? 'WITHHELD' : formation.velocity.toFixed(2)}
+              </b></div>
+            </div>
+          </Html>
+        );
+      })()}
 
       {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
           Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
@@ -2056,6 +2100,44 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             />
           );
         })}
+
+        {/* Formation Relationship Connector Layer — approved build scope, 2026-07-30.
+            Undirected lines between formation centroids. Currently renders zero connectors:
+            computeCandidatePairs() returns [] honestly — no real domain-to-domain association
+            registry exists in Krylo today, and the spec's own rule is relationships=[] rather
+            than fabricating an all-pairs graph or the prototype's arbitrary theme-match rule.
+            Plumbing is complete and correct; extend computeCandidatePairs() when a real
+            association source exists (do not add one here without that source). */}
+        {(() => {
+          const formations = coneState
+            .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
+            .filter(Boolean);
+          const relationships = deriveRelationships(formations);
+          return relationships.map(rel => {
+            const a = coneData[rel.sourceFormationId];
+            const b = coneData[rel.targetFormationId];
+            if (!a || !b) return null;
+            const color = RELATIONSHIP_STATE_COLOR[rel.state] ?? RELATIONSHIP_STATE_COLOR[RELATIONSHIP_STATE.UNKNOWN];
+            const midX = (a.pos[0] + b.pos[0]) / 2, midZ = (a.pos[2] + b.pos[2]) / 2;
+            const midY = (a.apexY + b.apexY) / 4;
+            return (
+              <group key={rel.id}>
+                <Line
+                  points={[[a.pos[0], a.apexY / 2, a.pos[2]], [b.pos[0], b.apexY / 2, b.pos[2]]]}
+                  color={color}
+                  lineWidth={1 + rel.strength * 2}
+                  transparent
+                  opacity={rel.confidence ?? 0.4}
+                />
+                <Html position={[midX, midY, midZ]} center distanceFactor={9} style={{ pointerEvents: 'none' }}>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.1em', whiteSpace: 'nowrap', color }}>
+                    {rel.sourceFormationId} ↔ {rel.targetFormationId} · {rel.state} · {rel.strength.toFixed(2)}
+                  </div>
+                </Html>
+              </group>
+            );
+          });
+        })()}
       </group>
     </>
   );

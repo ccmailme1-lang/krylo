@@ -32,17 +32,36 @@ function convergenceVector(magnitude, inputVolatility) {
 // Real tracking, not a fabrication: each call records an actual (magnitude, cohesion) reading.
 const _history = new Map(); // domain -> { M, C, ts } (most recent prior reading)
 
+// Velocity Preconditions (added after live testing surfaced Δt->0 amplification):
+//   1. Valid previous state must exist.
+//   2. Δt >= DT_MIN_SECONDS — below this, a rate is meaningless amplification, not a
+//      measurement. WITHHELD, never V=0 or a capped value pretending to be real.
+//   3. ||ΔF|| >= NOISE_FLOOR — below this, the "movement" is plausibly measurement jitter,
+//      not real change. Reported as a genuine 0 (this one IS a real reading, not withheld).
+// DT_MIN_SECONDS is a placeholder pending a real per-domain Formation Observation Window
+// (cadence/min-interval/max-stale) — flagged here, not silently treated as authoritative.
+const DT_MIN_SECONDS = 5;
+const NOISE_FLOOR = 0.01;
+
 // V_f = ||ΔF|| / Δt over F=[M,C], Euclidean (W=I — the spec's own admissible initial form).
-// First reading for a domain has no prior state to diff against — velocity is 0, not undefined
-// and not fabricated (a formation's first-ever observation has no known rate of change yet).
+// First reading for a domain has no prior state to diff against — velocity is 0 (a real reading:
+// "no known rate of change yet" is not the same failure mode as "interval too short to trust").
+// Returns { velocity, reason } — velocity is null (WITHHELD) when the interval is invalid.
 function computeVelocity(domain, M, C, now) {
   const prior = _history.get(domain);
   _history.set(domain, { M, C, ts: now });
-  if (!prior) return 0;
+  if (!prior) return { velocity: 0, reason: null };
+
   const dt = (now - prior.ts) / 1000; // seconds
-  if (dt <= 0) return 0;
+  if (dt < DT_MIN_SECONDS) {
+    return { velocity: null, reason: `VELOCITY_INVALID_INTERVAL — Δt=${dt.toFixed(3)}s below minimum valid interval ${DT_MIN_SECONDS}s (placeholder pending a real Formation Observation Window)` };
+  }
+
   const dM = M - prior.M, dC = C - prior.C;
-  return Math.sqrt(dM * dM + dC * dC) / dt;
+  const deltaF = Math.sqrt(dM * dM + dC * dC);
+  if (deltaF < NOISE_FLOOR) return { velocity: 0, reason: null }; // real reading: below noise floor, genuinely ~0
+
+  return { velocity: deltaF / dt, reason: null };
 }
 
 export function resetFormationHistory(domain) {
@@ -68,7 +87,7 @@ export function adaptDomainToFormation(domain, inputVolatility = 0.5) {
 
   const magnitude = pressure.magnitude;
   const cohesion  = raw.stateId / 4; // C_f = S/4, normalized convergence stage (stateId range 0-4)
-  const velocity  = computeVelocity(domain, magnitude, cohesion, Date.now());
+  const { velocity, reason: velocityReason } = computeVelocity(domain, magnitude, cohesion, Date.now());
 
   return buildFormation({
     domain,
@@ -76,6 +95,7 @@ export function adaptDomainToFormation(domain, inputVolatility = 0.5) {
     state,
     cohesion,
     velocity,
+    velocityReason,
     signalCount: pressure.signalCount,
   });
 }
