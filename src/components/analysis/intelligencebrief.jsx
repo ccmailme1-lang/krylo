@@ -1411,7 +1411,9 @@ export default function IntelligenceBrief() {
             <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
               {exportUnlocked
                 ? `Fs ${Math.round(fs * 100)}% — PROVENANCE-TRACED JSON READY`
-                : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
+                : structuralAbsence
+                  ? `Fs ${Math.round(fs * 100)}% — BLOCKED: NO STRUCTURAL EVIDENCE EVENT FILED`
+                  : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
             </span>
           </div>
         </div>
