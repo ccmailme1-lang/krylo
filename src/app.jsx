@@ -67,6 +67,7 @@ import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
+import OrientationSurface from './components/surface/orientationsurface.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -1265,24 +1266,40 @@ export default function App() {
           {surfaceActivated && <FloatingToolbar />}
 
 
-          {/* AnalysisField — ConeMap only. No ACTIVE mode. */}
+          {/* OrientationSurface (pre-activation) / AnalysisField (post-activation) — ConeMap only. No ACTIVE mode.
+              Mutually exclusive on surfaceActivated — the existing Surface activation lifecycle already
+              encodes the orientation/investigation boundary; no new application state introduced. */}
           <div style={{ position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear' }}>
-            <AnalysisField
-              signals={liveSignals}
-              replayedSignals={replayedSignals}
-              history={history}
-              selectedLens={selectedLens}
-              topoMode={topoMode}
-              onTopoToggle={handleTopoToggle}
-              selection={selection}
-              clickEvent={clickEvent}
-              onSelectCone={setSelection}
-              onActiveConeChange={handleActiveConeChange}
-              maxCones={surfaceActivated ? undefined : 3}
-              dollyKey={surfaceEntryCount}
-              onArcClick={handleArcClick}
-              coneColorOverrides={coneColorOverrides}
-            />
+            {!surfaceActivated && (
+              <OrientationSurface
+                signals={liveSignals}
+                selectedDomain={selection}
+                clickEvent={clickEvent}
+                onSelectCone={setSelection}
+                onActiveConeChange={handleActiveConeChange}
+                maxCones={3}
+                dollyKey={surfaceEntryCount}
+                onArcClick={handleArcClick}
+                coneColorOverrides={coneColorOverrides}
+              />
+            )}
+            {surfaceActivated && (
+              <AnalysisField
+                signals={liveSignals}
+                replayedSignals={replayedSignals}
+                history={history}
+                selectedLens={selectedLens}
+                topoMode={topoMode}
+                onTopoToggle={handleTopoToggle}
+                selection={selection}
+                clickEvent={clickEvent}
+                onSelectCone={setSelection}
+                onActiveConeChange={handleActiveConeChange}
+                dollyKey={surfaceEntryCount}
+                onArcClick={handleArcClick}
+                coneColorOverrides={coneColorOverrides}
+              />
+            )}
           </div>
 
           {/* Bottom panel — Console Dashboard, slides above scrubber */}
