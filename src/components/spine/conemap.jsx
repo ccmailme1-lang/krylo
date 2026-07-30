@@ -2094,7 +2094,12 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             connectorTier is an explicit presentation-contract prop from the caller — never
             inferred from selection state or maxCones. 'hero' = strongest-only, capped, low
             density (orientation); 'surface' (default) = full valid set above a lower floor
-            (exploration). */}
+            (exploration).
+            KRYL-HERO-INV-001 (locked, 2026-07-30): Hero rendering may alter exposure density
+            only — hide connectors, reduce count, reprioritize. It may NOT alter strength,
+            confidence, state, or any underlying formation/relationship value. filterForHero
+            selects a subset of the same real data filterForSurface would show; it never
+            recomputes or reweights it. */}
         {(() => {
           const formations = coneState
             .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
