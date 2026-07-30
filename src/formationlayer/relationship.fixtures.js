@@ -36,22 +36,53 @@ test('deriveConfidence is withheld (null), never averaged from a nonexistent fie
   assert.equal(deriveConfidence({ cohesion: 0.5 }, { cohesion: 0.5 }), null);
 });
 
-test('computeCandidatePairs is empty — no real domain-association registry exists yet', () => {
+test('computeCandidatePairs uses the real ARC_THESIS registry — CAPITAL+TECHNOLOGY is a known pair', () => {
   const formations = [
     { formation_id: 'TECHNOLOGY', cohesion: 0.8 },
     { formation_id: 'CAPITAL', cohesion: 0.6 },
+  ];
+  const pairs = computeCandidatePairs(formations);
+  assert.equal(pairs.length, 1, 'CAPITAL+TECHNOLOGY is an ARC_THESIS pair — must produce exactly one candidate');
+  const ids = pairs[0].map(f => f.formation_id).sort();
+  assert.deepEqual(ids, ['CAPITAL', 'TECHNOLOGY']);
+});
+
+test('computeCandidatePairs requires BOTH formations active — one missing side yields no candidate', () => {
+  const formations = [{ formation_id: 'TECHNOLOGY', cohesion: 0.8 }]; // CAPITAL not active
+  assert.deepEqual(computeCandidatePairs(formations), []);
+});
+
+test('computeCandidatePairs does not invent pairs outside ARC_THESIS — unrelated domain has none', () => {
+  const formations = [
+    { formation_id: 'TECHNOLOGY', cohesion: 0.8 },
+    { formation_id: 'KNOWLEDGE', cohesion: 0.6 }, // not an ARC_THESIS pair with TECHNOLOGY
   ];
   assert.deepEqual(computeCandidatePairs(formations), []);
 });
 
-test('deriveRelationships returns [] when there are no candidate pairs — not a fabricated graph', () => {
+test('deriveRelationships produces a real relationship for a grounded ARC_THESIS pair, not a fabricated graph', () => {
+  resetRelationshipHistory();
   const formations = [
     { formation_id: 'TECHNOLOGY', cohesion: 0.8 },
     { formation_id: 'CAPITAL', cohesion: 0.6 },
-    { formation_id: 'OWNERSHIP', cohesion: 0.9 },
   ];
   const relationships = deriveRelationships(formations);
-  assert.deepEqual(relationships, [], 'must not manufacture relationships just because formations exist');
+  assert.equal(relationships.length, 1, 'exactly the grounded CAPITAL+TECHNOLOGY ARC_THESIS pair');
+  assert.equal(relationships[0].strength, 0.6); // min(0.8, 0.6)
+  assert.equal(relationships[0].confidence, null); // withheld, not fabricated
+  assert.equal(relationships[0].direction, 'UNKNOWN');
+});
+
+test('a domain absent from ARC_THESIS entirely produces no relationships even with an active formation', () => {
+  resetRelationshipHistory();
+  // LABOR is adjacent to CAPITAL and TECHNOLOGY in ARC_THESIS -- pick formations where the
+  // *only* active domains have no entry together at all is not possible with the current 6-domain
+  // registry (every canonical domain pairs with CAPITAL). This test instead confirms a single
+  // isolated formation (no partner active) yields zero relationships, which the "requires BOTH
+  // formations active" test above already covers structurally -- kept here as a scene-level sanity
+  // check with just one active domain.
+  const formations = [{ formation_id: 'KNOWLEDGE', cohesion: 0.7 }];
+  assert.deepEqual(deriveRelationships(formations), []);
 });
 
 test('filterForHero and filterForSurface apply strength floors without crashing on an empty set', () => {

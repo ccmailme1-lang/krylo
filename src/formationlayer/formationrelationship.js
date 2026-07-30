@@ -50,14 +50,26 @@ export function resetRelationshipHistory(id) {
   else _previousStrength.clear();
 }
 
-// Candidate pairs: correction applied — do NOT generate all-pairs (n(n-1)/2 complete graph) and
-// do NOT reuse the prototype's arbitrary "same theme" rule. Krylo has no real domain-to-domain
-// association registry today (entitytopologyregistry.js exists but is keyed by individual
-// companies like NVIDIA/TSMC, not the 6 canonical domains this layer operates on). Per the spec's
-// own rule: if no association exists, relationships = []. This is the honest current answer, not
-// a placeholder bug — extend this function when a real association source exists.
-export function computeCandidatePairs(_formations) {
-  return [];
+// Candidate pairs — Domain Adjacency rule (Rule B), grounded in ARC_THESIS: a real,
+// already-existing, Founder-approved domain-pair registry (was local to conemap.jsx, extracted
+// to src/engine/domainpairthesis.js so both the live cone rendering and this connector layer
+// share one copy — not two independently-maintained lists that could drift). ARC_THESIS is an
+// adjacency thesis ("these domains are structurally related enough to evaluate"), not a
+// causal claim — matches this layer's own direction:"UNKNOWN" invariant.
+// Rule A (Shared Signal Association) and Rule C (Temporal Co-Movement) are NOT implemented here:
+// Formation objects don't track individual contributing signals or categories (only aggregate
+// magnitude/cohesion), and no history-based correlation exists yet. Extend this function if/when
+// that data exists — do not fabricate it now.
+import { canonicalDomainPairs } from '../engine/domainpairthesis.js';
+
+export function computeCandidatePairs(formations) {
+  const byId = new Map(formations.map(f => [f.formation_id, f]));
+  const pairs = [];
+  for (const [a, b] of canonicalDomainPairs()) {
+    const source = byId.get(a), target = byId.get(b);
+    if (source && target) pairs.push([source, target]); // both sides must have an active formation
+  }
+  return pairs;
 }
 
 // formations: array of { formation_id, cohesion, ... }. Returns FormationRelationship[] for

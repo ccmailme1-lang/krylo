@@ -9,6 +9,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import { adaptDomainToFormation } from '../../formationlayer/formationadapter.js';
 import { deriveRelationships, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
+import { arcThesis } from '../../engine/domainpairthesis.js';
 
 // Connector Layer state colors — meaning is relationship state ONLY, never health/confidence/
 // sentiment (explicit doctrine note from the approved connector spec, 2026-07-30).
@@ -141,23 +142,9 @@ function convergenceStateId(pressure, volatility) {
     coneConvergenceVector(pressure, volatility), CONE_TELEMETRY_CONFIDENCE).stateId;
 }
 
-const ARC_THESIS = {
-  'capital+technology':  'WATCH: LIQUIDITY FLOW',
-  'capital+ownership':   'WATCH: ASSET TRANSFER',
-  'capital+labor':       'WATCH: COST PRESSURE',
-  'capital+media':       'WATCH: NARRATIVE SHIFT',
-  'capital+knowledge':   'WATCH: YIELD SIGNAL',
-  'legal+career':        'WATCH: EXECUTIVE EVENT',
-  'labor+media':         'WATCH: NARRATIVE BREAK',
-  'technology+labor':    'WATCH: DISPLACEMENT SIGNAL',
-  'legal+technology':    'WATCH: REGULATORY SIGNAL',
-  'knowledge+ownership': 'WATCH: IP TRANSFER',
-  'knowledge+labor':     'WATCH: TALENT PRESSURE',
-  'media+ownership':     'WATCH: BRAND TRANSFER',
-};
-function arcThesis(a, b) {
-  return ARC_THESIS[[a, b].sort().join('+')] ?? 'POSSIBLE CATALYST';
-}
+// ARC_THESIS moved to src/engine/domainpairthesis.js (2026-07-30) — shared with the Formation
+// Relationship Connector Layer as its domain-adjacency candidate source. Same data, same
+// semantics, single copy. Imported below, not redefined here.
 
 function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'OBSERVE', drift = null }) {
   const bays       = useBayStore(s => s.bays);
