@@ -1499,6 +1499,7 @@ function AnalysisField({
         dollyKey={dollyKey}
         coneColorOverrides={coneColorOverrides}
         viewportLens={viewportLens}
+        connectorTier="surface"
       />
     </div>
   );
