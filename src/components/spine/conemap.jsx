@@ -8,7 +8,7 @@ import HelpMark from '../shared/helpmark.jsx';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import { adaptDomainToFormation } from '../../formationlayer/formationadapter.js';
-import { deriveRelationships, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
+import { deriveRelationships, filterForSurface, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
 import { arcThesis } from '../../engine/domainpairthesis.js';
 
 // Connector Layer state colors — meaning is relationship state ONLY, never health/confidence/
@@ -2089,17 +2089,16 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         })}
 
         {/* Formation Relationship Connector Layer — approved build scope, 2026-07-30.
-            Undirected lines between formation centroids. Currently renders zero connectors:
-            computeCandidatePairs() returns [] honestly — no real domain-to-domain association
-            registry exists in Krylo today, and the spec's own rule is relationships=[] rather
-            than fabricating an all-pairs graph or the prototype's arbitrary theme-match rule.
-            Plumbing is complete and correct; extend computeCandidatePairs() when a real
-            association source exists (do not add one here without that source). */}
+            Undirected lines between formation centroids. Candidate pairs come from ARC_THESIS
+            (real, Founder-approved domain-adjacency registry — see domainpairthesis.js).
+            filterForSurface applies the Surface-tier strength floor (0.25) so weak/noise-level
+            relationships don't clutter this rendering; Hero-tier density (filterForHero) is a
+            separate, higher floor for whichever surface needs the reduced set. */}
         {(() => {
           const formations = coneState
             .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
             .filter(Boolean);
-          const relationships = deriveRelationships(formations);
+          const relationships = filterForSurface(deriveRelationships(formations));
           return relationships.map(rel => {
             const a = coneData[rel.sourceFormationId];
             const b = coneData[rel.targetFormationId];
