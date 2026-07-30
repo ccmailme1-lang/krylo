@@ -8,7 +8,7 @@ import HelpMark from '../shared/helpmark.jsx';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Html, Line } from '@react-three/drei';
 import { adaptDomainToFormation } from '../../formationlayer/formationadapter.js';
-import { deriveRelationships, filterForSurface, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
+import { deriveRelationships, filterForHero, filterForSurface, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
 import { arcThesis } from '../../engine/domainpairthesis.js';
 
 // Connector Layer state colors — meaning is relationship state ONLY, never health/confidence/
@@ -1770,7 +1770,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE', divergenceByDomain = {} }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE', divergenceByDomain = {}, connectorTier = 'surface' }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   const spinRef    = useRef();
@@ -2091,14 +2091,18 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         {/* Formation Relationship Connector Layer — approved build scope, 2026-07-30.
             Undirected lines between formation centroids. Candidate pairs come from ARC_THESIS
             (real, Founder-approved domain-adjacency registry — see domainpairthesis.js).
-            filterForSurface applies the Surface-tier strength floor (0.25) so weak/noise-level
-            relationships don't clutter this rendering; Hero-tier density (filterForHero) is a
-            separate, higher floor for whichever surface needs the reduced set. */}
+            connectorTier is an explicit presentation-contract prop from the caller — never
+            inferred from selection state or maxCones. 'hero' = strongest-only, capped, low
+            density (orientation); 'surface' (default) = full valid set above a lower floor
+            (exploration). */}
         {(() => {
           const formations = coneState
             .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
             .filter(Boolean);
-          const relationships = filterForSurface(deriveRelationships(formations));
+          const allRelationships = deriveRelationships(formations);
+          const relationships = connectorTier === 'hero'
+            ? filterForHero(allRelationships)
+            : filterForSurface(allRelationships);
           return relationships.map(rel => {
             const a = coneData[rel.sourceFormationId];
             const b = coneData[rel.targetFormationId];
@@ -2175,7 +2179,7 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE' }) {
+export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE', connectorTier = 'surface' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2367,6 +2371,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
           dollyKey={dollyKey}
           viewportLens={viewportLens}
           divergenceByDomain={divergenceByDomain}
+          connectorTier={connectorTier}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
