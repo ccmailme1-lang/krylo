@@ -40,6 +40,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      // Gas Go — real per-station prices via Apify (johnvc/fuelprices Actor), key server-side.
+      '/api/fuel-apify': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+        secure: false,
+      },
       // KRYL-1052 — NARRATIVE facet: Event Registry proxy on the local mock-server (key
       // held server-side). Must precede the '/api' catch-all so it resolves locally.
       '/api/news-doc': {

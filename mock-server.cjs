@@ -60,6 +60,116 @@ const mockRecords = (query) => [
 const erCache = new Map();          // q -> { ts, payload }
 const ER_TTL  = 10 * 60 * 1000;     // 10 min
 
+// Gas Go fuel-price cache (EIA regional average + Apify per-station) — 24h TTL. Real prices
+// don't move intraday (EIA itself only publishes weekly); this also avoids re-paying Apify's
+// per-result cost on every repeat query for the same area/fuel type in a day.
+const fuelCache = new Map();        // cacheKey -> { ts, statusCode, body }
+const FUEL_TTL  = 24 * 60 * 60 * 1000; // 24h
+function fuelCacheGet(key) {
+  const hit = fuelCache.get(key);
+  if (!hit) return null;
+  if (Date.now() - hit.ts > FUEL_TTL) { fuelCache.delete(key); return null; }
+  return hit;
+}
+function fuelCacheSet(key, statusCode, body) {
+  fuelCache.set(key, { ts: Date.now(), statusCode, body });
+}
+
+// Real upstream fetch, extracted so both the live request handlers and the 4AM daily
+// pre-warm job (below) call the exact same logic — no duplicated upstream-call code.
+function fetchApify(search, fuel) {
+  return new Promise((resolve, reject) => {
+    const key = process.env.APIFY_API_TOKEN || '';
+    if (!key) return reject(Object.assign(new Error('UPSTREAM_DATA_UNAVAILABLE: APIFY_API_TOKEN'), { status: 503 }));
+    const runBody = JSON.stringify({ search, fuel: Number(fuel), lang: 'en', maxAge: 0 });
+    const runReq = require('https').request({
+      hostname: 'api.apify.com',
+      path: '/v2/acts/johnvc~fuelprices/runs?waitForFinish=60',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(runBody),
+        'Authorization': 'Bearer ' + key,
+      },
+    }, runRes => {
+      let runOut = ''; runRes.on('data', c => runOut += c);
+      runRes.on('end', () => {
+        let datasetId = null;
+        try { datasetId = JSON.parse(runOut)?.data?.defaultDatasetId ?? null; } catch {}
+        if (!datasetId) return reject(Object.assign(new Error('APIFY_RUN_FAILED: ' + runOut.slice(0, 300)), { status: 502 }));
+        const itemsReq = require('https').request({
+          hostname: 'api.apify.com',
+          path: `/v2/datasets/${datasetId}/items?clean=true`,
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + key },
+        }, itemsRes => {
+          let itemsOut = ''; itemsRes.on('data', c => itemsOut += c);
+          itemsRes.on('end', () => resolve({ statusCode: itemsRes.statusCode || 200, body: itemsOut }));
+        });
+        itemsReq.on('error', e => reject(Object.assign(new Error('APIFY_ITEMS upstream: ' + e.message), { status: 502 })));
+        itemsReq.end();
+      });
+    });
+    runReq.on('error', e => reject(Object.assign(new Error('APIFY_RUN upstream: ' + e.message), { status: 502 })));
+    runReq.write(runBody);
+    runReq.end();
+  });
+}
+
+function fetchEia(qs, key) {
+  return new Promise((resolve, reject) => {
+    const preq = require('https').request({
+      hostname: 'api.eia.gov',
+      path: `/v2/petroleum/pri/gnd/data/?${qs}&api_key=${encodeURIComponent(key)}`,
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+    }, up => {
+      let b = ''; up.on('data', c => b += c);
+      up.on('end', () => resolve({ statusCode: up.statusCode || 200, body: b }));
+    });
+    preq.on('error', e => reject(new Error('EIA-FUEL upstream: ' + e.message)));
+    preq.end();
+  });
+}
+
+// Daily 4AM pre-warm — whatever ZIP/area/fuel-type combos have EVER been cached (i.e. actually
+// used) get refreshed proactively, so the first real use of the day never pays the live-fetch
+// wait (up to 60s for a cold Apify run). Self-maintaining: no hardcoded demo location required —
+// it just keeps warm whatever the app has actually queried before. A brand-new key still pays
+// the wait on its first-ever use, same as today.
+function msUntilNext4am() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(4, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  return next - now;
+}
+async function prewarmFuelCache() {
+  const keys = [...fuelCache.keys()];
+  for (const key of keys) {
+    try {
+      if (key.startsWith('apify:')) {
+        const [, search, fuel] = key.split(':');
+        const { statusCode, body } = await fetchApify(search, fuel);
+        fuelCacheSet(key, statusCode, body);
+      } else if (key.startsWith('eia:')) {
+        const qs = key.slice('eia:'.length);
+        const k = eiaKey();
+        if (!k) continue;
+        const { statusCode, body } = await fetchEia(qs, k);
+        fuelCacheSet(key, statusCode, body);
+      }
+    } catch (e) {
+      console.log(`[Gas Go 4AM prewarm] failed for ${key}: ${e.message}`);
+    }
+  }
+  console.log(`[Gas Go 4AM prewarm] refreshed ${keys.length} cached key(s)`);
+}
+setTimeout(function scheduleDaily4am() {
+  prewarmFuelCache();
+  setInterval(prewarmFuelCache, 24 * 60 * 60 * 1000);
+}, msUntilNext4am());
+
 function erKey() {
   if (process.env.EVENTREGISTRY_KEY) return process.env.EVENTREGISTRY_KEY.trim();
   try {
@@ -118,7 +228,7 @@ const server = http.createServer((req, res) => {
 
   // GET /api/fuel — DEV proxy for Petro Locator. Zyla per-station prices (PAID).
   // Key from specs/petro_locator (or ZYLA_FUEL_KEY env), server-side, never echoed.
-  if (req.method === 'GET' && req.url.startsWith('/api/fuel')) {
+  if (req.method === 'GET' && (req.url === '/api/fuel' || req.url.startsWith('/api/fuel?'))) {
     const u    = new URL(req.url, 'http://localhost');
     const zip  = u.searchParams.get('zip');
     const type = u.searchParams.get('type') || 'regular';
@@ -140,6 +250,29 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // GET /api/fuel-apify — real per-station GasBuddy-sourced retail prices, via the Apify
+  // johnvc/fuelprices Actor (their commercial extraction service, not our own scraper).
+  // Chosen 2026-07-31 after Zyla (no license) and direct GasBuddy scraping (403, anti-bot,
+  // confirmed via manual curl test) were both ruled out. Two-step Apify flow: run the Actor
+  // synchronously, then fetch its result dataset. Key server-side only, never echoed.
+  if (req.method === 'GET' && req.url.startsWith('/api/fuel-apify')) {
+    const u      = new URL(req.url, 'http://localhost');
+    const search = u.searchParams.get('search') || u.searchParams.get('zip');
+    const fuel   = u.searchParams.get('fuel') || '1';
+    if (!search) { res.writeHead(400, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'MISSING_SEARCH' })); return; }
+    const cacheKey = `apify:${search}:${fuel}`;
+    const cached = fuelCacheGet(cacheKey);
+    if (cached) { res.writeHead(cached.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(cached.body); return; }
+    fetchApify(search, fuel)
+      .then(({ statusCode, body }) => {
+        fuelCacheSet(cacheKey, statusCode, body);
+        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+        res.end(body);
+      })
+      .catch(e => { res.writeHead(e.status || 502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: e.message })); });
+    return;
+  }
+
   // GET /api/eia-fuel — FREE EIA weekly retail fuel prices (regional-average FLOOR for Gas Go POC).
   // Real data, Tier-1 authoritative, provenance = EIA. Regional average only — never a per-station
   // claim (that is the paid Zyla layer on /api/fuel). Forwards the client's querystring to EIA v2 with
@@ -148,17 +281,16 @@ const server = http.createServer((req, res) => {
     const key = eiaKey();
     if (!key) { res.writeHead(503, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['EIA_API_KEY'] })); return; }
     const qs = req.url.split('?')[1] || '';
-    const preq = require('https').request({
-      hostname: 'api.eia.gov',
-      path: `/v2/petroleum/pri/gnd/data/?${qs}&api_key=${encodeURIComponent(key)}`,
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-    }, up => {
-      let b = ''; up.on('data', c => b += c);
-      up.on('end', () => { res.writeHead(up.statusCode || 200, { 'Content-Type': 'application/json' }); res.end(b); });
-    });
-    preq.on('error', e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'EIA-FUEL upstream: ' + e.message })); });
-    preq.end();
+    const cacheKey = `eia:${qs}`;
+    const cached = fuelCacheGet(cacheKey);
+    if (cached) { res.writeHead(cached.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(cached.body); return; }
+    fetchEia(qs, key)
+      .then(({ statusCode, body }) => {
+        fuelCacheSet(cacheKey, statusCode, body);
+        res.writeHead(statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+        res.end(body);
+      })
+      .catch(e => { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: 'EIA-FUEL upstream: ' + e.message })); });
     return;
   }
 

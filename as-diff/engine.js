@@ -36,6 +36,7 @@ const EDGAR_TTL_MS    = 900_000;
 const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
 const KALSHI_TTL_MS   = 300_000; // 5 min — prevents 429 on simultaneous polls
 const EIA_TTL_MS      = 3_600_000; // 1h — WPSR releases weekly, no need to re-fetch often
+const FUEL_CACHE_TTL_MS = 24 * 3_600_000; // 24h — Gas Go regional/per-station prices, dedicated TTL
 // WO-2019 — Service API connector TTLs
 const GITHUB_TTL_MS   =   900_000; // 15 min
 const ARXIV_TTL_MS    = 3_600_000; // 1h
@@ -552,7 +553,7 @@ function handleEiaProxy(req, res) {
 function handleEiaFuelProxy(req, res) {
   const qs  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
   const key = 'eiafuel:' + qs;
-  const hit = getCached(key, EIA_TTL_MS);
+  const hit = getCached(key, FUEL_CACHE_TTL_MS);
   if (hit) {
     res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
     res.end(hit.body);
@@ -579,6 +580,122 @@ function handleEiaFuelProxy(req, res) {
   proxy.on('error', err => send(res, 502, { error: 'EIA fuel upstream: ' + err.message }));
   proxy.end();
 }
+
+// ── Apify fuel-price proxy (johnvc/fuelprices Actor) — real per-station,
+// GasBuddy-sourced retail prices via Apify's commercial extraction service (not our own
+// scraper). Chosen 2026-07-31 after Zyla (no license) and direct GasBuddy scraping (403,
+// anti-bot, confirmed via manual test) were both ruled out. Key server-side only, never echoed.
+function fetchApify(search, fuel) {
+  return new Promise((resolve, reject) => {
+    const apiKey = process.env.APIFY_API_TOKEN ?? '';
+    if (!apiKey) return reject(Object.assign(new Error('UPSTREAM_DATA_UNAVAILABLE: APIFY_API_TOKEN'), { status: 503 }));
+    const runBody = JSON.stringify({ search, fuel: Number(fuel), lang: 'en', maxAge: 0 });
+    const runReq = https.request({
+      hostname: 'api.apify.com',
+      path:     '/v2/acts/johnvc~fuelprices/runs?waitForFinish=60',
+      method:   'POST',
+      headers: {
+        'Content-Type':   'application/json',
+        'Content-Length': Buffer.byteLength(runBody),
+        'Authorization':  'Bearer ' + apiKey,
+      },
+    }, runRes => {
+      let runOut = ''; runRes.on('data', c => runOut += c);
+      runRes.on('end', () => {
+        let datasetId = null;
+        try { datasetId = JSON.parse(runOut)?.data?.defaultDatasetId ?? null; } catch {}
+        if (!datasetId) return reject(Object.assign(new Error('APIFY_RUN_FAILED: ' + runOut.slice(0, 300)), { status: 502 }));
+        const itemsReq = https.request({
+          hostname: 'api.apify.com',
+          path:     `/v2/datasets/${datasetId}/items?clean=true`,
+          method:   'GET',
+          headers:  { 'Authorization': 'Bearer ' + apiKey },
+        }, itemsRes => {
+          let itemsOut = ''; itemsRes.on('data', c => itemsOut += c);
+          itemsRes.on('end', () => resolve({ statusCode: itemsRes.statusCode || 200, body: itemsOut }));
+        });
+        itemsReq.on('error', e => reject(Object.assign(new Error('APIFY_ITEMS upstream: ' + e.message), { status: 502 })));
+        itemsReq.end();
+      });
+    });
+    runReq.on('error', e => reject(Object.assign(new Error('APIFY_RUN upstream: ' + e.message), { status: 502 })));
+    runReq.write(runBody);
+    runReq.end();
+  });
+}
+
+function handleFuelApifyProxy(req, res) {
+  const u      = new URL(req.url, 'http://localhost');
+  const search = u.searchParams.get('search') || u.searchParams.get('zip');
+  const fuel   = u.searchParams.get('fuel') || '1';
+  if (!search) return send(res, 400, { error: 'MISSING_SEARCH' });
+  const cacheKey = `apify:${search}:${fuel}`;
+  const hit = getCached(cacheKey, FUEL_CACHE_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+  fetchApify(search, fuel)
+    .then(({ statusCode, body }) => {
+      setCached(cacheKey, statusCode, body);
+      res.writeHead(statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(body);
+    })
+    .catch(e => send(res, e.status || 502, { error: e.message }));
+}
+
+// Daily 4AM pre-warm — whatever ZIP/fuel-type combos have ever been cached get refreshed
+// proactively so the first real use of the day never pays the live-fetch wait (up to 60s
+// for a cold Apify run). Self-maintaining: keeps warm whatever the app has actually queried
+// before; a brand-new key still pays the wait on its first-ever use, same as today.
+function msUntilNext4am() {
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(4, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  return next - now;
+}
+async function prewarmFuelCache() {
+  const keys = [...PROXY_CACHE.keys()].filter(k => k.startsWith('apify:') || k.startsWith('eiafuel:'));
+  for (const key of keys) {
+    try {
+      if (key.startsWith('apify:')) {
+        const [, search, fuel] = key.split(':');
+        const { statusCode, body } = await fetchApify(search, fuel);
+        setCached(key, statusCode, body);
+      } else if (key.startsWith('eiafuel:')) {
+        const qs = key.slice('eiafuel:'.length);
+        const apiKey = process.env.EIA_API_KEY ?? '';
+        if (!apiKey) continue;
+        await new Promise((resolve) => {
+          const proxy = https.request({
+            hostname: 'api.eia.gov',
+            path: '/v2/petroleum/pri/gnd/data/' + qs + (qs ? '&' : '?') + 'api_key=' + apiKey,
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+          }, upstream => {
+            let body = ''; upstream.on('data', c => body += c);
+            upstream.on('end', () => {
+              const safe = body.replace(/"api_key":"[^"]*"/g, '"api_key":"[REDACTED]"');
+              setCached(key, upstream.statusCode, safe);
+              resolve();
+            });
+          });
+          proxy.on('error', () => resolve());
+          proxy.end();
+        });
+      }
+    } catch (e) {
+      console.log(`[Gas Go 4AM prewarm] failed for ${key}: ${e.message}`);
+    }
+  }
+  console.log(`[Gas Go 4AM prewarm] refreshed ${keys.length} cached key(s)`);
+}
+setTimeout(function scheduleDaily4am() {
+  prewarmFuelCache();
+  setInterval(prewarmFuelCache, 24 * 60 * 60 * 1000);
+}, msUntilNext4am());
 
 // ── Finnhub proxy — server-side fetch, cached ────────────────────────────────
 function handleFinnhubProxy(req, res) {
@@ -1300,6 +1417,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);
   if (req.method === 'GET'  && url === '/api/eia-fuel')                      return handleEiaFuelProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/fuel-apify')                    return handleFuelApifyProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fuel')                          return handleFuelProxy(req, res);
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);

@@ -1,10 +1,31 @@
 // Petro Locator (HIDDEN / NON-BROADCAST utility) — cheapest US fuel near you.
-// SOURCE: Zyla per-station fuel prices (PAID — activates once a subscription is live).
-// NOTE: Gas Price Locator #4808 is delisted; on subscribe, repoint FUEL_PATH/parse to the
-// chosen per-station API (Fuel Finder by ZIP #4811 / US Gas Cost Data). Tracked: KRYL-1027.
-// Flow: geolocate → ZIP → /api/fuel proxy → cheapest station. Withholds, never fabricates.
+// SOURCE (active, 2026-07-31): Apify johnvc/fuelprices Actor — real per-station,
+// GasBuddy-sourced retail prices, extracted via Apify's commercial service (not our own
+// scraper). Chosen after Zyla (no license, sporadic trial) and direct GasBuddy scraping
+// (403, anti-bot, confirmed via manual test) were both ruled out.
+// SOURCE (dormant): Zyla per-station fuel prices (PAID) — parseCheapest()/FUEL_PATH below
+// kept in place, not deleted, in case a Zyla subscription activates later. Not called by
+// findCheapestFuel() while Apify is active.
+// Flow: geolocate → ZIP → /api/fuel-apify proxy → cheapest station. Withholds, never fabricates.
 // Spec: specs/petro_locator_spec.md.
 import { geolocate } from './weather.js';
+
+// Client-side day-cache — Gas Go data doesn't need to be re-fetched (and the "Locating
+// stations…"/"Scanning vicinity…" wait re-shown) more than once per calendar day. Keyed by
+// today's date so it self-expires at midnight without a TTL timer. Server already caches for
+// 24h too (mock-server.cjs / as-diff/engine.js) — this avoids even the round-trip on repeat
+// mounts the same day.
+const DAY_CACHE_PREFIX = 'krylo_gasgo_cache_';
+function todayKey(name) { return `${DAY_CACHE_PREFIX}${name}_${new Date().toISOString().slice(0, 10)}`; }
+function readDayCache(name) {
+  try {
+    const raw = localStorage.getItem(todayKey(name));
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function writeDayCache(name, value) {
+  try { localStorage.setItem(todayKey(name), JSON.stringify(value)); } catch { /* storage full/unavailable — skip */ }
+}
 
 // lat/lon → US ZIP via OpenStreetMap Nominatim (free, CORS-ok, no key).
 async function coordsToZip(lat, lon) {
@@ -38,6 +59,36 @@ function parseCheapest(data) {
   };
 }
 
+// Apify (johnvc/fuelprices) dataset items → cheapest station + a real aggregate computed
+// from the actual returned set (average/lowest are derived from what came back, never
+// invented — Apify doesn't supply a regional aggregate the way Zyla did).
+function parseCheapestApify(items) {
+  const arr = Array.isArray(items) ? items : [];
+  const num = p => { const n = parseFloat(String(p).replace(/[^0-9.]/g, '')); return Number.isFinite(n) ? n : null; };
+  const stations = arr
+    .map(s => ({ ...s, _price: num(s?.price_cash ?? s?.price_credit) }))
+    .filter(s => s.name && s._price != null);
+  if (!stations.length) return null;
+  const cheapest = stations.reduce((a, b) => (b._price < a._price ? b : a));
+  const prices  = stations.map(s => s._price);
+  const average = prices.reduce((sum, p) => sum + p, 0) / prices.length;
+  const lowest  = Math.min(...prices);
+  // Real response shape is flat (address_line1/address_locality/address_region), not nested —
+  // confirmed via a live test call (2026-07-31), not assumed from the docs.
+  const addrParts = [cheapest.address_line1, cheapest.address_locality, cheapest.address_region].filter(Boolean);
+  return {
+    station:  cheapest.name,
+    address:  addrParts.join(', '),
+    price:    cheapest._price.toFixed(2),
+    average:  average.toFixed(2),
+    lowest:   lowest.toFixed(2),
+    currency: 'USD',
+  };
+}
+
+// petroType() string → Apify numeric fuel code (confirmed via Actor input schema, 2026-07-31).
+const APIFY_FUEL_CODE = { regular: 1, 'mid-grade': 2, premium: 3, diesel: 4 };
+
 // KRYL-1076 — real nearby fuel-station LOCATIONS from OpenStreetMap Overpass (amenity=fuel,
 // keyless, CORS-ok). Locations only — Overpass does NOT carry prices. Price stays the EIA
 // regional average, labeled as such. When a per-station price feed goes live, it attaches to
@@ -55,7 +106,18 @@ function milesBetween(lat1, lon1, lat2, lon2) {
 
 // findNearbyStations({ radiusMeters, limit }) → { kind:'STATIONS', origin, stations:[...] }
 // or { withheld:true, reason }. Real OSM locations, sorted nearest-first. Never fabricates.
-export async function findNearbyStations({ radiusMeters = 8000, limit = 12 } = {}) {
+// Day-cached client-side — a real fetch happens at most once per calendar day.
+export async function findNearbyStations(opts = {}) {
+  const { radiusMeters = 8000, limit = 12 } = opts;
+  const cacheName = `stations_${radiusMeters}_${limit}`;
+  const cached = readDayCache(cacheName);
+  if (cached) return cached;
+  const result = await _fetchNearbyStations({ radiusMeters, limit });
+  if (!result?.withheld) writeDayCache(cacheName, result);
+  return result;
+}
+
+async function _fetchNearbyStations({ radiusMeters, limit }) {
   const loc = await geolocate();
   if (!loc) return { withheld: true, reason: 'LOCATION_UNAVAILABLE' };
 
@@ -102,18 +164,29 @@ export async function findNearbyStations({ radiusMeters = 8000, limit = 12 } = {
 }
 
 // findCheapestFuel({ type }) → { station, address, price, average, lowest, zip, type }
-// or { withheld: true, reason }. Never fabricates.
-export async function findCheapestFuel({ type = 'regular' } = {}) {
+// or { withheld: true, reason }. Never fabricates. Day-cached client-side, same as above.
+export async function findCheapestFuel(opts = {}) {
+  const { type = 'regular' } = opts;
+  const cacheName = `cheapest_${type}`;
+  const cached = readDayCache(cacheName);
+  if (cached) return cached;
+  const result = await _fetchCheapestFuel({ type });
+  if (!result?.withheld) writeDayCache(cacheName, result);
+  return result;
+}
+
+async function _fetchCheapestFuel({ type }) {
   const loc = await geolocate();
   if (!loc) return { withheld: true, reason: 'LOCATION_UNAVAILABLE' };
   const zip = await coordsToZip(loc.lat, loc.lon);
   if (!zip) return { withheld: true, reason: 'ZIP_UNRESOLVED' };
+  const fuelCode = APIFY_FUEL_CODE[type] ?? APIFY_FUEL_CODE.regular;
   let data = null;
   try {
-    const r = await fetch(`/api/fuel?zip=${encodeURIComponent(zip)}&type=${encodeURIComponent(type)}`);
+    const r = await fetch(`/api/fuel-apify?search=${encodeURIComponent(zip)}&fuel=${fuelCode}`);
     if (r.ok) data = await r.json();
   } catch { /* withhold below */ }
-  const cheapest = parseCheapest(data);
+  const cheapest = parseCheapestApify(data);
   if (!cheapest) return { withheld: true, reason: 'NO_STATION_DATA' };
   return { ...cheapest, zip, type };
 }

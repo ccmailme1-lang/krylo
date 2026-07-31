@@ -19,6 +19,12 @@ const KEYFRAMES = `
 
 export default function PetroTemplate({ petro, stations }) {
   const pending = !petro || petro.loading;
+  // Real gap found 2026-07-31: `pending` only tracked the price fetch. If the price path
+  // (fast EIA average) resolved before the station-locations path (Overpass, sometimes slow),
+  // pending went false while stations was still null — neither the map nor any loading text
+  // rendered, showing a blank screen for however long Overpass took. Tracked separately so
+  // there is always a visible state.
+  const stationsPending = stations === null;
   return (
     <div style={{
       position: 'absolute', inset: 0, overflow: 'hidden',
@@ -48,7 +54,14 @@ export default function PetroTemplate({ petro, stations }) {
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', padding: 26, display: 'flex', flexDirection: 'column', gap: 18 }}>
         {/* KRYL-1076 — real station field (OSM). Renders whenever locations resolve, independent
             of the price path, so a withheld price no longer leaves a blank card (TEST-010). */}
-        {stations?.stations?.length > 0 && <GasGoMap data={stations} />}
+        {stations?.stations?.length > 0 && <GasGoMap data={stations} petro={petro} />}
+
+        {stationsPending && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, animation: 'gasgo-rise 300ms ease' }}>
+            <span style={{ width: 9, height: 9, borderRadius: '50%', border: `1px solid ${LIME}`, animation: 'gasgo-pulse 1s ease-in-out infinite' }} />
+            <span style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.24em', color: MID, textTransform: 'uppercase' }}>Locating stations…</span>
+          </div>
+        )}
 
         {pending && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, animation: 'gasgo-rise 300ms ease' }}>
@@ -94,26 +107,8 @@ export default function PetroTemplate({ petro, stations }) {
           </div>
         )}
 
-        {petro && !petro.loading && !petro.withheld && petro.kind !== 'AVG' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
-            <div style={{
-              position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
-              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 460,
-              background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
-              boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
-            }}>
-              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.34em', color: LIME }}>◆ CHEAPEST NEARBY</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
-                <span style={{ fontFamily: SERIF, fontSize: 24, color: BRT }}>{petro.station}</span>
-                <span style={{ fontFamily: MONO, fontSize: 30, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>{petro.price}<span style={{ fontSize: 12, color: DIM, marginLeft: 4, textShadow: 'none' }}>/gal</span></span>
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: MID }}>{petro.address}</div>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.16em' }}>
-              {(petro.type ?? '').toUpperCase()} · ZIP {petro.zip} · AREA AVG {petro.average ?? '—'} · LOW {petro.lowest ?? '—'}
-            </div>
-          </div>
-        )}
+        {/* Cheapest-station details moved to a hover HUD directly on its map pin (GasGoMap) —
+            no longer duplicated as a static card here. */}
       </div>
 
       {/* footer */}

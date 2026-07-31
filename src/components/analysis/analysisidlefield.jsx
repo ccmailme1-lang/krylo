@@ -1189,8 +1189,14 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
               <div style={{ color: 'rgba(255,255,255,0.2)' }}>SIMULATION MODULE // NORTH-SOUTH PANEL</div>
             </div>
             {hasSession && (
-              <button onClick={resetSession} style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: 'rgba(102,255,0,0.6)', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(102,255,0,0.3)', padding: '0 0 1px', cursor: 'pointer', marginTop: 8, display: 'block' }}>
-                ← new query
+              <button onClick={resetSession} style={{
+                fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em',
+                color: LIME, background: 'transparent',
+                border: '1px solid rgba(102,255,0,0.3)',
+                padding: '6px 20px', textTransform: 'uppercase', cursor: 'pointer',
+                marginTop: 8, display: 'inline-block',
+              }}>
+                New Query
               </button>
             )}
           </div>
