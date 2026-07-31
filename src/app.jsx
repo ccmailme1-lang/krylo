@@ -1041,7 +1041,10 @@ export default function App() {
         setNavMode(ev.data.mode);
         setConceptBOpen(true);
         if (ev.data.mode === 'surface') {
-          setSurfaceActivated(true);
+          // Activation is owned by krylo-submit (a real query submitted) and krylo-reset
+          // (logo tap). Clicking the Surface nav icon itself must not force it — that
+          // mistakenly forced a full OrientationSurface→AnalysisField swap (full ConeMap
+          // unmount/remount) and popped FloatingToolbar over the ribbon on every click.
           setSurfaceExpanded(true);
           setSurfaceEntryCount(c => c + 1);
         } else {
