@@ -92,11 +92,17 @@ export default function GasGoMap({ data }) {
         }}
       />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.14em' }}>
+      {/* Legend — identity is never color-alone: each caption carries its own swatch matching
+          the actual marker color/size on the map, rather than relying on memory of the pins. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.14em' }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: LIME, boxShadow: `0 0 0 3px rgba(102,255,0,0.25)`, flexShrink: 0 }} />
           NEAREST · {nearest.name.toUpperCase()} · {nearest.miles.toFixed(1)} MI
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.14em' }}>◉ YOU</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.14em', flexShrink: 0 }}>
+          <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fff', boxShadow: '0 0 0 3px rgba(255,255,255,0.18)', flexShrink: 0 }} />
+          YOU
+        </span>
       </div>
       <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.16em' }}>
         SOURCE: OPENSTREETMAP · REAL STATION LOCATIONS · NOT PER-STATION PRICE
