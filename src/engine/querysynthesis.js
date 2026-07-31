@@ -243,6 +243,11 @@ function resolvePrimary(q, lens) {
   if (/fintech.*infrastructure|payment.*infrastructure|payment.*rails|financial.*api|embedded.*finance|banking.*api|payment.*network.*build|stripe.*model|financial.*plumbing|developer.*payment|collison.*protocol/.test(q)) return 'FINTECH_INFRA';
   if (/forward.*compute|compute.*demand.*signal|gpu.*demand|ai.*compute.*demand|inference.*demand|training.*compute.*demand|compute.*supply.*gap|gpu.*supply.*gap|huang.*protocol|nvidia.*demand.*signal/.test(q)) return 'FORWARD_COMPUTE';
   if (/attention.*saturation|marketing.*saturation|purple.*cow|permission.*marketing|godin.*protocol|attention.*economy.*saturation|media.*saturation.*signal|relevance.*saturation|saturation.*signal/.test(q)) return 'ATTENTION_SATURATION';
+  // Closes the routing gap found 2026-07-30 (KRYL-PAYLOAD-0073/0074/0075): music catalog deals
+  // and master license agreements fell through to GENERAL. NOT a rename of "IP_COMMERCE" or
+  // "PRIVATE_CAPITAL" (those names appeared in an external diagnostic report but never existed
+  // in this codebase — verified absent before adding this gate).
+  if (/music.*catalog|song.*catalog|royalty.*catalog|catalog.*royalt|master licens|licensing agreement|franchise licens|film.*catalog|content.*library.*acquisition|library.*acquisition|catalog.*(deal|acquisition|rights)/.test(q)) return 'CATALOG_IP_ACQUISITION';
   return 'GENERAL';
 }
 
@@ -3493,6 +3498,66 @@ function synthBrandEquityStability(session, numbers, query) {
   };
 }
 
+// ── Catalog / IP Rights Acquisition — added 2026-07-30, closing the routing gap found in
+// KRYL-PAYLOAD-0073/0074/0075 (music catalog deals, master license agreements). ─────────────
+
+function synthCatalogIpAcquisition(session, numbers, query) {
+  const q      = query.toLowerCase();
+  const capital = numbers[0] ?? null;
+
+  const dealType =
+    /music.*catalog|song.*catalog|royalty.*catalog|catalog.*royalt/.test(q) ? 'MUSIC_CATALOG' :
+    /master licens|licensing agreement|franchise licens/.test(q)           ? 'LICENSING_AGREEMENT' :
+    /film.*catalog|content.*library|library.*acquisition/.test(q)          ? 'CONTENT_LIBRARY' :
+    'RIGHTS_ACQUISITION';
+
+  const rightsStructure =
+    /master.*rights|master.*recording/.test(q) ? 'MASTER_RIGHTS' :
+    /publishing.*rights|songwrit/.test(q)       ? 'PUBLISHING_RIGHTS' :
+    /exclusive.*licens/.test(q)                 ? 'EXCLUSIVE_LICENSE' :
+    'RIGHTS_STRUCTURE_UNSPECIFIED';
+
+  let stateLabel, primaryInsight;
+  if (dealType === 'MUSIC_CATALOG') {
+    stateLabel     = 'MUSIC_CATALOG_ACQUISITION_SIGNAL';
+    primaryInsight = 'Music catalog acquisitions are valued on trailing royalty yield, not comparable-company multiples. The structural driver is discount-rate compression as catalogs are treated as bond-like annuities — institutional buyers bid yield down as catalog supply tightens. Master rights command a premium over publishing rights; the split determines the actual cash-flow claim being acquired.';
+  } else if (dealType === 'LICENSING_AGREEMENT') {
+    stateLabel     = 'MASTER_LICENSE_AGREEMENT_SIGNAL';
+    primaryInsight = 'Master license agreements transfer usage rights, not ownership — the licensor retains the underlying IP and residual value. Deal economics hinge on exclusivity scope, territory, term length, and minimum guarantee vs. royalty-rate structure. A short term with a low minimum guarantee signals licensor caution about the licensee\'s execution risk.';
+  } else if (dealType === 'CONTENT_LIBRARY') {
+    stateLabel     = 'CONTENT_LIBRARY_ACQUISITION_SIGNAL';
+    primaryInsight = 'Content library acquisitions are a bet on catalog durability — evergreen titles retain streaming/licensing value for decades, while topical content depreciates fast. The valuation question is what fraction of the library is evergreen vs. time-decaying, not simply hours of content owned.';
+  } else {
+    stateLabel     = `RIGHTS_ACQUISITION_${rightsStructure}`;
+    primaryInsight = `Rights acquisition signal: ${rightsStructure.replace(/_/g,' ')}. Deal type: ${dealType.replace(/_/g,' ')}. The core question in any IP rights transaction is what specific bundle of rights (territory, term, exclusivity, format) is actually changing hands — headline deal size without rights-scope detail is not analyzable.`;
+  }
+
+  const tierLabel = capital !== null ? (capital >= 100000000 ? 'INSTITUTIONAL' : capital >= 10000000 ? 'GROWTH' : 'EARLY_STAGE') : 'UNSPECIFIED';
+
+  return {
+    state:           stateLabel,
+    label:           'CATALOG / IP RIGHTS ACQUISITION',
+    insight:         primaryInsight,
+    metrics: [
+      { id:'ci1', label:'DEAL TYPE',          value: dealType.replace(/_/g,' '),          type:'tag' },
+      { id:'ci2', label:'RIGHTS STRUCTURE',   value: rightsStructure.replace(/_/g,' '),   type:'tag' },
+      { id:'ci3', label:'VALUATION BASIS',    value: dealType === 'MUSIC_CATALOG' ? 'ROYALTY YIELD' : 'RIGHTS SCOPE', type:'status' },
+      { id:'ci4', label:'OWNERSHIP TRANSFER', value: dealType === 'LICENSING_AGREEMENT' ? 'NO — USAGE RIGHTS ONLY' : 'YES — ASSET TRANSFER', type:'status' },
+    ],
+    actions: {
+      primary:    { id:'a1', label:'CONFIRM RIGHTS SCOPE + TERM', impact:0.86, rationale:'Territory, exclusivity, term length, and format scope determine actual deal value more than headline price. Get the rights schedule before modeling economics.', tag:'DILIGENCE' },
+      secondary:  { id:'a2', label:'MODEL ROYALTY YIELD VS. DISCOUNT RATE', impact:0.74, rationale:'Catalog and rights deals are priced as yield instruments. Compare the implied yield to prevailing institutional catalog-fund discount rates to assess whether the deal is priced rich or cheap.', tag:'VALUATION' },
+      conviction: [
+        { id:'c1', label:'ASSESS EVERGREEN VS. DECAY MIX', impact:0.70, rationale:'Separate the durable, long-tail-earning portion of the asset from content/rights that depreciate on a shorter horizon. This ratio drives the terminal-value assumption.', tag:'STRATEGY' },
+        { id:'c2', label:'TRACK COUNTERPARTY EXECUTION CAPACITY', impact:0.60, rationale:'Licensing and rights deals fail on execution, not acquisition — confirm the counterparty has the distribution/marketing capacity to realize the value being paid for.', tag:'RISK' },
+      ],
+    },
+    leverage:          { typeY:2, typeLabel:'IP RIGHTS', tierLabel, deRatio:0.4, permissionless:false, industryNorm:0.5 },
+    deal_type:         dealType,
+    rights_structure:  rightsStructure,
+  };
+}
+
 // ── WO-1799: Structural Resilience Synthesizer (Dimon Protocol) ───────────────
 
 function synthStructuralResilience(session, numbers, query) {
@@ -4106,6 +4171,7 @@ const SYNTH_MAP = {
   FORWARD_COMPUTE:          synthForwardCompute,
   ATTENTION_SATURATION:     synthAttentionSaturation,
   STARTUP_FINANCE:          synthGeneral,
+  CATALOG_IP_ACQUISITION:   synthCatalogIpAcquisition,
 };
 
 // ── Public API ─────────────────────────────────────────────────────────────────
