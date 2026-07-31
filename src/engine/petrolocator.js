@@ -93,7 +93,16 @@ const APIFY_FUEL_CODE = { regular: 1, 'mid-grade': 2, premium: 3, diesel: 4 };
 // keyless, CORS-ok). Locations only — Overpass does NOT carry prices. Price stays the EIA
 // regional average, labeled as such. When a per-station price feed goes live, it attaches to
 // these existing pins by proximity, no rework.
-const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+// MAP LOAD TIME FIX (2026-07-31): the map didn't mount until this call finished, and the
+// query had a 25s server-side timeout with no client-side cap — on a loaded public Overpass
+// instance this stalled the whole map for up to ~30s. Two independent public mirrors are now
+// raced (Promise.any) under a 9s client-side AbortController each, so the real-world wait is
+// bounded by whichever mirror answers first instead of the slowest one.
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+];
+const OVERPASS_TIMEOUT_MS = 9000;
 
 // Haversine distance in miles — for sorting pins by nearness, no external dep.
 function milesBetween(lat1, lon1, lat2, lon2) {
@@ -117,27 +126,44 @@ export async function findNearbyStations(opts = {}) {
   return result;
 }
 
+// One Overpass mirror, bounded by an AbortController so a slow/overloaded instance can never
+// hang the caller past OVERPASS_TIMEOUT_MS. Rejects (never resolves late) on timeout/network
+// error so Promise.any in _fetchNearbyStations can move on to whichever mirror wins.
+async function fetchOverpassMirror(endpoint, query) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+  try {
+    const r = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain', 'Accept': 'application/json' },
+      body: query,
+      signal: controller.signal,
+    });
+    if (!r.ok) throw new Error(`Overpass ${endpoint} HTTP ${r.status}`);
+    const j = await r.json();
+    return Array.isArray(j?.elements) ? j.elements : [];
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function _fetchNearbyStations({ radiusMeters, limit }) {
   const loc = await geolocate();
   if (!loc) return { withheld: true, reason: 'LOCATION_UNAVAILABLE' };
 
-  // Overpass QL — fuel amenities (nodes + ways) within radius of the user.
-  const q = `[out:json][timeout:25];
+  // Overpass QL — fuel amenities (nodes + ways) within radius of the user. Server-side timeout
+  // matches the client-side cap so a mirror never keeps computing past the point we've stopped
+  // waiting on it.
+  const q = `[out:json][timeout:${Math.floor(OVERPASS_TIMEOUT_MS / 1000)}];
     (node["amenity"="fuel"](around:${radiusMeters},${loc.lat},${loc.lon});
      way["amenity"="fuel"](around:${radiusMeters},${loc.lat},${loc.lon}););
     out center ${limit * 3};`;
 
   let elements = [];
   try {
-    const r = await fetch(OVERPASS_ENDPOINT, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain', 'Accept': 'application/json' },
-      body: q,
-    });
-    if (!r.ok) return { withheld: true, reason: 'NO_STATION_DATA' };
-    const j = await r.json();
-    elements = Array.isArray(j?.elements) ? j.elements : [];
+    elements = await Promise.any(OVERPASS_ENDPOINTS.map(ep => fetchOverpassMirror(ep, q)));
   } catch {
+    // AggregateError — every mirror timed out or failed.
     return { withheld: true, reason: 'NO_STATION_DATA' };
   }
 

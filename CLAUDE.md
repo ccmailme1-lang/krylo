@@ -695,3 +695,44 @@ WIRING SEQUENCE:
     Validity × Convergence × AvgGroundedness) — that rule is the one case already locked; this
     section generalizes the underlying discipline so future composite metrics get audited
     against it by default, not as an afterthought.
+
+24. SECRET EXPOSURE GUARDRAIL (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-07-31)
+
+    INCIDENT RECORD (2026-07-31): three separate secret-exposure events in one session — an
+    EIA_API_KEY value printed via grep, a full ecosystem.config.cjs dump printed via cat/heredoc,
+    and a targeted grep of the same file that printed DATABASE_URL (with password), KALSHI_API_KEY,
+    VITE_FRED_API_KEY, and APIFY_API_TOKEN in plaintext — the third happening AFTER the first two
+    were already flagged as the problem. Root cause: no hard rule existed against running commands
+    whose output includes secret values; "be careful" was not enforced mechanically.
+
+    RULE (ABSOLUTE, NO JUDGMENT CALL): the agent MUST NEVER run any command whose output could
+    contain the literal value of a secret, credential, API key, token, password, private key, or
+    connection string — whether local (.env, .env.*), remote (ssh to any host), or in any config
+    file (ecosystem.config.cjs, docker-compose env blocks, CI secrets, etc.) — regardless of
+    whether the goal is legitimate (checking presence, verifying it changed, debugging a 503).
+
+    THIS MEANS, SPECIFICALLY, NEVER RUN:
+        - cat / less / head / tail / Read on any file containing secrets
+        - grep (any form) over a file or env dump containing secrets, even a "targeted" grep for
+          one key name — grep still prints the matched line, which includes the value
+        - pm2 env <id>, printenv, env, export -p, or any full environment dump
+        - echo $SECRET_VAR or any shell expansion of a secret variable
+        - heredocs, printf, or any command that reconstructs file contents into the transcript
+
+    THE ONLY PERMITTED CHECK PATTERN — EXISTENCE/BOOLEAN ONLY, NEVER VALUE:
+        - grep -q '^KEY_NAME=' file && echo "KEY_NAME: present" || echo "KEY_NAME: MISSING"
+        - test -n "$SECRET_VAR" && echo "set" || echo "unset"   (never echo "$SECRET_VAR" itself)
+        - wc -l, grep -c, or any count/boolean form that cannot leak the value
+        - If a value must be verified as CORRECT (not just present), ask the Founder to verify it
+          himself on his own terminal — the agent does not need to see it to confirm the fix works;
+          a functional endpoint test (curl against the feature, checking for a non-error response)
+          proves the fix without ever touching the secret's value.
+
+    IF A SECRET IS EVER PRINTED ANYWAY (tool output beyond the agent's control, e.g. an error
+    message that echoes a connection string): STOP immediately, do not run further commands, state
+    plainly and factually that it happened and exactly what was exposed, and treat it as a rotation
+    candidate — do not minimize, do not bury it in a longer message.
+
+    THIS RULE HAS NO EXCEPTIONS FOR URGENCY, DEBUGGING DIFFICULTY, OR "JUST THIS ONCE." If the
+    existence/boolean pattern above cannot answer the question, the agent STOPS and asks the
+    Founder to run the check himself, rather than finding a workaround that re-exposes the value.

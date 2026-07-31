@@ -10,7 +10,6 @@ import { useframestream }  from './hooks/useframestream.js';
 import { ecosystemcontext } from './ecosystemcontext.jsx';
 import { useSurface }     from './context/SurfaceContext.jsx';
 import campaignfunnel     from './components/spine/campaignfunnel.jsx';
-import conemap            from './components/spine/conemap.jsx';
 import oracleview         from './components/oracleview.jsx';
 import OracleViewV2      from './components/oracleview_v2.jsx';
 import { aggregateSignals }         from './engine/aggregation.js';
@@ -100,7 +99,6 @@ import { detectPersonaFromProfile } from './engine/lensrouter.js';
 const SignalMap = signalmap;
 
 const CampaignFunnel = campaignfunnel;
-const ConeMap        = conemap;
 const OracleView     = oracleview;
 
 // §22 Absence-Is-Signal: no live records is a TEMPORAL ABSENCE, not an

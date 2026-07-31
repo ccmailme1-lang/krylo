@@ -252,7 +252,6 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
           whiteSpace:    'nowrap',
           color:         isHovered ? LIME : isSelected ? '#ffffff' : 'rgba(255,255,255,0.35)',
           opacity:       isHovered ? 1 : flashOpacity,
-          transition:    'color 150ms ease, opacity 150ms ease',
           userSelect:    'none',
           pointerEvents: 'none',
           transition:    'color 200ms',
