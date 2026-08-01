@@ -1,0 +1,10 @@
+Summary,Issue Type,Description,Labels
+"Implement Subsignal Fan-Out Substrate Boundary",Task,"Implement the Subsignal Fan-Out Substrate as an additive, read-only boundary from the existing surfacerouter.js dispatch path -- gives the raw subsignal stream a second exit point so future detectors (anomaly, trend, absence-transition) can subscribe without ingestion changes.
+
+NON-GOALS: does not modify CI-F/CI-R/RBCS/LFOS/IB; does not score, classify, or aggregate subsignals; does not create any detector; no persistence unless the retention decision below selects it.
+
+BUILD BLOCKER: retention policy undecided -- in-memory bounded buffer (fast, lost on restart) vs. persistent store (survives restart, real ops cost). Do not invent a value -- Founder decides which detectors this needs to support first before build starts.
+
+FULL SPEC: specs/SPEC-subsignal-fanout-substrate.md (this repo) -- Boundary Declaration, Data Contract (BaseSubsignalTuple/SubsignalRecord split), Bottle Test, 4AR, Acceptance Criteria, Definition of Done.
+
+DOCTRINE REF: specs/DOCTRINE-subsignal-floor-principle.md -- proposed Section 25, not yet locked.",subsignal substrate architecture detection route-dont-aggregate epistemic-boundary work-order

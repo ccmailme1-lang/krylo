@@ -8,6 +8,7 @@ import { RENDER_OWNER } from './surfacecontract.js';
 import { resolveTopology } from './entitytopologyregistry.js';
 import { TOPOLOGY_CLUSTER_AMPLIFIER, DECAY } from './signalconstants.js';
 import { recordObservationBatch } from './observationtap.js';
+import { append as appendSubsignal } from './subsignalbuffer.js';
 
 // WO-1856 — Extended λ for QUARTERLY decay signals (patent data ages over quarters, not minutes)
 const QUARTERLY_TTL = 90 * 24 * 60 * 60 * 1000;
@@ -135,6 +136,12 @@ class SurfaceRouter {
   }
 
   dispatchBatch(events) {
+    // KRYL-1132 — subsignal fan-out tap. Raw tuples, exactly as connectors emitted them,
+    // BEFORE topology amplification/suppression/jitter — those are derived adjustments, not
+    // part of the §16 subsignal itself. Guarded so a tap fault can NEVER break routing, same
+    // pattern as the KRYL-1010 observation tap below.
+    try { events.forEach(e => appendSubsignal(e)); } catch { /* substrate is best-effort */ }
+
     // WO-1855 — tag topology, then apply cluster amplifier to overlapping signals
     const tagged = events.map(e => ({
       ...e,
