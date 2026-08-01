@@ -94,7 +94,7 @@ export default function PetroTemplate({ petro, stations }) {
               background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
               boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
             }}>
-              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.34em', color: LIME }}>◆ {petro.scope} AVERAGE</div>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.34em', color: LIME }}>◆ ONE {petro.scope} AVERAGE</div>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
                 <span style={{ fontFamily: SERIF, fontSize: 24, color: BRT }}>{petro.area}</span>
                 <span style={{ fontFamily: MONO, fontSize: 30, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(petro.average).toFixed(2)}<span style={{ fontSize: 12, color: DIM, marginLeft: 4, textShadow: 'none' }}>/gal</span></span>
