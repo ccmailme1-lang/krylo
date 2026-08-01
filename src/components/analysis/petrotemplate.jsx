@@ -101,29 +101,29 @@ export default function PetroTemplate({ petro, stations }) {
                     match exists, the real area average — labeled AREA AVERAGE, never presented
                     as that station's own metered price. No name or price is invented. */}
                 {cards.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 196, flexShrink: 0, marginTop: 22, animation: 'gasgo-rise 340ms ease' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 176, flexShrink: 0, marginTop: 22, animation: 'gasgo-rise 340ms ease' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       {cards.map((c, i) => (
                         <div key={i} style={{
-                          position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 5.4,
-                          padding: '11.7px 13.5px', display: 'flex', flexDirection: 'column', gap: 5.85,
+                          position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 4.86,
+                          padding: '10.53px 12.15px', display: 'flex', flexDirection: 'column', gap: 5.265,
                           background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
                           boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
                         }}>
                           {top5Stations.length > 0 && (
                             <span style={{
-                              position: 'absolute', top: -8, left: -8, width: 16, height: 16, borderRadius: '50%',
-                              background: LIME, color: '#000', fontFamily: MONO, fontSize: 9, fontWeight: 700,
+                              position: 'absolute', top: -7.2, left: -7.2, width: 14.4, height: 14.4, borderRadius: '50%',
+                              background: LIME, color: '#000', fontFamily: MONO, fontSize: 8.1, fontWeight: 700,
                               display: 'flex', alignItems: 'center', justifyContent: 'center',
                               boxShadow: '0 0 0 3px #000, 0 0 8px rgba(102,255,0,0.5)',
                             }}>{i + 1}</span>
                           )}
-                          <div style={{ fontFamily: MONO, fontSize: 5.85, letterSpacing: '0.3em', color: LIME }}>{c.kicker}</div>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10.8 }}>
-                            <span style={{ fontFamily: SERIF, fontSize: 12.6, color: BRT }}>{c.label}</span>
-                            <span style={{ fontFamily: MONO, fontSize: 17.1, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(c.price).toFixed(2)}<span style={{ fontSize: 6.75, color: DIM, marginLeft: 3, textShadow: 'none' }}>/gal</span></span>
+                          <div style={{ fontFamily: MONO, fontSize: 5.265, letterSpacing: '0.3em', color: LIME }}>{c.kicker}</div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 9.72 }}>
+                            <span style={{ fontFamily: SERIF, fontSize: 11.34, color: BRT }}>{c.label}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 15.39, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(c.price).toFixed(2)}<span style={{ fontSize: 6.075, color: DIM, marginLeft: 3, textShadow: 'none' }}>/gal</span></span>
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 6.75, color: MID }}>{c.meta}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 6.075, color: MID }}>{c.meta}</div>
                         </div>
                       ))}
                     </div>
