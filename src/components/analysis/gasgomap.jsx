@@ -52,6 +52,18 @@ function pinIcon(isNearest) {
   });
 }
 
+// Numbered pin for the same nearest-5 stations the price cards render — 1:1, so card #n on
+// the right always points at pin #n on the map, same proximity ranking, no separate logic.
+function rankIcon(n) {
+  const size = 18;
+  return L.divIcon({
+    className: 'gasgo-rank-icon',
+    html: `<div style="width:${size}px;height:${size}px;border-radius:50%;background:${LIME};box-shadow:0 0 0 4px rgba(102,255,0,0.28);display:flex;align-items:center;justify-content:center;font-family:${MONO};font-size:9px;font-weight:700;color:#000;">${n}</div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+  });
+}
+
 // Exact-name match only (case/whitespace-insensitive) — a substring/fuzzy match risks pinning
 // a real price to the wrong station, which is the one thing this component must never do.
 function findPricedStation(stations, petro) {
@@ -68,7 +80,7 @@ function priceHudHtml(station, petro) {
   `;
 }
 
-export default function GasGoMap({ data, petro }) {
+export default function GasGoMap({ data, petro, rankedStations }) {
   const mapElRef = useRef(null);
   const mapRef   = useRef(null);
 
@@ -93,14 +105,20 @@ export default function GasGoMap({ data, petro }) {
 
     const nearest = data.stations.reduce((a, b) => (b.miles < a.miles ? b : a));
     const priced  = findPricedStation(data.stations, petro);
+    // Same station ids the price cards render, in the same order — pin #n on the map is
+    // exactly card #n in the stack, one shared ranking computed once in petrotemplate.jsx.
+    const rankOf = new Map((rankedStations ?? []).map((s, i) => [s.id, i + 1]));
 
     const boundsPoints = [[data.origin.lat, data.origin.lon]];
     for (const s of data.stations) {
-      const marker = L.marker([s.lat, s.lon], { icon: pinIcon(s.id === nearest.id) }).addTo(map);
+      const rank = rankOf.get(s.id);
+      const icon = rank ? rankIcon(rank) : pinIcon(s.id === nearest.id);
+      const marker = L.marker([s.lat, s.lon], { icon }).addTo(map);
+      const rankPrefix = rank ? `#${rank} · ` : '';
       if (priced && s.id === priced.id) {
         marker.bindTooltip(priceHudHtml(s, petro), { direction: 'top', className: 'gasgo-tooltip', opacity: 1 });
       } else {
-        marker.bindTooltip(`${s.name} · ${s.miles.toFixed(1)} mi`, { direction: 'top', className: 'gasgo-tooltip' });
+        marker.bindTooltip(`${rankPrefix}${s.name} · ${s.miles.toFixed(1)} mi`, { direction: 'top', className: 'gasgo-tooltip' });
       }
       boundsPoints.push([s.lat, s.lon]);
     }

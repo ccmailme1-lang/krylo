@@ -52,9 +52,92 @@ export default function PetroTemplate({ petro, stations }) {
 
       {/* body */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', padding: 26, display: 'flex', flexDirection: 'column', gap: 18 }}>
-        {/* KRYL-1076 — real station field (OSM). Renders whenever locations resolve, independent
-            of the price path, so a withheld price no longer leaves a blank card (TEST-010). */}
-        {stations?.stations?.length > 0 && <GasGoMap data={stations} petro={petro} />}
+        <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+          {(() => {
+            // Same nearest-5 list feeds both the map pins and the cards, in the same order,
+            // so card #1..#5 always match pin #1..#5 — one real proximity ranking, not two.
+            // Deduped by name (e.g. Overpass sometimes returns the same station as both a
+            // node and a way) so all 5 cards are 5 distinct real stations, not a repeat.
+            const top5Stations = (() => {
+              if (!(stations?.stations?.length > 0)) return [];
+              const sorted = [...stations.stations].sort((a, b) => a.miles - b.miles);
+              const seen = new Set();
+              const uniq = [];
+              for (const st of sorted) {
+                const key = String(st.name ?? '').trim().toLowerCase();
+                if (seen.has(key)) continue;
+                seen.add(key);
+                uniq.push(st);
+                if (uniq.length === 5) break;
+              }
+              return uniq;
+            })();
+            const norm = s => String(s ?? '').trim().toLowerCase();
+            const hasTop5Price = Array.isArray(petro?.top5) && petro.top5.length > 0;
+            const areaAvg = petro?.average ?? petro?.price;
+
+            const cards = top5Stations.length
+              ? top5Stations.map(st => {
+                  const matched = hasTop5Price ? petro.top5.find(s => norm(s.station) === norm(st.name)) : null;
+                  if (matched) {
+                    return { kicker: '◆ STATION AVERAGE', label: st.name, price: matched.price, meta: matched.address || `${st.miles.toFixed(1)} mi` };
+                  }
+                  if (areaAvg == null) return null;
+                  return { kicker: '◆ AREA AVERAGE', label: st.name, price: areaAvg, meta: `${st.miles.toFixed(1)} mi · no confirmed station price` };
+                }).filter(Boolean)
+              : (petro && !petro.withheld && areaAvg != null)
+                ? [{ kicker: `◆ ONE ${petro.scope ?? 'STATION'} AVERAGE`, label: petro.area ?? petro.station ?? '', price: areaAvg, meta: petro.type ? `${petro.type.toUpperCase()} · week of ${petro.period}` : (petro.address ?? '') }]
+                : [];
+
+            return (
+              <>
+                {/* KRYL-1076 — real station field (OSM). Renders whenever locations resolve, independent
+                    of the price path, so a withheld price no longer leaves a blank card (TEST-010). */}
+                {stations?.stations?.length > 0 && <GasGoMap data={stations} petro={petro} rankedStations={top5Stations} />}
+
+                {/* Price cards — real station NAMES + proximity ranking come from the same
+                    Overpass list the map pins use. Each card's number is either that exact
+                    station's real Apify/GasBuddy price (name match) or, when no confident
+                    match exists, the real area average — labeled AREA AVERAGE, never presented
+                    as that station's own metered price. No name or price is invented. */}
+                {cards.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 196, flexShrink: 0, marginTop: 22, animation: 'gasgo-rise 340ms ease' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {cards.map((c, i) => (
+                        <div key={i} style={{
+                          position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 5.4,
+                          padding: '11.7px 13.5px', display: 'flex', flexDirection: 'column', gap: 5.85,
+                          background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
+                          boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
+                        }}>
+                          {top5Stations.length > 0 && (
+                            <span style={{
+                              position: 'absolute', top: -8, left: -8, width: 16, height: 16, borderRadius: '50%',
+                              background: LIME, color: '#000', fontFamily: MONO, fontSize: 9, fontWeight: 700,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              boxShadow: '0 0 0 3px #000, 0 0 8px rgba(102,255,0,0.5)',
+                            }}>{i + 1}</span>
+                          )}
+                          <div style={{ fontFamily: MONO, fontSize: 5.85, letterSpacing: '0.3em', color: LIME }}>{c.kicker}</div>
+                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10.8 }}>
+                            <span style={{ fontFamily: SERIF, fontSize: 12.6, color: BRT }}>{c.label}</span>
+                            <span style={{ fontFamily: MONO, fontSize: 17.1, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(c.price).toFixed(2)}<span style={{ fontSize: 6.75, color: DIM, marginLeft: 3, textShadow: 'none' }}>/gal</span></span>
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: 6.75, color: MID }}>{c.meta}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>
+                      {hasTop5Price
+                        ? 'SOURCE: OSM (proximity + names) · APIFY/GASBUDDY (matched price) OR AREA AVERAGE'
+                        : 'SOURCE: EIA · WEEKLY REGIONAL AVERAGE — NOT A PER-STATION PRICE'}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
 
         {stationsPending && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, animation: 'gasgo-rise 300ms ease' }}>
@@ -81,28 +164,6 @@ export default function PetroTemplate({ petro, stations }) {
             </div>
             <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(102,255,0,0.55)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
               ◈ Live fuel feed activates with subscription
-            </div>
-          </div>
-        )}
-
-        {/* EIA regional average — the free floor (no station claim) */}
-        {petro && petro.kind === 'AVG' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16, animation: 'gasgo-rise 340ms ease' }}>
-            <div style={{
-              position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 6,
-              padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 460,
-              background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
-              boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
-            }}>
-              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.34em', color: LIME }}>◆ ONE {petro.scope} AVERAGE</div>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 14 }}>
-                <span style={{ fontFamily: SERIF, fontSize: 24, color: BRT }}>{petro.area}</span>
-                <span style={{ fontFamily: MONO, fontSize: 30, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(petro.average).toFixed(2)}<span style={{ fontSize: 12, color: DIM, marginLeft: 4, textShadow: 'none' }}>/gal</span></span>
-              </div>
-              <div style={{ fontFamily: MONO, fontSize: 11, color: MID }}>{(petro.type ?? '').toUpperCase()} · week of {petro.period}</div>
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.16em' }}>
-              SOURCE: EIA · WEEKLY REGIONAL AVERAGE — NOT A PER-STATION PRICE
             </div>
           </div>
         )}

@@ -62,6 +62,10 @@ function parseCheapest(data) {
 // Apify (johnvc/fuelprices) dataset items → cheapest station + a real aggregate computed
 // from the actual returned set (average/lowest are derived from what came back, never
 // invented — Apify doesn't supply a regional aggregate the way Zyla did).
+// Real response shape is flat (address_line1/address_locality/address_region), not nested —
+// confirmed via a live test call (2026-07-31), not assumed from the docs.
+const addrOf = s => [s.address_line1, s.address_locality, s.address_region].filter(Boolean).join(', ');
+
 function parseCheapestApify(items) {
   const arr = Array.isArray(items) ? items : [];
   const num = p => { const n = parseFloat(String(p).replace(/[^0-9.]/g, '')); return Number.isFinite(n) ? n : null; };
@@ -69,20 +73,26 @@ function parseCheapestApify(items) {
     .map(s => ({ ...s, _price: num(s?.price_cash ?? s?.price_credit) }))
     .filter(s => s.name && s._price != null);
   if (!stations.length) return null;
-  const cheapest = stations.reduce((a, b) => (b._price < a._price ? b : a));
+  const sorted = [...stations].sort((a, b) => a._price - b._price);
+  const cheapest = sorted[0];
   const prices  = stations.map(s => s._price);
   const average = prices.reduce((sum, p) => sum + p, 0) / prices.length;
   const lowest  = Math.min(...prices);
-  // Real response shape is flat (address_line1/address_locality/address_region), not nested —
-  // confirmed via a live test call (2026-07-31), not assumed from the docs.
-  const addrParts = [cheapest.address_line1, cheapest.address_locality, cheapest.address_region].filter(Boolean);
+  // Cards render from this — real stations only, never padded. If the feed returns fewer
+  // than 5 priced stations, top5 is shorter than 5 and the card stack renders that many.
+  const top5 = sorted.slice(0, 5).map(s => ({
+    station: s.name,
+    address: addrOf(s),
+    price:   s._price.toFixed(2),
+  }));
   return {
     station:  cheapest.name,
-    address:  addrParts.join(', '),
+    address:  addrOf(cheapest),
     price:    cheapest._price.toFixed(2),
     average:  average.toFixed(2),
     lowest:   lowest.toFixed(2),
     currency: 'USD',
+    top5,
   };
 }
 
