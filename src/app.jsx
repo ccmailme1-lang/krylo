@@ -694,10 +694,10 @@ export default function App() {
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
   useEffect(() => {
-    if (!surfaceActivated) { setVisorReady(false); return; }
+    if (navMode !== 'surface') { setVisorReady(false); return; }
     const t = setTimeout(() => setVisorReady(true), 540);
     return () => clearTimeout(t);
-  }, [surfaceActivated]);
+  }, [navMode]);
   const [analysisPage, setAnalysisPage] = useState(0);
   const [analysisQuery, setAnalysisQuery] = useState('');
   const [searchHistory, setSearchHistory] = useState([]);
