@@ -1,0 +1,11 @@
+Summary,Issue Type,Description,Labels
+"Relationship Admission Contract",Task,"Contract document implementing KRYL-1133 (RKM Genealogy Admission Policy). Defines exact data shapes and semantic rules the policy governs -- not an implementation WO, no code, no JSON Schema, no runtime.
+
+KEY CONTENT: decision enum (PROPOSED/VALIDATED/REJECTED/CHALLENGED/SUPERSEDED, matches policy exactly) -- relationshipOrigin enum (OBSERVED/INFERRED/DECLARED) -- RelationshipProposal shape (no confidence field, no tier field) -- EvidenceReference shape (evidenceId, uri/hash, accessedAt -- records when KRYLO accessed the reference, not when the fact became true) -- AdmissionDecision shape (append-only) -- supersession semantics (new record references old, never mutates it; active graph excludes superseded records but never deletes them) -- 7 invariants including new I7 idempotency (normalized comparison, evidence set not sequence).
+
+EXPLICITLY OUT OF SCOPE (deferred to implementation WO): JSON Schema generation, RelationshipTypePolicy registration mechanics, compliance test suite. Ledger dependency (AdmissionDecision needs an append-only store; none exists; overlaps WO-2049 Truth Event Ledger) is flagged, not resolved here.
+
+FULL SPEC: specs/SPEC-relationship-admission-contract.md (this repo).
+DEPENDS ON: specs/SPEC-rkm-genealogy-admission-policy.md (KRYL-1133), specs/SPEC-rkm-genealogy-capability-gap-analysis.md.
+
+NEXT (only after this is ratified): implementation WO, which must reconcile the ledger dependency before AdmissionDecision persistence is built.",genealogy rkm admission-contract architecture route-dont-aggregate epistemic-boundary platform-framework

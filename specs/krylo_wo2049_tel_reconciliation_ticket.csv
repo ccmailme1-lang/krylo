@@ -1,0 +1,15 @@
+Summary,Issue Type,Description,Labels
+"WO-2049 Truth Event Ledger -- Capability Reconciliation & Gap Analysis",Task,"Analysis only. Answers the gating question before Relationship Admission implementation can proceed: does KRYLO need one shared authoritative event history substrate (Truth Event Ledger), or may domains maintain independent ones?
+
+WHY THIS EXISTS: Relationship Admission (KRYL-1133 + its Contract) needs an append-only, replayable history of RelationshipProposal/AdmissionDecision events. No such system exists in KRYLO today -- verified directly against source. Building a domain-specific Genealogy Ledger now would create parallel, incompatible histories, the exact failure mode this investigation chain exists to prevent.
+
+VERIFIED GAPS: convictionstore.js is browser-local sessionStorage, mutable -- not applicable. identitylineage.js is an in-memory pub/sub event bus for identity-kernel stability transitions (subscribe/dispatch/getHistory/clearHistory) -- real, live, but a different capability class entirely, not a weak ledger. No system in the codebase meets append-only + global-order + immutability together.
+
+12 capability requirements defined (append-only, immutability, global ordering, authority provenance, idempotency, etc.). 3 architectural options presented (Universal TEL / Domain-Scoped / Hybrid) with an evaluation matrix -- no option is selected in this document. 6 open decision questions (DQ-1 through DQ-6), with DQ-1 (shared vs domain-independent history) as the gating decision for everything downstream.
+
+TWO INVARIANTS LOCKED: TEL-INV-001 (no domain-specific authoritative history mechanism may be created while TEL scope is undecided, if it would overlap TEL responsibilities) and TEL-INV-002 (a TEL event is an accepted transition/decision, never raw observations -- discovery data stays owned by its originating domain).
+
+FULL SPEC: specs/SPEC-wo2049-tel-capability-reconciliation.md (this repo).
+DEPENDS ON / REQUIRED BY: specs/SPEC-rkm-genealogy-admission-policy.md (KRYL-1133), specs/SPEC-relationship-admission-contract.md.
+
+NEXT: governance session to resolve DQ-1. No ledger engine selection, no schema, no implementation until then.",tel truth-event-ledger genealogy admission-policy architecture platform-framework epistemic-boundary
