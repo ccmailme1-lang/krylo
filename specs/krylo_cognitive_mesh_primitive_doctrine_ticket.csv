@@ -1,0 +1,19 @@
+Summary,Issue Type,Description,Labels
+"Cognitive Mesh -- Primitive Doctrine & Formal Core (v0.4)",Task,"Architecture candidate, frozen for reconciliation. NOT an implementation WO -- no runtime, no code, no RFC may proceed until a Boundary Reconciliation doc (not yet written) resolves open gaps.
+
+CORE MODEL: Cognitive Primitive (CP) -- a bounded transformation unit, not an agent. Perception (raw->evidence), Proposal (evidence->relationship proposal), No-Self-Truth (never maps evidence directly to Truth), Bounded State. Prevents CPs from becoming mini-LLMs or autonomous decision-makers.
+
+FOUR-OBJECT CHAIN (do not collapse): Observation -> Evidence -> Relationship Proposal -> Admission Decision -> Runtime Edge -> (optional) RKM Genealogy. Prevents the classic AI-architecture failure of collapsing detected=believed=stored=truth.
+
+KEY BOUNDARY: Live Mesh edges are temporary cognition infrastructure, NOT truth claims. A mesh edge can exist, be used, and expire without ever becoming RKM genealogy -- that's healthy. Only relationships passing genealogy admission (KRYL-1133) enter durable memory.
+
+NAMING COLLISION RESOLVED: earlier drafts used 'Cell' -- collided with cifengine.js's existing parentCell/childCell/allCells vocabulary (WO-2053, CI-F Engine, a different concept). Renamed to Cognitive Primitive/CP. Verified no collision exists in the codebase for either name.
+
+ADMISSION DECISION SET: VALIDATED/REJECTED/PENDING/CHALLENGED/SUPERSEDED -- matches KRYL-1133 exactly. SUPERSEDED routes through TEL lifecycle event first, materializes into RKM only via a validated genealogy admission event -- never archived to RKM directly (this was a real bug in an earlier draft, corrected).
+
+7 OPEN GAPS block implementation: GAP-002 connector placement (HIGH), GAP-003 coherence metric (MEDIUM), GAP-004 governance evolution (HIGH), GAP-005 security model (MEDIUM), GAP-006 primitive identity/lineage (HIGH), GAP-007 relationship scope semantics (HIGH -- determines whether the mesh can only connect CP<->CP or also CP<->Formation/RKM Object, an ontology question that sets the expressive ceiling of the whole model).
+
+FULL SPEC: specs/SPEC-cognitive-mesh-primitive-doctrine.md (this repo).
+DEPENDS ON: specs/SPEC-rkm-genealogy-admission-policy.md (KRYL-1133), specs/SPEC-relationship-admission-contract.md, specs/SPEC-wo2049-tel-capability-reconciliation.md (KRYL-1134).
+
+NEXT (not yet written): Boundary Reconciliation doc resolving GAP-002/004/006/007 against the existing Connector Layer, CI-F lineage structures, RKM genealogy, and TEL.",cognitive-mesh architecture platform-framework epistemic-boundary genealogy mining

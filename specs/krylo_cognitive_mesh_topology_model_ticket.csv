@@ -1,0 +1,19 @@
+Summary,Issue Type,Description,Labels
+"Cognitive Mesh -- Relationship Topology Model (v0.1)",Task,"Draft architecture specification, analysis/normative-model level only. No API, transport, queue, or implementation decisions. Depends on the Cognitive Mesh Primitive Doctrine and the genealogy admission chain (KRYL-1133).
+
+CORE PRINCIPLE: a Cognitive Mesh is defined by the quality and evolution of relationships between Cells (Cognitive Primitives), not by how many exist. The fundamental unit of intelligence is the validated relationship pathway, not the primitive itself.
+
+5 RELATIONSHIP CLASSES defined: Perceptual (high-frequency, low commitment), Interpretive (contextual, more governed), Memory (highest persistence, connects to RKM), Contradiction (disagreement is a valid state, not failure), Causal (highest admission burden).
+
+KEY BOUNDARY (same as the Primitive Doctrine): a relationship inside the Mesh does not automatically become RKM genealogy -- only relationships passing genealogy admission may enter durable memory. This keeps the Mesh from becoming a second, competing truth store.
+
+5 GOVERNANCE RULES (T1-T5): no ungoverned edges, no relationship implies truth (only 'currently admitted'), relationships have memory (removed != erased), complexity must earn existence (no topology growth without demonstrated increased coherence), absence is valid (direct application of the existing Absence-Is-Signal doctrine).
+
+NECKLACE concept: an emergent cluster of validated relationships -- explicitly NOT created by design/workflow, only emerges through repeated successful admission. 4 failure modes named (Relationship Explosion, Cognitive Isolation, Echo Formation, Frozen Topology) with mitigations.
+
+TERMINOLOGY NOTE: this document predates the Cell -> Cognitive Primitive (CP) rename made in the Primitive Doctrine v0.4 (naming collision with cifengine.js). Not yet reconciled in this document's prose -- flagged for the next revision.
+
+FULL SPEC: specs/SPEC-cognitive-mesh-relationship-topology-model.md (this repo).
+DEPENDS ON: specs/SPEC-cognitive-mesh-primitive-doctrine.md, specs/SPEC-rkm-genealogy-admission-policy.md (KRYL-1133), specs/SPEC-relationship-admission-contract.md.
+
+5 open questions unresolved (explicit relationship domains vs emergent, neighbor discovery without uncontrolled connectivity, Necklace maintenance threshold, human-required admission cases, whether topology itself can become an RKM object).",cognitive-mesh topology architecture platform-framework epistemic-boundary genealogy mining
