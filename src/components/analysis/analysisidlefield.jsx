@@ -760,7 +760,19 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const playRef           = useRef(null);
 
   // Derived
-  const rankedSituations = useMemo(() => sortedSituations(SITUATIONS), [activeSituation]); // re-rank after each selection
+  // Domain-relevant situations float to the front when a domain pill is already selected —
+  // stable partition (relative order within each group unchanged), using the existing
+  // LENS_DOMAIN_MAP data. No new taxonomy; falls back to the plain usage-ranked list when
+  // no domain is selected, or when a domain (e.g. TECHNOLOGY/MEDIA/OWNERSHIP) has zero
+  // situations mapped to it.
+  const rankedSituations = useMemo(() => {
+    const base = sortedSituations(SITUATIONS); // re-rank after each selection
+    if (!selectedDomains.length) return base;
+    const isRelevant = s => (LENS_DOMAIN_MAP[s.lens] ?? []).some(d => selectedDomains.includes(d));
+    const relevant = base.filter(isRelevant);
+    if (!relevant.length) return base;
+    return [...relevant, ...base.filter(s => !isRelevant(s))];
+  }, [activeSituation, selectedDomains]);
   const isLive        = history.length === 0 || currentIndex >= history.length - 1;
   const activeLens    = activeSituation?.lens ?? null;
   const canExecute    = !!activeLens;
