@@ -20,6 +20,7 @@
 //   Accumulators reset per-lever after adjustment to prevent stale evidence compounding.
 
 import { RBCS_INVARIANT_KEYS, RBCS_INVARIANT_VERSION } from './rbcsengine.js';
+import { processOutcomes } from './feedbackengine.js';
 
 // ── Calibratable levers (exhaustive list — nothing else may be adjusted) ─────
 
@@ -188,6 +189,27 @@ export function applyLearningEvents(events) {
     skippedEvents:  events.length - eligible.length,
     totalAdjusted:  adjustments.length,
   };
+}
+
+/**
+ * applyObservedOutcomes — the feedback loop, wired: ObservedOutcome[] straight through
+ * feedbackengine's processOutcomes() into this engine's applyLearningEvents(), in one call.
+ *
+ * @param {object[]} outcomes — ObservedOutcome[] (see feedbackengine.js processOutcomes() for schema)
+ * @returns {object}          — { feedback: FeedbackOutput, calibration: CalibrationOutput }
+ *
+ * This is the two engines chained exactly as WO-2062's own header already declared
+ * ("Consumes LearningEvent[] from feedbackengine") — no new logic, no new boundary.
+ * Does NOT resolve where ObservedOutcome[] comes from live: its documented schema traces to
+ * ExecutionRecord (WO-2060, executionengine.js), which is itself not wired into the live path.
+ * pathstore.js (WO-1869) has real live outcome data but is explicitly out of scope per
+ * feedbackengine.js's own boundary comment ("WO-1869 is NOT fed here — distinct systems") —
+ * do not pass pathstore records to this function without resolving that boundary first.
+ */
+export function applyObservedOutcomes(outcomes) {
+  const feedback    = processOutcomes(outcomes);
+  const calibration = applyLearningEvents(feedback.events);
+  return { feedback, calibration };
 }
 
 // ── KRYL-981 — Domain Profile enforcement (Perception-as-a-Service boundary) ───
