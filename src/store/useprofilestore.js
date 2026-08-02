@@ -10,11 +10,11 @@ const KEY = 'krylo_active_tester_v1';
 // activated case-by-case — flip active:true for an account when you hand it out.
 export const TEST_PROFILES = Object.freeze([
   { id: 'xs', name: 'Founder', active: true }, // always on — never locks the Founder out
-  { id: 't01', name: 'Tester 01', active: true },
-  { id: 't02', name: 'Tester 02', active: true },
-  { id: 't03', name: 'Tester 03', active: true },
-  { id: 't04', name: 'Tester 04', active: true },
-  { id: 't05', name: 'Tester 05', active: true },
+  { id: 't01', name: 'Tester 01', active: false },
+  { id: 't02', name: 'Tester 02', active: false },
+  { id: 't03', name: 'Tester 03', active: false },
+  { id: 't04', name: 'Tester 04', active: false },
+  { id: 't05', name: 'Tester 05', active: false },
   { id: 't06', name: 'Tester 06', active: false },
   { id: 't07', name: 'Tester 07', active: false },
   { id: 't08', name: 'Tester 08', active: false },

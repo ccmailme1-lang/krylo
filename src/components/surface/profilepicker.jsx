@@ -29,6 +29,16 @@ export default function ProfilePicker() {
     }
   }, [activeId, setActive]);
 
+  // KRYL — enforce revocation. .active was previously only checked at the moment of sign-in;
+  // once activeId was set in localStorage it was trusted forever, so flipping active:false and
+  // deploying never actually logged out anyone already signed in. Re-check on every mount
+  // (app load / reload / tab reopen) and kick back to the code gate if no longer active.
+  useEffect(() => {
+    if (activeId && !valid(activeId)) clear();
+  }, [activeId, clear]);
+
+  if (activeId && !valid(activeId)) return null; // revoked — render nothing this pass, effect above clears it
+
   // Signed-in badge removed per Founder — no bottom-left "NAME · switch" indicator.
   // Sign-in gate below is unchanged; session/link sign-in still works.
   if (activeId) return null;
