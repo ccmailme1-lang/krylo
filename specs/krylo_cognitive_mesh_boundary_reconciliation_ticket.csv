@@ -1,0 +1,17 @@
+Summary,Issue Type,Description,Labels
+"Cognitive Mesh -- Boundary Reconciliation (KRYL-CF-006A)",Task,"Boundary decision draft, not implementation. Satisfies the mandate in the Cognitive Mesh Primitive Doctrine (KRYL-1136): no implementation RFC may proceed until this resolves GAP-002/004/006/007. Every recommendation is grounded in a pattern already live in the codebase, none picked arbitrarily -- all pending Founder ratification.
+
+GAP-002 Connector Placement -- RECOMMENDED: connectors stay upstream as evidence producers, not a Cognitive Primitive subtype. Grounded in edgar8kconnector.js's actual live behavior (ingestion/translation/discovery, no proposal-generation loop).
+
+GAP-004 Governance Evolution -- RECOMMENDED: static, versioned constitution, never self-rewriting. Grounded in calibrationengine.js's (WO-2062) existing split -- parameters/floors may be tuned, rule logic/structure never mutates. A self-rewriting rule engine would also violate the Primitive Doctrine's own No-Self-Truth axiom one level up.
+
+GAP-006 Primitive Identity -- RECOMMENDED: fork/retire with lineage, reusing rkmstore.js's existing supersedeObject() model exactly (successor inherits identityId+genealogy, old id retained as history) rather than inventing a second identity system.
+
+GAP-007 Relationship Scope -- RECOMMENDED: start CP<->CP only for v1; CP<->Evidence/Formation/RKM-Entity disabled pending demonstrated need. Direct re-application of KRYL-1133's own Gate-0 policy (causal memory must be earned, not defaulted) to relationship scope instead of relationship type.
+
+OUTCOME IF RATIFIED: KRYL-1137 (Topology Model) becomes an accepted baseline rather than a speculative model, and an Implementation RFC / Reference Runtime becomes possible without the runtime accidentally choosing architecture it was never authorized to choose.
+
+FULL SPEC: specs/SPEC-cognitive-mesh-boundary-reconciliation.md (this repo).
+DEPENDS ON: specs/SPEC-cognitive-mesh-primitive-doctrine.md (KRYL-1136), specs/SPEC-cognitive-mesh-relationship-topology-model.md (KRYL-1137), specs/SPEC-rkm-genealogy-admission-policy.md (KRYL-1133), specs/SPEC-wo2049-tel-capability-reconciliation.md (KRYL-1134).
+
+NEXT: Founder ratifies (accepts/rejects/amends) each of the 4 recommendations independently. Only then does the mandate clear for an Implementation RFC.",cognitive-mesh boundary-reconciliation architecture platform-framework genealogy mining
