@@ -1,0 +1,13 @@
+Summary,Issue Type,Description,Labels
+"RKM Genealogy Admission Policy",Task,"Policy document, not an implementation WO. Defines the authority boundary for how a relationship claim (causedBy/causes/dependsOn/enables/derivedFrom) may become part of RKM's active genealogy -- Discovery may propose, Admission (higher-trust, rule-based, never score-based) must decide, RKM stores only VALIDATED relationships.
+
+WHY THIS EXISTS: the nine Platform Framework engines (CI-F, CI-R, RBCS, LFOS, IB, Decision, Execution, Feedback, Calibration) were found built but orphaned -- zero live import path. Tracing why CI-F/LFOS specifically couldn't function even if wired in led to rkmstore.js: its genealogy contract already exists and is already live (edgar8kconnector.js writes real RKM objects in production today), but every object gets genealogy: {} -- empty. The gap was never missing code. It was missing definition of who is allowed to populate that field, and under what evidence standard.
+
+KEY DECISIONS LOCKED: canonical vocabulary (admissionState vs operationalStatus, kept orthogonal) -- no generic confidence field on proposals -- rule evaluation is PASS/FAIL/ESCALATE, never weighted-score aggregation -- Gate-0 relationship-type policy (derivedFrom/dependsOn enabled first, causes/causedBy/enables start disabled -- causal memory must be earned) -- 6 invariants including no self-validation and type-specific rule semantics.
+
+OPEN DEPENDENCY (not resolved by this policy): AdmissionDecision events need an append-only store. None exists in KRYLO today -- verified this session. CLAUDE.md already names this exact gap as WO-2049 Truth Event Ledger (NEEDS SPEC). This policy may be the first concrete consumer that defines WO-2049's requirements, rather than a system waiting on it -- but the two must be reconciled into one system, never built as parallel ledgers.
+
+FULL SPEC: specs/SPEC-rkm-genealogy-admission-policy.md (this repo).
+DEPENDS ON: specs/SPEC-rkm-genealogy-capability-gap-analysis.md.
+
+NEXT ARTIFACT (only after this is ratified): Relationship Admission Contract. No implementation until then.",genealogy rkm admission-policy architecture route-dont-aggregate epistemic-boundary platform-framework
