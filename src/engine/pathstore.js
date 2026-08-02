@@ -118,6 +118,46 @@ export function getLRPrior({ domain, stateLabel, lens }) {
 
 export function getAllRecords() { return load(); }
 
+// ── Bridge to calibrationengine.js (WO-2062) — adapter, not a coupling ─────────
+// pathstore.js (WO-1869, path memory) and feedbackengine.js (WO-2061) are declared
+// distinct systems — feedbackengine's own header says path memory "is NOT fed here."
+// This function keeps that true: it lives in pathstore, translates pathstore's own
+// records into the ObservedOutcome shape feedbackengine.processOutcomes() expects,
+// and neither engine imports the other. The caller wires the two together.
+//
+// Mapping notes (no fabrication — every field is either real data or an honest null):
+//   recordId    → null. No ExecutionRecord exists (executionengine.js is orphaned);
+//                 claiming a trace link that doesn't exist would be worse than omitting it.
+//   actionType  → omitted. Path-memory records carry no COMMIT/ALERT/MONITOR/EXPORT
+//                 concept. feedbackengine.selectLever() already has an honest default
+//                 for an unmatched actionType: RBCS_DISCARD_THRESHOLD.
+//   N           → count of OTHER attributed records sharing the same routeKey — the
+//                 same real group-count getLRPrior() already computes, reused rather
+//                 than invented. This is what lets feedbackengine's own N>=3 withhold
+//                 gate see genuine accumulated evidence instead of N=1 per record.
+export function toObservedOutcomes() {
+  const records    = load();
+  const attributed = records.filter(r => r.followed !== 'none' && r.lr !== null);
+
+  const nByRouteKey = new Map();
+  for (const r of attributed) {
+    nByRouteKey.set(r.routeKey, (nByRouteKey.get(r.routeKey) ?? 0) + 1);
+  }
+
+  return attributed.map(r => ({
+    outcomeId:       r.id,
+    recordId:        null,
+    convictionId:    r.convictionId,
+    branchId:        null,
+    sourceCI:        null,
+    actualScore:     r.observedValue,
+    projectedScore:  r.projectedValue,
+    attributionConf: r.attributionConfidence,
+    N:               nByRouteKey.get(r.routeKey),
+    observedAt:      r.outcomeLoggedAt,
+  }));
+}
+
 // getLRPriorByKey — like getLRPrior but accepts a pre-built route key.
 // Used by structuralconfirmation.js (WO-2005B) for structural composition keys.
 export function getLRPriorByKey(key) {
