@@ -46,6 +46,23 @@ enough structure to differentiate" is not a truth engine.** DISCARD here is not 
 it is the mechanism correctly exposing the current boundary of what it knows, which is exactly
 what §22 (absence-is-signal) requires of every layer in this system, CI-R/RBCS included.
 
+**The real, implemented tier system** (`rbcsengine.js`'s `classifyTier()` / `RBCS_THRESHOLDS` —
+not a proposed model, this is what runs today):
+
+| RBCS tier | Threshold | Meaning |
+|---|---:|---|
+| DISCARD | < 0.2 | Insufficient structural support; do not carry forward |
+| MONITOR | 0.2–0.5 | Weak/moderate signal requiring observation |
+| CANDIDATE | 0.5–0.75 | Meaningful structural support; eligible for consideration |
+| PRIORITY | ≥ 0.75 | Strong structural support |
+
+CI-R controls authorization (does this branch have enough evidence integrity to exist at all).
+RBCS classifies what CI-R already admitted into these four bands. The current live observation
+is specifically: 50 real executions, all scoring 0.0736, all classified DISCARD, due to
+insufficient structural enrichment from the current evidence source — not a defect in either
+layer. Any future higher-order decision vocabulary (e.g., ADVANCE/HOLD/ESCALATE) would sit above
+this table as a separate, not-yet-built layer — never presented as an alias for it.
+
 ## Supporting, independently real capabilities
 
 | Capability | Mechanism | Maturity / Verification |
