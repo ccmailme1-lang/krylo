@@ -79,14 +79,14 @@ const DOMAIN_CHIPS = [
 ];
 
 const DOMAIN_PRECURSORS = {
-  FINANCIAL:  ['RATE ENVIRONMENT', 'CREDIT SPREADS', 'M2 VELOCITY'],
-  MARKET:     ['EQUITY FLOW',      'VOLATILITY IDX', 'SECTOR ROTATION'],
-  LEGAL:      ['REGULATORY SHIFT', 'CASE VELOCITY',  'COMPLIANCE FLUX'],
-  HEALTH:     ['COVERAGE GAP',     'COST TRAJECTORY','ACCESS SIGNAL'],
-  CAREER:     ['LABOR PRESSURE',   'HIRE VELOCITY',  'WAGE FLUX'],
-  TECHNOLOGY: ['ADOPTION RATE',    'PATENT FLUX',    'DEPLOY SIGNAL'],
-  MEDIA:      ['NEWS VELOCITY',    'NARRATIVE SHIFT','MESSAGE SPEND'],
-  OWNERSHIP:  ['SUPPLY CONSTRAINT','CONTROL SHIFT',  'ASSET CONCENTRATION'],
+  FINANCIAL:  ['RATE ENVIRONMENT', 'CREDIT SPREADS', 'M2 VELOCITY', 'LIQUIDITY CONDITIONS', 'YIELD CURVE SHIFT', 'INFLATION EXPECTATIONS', 'CREDIT DEMAND', 'CAPITAL FLOWS'],
+  MARKET:     ['EQUITY FLOW', 'VOLATILITY IDX', 'SECTOR ROTATION', 'MOMENTUM SHIFT', 'VALUATION SPREAD', 'EARNINGS REVISION', 'SHORT INTEREST', 'OPTIONS SKEW'],
+  LEGAL:      ['REGULATORY SHIFT', 'CASE VELOCITY', 'COMPLIANCE FLUX', 'LITIGATION VOLUME', 'ENFORCEMENT ACTIVITY', 'POLICY DRIFT', 'PRECEDENT SHIFT', 'FILING VELOCITY'],
+  HEALTH:     ['COVERAGE GAP', 'COST TRAJECTORY', 'ACCESS SIGNAL', 'UTILIZATION RATE', 'PREMIUM DRIFT', 'PROVIDER SUPPLY', 'CLAIMS VELOCITY', 'POLICY EXPOSURE'],
+  CAREER:     ['LABOR PRESSURE', 'HIRE VELOCITY', 'WAGE FLUX', 'ATTRITION RATE', 'SKILL DEMAND', 'POSTING VELOCITY', 'REMOTE SHIFT', 'LAYOFF SIGNAL'],
+  TECHNOLOGY: ['ADOPTION RATE', 'PATENT FLUX', 'DEPLOY SIGNAL', 'R&D VELOCITY', 'PLATFORM SHIFT', 'COMPUTE DEMAND', 'INTEGRATION RATE', 'STACK MIGRATION'],
+  MEDIA:      ['NEWS VELOCITY', 'NARRATIVE SHIFT', 'MESSAGE SPEND', 'SENTIMENT DRIFT', 'COVERAGE DENSITY', 'AUDIENCE SHIFT', 'ENGAGEMENT VELOCITY', 'CHANNEL ROTATION'],
+  OWNERSHIP:  ['SUPPLY CONSTRAINT', 'CONTROL SHIFT', 'ASSET CONCENTRATION', 'TRANSFER VELOCITY', 'STAKE ROTATION', 'ACQUISITION FLOW', 'DILUTION SIGNAL', 'HOLDING PERIOD SHIFT'],
 };
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy — derived
@@ -1565,19 +1565,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 </div>
 
-                {/* ── TRENDING PRECURSORS ── */}
-                {selectedDomains[0] && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, minHeight: 22 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', flexShrink: 0 }}>TRENDING</span>
-                    {(DOMAIN_PRECURSORS[selectedDomains[0]] ?? []).map(p => (
-                      <span key={p} style={{
-                        fontFamily: MONO, fontSize: 8, color: 'rgba(102,255,0,0.5)',
-                        letterSpacing: '0.1em', padding: '2px 9px',
-                        border: '1px solid rgba(102,255,0,0.14)', borderRadius: 999,
-                      }}>{p}</span>
-                    ))}
-                  </div>
-                )}
 
                 {/* SES gauge pod removed — replaced by the world clocks */}
 
@@ -1680,11 +1667,19 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   ))}
                 </div>
 
-                {/* ── I'M FOCUSED ON ── */}
+                {/* ── TRENDING ── */}
                 <div style={{ marginTop: 20 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>I'M FOCUSED ON</div>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
                   <StaggeredChips
-                    chips={rankedSituations}
+                    chips={(() => {
+                      if (!selectedDomains.length) return [];
+                      // Balanced split across all selected domains — 8 total, divided evenly.
+                      // 1 domain -> 8 from it. 2 domains -> 4 each. 3 -> ~2-3 each. Etc.
+                      const perDomain = Math.max(1, Math.floor(8 / selectedDomains.length));
+                      return selectedDomains
+                        .flatMap(d => (DOMAIN_PRECURSORS[d] ?? []).slice(0, perDomain))
+                        .map(p => ({ lens: p, label: p }));
+                    })()}
                     selected={activeSituation?.lens}
                     onSelect={selectSituation}
                     getKey={s => s.lens}
