@@ -37,21 +37,12 @@ import { runMaerskSync }           from './engine/connectors/maerskconnector.js'
 // WO-2040 — USASpending NAICS sector capital flow
 import { runUsaspendingSync }        from './engine/connectors/usaspendingconnector.js';
 // WO-2046 — Capital Realization Connector (entity-level, query-gated)
-import { runCapitalRealizationSync } from './engine/connectors/capitalrealizationconnector.js';
+import { fireTopicConnectors } from './engine/topicconnectors.js';
 import { runFredSync } from './engine/connectors/fredconnector.js';
 // WO-2039 — Federal Signal Trio (data.gov)
 import { runFdaSync }              from './engine/connectors/fdaconnector.js';
 import { runFecSync }              from './engine/connectors/fecconnector.js';
 import { runCensusSync }           from './engine/connectors/censusconnector.js';
-// WO-2019 — topic connectors (fire on query submit)
-import { runGithubSync }           from './engine/connectors/githubconnector.js';
-import { runArxivSync }            from './engine/connectors/arxivconnector.js';
-import { runNpmSync }              from './engine/connectors/npmconnector.js';
-import { runPubmedSync }           from './engine/connectors/pubmedconnector.js';
-import { runOpenAlexSync }         from './engine/connectors/openalexconnector.js';
-import { runUsajobsSync }          from './engine/connectors/usajobsconnector.js';
-import { runGdeltSync }            from './engine/connectors/gdeltconnector.js';
-import { runRedditSync }           from './engine/connectors/redditconnector.js';
 import { runEdgar8KSync }          from './engine/connectors/edgar8kconnector.js';
 import { runEdgar8KSignalSync }    from './engine/connectors/edgar8ksignal.js';
 import { runEdgar8KEvidenceSync }  from './engine/connectors/edgar8kevidence.js';
@@ -1119,18 +1110,10 @@ export default function App() {
       setNavMode('surface');
       setSurfaceActivated(true);
       setSelection('technology');
-      const submitId = `submit-${Date.now()}`;
-      // WO-2019 topic connectors — fire on each query submit
-      traceConnector('github',   'TECHNOLOGY', submitId, () => runGithubSync(q));
-      traceConnector('arxiv',    'KNOWLEDGE',  submitId, () => runArxivSync(q));
-      traceConnector('npm',      'TECHNOLOGY', submitId, () => runNpmSync(q));
-      traceConnector('pubmed',   'KNOWLEDGE',  submitId, () => runPubmedSync(q));
-      traceConnector('openalex', 'KNOWLEDGE',  submitId, () => runOpenAlexSync(q));
-      traceConnector('usajobs',  'LABOR',      submitId, () => runUsajobsSync(q));
-      traceConnector('gdelt',    'MEDIA',      submitId, () => runGdeltSync(q));
-      traceConnector('reddit',   'MEDIA',      submitId, () => runRedditSync(q));
-      // WO-2046 — entity capital realization (fires only when query resolves a known entity)
-      traceConnector('capitalrealization', 'CAPITAL', submitId, () => runCapitalRealizationSync(q));
+      // WO-2019/2046 topic connectors — fire on each query submit. Single source of truth
+      // (src/engine/topicconnectors.js) shared with AnalysisIdleField's own search box, fixing
+      // the P1 bug where Analysis-tab queries never fired these connectors at all.
+      fireTopicConnectors(q);
     }
     window.addEventListener('message', onSubmit);
     return () => window.removeEventListener('message', onSubmit);

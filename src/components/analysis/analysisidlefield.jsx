@@ -25,6 +25,12 @@ import { transformIntentToConstraints } from '../../engine/baylogic.js';
 import { computeStructuralFriction }   from '../../engine/structuralfriction.js';
 import { trackLens, trackFloor, sortedSituations, topFloor, trackAdvanced, trackRules, deriveState } from '../../engine/cascadeusage.js';
 import { useDomainMetrics } from '../../hooks/useDomainMetrics.js';
+// KRYL-P1 — cone starvation fix. These "topic connectors" previously only fired on the
+// krylo-submit postMessage from the hero iframe (src/app.jsx) — a query submitted directly
+// from this Analysis pane's own search box never reached them, so any cone whose live data
+// depends on one of these (capital, technology, knowledge in particular) never populated for
+// that entry point. Wiring the same real calls here, not fabricating fallback data.
+import { fireTopicConnectors } from '../../engine/topicconnectors.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
@@ -1037,6 +1043,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       createSession(id, effectiveLens, seedQuery.trim(), tensor);
       setProcessing(false);
     }, 900);
+
+    // KRYL-P1 — fire the same real topic connectors the hero's krylo-submit path fires,
+    // so cone coverage (capital/technology/knowledge in particular) doesn't depend on
+    // which entry point the query came through.
+    fireTopicConnectors(seedQuery.trim());
   }
 
   function resetSession() {
@@ -1533,7 +1544,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
                 {/* ── CHOOSE A DOMAIN ── */}
                 <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
+                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     {DOMAIN_CHIPS.map(({ key, label, icon }, i) => {
                       const active   = selectedDomains.includes(key);
@@ -1645,7 +1656,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
                 {/* ── SIGNAL SCOPE ── */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', marginRight: 4, flexShrink: 0 }}>SIGNAL SCOPE</span>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', marginRight: 4, flexShrink: 0 }}>SIGNAL SCOPE</span>
                   {SIGNAL_SCOPE_OPTIONS.map(({ key, label }) => {
                     const active = signalScope === key;
                     return (
@@ -1658,7 +1669,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
                 {/* ── OUTPUT FILTERS ── */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 10 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.14)', letterSpacing: '0.28em', flexShrink: 0 }}>OUTPUT</span>
+                  <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', flexShrink: 0 }}>OUTPUT</span>
                   {OUTPUT_FILTERS_DEF.map(({ key, label }) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
                       <input type="checkbox" checked={outputFilters[key]} onChange={e => setOutputFilters(p => ({ ...p, [key]: e.target.checked }))} style={{ accentColor: LIME, width: 10, height: 10, cursor: 'pointer' }} />
@@ -1668,25 +1679,29 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 </div>
 
                 {/* ── TRENDING ── */}
-                <div style={{ marginTop: 20 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
-                  <StaggeredChips
-                    chips={(() => {
-                      if (!selectedDomains.length) return [];
-                      // Balanced split across all selected domains — 8 total, divided evenly.
-                      // 1 domain -> 8 from it. 2 domains -> 4 each. 3 -> ~2-3 each. Etc.
-                      const perDomain = Math.max(1, Math.floor(8 / selectedDomains.length));
-                      return selectedDomains
-                        .flatMap(d => (DOMAIN_PRECURSORS[d] ?? []).slice(0, perDomain))
-                        .map(p => ({ lens: p, label: p }));
-                    })()}
-                    selected={activeSituation?.lens}
-                    onSelect={selectSituation}
-                    getKey={s => s.lens}
-                    getLabel={s => s.label}
-                    isSelected={(s, sel) => s.lens === sel}
-                  />
-                </div>
+                {/* Whole section (label included) only renders once there's content — an
+                    empty "TRENDING" header with nothing under it reads as broken, not
+                    pending, same absence-handling as the rest of this UI. */}
+                {selectedDomains.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
+                    <StaggeredChips
+                      chips={(() => {
+                        // Balanced split across all selected domains — 8 total, divided evenly.
+                        // 1 domain -> 8 from it. 2 domains -> 4 each. 3 -> ~2-3 each. Etc.
+                        const perDomain = Math.max(1, Math.floor(8 / selectedDomains.length));
+                        return selectedDomains
+                          .flatMap(d => (DOMAIN_PRECURSORS[d] ?? []).slice(0, perDomain))
+                          .map(p => ({ lens: p, label: p }));
+                      })()}
+                      selected={activeSituation?.lens}
+                      onSelect={selectSituation}
+                      getKey={s => s.lens}
+                      getLabel={s => s.label}
+                      isSelected={(s, sel) => s.lens === sel}
+                    />
+                  </div>
+                )}
 
               </div>
 

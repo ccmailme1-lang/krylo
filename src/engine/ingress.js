@@ -13,7 +13,7 @@ export const SITUATIONS = [
   { label: 'STARTING OVER',        lens: 'RESTART'    },
   { label: 'HEALTH & COSTS',       lens: 'HEALTH'     },
   { label: 'BUILDING SOMETHING',   lens: 'SALES'      },
-  { label: 'NOT SURE YET',         lens: 'OPEN'       },
+  { label: 'JUST CURIOUS',         lens: 'OPEN'       },
   { label: 'REDUCING EXPENSES',    lens: 'EXPENSE'    },
 ];
 

@@ -25,7 +25,7 @@ const SITUATION_DOMAIN = {
   'STARTING OVER':        'TRANSITION',
   'HEALTH & COSTS':       'HEALTH',
   'BUILDING SOMETHING':   'SALES',
-  'NOT SURE YET':         'OPEN',
+  'JUST CURIOUS':         'OPEN',
 };
 
 // Query refinement sequences — context-aware nudges per domain.
