@@ -228,22 +228,32 @@ see git log / Jira KRYL project for history. This list is the only thing to read
                 WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
                            rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
                            edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — 2026-06-30 — ALL COMPLETE):
-                WO-2053  — CI-F Engine (Causal Expansion System) — COMPLETE (4551645). cifengine.js.
-                WO-2054  — CI-R Gate (Constitutional Validator) — COMPLETE (3e80848). cirgate.js.
-                WO-2055  — RBCS Scoring Engine — COMPLETE (c0cb08b). rbcsengine.js.
-                WO-2056  — LFOS Engine (Propagation Physics) — COMPLETE (e253d38). lfosengine.js.
-                WO-2057  — IB Collapse Engine — COMPLETE (becbb22). ibengine.js.
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§26):
+                "COMPLETE" below means code exists correctly (Maturity B). It does NOT mean wired
+                into the live app — re-audit found zero live callers for CI-R, RBCS, LFOS, IB,
+                Decision, Execution, Calibration, and Feedback's applyObservedOutcomes() bridge.
+                See specs/SPEC-the-evolution-built-vs-vision.md "2026-08-03 re-audit" for the full
+                trace. FIXED (additive, same day): CI-F→CI-R→RBCS now has a real call path via
+                src/engine/cipipelinerun.js, wired into app.jsx's EDGAR sync chain. Current status
+                of that segment: Maturity A, Verification B (behaviorally verified in a standalone
+                harness; not yet confirmed executing in the deployed app — see spec for the
+                remaining check). LFOS/IB/Decision/Execution/Calibration/Feedback are UNCHANGED —
+                still Maturity B, Verification L only, zero live callers.
+                WO-2053  — CI-F Engine (Causal Expansion System) — code COMPLETE (4551645). cifengine.js.
+                WO-2054  — CI-R Gate (Constitutional Validator) — code COMPLETE (3e80848). cirgate.js.
+                WO-2055  — RBCS Scoring Engine — code COMPLETE (c0cb08b). rbcsengine.js.
+                WO-2056  — LFOS Engine (Propagation Physics) — code COMPLETE (e253d38), UNWIRED. lfosengine.js.
+                WO-2057  — IB Collapse Engine — code COMPLETE (becbb22), UNWIRED. ibengine.js.
                            Filter(IB_SURVIVAL_FLOOR=0.30) → rank(collapsedScore) → cap(IB_TOP_N=10).
-                WO-2059  — Decision Framework — COMPLETE (ed62da7). decisionengine.js.
+                WO-2059  — Decision Framework — code COMPLETE (ed62da7), UNWIRED. decisionengine.js.
                            13 lens profiles. intentScore=collapsedScore×lensRelevanceScore.
                            LENS_RELEVANCE_FLOOR=0.40, DECISION_TOP_N=5.
-                WO-2060  — Action Execution Layer — COMPLETE (5703aaa). executionengine.js.
+                WO-2060  — Action Execution Layer — code COMPLETE (5703aaa), UNWIRED. executionengine.js.
                            SIMULATION|PARTIAL|LIVE. COMMIT_INTENT_FLOOR=0.30, ALERT_INTENT_FLOOR=0.15.
-                WO-2061  — Feedback / Learning Loop — COMPLETE (8ff751b). feedbackengine.js.
+                WO-2061  — Feedback / Learning Loop — code COMPLETE (8ff751b), UNWIRED. feedbackengine.js.
                            ObservedOutcome[] → LearningEvent[]. ATTRIBUTION_FLOOR=0.60, MIN_N=3.
                            Distinct from WO-1869 (path memory): calibrates params, not routes.
-                WO-2062  — System Calibration + Drift Correction — COMPLETE (da3255a). calibrationengine.js.
+                WO-2062  — System Calibration + Drift Correction — code COMPLETE (da3255a), UNWIRED. calibrationengine.js.
                            weightedDirection=Σ(sign×mag×N)/Σ(N). WEIGHT_FLOOR=5, DRIFT_THRESHOLD=0.20.
                            Adjusts 5 floors only. Immutable: ANCHOR_COVERAGE_FLOOR, RBCS weights, LFOS physics.
                 WO-2062  — System Calibration + Drift Correction — LOCKED (2026-06-30). BUILD-READY.
@@ -736,3 +746,89 @@ WIRING SEQUENCE:
     THIS RULE HAS NO EXCEPTIONS FOR URGENCY, DEBUGGING DIFFICULTY, OR "JUST THIS ONCE." If the
     existence/boolean pattern above cannot answer the question, the agent STOPS and asks the
     Founder to run the check himself, rather than finding a workaround that re-exposes the value.
+
+25. THREE-QUESTION GROUNDING PROTOCOL (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-03)
+
+    INCIDENT RECORD (2026-08-03): during an IP-meeting prep audit, the agent stated "Cognitive
+    Event Infrastructure — NOT BUILT — zero hits for any cognitive-event-log concept anywhere in
+    src/" and wrote this into a committed spec file. It was false. Real code implementing exactly
+    this concept already existed — src/engine/replayengine.js (WO-1700, replay(envelope) →
+    UISnapshot) and src/engine/causalos/provenance.js (WO-1336 L3, ProvenanceDAG) — under
+    different names than the ones searched for. Root cause: the agent searched only for the
+    literal strings "cognitive event" / "cognitiveEvent", found no match, and concluded the
+    CONCEPT didn't exist because the EXACT PHRASE didn't. Architectural concepts rarely have one
+    canonical name in a mature codebase. A narrow lexical search returning zero hits proves only
+    that the search terms are absent — never that the capability is absent.
+
+    RULE: every grounding/architecture-audit pass — "does X exist," "is Y built," any BUILT /
+    NOT BUILT / orphaned determination — MUST answer three distinct questions before a verdict is
+    stated, and MUST NOT collapse them into one:
+
+        1. LEXICAL SEARCH — "Does this exact term exist?"
+           (grep for the literal name/phrase used in the request or spec.)
+
+        2. CONCEPT SEARCH — "Does this capability exist under another implementation or name?"
+           (search for the underlying mechanism by function, not by the label — synonyms, prior
+           WO numbers, adjacent subsystems, related file names. A zero result on step 1 is not
+           evidence for step 2; it is only evidence that step 1 found nothing.)
+
+        3. BEHAVIORAL VERIFICATION — "Is this actually wired into the running system?"
+           (trace real import chains to a live mount point / call site — code existing on disk is
+           not the same as code executing. An orphaned file answers "does it exist" YES and
+           "is it live" NO — both halves must be stated, never just one.)
+
+    A verdict of NOT BUILT requires all three questions answered NO. A verdict of BUILT requires
+    all three answered YES. Anything in between (found in code, unconfirmed live; or found under
+    a different name than searched) is ARCHITECTURALLY DECOMPOSED / UNCONFIRMED — never rounded
+    up to BUILT or down to NOT BUILT for narrative convenience.
+
+    FAILURE MODE THIS PREVENTS: false negatives presented with false confidence in front of an
+    external audience (investors, patent counsel, technical diligence) — the exact opposite
+    failure mode from §24, but the same root cause: a shortcut mistaken for a completed check.
+
+26. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
+
+    §25 defines HOW to check a claim (three questions). This section defines HOW TO RECORD what
+    was found. It applies architecture-wide — to CLAUDE.md itself, every spec file, every WO
+    status line, every session handoff, and anything presented externally (IP counsel, investor
+    diligence, technical review) — not only to IP-meeting prep.
+
+    RULE: every architectural claim SHALL declare two independent, orthogonal axes. Never
+    collapse them into a single word like "COMPLETE," "BUILT," or "DONE" — those words hide
+    which axis is actually being claimed.
+
+    MATURITY (what exists):
+        A — Production implementation exists (code exists AND is wired into the live system)
+        B — Enabling implementation exists (a real primitive/mechanism exists; the composed,
+            named capability built from it does not)
+        C — Technical specification/contract exists (defined in a spec or doctrine; no
+            implementation)
+        D — Architectural vision (intent only; no contract, no implementation)
+
+    VERIFICATION (how thoroughly the claim above has actually been checked, mapped to §25's
+    three questions):
+        L — Lexically verified (exact term/name found)
+        C — Conceptually verified (capability found under a different name/implementation)
+        R — Runtime verified (traced a real import/call chain to a live mount point — it
+            executes as part of the running system)
+        B — Behaviorally verified (observed it actually produce correct output under real
+            execution — the strongest rung; code being wired is not the same as code being
+            proven correct)
+
+    NOTATION: state both axes together, always — e.g. "CI-R — Maturity: A, Verification: C
+    (pending R)." A claim with no Verification letter attached is not a claim, it's a guess.
+
+    RETROACTIVE RULE (the more important half): pre-existing "COMPLETE" labels anywhere in this
+    file (WO registries, the Platform Framework Sequence, any status block) are NOT
+    grandfathered. They were written before this doctrine existed and have not been classified
+    under it — not because they are probably wrong, but because "COMPLETE" was never a real
+    epistemic claim to begin with. They must not be cited to any external audience as evidence of
+    Runtime or Behaviorally verified status until re-audited under §25 and re-labeled under this
+    matrix. Until re-audited, treat every legacy "COMPLETE" as Maturity: A (unconfirmed),
+    Verification: unclassified.
+
+    FAILURE MODE THIS PREVENTS: conflating "code exists" with "code is proven correct in
+    production" — the exact gap that let past-session "COMPLETE" markers get cited as
+    demonstrated fact without ever being re-checked. The standard is no longer "someone
+    previously declared this complete" — it is "state both the implementation maturity and the
+    level of evidence supporting that claim."
