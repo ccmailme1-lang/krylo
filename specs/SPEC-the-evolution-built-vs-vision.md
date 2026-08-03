@@ -105,13 +105,32 @@ a call site. Built `src/engine/cipipelinerun.js`:
 error and produced a coherent result (1 branch admitted, score 0.0736 — correctly low, since a
 single isolated seed with no surrounding causal chain should score low, not because of a bug).
 
-**Current honest status:** CI-F/CI-R/RBCS chain — Maturity A, Verification B (behaviorally
-verified in a standalone harness against production-shaped data). **Not yet Verification R** —
-that requires confirming it executes inside the actually-deployed app (check
-`window.__KRYLO_CI_PIPELINE_RUNS__` in a live browser session after a real EDGAR sync cycle,
-post-deploy). Do not present this as fully Runtime-verified until that check happens.
+**Current honest status:** CI-F/CI-R/RBCS chain — Maturity A, **Verification R — confirmed
+2026-08-03**. Deployed, checked live: `window.__KRYLO_CI_PIPELINE_RUNS__` on krylo.org returned
+50 real entries (real `robj_...` RKM ids, branch counts 1–3), screenshotted directly from
+DevTools alongside the live app. This is the strongest verification level short of a full
+production test suite — genuinely executing in the deployed application, not asserted.
 LFOS/IB/Decision/Execution/Calibration/Feedback remain orphaned — this fix only closes the
 CI-F→CI-R→RBCS segment, not the whole chain.
+
+### Finding surfaced by the live data itself
+
+All 50 live-scored branches returned the identical score, 0.0736 — traced this to confirm it's
+correct math, not a bug: every real EDGAR-derived branch is single-hop (`hopDepth=1`), uses only
+a `DEPENDS_ON` edge, and never crosses domains or amplifies. Under `rbcsengine.js`'s formula,
+that shape forces D (divergence), C (cross-domain coupling), and A (amplification) to exactly 0
+for every branch — `computeD/C/A` all key off `AMPLIFIES`/`TRIGGERS` edges or `crossDomainCount`,
+neither of which the live EDGAR connector currently populates. T and V converge to the same value
+for structurally identical inputs. Identical inputs correctly produce identical outputs — not a
+formula defect.
+
+**The real, honest finding this exposes:** 0.0736 sits below RBCS's DISCARD threshold (0.2).
+**100% of RBCS-scored branches in production classify as DISCARD right now.** Not because the
+gate is broken — because the live EDGAR connector doesn't yet populate the structural richness
+(domain field, amplification/trigger edges, cross-domain reach) RBCS needs to differentiate
+anything. The mechanism is real and correct; the current live data feeding it is too structurally
+thin to produce a non-trivial score. This is worth stating in the meeting exactly this way if
+asked "does it produce real scores" — yes, correctly, and here's why they're all low right now.
 
 ## Adaptive decay — a proven template, not yet applied here
 
