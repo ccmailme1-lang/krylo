@@ -26,8 +26,9 @@ This is not a design goal — it is a running mechanism, as of today:
 
 **Maturity: A. Verification: R — confirmed 2026-08-03.** Deployed to krylo.org and checked live:
 the console output (`window.__KRYLO_CI_PIPELINE_RUNS__`) shows 50 real executions against real
-RKM data, screenshotted directly from DevTools. This is not a claim — it is the strongest
-verification level short of a full production test suite.
+RKM data, screenshotted directly from DevTools. This confirms runtime execution in the deployed
+environment. It does not replace a broader production validation suite, but it establishes that
+the mechanism is operating against live application data.
 
 **What the live data itself revealed, worth stating precisely in the room:** all 50 branches
 scored the identical 0.0736 — traced this to confirm it's correct math, not a bug. Every real
