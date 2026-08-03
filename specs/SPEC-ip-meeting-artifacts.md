@@ -41,6 +41,11 @@ Say exactly this if asked "does it produce real scores": *"Yes, correctly — an
 why every one is low right now, which is itself evidence the scoring logic is doing real work,
 not returning a canned number."*
 
+The deeper point, and the one worth landing deliberately: **a truth engine that cannot say "not
+enough structure to differentiate" is not a truth engine.** DISCARD here is not failure output —
+it is the mechanism correctly exposing the current boundary of what it knows, which is exactly
+what §22 (absence-is-signal) requires of every layer in this system, CI-R/RBCS included.
+
 ## Supporting, independently real capabilities
 
 | Capability | Mechanism | Maturity / Verification |
