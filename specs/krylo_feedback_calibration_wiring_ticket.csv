@@ -1,0 +1,20 @@
+Summary,Issue Type,Description,Labels
+"Wire Feedback/Calibration Loop Live + Detection-Time Historical Pattern Surfacing",Task,"Scope: extends WO-1869 (pathstore.js, COMPLETE), WO-2061 (feedbackengine.js, built), WO-2062 (calibrationengine.js, built), and SS19 (Closed-Loop Leverage Principle, LOCKED). This is explicitly NOT a new architecture -- filed instead of a proposed 'Symbiotic Structural Intelligence Feedback Loop' epic that was found, on verification, to substantially duplicate all four of the above under different vocabulary.
+
+VERIFIED 2026-08-04 (direct code read, not assumption):
+- pathstore.js is real: logEmission, logOutcome, getLRPrior, toObservedOutcomes all present.
+- feedbackengine.js is real: ATTRIBUTION_FLOOR=0.60, MIN_N_FOR_DIRECTION=3, processOutcomes present.
+- calibrationengine.js is real: consumes LearningEvent[] from feedbackengine, applyLearningEvents present, adjusts parameter floors.
+- cirgate.js header literally reads 'Constitutional Validator'.
+- SS19 in CLAUDE.md still contains the exact closed-loop chain: Signal -> Synthesis -> Happy Path -> Decision -> Export -> OUTCOME -> OUTCOME ATTRIBUTION -> PATH MEMORY -> ROUTE RANKING -> LEVERAGE DISCOVERY.
+
+PROBLEM: same class of gap as the CI-F/CI-R/RBCS chain fixed earlier this session (see specs/SPEC-the-evolution-built-vs-vision.md) -- feedbackengine.js and calibrationengine.js are real, correct, built code with confirmed callers only from perceptionprofile.js, which itself has zero live callers anywhere. The whole chain is orphaned from the live app, same pattern, not yet re-verified tonight but flagged as highly likely still true and should be the first task here (re-run the same import-graph trace used for CI-F/CI-R/RBCS before assuming the orphan status is unchanged).
+
+SCOPE:
+1. Re-verify current wiring status of feedbackengine.js/calibrationengine.js/pathstore.js (do not assume last session's finding still holds without re-checking).
+2. If still orphaned: wire a real live call path, additive only, same discipline as the CI-F/CI-R/RBCS fix -- no existing gate touched, behavioral verification against production-shaped data before claiming success, then Runtime verification (live browser check) before claiming that.
+3. New piece, not covered by existing code: detection-time historical-pattern surfacing. SS19 describes 'PATH MEMORY -> ROUTE RANKING -> LEVERAGE DISCOVERY' -- matching a new path to history via route similarity. Today pathstore.js's getLRPrior surfaces a prior AT EMISSION time (after a decision is made). The new piece is surfacing historical route similarity DURING detection/formation-recognition, before a decision is emitted -- extends the existing pattern, does not replace it.
+
+NON-GOALS: no new engine, no new architecture, no autonomous learning beyond what feedbackengine.js/calibrationengine.js already gate (ATTRIBUTION_FLOOR, MIN_N). Do not reintroduce SSIFL's broader framing -- this ticket is intentionally the narrow, real subset of it.
+
+Governance: any wiring work here must respect CI-R boundaries and the existing ATTRIBUTION_FLOOR/MIN_N gates in feedbackengine.js -- do not loosen them as part of this work.",feedback-loop calibration wiring path-memory route-ranking wo-1869 wo-2061 wo-2062
