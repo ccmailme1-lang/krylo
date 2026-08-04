@@ -1,0 +1,27 @@
+Summary,Issue Type,Description,Labels
+"Lens/Surface Charting Overhaul -- Analysis, Planning, Execution",Task,"Reference: Portfolio Visualizer (portfoliovisualizer.com) identified as a strong analog for how to present dense, credible analytics. Not to be copied directly -- the pattern to extract is the underlying taxonomy of analytical questions (what exists / how is it related / why did it happen / what is changing / what could happen / what should be examined), each mapped to a reusable visualization primitive (correlation matrix, rolling metrics, factor exposure, etc.) applied to different datasets, rather than one bespoke chart per page.
+
+CURRENT STATE: Surface page's Lens-section visuals (LEVERAGE TOWERS, ATTENTION STACK, FIELD CONVERGENCE in src/components/surface/leveragetowers.jsx and attentionstack.jsx) use large KPI tiles, basic bar/line charts, and sparse visual hierarchy -- assessed as not communicating the sophistication of the underlying analytical architecture.
+
+TARGET ARCHITECTURE: a library of reusable visualization primitives (heatmap, matrix, network graph, sankey, rolling-series, waterfall, distribution histogram, scatter, radar, hierarchical drill-down table) bound to analytical descriptors/data contracts, so new engines or analyses are added via metadata rather than bespoke UI pages. Page philosophy shifts from Dashboard->Metrics->Charts to Investigation->Evidence->Structure->Quantification.
+
+PROPOSED ANALYSIS LIBRARY STRUCTURE (draft, needs validation against real data availability -- see gating conditions below):
+- Discovery: Signal Explorer, Entity Explorer, Relationship Explorer, Formation Explorer
+- Structure: Domain Allocation, Relationship Matrix, Domain Matrix, Connectivity Graph, Influence Network
+- Evidence: Confidence History, Source Distribution, Evidence Timeline, Evidence Waterfall, Qualification History
+- Dynamics: Formation Growth, Drift Detection, Signal Momentum, Volatility, Stability
+- Intelligence: Causal Chains, Dependency Analysis, Propagation Paths, Structural Projection, Scenario Analysis
+- Performance: Engine Health, Detection Precision, False Positive Rate, Coverage, Throughput
+
+TWO GATING FINDINGS -- MUST BE THE FIRST ANALYSIS-PHASE DELIVERABLES, NOT DISCOVERED MID-BUILD:
+
+1. Canonical domain names. Any domain-based chart (Domain Allocation, Domain Matrix, etc.) MUST use src/engine/ontology.js's CANONICAL_DOMAINS (technology, capital, knowledge, labor, media, ownership -- SS17, ratified KRYL-1061) -- not an invented list. Tied directly to KRYL-1140 (Domain Taxonomy Drift), filed same session: leveragetowers.jsx itself currently uses a non-canonical list (['FINANCIAL','MARKET','HOME','TECHNOLOGY','HEALTH','SIGNAL']) and must be fixed as part of or before this work, not independently of it.
+
+2. Real-data-availability gate on relationship/cross-domain charts. Relationship Matrix, Domain correlation/coupling views, and similar cross-domain visualizations require real relationship-edge data between domains. As of 2026-08-03 this data is confirmed thin in live production -- RBCS's crossDomainCount is pinned to 0 because the only real connector (edgar8kconnector.js) never populates metadata.domain or genealogy (see specs/SPEC-the-evolution-built-vs-vision.md, specs/SPEC-structural-memory-cer-waypoint-fabric.md). Building these specific chart types now risks either an empty chart or fabricated/estimated data to fill it -- a direct violation of SS20 (Direction Honesty) and SS22 (Absence-is-Signal). Charts backed by per-domain independent scores (already computed live, e.g. leveragetowers.jsx's friction/potential/volatility) are safe to build now. Cross-domain relationship charts should be explicitly flagged BLOCKED pending the Structural Memory work (KRYL-1139), not built against thin/absent data.
+
+PHASES:
+- Analysis: inventory every proposed chart type against (a) canonical domain compliance and (b) real data availability today. Produce a BUILD NOW / BLOCKED list, not a single flat chart list.
+- Planning: for the BUILD NOW list, define the reusable primitive components and their data contracts. For the BLOCKED list, note the explicit dependency (KRYL-1139 Structural Memory) rather than silently dropping them.
+- Execution: build the reusable primitive library first, then compose Lens-section pages from it -- not bespoke one-off charts.
+
+Not yet done: no code has been written for this effort. This ticket covers analysis through execution, to be sequenced against KRYL-1140 (must land first or in parallel, same file) and KRYL-1139 (blocks the relationship-chart subset only).",surface-page lens-section charting portfolio-visualizer domain-ontology structural-memory-dependency
