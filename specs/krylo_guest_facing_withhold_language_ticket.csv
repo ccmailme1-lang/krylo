@@ -1,0 +1,16 @@
+Summary,Issue Type,Description,Labels
+"Guest-Facing Language for Withheld/Low-Confidence States (raw engine states leaking to UI)",Bug,"Observed live 2026-08-04: raw internal engine states are being surfaced directly to the end user instead of guest-appropriate language. Examples observed: 'STRUCTURAL ABSENCE -- No structural evidence event recorded for [query]. A provenance trace requires a filed structural event.' and 'Fs 0% -- BLOCKED: NO STRUCTURAL EVIDENCE EVENT FILED.'
+
+THIS IS NOT AN ENGINE DEFECT. The underlying behavior -- withholding an answer when there is insufficient structural evidence -- is correct and must not change. This ticket is scoped to the presentation layer only: the translation between what the engine returns and what a guest sees.
+
+PRINCIPLE (already established doctrine, this ticket applies it): 'Engine detects, Interface sells' -- the engine's detection/withholding logic stays exactly as strict as it is today. Only the language shown to the guest changes. A guest does not need to know the export gate's internal name (Fs), the provenance mechanism, or the phrase 'structural event' -- they need to know, in plain terms, that more specific input would help, and what kind.
+
+SCOPE:
+1. Locate every render point where raw engine state strings (STRUCTURAL ABSENCE, Fs [n]% BLOCKED, INSUFFICIENT convergence, PROVENANCE trace language, etc.) are shown directly rather than translated.
+2. Define a guest-facing language layer: a mapping from each internal withhold/low-confidence state to plain, actionable copy (e.g. 'Add a specific decision, dollar amount, or timeline to get a grounded answer' instead of exposing 'Fs 0% BLOCKED').
+3. Apply consistently across all surfaces that can render a withheld/low-confidence result, not just the one observed live tonight.
+4. Explicit non-goal: do not soften, hide, or fabricate around a real absence -- the guest must still understand no confident answer exists yet. Only the vocabulary changes, not the honesty of the message.
+
+WHY THIS MATTERS NOW: discovered during IP-attorney-meeting prep, day before the demo. Raw engine-log language visible to a guest/demo audience undermines the product's credibility even when the underlying behavior is exactly correct -- the guest sees what looks like an error, not a considered withholding. Founder-observed impact: guests have walked away from the platform after encountering this raw language -- this is a real, observed retention/trust failure, not a hypothetical polish item.
+
+PRIORITY: P1 per explicit Founder direction 2026-08-04.",guest-experience presentation-layer withhold-language ux engine-vs-interface pre-demo p1
