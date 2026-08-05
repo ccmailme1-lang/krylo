@@ -8,6 +8,7 @@
 import React, { useMemo } from 'react';
 import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
+import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -36,14 +37,15 @@ export default function WhyTracePanel({ entity }) {
     </div>
   );
 
-  // §22 — absence / withhold is a stated state, not a hidden one.
+  // §22 — absence / withhold is a stated state, not a hidden one. KRYL-1143: the guest sees plain,
+  // actionable copy — the internal state name and reason string stay in `title` for debugging only.
   if (res.state !== WT_STATE.RESOLVED) {
-    const tag = res.state === WT_STATE.TRACE_ERROR ? 'TRACE WITHHELD' : 'STRUCTURAL ABSENCE';
+    const guestCopy = guestWithholdCopy(res.state, res.reason);
     return (
-      <div style={{ flexShrink: 0, borderTop: HAIR, padding: '14px 24px' }}>
+      <div style={{ flexShrink: 0, borderTop: HAIR, padding: '14px 24px' }} title={`${res.state}: ${res.reason ?? ''}`}>
         {header}
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: DIM, marginTop: 8, lineHeight: 1.5 }}>
-          {tag} — {res.reason}
+          {guestCopy}
         </div>
       </div>
     );

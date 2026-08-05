@@ -20,6 +20,7 @@ import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecon
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
+import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -86,76 +87,75 @@ function SystemClock() {
 
 // ── Domain Isolation Console ──────────────────────────────────────────────────
 
-function SignalCluster({ entityTitle, pressure, volatility, loading, headline }) {
-  const [ring, setRing] = useState(0);
-  const [opacity, setOpacity] = useState(0.35);
+// Founder directive 2026-08-04 — replaces the per-card SignalCluster circle (headline text
+// crammed into a ~64px circle, unreadable, duplicated the plain-text headline already shown
+// below it). One shared risk/return-style scatter for all 4 bays, same visual grammar as a
+// portfolio efficient-frontier chart: X = volatility, Y = pressure, one labeled point per
+// domain — both real values, same useEntitySignal() hook DomainCard already uses, nothing
+// fabricated. A domain with no resolved reading yet is simply absent from the plot (§22 —
+// KRYL-1085's own doctrine in this file), listed underneath instead of guessed at.
+const SCATTER_BAYS = [
+  { bayId: 1, domainLabel: 'FINANCIAL' },
+  { bayId: 2, domainLabel: 'MARKET'    },
+  { bayId: 3, domainLabel: 'CAREER'    },
+  { bayId: 4, domainLabel: 'HEALTH'    },
+];
 
-  // active pulse: ring expands 0→1 on interval keyed to volatility
-  useEffect(() => {
-    if (loading || !entityTitle) {
-      // idle breathe
-      let up = true;
-      const id = setInterval(() => {
-        setOpacity(o => { const next = up ? o + 0.04 : o - 0.04; if (next >= 0.65) up = false; if (next <= 0.25) up = true; return next; });
-      }, 60);
-      return () => clearInterval(id);
-    }
-    // active pulse: ring 0→1 then snap back
-    const intervalMs = Math.round(800 + (1 - volatility) * 1400);
-    const id = setInterval(() => setRing(r => r >= 1 ? 0 : r + 0.06), 30);
-    return () => clearInterval(id);
-  }, [loading, entityTitle, volatility]);
+function DomainRiskScatter() {
+  const bay1 = useBayStore(s => s.bays[1]);
+  const bay2 = useBayStore(s => s.bays[2]);
+  const bay3 = useBayStore(s => s.bays[3]);
+  const bay4 = useBayStore(s => s.bays[4]);
+  const sig1 = useEntitySignal(bay1?.assignment?.title ?? null);
+  const sig2 = useEntitySignal(bay2?.assignment?.title ?? null);
+  const sig3 = useEntitySignal(bay3?.assignment?.title ?? null);
+  const sig4 = useEntitySignal(bay4?.assignment?.title ?? null);
+  const signals = [sig1, sig2, sig3, sig4];
 
-  const borderColor = loading || !entityTitle
-    ? `rgba(255,255,255,${opacity.toFixed(2)})`
-    : pressure > 75 ? LIME
-    : pressure > 50 ? 'rgba(102,255,0,0.55)'
-    : 'rgba(102,255,0,0.28)';
+  const allPoints = SCATTER_BAYS.map((b, i) => ({ ...b, ...signals[i] }));
+  const resolved  = allPoints.filter(p => p.status === ENTITY_SIGNAL_STATUS.RESOLVED);
+  const unresolved = allPoints.filter(p => p.status !== ENTITY_SIGNAL_STATUS.RESOLVED);
 
-  const size = (!loading && entityTitle) ? Math.round(52 + (pressure / 100) * 20) : 64;
-  // ring: expand outward then fade
-  const ringOpacity = ring < 0.5 ? ring * 2 : (1 - ring) * 2;
-  const ringScale   = 1 + ring * 0.35;
+  // viewBox chosen to match the wide, ~2.3:1 aspect ratio of the approved reference.
+  const W = 460, H = 200, PAD_L = 34, PAD_B = 22, PAD_T = 10, PAD_R = 14;
+  const plotW = W - PAD_L - PAD_R, plotH = H - PAD_T - PAD_B;
+  const x = (volatility) => PAD_L + Math.max(0, Math.min(1, volatility)) * plotW;
+  const y = (pressure)   => PAD_T + (1 - Math.max(0, Math.min(100, pressure)) / 100) * plotH;
+  const dotColor = (pressure) => pressure > 75 ? LIME : pressure > 50 ? 'rgba(102,255,0,0.55)' : 'rgba(102,255,0,0.28)';
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0, transition: 'width 600ms ease, height 600ms ease' }}>
-      {/* expanding ring */}
-      {!loading && entityTitle && (
-        <div style={{
-          position: 'absolute', inset: 0,
-          borderRadius: '50%',
-          border: `1px solid ${borderColor}`,
-          opacity: ringOpacity,
-          transform: `scale(${ringScale})`,
-          pointerEvents: 'none',
-        }} />
+    <div style={{ padding: '10px 12px 8px', background: '#000', borderTop: `1px solid ${BORDER}` }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} style={{ display: 'block', fontFamily: MONO }}>
+        {/* gridlines — min/mid/max only, per data-ink discipline */}
+        {[0, 0.5, 1].map(f => (
+          <line key={`gx${f}`} x1={PAD_L + f * plotW} y1={PAD_T} x2={PAD_L + f * plotW} y2={PAD_T + plotH} stroke={BORDER} strokeWidth="1" />
+        ))}
+        {[0, 0.5, 1].map(f => (
+          <line key={`gy${f}`} x1={PAD_L} y1={PAD_T + f * plotH} x2={PAD_L + plotW} y2={PAD_T + f * plotH} stroke={BORDER} strokeWidth="1" />
+        ))}
+        {/* axes */}
+        <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + plotH} stroke={DIM} strokeWidth="1" />
+        <line x1={PAD_L} y1={PAD_T + plotH} x2={PAD_L + plotW} y2={PAD_T + plotH} stroke={DIM} strokeWidth="1" />
+        {/* axis labels */}
+        <text x={PAD_L + plotW / 2} y={H - 4} textAnchor="middle" fontSize="7" letterSpacing="0.2em" fill={DIM}>VOLATILITY →</text>
+        <text x={10} y={PAD_T + plotH / 2} textAnchor="middle" fontSize="7" letterSpacing="0.2em" fill={DIM} transform={`rotate(-90 10 ${PAD_T + plotH / 2})`}>PRESSURE →</text>
+        {/* points */}
+        {resolved.map(p => {
+          const cx = x(p.volatility), cy = y(p.pressure);
+          const color = dotColor(p.pressure);
+          return (
+            <g key={p.bayId}>
+              <circle cx={cx} cy={cy} r="4" fill={color} />
+              <text x={cx + 7} y={cy + 3} fontSize="8" fill={color} letterSpacing="0.08em">{p.domainLabel}</text>
+            </g>
+          );
+        })}
+      </svg>
+      {unresolved.length > 0 && (
+        <div style={{ fontSize: 8, color: DIM, letterSpacing: '0.12em', marginTop: 4 }}>
+          NO SIGNAL RESOLVED: {unresolved.map(p => p.domainLabel).join(' · ')}
+        </div>
       )}
-      <div style={{
-        width: '100%', height: '100%',
-        background: '#0a0a0a',
-        border: `1px solid ${borderColor}`,
-        borderRadius: '50%',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'border-color 400ms ease',
-      }}>
-        {(!loading && (entityTitle || headline)) ? (
-          <span style={{
-            fontSize: 9, color: LIME, fontFamily: SERIF,
-            lineHeight: 1.3, textAlign: 'center', padding: '0 8px',
-            transition: 'color 400ms ease',
-          }}>
-            {entityTitle
-              ? entityTitle
-              : headline.split(' ').slice(0, 6).join(' ')}
-          </span>
-        ) : (
-          <span style={{
-            fontSize: 9, color: `rgba(255,255,255,${opacity.toFixed(2)})`,
-            fontFamily: MONO, letterSpacing: '0.12em',
-            transition: 'color 400ms ease',
-          }}>···</span>
-        )}
-      </div>
     </div>
   );
 }
@@ -194,16 +194,13 @@ function DomainCard({ bayId, domainLabel }) {
       padding: 16,
       display: 'flex', flexDirection: 'column', gap: 8,
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.25em', fontFamily: MONO }}>
-            ID: {domainLabel}
-          </div>
-          <div style={{ fontSize: 10, color: LIME, textTransform: 'uppercase', letterSpacing: '0.25em', fontFamily: MONO, fontWeight: 'bold' }}>
-            DOMAIN: {domainLabel}
-          </div>
+      <div>
+        <div style={{ fontSize: 10, color: DIM, textTransform: 'uppercase', letterSpacing: '0.25em', fontFamily: MONO }}>
+          ID: {domainLabel}
         </div>
-        <SignalCluster entityTitle={entityTitle} pressure={pressure} volatility={volatility} loading={!headline && !entityTitle} headline={headline} />
+        <div style={{ fontSize: 10, color: LIME, textTransform: 'uppercase', letterSpacing: '0.25em', fontFamily: MONO, fontWeight: 'bold' }}>
+          DOMAIN: {domainLabel}
+        </div>
       </div>
       {entityTitle && resolved && (
         <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
@@ -264,7 +261,8 @@ function DomainIsolationConsole() {
   return (
     <div style={{ flexShrink: 0, fontFamily: MONO, borderTop: `1px solid ${BORDER}`, paddingTop: 8 }}>
       <div style={{ fontSize: 9, color: DIM, letterSpacing: '0.3em', textTransform: 'uppercase', marginBottom: 6 }}>Domain Isolation Console</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: BORDER }}>
+      <DomainRiskScatter />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: BORDER, marginTop: 1 }}>
         <DomainCard bayId={1} domainLabel="FINANCIAL" />
         <DomainCard bayId={2} domainLabel="MARKET"    />
         <DomainCard bayId={3} domainLabel="CAREER"    />
@@ -912,8 +910,8 @@ export default function TargetPacket() {
               { label: 'SIGNAL ACCURACY',  value: `${accuracy}% confidence — ${signalDrift} drivers positive` },
               { label: normalizeToProjectionLanguage('DECISION OUTCOME', stateType), value: topCandidates[0]?.label ?? 'Awaiting arbitration' },
               // KRYL-1015: economics gate on .withheld — never render a fabricated $ (esp. on a real named person). §19/§22.
-              { label: 'ROAS',             value: (metrics && !metrics.roas.withheld) ? `${metrics.roas.value}x · ${metrics.roas.label}` : (metrics ? 'UNGROUNDED' : '—') },
-              { label: 'CAC',              value: (metrics && !metrics.cac.withheld && metrics.cac.value != null) ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : (metrics ? 'UNGROUNDED' : '—') },
+              { label: 'ROAS',             value: (metrics && !metrics.roas.withheld) ? `${metrics.roas.value}x · ${metrics.roas.label}` : (metrics ? guestWithholdCopy('UNGROUNDED_TAG') : '—') },
+              { label: 'CAC',              value: (metrics && !metrics.cac.withheld && metrics.cac.value != null) ? `$${metrics.cac.value.toLocaleString()} · ${metrics.cac.label}` : (metrics ? guestWithholdCopy('UNGROUNDED_TAG') : '—') },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>{label}</span>

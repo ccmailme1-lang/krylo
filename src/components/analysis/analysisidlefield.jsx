@@ -15,7 +15,8 @@ import { emitTelemetry, getTelemetryLog } from '../../engine/telemetry.js';
 import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '../../engine/temporalhorizon.js';
 import { parseIntent }                from '../../engine/intentparser.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
-import { synthesizeQuery } from '../../engine/querysynthesis.js';
+import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
+import { deriveTrendingTerms } from '../../engine/trendingterms.js';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
@@ -84,8 +85,15 @@ const DOMAIN_CHIPS = [
   { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> },
 ];
 
+// Founder directive 2026-08-04 — TRENDING must always populate once a domain is selected or
+// typed, never sit empty waiting on live connector coverage. deriveTrendingTerms (real signals)
+// is tried first; this is the fill-in for whatever it doesn't cover, so the section never goes
+// empty. Restored verbatim from the pre-KRYL-1143b static list.
 const DOMAIN_PRECURSORS = {
-  FINANCIAL:  ['RATE ENVIRONMENT', 'CREDIT SPREADS', 'M2 VELOCITY', 'LIQUIDITY CONDITIONS', 'YIELD CURVE SHIFT', 'INFLATION EXPECTATIONS', 'CREDIT DEMAND', 'CAPITAL FLOWS'],
+  // Sourced 2026-08-04 from real, cited 2026 finance search-trend data (Trintech/WEF/BCG/
+  // Accenture/Deloitte/Morgan Stanley reporting) provided by Founder — not invented, not the
+  // prior generic macro-jargon list.
+  FINANCIAL:  ['AGENTIC AI', 'AI ACCOUNTABILITY', 'AFFORDABILITY PRESSURE', 'LOUD BUDGETING', 'YIELD HUNTING', 'STABLECOIN ADOPTION', 'PRIVATE CREDIT', 'CYBERSECURITY'],
   MARKET:     ['EQUITY FLOW', 'VOLATILITY IDX', 'SECTOR ROTATION', 'MOMENTUM SHIFT', 'VALUATION SPREAD', 'EARNINGS REVISION', 'SHORT INTEREST', 'OPTIONS SKEW'],
   LEGAL:      ['REGULATORY SHIFT', 'CASE VELOCITY', 'COMPLIANCE FLUX', 'LITIGATION VOLUME', 'ENFORCEMENT ACTIVITY', 'POLICY DRIFT', 'PRECEDENT SHIFT', 'FILING VELOCITY'],
   HEALTH:     ['COVERAGE GAP', 'COST TRAJECTORY', 'ACCESS SIGNAL', 'UTILIZATION RATE', 'PREMIUM DRIFT', 'PROVIDER SUPPLY', 'CLAIMS VELOCITY', 'POLICY EXPOSURE'],
@@ -95,10 +103,10 @@ const DOMAIN_PRECURSORS = {
   OWNERSHIP:  ['SUPPLY CONSTRAINT', 'CONTROL SHIFT', 'ASSET CONCENTRATION', 'TRANSFER VELOCITY', 'STAKE ROTATION', 'ACQUISITION FLOW', 'DILUTION SIGNAL', 'HOLDING PERIOD SHIFT'],
 };
 
-// Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy — derived
-// from real DOMAIN_PRECURSORS keyword content (specs/analysis-domain-taxonomy-
-// unification.md), not invented. Needed to filter AnalysisDomainField (which
-// only knows the locked six) from a pill click (which uses these 8 labels).
+// Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
+// taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked
+// six) from a pill click (which uses these 8 labels), and to route TRENDING chip derivation
+// (deriveTrendingTerms, KRYL-1143b) onto the same canonical domain a pill click resolves to.
 const ANALYSIS_PILL_TO_DOMAIN = {
   FINANCIAL:  'CAPITAL',
   MARKET:     'CAPITAL',
@@ -522,7 +530,7 @@ function defaultDnaCards() {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function AnalysisIdleField({ activeCones = null, onDomainSelect = null }) {
+export default function AnalysisIdleField({ activeCones = null, onDomainSelect = null, rawSignals = null }) {
 
   // Store
   const createSession = useAnalysisStore(s => s.createSession);
@@ -729,8 +737,9 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const [selectedDomains, setSelectedDomains] = useState([]);
   // Two distinct taxonomies exist by design (specs/analysis-domain-taxonomy-
   // unification.md): selectedDomains[0] is the raw 8-pill UI key the user
-  // clicked (e.g. "FINANCIAL") — used for display, DOMAIN_PRECURSORS lookup,
-  // and tensor.domainLock/synthesis.queryDomain. selectedLockedDomain is the
+  // clicked (e.g. "FINANCIAL") — used for display, TRENDING chip derivation
+  // (deriveTrendingTerms via ANALYSIS_PILL_TO_DOMAIN), and tensor.domainLock/
+  // synthesis.queryDomain. selectedLockedDomain is the
   // engine's locked-six bucket it maps onto (e.g. "CAPITAL") — used ONLY by
   // consumers that require the locked six (AnalysisDomainField's real
   // connector-tagged signals). Computed once here, not inlined per call site,
@@ -1679,29 +1688,57 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 </div>
 
                 {/* ── TRENDING ── */}
-                {/* Whole section (label included) only renders once there's content — an
-                    empty "TRENDING" header with nothing under it reads as broken, not
-                    pending, same absence-handling as the rest of this UI. */}
-                {selectedDomains.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
-                    <StaggeredChips
-                      chips={(() => {
-                        // Balanced split across all selected domains — 8 total, divided evenly.
-                        // 1 domain -> 8 from it. 2 domains -> 4 each. 3 -> ~2-3 each. Etc.
-                        const perDomain = Math.max(1, Math.floor(8 / selectedDomains.length));
-                        return selectedDomains
-                          .flatMap(d => (DOMAIN_PRECURSORS[d] ?? []).slice(0, perDomain))
-                          .map(p => ({ lens: p, label: p }));
-                      })()}
-                      selected={activeSituation?.lens}
-                      onSelect={selectSituation}
-                      getKey={s => s.lens}
-                      getLabel={s => s.label}
-                      isSelected={(s, sel) => s.lens === sel}
-                    />
-                  </div>
-                )}
+                {/* Founder directive 2026-08-04 — key on the SUBJECT MATTER of what's actually
+                    typed, not a static domain->word-list mapping (that's dead the moment it's
+                    written). Priority order, highest first:
+                      1. Real entities parseIntent() extracts from the literal typed text
+                         (quoted phrases / proper nouns) — this is quoting the user back at
+                         themselves, so it can't be stale or wrong.
+                      2. Real signals a live connector actually dispatched for the resolved
+                         domain(s) (deriveTrendingTerms).
+                      3. DOMAIN_PRECURSORS — last-resort filler ONLY, so the section still
+                         always populates on a bare domain click with zero typed text and zero
+                         live signal yet. Never the primary source again. */}
+                {(() => {
+                  const trimmedQuery = seedQuery.trim();
+                  const parsed = trimmedQuery ? parseIntent(trimmedQuery) : null;
+                  const entityChips = Array.from(new Set((parsed?.entities ?? []).map(e => e.toUpperCase())));
+
+                  const queryDomainResult = trimmedQuery ? detectDomain(trimmedQuery, activeLens) : null;
+                  const queryPill = queryDomainResult?.resolutionEligible ? queryDomainResult.primary : null;
+
+                  const pills = Array.from(new Set([...selectedDomains, queryPill].filter(Boolean)));
+                  if (pills.length === 0 && entityChips.length === 0) return null;
+
+                  const remaining = Math.max(0, 8 - entityChips.length);
+                  const perDomain = pills.length > 0 ? Math.max(1, Math.floor(remaining / pills.length)) : 0;
+                  const domainChips = remaining === 0 ? [] : pills.flatMap(pill => {
+                    const canonicalDomain = ANALYSIS_PILL_TO_DOMAIN[pill];
+                    const real   = canonicalDomain ? deriveTrendingTerms(rawSignals, canonicalDomain, perDomain) : [];
+                    const filler = (DOMAIN_PRECURSORS[pill] ?? []).filter(t => !real.includes(t));
+                    return [...real, ...filler].slice(0, perDomain);
+                  });
+
+                  const chips = Array.from(new Set([...entityChips, ...domainChips]))
+                    .slice(0, 8)
+                    .map(t => ({ lens: t, label: t }));
+
+                  if (chips.length === 0) return null;
+
+                  return (
+                    <div style={{ marginTop: 20 }}>
+                      <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
+                      <StaggeredChips
+                        chips={chips}
+                        selected={activeSituation?.lens}
+                        onSelect={selectSituation}
+                        getKey={s => s.lens}
+                        getLabel={s => s.label}
+                        isSelected={(s, sel) => s.lens === sel}
+                      />
+                    </div>
+                  );
+                })()}
 
               </div>
 

@@ -112,8 +112,13 @@ discover, and reason.
    (Artifact 1); the adaptive, decaying version does not exist. The decay mechanism it would
    need already has a proven template in this codebase (`financialmarketconnector.js`'s
    DAILY-decay pattern) — worth naming as evidence of feasibility, not evidence of completion.
-4. **Coordinate** — distributed reasoning ("Cognitive Fabric"). Ratified doctrine
-   (KRYL-1136/1137/1138), zero implementation. Say so plainly if asked.
+4. **Coordinate** — distributed reasoning. Two distinct, unmerged initiatives exist here, and the
+   room should hear them as separate, not conflated: **Cognitive Mesh** (KRYL-1136/1137/1138) —
+   ratified doctrine, zero code. **Cognitive Fabric** (KRYLCF-1 through KRYLCF-6, a separate Jira
+   project, Founder-authored spec 2026-07-29) — a real spec exists; an implementation was built
+   against it but confirmed agent-authored and never Founder-reviewed, so it was removed
+   2026-08-04 pending a proper reviewed rebuild. Current status for both: spec-level only, zero
+   reviewed code. Do not present these as one initiative.
 5. **Discover** — unified formation discovery. Three of four detection types already run as
    separate engines (Artifact 1); the fourth ("novel," no historical precedent) is an unproven
    design hypothesis, not a definition — present it as a candidate to prototype.

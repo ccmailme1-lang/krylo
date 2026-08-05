@@ -1353,7 +1353,7 @@ export default function App() {
       {navMode === 'analysis' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
           <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} activeDomain={activeAnalysisDomain} />
-          <AnalysisIdleField activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} />
+          <AnalysisIdleField activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} rawSignals={routedSignals} />
         </div>
       )}
 

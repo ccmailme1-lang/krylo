@@ -12,6 +12,7 @@ import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../
 import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
+import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
 import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { validateImport, reconstructSession, reconstructAcquisition, parseImportFile } from '../../engine/consultingimport.js';
@@ -1408,12 +1409,16 @@ export default function IntelligenceBrief() {
             <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
               CONSULTING I/O · WO-1752
             </span>
-            <span style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}>
+            <span
+              style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}
+              title={`Fs ${Math.round(fs * 100)}% · gate ${Math.round(EXPORT_FS_GATE * 100)}% · structuralAbsence=${structuralAbsence}`}
+            >
+              {/* KRYL-1143: guest sees plain, actionable copy — raw Fs%/BLOCKED jargon moved to title */}
               {exportUnlocked
-                ? `Fs ${Math.round(fs * 100)}% — PROVENANCE-TRACED JSON READY`
+                ? `${Math.round(fs * 100)}% ${guestWithholdCopy('EXPORT_READY')}`
                 : structuralAbsence
-                  ? `Fs ${Math.round(fs * 100)}% — BLOCKED: NO STRUCTURAL EVIDENCE EVENT FILED`
-                  : `Fs ${Math.round(fs * 100)}% — EXPORT REQUIRES ${Math.round(EXPORT_FS_GATE * 100)}%`}
+                  ? guestWithholdCopy('EXPORT_BLOCKED_ABSENCE')
+                  : `${Math.round(fs * 100)}% ${guestWithholdCopy('EXPORT_BELOW_GATE')}`}
             </span>
           </div>
         </div>

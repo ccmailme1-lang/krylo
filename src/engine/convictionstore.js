@@ -2,7 +2,7 @@
 // WO-1824 — Thesis Monitoring Layer
 // Session-scoped via sessionStorage. Cross-session persistence: WO-1813.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { HIGH_CONVERGENCE_FLOOR, COUNTER_SIGNAL_CEILING, CALIBRATION_MIN_OVERALL, CALIBRATION_MIN_DOMAIN, CALIBRATION_MIN_HP } from './signalconstants.js';
 
 const STORE_KEY = 'krylo_convictions_v2';
@@ -164,14 +164,25 @@ export function computeCalibration(resolved) {
 
 export function useThesisMonitor(active, domainStates, happyPath) {
   const [monitorMap, setMonitorMap] = useState({});
+  const monitorMapRef = useRef(monitorMap);
+  monitorMapRef.current = monitorMap;
 
   useEffect(() => {
-    if (!domainStates || active.length === 0) { setMonitorMap({}); return; }
+    if (!domainStates || active.length === 0) {
+      // Idempotent — bail if already empty, same guard as below, so an unmemoized
+      // `active`/`domainStates`/`happyPath` reference from the caller (a fresh array/
+      // object literal every render) can't retrigger a state update -> re-render -> new
+      // reference -> effect-refire loop ("Maximum update depth exceeded").
+      if (Object.keys(monitorMapRef.current).length > 0) setMonitorMap({});
+      return;
+    }
     const map = {};
     for (const conviction of active) {
       map[conviction.id] = computeThesisMonitoring(conviction, domainStates, happyPath);
     }
-    setMonitorMap(map);
+    // Same idempotent guard as the non-empty case above — only commit a new state
+    // object (and thus trigger a re-render) when the computed alerts actually changed.
+    if (JSON.stringify(map) !== JSON.stringify(monitorMapRef.current)) setMonitorMap(map);
   }, [active, domainStates, happyPath]);
 
   return monitorMap;

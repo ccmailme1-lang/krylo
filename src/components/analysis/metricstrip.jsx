@@ -7,6 +7,7 @@
 import React from 'react';
 import { getPhaseLock } from '../../engine/phaselock.js';
 import { getMetricDefinition } from '../../engine/metricdefinitions.js';
+import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 import HelpMark from '../shared/helpmark.jsx';
 
 // Help text for a metric's label — click the "?" to see it. Render-only:
@@ -173,7 +174,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       label:        'CAC',
       display:      (cac && !cac.withheld) ? `$${(cac.value ?? 0).toLocaleString()}` : '—',
       groundedness: cac?.groundedness ?? 0,
-      tag:          cac?.withheld ? 'UNGROUNDED' : (cac?.label ?? 'MODELED'),
+      tag:          cac?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (cac?.label ?? 'MODELED'),
       tileMode:     'active',
       title:        defTitle('cac'),
     },
@@ -181,7 +182,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       label:        'ROAS',
       display:      (roas && !roas.withheld) ? `${roas.value ?? 0}x` : '—',
       groundedness: roas?.groundedness ?? 0,
-      tag:          roas?.withheld ? 'UNGROUNDED' : (roas?.label ?? 'MODELED'),
+      tag:          roas?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (roas?.label ?? 'MODELED'),
       tileMode:     'active',
       title:        defTitle('roas'),
     },
@@ -189,7 +190,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       label:        'LTV',
       display:      (ltv && !ltv.withheld) ? `$${(ltv.value ?? 0).toLocaleString()}` : '—',
       groundedness: ltv?.groundedness ?? 0,
-      tag:          ltv?.withheld ? 'UNGROUNDED' : (ltv?.label ?? 'MODELED'),
+      tag:          ltv?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (ltv?.label ?? 'MODELED'),
       tileMode:     'active',
       title:        defTitle('ltv'),
     },

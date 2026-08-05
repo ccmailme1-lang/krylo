@@ -193,7 +193,10 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
   const activeVolatility = entityResolved ? entityVolatility : (state.volatility ?? 0.5);
 
   const { height, radius } = encodeCone({ ...state, pressure: activePressure, volatility: activeVolatility }, { focusId: null });
-  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
+  // Floor raised 0.2 -> 0.6 — a zero-signal cone at 0.2 rendered as a near-invisible sliver
+  // (muted-slate wireframe, near-black ground) even though it was technically in the scene.
+  // Raising the floor makes "no signal yet" visually present, not just present in the DOM.
+  const coneHeight = Math.max(0.6, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const baseY      = coneHeight / 2 - coneHeight * 0.1;
 
   // Cone body color = classifier convergence state, resolved once via the shared helper.
@@ -1462,7 +1465,10 @@ const FRONTIER_FRAG = `
 
 function FrontierRing({ position, state }) {
   const { height, radius } = encodeCone(state, { focusId: null });
-  const coneHeight = Math.max(0.2, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
+  // Floor raised 0.2 -> 0.6 — a zero-signal cone at 0.2 rendered as a near-invisible sliver
+  // (muted-slate wireframe, near-black ground) even though it was technically in the scene.
+  // Raising the floor makes "no signal yet" visually present, not just present in the DOM.
+  const coneHeight = Math.max(0.6, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
   const FRAC   = 0.75;
   const worldY = coneHeight * (FRAC - 0.1);
   const ringR  = (1 - FRAC) * radius * 1.5972;
