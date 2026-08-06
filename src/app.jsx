@@ -85,12 +85,13 @@ import { useAnnotationStore } from './store/useannotationstore.js';
 import { useAnalysisStore }   from './store/useanalysisstore.js';
 import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
-import { emitTelemetry }      from './engine/telemetry.js';
+import { emitTelemetry, emitDomainProvenance, nextTraceId } from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
 import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import StickyTape             from './components/surface/stickytape.jsx';
 import { useStickyStore }     from './store/usestickystore.js';
 import ProfilePicker          from './components/surface/profilepicker.jsx';
+import DomainProvenancePanel  from './components/diagnostics/domainprovenancepanel.jsx';
 import WorldClocks            from './components/analysis/worldclocks.jsx';
 import { getActiveProfile }   from './store/useprofilestore.js';
 import { resolveGeo }         from './engine/georesolver.js';
@@ -645,6 +646,32 @@ function BaySignalMapProjection({ signals, xraySignals = [] }) {
   );
 }
 
+// KRYL-DIAG-1 — Domain Provenance Trace. Wraps a connector call with dispatch/resolve/fail
+// telemetry, additive-only: does not change what the connector returns, does not touch
+// aggregation/scoring/rendering. Purpose: answer "which of the six domains lost data, at
+// which connector boundary, and why" from the telemetry log alone, without needing the
+// reporter's own DevTools access.
+function traceConnector(connector, domain, sessionId, fn) {
+  const traceId = nextTraceId();
+  const t0 = Date.now();
+  emitDomainProvenance({ traceId, sessionId, stage: 'dispatch', domain, connector, timestamp: t0 });
+  return fn()
+    .then((result) => {
+      const outputCount = Array.isArray(result) ? result.length : (result != null ? 1 : 0);
+      emitDomainProvenance({
+        traceId, sessionId, stage: 'resolve', domain, connector, status: 'success',
+        outputCount, timestamp: Date.now(), latencyMs: Date.now() - t0,
+      });
+      return result;
+    })
+    .catch((err) => {
+      emitDomainProvenance({
+        traceId, sessionId, stage: 'fail', domain, connector, status: 'error',
+        reason: err?.message ?? String(err), timestamp: Date.now(), latencyMs: Date.now() - t0,
+      });
+    });
+}
+
 // ── App ──────────────────────────────────────────────────────
 
 export default function App() {
@@ -731,15 +758,15 @@ export default function App() {
   // Intervals match decay type: topology=10min, market=4h, flow/supply/patents/macro=24h, eia=weekly
   useEffect(() => {
     runNetworkTopologySync().catch(() => {});
-    runFinancialMarketSync().catch(() => {});
+    traceConnector('financialmarket', 'CAPITAL', 'mount', () => runFinancialMarketSync());
     runEconomicFlowSync().catch(() => {});
     runSupplyChainSync().catch(() => {});
     runPatentsViewSync().catch(() => {});
-    runEiaSync().catch(() => {});
+    traceConnector('eia', 'CAPITAL', 'mount', () => runEiaSync());
     // WO-2019 macro connectors
     runBlsSync().catch(() => {});
-    runTreasurySync().catch(() => {});
-    runWorldBankSync().catch(() => {});
+    traceConnector('treasury',  'CAPITAL', 'mount', () => runTreasurySync());
+    traceConnector('worldbank', 'CAPITAL', 'mount', () => runWorldBankSync());
     runFhfaSync().catch(() => {});
     runUsgsSync().catch(() => {});
     runMaerskSync().catch(() => {});
@@ -1082,17 +1109,18 @@ export default function App() {
       setNavMode('surface');
       setSurfaceActivated(true);
       setSelection('technology');
+      const submitId = `submit-${Date.now()}`;
       // WO-2019 topic connectors — fire on each query submit
-      runGithubSync(q).catch(() => {});
-      runArxivSync(q).catch(() => {});
-      runNpmSync(q).catch(() => {});
-      runPubmedSync(q).catch(() => {});
-      runOpenAlexSync(q).catch(() => {});
-      runUsajobsSync(q).catch(() => {});
-      runGdeltSync(q).catch(() => {});
-      runRedditSync(q).catch(() => {});
+      traceConnector('github',   'TECHNOLOGY', submitId, () => runGithubSync(q));
+      traceConnector('arxiv',    'KNOWLEDGE',  submitId, () => runArxivSync(q));
+      traceConnector('npm',      'TECHNOLOGY', submitId, () => runNpmSync(q));
+      traceConnector('pubmed',   'KNOWLEDGE',  submitId, () => runPubmedSync(q));
+      traceConnector('openalex', 'KNOWLEDGE',  submitId, () => runOpenAlexSync(q));
+      traceConnector('usajobs',  'LABOR',      submitId, () => runUsajobsSync(q));
+      traceConnector('gdelt',    'MEDIA',      submitId, () => runGdeltSync(q));
+      traceConnector('reddit',   'MEDIA',      submitId, () => runRedditSync(q));
       // WO-2046 — entity capital realization (fires only when query resolves a known entity)
-      runCapitalRealizationSync(q).catch(() => {});
+      traceConnector('capitalrealization', 'CAPITAL', submitId, () => runCapitalRealizationSync(q));
     }
     window.addEventListener('message', onSubmit);
     return () => window.removeEventListener('message', onSubmit);
@@ -1216,6 +1244,7 @@ export default function App() {
 
       {/* KRYL-1029 — light test-account sign-in (pick screen + active badge) */}
       <ProfilePicker />
+      <DomainProvenancePanel />
 
       {/* World clocks — analysis page only */}
       {navMode === 'analysis' && !activeSessionId && <WorldClocks />}

@@ -54,3 +54,28 @@ export function getTelemetryLog() {
 export function getSessionEvents(sessionId) {
   return _log.filter(e => e.sessionId === sessionId);
 }
+
+// DOMAIN_PROVENANCE_EVENT — additive event type, same transport, same storage, same
+// validation path as every other emitTelemetry() call. Observation only: does not touch
+// aggregation, scoring, or rendering. Purpose: answer "which of the six domains lost data,
+// at which connector boundary, and why" without needing DevTools access to the reporter's
+// actual browser.
+//
+// Shape: { type: 'DOMAIN_PROVENANCE_EVENT', traceId, sessionId, stage, domain, connector,
+//          status, inputCount, outputCount, score, reason, timestamp }
+//   stage: 'dispatch' | 'resolve' | 'fail'
+//   status (resolve/fail only): 'success' | 'error' | 'timeout'
+let _traceCounter = 0;
+export function nextTraceId() {
+  _traceCounter += 1;
+  return `trace-${Date.now()}-${_traceCounter}`;
+}
+
+export function emitDomainProvenance(fields) {
+  emitTelemetry({ type: 'DOMAIN_PROVENANCE_EVENT', ...fields });
+}
+
+// Read-only — every DOMAIN_PROVENANCE_EVENT currently in the log, newest first.
+export function getDomainProvenanceLog() {
+  return _log.filter(e => e.type === 'DOMAIN_PROVENANCE_EVENT').slice().reverse();
+}

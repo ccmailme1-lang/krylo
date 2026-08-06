@@ -6,9 +6,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { execSync } from 'child_process';
+
+// KRYL-DIAG-1 — environment fingerprint. Baked in at build time so the running app can state
+// its own identity (which commit, when built) without any runtime lookup.
+function gitCommitSha() {
+  try { return execSync('git rev-parse --short HEAD').toString().trim(); }
+  catch { return 'unknown'; }
+}
 
 export default defineConfig({
   plugins: [tailwindcss(), react()],
+  define: {
+    __KRYLO_COMMIT_SHA__: JSON.stringify(gitCommitSha()),
+    __KRYLO_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   resolve: {
     dedupe: ['@react-three/fiber', '@react-three/drei', 'three', 'react', 'react-dom'],
   },
