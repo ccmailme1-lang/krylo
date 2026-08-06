@@ -9,10 +9,13 @@
   ],
   "scripts": {
     "dev": "vite",
+    "predev": "node scripts/verify-proxy-routes.mjs",
     "dev:ablinq": "yarn workspace @krylo/ablinq-audit-desk dev",
     "dev:nooma": "yarn workspace @krylo/nooma-engine dev",
     "dev:root": "vite",
+    "predev:root": "node scripts/verify-proxy-routes.mjs",
     "check:ontology": "node scripts/check-domain-ontology.mjs",
+    "check:proxy-routes": "node scripts/verify-proxy-routes.mjs",
     "prebuild": "node scripts/check-domain-ontology.mjs",
     "build": "vite build",
     "preview": "vite preview",
