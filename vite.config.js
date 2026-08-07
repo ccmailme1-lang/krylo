@@ -87,6 +87,7 @@ export default defineConfig({
       '/api/companies-house-profile':         { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/companies-house-filing-history':  { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/v1/persistence/execution-plan':   { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/api/tester-telemetry': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/v1/timing-proxy':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/compare':             { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/stream': {
