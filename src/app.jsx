@@ -38,6 +38,7 @@ import { runMaerskSync }           from './engine/connectors/maerskconnector.js'
 import { runUsaspendingSync }        from './engine/connectors/usaspendingconnector.js';
 // WO-2046 — Capital Realization Connector (entity-level, query-gated)
 import { runCapitalRealizationSync } from './engine/connectors/capitalrealizationconnector.js';
+import { runFredSync } from './engine/connectors/fredconnector.js';
 // WO-2039 — Federal Signal Trio (data.gov)
 import { runFdaSync }              from './engine/connectors/fdaconnector.js';
 import { runFecSync }              from './engine/connectors/fecconnector.js';
@@ -766,6 +767,7 @@ export default function App() {
     runBlsSync().catch(() => {});
     traceConnector('treasury',  'CAPITAL', 'mount', () => runTreasurySync());
     traceConnector('worldbank', 'CAPITAL', 'mount', () => runWorldBankSync());
+    traceConnector('fred',      'CAPITAL', 'mount', () => runFredSync());
     runFhfaSync().catch(() => {});
     runUsgsSync().catch(() => {});
     runMaerskSync().catch(() => {});
@@ -1041,10 +1043,11 @@ export default function App() {
         setNavMode(ev.data.mode);
         setConceptBOpen(true);
         if (ev.data.mode === 'surface') {
-          // Activation is owned by krylo-submit (a real query submitted) and krylo-reset
-          // (logo tap). Clicking the Surface nav icon itself must not force it — that
-          // mistakenly forced a full OrientationSurface→AnalysisField swap (full ConeMap
-          // unmount/remount) and popped FloatingToolbar over the ribbon on every click.
+          // Hero/Surface cone-cap contract: surfaceExpanded is the Hero-page boundary.
+          // Clicking the Surface nav button crosses it (maxCones 3 -> 6). Does NOT touch
+          // surfaceActivated — that stays owned by krylo-submit/krylo-reset only, so
+          // FloatingToolbar/visorReady/AnalysisField-vs-OrientationSurface component swap
+          // are unaffected (avoids the WO-nav-force-activate regression).
           setSurfaceExpanded(true);
           setSurfaceEntryCount(c => c + 1);
         } else {
@@ -1065,6 +1068,7 @@ export default function App() {
       if (ev.data?.type !== 'krylo-reset') return;
       setNavMode('surface');
       setSurfaceActivated(false);
+      setSurfaceExpanded(false);
       setquery('');
       setScrubPos(0);
       setSelection(null);
@@ -1278,7 +1282,7 @@ export default function App() {
                 clickEvent={clickEvent}
                 onSelectCone={setSelection}
                 onActiveConeChange={handleActiveConeChange}
-                maxCones={3}
+                maxCones={surfaceExpanded ? undefined : 3}
                 dollyKey={surfaceEntryCount}
                 onArcClick={handleArcClick}
                 coneColorOverrides={coneColorOverrides}

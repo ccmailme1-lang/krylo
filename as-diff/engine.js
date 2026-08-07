@@ -854,7 +854,7 @@ function handleOpenAlexProxy(req, res) {
   if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
   const options = {
     hostname: 'api.openalex.org',
-    path: `/works?filter=title.search:${encodeURIComponent(q)},publication_year:%3E%3D2024&per-page=25&select=cited_by_count`,
+    path: `/works?filter=title.search:${encodeURIComponent(q)},publication_year:%3E2023&per-page=25&select=cited_by_count`,
     method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0 (mailto:houzzco@gmail.com)' },
   };
   const proxy = https.request(options, upstream => {
