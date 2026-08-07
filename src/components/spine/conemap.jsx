@@ -230,17 +230,24 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
         <coneGeometry args={[radius * 1.5972, coneHeight, 16, 12, true]} />
         <meshBasicMaterial color={stateColor} wireframe transparent opacity={(isLocked ? 1.0 : 0.7) * flashOpacity} />
       </mesh>
-      {/* Invisible raycast-only base cap — coneGeometry's openEnded:true leaves the base
-          hollow for rendering, which means a click aimed at the wide lower part of a
-          foreground cone's silhouette can pass through with no geometry to catch it,
-          hitting whatever cone is behind it instead. This plugs that hole without
-          changing anything visible: opacity:0 (not visible:false — an invisible object
-          is skipped by the raycaster entirely) keeps it raycast-active while rendering
-          nothing. Tagged with the same domain directly (not resolved via group/parent)
-          so the existing hit.object.userData.domain read in ConeScene's raycast handler
-          needs no changes. */}
-      <mesh position={[0, -coneHeight / 2, 0]} rotation={[-Math.PI / 2, 0, 0]} userData={{ domain: state.domain }}>
-        <circleGeometry args={[radius * 1.5972, 16]} />
+      {/* Invisible raycast-only solid boundary — the visible cone above uses
+          coneGeometry(..., openEnded:true), which is hollow both at the base AND has gaps
+          between wireframe lines are irrelevant for hit-testing (wireframe is a material
+          flag, not a geometry change — the underlying triangles still raycast as solid),
+          but the OPEN base meant a click aimed at the cone's silhouette near its base could
+          pass straight through with no geometry to catch it, hitting whatever cone sat
+          behind it instead — the reported "click through to the background cone" bug.
+          A flat circle at the base alone isn't sufficient boundary coverage (it only
+          plugs the very bottom, not the full hollow interior along a ray's path through
+          the lower portion of the cone at any height). This is a full CLOSED cone
+          (openEnded:false) matching the visible one's silhouette exactly, so the entire
+          volume — sides and base alike — is a genuine solid raycast boundary. opacity:0
+          (not visible:false — an invisible object is skipped by the raycaster entirely)
+          keeps it raycast-active while rendering nothing. Tagged with the same domain
+          directly (not resolved via group/parent) so the existing hit.object.userData.domain
+          read in ConeScene's raycast handler needs no changes. */}
+      <mesh userData={{ domain: state.domain }}>
+        <coneGeometry args={[radius * 1.5972, coneHeight, 16, 1, false]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
@@ -586,7 +593,7 @@ function ComparePanel() {
   );
 }
 
-export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [] }) {
+export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], manualClickDomain = null }) {
   const [tab, setTab]         = React.useState('stats');
   const [topTab, setTopTab]   = React.useState('domain');
   const emaRef                = React.useRef({});
@@ -628,11 +635,29 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     setAssignInput('');
     setCandOpen(false);
     setCandInput('');
-    // page load → default to Domain; afterwards, selecting a cone opens the Cone view
-    // Domain is the default view; a personal setting (profile.defaultView) may override to Cone.
-    setTopTab(loadProfile().defaultView === 'CONE' ? 'cone' : 'domain');
-    firstView.current = false;
+    // First mount only: apply the default view (Domain, or profile.defaultView override).
+    // Deliberately NOT re-run on every cone.domain change — that also fires on automatic
+    // auto-highest-pressure drift (signal fluctuation, no click), which must never force a
+    // tab switch. See the manualClickDomain effect below for the actual click->Cone behavior.
+    if (firstView.current) {
+      setTopTab(loadProfile().defaultView === 'CONE' ? 'cone' : 'domain');
+      firstView.current = false;
+    }
   }, [cone?.domain]);
+
+  // A genuine cone click (manualClickDomain — set only from manualPick, never from the
+  // auto-highest fallback) switches to the Cone tab. Anything else — auto-highest drift,
+  // or the user manually clicking back to the Domain tab — leaves topTab alone; the tab
+  // stays exactly where it was until the next real click or manual tab change.
+  const lastManualDomainRef = React.useRef(null);
+  React.useEffect(() => {
+    if (manualClickDomain && manualClickDomain !== lastManualDomainRef.current) {
+      lastManualDomainRef.current = manualClickDomain;
+      setTopTab('cone');
+    } else if (!manualClickDomain) {
+      lastManualDomainRef.current = null;
+    }
+  }, [manualClickDomain]);
 
   React.useEffect(() => {
     if (panelSearch && panelRef.current) {
@@ -2396,7 +2421,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} />
+          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />
         </>,
         document.getElementById('krylo-hud-root')
       )}

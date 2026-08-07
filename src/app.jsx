@@ -1433,7 +1433,7 @@ export default function App() {
           records={marqueeSignals}
           iframeRef={iframeRef}
           src="/krylo2-feed.html"
-          restrictToChrome={isSurface && surfaceActivated}
+          restrictToChrome={isSurface && surfaceExpanded}
         />
       </div>
 
