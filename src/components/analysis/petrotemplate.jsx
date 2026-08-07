@@ -52,7 +52,7 @@ export default function PetroTemplate({ petro, stations }) {
 
       {/* body */}
       <div style={{ position: 'relative', flex: 1, minHeight: 0, overflowY: 'auto', padding: 26, display: 'flex', flexDirection: 'column', gap: 18 }}>
-        <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {(() => {
             // Same nearest-5 list feeds both the map pins and the cards, in the same order,
             // so card #1..#5 always match pin #1..#5 — one real proximity ranking, not two.
@@ -101,29 +101,24 @@ export default function PetroTemplate({ petro, stations }) {
                     match exists, the real area average — labeled AREA AVERAGE, never presented
                     as that station's own metered price. No name or price is invented. */}
                 {cards.length > 0 && (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: 176, flexShrink: 0, marginTop: 22, animation: 'gasgo-rise 340ms ease' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0, marginTop: 24, animation: 'gasgo-rise 340ms ease' }}>
+                    {/* Timebox-card treatment (worldclocks.jsx): 82x48 box, #0a0a0a bg, faint lime
+                        border, centered flex column — label / big LED value / subtext. */}
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {cards.map((c, i) => (
                         <div key={i} style={{
-                          position: 'relative', border: '1px solid rgba(102,255,0,0.4)', borderRadius: 4.86,
-                          padding: '10.53px 12.15px', display: 'flex', flexDirection: 'column', gap: 5.265,
-                          background: 'linear-gradient(rgba(102,255,0,0.05), transparent)',
-                          boxShadow: '0 0 26px rgba(102,255,0,0.14), inset 0 0 20px rgba(102,255,0,0.04)',
+                          width: 82, height: 48, background: '#0a0a0a', border: '1px solid rgba(102,255,0,0.15)',
+                          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                         }}>
-                          {top5Stations.length > 0 && (
-                            <span style={{
-                              position: 'absolute', top: -7.2, left: -7.2, width: 14.4, height: 14.4, borderRadius: '50%',
-                              background: LIME, color: '#000', fontFamily: MONO, fontSize: 8.1, fontWeight: 700,
-                              display: 'flex', alignItems: 'center', justifyContent: 'center',
-                              boxShadow: '0 0 0 3px #000, 0 0 8px rgba(102,255,0,0.5)',
-                            }}>{i + 1}</span>
-                          )}
-                          <div style={{ fontFamily: MONO, fontSize: 5.265, letterSpacing: '0.3em', color: LIME }}>{c.kicker}</div>
-                          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 9.72 }}>
-                            <span style={{ fontFamily: SERIF, fontSize: 11.34, color: BRT }}>{c.label}</span>
-                            <span style={{ fontFamily: MONO, fontSize: 15.39, color: LIME, whiteSpace: 'nowrap', textShadow: `0 0 14px rgba(102,255,0,0.5)` }}>${Number(c.price).toFixed(2)}<span style={{ fontSize: 6.075, color: DIM, marginLeft: 3, textShadow: 'none' }}>/gal</span></span>
+                          <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.14em', color: 'rgba(102,255,0,0.55)', marginBottom: 3 }}>
+                            {top5Stations.length > 0 ? `#${i + 1} · ${c.kicker.replace('◆ ', '')}` : c.kicker.replace('◆ ', '')}
                           </div>
-                          <div style={{ fontFamily: MONO, fontSize: 6.075, color: MID }}>{c.meta}</div>
+                          <div style={{ fontFamily: MONO, fontSize: 13, fontWeight: 700, color: LIME, textShadow: '0 0 6px rgba(102,255,0,0.55)', lineHeight: 1 }}>
+                            ${Number(c.price).toFixed(2)}<span style={{ fontSize: 7, marginLeft: 1, opacity: 0.85 }}>/gal</span>
+                          </div>
+                          <div style={{ fontFamily: MONO, fontSize: 6.5, color: LIME, textShadow: '0 0 5px rgba(102,255,0,0.5)', letterSpacing: '0.02em', marginTop: 2, maxWidth: 74, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {c.label}
+                          </div>
                         </div>
                       ))}
                     </div>
