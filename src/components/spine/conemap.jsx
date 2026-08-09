@@ -253,78 +253,90 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
       </mesh>
 
 
-      <Html position={[0, coneHeight / 2 + 0.4, 0]} center>
-        <div style={{
-          fontFamily:    "'IBM Plex Mono', monospace",
-          fontSize:      11,
-          lineHeight:    '1.6',
-          letterSpacing: '0.12em',
-          textAlign:     'center',
-          whiteSpace:    'nowrap',
-          color:         isHovered ? LIME : isSelected ? '#ffffff' : 'rgba(255,255,255,0.35)',
-          opacity:       isHovered ? 1 : flashOpacity,
-          userSelect:    'none',
-          pointerEvents: 'none',
-          transition:    'color 200ms',
-        }}>
-          <div>{coneLabel.toUpperCase()}</div>
-          <div style={{ color: isSelected ? LIME : 'rgba(102,255,0,0.35)', fontSize: 10, opacity: 0.9 }}>
-            SIGNAL {Math.round(state.pressure ?? 0)}
-            <span style={{ color: isSelected ? v.color : 'rgba(255,255,255,0.3)', marginLeft: 8 }}>
-              {v.glyph} {v.text}
-            </span>
-          </div>
-        </div>
-      </Html>
-
-      {/* Formation Representation Layer — floating HUD, same scene as the cone, not attached to
-          its geometry (positioned to the side, independent of coneHeight/radius). Sandboxed math
-          module (src/formationlayer/), read-only here — does not affect cone rendering/state.
-          Reports magnitude/cohesion/state (real) and velocity (real or WITHHELD, never faked). */}
-      {(() => {
-        const formation = adaptDomainToFormation(state.domain, activeVolatility);
-        if (!formation) {
-          return (
-            <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap' }}>
-                FORMATION · NO SIGNAL
-              </div>
-            </Html>
-          );
-        }
-        return (
-          <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.1em', whiteSpace: 'nowrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.55)' }}>
-              <div style={{ color: formation.state === 'stable' ? '#ffffff' : LIME, opacity: 0.9 }}>
-                {formation.state.toUpperCase()} FORMATION
-              </div>
-              <div>MAG <b style={{ color: '#fff' }}>{formation.magnitude}</b></div>
-              <div>COH <b style={{ color: '#fff' }}>{formation.cohesion.toFixed(2)}</b></div>
-              <div>VEL <b style={{ color: formation.velocity === null ? 'rgba(255,255,255,0.3)' : '#fff' }}>
-                {formation.velocity === null ? 'WITHHELD' : formation.velocity.toFixed(2)}
-              </b></div>
-            </div>
-          </Html>
-        );
-      })()}
-
-      {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
-          Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
-      {(() => {
-        const g = LENS_GLYPH[viewportLens] ?? '◉';
-        const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
-        return (
-          <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
+      {/* KRYL-1169 — these three floating HUD label blocks (domain/signal, formation,
+          suspended lens read) are suppressed once a report is showing (viewportLens !==
+          OBSERVE). Not data loss: the same SIGNAL values are already presented cleanly in
+          the report body + right-side DOMAIN sidebar once a report is active — these
+          per-cone floating labels became pure visual collision with the report text (real,
+          confirmed via live screenshot), not an independent source of information at that
+          point. Cone wireframe mesh itself is untouched — the persistent surface stays
+          visible, only its floating text HUD recedes during report mode. */}
+      {viewportLens === 'OBSERVE' && (
+        <>
+          <Html position={[0, coneHeight / 2 + 0.4, 0]} center>
             <div style={{
-              fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.14em',
-              whiteSpace: 'nowrap', textTransform: 'uppercase', userSelect: 'none',
-              color: r.grounded ? LIME : 'rgba(255,255,255,0.3)', opacity: flashOpacity,
+              fontFamily:    "'IBM Plex Mono', monospace",
+              fontSize:      11,
+              lineHeight:    '1.6',
+              letterSpacing: '0.12em',
+              textAlign:     'center',
+              whiteSpace:    'nowrap',
+              color:         isHovered ? LIME : isSelected ? '#ffffff' : 'rgba(255,255,255,0.35)',
+              opacity:       isHovered ? 1 : flashOpacity,
+              userSelect:    'none',
+              pointerEvents: 'none',
+              transition:    'color 200ms',
             }}>
-              {g} {viewportLens} · {r.text}
+              <div>{coneLabel.toUpperCase()}</div>
+              <div style={{ color: isSelected ? LIME : 'rgba(102,255,0,0.35)', fontSize: 10, opacity: 0.9 }}>
+                SIGNAL {Math.round(state.pressure ?? 0)}
+                <span style={{ color: isSelected ? v.color : 'rgba(255,255,255,0.3)', marginLeft: 8 }}>
+                  {v.glyph} {v.text}
+                </span>
+              </div>
             </div>
           </Html>
-        );
-      })()}
+
+          {/* Formation Representation Layer — floating HUD, same scene as the cone, not attached to
+              its geometry (positioned to the side, independent of coneHeight/radius). Sandboxed math
+              module (src/formationlayer/), read-only here — does not affect cone rendering/state.
+              Reports magnitude/cohesion/state (real) and velocity (real or WITHHELD, never faked). */}
+          {(() => {
+            const formation = adaptDomainToFormation(state.domain, activeVolatility);
+            if (!formation) {
+              return (
+                <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap' }}>
+                    FORMATION · NO SIGNAL
+                  </div>
+                </Html>
+              );
+            }
+            return (
+              <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.1em', whiteSpace: 'nowrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.55)' }}>
+                  <div style={{ color: formation.state === 'stable' ? '#ffffff' : LIME, opacity: 0.9 }}>
+                    {formation.state.toUpperCase()} FORMATION
+                  </div>
+                  <div>MAG <b style={{ color: '#fff' }}>{formation.magnitude}</b></div>
+                  <div>COH <b style={{ color: '#fff' }}>{formation.cohesion.toFixed(2)}</b></div>
+                  <div>VEL <b style={{ color: formation.velocity === null ? 'rgba(255,255,255,0.3)' : '#fff' }}>
+                    {formation.velocity === null ? 'WITHHELD' : formation.velocity.toFixed(2)}
+                  </b></div>
+                </div>
+              </Html>
+            );
+          })()}
+
+          {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
+              Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
+          {(() => {
+            const g = LENS_GLYPH[viewportLens] ?? '◉';
+            const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
+            return (
+              <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
+                <div style={{
+                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.14em',
+                  whiteSpace: 'nowrap', textTransform: 'uppercase', userSelect: 'none',
+                  color: r.grounded ? LIME : 'rgba(255,255,255,0.3)', opacity: flashOpacity,
+                }}>
+                  {g} {viewportLens} · {r.text}
+                </div>
+              </Html>
+            );
+          })()}
+        </>
+      )}
     </group>
   );
 }
@@ -2178,8 +2190,12 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             selects a subset of the same real data filterForSurface would show; it never
             recomputes or reweights it.
             Same layoutSettling gate as the two overlay blocks above — these connector lines
-            also read coneData[...].pos, the un-lerped static position. */}
-        {!layoutSettling && (() => {
+            also read coneData[...].pos, the un-lerped static position. KRYL-1169 — also gated
+            on viewportLens === 'OBSERVE', same reasoning as the per-Cone label suppression:
+            once a report is showing, these floating relationship labels ("X <-> Y / WATCH:
+            ...") collide with report text and are redundant with what the report body itself
+            presents. */}
+        {!layoutSettling && viewportLens === 'OBSERVE' && (() => {
           const formations = coneState
             .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
             .filter(Boolean);
