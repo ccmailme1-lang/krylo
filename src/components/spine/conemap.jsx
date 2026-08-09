@@ -34,6 +34,7 @@ import { useEntitySignal }          from '../../hooks/useEntitySignal.js';
 import { useKalshiSignals }         from '../../hooks/usekalshisignals.js';
 import { useDriftDivergence }       from '../../hooks/usedriftdivergence.js';
 import { CANONICAL_DOMAINS, CONE_DISPLAY_ORDER } from '../../engine/ontology.js';
+import { isValidPerceptionFrame, DOMAIN_STATE as PF_DOMAIN_STATE } from '../../contracts/perceptionframe.js';
 
 let _carouselStopped = false;
 
@@ -2256,10 +2257,37 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE', connectorTier = 'surface' }) {
+export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE', connectorTier = 'surface' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
+    // KRYL-1158 Phase 1 — if a validated PerceptionFrame is supplied, it is the ONLY source
+    // of domain state; the legacy signals->aggregation path below is not consulted at all.
+    // Malformed/invalid frames are rejected outright, never partially trusted.
+    if (perceptionFrame) {
+      if (!isValidPerceptionFrame(perceptionFrame)) {
+        console.error('[KRYL-1158] ConeMap received an invalid PerceptionFrame — refusing to render from it.', perceptionFrame);
+        return { coneState: [], rawDomains: [] };
+      }
+      let state = perceptionFrame.domains.map(df => ({
+        domain:     df.domain,
+        pressure:   df.pressure ?? 0,
+        volatility: df.volatility ?? 0,
+        observed:   df.state === PF_DOMAIN_STATE.OBSERVED,
+        frameState: df.state, // KRYL-1159 Gate 2 — explicit state carried through, not collapsed to boolean
+      }));
+      if (Object.keys(coneColorOverrides).length) {
+        state = state.map(c => {
+          const bayNum = PILLAR_INDEX.indexOf(c.domain) + 1;
+          const override = coneColorOverrides[bayNum] ?? null;
+          return override ? { ...c, colorOverride: override } : c;
+        });
+      }
+      if (maxCones) {
+        state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
+      }
+      return { coneState: state, rawDomains: state };
+    }
     const normalized = signals.map(sig => ({
       // cone_domain (live records) routes to canonical feeders; stubs keep source
       domain:     sig.domain ?? sig.source ?? 'signal',
@@ -2281,7 +2309,7 @@ export default function ConeMap({ signals = [], timeOffset = 0, lens = 'INVESTOR
       state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
     }
     return { coneState: state, rawDomains: sixDomain };
-  }, [signals, maxCones, coneColorOverrides]);
+  }, [signals, perceptionFrame, maxCones, coneColorOverrides]);
 
   // KRYL-1052 — DRIFT divergence per domain, computed outside the Canvas. Gated on the
   // active lens so GDELT is only queried when DRIFT is selected. Withheld → HUD AWAITING.

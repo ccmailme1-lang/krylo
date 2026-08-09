@@ -14,6 +14,18 @@ import campaignfunnel     from './components/spine/campaignfunnel.jsx';
 import oracleview         from './components/oracleview.jsx';
 import OracleViewV2      from './components/oracleview_v2.jsx';
 import { aggregateSignals }         from './engine/aggregation.js';
+import { hydrate }                  from './engine/perceptionhydrator.js'; // KRYL-1158 Phase 2
+
+// KRYL-1158 Phase 2 — shared normalization, module scope so both frame builders (live +
+// scrub-aware) use identical logic to ConeMap's now-legacy internal mapping.
+function hydrateSignalsToFrame(signals) {
+  const normalized = signals.map(sig => ({
+    domain:     sig.domain ?? sig.source ?? 'signal',
+    leverage:   (sig.fs ?? 0) * 100,
+    volatility: sig.fidelity?.e_viral ?? 0,
+  }));
+  return hydrate(normalized);
+}
 import { classifyConvergenceState } from './engine/convergenceclassifier.js';
 import { surfaceRouter, EVENT_DOMAIN, HYDRATION_OP } from './engine/surfacerouter.js';
 import { usesurfacerouter } from './hooks/usesurfacerouter.js';
@@ -906,6 +918,14 @@ export default function App() {
     [mergedRecords],
   );
 
+  // KRYL-1158 Phase 2 — same normalization ConeMap's legacy path used to do internally,
+  // now run once here and passed as a validated PerceptionFrame. ConeMap's perceptionFrame
+  // branch takes priority whenever this is non-null, so passing it stops ConeMap consuming
+  // the raw signals aggregation path (legacy branch stays in ConeMap as dead code until
+  // Phase 3 cutover removes it — this is the migration step, not the removal step).
+  // Used for OrientationSurface (hero — no scrubber, always live).
+  const perceptionFrame = useMemo(() => hydrateSignalsToFrame(liveSignals), [liveSignals]);
+
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
   const activeCones = useMemo(() => buildActiveCones(liveSignals, coneColorOverrides), [liveSignals, coneColorOverrides]);
 
@@ -981,6 +1001,10 @@ export default function App() {
       return { ...sig, fs: Math.max(0, Math.min(1, (sig.fs ?? 0) * decay + noise)) };
     });
   }, [isLive, current.signals, liveSignals, scrubPos]);
+
+  // KRYL-1158 Phase 2 — scrub-aware frame for AnalysisField's ConeMap, which reads
+  // replayedSignals (not liveSignals) to preserve the WO-1003 replay/live boundary.
+  const replayedPerceptionFrame = useMemo(() => hydrateSignalsToFrame(replayedSignals), [replayedSignals]);
 
   const leaderboardState = useMemo(() => {
     const normalized = replayedSignals.map(sig => ({
@@ -1266,6 +1290,7 @@ export default function App() {
             {!surfaceActivated && (
               <OrientationSurface
                 signals={liveSignals}
+                perceptionFrame={perceptionFrame}
                 selectedDomain={selection}
                 clickEvent={clickEvent}
                 onSelectCone={setSelection}
@@ -1280,6 +1305,7 @@ export default function App() {
             {surfaceActivated && (
               <AnalysisField
                 signals={liveSignals}
+                perceptionFrame={replayedPerceptionFrame}
                 replayedSignals={replayedSignals}
                 history={history}
                 selectedLens={selectedLens}

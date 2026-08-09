@@ -1,0 +1,4 @@
+action,issue_type,status_name,status_category,notes
+add_status_to_workflow,Task,Closed,Done,"Status object already created in KRYL project (id 10057) via API; needs manual placement into the Task/Bug/Epic workflow via Project Settings > KRYL > Workflow (drag into layout) — not reliably doable via REST API for this team-managed project."
+add_status_to_workflow,Bug,Closed,Done,"Same status object (id 10057), same manual step required."
+add_status_to_workflow,Epic,Closed,Done,"Same status object (id 10057), same manual step required."

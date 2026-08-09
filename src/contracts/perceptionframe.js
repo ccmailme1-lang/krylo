@@ -1,164 +1,89 @@
-// KRYL-1158 — Perception Contract (Component 1).
-// Defines the immutable PerceptionFrame schema all downstream rendering consumes.
-// Pure contract module: no rendering, no I/O, no mutable state of its own.
-//
-// Migration Phase 1 (KRYL-1158 §Migration Strategy) — this file is additive. It does not
-// replace or touch the live ConeMap/OrientationSurface/AnalysisField render path. Nothing
-// currently running imports this yet.
+// src/contracts/perceptionframe.js
+// KRYL-1158 (Phase 1) — Perception Contract.
+// Defines the frame schema every consumer of domain signal state must read, and nothing else.
+// Full spec: KRYL-1158/1159/1160.
 
-import { CANONICAL_DOMAINS } from '../engine/ontology.js';
+export const CANONICAL_DOMAIN_ORDER = Object.freeze([
+  'capital', 'ownership', 'labor', 'media', 'technology', 'knowledge',
+]);
 
-// §2 Explicit Domain State Model. Exactly these four — no fifth state, no shorthand.
+// AWAITING — domain exists, no contributing evidence has arrived yet (genuine temporal absence).
+// OBSERVED — domain has at least one valid contributing record; pressure/volatility are real.
+// STALE    — domain was OBSERVED but its evidence has aged past validity (not yet produced by
+//            any hydrator in this phase — reserved for a future TTL-aware hydration pass).
+// INVALID  — domain received evidence, but all of it failed schema validation.
 export const DOMAIN_STATE = Object.freeze({
-  AWAITING: 'AWAITING', // expected, not yet observed — §22 TEMPORAL ABSENCE, never rendered as 0
-  OBSERVED: 'OBSERVED', // real evidence hydrated, value is meaningful
-  STALE:    'STALE',    // was OBSERVED, evidence has aged past freshness window
-  INVALID:  'INVALID',  // malformed/rejected evidence — §22 FILTERED ABSENCE, never silently dropped
+  AWAITING: 'AWAITING',
+  OBSERVED: 'OBSERVED',
+  STALE:    'STALE',
+  INVALID:  'INVALID',
 });
 
 const VALID_STATES = new Set(Object.values(DOMAIN_STATE));
 
-// Only these two states carry a real observed value. AWAITING/INVALID must carry `value: null`
-// — enforced below, not left to caller discipline. This is the concrete mechanism behind the
-// ticket's rule set: UNKNOWN ≠ ZERO, NO EVIDENCE ≠ LOW SIGNAL, INVALID DATA ≠ ABSENT DATA.
-const VALUE_BEARING_STATES = new Set([DOMAIN_STATE.OBSERVED, DOMAIN_STATE.STALE]);
-
-// §2 Rules: legal domain-state transitions. Anything not listed here is a contract violation —
-// validateTransition() below is the single enforcement point, not left to call-site discipline.
-const ALLOWED_TRANSITIONS = Object.freeze({
-  [DOMAIN_STATE.AWAITING]: new Set([DOMAIN_STATE.OBSERVED, DOMAIN_STATE.INVALID]),
-  [DOMAIN_STATE.OBSERVED]: new Set([DOMAIN_STATE.STALE, DOMAIN_STATE.INVALID, DOMAIN_STATE.OBSERVED]),
-  [DOMAIN_STATE.STALE]:    new Set([DOMAIN_STATE.OBSERVED, DOMAIN_STATE.INVALID]),
-  [DOMAIN_STATE.INVALID]:  new Set([DOMAIN_STATE.AWAITING, DOMAIN_STATE.OBSERVED]),
-});
-
-// §Definition of Done #4 — frame-level status, derived only, never set directly by a caller.
-export const FRAME_STATUS = Object.freeze({
-  COMPLETE: 'COMPLETE', // all six domains OBSERVED (STALE counts as complete-but-aging)
-  PARTIAL:  'PARTIAL',  // mix of AWAITING and OBSERVED/STALE, no INVALID present
-  DEGRADED: 'DEGRADED', // at least one domain INVALID — §6 Fault Containment: others still render
-});
-
 /**
- * @typedef {{ domain: string, state: string, value: number|null, ts: number, source: string|null }} DomainState
- * @typedef {{ frameId: string, status: string, createdAt: number, domains: Readonly<DomainState[]> }} PerceptionFrame
+ * @typedef {Object} DomainFrame
+ * @property {string} domain
+ * @property {'AWAITING'|'OBSERVED'|'STALE'|'INVALID'} state
+ * @property {number|null} pressure   - null unless state === OBSERVED or STALE
+ * @property {number|null} volatility - null unless state === OBSERVED or STALE
+ * @property {number} recordCount     - number of valid records that contributed
+ * @property {number} rejectedCount   - number of records rejected by schema validation
  */
 
-let _frameCounter = 0;
-
 /**
- * Validates one domain-state entry against the contract. Returns a violation list — never
- * throws. Callers (Evidence Intake Layer, Component 2) decide what to do with violations;
- * this module only defines what a violation IS.
- * @param {Partial<DomainState>} entry
- * @returns {string[]} violations, empty if valid
+ * @typedef {Object} PerceptionFrame
+ * @property {string} frameId
+ * @property {'COMPLETE'|'PARTIAL'} status - COMPLETE iff every domain is OBSERVED
+ * @property {number} createdAt
+ * @property {DomainFrame[]} domains - always exactly the 6 canonical domains, fixed order
  */
-export function validateDomainState(entry) {
-  const violations = [];
-  if (!entry || typeof entry !== 'object') {
-    return ['domain state entry must be an object'];
+
+function isFiniteInRange(v, lo, hi) {
+  return typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
+}
+
+/** Validates a single DomainFrame entry. Returns true/false — never throws. */
+export function isValidDomainFrame(df) {
+  if (!df || typeof df !== 'object') return false;
+  if (!CANONICAL_DOMAIN_ORDER.includes(df.domain)) return false;
+  if (!VALID_STATES.has(df.state)) return false;
+  if (df.state === DOMAIN_STATE.OBSERVED || df.state === DOMAIN_STATE.STALE) {
+    if (!isFiniteInRange(df.pressure, 0, 100)) return false;
+    if (!isFiniteInRange(df.volatility, 0, 1)) return false;
+  } else {
+    // AWAITING / INVALID carry no numeric truth claim.
+    if (df.pressure !== null || df.volatility !== null) return false;
   }
-  if (!CANONICAL_DOMAINS.includes(entry.domain)) {
-    violations.push(`domain "${entry.domain}" is not one of the 6 canonical domains`);
-  }
-  if (!VALID_STATES.has(entry.state)) {
-    violations.push(`state "${entry.state}" is not a valid DOMAIN_STATE`);
-  }
-  const mustBeNull = entry.state === DOMAIN_STATE.AWAITING || entry.state === DOMAIN_STATE.INVALID;
-  if (mustBeNull && entry.value !== null) {
-    violations.push(`state ${entry.state} must carry value:null (got ${JSON.stringify(entry.value)}) — unknown/invalid is not zero`);
-  }
-  if (VALUE_BEARING_STATES.has(entry.state) && typeof entry.value !== 'number') {
-    violations.push(`state ${entry.state} requires a numeric value (got ${JSON.stringify(entry.value)})`);
-  }
-  if (typeof entry.ts !== 'number') {
-    violations.push('domain state entry requires a numeric ts (timestamp)');
-  }
-  return violations;
+  return true;
+}
+
+/** Validates a full PerceptionFrame. Returns true/false — never throws. */
+export function isValidPerceptionFrame(frame) {
+  if (!frame || typeof frame !== 'object') return false;
+  if (typeof frame.frameId !== 'string' || !frame.frameId) return false;
+  if (frame.status !== 'COMPLETE' && frame.status !== 'PARTIAL') return false;
+  if (!Array.isArray(frame.domains) || frame.domains.length !== 6) return false;
+  const domainsPresent = new Set(frame.domains.map(d => d?.domain));
+  if (domainsPresent.size !== 6) return false;
+  for (const d of CANONICAL_DOMAIN_ORDER) if (!domainsPresent.has(d)) return false;
+  return frame.domains.every(isValidDomainFrame);
 }
 
 /**
- * Validates a proposed state transition. Pure function, no side effects — the single
- * enforcement point for "prevent ambiguous states" (KRYL-1158 Component 1 responsibility).
- * @param {string} fromState
- * @param {string} toState
- * @returns {boolean}
+ * Builds a frozen, immutable PerceptionFrame from already-classified DomainFrame entries.
+ * Does not do aggregation/validation itself — src/engine/perceptionhydrator.js does that.
+ * This is the one place a frame object gets constructed, so shape can't drift per call site.
  */
-export function validateTransition(fromState, toState) {
-  if (!VALID_STATES.has(fromState) || !VALID_STATES.has(toState)) return false;
-  return ALLOWED_TRANSITIONS[fromState]?.has(toState) ?? false;
-}
-
-/**
- * Constructs one AWAITING domain-state entry — the correct default for a domain with no
- * evidence yet. Never `{ value: 0 }`.
- * @param {string} domain
- * @returns {DomainState}
- */
-export function awaitingDomainState(domain) {
-  return Object.freeze({ domain, state: DOMAIN_STATE.AWAITING, value: null, ts: Date.now(), source: null });
-}
-
-/**
- * Builds an immutable PerceptionFrame from a full set of domain-state entries. Enforces the
- * Six Domain Contract: exactly the 6 canonical domains, no more, no fewer, no duplicates.
- * Frame-level `status` is derived, never accepted as caller input.
- * @param {DomainState[]} domainStates — must cover all 6 canonical domains exactly once
- * @returns {{ frame: PerceptionFrame|null, violations: string[] }}
- */
-export function buildPerceptionFrame(domainStates) {
-  const violations = [];
-
-  if (!Array.isArray(domainStates)) {
-    return { frame: null, violations: ['domainStates must be an array'] };
-  }
-
-  const byDomain = new Map();
-  for (const entry of domainStates) {
-    const entryViolations = validateDomainState(entry);
-    if (entryViolations.length) {
-      violations.push(...entryViolations);
-      continue;
-    }
-    if (byDomain.has(entry.domain)) {
-      violations.push(`duplicate domain state for "${entry.domain}" — a frame must have exactly one entry per domain`);
-      continue;
-    }
-    byDomain.set(entry.domain, entry);
-  }
-
-  for (const domain of CANONICAL_DOMAINS) {
-    if (!byDomain.has(domain)) {
-      violations.push(`missing required domain "${domain}" — Six Domain Contract requires all 6 present in every frame`);
-    }
-  }
-
-  if (violations.length) {
-    return { frame: null, violations };
-  }
-
-  const orderedDomains = Object.freeze(CANONICAL_DOMAINS.map(d => byDomain.get(d)));
-  const hasInvalid = orderedDomains.some(d => d.state === DOMAIN_STATE.INVALID);
-  const allObserved = orderedDomains.every(d => d.state === DOMAIN_STATE.OBSERVED || d.state === DOMAIN_STATE.STALE);
-
-  const status = hasInvalid ? FRAME_STATUS.DEGRADED : (allObserved ? FRAME_STATUS.COMPLETE : FRAME_STATUS.PARTIAL);
-
-  _frameCounter += 1;
-  const frame = Object.freeze({
-    frameId: `pf_${Date.now().toString(36)}_${_frameCounter}`,
-    status,
-    createdAt: Date.now(),
-    domains: orderedDomains,
-  });
-
-  return { frame, violations: [] };
-}
-
-/**
- * Cold-start frame: all 6 domains AWAITING. KRYL-1159 Test 1 — 6 cones created, none observed.
- * @returns {PerceptionFrame}
- */
-export function coldStartFrame() {
-  const { frame } = buildPerceptionFrame(CANONICAL_DOMAINS.map(awaitingDomainState));
+export function createPerceptionFrame(frameId, domainFrames) {
+  const byDomain = new Map(domainFrames.map(d => [d.domain, d]));
+  const domains = CANONICAL_DOMAIN_ORDER.map(d =>
+    Object.freeze(byDomain.get(d) ?? {
+      domain: d, state: DOMAIN_STATE.AWAITING, pressure: null, volatility: null,
+      recordCount: 0, rejectedCount: 0,
+    })
+  );
+  const status = domains.every(d => d.state === DOMAIN_STATE.OBSERVED) ? 'COMPLETE' : 'PARTIAL';
+  const frame = Object.freeze({ frameId, status, createdAt: Date.now(), domains });
   return frame;
 }

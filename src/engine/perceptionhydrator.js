@@ -1,115 +1,72 @@
-// KRYL-1158 — Hydration Engine (Component 3).
-// Stateful core: merges validated evidence (from evidenceintake.js) into per-domain lifecycle
-// state, producing a new immutable PerceptionFrame (perceptionframe.js) after each change.
-//
-// This module owns the ONLY mutable state in the whole KRYL-1158 pipeline. Everything upstream
-// (intake) and downstream (frames, renderer) is pure/immutable by design — mutation is
-// contained to exactly one place, on purpose.
-//
-// Migration Phase 1 — additive only. Nothing live imports this yet.
-
-import {
-  DOMAIN_STATE, awaitingDomainState, buildPerceptionFrame, validateTransition,
-} from '../contracts/perceptionframe.js';
-import { CANONICAL_DOMAINS } from './ontology.js';
-
-// No explicit freshness window is specified anywhere in KRYL-1158/1159 — this is a
-// conservative, documented default or the caller can override at creation time.
-const DEFAULT_STALE_AFTER_MS = 15 * 60 * 1000; // 15 minutes
+// src/engine/perceptionhydrator.js
+// KRYL-1158 (Phase 1) — Perception Hydration Engine.
+// Pure function: raw signal records -> validated, immutable PerceptionFrame.
+// Sits between Evidence Intake (schema validation, done inline here — this app has no
+// separate transport layer to intercept) and the ConeMap renderer, which must consume
+// only the frame this produces, never the raw records.
+import { createPerceptionFrame, DOMAIN_STATE, CANONICAL_DOMAIN_ORDER } from '../contracts/perceptionframe.js';
 
 /**
- * @typedef {import('../contracts/perceptionframe.js').PerceptionFrame} PerceptionFrame
- * @typedef {{ domain: string, value: number, ts: number, source: string, confidence: number }} ValidatedEvidence
+ * @typedef {Object} RawSignalRecord
+ * @property {string} domain
+ * @property {number} leverage   - raw 0-100 pressure candidate
+ * @property {number} volatility - raw 0-1 volatility candidate
  */
+
+function isFiniteInRange(v, lo, hi) {
+  return typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
+}
 
 /**
- * Creates one Hydration Engine instance. State is instance-scoped (not module-global) so
- * multiple independent hydrators can run in parallel — required by KRYL-1158's own Migration
- * Phase 2 ("run both systems in parallel and compare frames").
- * @param {{ staleAfterMs?: number }} [opts]
+ * Evidence Intake validation for one raw record. Returns true iff the record is
+ * structurally sound enough to contribute to aggregation. Malformed records are
+ * REJECTED here, not coerced or defaulted — a rejected record never reaches
+ * aggregation, and is counted so INVALID can be distinguished from AWAITING.
  */
-export function createHydrator(opts = {}) {
-  const staleAfterMs = opts.staleAfterMs ?? DEFAULT_STALE_AFTER_MS;
+export function validateRawRecord(rec) {
+  if (!rec || typeof rec !== 'object') return false;
+  if (!CANONICAL_DOMAIN_ORDER.includes(rec.domain)) return false;
+  if (!isFiniteInRange(rec.leverage, 0, 100)) return false;
+  if (!isFiniteInRange(rec.volatility, 0, 1)) return false;
+  return true;
+}
 
-  /** @type {Map<string, import('../contracts/perceptionframe.js').DomainState>} */
-  let domainState = new Map(CANONICAL_DOMAINS.map(d => [d, awaitingDomainState(d)]));
+/**
+ * hydrate(rawRecords) -> PerceptionFrame
+ *
+ * Deterministic: same input array (by value) always produces the same frame (module-scope
+ * counter only affects frameId, never domain content — see hydrate.test below for the
+ * content-equality check that matters).
+ *
+ * Domain state rules (KRYL-1159 Gate 2):
+ *   - domain has >=1 valid record            -> OBSERVED, pressure/volatility = mean of valid records
+ *   - domain has 0 records at all             -> AWAITING (genuine temporal absence)
+ *   - domain has >=1 record but ALL rejected  -> INVALID (evidence arrived, all of it malformed)
+ */
+export function hydrate(rawRecords = []) {
+  const byDomain = new Map(CANONICAL_DOMAIN_ORDER.map(d => [d, { valid: [], rejected: 0 }]));
 
-  function currentFrame() {
-    const { frame, violations } = buildPerceptionFrame([...domainState.values()]);
-    if (!frame) {
-      // Contract-level bug, not a data problem (all 6 domains are always present by
-      // construction above) — fail loudly here rather than hide it in a bad frame.
-      throw new Error('perceptionhydrator: internal state produced an invalid frame: ' + violations.join('; '));
-    }
-    return frame;
+  for (const rec of rawRecords) {
+    const domain = rec?.domain;
+    if (!CANONICAL_DOMAIN_ORDER.includes(domain)) continue; // not a canonical domain at all — not this contract's concern
+    const bucket = byDomain.get(domain);
+    if (validateRawRecord(rec)) bucket.valid.push(rec);
+    else bucket.rejected += 1;
   }
 
-  /**
-   * Merges one validated evidence event into domain state. Reject-stale + duplicate-handling
-   * both live here, since both require comparing against currently-held state.
-   * @param {ValidatedEvidence} evidence
-   * @returns {PerceptionFrame}
-   */
-  function applyEvidence(evidence) {
-    const { domain, value, ts, source } = evidence ?? {};
-    const existing = domainState.get(domain);
-    if (!existing) return currentFrame(); // not a canonical domain — evidenceintake.js should never let this through; defensive no-op
-
-    // Duplicate event — identical ts already applied to an OBSERVED/STALE domain. No-op.
-    if ((existing.state === DOMAIN_STATE.OBSERVED || existing.state === DOMAIN_STATE.STALE) && existing.ts === ts) {
-      return currentFrame();
+  const domainFrames = CANONICAL_DOMAIN_ORDER.map(domain => {
+    const { valid, rejected } = byDomain.get(domain);
+    if (valid.length > 0) {
+      const pressure   = Math.min(100, Math.max(0, valid.reduce((s, r) => s + r.leverage, 0) / valid.length));
+      const volatility = Math.min(1,   Math.max(0, valid.reduce((s, r) => s + r.volatility, 0) / valid.length));
+      return { domain, state: DOMAIN_STATE.OBSERVED, pressure, volatility, recordCount: valid.length, rejectedCount: rejected };
     }
-
-    // Out-of-order event — older than what's already held. Reject (keep existing), don't regress.
-    if ((existing.state === DOMAIN_STATE.OBSERVED || existing.state === DOMAIN_STATE.STALE) && ts < existing.ts) {
-      return currentFrame();
+    if (rejected > 0) {
+      return { domain, state: DOMAIN_STATE.INVALID, pressure: null, volatility: null, recordCount: 0, rejectedCount: rejected };
     }
-
-    if (!validateTransition(existing.state, DOMAIN_STATE.OBSERVED)) {
-      return currentFrame(); // illegal transition per the contract — refuse rather than force it
-    }
-
-    domainState.set(domain, Object.freeze({ domain, state: DOMAIN_STATE.OBSERVED, value, ts, source: source ?? null }));
-    return currentFrame();
-  }
-
-  /**
-   * Marks a domain INVALID — the hydration-side counterpart to evidenceintake.js's
-   * quarantine, for when a caller determines a specific domain's data is unusable and wants
-   * that reflected in the visible perception surface itself (§22: filtered absence is a
-   * classified, visible state — not a silent log entry only).
-   * @param {string} domain
-   * @param {string} [reason]
-   * @returns {PerceptionFrame}
-   */
-  function markInvalid(domain, reason) {
-    const existing = domainState.get(domain);
-    if (!existing) return currentFrame();
-    if (!validateTransition(existing.state, DOMAIN_STATE.INVALID)) return currentFrame();
-    domainState.set(domain, Object.freeze({ domain, state: DOMAIN_STATE.INVALID, value: null, ts: Date.now(), source: reason ?? null }));
-    return currentFrame();
-  }
-
-  /**
-   * Ages OBSERVED domains whose evidence has outlived the freshness window into STALE.
-   * Call periodically (e.g. on a timer) — not triggered automatically by evidence arrival,
-   * since aging is a function of the absence of new evidence, not a reaction to it.
-   * @param {number} [now]
-   * @returns {PerceptionFrame}
-   */
-  function tickStaleness(now = Date.now()) {
-    for (const [domain, entry] of domainState) {
-      if (entry.state === DOMAIN_STATE.OBSERVED && (now - entry.ts) > staleAfterMs) {
-        domainState.set(domain, Object.freeze({ ...entry, state: DOMAIN_STATE.STALE }));
-      }
-    }
-    return currentFrame();
-  }
-
-  return Object.freeze({
-    applyEvidence,
-    markInvalid,
-    tickStaleness,
-    getFrame: currentFrame,
+    return { domain, state: DOMAIN_STATE.AWAITING, pressure: null, volatility: null, recordCount: 0, rejectedCount: 0 };
   });
+
+  const frameId = `pf-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return createPerceptionFrame(frameId, domainFrames);
 }
