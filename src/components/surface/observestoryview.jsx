@@ -131,13 +131,13 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 10 }}>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
           What changed
         </div>
-        <p style={{ fontFamily: SERIF, fontSize: 24, lineHeight: 1.3, fontWeight: 400, color: '#edefe8', maxWidth: '46ch', margin: 0, textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 640, margin: '0 0 16px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: 'rgba(255,255,255,0.5)', maxWidth: '62ch', marginTop: 12 }}>
+        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 760, margin: 0 }}>
           {paragraph}
         </p>
       </div>
