@@ -30,7 +30,7 @@ const bar = {
 };
 export default function FloatingToolbar() {
   const { state, dispatch } = usePrism();
-  const active = state?.activeLens ?? 'OBSERVE'; // default posture / ground zero
+  const active = state?.activeLens ?? 'NAV_SURFACE'; // KRYL-1171 — safe landing default; no lens button lights up until one is explicitly clicked, including OBSERVE
 
   return (
     <div style={bar}>

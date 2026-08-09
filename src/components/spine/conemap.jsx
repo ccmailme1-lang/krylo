@@ -147,7 +147,7 @@ function convergenceStateId(pressure, volatility) {
 // Relationship Connector Layer as its domain-adjacency candidate source. Same data, same
 // semantics, single copy. Imported below, not redefined here.
 
-function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'OBSERVE', drift = null }) {
+function Cone({ state, position, isSelected = true, isLocked = false, kalshiSignal = null, viewportLens = 'NAV_SURFACE', drift = null }) {
   const bays       = useBayStore(s => s.bays);
   const hoveredBay = useBayStore(s => s.hoveredBay);
   const bayId      = PILLAR_INDEX.indexOf(state.domain) + 1;
@@ -253,15 +253,16 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
       </mesh>
 
 
-      {/* KRYL-1169 — these three floating HUD label blocks (domain/signal, formation,
-          suspended lens read) are suppressed once a report is showing (viewportLens !==
-          OBSERVE). Not data loss: the same SIGNAL values are already presented cleanly in
-          the report body + right-side DOMAIN sidebar once a report is active — these
-          per-cone floating labels became pure visual collision with the report text (real,
-          confirmed via live screenshot), not an independent source of information at that
-          point. Cone wireframe mesh itself is untouched — the persistent surface stays
-          visible, only its floating text HUD recedes during report mode. */}
-      {viewportLens === 'OBSERVE' && (
+      {/* KRYL-1169/1171 — these three floating HUD label blocks (domain/signal, formation,
+          suspended lens read) are suppressed once a report is showing. Not data loss: the same
+          SIGNAL values are already presented cleanly in the report body + right-side DOMAIN
+          sidebar once a report is active — these per-cone floating labels became pure visual
+          collision with the report text (real, confirmed via live screenshot), not an
+          independent source of information at that point. Cone wireframe mesh itself is
+          untouched — the persistent surface stays visible, only its floating text HUD recedes
+          during report mode. Visible for BOTH NAV_SURFACE (default landing) and OBSERVE
+          (explicit choice) — "just the cones" means no report chrome, not no labels. */}
+      {(viewportLens === 'OBSERVE' || viewportLens === 'NAV_SURFACE') && (
         <>
           <Html position={[0, coneHeight / 2 + 0.4, 0]} center>
             <div style={{
@@ -287,42 +288,21 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
             </div>
           </Html>
 
-          {/* Formation Representation Layer — floating HUD, same scene as the cone, not attached to
-              its geometry (positioned to the side, independent of coneHeight/radius). Sandboxed math
-              module (src/formationlayer/), read-only here — does not affect cone rendering/state.
-              Reports magnitude/cohesion/state (real) and velocity (real or WITHHELD, never faked). */}
-          {(() => {
-            const formation = adaptDomainToFormation(state.domain, activeVolatility);
-            if (!formation) {
-              return (
-                <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.14em', color: 'rgba(255,255,255,0.18)', whiteSpace: 'nowrap' }}>
-                    FORMATION · NO SIGNAL
-                  </div>
-                </Html>
-              );
-            }
-            return (
-              <Html position={[radius * 1.5972 + 0.6, 0, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.1em', whiteSpace: 'nowrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.55)' }}>
-                  <div style={{ color: formation.state === 'stable' ? '#ffffff' : LIME, opacity: 0.9 }}>
-                    {formation.state.toUpperCase()} FORMATION
-                  </div>
-                  <div>MAG <b style={{ color: '#fff' }}>{formation.magnitude}</b></div>
-                  <div>COH <b style={{ color: '#fff' }}>{formation.cohesion.toFixed(2)}</b></div>
-                  <div>VEL <b style={{ color: formation.velocity === null ? 'rgba(255,255,255,0.3)' : '#fff' }}>
-                    {formation.velocity === null ? 'WITHHELD' : formation.velocity.toFixed(2)}
-                  </b></div>
-                </div>
-              </Html>
-            );
-          })()}
+          {/* KRYL-1171 — Formation Representation block (MAG/COH/VEL WITHHELD raw numbers) removed
+              from the default cone display per Founder direction — too technical/redundant for the
+              guest-facing default view. The underlying formation computation (formationadapter.js)
+              is untouched and still powers ObserveStoryBanner's macro narrative + relationship
+              connectors; only this always-on per-cone readout is gone. */}
 
           {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
               Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
           {(() => {
-            const g = LENS_GLYPH[viewportLens] ?? '◉';
-            const r = lensRead(viewportLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
+            // KRYL-1171 — NAV_SURFACE (the new default landing state, no lens picked yet) reads
+            // as OBSERVE here for display purposes only. It's not a real lens choice; showing the
+            // raw internal state name would leak implementation detail onto the cone.
+            const displayLens = viewportLens === 'NAV_SURFACE' ? 'OBSERVE' : viewportLens;
+            const g = LENS_GLYPH[displayLens] ?? '◉';
+            const r = lensRead(displayLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
             return (
               <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
                 <div style={{
@@ -330,7 +310,7 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
                   whiteSpace: 'nowrap', textTransform: 'uppercase', userSelect: 'none',
                   color: r.grounded ? LIME : 'rgba(255,255,255,0.3)', opacity: flashOpacity,
                 }}>
-                  {g} {viewportLens} · {r.text}
+                  {g} {displayLens} · {r.text}
                 </div>
               </Html>
             );
@@ -1813,7 +1793,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE', divergenceByDomain = {}, connectorTier = 'surface' }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface' }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // Layout-count transition, part 2 (see coneGroupRefs/layoutLerpRef below for part 1 — the
@@ -2279,7 +2259,7 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'OBSERVE', connectorTier = 'surface' }) {
+export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface' }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {

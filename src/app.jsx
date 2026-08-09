@@ -73,6 +73,7 @@ import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import ConeMap            from './components/spine/conemap.jsx';
+import ObserveStoryBanner from './components/surface/observestoryview.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -694,7 +695,7 @@ export default function App() {
 
 
   const { state: prismState } = usePrism();
-  const viewportLens = prismState?.activeLens ?? 'OBSERVE'; // KRYL-1034/KRYL-1165 — lens must reach the cone map pre-activation too
+  const viewportLens = prismState?.activeLens ?? 'NAV_SURFACE'; // KRYL-1034/KRYL-1165/KRYL-1171 — lens must reach the cone map pre-activation too; NAV_SURFACE is the safe landing default, OBSERVE is now an explicit choice
 
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
@@ -709,7 +710,9 @@ export default function App() {
   // live via Playwright before treating this as done, since the remount itself is unchanged and
   // a real crash was observed earlier tonight testing this same code.
   useEffect(() => {
-    if (viewportLens !== 'OBSERVE') setSurfaceActivated(true);
+    // KRYL-1171 — NAV_SURFACE (the new default landing state) must NOT trigger activation, same
+    // as OBSERVE never did. Only a real, explicit report-lens choice does.
+    if (viewportLens !== 'OBSERVE' && viewportLens !== 'NAV_SURFACE') setSurfaceActivated(true);
   }, [viewportLens]);
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
@@ -1322,6 +1325,7 @@ export default function App() {
               viewportLens={viewportLens}
               connectorTier={surfaceActivated ? 'surface' : 'hero'}
             />
+            {surfaceExpanded && viewportLens === 'OBSERVE' && <ObserveStoryBanner activeDomain={selection} />}
             {surfaceActivated && (
               <AnalysisField
                 signals={liveSignals}

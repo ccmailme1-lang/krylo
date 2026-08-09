@@ -59,7 +59,7 @@ function AnalysisField({
   onTopoToggle,
 }) {
   const { state } = usePrism();
-  const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
+  const viewportLens = state?.activeLens ?? 'NAV_SURFACE'; // KRYL-1034/KRYL-1171 active lens → cone suspended HUD; NAV_SURFACE is the safe landing default
 
   // CONVERGENCE hysteresis buffer (report-layer only — classifyConvergenceState stays a black box,
   // untouched). Per-domain sliding window, k=3, S_w = mode(H_w); ties resolved by earliest-appearance

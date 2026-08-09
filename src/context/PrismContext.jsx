@@ -19,7 +19,9 @@ const initialState = {
   status:           'AMBIENT',  // AMBIENT | THINKING | ORACLE
   activeRefraction: null,
   rawSignal:        '',
-  activeLens:       'OBSERVE',  // KRYL-1034 perceptual viewport lens — default posture / ground zero
+  activeLens:       'NAV_SURFACE',  // KRYL-1171 — safe default is landing-on-Surface, no lens picked yet.
+                                     // OBSERVE is now an explicit lens choice (toolbar click), not the
+                                     // automatic default. KRYL-1034's original default posture.
 };
 
 function prismReducer(state, action) {
