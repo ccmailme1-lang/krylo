@@ -72,7 +72,7 @@ import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
-import OrientationSurface from './components/surface/orientationsurface.jsx';
+import ConeMap            from './components/spine/conemap.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -699,6 +699,18 @@ export default function App() {
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
+
+  // KRYL-1167 (restored 2026-08-09) — reuse the SAME activation setter krylo-submit uses
+  // (setSurfaceActivated), triggered by the same class of signal: real, deliberate user intent.
+  // Selecting a report lens (anything but OBSERVE) is exactly that. Original implementation
+  // (d5fa964) was reverted same-day for jerky cone motion on the resulting OrientationSurface->
+  // AnalysisField WebGL remount — that motion issue is now separately fixed (KRYL-1169: cone-
+  // count position lerp + overlay-desync suppression, conemap.jsx). Restoring here; validating
+  // live via Playwright before treating this as done, since the remount itself is unchanged and
+  // a real crash was observed earlier tonight testing this same code.
+  useEffect(() => {
+    if (viewportLens !== 'OBSERVE') setSurfaceActivated(true);
+  }, [viewportLens]);
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
@@ -1283,41 +1295,41 @@ export default function App() {
           {surfaceExpanded && <FloatingToolbar />}
 
 
-          {/* OrientationSurface (pre-activation) / AnalysisField (post-activation) — ConeMap only. No ACTIVE mode.
-              Mutually exclusive on surfaceActivated — the existing Surface activation lifecycle already
-              encodes the orientation/investigation boundary; no new application state introduced. */}
+          {/* KRYL-1169 Tier B — ONE persistent ConeMap for the lifetime of the Surface screen.
+              surfaceActivated switches PROPS (which signal source, maxCones, connectorTier),
+              never the existence of ConeMap. OrientationSurface owned no chrome of its own (just
+              a wrapper around ConeMap) so it's retired from this render path entirely.
+              AnalysisField keeps its report/topology chrome, rendered as a sibling overlay — its
+              own internal ConeMap call is removed (see analysisfield.jsx). isSurface itself
+              (navMode-driven) is NOT part of this condition — confirmed it never toggles as part
+              of the activation transition, so this div and the Canvas inside ConeMap mount once
+              per Surface visit, full stop. */}
           <div style={{ position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear' }}>
-            {!surfaceActivated && (
-              <OrientationSurface
-                signals={liveSignals}
-                perceptionFrame={perceptionFrame}
-                selectedDomain={selection}
-                clickEvent={clickEvent}
-                onSelectCone={setSelection}
-                onActiveConeChange={handleActiveConeChange}
-                maxCones={surfaceExpanded ? undefined : 3}
-                dollyKey={surfaceEntryCount}
-                onArcClick={handleArcClick}
-                coneColorOverrides={coneColorOverrides}
-                viewportLens={viewportLens}
-              />
-            )}
+            <ConeMap
+              signals={surfaceActivated ? liveSignals : liveSignals}
+              replayedSignals={replayedSignals}
+              perceptionFrame={surfaceActivated ? replayedPerceptionFrame : perceptionFrame}
+              lens={selectedLens ?? 'INVESTOR'}
+              selectedDomain={selection}
+              clickEvent={clickEvent}
+              onSelectCone={setSelection}
+              onActiveConeChange={handleActiveConeChange}
+              topoMode={topoMode}
+              onArcClick={handleArcClick}
+              maxCones={surfaceActivated ? undefined : (surfaceExpanded ? undefined : 3)}
+              dollyKey={surfaceEntryCount}
+              coneColorOverrides={coneColorOverrides}
+              viewportLens={viewportLens}
+              connectorTier={surfaceActivated ? 'surface' : 'hero'}
+            />
             {surfaceActivated && (
               <AnalysisField
                 signals={liveSignals}
-                perceptionFrame={replayedPerceptionFrame}
                 replayedSignals={replayedSignals}
                 history={history}
                 selectedLens={selectedLens}
                 topoMode={topoMode}
                 onTopoToggle={handleTopoToggle}
-                selection={selection}
-                clickEvent={clickEvent}
-                onSelectCone={setSelection}
-                onActiveConeChange={handleActiveConeChange}
-                dollyKey={surfaceEntryCount}
-                onArcClick={handleArcClick}
-                coneColorOverrides={coneColorOverrides}
               />
             )}
           </div>

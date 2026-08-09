@@ -57,14 +57,6 @@ function AnalysisField({
   selectedLens,
   topoMode,
   onTopoToggle,
-  selection,
-  clickEvent,
-  onSelectCone,
-  onActiveConeChange,
-  onArcClick,
-  maxCones,
-  dollyKey,
-  coneColorOverrides,
 }) {
   const { state } = usePrism();
   const viewportLens = state?.activeLens ?? 'OBSERVE'; // KRYL-1034 active lens → cone suspended HUD
@@ -1470,7 +1462,7 @@ function AnalysisField({
   }
 
   return (
-    <div style={{ position: 'absolute', inset: 0, background: '#000', overflow: 'hidden' }}>
+    <div style={{ position: 'absolute', inset: 0, background: 'transparent', overflow: 'hidden', pointerEvents: 'none' }}>
       <button
         onClick={onTopoToggle}
         style={{
@@ -1482,25 +1474,11 @@ function AnalysisField({
           fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em',
           padding: '10px 4px', cursor: 'pointer',
           transition: 'border-color 150ms, color 150ms',
+          pointerEvents: 'auto',
         }}
       >
         {topoMode ? 'TOPOLOGY' : 'ABSTRACT'}
       </button>
-      <ConeMap
-        signals={replayedSignals ?? []}
-        lens={selectedLens ?? 'INVESTOR'}
-        selectedDomain={selection}
-        clickEvent={clickEvent}
-        onSelectCone={onSelectCone}
-        onActiveConeChange={onActiveConeChange}
-        topoMode={topoMode}
-        onArcClick={onArcClick}
-        maxCones={maxCones}
-        dollyKey={dollyKey}
-        coneColorOverrides={coneColorOverrides}
-        viewportLens={viewportLens}
-        connectorTier="surface"
-      />
     </div>
   );
 }
