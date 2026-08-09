@@ -1296,13 +1296,20 @@ export default function App() {
             )}
           </div>
 
-          {/* Bottom panel — Console Dashboard, slides above scrubber */}
-          <div style={{ position: 'fixed', bottom: 56, left: 72, right: 0, zIndex: 100 }}>
+          {/* Bottom panel — Console Dashboard, slides above scrubber.
+              KRYL-1163: pointerEvents moved onto THIS outer div (zIndex:100, higher than
+              FloatingToolbar's zIndex:40) — the inner-only gating below left this wrapper's
+              box (sized to BayVisor's bottom-aligned flex-end bars, which can extend upward
+              regardless of visual state) clickable at all times, silently intercepting clicks
+              meant for the toolbar whenever this panel was "closed" but still laid out. */}
+          <div style={{
+            position: 'fixed', bottom: 56, left: 72, right: 0, zIndex: 100,
+            pointerEvents: (visorReady && (conceptBOpen || conceptBPinned)) ? 'auto' : 'none',
+          }}>
             <div style={{
               opacity:    (visorReady && (conceptBOpen || conceptBPinned)) ? 1 : 0,
               transform:  (visorReady && (conceptBOpen || conceptBPinned)) ? 'translateY(0)' : 'translateY(100%)',
               transition: 'opacity 360ms ease, transform 360ms cubic-bezier(0.4,0,0.2,1)',
-              pointerEvents: (visorReady && (conceptBOpen || conceptBPinned)) ? 'auto' : 'none',
             }}>
               <BayVisor cones={activeCones} />
             </div>

@@ -1803,6 +1803,25 @@ const CONE_TO_KALSHI_DOMAIN = {
 function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'OBSERVE', divergenceByDomain = {}, connectorTier = 'surface' }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
+  // Layout-count transition, part 2 (see coneGroupRefs/layoutLerpRef below for part 1 — the
+  // cone-body lerp). Event pulses / flow arcs / formation-relationship lines all read
+  // coneData[domain].pos, a useMemo keyed on [coneState, total, R] that snaps to the NEW
+  // target position the instant `total` changes (same render tick as the prop change) — while
+  // the cone bodies are still easing toward it via direct ref mutation in useFrame over the
+  // next ~0.6s. That's two independent position sources going out of sync mid-transition,
+  // visible as arcs/particles detached from the cone they're supposed to connect to. Simplest
+  // safe fix: hide these secondary/decorative overlays for the transition window instead of
+  // teaching three separate child components (EventPulse, FlowArc, relationship Line) to do
+  // their own per-frame lerp — a much larger change to components not yet audited here.
+  const [layoutSettling, setLayoutSettling] = useState(false);
+  const prevTotalForSettleRef = useRef(total);
+  useEffect(() => {
+    if (prevTotalForSettleRef.current === total) return;
+    prevTotalForSettleRef.current = total;
+    setLayoutSettling(true);
+    const t = setTimeout(() => setLayoutSettling(false), 620); // slightly past the 0.6s cone-body lerp
+    return () => clearTimeout(t);
+  }, [total]);
   const spinRef    = useRef();
   const lastClickTs = useRef(0);
   const ghostFrame = useRef(0);
@@ -1824,6 +1843,14 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const frozenAngleRef  = useRef(0);
   const stepAnimRef     = useRef(null); // { startAngle, targetAngle, startTime } while an arrow-step eases in
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
+  // Layout-count transition (e.g. maxCones 3 -> 6 on surfaceExpanded): coneState.length
+  // changing shifts every cone's angle + R in the SAME frame it happens, previously a hard
+  // snap. Lerp from each domain's last rendered position to its new target instead, same
+  // time-normalized ease-out pattern as the arrow-step animation above.
+  const lastPosRef     = useRef({});   // domain -> [x, z], last rendered (post-lerp) position
+  const layoutFromRef  = useRef({});   // domain -> [x, z] snapshot at the start of a transition
+  const layoutLerpRef  = useRef(1);    // 0..1, 1 = settled
+  const prevTotalRef   = useRef(total);
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
   const { camera, size } = useThree();
@@ -1912,11 +1939,26 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     }
     prevTopoRef.current = topoMode;
 
+    if (prevTotalRef.current !== total) {
+      layoutFromRef.current = { ...lastPosRef.current };
+      layoutLerpRef.current = 0;
+      prevTotalRef.current = total;
+    }
+    const LAYOUT_TRANSITION_DURATION = 0.6; // seconds
+    if (layoutLerpRef.current < 1) {
+      layoutLerpRef.current = Math.min(1, layoutLerpRef.current + delta / LAYOUT_TRANSITION_DURATION);
+    }
+    const layoutEased = 1 - Math.pow(1 - layoutLerpRef.current, 3); // ease-out cubic
+
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
       if (!ref?.current) return;
       const angle  = (i / total) * Math.PI * 2;
-      const sx = R * Math.cos(angle), sz = R * Math.sin(angle);
+      const targetSx = R * Math.cos(angle), targetSz = R * Math.sin(angle);
+      const from = layoutFromRef.current[state.domain] ?? [targetSx, targetSz];
+      const sx = from[0] + (targetSx - from[0]) * layoutEased;
+      const sz = from[1] + (targetSz - from[1]) * layoutEased;
+      lastPosRef.current[state.domain] = [sx, sz];
       const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
       ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
