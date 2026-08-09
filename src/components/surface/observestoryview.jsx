@@ -127,17 +127,17 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
   return (
     <>
       <div style={{
-        position: 'absolute', top: 24, left: 40, right: 40, zIndex: 15,
+        position: 'absolute', top: 24, left: 16, right: 40, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
           What changed
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 50, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 640, margin: '0 0 18px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 40, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 512, margin: '0 0 15px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 16.5, lineHeight: 1.5, color: 'rgba(255,255,255,0.5)', maxWidth: 900, margin: 0 }}>
+        <p style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.5)', maxWidth: 720, margin: 0 }}>
           {paragraph}
         </p>
       </div>
