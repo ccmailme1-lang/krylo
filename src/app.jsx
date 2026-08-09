@@ -687,17 +687,6 @@ export default function App() {
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
-
-  // KRYL-1166 follow-up — reuse the SAME activation setter krylo-submit uses (setSurfaceActivated),
-  // triggered by the same class of signal: real, deliberate user intent. Selecting a report lens
-  // (anything but OBSERVE) is exactly that -- unlike the Surface nav-tab click (2914987), which is
-  // passive navigation and must NOT force activation. No parallel state system; this is the one
-  // real gate AnalysisField's reports need (getDomainSignals reads a live global pool, not
-  // query-specific data -- confirmed via domaingravity.js -- so surfaceActivated is the only
-  // missing transition).
-  useEffect(() => {
-    if (viewportLens !== 'OBSERVE') setSurfaceActivated(true);
-  }, [viewportLens]);
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);

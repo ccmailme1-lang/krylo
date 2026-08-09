@@ -39,7 +39,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
-const CONE_HEIGHT_SCALE = 6.5; // was 7.0 — reduced 2026-07-07 for margin against PulseFloor's outer ring (7.2)
+const CONE_HEIGHT_SCALE = 6.175; // was 6.5 — reduced 5% 2026-08-08 (Founder request, cones read too large)
 const DRAG_SENSITIVITY  = 0.01; // radians per pixel of horizontal drag while frozen
 const STEP_DURATION     = 0.15; // seconds — short, snappy ease for arrow-button step
 
