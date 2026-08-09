@@ -127,9 +127,9 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
   return (
     <>
       <div style={{
-        position: 'absolute', top: 24, left: 0, right: 0, zIndex: 15,
-        display: 'flex', flexDirection: 'column', alignItems: 'center',
-        textAlign: 'center', pointerEvents: 'none', padding: '0 40px',
+        position: 'absolute', top: 24, left: 40, right: 40, zIndex: 15,
+        display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
+        textAlign: 'left', pointerEvents: 'none',
       }}>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 10 }}>
           What changed
