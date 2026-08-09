@@ -1252,7 +1252,7 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
-          {surfaceExpanded && <FloatingToolbar />}
+          {surfaceActivated && <FloatingToolbar />}
 
 
           {/* OrientationSurface (pre-activation) / AnalysisField (post-activation) — ConeMap only. No ACTIVE mode.
