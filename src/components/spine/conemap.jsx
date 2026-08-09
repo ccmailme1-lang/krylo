@@ -2129,8 +2129,12 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         });
         })()}
 
-        {/* Wave 2: live event pulses — particles rise from each firing cone */}
-        {events.map(ev => {
+        {/* Wave 2: live event pulses — particles rise from each firing cone.
+            Gated on !layoutSettling (see coneGroupRefs/layoutLerpRef above) — coneData.pos is a
+            useMemo that snaps to the new target the instant total changes, while cone bodies
+            ease toward it over ~0.6s via ref mutation. Rendering these against the un-lerped
+            static position during that window is what produced the "misaligned" look. */}
+        {!layoutSettling && events.map(ev => {
           const data = coneData[ev.target];
           if (!data) return null;
           return (
@@ -2143,8 +2147,8 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           );
         })}
 
-        {/* Wave 2: flow arcs — bezier between cones that pulsed together */}
-        {flows.map(f => {
+        {/* Wave 2: flow arcs — bezier between cones that pulsed together. Same layoutSettling gate. */}
+        {!layoutSettling && flows.map(f => {
           const a = coneData[f.a];
           const b = coneData[f.b];
           if (!a || !b) return null;
@@ -2172,8 +2176,10 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             only — hide connectors, reduce count, reprioritize. It may NOT alter strength,
             confidence, state, or any underlying formation/relationship value. filterForHero
             selects a subset of the same real data filterForSurface would show; it never
-            recomputes or reweights it. */}
-        {(() => {
+            recomputes or reweights it.
+            Same layoutSettling gate as the two overlay blocks above — these connector lines
+            also read coneData[...].pos, the un-lerped static position. */}
+        {!layoutSettling && (() => {
           const formations = coneState
             .map(s => adaptDomainToFormation(s.domain, s.volatility ?? 0.5))
             .filter(Boolean);
