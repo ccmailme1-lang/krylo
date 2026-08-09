@@ -8,6 +8,7 @@ import { useframeingest }  from './hooks/useframeingest.js';
 import { usehnsignals }    from './hooks/usehnsignals.js';
 import { useframestream }  from './hooks/useframestream.js';
 import { ecosystemcontext } from './ecosystemcontext.jsx';
+import { usePrism }         from './context/PrismContext.jsx';
 import { useSurface }     from './context/SurfaceContext.jsx';
 import campaignfunnel     from './components/spine/campaignfunnel.jsx';
 import oracleview         from './components/oracleview.jsx';
@@ -680,6 +681,9 @@ export default function App() {
   useEffect(() => initBrowserGate(), []);
 
 
+  const { state: prismState } = usePrism();
+  const viewportLens = prismState?.activeLens ?? 'OBSERVE'; // KRYL-1034/KRYL-1165 — lens must reach the cone map pre-activation too
+
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
@@ -1252,7 +1256,7 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
-          {surfaceActivated && <FloatingToolbar />}
+          {surfaceExpanded && <FloatingToolbar />}
 
 
           {/* OrientationSurface (pre-activation) / AnalysisField (post-activation) — ConeMap only. No ACTIVE mode.
@@ -1270,6 +1274,7 @@ export default function App() {
                 dollyKey={surfaceEntryCount}
                 onArcClick={handleArcClick}
                 coneColorOverrides={coneColorOverrides}
+                viewportLens={viewportLens}
               />
             )}
             {surfaceActivated && (
