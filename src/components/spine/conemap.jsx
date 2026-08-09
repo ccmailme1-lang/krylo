@@ -2183,13 +2183,16 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           const relationships = connectorTier === 'hero'
             ? filterForHero(allRelationships)
             : filterForSurface(allRelationships);
-          return relationships.map(rel => {
+          return relationships.map((rel, i) => {
             const a = coneData[rel.sourceFormationId];
             const b = coneData[rel.targetFormationId];
             if (!a || !b) return null;
             const color = RELATIONSHIP_STATE_COLOR[rel.state] ?? RELATIONSHIP_STATE_COLOR[RELATIONSHIP_STATE.UNKNOWN];
             const midX = (a.pos[0] + b.pos[0]) / 2, midZ = (a.pos[2] + b.pos[2]) / 2;
-            const midY = (a.apexY + b.apexY) / 4;
+            // KRYL-1171 — when multiple relationships are active at once, their midpoint labels
+            // can land on top of each other (confirmed via live screenshot). Stack subsequent
+            // labels higher, one slot per index, so simultaneous relationships never overlap.
+            const midY = (a.apexY + b.apexY) / 4 + i * 0.9;
             return (
               <group key={rel.id}>
                 <Line
@@ -2200,7 +2203,10 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
                   opacity={rel.confidence ?? 0.4}
                 />
                 <Html position={[midX, midY, midZ]} center distanceFactor={9} style={{ pointerEvents: 'none' }}>
-                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.1em', whiteSpace: 'nowrap', color }}>
+                  <div style={{
+                    fontFamily: "'IBM Plex Mono', monospace", fontSize: 7, letterSpacing: '0.1em', whiteSpace: 'nowrap', color,
+                    background: 'rgba(0,0,0,0.72)', padding: '3px 6px', borderRadius: 2, border: `1px solid ${color}33`,
+                  }}>
                     {rel.sourceFormationId} ↔ {rel.targetFormationId} · {rel.state} · {rel.strength.toFixed(2)}
                   </div>
                 </Html>
