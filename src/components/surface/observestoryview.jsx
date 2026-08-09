@@ -134,10 +134,10 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
           What changed
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 640, margin: '0 0 16px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 50, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 640, margin: '0 0 18px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 760, margin: 0 }}>
+        <p style={{ fontFamily: MONO, fontSize: 16.5, lineHeight: 1.5, color: 'rgba(255,255,255,0.5)', maxWidth: 900, margin: 0 }}>
           {paragraph}
         </p>
       </div>
