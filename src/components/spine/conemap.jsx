@@ -2034,7 +2034,14 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     <>
       <group ref={gridGroupRef}>
         <PulseFloor ringCount={7} maxRadius={R + 2.4} />
-        <ThresholdBands />
+        {/* KRYL-1171 — threshold band scale labels (LO·50/MID·75/HI·90 + tics) are cone-field
+            HUD chrome for the default landing state only. Once a report/analysis surface is
+            showing (OBSERVE banner, any AnalysisField lens), these Html-portaled labels float
+            above that 2D content instead of being covered by it (confirmed via live screenshot —
+            "MID · 75" bleeding through the Structural Convergence Report). Restrict to
+            NAV_SURFACE (hero + surface default view, before any lens or report is chosen).
+            Band geometry itself is untouched — only visibility is gated. */}
+        {viewportLens === 'NAV_SURFACE' && <ThresholdBands />}
 
       </group>
 
