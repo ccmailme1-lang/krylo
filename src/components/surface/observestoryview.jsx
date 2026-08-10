@@ -6,19 +6,34 @@
 // No bars, no separate chart, no duplicate per-domain numbers — those already exist on the
 // cones themselves.
 //
-// Reads the SAME live global signal pool Cone (conemap.jsx) already reads for its Formation
-// Representation HUD -- getDomainPressure()/adaptDomainToFormation() -- not a separate data path.
-import React, { useMemo, useState, useEffect } from 'react';
-import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
-import { getDomainPressure } from '../../engine/domaingravity.js';
-import { adaptDomainToFormation } from '../../formationlayer/formationadapter.js';
+// coneState comes in as a prop — the SAME live array app.jsx builds as `leaderboardState` and
+// hands to ConeMap (app.jsx:1024-1034, aggregateSignals() over liveSignals/replayedSignals).
+// An earlier version of this file called getDomainPressure()/adaptDomainToFormation()
+// (domaingravity.js / formationlayer/formationadapter.js) instead — a real but SEPARATE pool,
+// fed only by the external-API connector fleet (FRED/EDGAR/GDELT/etc. via dispatchBatch), which
+// stays empty without live network access. That made the banner's narrative permanently stuck
+// on "awaiting enough signal" even while the cones visibly showed real signal. Fixed by reading
+// the same live pool the cones read, and classifying it with the exact same formula conemap.jsx
+// uses for its own per-cone convergence color (coneConvergenceVector + classifyConvergenceState,
+// mirrored below since those helpers aren't exported from conemap.jsx).
+import React, { useMemo } from 'react';
+import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 import { deriveRelationships, filterForSurface, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
 
-const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 
-function label(domain) {
+// Mirrors conemap.jsx's coneConvergenceVector/CONE_VECTOR_T/CONE_TELEMETRY_CONFIDENCE exactly —
+// same live pressure/volatility in, same classifier state out, so this text never disagrees
+// with what color a cone is actually rendering.
+const CONE_VECTOR_T = 0.7;
+const CONE_TELEMETRY_CONFIDENCE = 0.8;
+function coneConvergenceVector(pressure, volatility) {
+  const leverageN = (pressure ?? 0) / 100;
+  return { D: leverageN, V: volatility ?? 0.5, A: leverageN, T: CONE_VECTOR_T };
+}
+
+function domainLabel(domain) {
   return domain.charAt(0).toUpperCase() + domain.slice(1).toLowerCase();
 }
 
@@ -83,33 +98,32 @@ function buildNarrative(domains, relationships) {
   return { headlinePre, emphasis, headlinePost, paragraph: paragraphParts.join(' ') };
 }
 
-export default function ObserveStoryBanner({ activeDomain = null }) {
-  // Formation state has real hysteresis (applyTransitionPolicy) that settles over successive
-  // reads, same mechanism Cone's own formation HUD uses. Re-poll on an interval so this reflects
-  // the same live state the cones themselves show, not a one-time stale snapshot from mount.
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setTick(t => t + 1), 2000);
-    return () => clearInterval(id);
-  }, []);
-
+// coneState: [{ domain, pressure, volatility }] — see file header. domain strings are already
+// uppercase CANONICAL_DOMAINS values (app.jsx's CANONICAL_FEEDERS = CANONICAL_DOMAINS).
+export default function ObserveStoryBanner({ activeDomain = null, coneState = [] }) {
   const domains = useMemo(() => {
-    return CANONICAL_DOMAINS.map(domain => {
-      const pressure = getDomainPressure(domain);
-      const formation = adaptDomainToFormation(domain, 0.5);
+    return coneState.map(({ domain, pressure, volatility }) => {
+      const { stateId, label: stateLabel } = classifyConvergenceState(
+        coneConvergenceVector(pressure, volatility), CONE_TELEMETRY_CONFIDENCE
+      );
+      // BUILDING/HIGH CONVERGENCE (lime/purple, §6) = confirmed pattern. TURBULENT = real
+      // signal, not yet coherent. INSUFFICIENT/LOW = no formation. Same semantics the cones'
+      // own fill color already encodes — this just narrates it.
+      const formationState = stateId === 2 || stateId === 4 ? 'STABLE'
+        : stateId === 3 ? 'EMERGING'
+        : null;
       return {
         domain,
-        formationId: formation?.domain ?? domain,
-        label: label(domain),
-        magnitude: pressure.magnitude,
-        signalCount: pressure.signalCount,
-        formationState: formation?.state ?? null,
-        cohesion: formation?.cohesion ?? null,
-        velocityReason: formation?.velocityReason ?? null,
+        formationId: domain,
+        label: domainLabel(domain),
+        magnitude: pressure ?? 0,
+        volatility: volatility ?? 0,
+        formationState,
+        stateLabel,
+        cohesion: stateId / 4,
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     });
-  }, [tick]);
+  }, [coneState]);
 
   const relationships = useMemo(() => {
     const formations = domains
@@ -127,23 +141,23 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
   return (
     <>
       <div style={{
-        position: 'absolute', top: 24, left: 16, right: 40, zIndex: 15,
+        position: 'absolute', top: 60, left: 346, right: 40, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 14 }}>
+        <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
           What changed
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 40, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 512, margin: '0 0 15px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 265, margin: '0 0 10px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 13, lineHeight: 1.5, color: 'rgba(255,255,255,0.5)', maxWidth: 720, margin: 0 }}>
+        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 480, margin: 0 }}>
           {paragraph}
         </p>
       </div>
 
       <div style={{
-        position: 'absolute', bottom: 12, left: 0, right: 0, zIndex: 15,
+        position: 'absolute', bottom: 56, left: 0, right: 0, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center',
         pointerEvents: 'none', padding: '0 40px',
       }}>
@@ -156,29 +170,13 @@ export default function ObserveStoryBanner({ activeDomain = null }) {
           </div>
         )}
         {activeInfo && (
-          <div style={{
-            display: 'flex', gap: 28, fontFamily: MONO, fontSize: 11.5,
-            color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em',
-          }}>
-            <span><b style={{ color: activeInfo.formationState === 'STABLE' ? LIME : '#007FFF' }}>{activeInfo.label}</b></span>
+          <div style={{ display: 'flex', gap: 28, justifyContent: 'center', fontFamily: MONO, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}>
+            <span><b style={{ color: activeInfo.formationState === 'STABLE' ? LIME : activeInfo.formationState === 'EMERGING' ? '#007FFF' : 'rgba(255,255,255,0.5)' }}>{activeInfo.label}</b></span>
             <span>{activeInfo.formationState === 'STABLE' ? 'Confirmed pattern' : activeInfo.formationState === 'EMERGING' ? 'Still forming' : 'No pattern yet'}</span>
-            <span>{activeInfo.signalCount} signal{activeInfo.signalCount === 1 ? '' : 's'}</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{activeInfo.velocityReason ?? 'Direction not yet available'}</span>
+            <span>P{Math.round(activeInfo.magnitude)}</span>
+            <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{activeInfo.stateLabel}</span>
           </div>
         )}
-      </div>
-
-      <div style={{
-        position: 'absolute', bottom: 60, left: '50%', transform: 'translateX(-50%)', zIndex: 15,
-        maxWidth: 640, padding: '14px 18px', background: 'rgba(12,15,12,0.85)', border: '1px solid #22271f',
-        borderRadius: 2, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.55, color: 'rgba(255,255,255,0.45)',
-        display: 'flex', gap: 10, pointerEvents: 'none',
-      }}>
-        <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'rgba(255,255,255,0.3)', marginTop: 5, flexShrink: 0 }} />
-        <div>
-          <b style={{ color: 'rgba(255,255,255,0.8)' }}>Why no trend arrows.</b> Every domain shows current strength, not direction —
-          that's withheld on purpose until there's enough history to say it honestly.
-        </div>
       </div>
     </>
   );

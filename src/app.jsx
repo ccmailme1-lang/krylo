@@ -1325,7 +1325,7 @@ export default function App() {
               viewportLens={viewportLens}
               connectorTier={surfaceActivated ? 'surface' : 'hero'}
             />
-            {surfaceExpanded && viewportLens === 'OBSERVE' && <ObserveStoryBanner activeDomain={selection} />}
+            {surfaceExpanded && viewportLens === 'OBSERVE' && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
             {surfaceActivated && (
               <AnalysisField
                 signals={liveSignals}

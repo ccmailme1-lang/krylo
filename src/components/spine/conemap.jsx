@@ -41,6 +41,7 @@ let _carouselStopped = false;
 const LIME             = '#66FF00';
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 6.175; // was 6.5 — reduced 5% 2026-08-08 (Founder request, cones read too large)
+const FORMATION_SCALE   = 0.85; // 2026-08-09 (Founder request) — uniform scale on the whole cone formation group (positions + geometry together), not height alone
 const DRAG_SENSITIVITY  = 0.01; // radians per pixel of horizontal drag while frozen
 const STEP_DURATION     = 0.15; // seconds — short, snappy ease for arrow-button step
 
@@ -79,26 +80,6 @@ const THEME_COLOR = {
 
 // KRYL-1034 — perceptual viewport lens glyphs. Suspended HUD floats a per-cone read of the
 // ACTIVE lens; cone FILL color stays convergence (locked §6) — additive, not a recolor.
-const LENS_GLYPH = { OBSERVE:'◉', SIGNAL:'↯', FLOW:'⇢', PRESSURE:'⧖', CONVERGENCE:'⬡', DRIFT:'↝', OPPORTUNITY:'⟡' };
-
-// lensRead — the cone's grounded read for a lens, or a §22 withheld state when no facet exists.
-// OBSERVE/SIGNAL/PRESSURE/CONVERGENCE map to data the cone already carries (grounded).
-// DRIFT consumes a real divergence result (STRUCTURAL vs NARRATIVE facet) computed outside
-// the Canvas; withheld → AWAITING. FLOW/OPPORTUNITY have no producer yet → AWAITING (§22).
-function lensRead(lens, { domain, pressure, volatility, v, drift }) {
-  const P = Math.round(pressure ?? 0);
-  switch (lens) {
-    case 'OBSERVE':     return { text: `${(domain ?? '').toUpperCase()} · P${P}`, grounded: true };
-    case 'SIGNAL':      return { text: v?.text ?? '—', grounded: v?.text != null };
-    case 'PRESSURE':    return { text: `P ${P}`, grounded: true };
-    case 'CONVERGENCE': return { text: resolveConvergenceState(pressure, volatility).label, grounded: true };
-    case 'DRIFT': {
-      if (!drift || drift.withheld) return { text: 'AWAITING', grounded: false }; // absence → withhold, never faked
-      return { text: `${drift.direction} Δ${Math.round(drift.margin)}`, grounded: true };
-    }
-    default:            return { text: 'AWAITING', grounded: false }; // FLOW / OPPORTUNITY (§22)
-  }
-}
 
 // KRYL-1088 — a cone holds exactly two measurements: pressure and volatility. The classifier
 // takes four axes, so this call site fills D and A from the same pressure value and pins T to
@@ -292,29 +273,13 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
               from the default cone display per Founder direction — too technical/redundant for the
               guest-facing default view. The underlying formation computation (formationadapter.js)
               is untouched and still powers ObserveStoryBanner's macro narrative + relationship
-              connectors; only this always-on per-cone readout is gone. */}
+              connectors; only this always-on per-cone readout is gone.
 
-          {/* KRYL-1034 — suspended HUD: per-cone read of the ACTIVE lens (floats below base).
-              Grounded reads in lime; withheld (§22) stays dim. Cone fill color untouched. */}
-          {(() => {
-            // KRYL-1171 — NAV_SURFACE (the new default landing state, no lens picked yet) reads
-            // as OBSERVE here for display purposes only. It's not a real lens choice; showing the
-            // raw internal state name would leak implementation detail onto the cone.
-            const displayLens = viewportLens === 'NAV_SURFACE' ? 'OBSERVE' : viewportLens;
-            const g = LENS_GLYPH[displayLens] ?? '◉';
-            const r = lensRead(displayLens, { domain: state.domain, pressure: activePressure, volatility: activeVolatility, v, drift });
-            return (
-              <Html position={[0, -coneHeight / 2 - 0.25, 0]} center style={{ pointerEvents: 'none' }}>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.14em',
-                  whiteSpace: 'nowrap', textTransform: 'uppercase', userSelect: 'none',
-                  color: r.grounded ? LIME : 'rgba(255,255,255,0.3)', opacity: flashOpacity,
-                }}>
-                  {g} {displayLens} · {r.text}
-                </div>
-              </Html>
-            );
-          })()}
+              KRYL-1171 — the suspended lens HUD (glyph + lens + domain/pressure, floating below
+              the cone base) that used to render here is also removed — redundant with
+              ObserveStoryBanner's bottom "full read" panel, which shows the same domain/pattern/
+              pressure once on tap instead of always-on for all 6 cones. lensRead()/LENS_GLYPH
+              were sole-use for that block and removed with it. */}
         </>
       )}
     </group>
@@ -2083,7 +2048,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 
       {/* cones + their footprints spin collectively around center Y axis */}
       {/* In topology mode spin stops; coneGroupRefs lerp positions to geographic anchors */}
-      <group ref={spinRef}>
+      <group ref={spinRef} scale={[FORMATION_SCALE, FORMATION_SCALE, FORMATION_SCALE]}>
         {(() => {
           // Build domain → best Kalshi signal map (highest OI per domain)
           const kalshiMap = {};
