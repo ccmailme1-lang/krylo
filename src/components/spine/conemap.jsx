@@ -2033,7 +2033,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   return (
     <>
       <group ref={gridGroupRef}>
-        <PulseFloor ringCount={7} maxRadius={R + 2.4} />
+        <PulseFloor ringCount={7} maxRadius={R + 6} />
         {/* KRYL-1171 — threshold band scale labels (LO·50/MID·75/HI·90 + tics) are cone-field
             HUD chrome for the default landing state only. Once a report/analysis surface is
             showing (OBSERVE banner, any AnalysisField lens), these Html-portaled labels float
@@ -2451,7 +2451,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
     >
-      <Canvas flat camera={{ position: [0, 3.25, 18], fov: 50 }} onCreated={onCanvasCreated}>
+      <Canvas flat camera={{ position: [0, 2.1, 18], fov: 50 }} onCreated={onCanvasCreated}>
         <ConeScene
           coneState={coneState}
           selectedDomain={activeDomain}
@@ -2472,7 +2472,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
-          target={[0, 2.4, 0]}
+          target={[0, 1.25, 0]}
         />
       </Canvas>
 

@@ -93,8 +93,6 @@ function buildNarrative(domains, relationships) {
     const b = domains.find(d => d.formationId === topRel.targetFormationId)?.label ?? topRel.targetFormationId;
     paragraphParts.push(`${a} and ${b} specifically are linked — see the connecting line below.`);
   }
-  paragraphParts.push('Tap any cone for the full read.');
-
   return { headlinePre, emphasis, headlinePost, paragraph: paragraphParts.join(' ') };
 }
 
@@ -141,7 +139,7 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
   return (
     <>
       <div style={{
-        position: 'absolute', top: 60, left: 346, right: 40, zIndex: 15,
+        position: 'absolute', bottom: 70, left: 346, right: 40, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
@@ -166,15 +164,7 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
         </div>
         {!activeInfo && (
           <div style={{ fontFamily: MONO, fontSize: 11.5, color: 'rgba(255,255,255,0.35)' }}>
-            No domain selected yet. Tap any cone to see its confidence level and evidence depth.
-          </div>
-        )}
-        {activeInfo && (
-          <div style={{ display: 'flex', gap: 28, justifyContent: 'center', fontFamily: MONO, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.02em' }}>
-            <span><b style={{ color: activeInfo.formationState === 'STABLE' ? LIME : activeInfo.formationState === 'EMERGING' ? '#007FFF' : 'rgba(255,255,255,0.5)' }}>{activeInfo.label}</b></span>
-            <span>{activeInfo.formationState === 'STABLE' ? 'Confirmed pattern' : activeInfo.formationState === 'EMERGING' ? 'Still forming' : 'No pattern yet'}</span>
-            <span>P{Math.round(activeInfo.magnitude)}</span>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>{activeInfo.stateLabel}</span>
+           
           </div>
         )}
       </div>
