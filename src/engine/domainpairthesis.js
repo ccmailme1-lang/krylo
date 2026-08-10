@@ -3,18 +3,27 @@
 // for the connector layer. Used by both the live cone rendering (FlowArc labeling) and the
 // Formation Relationship Connector Layer's domain-adjacency candidate rule.
 export const ARC_THESIS = {
-  'capital+technology':  'WATCH: LIQUIDITY FLOW',
-  'capital+ownership':   'WATCH: ASSET TRANSFER',
-  'capital+labor':       'WATCH: COST PRESSURE',
-  'capital+media':       'WATCH: NARRATIVE SHIFT',
-  'capital+knowledge':   'WATCH: YIELD SIGNAL',
-  'legal+career':        'WATCH: EXECUTIVE EVENT',
-  'labor+media':         'WATCH: NARRATIVE BREAK',
-  'technology+labor':    'WATCH: DISPLACEMENT SIGNAL',
-  'legal+technology':    'WATCH: REGULATORY SIGNAL',
-  'knowledge+ownership': 'WATCH: IP TRANSFER',
-  'knowledge+labor':     'WATCH: TALENT PRESSURE',
-  'media+ownership':     'WATCH: BRAND TRANSFER',
+  'capital+technology':   'WATCH: LIQUIDITY FLOW',
+  'capital+ownership':    'WATCH: ASSET TRANSFER',
+  'capital+labor':        'WATCH: COST PRESSURE',
+  'capital+media':        'WATCH: NARRATIVE SHIFT',
+  'capital+knowledge':    'WATCH: YIELD SIGNAL',
+  'legal+career':         'WATCH: EXECUTIVE EVENT',
+  'labor+media':          'WATCH: NARRATIVE BREAK',
+  'labor+technology':     'WATCH: DISPLACEMENT SIGNAL', // was keyed 'technology+labor' — sort-order
+                                                          // bug meant this never resolved (fell to
+                                                          // the generic fallback instead)
+  'legal+technology':     'WATCH: REGULATORY SIGNAL',
+  'knowledge+ownership':  'WATCH: IP TRANSFER',
+  'knowledge+labor':      'WATCH: TALENT PRESSURE',
+  'media+ownership':      'WATCH: BRAND TRANSFER',
+  // 2026-08-10 — closes the remaining canonical pairs (was 9/15, all others fell to generic
+  // 'POSSIBLE CATALYST'). Same domain-adjacency thesis, not a causal claim (see arcThesis below).
+  'knowledge+technology':  'WATCH: INNOVATION TRANSFER', // R&D / patent pipeline becoming deployable tech
+  'knowledge+media':       'WATCH: DISCLOSURE EVENT',    // research/IP becoming public narrative
+  'labor+ownership':       'WATCH: EQUITY TRANSFER',     // workforce stake / control shift
+  'media+technology':      'WATCH: DISTRIBUTION SHIFT',  // platform-driven reach change
+  'ownership+technology':  'WATCH: ACQUISITION SIGNAL',  // tech M&A — control over productive capacity
 };
 
 export function arcThesis(a, b) {

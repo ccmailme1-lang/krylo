@@ -867,3 +867,34 @@ WIRING SEQUENCE:
     by role (title / state label / body copy) and use the exact spec above. A font-size found on
     report text that matches none of the three is a contract violation — flag it, do not leave it
     unresolved.
+
+28. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
+
+    INCIDENT RECORD: two separate cone-scene HUD elements — ThresholdBands (LO·50/MID·75/HI·90
+    scale labels, conemap.jsx) and FlowArc (bay-pulse "X ↔ Y / WATCH: ..." labels, conemap.jsx) —
+    were confirmed via live screenshot bleeding through AnalysisField's 2D report overlays
+    (Structural Convergence Report, FLOW "Movement Analysis," and others). Root cause: these are
+    drei `<Html>` elements portaled out of the r3f Canvas into their own DOM layer. The Canvas
+    stays mounted underneath every AnalysisField report (surfaceActivated just adds a 2D overlay
+    on top), so any Html-portaled 3D HUD chrome without an explicit lens gate renders above that
+    2D content instead of being covered by it — the report's `background: '#000'` does not stop
+    a sibling-stacked portal element from painting on top.
+
+    RULE: every Html-portaled element inside conemap.jsx's ConeScene that is pure background/
+    orientation chrome (not itself the active view's content) MUST be gated to
+    `viewportLens === 'NAV_SURFACE'` (hero + surface default, before any lens or report is
+    chosen). Do not rely on z-index to fix this class of bug — z-index does not reliably win
+    against portaled Html in this stacking context; gate visibility at the lens level instead.
+
+    CURRENT GATING (reference — conemap.jsx):
+        ThresholdBands  — NAV_SURFACE only (fixed 2026-08-09)
+        FlowArc         — NAV_SURFACE only (fixed 2026-08-10)
+        Formation Relationship Connector Layer — NAV_SURFACE + OBSERVE (intentional exception:
+            it is the companion visual to ObserveStoryBanner, which also does not trigger
+            surfaceActivated / AnalysisField — see app.jsx's viewportLens !== 'OBSERVE' check).
+        Per-cone floating HUD (domain/signal label) — NAV_SURFACE + OBSERVE (same exception).
+
+    WHEN BUILDING NEW 3D HUD CHROME: default new Html-portaled elements to NAV_SURFACE-only.
+    Only extend to OBSERVE if the element is a direct, intentional companion to
+    ObserveStoryBanner's narrative (never as a default assumption) — every other lens mounts a
+    full AnalysisField report and will suffer this same bleed-through if the gate is missed.

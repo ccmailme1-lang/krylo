@@ -2111,8 +2111,13 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           );
         })}
 
-        {/* Wave 2: flow arcs — bezier between cones that pulsed together. Same layoutSettling gate. */}
-        {!layoutSettling && flows.map(f => {
+        {/* Wave 2: flow arcs — bezier between cones that pulsed together. Same layoutSettling gate.
+            KRYL-1171 — same bleed-through class as ThresholdBands: FlowArc's Html label
+            ("X ↔ Y / WATCH: ...") had no lens gate at all, so it rendered underneath every
+            AnalysisField report (confirmed via live screenshot — FLOW lens "Movement Analysis"
+            showing a stray "KNOWLEDGE ↔ OWNERSHIP / WATCH: IP TRANSFER" label). Restricted to
+            NAV_SURFACE per the 3D-HUD/report-overlay boundary contract (CLAUDE.md §28). */}
+        {!layoutSettling && viewportLens === 'NAV_SURFACE' && flows.map(f => {
           const a = coneData[f.a];
           const b = coneData[f.b];
           if (!a || !b) return null;
