@@ -832,3 +832,38 @@ WIRING SEQUENCE:
     demonstrated fact without ever being re-checked. The standard is no longer "someone
     previously declared this complete" — it is "state both the implementation maturity and the
     level of evidence supporting that claim."
+
+27. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
+
+    Every report-style output surface (banner narratives, macro/domain state reports, brief and
+    packet bodies) uses exactly THREE text sizes. No ad-hoc font-size value may be introduced on
+    report/narrative text outside these three tiers. This does not govern HUD micro-labels,
+    numeric/tabular data, or buttons — narrative/report text only.
+
+    CANONICAL SOURCE (reference implementation — analysisfield.jsx:897-910, "01 MACRO STATE
+    OVERVIEW"):
+
+        LARGE  — headline / report title.
+            font: Georgia, 'Times New Roman', serif · size: 28px · line-height: 1.15
+            e.g. "Structural Convergence Report"
+
+        MEDIUM — state / classification label.
+            font: 'IBM Plex Mono', monospace · size: 15px · letter-spacing: 0.04em
+            e.g. "BUILDING CONVERGENCE"
+
+        SMALL  — descriptive / explanatory body copy.
+            font: 'IBM Plex Mono', monospace · size: 11.5px · line-height: 1.6
+            e.g. "Measures whether independent macro forces are accumulating, conflicting, or
+            failing to align across the structural environment. Classification: PROJECTION — a
+            telemetry-derived state, not an observed or asserted outcome (DEF-1863). Scope: macro
+            structural field, not any single domain."
+
+    SCOPE: applies app-wide to every report-style surface, current and future — including
+    observestoryview.jsx (ObserveStoryBanner), analysisfield.jsx (Structural Convergence Report),
+    targetpacket.jsx, and intelligencebrief.jsx. A new report surface conforms to these three
+    sizes on build; it does not invent a fourth.
+
+    RULE: when auditing or building any report-style text, classify it as Large, Medium, or Small
+    by role (title / state label / body copy) and use the exact spec above. A font-size found on
+    report text that matches none of the three is a contract violation — flag it, do not leave it
+    unresolved.
