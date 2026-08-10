@@ -1324,8 +1324,9 @@ export default function App() {
               coneColorOverrides={coneColorOverrides}
               viewportLens={viewportLens}
               connectorTier={surfaceActivated ? 'surface' : 'hero'}
+              surfaceActivated={surfaceActivated}
             />
-            {surfaceExpanded && viewportLens === 'OBSERVE' && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
+            {surfaceExpanded && (viewportLens === 'OBSERVE' || viewportLens === 'NAV_SURFACE') && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
             {surfaceActivated && (
               <AnalysisField
                 signals={liveSignals}

@@ -1758,7 +1758,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface' }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // Layout-count transition, part 2 (see coneGroupRefs/layoutLerpRef below for part 1 — the
@@ -2041,7 +2041,13 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             "MID · 75" bleeding through the Structural Convergence Report). Restrict to
             NAV_SURFACE (hero + surface default view, before any lens or report is chosen).
             Band geometry itself is untouched — only visibility is gated. */}
-        {viewportLens === 'NAV_SURFACE' && <ThresholdBands />}
+        {/* 2026-08-10 — viewportLens === 'NAV_SURFACE' alone was confirmed (live, hard-refreshed,
+            post-deploy) to still let this bleed through on the Formation Prospectus report
+            (OPPORTUNITY lens). Belt-and-suspenders fix: also require !surfaceActivated — the
+            actual boolean that controls whether AnalysisField/the report is mounted (app.jsx),
+            so this is gated on the real cause of the bleed (a report is on screen) rather than
+            solely inferring it from a lens-string match that can drift out of sync. */}
+        {viewportLens === 'NAV_SURFACE' && !surfaceActivated && <ThresholdBands />}
 
       </group>
 
@@ -2117,7 +2123,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             AnalysisField report (confirmed via live screenshot — FLOW lens "Movement Analysis"
             showing a stray "KNOWLEDGE ↔ OWNERSHIP / WATCH: IP TRANSFER" label). Restricted to
             NAV_SURFACE per the 3D-HUD/report-overlay boundary contract (CLAUDE.md §28). */}
-        {!layoutSettling && viewportLens === 'NAV_SURFACE' && flows.map(f => {
+        {!layoutSettling && viewportLens === 'NAV_SURFACE' && !surfaceActivated && flows.map(f => {
           const a = coneData[f.a];
           const b = coneData[f.b];
           if (!a || !b) return null;
@@ -2242,7 +2248,7 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface' }) {
+export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2462,6 +2468,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
           viewportLens={viewportLens}
           divergenceByDomain={divergenceByDomain}
           connectorTier={connectorTier}
+          surfaceActivated={surfaceActivated}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}

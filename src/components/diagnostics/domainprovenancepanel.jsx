@@ -5,13 +5,15 @@
 // without needing the reporter's own DevTools access.
 import React, { useState, useEffect } from 'react';
 import { getDomainProvenanceLog } from '../../engine/telemetry.js';
+import { CONE_DISPLAY_ORDER } from '../../engine/ontology.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 const RED  = '#ff4444';
 const DIM  = 'rgba(255,255,255,0.35)';
 
-const CANONICAL_ORDER = ['CAPITAL', 'OWNERSHIP', 'LABOR', 'MEDIA', 'TECHNOLOGY', 'KNOWLEDGE'];
+// KRYL-1065 — sourced from ontology.js (no local domain list). Same order as cone layout.
+const CANONICAL_ORDER = CONE_DISPLAY_ORDER.map(d => d.toUpperCase());
 
 function isDebugEnabled() {
   if (typeof window === 'undefined') return false;
