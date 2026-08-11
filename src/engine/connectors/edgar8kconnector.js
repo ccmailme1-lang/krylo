@@ -16,6 +16,7 @@ import { EPISTEMIC_CLASS } from '../evidencetiers.js';
 import { realiseSnapshot } from '../gwrealiser.js';
 import { buildStructure } from '../sigmaengine.js';
 import { realityObjectToEventLike } from '../ontologycontracts.js';
+import { ProvenanceDAG } from '../causalos/provenance.js';
 
 const EDGAR_BASE    = '/api/edgar';
 // KRYL-1094 — was 1. A single-day window returns zero on every weekend and market holiday,
@@ -85,6 +86,14 @@ const _deadLetter = [];
 
 // Event log: accessionKey → event metadata — consumed by WO-2051
 const _eventLog = new Map();
+
+// KRYL-Lean-Ontology — session-scoped πΣ store, same pattern as _processed/_deadLetter/
+// _eventLog above. Without this, buildStructure() would create a fresh throwaway
+// ProvenanceDAG every sync cycle (its default when none is passed in) — traceable per
+// cycle, but nothing accumulates and every prior cycle's evidence links vanish the moment
+// the next cycle runs. Sharing one DAG across cycles is what makes traceability queryable
+// after the fact, not just provable in the instant a sync ran.
+const _provenanceDAG = new ProvenanceDAG();
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -280,7 +289,7 @@ export async function runEdgar8KSync() {
   if (processed.length > 0) {
     const events = processed.map(realityObjectToEventLike).filter(Boolean);
     const snapshot = realiseSnapshot({ window: { start: Date.now() - LOOKBACK_DAYS * 86_400_000, end: null }, events, edges: [] });
-    sigmaProof = buildStructure({ sigmaId: `EDGAR_8K_SYNC_${Date.now()}`, snapshot });
+    sigmaProof = buildStructure({ sigmaId: `EDGAR_8K_SYNC_${Date.now()}`, snapshot, provenanceDAG: _provenanceDAG });
   }
 
   return {
@@ -314,6 +323,12 @@ export function clearDeadLetter() {
 
 export function isProcessed(cik, accessionNo) {
   return _processed.has(accessionKey(cik, accessionNo));
+}
+
+// KRYL-Lean-Ontology — exposes the session-scoped πΣ store so callers (tests, future UI)
+// can query traceability after the fact, not just at sync time.
+export function getProvenanceDAG() {
+  return _provenanceDAG;
 }
 
 // Expose ITEM_EVENT_CLASS for WO-2051 domain routing decisions
