@@ -4,7 +4,7 @@
 // Phase A — name normalization + registry lookup only.
 // Phase B (WO-2046) will add cross-source identifier joins (FEC↔UEI↔EDGAR).
 
-import REGISTRY from '../data/entityregistry.json';
+import REGISTRY from '../data/entityregistry.json' with { type: 'json' };
 import { nodeId } from './entitytopologyregistry.js';
 
 // Corporate suffix strip list — remove before matching
@@ -45,6 +45,129 @@ const INDEX = REGISTRY.flatMap(entity => {
   return entries;
 });
 
+// ── O extension (additive, KRYL-Lean-Ontology) — runtime entity lifecycle ──────────
+// The static REGISTRY (entityregistry.json, 56 hand-curated entries) is a build-time
+// import — immutable at runtime, cannot be written to. This adds a SEPARATE in-memory
+// runtime registry for entities created/updated after the app is running, without
+// touching the static registry or its existing read path (resolve/resolveAll above are
+// extended, not replaced — every existing caller's behavior for the 56 static entities
+// is unchanged).
+//
+// Static entities are immutable (matches audit 003's finding: "no mutation functions,
+// hand-curated, 56-entry file" — that's a deliberate curation boundary, not a bug to
+// paper over). upsertEntity/mergeEntity therefore only operate on runtime-created
+// entities; attempting either on a static canonicalId returns null rather than silently
+// no-op'ing or throwing.
+const RUNTIME_REGISTRY = new Map(); // canonicalId -> entity
+const RUNTIME_INDEX = [];           // same shape as INDEX above, kept in sync
+
+function isStaticId(canonicalId) {
+  return REGISTRY.some(e => e.canonicalId === canonicalId);
+}
+
+function reindexRuntimeEntity(entity) {
+  // Remove any stale index entries for this entity, then rebuild from current aliases.
+  for (let i = RUNTIME_INDEX.length - 1; i >= 0; i--) {
+    if (RUNTIME_INDEX[i].entity.canonicalId === entity.canonicalId) RUNTIME_INDEX.splice(i, 1);
+  }
+  for (const name of [entity.canonicalName, ...entity.aliases]) {
+    RUNTIME_INDEX.push({ norm: normalize(name), entity });
+  }
+}
+
+/**
+ * createEntity({canonicalName, aliases, identifiers, domainTags}) → entity card
+ *
+ * Idempotent creation (rc3 O requirement): if an entity already resolves confidently
+ * (via the existing resolve() path, static or runtime) for canonicalName, that existing
+ * entity is returned unchanged rather than creating a duplicate — matches WO-2004's
+ * "id uniqueness" discipline applied to O instead of E.
+ */
+export function createEntity({ canonicalName, aliases = [], identifiers = {}, domainTags = [] } = {}) {
+  if (!canonicalName || typeof canonicalName !== 'string') return null;
+
+  const existing = resolve(canonicalName);
+  if (existing && existing.confidence === 1.0) return existing;
+
+  const canonicalId = buildCanonicalId(canonicalName);
+  if (isStaticId(canonicalId) || RUNTIME_REGISTRY.has(canonicalId)) {
+    // Slug collision without an exact-name resolve hit — different name, same slug.
+    // Do not silently overwrite; caller must resolve the collision explicitly.
+    return null;
+  }
+
+  const now = new Date().toISOString();
+  const entity = {
+    canonicalId,
+    canonicalName,
+    aliases: [...aliases],
+    identifiers: { edgar: null, fec: null, uei: null, ...identifiers },
+    domainTags: [...domainTags],
+    createdAt: now,
+    updatedAt: now,
+    mergedInto: null, // set by mergeEntity when this entity is superseded
+  };
+  RUNTIME_REGISTRY.set(canonicalId, entity);
+  reindexRuntimeEntity(entity);
+  return { ...entity, confidence: 1.0 };
+}
+
+/**
+ * upsertEntity(canonicalId, patch) → updated entity card, or null
+ * Only operates on runtime-created entities — static entities are immutable (see header
+ * note). patch may update aliases/identifiers/domainTags; canonicalId/canonicalName/
+ * createdAt are immutable provenance fields and are never overwritten by a patch.
+ */
+export function upsertEntity(canonicalId, patch = {}) {
+  if (isStaticId(canonicalId)) return null;
+  const current = RUNTIME_REGISTRY.get(canonicalId);
+  if (!current) return null;
+
+  const updated = {
+    ...current,
+    aliases:     patch.aliases     ?? current.aliases,
+    identifiers: patch.identifiers ? { ...current.identifiers, ...patch.identifiers } : current.identifiers,
+    domainTags:  patch.domainTags  ?? current.domainTags,
+    updatedAt:   new Date().toISOString(),
+  };
+  RUNTIME_REGISTRY.set(canonicalId, updated);
+  reindexRuntimeEntity(updated);
+  return { ...updated, confidence: 1.0 };
+}
+
+/**
+ * mergeEntity(survivorId, mergedId) → survivor entity card, or null
+ * Only operates on runtime-created entities. The merged entity is NOT deleted (matches
+ * WO-2004's immutable/no-deletion discipline, identitykernel.js's FRAGMENTED status
+ * pattern) — it stays in RUNTIME_REGISTRY with mergedInto set, so any code already
+ * holding its canonicalId can still look it up and be redirected, and its history is
+ * never silently erased.
+ */
+export function mergeEntity(survivorId, mergedId) {
+  if (isStaticId(survivorId) || isStaticId(mergedId)) return null;
+  const survivor = RUNTIME_REGISTRY.get(survivorId);
+  const merged   = RUNTIME_REGISTRY.get(mergedId);
+  if (!survivor || !merged) return null;
+
+  const mergedAliases = [...new Set([...survivor.aliases, merged.canonicalName, ...merged.aliases])];
+  const mergedIdentifiers = { ...merged.identifiers, ...survivor.identifiers }; // survivor's own values win on conflict
+  const updatedSurvivor = {
+    ...survivor,
+    aliases:     mergedAliases,
+    identifiers: mergedIdentifiers,
+    domainTags:  [...new Set([...survivor.domainTags, ...merged.domainTags])],
+    updatedAt:   new Date().toISOString(),
+  };
+  RUNTIME_REGISTRY.set(survivorId, updatedSurvivor);
+  RUNTIME_REGISTRY.set(mergedId, { ...merged, mergedInto: survivorId, updatedAt: new Date().toISOString() });
+  reindexRuntimeEntity(updatedSurvivor);
+  // Merged entity's own aliases now also resolve to the survivor.
+  for (let i = RUNTIME_INDEX.length - 1; i >= 0; i--) {
+    if (RUNTIME_INDEX[i].entity.canonicalId === mergedId) RUNTIME_INDEX[i] = { ...RUNTIME_INDEX[i], entity: updatedSurvivor };
+  }
+  return { ...updatedSurvivor, confidence: 1.0 };
+}
+
 /**
  * resolve(name) → entity card | null
  *
@@ -62,8 +185,12 @@ export function resolve(name) {
   const norm = normalize(name);
   if (!norm) return null;
 
+  // Static index first, runtime-created entities second — preserves the exact existing
+  // match order/behavior for all 56 curated entities; runtime entities are additive.
+  const searchIndex = RUNTIME_INDEX.length ? [...INDEX, ...RUNTIME_INDEX] : INDEX;
+
   // Pass 1 — exact match
-  for (const { norm: candidateNorm, entity } of INDEX) {
+  for (const { norm: candidateNorm, entity } of searchIndex) {
     if (candidateNorm === norm) {
       return { ...entity, confidence: 1.0 };
     }
@@ -72,7 +199,7 @@ export function resolve(name) {
   // Pass 2 — fuzzy match (Jaccard ≥ 0.85)
   let best = null;
   let bestScore = 0;
-  for (const { norm: candidateNorm, entity } of INDEX) {
+  for (const { norm: candidateNorm, entity } of searchIndex) {
     const score = jaccard(norm, candidateNorm);
     if (score > bestScore) {
       bestScore = score;

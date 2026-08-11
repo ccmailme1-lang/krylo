@@ -47,7 +47,32 @@ export function registerInventorMigrationEdge(sourceOrg, destOrg) {
 // "dynamic graph" the file's own header flagged as not-yet-built. Each typed edge
 // ALSO writes into the v1 flat registry so existing resolveTopology() callers keep
 // working unchanged — purely additive, nothing about v1's behavior changes.
-export const TYPED_EDGES = []; // { from, to, type, source, ts }
+export const TYPED_EDGES = []; // { from, to, type, source, ts, validFrom, validTo }
+
+// KRYL-Lean-Ontology R extension — closed predicate vocabulary (Lean spec's 𝑃).
+// Built from every `type` value actually observed in live callers as of this audit:
+// registerOwnershipEdge (BENEFICIAL_OWNER_OF) and chokepointedges.js's EDGES table
+// (OPERATES/GATES/PROVIDES/POWERS/ENABLES). BRIDGES_TO is synthetic — added by
+// bridgeV1ToV2() below, not a real-world relationship, kept in the same enum so
+// getTypedEdgesFor()/findPath() consumers can filter it out explicitly if they need
+// real-world-only edges.
+export const RELATION_TYPES = Object.freeze({
+  BENEFICIAL_OWNER_OF: 'BENEFICIAL_OWNER_OF',
+  OPERATES:            'OPERATES',
+  GATES:               'GATES',
+  PROVIDES:            'PROVIDES',
+  POWERS:              'POWERS',
+  ENABLES:             'ENABLES',
+  BRIDGES_TO:          'BRIDGES_TO',
+});
+
+// Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently
+// rejects unrecognized types would break every future connector until this file is
+// updated; that is a worse failure mode than an unrecognized type getting through.
+// Callers that care can check this before registering.
+export function isKnownRelationType(type) {
+  return Object.values(RELATION_TYPES).includes(type);
+}
 
 // Node labels — CIK -> last-seen clean display name, for readability only.
 // Node IDENTITY is the CIK, never the raw display string (see bug note below).
@@ -68,14 +93,20 @@ export function nodeId(cik, fallbackName) {
   return cik ? `CIK:${cik}` : normId(fallbackName);
 }
 
-export function registerTypedEdge({ from, to, fromCik, toCik, type, source, fromLabel, toLabel }) {
+// validFrom/validTo — additive, optional. Default validFrom = ts (creation time, existing
+// behavior unchanged for every caller that doesn't pass these), validTo = null (open-ended
+// — "still valid as of now"). A caller with a known effective date (e.g. a filing's stated
+// effective date) can pass validFrom explicitly; validTo lets a superseding edge close out
+// a prior one without deleting history (§25/§26 — never silently overwrite prior fact).
+export function registerTypedEdge({ from, to, fromCik, toCik, type, source, fromLabel, toLabel, validFrom, validTo = null }) {
   if (!from || !to || !type) return;
   const f = nodeId(fromCik, from);
   const t = nodeId(toCik, to);
   if (fromLabel) NODE_LABELS[f] = fromLabel;
   if (toLabel)   NODE_LABELS[t] = toLabel;
 
-  TYPED_EDGES.push({ from: f, to: t, type, source: source ?? 'UNKNOWN', ts: Date.now() });
+  const ts = Date.now();
+  TYPED_EDGES.push({ from: f, to: t, type, source: source ?? 'UNKNOWN', ts, validFrom: validFrom ?? ts, validTo });
 
   // backward-compat: keep v1's flat peer registry in sync
   if (!entityTopologyRegistry[f]) entityTopologyRegistry[f] = [];
@@ -163,4 +194,43 @@ export function findPath(fromId, toId, maxDegrees = 6) {
   }
 
   return { found: false, degrees: null, path: [], hops: [], reason: `NO_PATH_WITHIN_${maxDegrees}_DEGREES` };
+}
+
+// ── v1/v2 identity bridge (additive, KRYL-Lean-Ontology R extension) ───────────
+// KNOWN LIMITATION documented above (findPath): v1 nodes are plain uppercased names
+// (e.g. 'NVIDIA'), v2 nodes are CIK-prefixed (e.g. 'CIK:0001045810') — a path crossing
+// from a v1-only node to a v2-only node isn't found unless some edge bridges them.
+//
+// This does NOT import entityresolution.js directly — entityresolution.js already
+// imports nodeId from this file, so a reverse import would be circular. Instead the
+// caller passes its own resolver (entityresolution.js's resolve()) in, same
+// dependency-injection pattern identitykernel.js already uses for getAnchorStrength.
+//
+// bridgeV1ToV2(v1Name, resolveEntity) — resolveEntity: (name) => entity|null, matching
+// entityresolution.js's resolve() contract (entity.identifiers.edgar = CIK).
+// Registers a BRIDGES_TO edge connecting the v1 name-node to the v2 CIK-node so
+// findPath() can traverse across them. Idempotent. Returns the v2 node id if bridged
+// (or already bridgeable), null if no confident resolution exists — never fabricates a
+// bridge from a low-confidence guess (§22).
+export function bridgeV1ToV2(v1Name, resolveEntity) {
+  if (!v1Name || typeof resolveEntity !== 'function') return null;
+  const entity = resolveEntity(v1Name);
+  const cik = entity?.identifiers?.edgar;
+  if (!cik) return null;
+
+  const v1Id = normId(v1Name);
+  const v2Id = nodeId(cik, v1Name);
+  if (v1Id === v2Id) return v2Id; // already the same key — nothing to bridge
+
+  const alreadyBridged = TYPED_EDGES.some(e =>
+    e.type === RELATION_TYPES.BRIDGES_TO &&
+    ((e.from === v1Id && e.to === v2Id) || (e.from === v2Id && e.to === v1Id))
+  );
+  if (!alreadyBridged) {
+    registerTypedEdge({
+      from: v1Id, to: v2Id, type: RELATION_TYPES.BRIDGES_TO,
+      source: 'IDENTITY_BRIDGE', fromLabel: v1Name, toLabel: entity.canonicalName ?? v1Name,
+    });
+  }
+  return v2Id;
 }
