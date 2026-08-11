@@ -85,10 +85,12 @@ const DOMAIN_CHIPS = [
   { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> },
 ];
 
-// Founder directive 2026-08-04 — TRENDING must always populate once a domain is selected or
-// typed, never sit empty waiting on live connector coverage. deriveTrendingTerms (real signals)
-// is tried first; this is the fill-in for whatever it doesn't cover, so the section never goes
-// empty. Restored verbatim from the pre-KRYL-1143b static list.
+// CARL (Concept Alias Retrieval Layer, specs/SPEC-carl-concept-alias-retrieval-layer.md) was
+// built 2026-08-11 as a replacement for this flat list, then rejected the same session — see
+// the spec's own status header. DOMAIN_PRECURSORS is restored as the real candidate pool for
+// the TRENDING block below. The original 2026-08-04 "always populate" filler directive is
+// still superseded: chips require typed text and a zero-score candidate is dropped, never
+// padded in — that part of the 2026-08-11 fix stands.
 const DOMAIN_PRECURSORS = {
   // Sourced 2026-08-04 from real, cited 2026 finance search-trend data (Trintech/WEF/BCG/
   // Accenture/Deloitte/Morgan Stanley reporting) provided by Founder — not invented, not the
@@ -117,6 +119,31 @@ const ANALYSIS_PILL_TO_DOMAIN = {
   MEDIA:      'MEDIA',
   OWNERSHIP:  'OWNERSHIP',
 };
+
+// Deterministic lexical relevance — no LLM, same discipline as intentparser.js. Splits
+// typed text into meaningful tokens (3+ chars) for scoring TRENDING chip candidates against.
+function tokenizeForRelevance(text) {
+  return Array.from(new Set(
+    text.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2)
+  ));
+}
+
+// Scores a candidate chip term (domain ontology entry or real signal label) against the
+// typed text's tokens. Exact token match scores highest; a shared 4+ char prefix (stem-ish,
+// e.g. "asset"/"assets") scores lower. Zero means no lexical connection to what was typed —
+// callers must drop zero-score candidates rather than padding them in as filler.
+function scoreTermRelevance(term, queryTokens) {
+  if (!queryTokens.length) return 0;
+  const termTokens = term.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  let score = 0;
+  for (const tt of termTokens) {
+    for (const qt of queryTokens) {
+      if (tt === qt) { score += 3; continue; }
+      if (tt.length >= 4 && qt.length >= 4 && tt.slice(0, 4) === qt.slice(0, 4)) score += 1;
+    }
+  }
+  return score;
+}
 
 const SIGNAL_SCOPE_OPTIONS = [
   { key: 'live',       label: 'LIVE'            },
@@ -794,6 +821,47 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const bayDomain      = LENS_BROKER_DOMAIN_MAP[activeLens] ?? 'GENERAL';
   const bayResult      = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
   const frictionResult = useMemo(() => computeStructuralFriction(bayDomain, bayResult), [bayDomain, bayResult]);
+
+  // TRENDING chips — Founder directive 2026-08-11. Chips require typed subject matter: no text
+  // -> no chips, domain selected with an empty box -> no chips. Real literal token/stem
+  // matching only (scoreTermRelevance) against DOMAIN_PRECURSORS + live signals
+  // (deriveTrendingTerms) — a zero-score candidate is dropped, never padded in as filler.
+  // Pure computation lives in this memo, never in render-phase JSX.
+  const trendingResult = useMemo(() => {
+    const trimmedQuery = seedQuery.trim();
+    if (!trimmedQuery) return { chips: [] };
+
+    const parsed = parseIntent(trimmedQuery);
+    const entityChips = Array.from(new Set((parsed?.entities ?? []).map(e => e.toUpperCase())));
+
+    const queryDomainResult = detectDomain(trimmedQuery, activeLens);
+    const queryPill = queryDomainResult?.resolutionEligible ? queryDomainResult.primary : null;
+    const pills = Array.from(new Set([...selectedDomains, queryPill].filter(Boolean)));
+
+    const queryTokens = tokenizeForRelevance(trimmedQuery);
+
+    const remaining = Math.max(0, 8 - entityChips.length);
+    const perDomain = pills.length > 0 ? Math.max(1, Math.floor(remaining / pills.length)) : 0;
+    const domainChips = (remaining === 0 || pills.length === 0) ? [] : pills.flatMap(pill => {
+      const canonicalDomain = ANALYSIS_PILL_TO_DOMAIN[pill];
+      const real      = canonicalDomain ? deriveTrendingTerms(rawSignals, canonicalDomain, 24) : [];
+      const ontology  = DOMAIN_PRECURSORS[pill] ?? [];
+      const candidates = Array.from(new Set([...real, ...ontology]));
+      return candidates
+        .map(term => ({ term, score: scoreTermRelevance(term, queryTokens) }))
+        .filter(c => c.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, perDomain)
+        .map(c => c.term);
+    });
+
+    const chips = Array.from(new Set([...entityChips, ...domainChips]))
+      .slice(0, 8)
+      .map(t => ({ lens: t, label: t }));
+
+    return { chips };
+  }, [seedQuery, activeLens, selectedDomains, rawSignals]);
+
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
   const scopeDot      = projectedState.stateId >= 4 ? LIME
@@ -1688,57 +1756,27 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 </div>
 
                 {/* ── TRENDING ── */}
-                {/* Founder directive 2026-08-04 — key on the SUBJECT MATTER of what's actually
-                    typed, not a static domain->word-list mapping (that's dead the moment it's
-                    written). Priority order, highest first:
-                      1. Real entities parseIntent() extracts from the literal typed text
-                         (quoted phrases / proper nouns) — this is quoting the user back at
-                         themselves, so it can't be stale or wrong.
-                      2. Real signals a live connector actually dispatched for the resolved
-                         domain(s) (deriveTrendingTerms).
-                      3. DOMAIN_PRECURSORS — last-resort filler ONLY, so the section still
-                         always populates on a bare domain click with zero typed text and zero
-                         live signal yet. Never the primary source again. */}
-                {(() => {
-                  const trimmedQuery = seedQuery.trim();
-                  const parsed = trimmedQuery ? parseIntent(trimmedQuery) : null;
-                  const entityChips = Array.from(new Set((parsed?.entities ?? []).map(e => e.toUpperCase())));
-
-                  const queryDomainResult = trimmedQuery ? detectDomain(trimmedQuery, activeLens) : null;
-                  const queryPill = queryDomainResult?.resolutionEligible ? queryDomainResult.primary : null;
-
-                  const pills = Array.from(new Set([...selectedDomains, queryPill].filter(Boolean)));
-                  if (pills.length === 0 && entityChips.length === 0) return null;
-
-                  const remaining = Math.max(0, 8 - entityChips.length);
-                  const perDomain = pills.length > 0 ? Math.max(1, Math.floor(remaining / pills.length)) : 0;
-                  const domainChips = remaining === 0 ? [] : pills.flatMap(pill => {
-                    const canonicalDomain = ANALYSIS_PILL_TO_DOMAIN[pill];
-                    const real   = canonicalDomain ? deriveTrendingTerms(rawSignals, canonicalDomain, perDomain) : [];
-                    const filler = (DOMAIN_PRECURSORS[pill] ?? []).filter(t => !real.includes(t));
-                    return [...real, ...filler].slice(0, perDomain);
-                  });
-
-                  const chips = Array.from(new Set([...entityChips, ...domainChips]))
-                    .slice(0, 8)
-                    .map(t => ({ lens: t, label: t }));
-
-                  if (chips.length === 0) return null;
-
-                  return (
-                    <div style={{ marginTop: 20 }}>
-                      <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
-                      <StaggeredChips
-                        chips={chips}
-                        selected={activeSituation?.lens}
-                        onSelect={selectSituation}
-                        getKey={s => s.lens}
-                        getLabel={s => s.label}
-                        isSelected={(s, sel) => s.lens === sel}
-                      />
-                    </div>
-                  );
-                })()}
+                {/* Founder directive 2026-08-11. Computation lives in the trendingResult useMemo
+                    above; this block is a pure render of that already-computed result. Chips
+                    require typed subject matter: no text -> no chips, domain selected with an
+                    empty box -> no chips. Real literal token/stem matching only against
+                    DOMAIN_PRECURSORS + live signals (deriveTrendingTerms) — a zero-score
+                    candidate is dropped, never padded in as filler. CARL (concept/alias
+                    retrieval) was built and rejected this same session — see
+                    specs/SPEC-carl-concept-alias-retrieval-layer.md for the record. */}
+                {trendingResult.chips.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
+                    <StaggeredChips
+                      chips={trendingResult.chips}
+                      selected={activeSituation?.lens}
+                      onSelect={selectSituation}
+                      getKey={s => s.lens}
+                      getLabel={s => s.label}
+                      isSelected={(s, sel) => s.lens === sel}
+                    />
+                  </div>
+                )}
 
               </div>
 

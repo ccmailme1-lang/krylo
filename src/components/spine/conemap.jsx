@@ -631,6 +631,22 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
     return () => clearInterval(iv);
   }, []);
 
+  // KRYL-1171 — FIELD CONVERGENCE's "PROJECTION · N=" (StateDistribution, fed by
+  // coneState.length) used to hard-cut 3->6 the instant surfaceExpanded changed the cone count —
+  // same frame as the cone formation's own expansion. Cross-fade it on the same 620ms clock
+  // ConeScene's layoutLerpRef already uses for the cone reposition/entrance lerp (see
+  // LAYOUT_TRANSITION_DURATION in ConeScene) so the panel and the 3D formation read as one
+  // coordinated expansion instead of three separate UI changes landing at once.
+  const [fieldCountTransitioning, setFieldCountTransitioning] = React.useState(false);
+  const prevFieldCountRef = React.useRef(coneState.length);
+  React.useEffect(() => {
+    if (prevFieldCountRef.current === coneState.length) return;
+    prevFieldCountRef.current = coneState.length;
+    setFieldCountTransitioning(true);
+    const t = setTimeout(() => setFieldCountTransitioning(false), 620);
+    return () => clearTimeout(t);
+  }, [coneState.length]);
+
   // WO-1339 Phase B — live resonance path via Ollama
   const [resonancePath, setResonancePath] = React.useState(null);
   const resonanceTitleRef = React.useRef(null);
@@ -759,7 +775,9 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
         return (
           <div>
             <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
-              <StateDistribution stateIds={fieldStateIds} label="FIELD CONVERGENCE" />
+              <div style={{ opacity: fieldCountTransitioning ? 0 : 1, transition: 'opacity 300ms ease' }}>
+                <StateDistribution stateIds={fieldStateIds} label="FIELD CONVERGENCE" />
+              </div>
             </div>
             <div style={{marginBottom:10,paddingBottom:10,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
               <div style={{fontSize:7,letterSpacing:'0.2em',color:'rgba(255,255,255,0.3)',marginBottom:4}}>ATTENTION STACK</div>
@@ -1913,13 +1931,24 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       if (!ref?.current) return;
       const angle  = (i / total) * Math.PI * 2;
       const targetSx = R * Math.cos(angle), targetSz = R * Math.sin(angle);
-      const from = layoutFromRef.current[state.domain] ?? [targetSx, targetSz];
+      // KRYL-1171 — a domain absent from layoutFromRef didn't exist in the previous formation
+      // (e.g. maxCones 3 -> 6 on surfaceExpanded). This used to fall back to [targetSx, targetSz]
+      // — from === to, zero interpolation distance — so new cones popped in at full size/position
+      // instantly while the surviving cones eased smoothly past them. Spawn new cones from the
+      // formation's own center [0,0] instead (the real anchor this whole scene is already built
+      // around, not a fabricated coordinate) so they travel outward on the exact same
+      // ease-out-cubic curve as every other cone reposition.
+      const isNewCone = layoutFromRef.current[state.domain] === undefined;
+      const from = isNewCone ? [0, 0] : layoutFromRef.current[state.domain];
       const sx = from[0] + (targetSx - from[0]) * layoutEased;
       const sz = from[1] + (targetSz - from[1]) * layoutEased;
       lastPosRef.current[state.domain] = [sx, sz];
       const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
       ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
+      // New cones also grow from near-zero as they travel outward, rather than appearing at
+      // full size mid-flight — same layoutEased clock as the position lerp, no separate timer.
+      ref.current.scale.setScalar(isNewCone ? (0.05 + 0.95 * layoutEased) : 1);
     });
 
     if (gridGroupRef.current) {
@@ -2248,7 +2277,7 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false }) {
+export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2451,7 +2480,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
     >
-      <Canvas flat camera={{ position: [0, 2.1, 18], fov: 50 }} onCreated={onCanvasCreated}>
+      <Canvas flat camera={{ position: [0, 2.1, 18], fov: 50 }} onCreated={onCanvasCreated} frameloop={surfaceVisible ? 'always' : 'never'}>
         <ConeScene
           coneState={coneState}
           selectedDomain={activeDomain}
@@ -2479,11 +2508,29 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
       {/* WO-1349 — Cross-bay resonance arcs (leaf-isolated so its 100ms HUD sampling doesn't re-render the scene) */}
       <ResonanceArcs hudRef={hudRef} baysForResonance={baysForResonance} />
 
-      {/* InspectionPanel + ComparePanel portaled to root z:20 overlay */}
+      {/* InspectionPanel + ComparePanel portaled to root z:20 overlay.
+          §28 boundary contract (2026-08-11, corrected same day) — InspectionPanel is
+          Html-portaled out of the r3f Canvas AND out of ConeMap's own visibility-controlled
+          wrapper (portals to a root-level DOM node, #krylo-hud-root, that app.jsx does not hide
+          when navMode leaves 'surface' — ConeMap itself stays mounted underneath other pages by
+          design). Two conditions, both required: `surfaceVisible` (= isSurface in app.jsx,
+          navMode === 'surface') so it's gone from every other left-nav page (History/Community/
+          News/Analysis/Settings/etc — first real bug found, confirmed live: panel was showing
+          on History); `viewportLens === 'NAV_SURFACE' || viewportLens === 'OBSERVE'` so it's
+          gone from DRIFT and any activated analysis report, but stays through OBSERVE — OBSERVE
+          is still "the Surface page" to the Founder (confirmed live, 2026-08-11: panel was
+          missing during the ambient pre-click narrative state and that was wrong), matching the
+          same OBSERVE+NAV_SURFACE pairing ObserveStoryBanner and the per-cone floating HUD
+          already use for exactly this "still on Surface, no report yet" state. First cut of
+          this gate (NAV_SURFACE only, following ThresholdBands/FlowArc's narrower rule) was too
+          strict — those two intentionally exclude OBSERVE for a different reason (avoiding
+          their own visual clutter during the narrative moment); InspectionPanel does not share
+          that reason and should not have copied their exclusion.
+          ComparePanel is left ungated — not requested, no incident reported for it. */}
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />
+          {surfaceVisible && (viewportLens === 'NAV_SURFACE' || viewportLens === 'OBSERVE') && <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
         </>,
         document.getElementById('krylo-hud-root')
       )}
