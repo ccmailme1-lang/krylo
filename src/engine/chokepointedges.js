@@ -23,6 +23,9 @@
 // check first (§4). Call registerChokepointEdges() from the impact-map entry point.
 
 import { registerTypedEdge } from './entitytopologyregistry.js';
+import { realiseSnapshot } from './gwrealiser.js';
+import { buildStructure } from './sigmaengine.js';
+import { ProvenanceDAG } from './causalos/provenance.js';
 
 const SRC = 'DOMAIN_DEP_FACT';
 
@@ -90,4 +93,40 @@ export function registerChokepointEdges() {
     registerTypedEdge({ from, to, type, source: SRC, fromCik: COMPANY_CIK[from], fromLabel: from, toLabel: to });
   }
   return EDGES.length;
+}
+
+// KRYL-Lean-Ontology R-side integration — additive, does not change
+// registerChokepointEdges() above in any way (same function, same return contract, same
+// idempotency flag). entitytopologyregistry.js is treated as the authoritative R
+// substrate, per direction — this reads the edges it already holds via gwrealiser.js's
+// default (realiseSnapshot() reads live TYPED_EDGES when no override is passed), it does
+// not create a second store or duplicate the edges anywhere.
+//
+// Session-scoped shared ProvenanceDAG, same pattern as edgar8kconnector.js's
+// _provenanceDAG — links accumulate across calls rather than resetting.
+const _chokepointDAG = new ProvenanceDAG();
+
+// Fixed sigmaId, not a Date.now()-suffixed one — unlike EDGAR filings, this curated data
+// doesn't grow between calls (registerChokepointEdges() is a one-time seed, guarded by
+// _registered). Repeated calls to this function re-confirm the SAME structure rather than
+// spawning a new Σ namespace each time — linkEvidence() is a Set add, so re-linking the
+// same (evidence, element) pair on a repeat call is a genuine no-op, not a duplicate.
+const CHOKEPOINT_SIGMA_ID = 'CHOKEPOINT_DEPENDENCY_STRUCTURE';
+
+/**
+ * buildChokepointStructure() → Σ object (sigmaengine.js's buildStructure() return shape)
+ *
+ * Ensures the edges exist (calling registerChokepointEdges() is safe/idempotent — it
+ * no-ops after the first real call), then realises a Gᵂ snapshot over all time (this
+ * curated data has no natural decay window) and builds Σ over the whole graph — no
+ * seedId, since this is one cohesive curated structure, not scoped to a single entity.
+ */
+export function buildChokepointStructure() {
+  registerChokepointEdges();
+  const snapshot = realiseSnapshot({ window: { start: 0, end: null } });
+  return buildStructure({ sigmaId: CHOKEPOINT_SIGMA_ID, snapshot, provenanceDAG: _chokepointDAG });
+}
+
+export function getChokepointProvenanceDAG() {
+  return _chokepointDAG;
 }
