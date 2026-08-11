@@ -22,7 +22,7 @@
 // (resolveTopology / surface amplifier), so wiring it live needs an amplifier-interaction
 // check first (§4). Call registerChokepointEdges() from the impact-map entry point.
 
-import { registerTypedEdge } from './entitytopologyregistry.js';
+import { registerTypedEdge, TYPED_EDGES } from './entitytopologyregistry.js';
 import { realiseSnapshot } from './gwrealiser.js';
 import { buildStructure } from './sigmaengine.js';
 import { ProvenanceDAG } from './causalos/provenance.js';
@@ -120,10 +120,21 @@ const CHOKEPOINT_SIGMA_ID = 'CHOKEPOINT_DEPENDENCY_STRUCTURE';
  * no-ops after the first real call), then realises a Gᵂ snapshot over all time (this
  * curated data has no natural decay window) and builds Σ over the whole graph — no
  * seedId, since this is one cohesive curated structure, not scoped to a single entity.
+ *
+ * SOURCE-SCOPED (fixed after multi-cycle testing, audit 024): realiseSnapshot()'s default
+ * reads the WHOLE shared TYPED_EDGES store. Since other connectors write into that same
+ * array, an unscoped read would silently absorb unrelated edges into what is supposed to be
+ * a cohesive curated chokepoint structure — a real "prior structural state corrupted by an
+ * unrelated write" bug, caught by testing repeated invocation alongside a simulated other
+ * connector, not assumed safe. Filtering to this file's own SRC ('DOMAIN_DEP_FACT') keeps
+ * this function's Σ scoped to only the edges it itself is responsible for, without touching
+ * entitytopologyregistry.js's status as the single shared authoritative R store — the filter
+ * happens here, at read time, not by creating a second store.
  */
 export function buildChokepointStructure() {
   registerChokepointEdges();
-  const snapshot = realiseSnapshot({ window: { start: 0, end: null } });
+  const ownEdges = TYPED_EDGES.filter(e => e.source === SRC);
+  const snapshot  = realiseSnapshot({ window: { start: 0, end: null }, edges: ownEdges });
   return buildStructure({ sigmaId: CHOKEPOINT_SIGMA_ID, snapshot, provenanceDAG: _chokepointDAG });
 }
 
