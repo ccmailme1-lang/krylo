@@ -9,7 +9,9 @@
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
-import { registerOwnershipEdge } from '../entitytopologyregistry.js';
+import { registerOwnershipEdge, nodeId } from '../entitytopologyregistry.js';
+import { realiseSnapshot } from '../gwrealiser.js';
+import { buildStructure } from '../sigmaengine.js';
 
 const SEARCH_BASE = '/api/edgar';
 const MAX_HITS    = 100;
@@ -62,6 +64,9 @@ export async function runSecOwnershipSync({ from, to } = {}) {
 
   let registered = 0;
   const errors   = [];
+  let firstSeedId = null; // KRYL-Lean-Ontology: nodeId of the first successfully-registered
+                           // pair's subject — used below to seed a real Σ from this sync's
+                           // own live edges, not a fixture.
 
   for (const hit of hits) {
     const pair = extractOwnershipPair(hit);
@@ -72,10 +77,29 @@ export async function runSecOwnershipSync({ from, to } = {}) {
         subjectCik: pair.subjectCik, subjectName: pair.subjectName,
         filerCik:   pair.filerCik,   filerName:   pair.filerName,
       });
+      if (!firstSeedId) firstSeedId = nodeId(pair.subjectCik, pair.subjectName);
       registered++;
     } catch (err) {
       errors.push({ hit: hit._id, error: err.message });
     }
+  }
+
+  // KRYL-Lean-Ontology live integration — additive, changes nothing above. Runs the real
+  // edges this sync just registered through the actual Gᵂ → σ → Σ → πΣ path (gwrealiser.js
+  // / sigmaengine.js) instead of leaving that machinery wired-but-uncalled, which is the
+  // exact failure mode already documented against WO-2004's attachDomainPressures/attachSCI
+  // and WO-2005B's computeStructuralSuite (audits 001/002). No evidenceGraph is available
+  // here (this connector produces R edges directly, not WO-2004 EvidenceNodes) — props_Σ
+  // is therefore expected to stay empty on this specific path, which is the correct §22
+  // withhold behavior, not a defect.
+  let sigmaProof = null;
+  if (firstSeedId) {
+    // end: Date.now(), not Date.parse(enddt) — edges register with a Date.now() timestamp,
+    // and enddt parses to midnight UTC on the query's end date. A sync running any time
+    // after midnight on its own end date would otherwise exclude the edges it just wrote.
+    const window = { start: Date.parse(startdt), end: Date.now() };
+    const snapshot = realiseSnapshot({ window });
+    sigmaProof = buildStructure({ sigmaId: `SEC_13D_13G_SYNC_${Date.now()}`, snapshot, seedId: firstSeedId });
   }
 
   // Normalized 0-100 signal per §16 shared pool contract — filing volume in window
@@ -91,5 +115,12 @@ export async function runSecOwnershipSync({ from, to } = {}) {
     decay:     DECAY.DAILY,
   }]);
 
-  return { registered, total: hits.length, errors };
+  return {
+    registered, total: hits.length, errors,
+    // KRYL-Lean-Ontology — additive field, existing callers reading registered/total/errors
+    // are unaffected. sigma: null when nothing was registered (no seed to build from).
+    sigma: sigmaProof
+      ? { sigmaId: sigmaProof.sigmaId, vertexCount: sigmaProof.vertices.length, edgeCount: sigmaProof.edges.length, traceable: sigmaProof.traceable }
+      : null,
+  };
 }

@@ -48,9 +48,16 @@ export function buildStructure({ sigmaId, snapshot, seedId, maxDegrees = 6, evid
   const V_Sigma = [];
   for (const [id, v] of C.vertices) {
     V_Sigma.push({ id, kind: v.kind });
-    if (v.kind === 'E' && v.ref?.identityId) {
-      // E is a legitimate member of the Lean evidence domain (E∪R) — it can be its own
-      // evidence for its own inclusion in the structure.
+    if (v.kind === 'E' && Array.isArray(v.ref?.evidence) && v.ref.evidence.length > 0) {
+      // RealityObject-shaped E vertex (via ontologycontracts.js's realityObjectToEventLike
+      // translation, per architecture-recon/012) — real per-item evidence exists, so link
+      // each one individually rather than self-referencing. This is MORE rc3-correct than
+      // the CanonicalEvent fallback below: distinct evidence instances, not one self-link.
+      for (const evId of v.ref.evidence) dag.linkEvidence(evId, sigmaId, 'vertex', id);
+    } else if (v.kind === 'E' && v.ref?.identityId) {
+      // CanonicalEvent-shaped E vertex (WO-2004, no per-item evidence array available at
+      // this layer) — E is a legitimate member of the Lean evidence domain (E∪R), so it
+      // can be its own evidence for its own inclusion in the structure.
       dag.linkEvidence(v.ref.identityId, sigmaId, 'vertex', id);
     }
     // O-kind vertices are NOT in E∪R — they are never self-evidenced. They get linked

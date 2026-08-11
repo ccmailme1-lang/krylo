@@ -13,6 +13,9 @@
 import { resolve as resolveEntity } from '../entityresolution.js';
 import { createObject, weightForClass, OBJECT_TYPE, EPISTEMIC_STATE } from '../rkmstore.js';
 import { EPISTEMIC_CLASS } from '../evidencetiers.js';
+import { realiseSnapshot } from '../gwrealiser.js';
+import { buildStructure } from '../sigmaengine.js';
+import { realityObjectToEventLike } from '../ontologycontracts.js';
 
 const EDGAR_BASE    = '/api/edgar';
 // KRYL-1094 — was 1. A single-day window returns zero on every weekend and market holiday,
@@ -265,6 +268,21 @@ export async function runEdgar8KSync() {
     }
   }
 
+  // KRYL-Lean-Ontology live integration — additive, changes nothing above. Per
+  // architecture-recon/012: RealityObjects aren't CanonicalEvent-shaped, so they're
+  // translated (realityObjectToEventLike, ontologycontracts.js) before entering the real
+  // Gᵂ → Σ → πΣ path. edges: [] — this connector produces no R relationships of its own;
+  // scoping the snapshot to just this run's own events avoids mixing in unrelated live
+  // edges from other connectors sharing the same TYPED_EDGES array. No seedId — building
+  // over the whole batch, not a single traversal, since 8-K filings are independent of
+  // each other within one sync.
+  let sigmaProof = null;
+  if (processed.length > 0) {
+    const events = processed.map(realityObjectToEventLike).filter(Boolean);
+    const snapshot = realiseSnapshot({ window: { start: Date.now() - LOOKBACK_DAYS * 86_400_000, end: null }, events, edges: [] });
+    sigmaProof = buildStructure({ sigmaId: `EDGAR_8K_SYNC_${Date.now()}`, snapshot });
+  }
+
   return {
     processed,
     total:      hits.length,
@@ -272,6 +290,11 @@ export async function runEdgar8KSync() {
     skipped:    hits.length - processed.length,
     status:     hits.length === 0 ? SYNC_STATUS.EMPTY_WINDOW : SYNC_STATUS.OK,
     deadLetter: _deadLetter.length,
+    // KRYL-Lean-Ontology — additive field, existing callers reading processed/total/new/
+    // skipped/status/deadLetter are unaffected. sigma: null when nothing was processed.
+    sigma: sigmaProof
+      ? { sigmaId: sigmaProof.sigmaId, vertexCount: sigmaProof.vertices.length, traceable: sigmaProof.traceable }
+      : null,
   };
 }
 

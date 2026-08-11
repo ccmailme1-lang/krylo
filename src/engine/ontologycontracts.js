@@ -83,3 +83,39 @@ export function recordEntityLifecycleState({ entityId, priorStatus, newStatus, s
     eventTriggerId,
   });
 }
+
+// ── RKM (rkmstore.js) ↔ Lean translation ────────────────────────────────────────
+// Per architecture-recon/012's reconciliation: RealityObject is a real, live, production
+// knowledge-claim shape — but it is NOT CanonicalEvent-shaped, so gwrealiser.js's
+// realiseSnapshot({events}) can't consume it directly without a translation. This is that
+// translation — additive glue, not a new representation, not a rename of anything in
+// rkmstore.js itself.
+//
+// Field mapping, each one grounded in 012's findings, not guessed:
+//   - Vertex key = obj.id (the RealityObject's own robj_... identity), NOT obj.identityId
+//     (which is an O/entity attribution reference, confirmed in 012 §1 — using it as the
+//     vertex key would collapse every filing about the same company into one vertex and
+//     could collide with an O vertex using the same CIK-derived key).
+//   - "ACTIVE" for gwrealiser's presence filter = epistemicState is not SUPERSEDED/RETRACTED
+//     (012 §5 — epistemicState is the ℒ-like field; DISPUTED is deliberately still counted
+//     present, matching detect-not-predict — a contested claim was still detected, per §20
+//     it must not be silently suppressed).
+//   - timeWindow = {start: validFrom, end: validUntil} (validUntil null = still open).
+const RKM_INACTIVE_STATES = new Set(['SUPERSEDED', 'RETRACTED']);
+
+/**
+ * realityObjectToEventLike(obj) → { identityId, status, timeWindow, evidence } | null
+ * obj: a rkmstore.js RealityObject (createObject()'s return shape). Returns null for a
+ * malformed input rather than fabricating a partial event-like shape.
+ */
+export function realityObjectToEventLike(obj) {
+  if (!obj?.id) return null;
+  return {
+    identityId: obj.id,
+    status: RKM_INACTIVE_STATES.has(obj.epistemicState) ? 'SUPERSEDED_OR_RETRACTED' : 'ACTIVE',
+    timeWindow: { start: obj.validFrom ?? obj.observedAt, end: obj.validUntil ?? null },
+    // Carried through so sigmaengine.js can link real per-item evidence (πΣ) instead of
+    // self-referencing the object's own id — see sigmaengine.js's V_Σ evidence-linking.
+    evidence: Array.isArray(obj.evidence) ? [...obj.evidence] : [],
+  };
+}
