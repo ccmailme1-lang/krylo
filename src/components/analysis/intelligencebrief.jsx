@@ -450,7 +450,7 @@ export default function IntelligenceBrief() {
           <div style={{ flexShrink: 0, padding: '8px 20px', borderBottom: `1px solid rgba(138,43,226,0.2)`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
+              <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
               <span
                 onClick={() => { setHpOpen(false); setHpDismissed(true); }}
                 onMouseEnter={e => e.currentTarget.style.color = '#fff'}
@@ -468,7 +468,7 @@ export default function IntelligenceBrief() {
               { label: 'COUNTER',     value: hpCounterValue },
             ].map(({ label, value }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
               </div>
             ))}
@@ -481,12 +481,12 @@ export default function IntelligenceBrief() {
           {alerts.length > 0 && (
             <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid rgba(138,43,226,0.08)`, display: 'flex', flexDirection: 'column', gap: 4 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
-                <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
               </div>
               {alerts.map(a => (
                 <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
                   <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
                 </div>
               ))}
@@ -494,16 +494,16 @@ export default function IntelligenceBrief() {
           )}
           {/* HP Update Log */}
           <div style={{ flexShrink: 0, padding: '10px 20px', borderBottom: `1px solid rgba(138,43,226,0.08)` }}>
-            <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 6 }}>HP UPDATE LOG</div>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 6 }}>HP UPDATE LOG</div>
             {hpLog.length === 0 ? (
               <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.14em' }}>[ awaiting signal ]</div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {hpLog.map(entry => (
                   <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>{new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>{entry.label}</span>
-                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>{entry.detail}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>{new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>{entry.label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>{entry.detail}</span>
                   </div>
                 ))}
               </div>
@@ -511,7 +511,7 @@ export default function IntelligenceBrief() {
           </div>
           {/* EQ Canvas */}
           <div style={{ padding: '6px 20px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
+            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
             <input
               value={pendingHypothesisId}
               onChange={e => setPendingHypothesisId(e.target.value.trim())}
@@ -635,7 +635,7 @@ export default function IntelligenceBrief() {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: PURPLE, textTransform: 'uppercase' }}>Happy Path Identified</span>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.5)', letterSpacing: '0.18em' }}>{hpSnapshot.current.domains.join(' · ')}</span>
                   <span
                     onClick={() => { setHpOpen(false); setHpDismissed(true); }}
                     onMouseEnter={e => e.currentTarget.style.color = PURPLE}
@@ -652,7 +652,7 @@ export default function IntelligenceBrief() {
                   { label: 'COUNTER',     value: hpCounterValue },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
                     <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
                   </div>
                 ))}
@@ -663,12 +663,12 @@ export default function IntelligenceBrief() {
               {alerts.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
-                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
                   </div>
                   {alerts.map(a => (
                     <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
                       <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
                     </div>
                   ))}
@@ -677,7 +677,7 @@ export default function IntelligenceBrief() {
             </div>
             {convictions.active.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px 12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
                   Active Convictions · {convictions.active.length}
                 </div>
                 {convictions.active.map(c => {
@@ -688,10 +688,10 @@ export default function IntelligenceBrief() {
                   return (
                     <div key={c.id} style={{ borderLeft: `2px solid ${borderColor}`, paddingLeft: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
                           {new Date(c.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
                       </div>
                       {c.thesis && (
                         <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, letterSpacing: '0.03em' }}>
@@ -710,13 +710,13 @@ export default function IntelligenceBrief() {
                       <div style={{ display: 'flex', gap: 6 }}>
                         {['confirmed', 'denied', 'timed_out'].map(res => (
                           <button key={res} onClick={() => convictions.resolve(c.id, res)} style={{
-                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                            fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase',
                             background: 'transparent', cursor: 'pointer', padding: '3px 8px',
                             border: `1px solid rgba(138,43,226,0.25)`, color: 'rgba(138,43,226,0.45)',
                           }}>{res.replace('_', ' ')}</button>
                         ))}
                         <button onClick={() => convictions.dismiss(c.id)} style={{
-                          fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase',
                           background: 'transparent', cursor: 'pointer', padding: '3px 8px',
                           border: `1px solid rgba(255,255,255,0.08)`, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto',
                         }}>DISMISS</button>
@@ -729,11 +729,11 @@ export default function IntelligenceBrief() {
             {convictions.resolved.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 20px 16px', borderTop: `1px solid rgba(255,255,255,0.06)` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
                     Decision Lineage · {convictions.resolved.length}
                   </span>
                   {calibration.total >= 5 && (
-                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: LIME }}>
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: LIME }}>
                       {Math.round(calibration.overallAccuracy * 100)}% ACCURACY
                     </span>
                   )}
@@ -742,19 +742,19 @@ export default function IntelligenceBrief() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 12px', borderLeft: `2px solid rgba(102,255,0,0.2)` }}>
                     {calibration.overallAccuracy !== null && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{calibration.confirmed}C · {calibration.denied}D · {calibration.timedOut}T</span>
                       </div>
                     )}
                     {calibration.hpAccuracy !== null && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.08em' }}>{Math.round(calibration.hpAccuracy * 100)}%</span>
                       </div>
                     )}
                     {calibration.domainAccuracy.map(g => (
                       <div key={g.domains.join('+')} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{Math.round(g.accuracy * 100)}%</span>
                       </div>
                     ))}
@@ -776,15 +776,15 @@ export default function IntelligenceBrief() {
                     return (
                       <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
                             {new Date(r.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 5, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
-                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
+                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
+                            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
                           </div>
                         </div>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
                         {r.thesis && (
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
                             {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
@@ -792,16 +792,16 @@ export default function IntelligenceBrief() {
                         )}
                         {/* WO-1869: outcome capture + LR display */}
                         {hasOutcome && path.lr !== null && (
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.14em' }}>
                             LR {path.lr.toFixed(2)}× · {path.followed}
                           </span>
                         )}
                         {hasOutcome && path.lr === null && (
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
                         )}
                         {path && !hasOutcome && !showForm && (
                           <button onClick={() => setOutcomeInput({ convictionId: r.id, pathId: path.id, value: '', followed: 'full' })} style={{
-                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase',
+                            fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase',
                             background: 'transparent', cursor: 'pointer', padding: '3px 8px', alignSelf: 'flex-start',
                             border: `1px solid rgba(102,255,0,0.2)`, color: 'rgba(102,255,0,0.4)',
                           }}>LOG OUTCOME</button>
@@ -826,10 +826,10 @@ export default function IntelligenceBrief() {
                             <button onClick={() => {
                               logOutcome({ pathId: outcomeInput.pathId, observedValue: parseFloat(outcomeInput.value) || 0, followed: outcomeInput.followed });
                               setOutcomeInput(null);
-                            }} style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
+                            }} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
                               RECORD
                             </button>
-                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 6, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
+                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 8, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
                           </div>
                         )}
                       </div>
@@ -839,7 +839,7 @@ export default function IntelligenceBrief() {
               </div>
             )}
             <div style={{ margin: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
                 HP UPDATE LOG
               </div>
               {hpLog.length === 0 ? (
@@ -850,13 +850,13 @@ export default function IntelligenceBrief() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {hpLog.map(entry => (
                     <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
                         {new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
                         {entry.label}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
                         {entry.detail}
                       </span>
                     </div>
@@ -871,7 +871,7 @@ export default function IntelligenceBrief() {
         {false && (
           <>
             <div>
-              <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
+              <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase', flexShrink: 0 }}>HYPOTHESIS · BIND ID</span>
               <input
                 value={pendingHypothesisId}
                 onChange={e => setPendingHypothesisId(e.target.value.trim())}
@@ -937,14 +937,14 @@ export default function IntelligenceBrief() {
               </span>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 {!importState.versionMatch && (
-                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.12em' }}>⚠ VERSION DRIFT</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,127,255,0.6)', letterSpacing: '0.12em' }}>⚠ VERSION DRIFT</span>
                 )}
                 {importState.isV1752 && (
-                  <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(0,127,255,0.5)', letterSpacing: '0.12em' }}>✓ INTEGRITY VERIFIED</span>
+                  <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,127,255,0.5)', letterSpacing: '0.12em' }}>✓ INTEGRITY VERIFIED</span>
                 )}
               </div>
             </div>
-            <div style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.1em' }}>
+            <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>
               FROZEN {importState.timeFrozen ? new Date(importState.timeFrozen).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '—'}
               {importState.staleDays != null && importState.staleDays > 7 && (
                 <span style={{ color: 'rgba(0,127,255,0.5)', marginLeft: 10 }}>
@@ -953,7 +953,7 @@ export default function IntelligenceBrief() {
               )}
             </div>
             {importState.artifactHash && (
-              <div style={{ fontFamily: MONO, fontSize: 5.5, color: 'rgba(0,127,255,0.35)', letterSpacing: '0.1em', marginTop: 3 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,127,255,0.35)', letterSpacing: '0.1em', marginTop: 3 }}>
                 HASH: {importState.artifactHash}
               </div>
             )}
@@ -991,11 +991,11 @@ export default function IntelligenceBrief() {
 
         {/* 01 · BLUF */}
         <Panel seq="01" label="BLUF · Introduction">
-          <div style={{ fontFamily: SERIF, fontSize: 13, color: BRT, lineHeight: 1.8, borderLeft: `2px solid ${LIME}`, paddingLeft: 14, marginBottom: 14 }}>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, color: BRT, lineHeight: 1.6, letterSpacing: '0.02em', borderLeft: `2px solid ${LIME}`, paddingLeft: 14, marginBottom: 14 }}>
             {brief.bluf}
           </div>
           <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 5 }}>Purpose</div>
-          <div style={{ fontFamily: SERIF, fontSize: 11, color: MID, lineHeight: 1.7 }}>{brief.purpose}</div>
+          <div style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em' }}>{brief.purpose}</div>
         </Panel>
 
         {/* 02 · BODY & KEY FINDINGS */}
@@ -1006,7 +1006,7 @@ export default function IntelligenceBrief() {
               {(Array.isArray(brief.fiveWs) ? brief.fiveWs : []).map(({ w, answer }) => (
                 <tr key={w} style={{ borderBottom: `1px solid rgba(102,255,0,0.07)` }}>
                   <td style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.2em', padding: '7px 12px 7px 0', verticalAlign: 'top', whiteSpace: 'nowrap', width: 48 }}>{w}</td>
-                  <td style={{ fontFamily: SERIF, fontSize: 11, color: MID, lineHeight: 1.6, padding: '7px 0' }}>{answer}</td>
+                  <td style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em', padding: '7px 0' }}>{answer}</td>
                 </tr>
               ))}
             </tbody>
@@ -1118,7 +1118,7 @@ export default function IntelligenceBrief() {
                   { label: 'COUNTER',     value: hpCounterValue },
                 ].map(({ label, value }) => (
                   <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.45)', letterSpacing: '0.22em' }}>{label}</span>
                     <span style={{ fontFamily: MONO, fontSize: 8, color: PURPLE, letterSpacing: '0.08em' }}>{value}</span>
                   </div>
                 ))}
@@ -1129,12 +1129,12 @@ export default function IntelligenceBrief() {
               {alerts.length > 0 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4, borderTop: `1px solid rgba(138,43,226,0.12)`, paddingTop: 8 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
-                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.22em', color: 'rgba(138,43,226,0.45)' }}>DOMAIN · ALERTS</span>
+                    <span onClick={clearAlerts} style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', cursor: 'pointer', letterSpacing: '0.12em' }}>CLEAR</span>
                   </div>
                   {alerts.map(a => (
                     <div key={a.id} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', flexShrink: 0 }}>{new Date(a.ts).toTimeString().slice(0, 8)}</span>
                       <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.1em' }}>{a.label}</span>
                     </div>
                   ))}
@@ -1144,7 +1144,7 @@ export default function IntelligenceBrief() {
 
             {convictions.active.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 20px 12px' }}>
-                <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
+                <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: 'rgba(138,43,226,0.45)', textTransform: 'uppercase' }}>
                   Active Convictions · {convictions.active.length}
                 </div>
                 {convictions.active.map(c => {
@@ -1155,10 +1155,10 @@ export default function IntelligenceBrief() {
                   return (
                     <div key={c.id} style={{ borderLeft: `2px solid ${borderColor}`, paddingLeft: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.4)', letterSpacing: '0.14em' }}>
                           {new Date(c.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                         </span>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(138,43,226,0.35)', letterSpacing: '0.12em' }}>{c.domains.join(' · ')}</span>
                       </div>
                       {c.thesis && (
                         <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.65)', lineHeight: 1.5, letterSpacing: '0.03em' }}>
@@ -1177,13 +1177,13 @@ export default function IntelligenceBrief() {
                       <div style={{ display: 'flex', gap: 6 }}>
                         {['confirmed', 'denied', 'timed_out'].map(res => (
                           <button key={res} onClick={() => convictions.resolve(c.id, res)} style={{
-                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                            fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase',
                             background: 'transparent', cursor: 'pointer', padding: '3px 8px',
                             border: `1px solid rgba(138,43,226,0.25)`, color: 'rgba(138,43,226,0.45)',
                           }}>{res.replace('_', ' ')}</button>
                         ))}
                         <button onClick={() => convictions.dismiss(c.id)} style={{
-                          fontFamily: MONO, fontSize: 6, letterSpacing: '0.16em', textTransform: 'uppercase',
+                          fontFamily: MONO, fontSize: 8, letterSpacing: '0.16em', textTransform: 'uppercase',
                           background: 'transparent', cursor: 'pointer', padding: '3px 8px',
                           border: `1px solid rgba(255,255,255,0.08)`, color: 'rgba(255,255,255,0.2)', marginLeft: 'auto',
                         }}>DISMISS</button>
@@ -1197,11 +1197,11 @@ export default function IntelligenceBrief() {
             {convictions.resolved.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '12px 20px 16px', borderTop: `1px solid rgba(255,255,255,0.06)` }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
+                  <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
                     Decision Lineage · {convictions.resolved.length}
                   </span>
                   {calibration.total >= 5 && (
-                    <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: LIME }}>
+                    <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: LIME }}>
                       {Math.round(calibration.overallAccuracy * 100)}% ACCURACY
                     </span>
                   )}
@@ -1210,19 +1210,19 @@ export default function IntelligenceBrief() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, padding: '8px 12px', borderLeft: `2px solid rgba(102,255,0,0.2)` }}>
                     {calibration.overallAccuracy !== null && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Overall · {calibration.total}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{calibration.confirmed}C · {calibration.denied}D · {calibration.timedOut}T</span>
                       </div>
                     )}
                     {calibration.hpAccuracy !== null && (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>Happy Path · {calibration.hpResolved}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: PURPLE, letterSpacing: '0.08em' }}>{Math.round(calibration.hpAccuracy * 100)}%</span>
                       </div>
                     )}
                     {calibration.domainAccuracy.map(g => (
                       <div key={g.domains.join('+')} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em', textTransform: 'uppercase' }}>{g.domains.join(' · ')} · {g.count}</span>
                         <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, letterSpacing: '0.08em' }}>{Math.round(g.accuracy * 100)}%</span>
                       </div>
                     ))}
@@ -1244,31 +1244,31 @@ export default function IntelligenceBrief() {
                     return (
                       <div key={r.id} style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingBottom: 5, borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>
                             {new Date(r.committedAt).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 5, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
-                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
+                            {hadHP && <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: PURPLE, border: `1px solid rgba(138,43,226,0.3)`, padding: '1px 4px' }}>HP</span>}
+                            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: resColor, textTransform: 'uppercase' }}>{r.resolution.replace('_', ' ')}</span>
                           </div>
                         </div>
-                        <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
+                        <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>{r.domains.join(' · ')}</span>
                         {r.thesis && (
                           <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5, letterSpacing: '0.02em' }}>
                             {r.thesis.length > 100 ? r.thesis.slice(0, 97) + '…' : r.thesis}
                           </div>
                         )}
                         {hasOutcome && path.lr !== null && (
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: LIME, letterSpacing: '0.14em' }}>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.14em' }}>
                             LR {path.lr.toFixed(2)}× · {path.followed}
                           </span>
                         )}
                         {hasOutcome && path.lr === null && (
-                          <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
+                          <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.14em' }}>not followed · excluded from path memory</span>
                         )}
                         {path && !hasOutcome && !showForm && (
                           <button onClick={() => setOutcomeInput({ convictionId: r.id, pathId: path.id, value: '', followed: 'full' })} style={{
-                            fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase',
+                            fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase',
                             background: 'transparent', cursor: 'pointer', padding: '3px 8px', alignSelf: 'flex-start',
                             border: `1px solid rgba(102,255,0,0.2)`, color: 'rgba(102,255,0,0.4)',
                           }}>LOG OUTCOME</button>
@@ -1293,10 +1293,10 @@ export default function IntelligenceBrief() {
                             <button onClick={() => {
                               logOutcome({ pathId: outcomeInput.pathId, observedValue: parseFloat(outcomeInput.value) || 0, followed: outcomeInput.followed });
                               setOutcomeInput(null);
-                            }} style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
+                            }} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', textTransform: 'uppercase', background: 'transparent', cursor: 'pointer', padding: '3px 8px', border: `1px solid rgba(102,255,0,0.3)`, color: LIME }}>
                               RECORD
                             </button>
-                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 6, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
+                            <button onClick={() => setOutcomeInput(null)} style={{ fontFamily: MONO, fontSize: 8, background: 'transparent', cursor: 'pointer', padding: '3px 6px', border: `1px solid rgba(255,255,255,0.08)`, color: DIM }}>✕</button>
                           </div>
                         )}
                       </div>
@@ -1308,7 +1308,7 @@ export default function IntelligenceBrief() {
 
             {/* ── HP Update Log ─────────────────────────────────────────── */}
             <div style={{ margin: '12px 20px 16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-              <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
+              <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: LIME_MID, textTransform: 'uppercase', marginBottom: 8 }}>
                 HP UPDATE LOG
               </div>
               {hpLog.length === 0 ? (
@@ -1319,13 +1319,13 @@ export default function IntelligenceBrief() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                   {hpLog.map(entry => (
                     <div key={entry.key} style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', flexShrink: 0, letterSpacing: '0.06em' }}>
                         {new Date(entry.ts).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)' }}>
                         {entry.label}
                       </span>
-                      <span style={{ fontFamily: MONO, fontSize: 6, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.08em' }}>
                         {entry.detail}
                       </span>
                     </div>
@@ -1381,7 +1381,7 @@ export default function IntelligenceBrief() {
           ];
         })().map(({ label, value, color }, i) => (
           <div key={label} style={{ display: 'flex', gap: 7, alignItems: 'center', paddingRight: 20, borderRight: i < 4 ? `1px solid rgba(255,255,255,0.06)` : 'none', marginRight: 20, flexShrink: 0 }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, color: DIM, letterSpacing: '0.22em' }}>{label}</span>
+            <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.22em' }}>{label}</span>
             <span style={{ fontFamily: MONO, fontSize: 9, color, letterSpacing: '0.18em' }}>{value}</span>
           </div>
         ))}
@@ -1406,11 +1406,11 @@ export default function IntelligenceBrief() {
           position: 'relative', zIndex: 1,
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
               CONSULTING I/O · WO-1752
             </span>
             <span
-              style={{ fontFamily: MONO, fontSize: 5.5, letterSpacing: '0.14em', color: DIM }}
+              style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: DIM }}
               title={`Fs ${Math.round(fs * 100)}% · gate ${Math.round(EXPORT_FS_GATE * 100)}% · structuralAbsence=${structuralAbsence}`}
             >
               {/* KRYL-1143: guest sees plain, actionable copy — raw Fs%/BLOCKED jargon moved to title */}

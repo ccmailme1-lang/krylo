@@ -19,7 +19,7 @@ const MID  = 'rgba(255,255,255,0.55)';
 function Metric({ k, v }) {
   return (
     <div>
-      <div style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: DIM }}>{k}</div>
+      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM }}>{k}</div>
       <div style={{ fontFamily: MONO, fontSize: 14, color: LIME, fontWeight: 600, marginTop: 2 }}>{v}</div>
     </div>
   );
@@ -33,7 +33,7 @@ export default function WhyTracePanel({ entity }) {
   const header = (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
       <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.3em', color: LIME }}>WHY · STRUCTURAL PROVENANCE</span>
-      <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.2em', color: DIM }}>{res.entity}</span>
+      <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM }}>{res.entity}</span>
     </div>
   );
 

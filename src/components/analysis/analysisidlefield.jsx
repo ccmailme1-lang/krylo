@@ -1344,8 +1344,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           {/* ── SECTION 1: INTENT STRENGTH MAPPING ── */}
           <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', display: 'flex', alignItems: 'center' }}>1. INTENT STRENGTH MAPPING (θ)<HelpMark text="How strongly-worded your question is. A more specific, confident question gets a higher number." /></div>
-              <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
+                <HelpMark text="How strongly-worded your question is. A more specific, confident question gets a higher number." />
+              </span>
             </div>
             {/* Chart — responds to slider; no pointer events needed */}
             {(() => {
@@ -1412,8 +1415,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
               return (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', display: 'flex', alignItems: 'center' }}>2. HORIZON SCRUBBER (t + Δ)<HelpMark text="How far into the future you want to look — from right now out to years ahead. Slide it to change the time window." /></div>
-                    <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
+                    <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>2. HORIZON SCRUBBER (t + Δ)</div>
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <span style={{ fontFamily: MONO, fontSize: 9, color: horizon ? LIME : 'rgba(255,255,255,0.2)' }}>{horizon ? (HORIZON_LABELS[horizon] ?? horizon) : '—'}</span>
+                      <HelpMark text="How far into the future you want to look — from right now out to years ahead. Slide it to change the time window." />
+                    </span>
                   </div>
                   {/* Range slider */}
                   <style>{`
@@ -1834,36 +1840,29 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           )}
 
 
-          {/* Time axis */}
-          <div style={{
-            position: 'absolute', right: 16, top: 140, bottom: 80,
-            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-            fontSize: FS_TELEMETRY, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em', textTransform: 'uppercase', zIndex: 10,
-          }}>
-            {['Now', '-1m', '-5m', '-15m', '-1h', '-3h', '-6h', '-12h', '-24h'].map(t => <span key={t}>{t}</span>)}
-          </div>
-
-          {/* Telemetry rail */}
-          <div style={{
-            position: 'absolute', left: 0, right: 0, bottom: 0, height: 52,
-            borderTop: `1px solid ${BORDER_FAINT}`, padding: '0 32px',
-            display: 'flex', alignItems: 'center', gap: 24,
-            fontSize: FS_TELEMETRY, letterSpacing: '0.4em', textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.3)', zIndex: 10, background: 'rgba(0,0,0,0.5)',
-          }}>
-            <span>EVENT STREAM ACTIVE</span>
-            <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
-            <span>FRAME <span style={{ color: 'rgba(102,255,0,0.7)' }}>{frameId}</span></span>
-            <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
-            {/* DEF-1875: track the live session state like the header (was stuck on projectedState → stale badge) */}
-            <span>{hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}</span>
-            {packets.length > 0 && (
-              <>
-                <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
-                <span style={{ color: 'rgba(102,255,0,0.6)' }}>{packets.length} PACKET{packets.length !== 1 ? 'S' : ''} DOCKED</span>
-              </>
-            )}
-          </div>
+          {/* Telemetry rail — §28 boundary contract: gated to !hasSession so this idle-screen
+              chrome doesn't stay pinned to bottom:0 over TargetPacket's own report content
+              (WhyTracePanel / DOMAIN STATUS row) once a session is active. Gate by view state,
+              not z-index — same discipline as the ConeMap Html-portal boundary contract. */}
+          {!hasSession && (
+            <div style={{
+              position: 'absolute', left: 0, right: 0, bottom: 0, height: 52,
+              borderTop: `1px solid ${BORDER_FAINT}`, padding: '0 32px',
+              display: 'flex', alignItems: 'center', gap: 24,
+              fontSize: FS_TELEMETRY, letterSpacing: '0.4em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.3)', zIndex: 10, background: 'rgba(0,0,0,0.5)',
+            }}>
+              <span>EVENT STREAM <span style={{ color: 'rgba(102,255,0,0.7)' }}>{frameId.toUpperCase()}</span></span>
+              <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
+              <span>{projectedState.label}</span>
+              {packets.length > 0 && (
+                <>
+                  <span style={{ color: 'rgba(255,255,255,0.1)' }}>•</span>
+                  <span style={{ color: 'rgba(102,255,0,0.6)' }}>{packets.length} PACKET{packets.length !== 1 ? 'S' : ''} DOCKED</span>
+                </>
+              )}
+            </div>
+          )}
 
         </main>
 

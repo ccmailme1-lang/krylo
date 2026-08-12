@@ -148,10 +148,10 @@ function FractureSignalSurface({ domainPressures }) {
   if (fracturing.length === 0) {
     return (
       <div style={{ flexShrink: 0, borderTop: `1px solid ${BORDER}`, padding: '9px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.15)', flexShrink: 0 }}>DOMAIN STATUS</span>
+        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.3em', color: 'rgba(255,255,255,0.15)', flexShrink: 0 }}>DOMAIN STATUS</span>
         {all.map(p => (
           <span key={p.domain} style={{
-            fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em',
+            fontFamily: MONO, fontSize: 8, letterSpacing: '0.15em',
             color: p.signalCount > 0 ? 'rgba(102,255,0,0.35)' : 'rgba(255,255,255,0.10)',
           }}>{p.domain}</span>
         ))}
@@ -162,8 +162,8 @@ function FractureSignalSurface({ domainPressures }) {
   return (
     <div style={{ flexShrink: 0, borderTop: '1px solid rgba(0,127,255,0.35)', padding: '14px 24px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 14, marginBottom: 12 }}>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.35em', color: BLUE }}>STRUCTURAL DIVERGENCE</span>
-        <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em', color: 'rgba(0,127,255,0.55)' }}>
+        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.35em', color: BLUE }}>STRUCTURAL DIVERGENCE</span>
+        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.15em', color: 'rgba(0,127,255,0.55)' }}>
           {fracturing.length} DOMAIN{fracturing.length !== 1 ? 'S' : ''} IN FRACTURE POLARITY
         </span>
       </div>
@@ -176,7 +176,7 @@ function FractureSignalSurface({ domainPressures }) {
               <span style={{ fontFamily: MONO, fontSize: 13, color: BLUE, fontWeight: 600, letterSpacing: '0.02em' }}>
                 {p.magnitude.toFixed(0)}
               </span>
-              <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(0,127,255,0.55)', letterSpacing: '0.12em' }}>
+              <span style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(0,127,255,0.55)', letterSpacing: '0.12em' }}>
                 {p.signalCount} SIG
               </span>
             </div>
@@ -186,9 +186,9 @@ function FractureSignalSurface({ domainPressures }) {
 
       {constructive.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', paddingTop: 10, borderTop: `1px solid ${BORDER}` }}>
-          <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>CONSTRUCTIVE</span>
+          <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.25em', color: 'rgba(255,255,255,0.18)', flexShrink: 0 }}>CONSTRUCTIVE</span>
           {constructive.map(p => (
-            <span key={p.domain} style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.40)' }}>
+            <span key={p.domain} style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.15em', color: 'rgba(102,255,0,0.40)' }}>
               {p.domain} · {p.magnitude.toFixed(0)}
             </span>
           ))}
@@ -467,7 +467,7 @@ export default function TargetPacket() {
                       return (
                         <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 6, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
+                            <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 8, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
                           </div>
                           <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{(c.type ?? 'path').toUpperCase()}</div>
                           <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{typeof c.content === 'string' ? c.content : String(c.content ?? '')}</div>
@@ -496,7 +496,7 @@ export default function TargetPacket() {
                         : petro.reason === 'ZIP_UNRESOLVED'     ? "Couldn't resolve your ZIP from location."
                         : petro.reason === 'NO_STATION_DATA'    ? 'No local station data (feed pending subscription).'
                         : 'Lookup failed.'}
-                      <span style={{ fontSize: 7, color: DIM, marginLeft: 6, letterSpacing: '0.1em' }}>[{petro.reason}]</span>
+                      <span style={{ fontSize: 8, color: DIM, marginLeft: 6, letterSpacing: '0.1em' }}>[{petro.reason}]</span>
                     </div>
                   )}
                   {!petro.loading && !petro.withheld && (
@@ -597,7 +597,7 @@ export default function TargetPacket() {
                         <div key={c.id} data-test="hypothesis_item" data-id={c.id}
                           style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
-                            <span style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
+                            <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
                               G:{gProxy} PROXY_UNTIL_WO1848
                             </span>
                           </div>
@@ -669,7 +669,7 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
               <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>Competitive Edge</div>
               {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
                   multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
                 </span>
               )}
@@ -697,7 +697,7 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
               <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>ROI Proof</div>
               {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
                   multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
                 </span>
               )}
@@ -730,7 +730,7 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 2 }}>
               <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.32em', color: LIME, textTransform: 'uppercase' }}>Operations Brief</div>
               {lensRfe?.state === 'MULTI_ROLE_OVERLAP' && (
-                <span style={{ fontFamily: MONO, fontSize: 7, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, textTransform: 'uppercase' }}>
                   multi-domain signal · entropy {lensRfe.entropy.toFixed(2)}
                 </span>
               )}
