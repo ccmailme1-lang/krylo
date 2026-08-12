@@ -1656,9 +1656,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
               {/* Headline */}
               <div style={{ textAlign: 'center', marginBottom: 28, pointerEvents: 'none' }}>
-                <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: 'rgba(255,255,255,0.82)' }}>WHAT ARE YOU</div>
-                <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', color: LIME }}>FOCUSED ON?</div>
-                <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginTop: 10 }}>
+                <div style={{ fontFamily: SERIF, fontSize: 24, letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.82)' }}>WHAT'S YOUR </span>
+                  <span style={{ color: LIME }}>EDGE?</span>
+                </div>
+                <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginTop: 10 }}>
                   Search across topics, domains or ask anything
                 </div>
               </div>
