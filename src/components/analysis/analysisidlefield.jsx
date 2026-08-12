@@ -17,6 +17,7 @@ import { parseIntent }                from '../../engine/intentparser.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
+import { matchConceptRewrites } from '../../engine/conceptrewrite.js';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
@@ -144,6 +145,11 @@ function scoreTermRelevance(term, queryTokens) {
   }
   return score;
 }
+
+// CICE surface-form rewrite matches (matchConceptRewrites) are a whole-phrase match, not a
+// per-token score — fixed above the highest realistic literal/stem score so a known paraphrase
+// always sorts first within its domain.
+const REWRITE_MATCH_SCORE = 1000;
 
 const SIGNAL_SCOPE_OPTIONS = [
   { key: 'live',       label: 'LIVE'            },
@@ -824,9 +830,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   // TRENDING chips — Founder directive 2026-08-11. Chips require typed subject matter: no text
   // -> no chips, domain selected with an empty box -> no chips. Real literal token/stem
-  // matching only (scoreTermRelevance) against DOMAIN_PRECURSORS + live signals
-  // (deriveTrendingTerms) — a zero-score candidate is dropped, never padded in as filler.
-  // Pure computation lives in this memo, never in render-phase JSX.
+  // matching (scoreTermRelevance) against DOMAIN_PRECURSORS + live signals (deriveTrendingTerms),
+  // plus CICE surface-form rewrite matches (matchConceptRewrites, KRYL — SPEC-cice-...) for
+  // known paraphrases that share no literal token with the typed text — a zero-score candidate
+  // is still dropped, never padded in as filler. Pure computation lives in this memo, never in
+  // render-phase JSX.
   const trendingResult = useMemo(() => {
     const trimmedQuery = seedQuery.trim();
     if (!trimmedQuery) return { chips: [] };
@@ -846,13 +854,21 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       const canonicalDomain = ANALYSIS_PILL_TO_DOMAIN[pill];
       const real      = canonicalDomain ? deriveTrendingTerms(rawSignals, canonicalDomain, 24) : [];
       const ontology  = DOMAIN_PRECURSORS[pill] ?? [];
-      const candidates = Array.from(new Set([...real, ...ontology]));
-      return candidates
-        .map(term => ({ term, score: scoreTermRelevance(term, queryTokens) }))
-        .filter(c => c.score > 0)
-        .sort((a, b) => b.score - a.score)
+      const rewrites  = matchConceptRewrites(trimmedQuery, pill);
+
+      const scored = new Map();
+      for (const term of [...real, ...ontology]) {
+        const s = scoreTermRelevance(term, queryTokens);
+        if (s > 0) scored.set(term, Math.max(scored.get(term) ?? 0, s));
+      }
+      // Rewrite matches are a deliberate phrase-level hit, not a token score — they outrank
+      // any literal/stem match so a known paraphrase surfaces first, not buried by coincidence.
+      for (const term of rewrites) scored.set(term, Math.max(scored.get(term) ?? 0, REWRITE_MATCH_SCORE));
+
+      return [...scored.entries()]
+        .sort((a, b) => b[1] - a[1])
         .slice(0, perDomain)
-        .map(c => c.term);
+        .map(([term]) => term);
     });
 
     const chips = Array.from(new Set([...entityChips, ...domainChips]))
