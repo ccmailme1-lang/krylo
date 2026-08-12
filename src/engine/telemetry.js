@@ -107,3 +107,21 @@ export function emitDomainProvenance(fields) {
 export function getDomainProvenanceLog() {
   return _log.filter(e => e.type === 'DOMAIN_PROVENANCE_EVENT').slice().reverse();
 }
+
+// CHIP_INTERACTION_EVENT — additive event type, same transport/storage/validation as every
+// other emitTelemetry() call. specs/SPEC-cice-phase2-behavioral-presentation-layer.md Phase 2
+// step 1 (event capture) ONLY — this file does no aggregation, no ranking, no learning. It just
+// records what happened so a future phase has real data to work from instead of none.
+//
+// Shape: { type: 'CHIP_INTERACTION_EVENT', action, query, domains, chips?, chipLabel?, source?,
+//          timestamp }
+//   action: 'render' (chips shown) | 'click' (chip selected)
+//   source (per chip, where known): 'entity' | 'literal' | 'rewrite' | 'unknown'
+export function emitChipInteraction(fields) {
+  emitTelemetry({ type: 'CHIP_INTERACTION_EVENT', ...fields });
+}
+
+// Read-only — every CHIP_INTERACTION_EVENT currently in the log, newest first.
+export function getChipInteractionLog() {
+  return _log.filter(e => e.type === 'CHIP_INTERACTION_EVENT').slice().reverse();
+}

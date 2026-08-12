@@ -11,7 +11,7 @@ import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
 import { computePositionVector }      from '../../engine/positioningengine.js';
 import { classifyConvergenceState, applyTransitionPolicy } from '../../engine/convergenceclassifier.js';
-import { emitTelemetry, getTelemetryLog } from '../../engine/telemetry.js';
+import { emitTelemetry, getTelemetryLog, emitChipInteraction } from '../../engine/telemetry.js';
 import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '../../engine/temporalhorizon.js';
 import { parseIntent }                from '../../engine/intentparser.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
@@ -837,10 +837,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   // render-phase JSX.
   const trendingResult = useMemo(() => {
     const trimmedQuery = seedQuery.trim();
-    if (!trimmedQuery) return { chips: [] };
+    if (!trimmedQuery) return { chips: [], chipSources: new Map() };
+
+    // Per-chip source attribution — SPEC-cice-phase2-behavioral-presentation-layer.md step 1
+    // (event capture). Read-only bookkeeping for telemetry; does not affect which chips surface
+    // or their order below.
+    const chipSources = new Map();
 
     const parsed = parseIntent(trimmedQuery);
     const entityChips = Array.from(new Set((parsed?.entities ?? []).map(e => e.toUpperCase())));
+    entityChips.forEach(t => chipSources.set(t, 'entity'));
 
     const queryDomainResult = detectDomain(trimmedQuery, activeLens);
     const queryPill = queryDomainResult?.resolutionEligible ? queryDomainResult.primary : null;
@@ -859,11 +865,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       const scored = new Map();
       for (const term of [...real, ...ontology]) {
         const s = scoreTermRelevance(term, queryTokens);
-        if (s > 0) scored.set(term, Math.max(scored.get(term) ?? 0, s));
+        if (s > 0) { scored.set(term, Math.max(scored.get(term) ?? 0, s)); if (!chipSources.has(term)) chipSources.set(term, 'literal'); }
       }
       // Rewrite matches are a deliberate phrase-level hit, not a token score — they outrank
       // any literal/stem match so a known paraphrase surfaces first, not buried by coincidence.
-      for (const term of rewrites) scored.set(term, Math.max(scored.get(term) ?? 0, REWRITE_MATCH_SCORE));
+      for (const term of rewrites) { scored.set(term, Math.max(scored.get(term) ?? 0, REWRITE_MATCH_SCORE)); chipSources.set(term, 'rewrite'); }
 
       return [...scored.entries()]
         .sort((a, b) => b[1] - a[1])
@@ -875,8 +881,26 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       .slice(0, 8)
       .map(t => ({ lens: t, label: t }));
 
-    return { chips };
+    return { chips, chipSources };
   }, [seedQuery, activeLens, selectedDomains, rawSignals]);
+
+  // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
+  // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
+  // so it logs once per distinct chip set, not on every rawSignals-driven memo recompute.
+  const lastLoggedChipsRef = useRef(null);
+  useEffect(() => {
+    const chips = trendingResult.chips;
+    if (!chips.length) return;
+    const signature = chips.map(c => c.label).join('|');
+    if (signature === lastLoggedChipsRef.current) return;
+    lastLoggedChipsRef.current = signature;
+    emitChipInteraction({
+      action: 'render',
+      query: seedQuery.trim(),
+      domains: selectedDomains,
+      chips: chips.map(c => ({ label: c.label, source: trendingResult.chipSources?.get(c.label) ?? 'unknown' })),
+    });
+  }, [trendingResult, seedQuery, selectedDomains]);
 
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
@@ -1786,7 +1810,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     <StaggeredChips
                       chips={trendingResult.chips}
                       selected={activeSituation?.lens}
-                      onSelect={selectSituation}
+                      onSelect={(chip) => {
+                        emitChipInteraction({
+                          action: 'click',
+                          query: seedQuery.trim(),
+                          domains: selectedDomains,
+                          chipLabel: chip.label,
+                          source: trendingResult.chipSources?.get(chip.label) ?? 'unknown',
+                        });
+                        selectSituation(chip);
+                      }}
                       getKey={s => s.lens}
                       getLabel={s => s.label}
                       isSelected={(s, sel) => s.lens === sel}
