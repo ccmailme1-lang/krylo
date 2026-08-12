@@ -1,13 +1,21 @@
-# SPEC — Structural Formation Lifecycle: Relational Formation + Pre/Post-State Recognition
+# SPEC — Structural Formation Lifecycle: Relational Formation/Representation Alignment + Pre/Post-State Recognition
 
-Status: **TWO COUPLED GAPS IDENTIFIED — NOT BUILT.** Design record from an extended architecture
-verification discussion (2026-08-12), relayed from an external AI across many rounds; each
-substantive claim was checked against real code in this conversation before being recorded here
-— not accepted at face value.
+Status: **TWO COUPLED GAPS IDENTIFIED — NOT BUILT. Gap 2 was corrected twice in this same
+session.** First: a full 31-connector inventory found a live, correctly-built instance-level
+relational pathway (`entitytopologyregistry.js`) that an earlier pass in this conversation missed
+and incorrectly declared closed. Second: that finding was itself overclaimed — the registry's
+edges are entity-to-entity (`Organization A → Organization B`), a different ontological subject
+than `identitykernel.js`'s evidence-instance-to-evidence-instance graph. Gap 2 is not solved; it's
+now precisely scoped as a representation-alignment question, not a missing-capability question.
+Design record from an extended architecture verification discussion (2026-08-12), relayed from an
+external AI across many rounds; each substantive claim was checked against real code in this
+conversation before being recorded here — not accepted at face value.
 Date: 2026-08-12
-Target file(s) if ever built: `src/engine/identitykernel.js` (dormant mechanism),
-`src/engine/connectors/edgar8kevidence.js` (the one live CanonicalEvent producer),
-`src/engine/reconlayer.js` (live, adjacent mechanism), doctrine addition to CLAUDE.md §22.
+Target file(s) if ever built: `src/engine/entitytopologyregistry.js` (live, real relational
+edges — entity-level), `src/engine/connectors/secownershipconnector.js` (built correctly, needs a
+sync trigger), `src/engine/identitykernel.js` (dormant, evidence-level graph),
+`src/engine/connectors/edgar8kevidence.js` (the one live CanonicalEvent producer, still
+zero-edge), doctrine addition to CLAUDE.md §22.
 
 ---
 
@@ -27,15 +35,15 @@ path: with no edges anywhere, it cannot distinguish "a weak relationship exists 
 strengthened" from "no relationship was ever asserted." It just detects "has no edges," which is
 trivially true of every node today.
 
-**Why these are coupled, not two separate items:** Gap 2 is the producer — it's what would
-generate real candidate relationships. Gap 1 is the consumer — it's what determines whether a
-given piece of relational evidence counts as absent, sub-threshold, or persistent. Closing Gap 2
-without Gap 1 gives real edges with no principled way to say what they mean epistemically (risk
-of premature "this is structure" claims). Closing Gap 1 without Gap 2 gives a well-defined
-category that stays permanently empty. They need to be designed against each other, not
-sequentially — the taxonomy's boundaries should reflect what real relational evidence can
-actually look like; the relationship-formation mechanism should know what classification its
-output needs to satisfy.
+**Why these are coupled, not two separate items — revised per the ontological-subject
+correction below:** not simply Gap 2 = producer → Gap 1 = consumer. More precisely: **Gap 2 =
+relational substrate/formation → Gap 1 = lifecycle classification.** What constitutes an
+admissible relationship determines what SUB-THRESHOLD can mean; what SUB-THRESHOLD must classify
+determines what relational evidence the substrate must expose. Closing Gap 2 without Gap 1 gives
+real edges with no principled way to say what they mean epistemically (risk of premature "this is
+structure" claims). Closing Gap 1 without Gap 2 gives a well-defined category that stays
+permanently empty, or gets pointed at the wrong substrate. They need to be designed against each
+other, not sequentially.
 
 **The sharper risk, specifically for Gap 2:** `identitykernel.js`'s merge machinery already
 speaks fluent graph language — "structural similarity," "nodes," "edges," "merge" — while
@@ -48,26 +56,109 @@ exactly like structural formation — same field names, same thresholds — whil
 reflecting "these share some evidence types and overlapping time windows." Not a missing
 feature — a sophisticated-looking mechanism that could be trusted as relational before it is one.
 
+**Empirical check of the EDGAR 8-K pipeline, this session — no theorizing from field names.** Read
+`toEvidenceNode()` (`edgar8kevidence.js`) and its upstream `createObject()` call
+(`edgar8kconnector.js`) directly:
+- `content`/`summary` are both labels describing the filing itself (`"8-K — {eventClass}"`,
+  `"SEC 8-K — items: X. Filed {date}."`) — not references to another object.
+- `metadata` keys (`cik`, `accessionNumber`, `ticker`, `canonicalName`, `eventClass`, `items`,
+  `materiality`, `groundedness`, `sourceURL`, `filingDate`) all describe attributes of *this*
+  filing. None reference a different filing or entity.
+- `seedId` equals `id` — it's the node's own identity key, not a link elsewhere.
+- `entityKey` is co-membership only, by the adapter's own comment: partitions by
+  `(entity, eventClass)`, explicitly acknowledged as coarse — *"two separate executive changes a
+  year apart still land in one event... Inventing a date-proximity threshold here would be
+  fabricating identity."*
+- `genealogy: {}` on the raw `RealityObject` (`edgar8kconnector.js`) — hardcoded empty. A second
+  designed-but-unpopulated relational hook, one layer upstream of `predecessorIds`/`successorIds`.
+
+**Conclusion for EDGAR 8-K specifically: not a criteria-definition problem, a data problem.** No
+field at any layer of that one pipeline currently carries a cross-object reference.
+
+**Correction, from a full connector inventory this session — do not stop at EDGAR.** An earlier
+pass concluded no connector produces instance-level relational evidence and treated the inventory
+as closed. That conclusion was wrong. Continuing the inventory across all 31 connectors found:
+
+- **`patentsviewconnector.js` → `entitytopologyregistry.js` is real, live, and instance-level.**
+  `runPatentsViewSync()`'s migration-tracking path groups real patents by real `inventor_id`; when
+  one inventor's patents split across 2+ real `assignee_organization` values in a 90-day window,
+  it calls `registerInventorMigrationEdge(sourceOrg, destOrg)` — a real edge between two real named
+  organizations, deterministically derived, not fabricated. **Confirmed live end to end:**
+  `runPatentsViewSync()` is called from `app.jsx:787,820` → edge lands in
+  `entitytopologyregistry.js` → read by `causalimpactmap.js` → rendered by `causalimpactview.jsx`,
+  which is mounted at `analysisidlefield.jsx:1645` as the live "IMPACT" tab.
+- **`secownershipconnector.js` is the same shape, built correctly, but unwired.** Real SEC
+  13D/13G ownership edges (subject company ↔ beneficial owner, CIK pairs — its own comment:
+  *"structurally guaranteed entity pair... not extracted from prose"*), routed through the actual
+  `Gᵂ → σ → Σ → πΣ` path (`gwrealiser.js`/`sigmaengine.js`), not through `identitykernel.js`.
+  `runSecOwnershipSync()` itself has **zero callers** — real mechanism, same dormant pattern as
+  `identitykernel.js`'s merge machinery, just in a different file.
+- **`signalgenealogy.js` has real, live edges too** (via `reconlayer.js`), but at the wrong
+  granularity for this purpose — a hand-authored prior over signal *categories*
+  (`CONSTRUCTION_PERMITS →CAUSES→ POWER_INFRA`), not asserted relationships between specific
+  evidence instances.
+
+**Revised Gap 2 finding — corrected a second time, this session, for overclaiming the first
+correction.** It is not "KRYLO has no live producer of instance-level relational evidence" — that
+was wrong. But it is also not simply "solved by `entitytopologyregistry.js`" — that was an
+overcorrection. The precise finding requires distinguishing the **ontological subject** of the
+relationship:
+
+- `entitytopologyregistry.js`'s edges connect **entities** — `Organization A → Organization B`,
+  derived from an inventor's migration between employers. Real, live, instance-level, but the
+  subject is *entity-to-entity*.
+- `identitykernel.js`'s `EvidenceGraph` nodes are **individual pieces of evidence** — one filing,
+  one document. A relationship it would need is *evidence-instance-to-evidence-instance*: does
+  this specific piece of evidence relate to that specific piece of evidence.
+
+An entity-level relationship does not automatically imply anything about a relationship between
+specific pieces of evidence concerning those entities. These are different subjects, not
+interchangeable substrates. Gap 2 is therefore **renamed: Relational Formation / Representation
+Alignment.** The capability to produce real, live, instance-level relational edges is proven to
+exist (disproving the original "KRYLO can't do this at all" framing) — what remains open is (1)
+which existing representation is the semantically valid substrate for the structural-formation
+lifecycle Gap 1 defines, given the two are different ontological subjects, and (2) how that
+representation would be composed with `EvidenceNode`/`CanonicalEvent` without silently collapsing
+"these two entities are connected" into "this evidence constitutes structure" — a category error
+the taxonomy in Gap 1 exists specifically to prevent.
+
+**Status, precisely:** Gap 1 — unresolved, definitional (SUB-THRESHOLD doesn't exist as a
+governed state anywhere). Gap 2 — partially resolved empirically (the capability-gap framing is
+disproven), unresolved architecturally (which substrate, and how it composes, remains open).
+EDGAR 8-K's zero-relational-data finding stays scoped to that one connector — not generalized into
+a KRYLO-wide limitation, since `entitytopologyregistry.js` demonstrates the wider claim was false.
+
 ---
 
 ## SOLUTION
 
-### 2A — Relational Formation (the producer)
+### 2A — Relational Formation / Representation Alignment — substrate and composition
 
-Not inventing a mechanism from zero. `createEvidenceNode` (`identitykernel.js`) already defines
-`predecessorIds`/`successorIds` on every node — checked this session: **nothing anywhere in the
-codebase ever populates these with a real value, and nothing reads them to build edges.** It's an
-existing, designed, empty slot, not a gap requiring a new field.
+**Not "which mechanism to invent" — "which existing representation is the valid substrate,
+given two exist at different ontological levels."** `entitytopologyregistry.js` is a live, real,
+*entity-level* relational edge store, fed today by `patentsviewconnector.js` (confirmed live) and
+correctly built by `secownershipconnector.js` (confirmed unwired, needs a sync trigger, not a
+redesign). `identitykernel.js`'s `predecessorIds`/`successorIds` are a *second*, separate, empty
+hook on a *different* data structure (`EvidenceNode` — individual pieces of evidence, not
+entities) — still real, still unpopulated.
 
-The open design question is narrower than "add edges": **what relationships between existing
-EvidenceNodes can be asserted from fields that are actually observable today, under
-Projection-not-Prediction — without inventing causality?** Real fields currently on
-`EvidenceNode`: `seedId`, `evidenceType`, `content`, `metadata`, `timestamp`,
-`predecessorIds`/`successorIds` (empty), plus `entityKey` at the `CanonicalEvent` level.
-Any admissible relationship type has to ground in one of these, not a plausible-sounding category
-invented for the occasion — same discipline already applied to `DOMAIN_PRECURSORS` and the CICE
-rewrite table earlier tonight: the mechanism is implemented here, the actual admissible-type
-vocabulary is a Founder content decision, not something to enumerate unprompted in this spec.
+The open design question is not which path is "highest-leverage" by virtue of already being
+live — it's which ontological subject Gap 1's taxonomy is actually about:
+1. **If the taxonomy is about entity relationships** (do these two organizations have a
+   structurally persistent connection), `entitytopologyregistry.js` may be directly usable —
+   real, live edges already exist at that level.
+2. **If the taxonomy is about evidence relationships** (does this specific piece of evidence
+   relate to that specific piece of evidence, the way `identitykernel.js`'s `EvidenceGraph` is
+   shaped), the registry does not answer that question — an entity connection doesn't establish
+   an evidence connection. This path still requires either new EDGAR ingestion (confirmed this
+   session: no field currently carries a cross-object reference) or a different connector that
+   captures evidence-level references, not just entity-level ones.
+
+Any admissible relationship type, in either path, has to ground in a real observable field, not a
+plausible-sounding category invented for the occasion, and must not silently substitute one
+ontological subject for the other — same discipline already applied to `DOMAIN_PRECURSORS` and
+the CICE rewrite table earlier tonight: the mechanism is implemented here, the actual
+admissible-type vocabulary is a Founder content decision.
 
 ### 2B — Taxonomy (the consumer)
 
@@ -141,14 +232,17 @@ currently unconnected.
 
 | Component | Status |
 |---|---|
-| `predecessorIds`/`successorIds` on `EvidenceNode` (Gap 2 hook) | Defined, exists, **populated nowhere, read nowhere** — confirmed via grep this session |
-| Admissible-relationship-type definition (Gap 2 design question) | Does not exist — needs grounding against real observable fields, vocabulary is a Founder content decision |
-| `fragmentationPoints` (Gap 1 candidate evidence source) | Exists, live, but **degenerate** in the one live path (zero edges everywhere) |
+| `entitytopologyregistry.js` (real instance-level edge store) | **Exists, live, populated.** Fed by `patentsviewconnector.js`'s inventor-migration edges (confirmed real, deterministic, not fabricated) |
+| `patentsviewconnector.js` → registry → `causalimpactview.jsx` | **Confirmed live end-to-end** — `runPatentsViewSync()` called from `app.jsx:787,820`, rendered at `analysisidlefield.jsx:1645` ("IMPACT" tab) |
+| `secownershipconnector.js` (real ownership edges via Gᵂ→σ→Σ→πΣ) | Exists, code-complete, correctly routed — `runSecOwnershipSync()` has **zero callers** |
+| `signalgenealogy.js` edges (via `reconlayer.js`) | Exists, live, but category-level prior, not instance-level evidence — wrong granularity for Gap 2 |
+| `predecessorIds`/`successorIds` on `EvidenceNode` (2nd, separate hook) | Defined, exists, **populated nowhere, read nowhere** — a different data structure than the registry above |
+| `fragmentationPoints` (Gap 1 candidate evidence source, `identitykernel.js` path only) | Exists, live, but **degenerate** in the `edgar8kevidence.js` path (zero edges everywhere) |
 | `shouldMerge` / `mergeEvents` / `shouldSplit` (Redemption mechanism) | Exists, code-complete, traced this session end-to-end, **zero live callers** |
 | `CanonicalEvent` persistent store | Exists, live (`edgar8kevidence.js`'s `_events` Map), read by `whytracepanel.jsx` — but rebuilt from scratch each sync, never incrementally merged |
 | Provenance/lineage on formation events | Exists, live, deliberately isolated from scoring per `identitylineage.js`'s own boundary |
 | `detect_blind_spots` COUPLING concept (live vocabulary foothold) | Exists, live, `reconlayer.js` — different granularity than `identitykernel.js` |
-| SUB-THRESHOLD as a named, classified state (Gap 1) | Does not exist anywhere — not in §22, not in code |
+| SUB-THRESHOLD as a named, classified state (Gap 1) | Does not exist anywhere — not in §22, not in code, not yet evaluated against the registry's real edges |
 | Temporal-confirmation requirement on Redemption | Not yet designed — implementation question, not preselected (see VALIDATION) |
 
 ---
@@ -205,3 +299,8 @@ Nothing built — design record only.
 - `identitykernel.js`'s merge/split mechanics and `reconlayer.js`'s live COUPLING detection are
   two real, uncomposed pieces at different granularities — any future work here is composition of
   what exists, not a new build from zero.
+- Don't substitute `entitytopologyregistry.js`'s entity-level edges for evidence-level
+  relationships without justification. "Organization A and Organization B are connected" does not
+  establish "this piece of evidence relates to that piece of evidence" — different ontological
+  subjects. Treating them as interchangeable because both are technically "relational data" is
+  the same category of error as treating similarity as a relationship.
