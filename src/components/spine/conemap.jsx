@@ -1776,7 +1776,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // Layout-count transition, part 2 (see coneGroupRefs/layoutLerpRef below for part 1 — the
@@ -1827,14 +1827,52 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const layoutFromRef  = useRef({});   // domain -> [x, z] snapshot at the start of a transition
   const layoutLerpRef  = useRef(1);    // 0..1, 1 = settled
   const prevTotalRef   = useRef(total);
+  const suppressionScaleRef = useRef({}); // domain -> 0..1 current Hero-suppression scale (KRYL-1180)
+  const { camera, size, clock } = useThree();
+
+  // KRYL-1180 fix: while frameloop is frozen (surfaceVisible false), useFrame never runs,
+  // so suppressionScaleRef never tracks what the declarative `scale` prop actually rendered.
+  // On unfreeze, the ref read as undefined and fell back to the target itself — zero
+  // interpolation distance, so the first live frame snapped instead of animating. Keep the
+  // ref mirroring the declarative value every render while frozen, so it's seeded correctly
+  // the moment useFrame starts driving it.
+  // Same handoff gap for position: layoutFromRef only gets written inside useFrame, so it's
+  // empty for every domain the first time useFrame ever fires (right when frameloop unfreezes).
+  // isNewCone then reads true for all six, and they lerp in from [0,0] instead of staying at
+  // the position React already rendered them at — the "sliding forward from center" motion.
+  // Seed it (and layoutLerpRef=settled) with the same [R*cos, R*sin] formula the declarative
+  // `pos` prop uses, so isNewCone is false on that first frame and there's nothing to travel.
+  if (!surfaceVisible) {
+    coneState.forEach((s, i) => {
+      suppressionScaleRef.current[s.domain] = s.suppressed ? 0.001 : 1;
+      const angle = (i / total) * Math.PI * 2;
+      const settledPos = [R * Math.cos(angle), R * Math.sin(angle)];
+      layoutFromRef.current[s.domain] = settledPos;
+      lastPosRef.current[s.domain] = settledPos;
+    });
+    layoutLerpRef.current = 1;
+
+    // Fourth instance of the same class: spinRef's free-spin rotation is driven by
+    // clock.getElapsedTime() * SPIN, and the clock keeps advancing in real time even
+    // while frozen. Without this, the first live frame snaps rotation.y to match
+    // real-elapsed-time * SPIN — an instant jump of the whole cone formation ("entire
+    // base lurches"). Keep rotOffsetRef matched every render while frozen so the
+    // expression already equals the current visual rotation when useFrame resumes.
+    if (spinRef.current) {
+      rotOffsetRef.current = spinRef.current.rotation.y - clock.getElapsedTime() * SPIN;
+    }
+  }
+
   const gridGroupRef   = useRef();
   const mapMatRef      = useRef();
-  const { camera, size } = useThree();
   const raycasterRef = useRef();
   if (!raycasterRef.current) raycasterRef.current = new THREE.Raycaster();
   const zoomTarget = useRef(16.2);
-  const zooming    = useRef(true);
-  useEffect(() => { zooming.current = true; }, []);
+  // Was an animated "10% zoom-in on surface engage" driven entirely inside useFrame.
+  // useFrame never runs while frameloop is frozen on Hero, so the whole dolly sat pending
+  // and fired as one lurch the instant frameloop unfroze on Surface reveal.
+  // Locked: camera starts (and stays) at its resting z. No animation, nothing to lurch.
+  useEffect(() => { camera.position.z = zoomTarget.current; }, [camera]);
   // Per-cone position + apex Y lookup for event rendering
   const coneData = useMemo(() => {
     const out = {};
@@ -1861,12 +1899,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       ));
     }
     const lerpT = topoLerpRef.current;
-
-    // Smooth 10% zoom-in on surface engage
-    if (zooming.current) {
-      camera.position.z += (zoomTarget.current - camera.position.z) * 0.012;
-      if (Math.abs(camera.position.z - zoomTarget.current) < 0.01) zooming.current = false;
-    }
 
     if (spinRef.current) {
       const elapsed = clock.getElapsedTime();
@@ -1920,35 +1952,41 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       layoutLerpRef.current = 0;
       prevTotalRef.current = total;
     }
-    const LAYOUT_TRANSITION_DURATION = 0.6; // seconds
-    if (layoutLerpRef.current < 1) {
-      layoutLerpRef.current = Math.min(1, layoutLerpRef.current + delta / LAYOUT_TRANSITION_DURATION);
-    }
-    const layoutEased = 1 - Math.pow(1 - layoutLerpRef.current, 3); // ease-out cubic
-
+    const SUPPRESSION_TRANSITION_DURATION = 0.5; // seconds — Hero-suppression scale fade (KRYL-1180)
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
       if (!ref?.current) return;
       const angle  = (i / total) * Math.PI * 2;
       const targetSx = R * Math.cos(angle), targetSz = R * Math.sin(angle);
-      // KRYL-1171 — a domain absent from layoutFromRef didn't exist in the previous formation
-      // (e.g. maxCones 3 -> 6 on surfaceExpanded). This used to fall back to [targetSx, targetSz]
-      // — from === to, zero interpolation distance — so new cones popped in at full size/position
-      // instantly while the surviving cones eased smoothly past them. Spawn new cones from the
-      // formation's own center [0,0] instead (the real anchor this whole scene is already built
-      // around, not a fabricated coordinate) so they travel outward on the exact same
-      // ease-out-cubic curve as every other cone reposition.
-      const isNewCone = layoutFromRef.current[state.domain] === undefined;
-      const from = isNewCone ? [0, 0] : layoutFromRef.current[state.domain];
-      const sx = from[0] + (targetSx - from[0]) * layoutEased;
-      const sz = from[1] + (targetSz - from[1]) * layoutEased;
+      // KRYL-1174 — the "spawn new cone from center [0,0] and travel outward" behavior below
+      // is disabled per Founder directive: it produced a visible "sliding forward from center"
+      // motion that was reproducing even after the frozen-frameloop seeding fix (a gap in when
+      // that seed actually runs, not a timing fix worth chasing further). Cones now always
+      // render directly at their target position — no travel, no spawn ramp.
+      const sx = targetSx, sz = targetSz;
       lastPosRef.current[state.domain] = [sx, sz];
       const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
       ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
-      // New cones also grow from near-zero as they travel outward, rather than appearing at
-      // full size mid-flight — same layoutEased clock as the position lerp, no separate timer.
-      ref.current.scale.setScalar(isNewCone ? (0.05 + 0.95 * layoutEased) : 1);
+      const spawnScale = 1;
+
+      // KRYL-1180 — Hero-suppression: all 6 domains exist and are positioned at all times now
+      // (see coneState useMemo above). Hero hides the lower-pressure ones via scale, not by
+      // not-creating them — Surface reveal is a suppression toggle, never a spawn event, so it
+      // never touches the layoutFromRef/isNewCone path above (no frozen-frameloop exposure).
+      const suppressTarget = state.suppressed ? 0.001 : 1;
+      const prevSuppress = suppressionScaleRef.current[state.domain] ?? suppressTarget;
+      const lerpFactor = Math.min(1, delta / SUPPRESSION_TRANSITION_DURATION);
+      const nextSuppress = prevSuppress + (suppressTarget - prevSuppress) * lerpFactor;
+      suppressionScaleRef.current[state.domain] = nextSuppress;
+
+      ref.current.scale.setScalar(spawnScale * nextSuppress);
+      ref.current.visible = nextSuppress > 0.002; // skip raycasting/render cost once fully suppressed
+
+      // Frame-by-frame TRACE/LONGTRACE logging disabled — was adding real console load and
+      // ConeMap's C-layer (renderer) is already confirmed correct. Investigation has moved
+      // to the A->B boundary (source state -> coneState.suppressed derivation), covered by
+      // the single change-triggered [KRYL-1180 MAXCONES] log above, in ConeMap itself.
     });
 
     if (gridGroupRef.current) {
@@ -2111,7 +2149,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           // matches what's actually rendered.
           const { radius: footRadius } = encodeCone(state, { focusId: null });
           return (
-            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
+            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos} scale={state.suppressed ? 0.001 : 1}>
               <Footprint position={[0, 0, 0]} radius={footRadius * 1.5972} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
               <Cone
@@ -2278,6 +2316,15 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
 }
 
 export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true }) {
+  // TEMP INSTRUMENTATION — KRYL-1180 verification. Logs the actual maxCones prop this
+  // component received, only when it changes, with a stack trace so we can see the real
+  // caller/re-render source instead of inferring it from state.suppressed downstream.
+  const prevMaxConesRef = useRef(undefined);
+  if (prevMaxConesRef.current !== maxCones) {
+    console.log('[KRYL-1180 MAXCONES] changed from', prevMaxConesRef.current, 'to', maxCones, 'perceptionFrame?', !!perceptionFrame);
+    console.trace('[KRYL-1180 MAXCONES] stack');
+    prevMaxConesRef.current = maxCones;
+  }
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2304,7 +2351,14 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
         });
       }
       if (maxCones) {
-        state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
+        // KRYL-1180 — mark suppressed instead of removing. All domains stay created and
+        // positioned at all times; Hero just hides the lower-pressure ones. Fixes the
+        // Hero->Surface transition, which used to change coneState.length (3->6), triggering
+        // the spawn/reposition lerp for "new" cones — a mechanism vulnerable to a frozen r3f
+        // clock resuming with a stale delta and collapsing the whole 0.6s ease into one frame.
+        const sorted = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0));
+        const suppressedDomains = new Set(sorted.slice(maxCones).map(c => c.domain));
+        state = state.map(c => ({ ...c, suppressed: suppressedDomains.has(c.domain) }));
       }
       return { coneState: state, rawDomains: state };
     }
@@ -2326,7 +2380,10 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
       });
     }
     if (maxCones) {
-      state = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0)).slice(0, maxCones);
+      // KRYL-1180 — same suppress-not-remove fix as the perceptionFrame branch above.
+      const sorted = [...state].sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0));
+      const suppressedDomains = new Set(sorted.slice(maxCones).map(c => c.domain));
+      state = state.map(c => ({ ...c, suppressed: suppressedDomains.has(c.domain) }));
     }
     return { coneState: state, rawDomains: sixDomain };
   }, [signals, perceptionFrame, maxCones, coneColorOverrides]);
@@ -2498,6 +2555,8 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
           divergenceByDomain={divergenceByDomain}
           connectorTier={connectorTier}
           surfaceActivated={surfaceActivated}
+          surfaceVisible={surfaceVisible}
+          maxCones={maxCones}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
