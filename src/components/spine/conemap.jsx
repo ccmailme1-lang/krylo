@@ -1952,7 +1952,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       layoutLerpRef.current = 0;
       prevTotalRef.current = total;
     }
-    const SUPPRESSION_TRANSITION_DURATION = 0.5; // seconds — Hero-suppression scale fade (KRYL-1180)
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
       if (!ref?.current) return;
@@ -1970,14 +1969,12 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
       const spawnScale = 1;
 
-      // KRYL-1180 — Hero-suppression: all 6 domains exist and are positioned at all times now
-      // (see coneState useMemo above). Hero hides the lower-pressure ones via scale, not by
-      // not-creating them — Surface reveal is a suppression toggle, never a spawn event, so it
-      // never touches the layoutFromRef/isNewCone path above (no frozen-frameloop exposure).
-      const suppressTarget = state.suppressed ? 0.001 : 1;
-      const prevSuppress = suppressionScaleRef.current[state.domain] ?? suppressTarget;
-      const lerpFactor = Math.min(1, delta / SUPPRESSION_TRANSITION_DURATION);
-      const nextSuppress = prevSuppress + (suppressTarget - prevSuppress) * lerpFactor;
+      // KRYL-1174 — no grow/fade animation on suppression toggle, either direction. Cones jump
+      // directly to target scale, same as position above (no travel, no ramp). This makes
+      // forward (3->6) and backward (6->3, e.g. krylo-reset) run the exact same instant-set
+      // code, symmetric both ways — nothing left to lerp, nothing left to race, nothing left
+      // to read as choppy in either direction.
+      const nextSuppress = state.suppressed ? 0.001 : 1;
       suppressionScaleRef.current[state.domain] = nextSuppress;
 
       ref.current.scale.setScalar(spawnScale * nextSuppress);

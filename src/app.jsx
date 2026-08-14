@@ -1363,7 +1363,6 @@ export default function App() {
             <div style={{
               opacity:    (visorReady && (conceptBOpen || conceptBPinned)) ? 1 : 0,
               transform:  (visorReady && (conceptBOpen || conceptBPinned)) ? 'translateY(0)' : 'translateY(100%)',
-              transition: 'opacity 360ms ease, transform 360ms cubic-bezier(0.4,0,0.2,1)',
             }}>
               <BayVisor cones={activeCones} />
             </div>
