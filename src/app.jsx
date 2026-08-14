@@ -1309,10 +1309,13 @@ export default function App() {
           Surface (viewportLens) was already untouched by this — surfaceActivated only ever
           swapped props, never existence — and stays exactly as-is. */}
       <div style={{
-        // KRYL-1174 (2026-08-14) -- no transition on `bottom`. This animated the whole 3D
-        // viewport's bounding box over 900ms on every surfaceExpanded toggle -- removed per
-        // Founder directive, same instant-set pattern as the cone scale/position fixes.
-        position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0,
+        // KRYL-1174 (2026-08-14) -- bottom is now a fixed value, not conditional on
+        // surfaceExpanded. Even with the 900ms transition already removed, the raw value still
+        // jumped 96->56 the instant surfaceExpanded flipped, resizing the container and
+        // shifting where the fixed-camera scene sits inside it -- "the whole map drops."
+        // Demo mode already shows all 6 cones from the start (see maxCones below), so there's
+        // no longer a real "collapsed" layout state to distinguish -- one fixed value, no jump.
+        position: 'fixed', top: 56, left: 72, right: 0, bottom: 56, zIndex: 0,
         visibility: isSurface ? 'visible' : 'hidden',
         pointerEvents: isSurface ? 'auto' : 'none',
       }}>
