@@ -1309,7 +1309,10 @@ export default function App() {
           Surface (viewportLens) was already untouched by this — surfaceActivated only ever
           swapped props, never existence — and stays exactly as-is. */}
       <div style={{
-        position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear',
+        // KRYL-1174 (2026-08-14) -- no transition on `bottom`. This animated the whole 3D
+        // viewport's bounding box over 900ms on every surfaceExpanded toggle -- removed per
+        // Founder directive, same instant-set pattern as the cone scale/position fixes.
+        position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0,
         visibility: isSurface ? 'visible' : 'hidden',
         pointerEvents: isSurface ? 'auto' : 'none',
       }}>
