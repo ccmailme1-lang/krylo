@@ -2144,7 +2144,15 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           // matches what's actually rendered.
           const { radius: footRadius } = encodeCone(state, { focusId: null });
           return (
-            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos} scale={state.suppressed ? 0.001 : 1}>
+            // KRYL-1174 — scale is NOT set declaratively here. The imperative useFrame lerp
+            // above (suppressionScaleRef / ref.current.scale.setScalar) is the sole owner of
+            // this group's scale. A declarative scale prop here used to race it: every time
+            // state.suppressed flips, React re-applies this prop and snaps scale to 0.001/1
+            // with zero interpolation, stomping the smooth lerp mid-frame — that was the
+            // choppy/indecisive 3->6 cone growth. Domain groups never unmount (all 6 domains
+            // are always created — see coneState above), so there is no first-frame gap where
+            // scale would sit at an unset default before useFrame runs.
+            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
               <Footprint position={[0, 0, 0]} radius={footRadius * 1.5972} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
               <Cone
