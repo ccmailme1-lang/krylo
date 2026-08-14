@@ -39,6 +39,7 @@ import { isValidPerceptionFrame, DOMAIN_STATE as PF_DOMAIN_STATE } from '../../c
 let _carouselStopped = false;
 
 const LIME             = '#66FF00';
+const LOCKED_DEFAULT_CAMERA_Z = 16.2; // FOUNDER-LOCKED DEFAULT VIEW (2026-08-14) — do not change without explicit Founder go-ahead.
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 6.175; // was 6.5 — reduced 5% 2026-08-08 (Founder request, cones read too large)
 const FORMATION_SCALE   = 0.90; // was 0.85 — nudged up slightly 2026-08-09 (Founder request, read a touch too small)
@@ -1867,12 +1868,9 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const mapMatRef      = useRef();
   const raycasterRef = useRef();
   if (!raycasterRef.current) raycasterRef.current = new THREE.Raycaster();
-  const zoomTarget = useRef(16.2);
-  // Was an animated "10% zoom-in on surface engage" driven entirely inside useFrame.
-  // useFrame never runs while frameloop is frozen on Hero, so the whole dolly sat pending
-  // and fired as one lurch the instant frameloop unfroze on Surface reveal.
-  // Locked: camera starts (and stays) at its resting z. No animation, nothing to lurch.
-  useEffect(() => { camera.position.z = zoomTarget.current; }, [camera]);
+  // FOUNDER-LOCKED DEFAULT VIEW (2026-08-14) — this exact camera framing is the permanent
+  // default cone view. Do not change without explicit Founder go-ahead.
+  useEffect(() => { camera.position.z = LOCKED_DEFAULT_CAMERA_Z; }, [camera]);
   // Per-cone position + apex Y lookup for event rendering
   const coneData = useMemo(() => {
     const out = {};
