@@ -1943,9 +1943,10 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       if (!ref?.current) return;
       const angle = (i / total) * Math.PI * 2;
       const sx = R * Math.cos(angle), sz = R * Math.sin(angle);
-      const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
-      ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
-      ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
+      // KRYL-1174 (2026-08-14) — direct assignment, no anchor/lerpT blend. Per Founder
+      // instruction, removed as a possible source of position drift on nav-surface click.
+      ref.current.position.x = sx;
+      ref.current.position.z = sz;
 
       // KRYL-1174 (2026-08-14) — scale-only grow, reintroduced deliberately to mask a small
       // remaining render delay. Sole writer of this ref and of the group's scale — no
