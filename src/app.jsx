@@ -1366,6 +1366,10 @@ export default function App() {
             <div style={{
               opacity:    (visorReady && (conceptBOpen || conceptBPinned)) ? 1 : 0,
               transform:  (visorReady && (conceptBOpen || conceptBPinned)) ? 'translateY(0)' : 'translateY(100%)',
+              // KRYL-1174 (2026-08-14) — deliberate slow slide-up ("unfurl" pacing), reintroduced
+              // per Founder direction after the instant-snap version read as too abrupt.
+              // Slower than the original (360ms -> 1100ms), same easing curve.
+              transition: 'opacity 1100ms ease, transform 1100ms cubic-bezier(0.4,0,0.2,1)',
             }}>
               <BayVisor cones={activeCones} />
             </div>

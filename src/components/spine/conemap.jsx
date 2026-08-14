@@ -40,6 +40,7 @@ let _carouselStopped = false;
 
 const LIME             = '#66FF00';
 const LOCKED_DEFAULT_CAMERA_Z = 16.2; // FOUNDER-LOCKED DEFAULT VIEW (2026-08-14) — do not change without explicit Founder go-ahead.
+const CONE_GROW_DURATION = 0.4; // seconds — scale-only reveal on suppression toggle (KRYL-1174, 2026-08-14). Position stays instant-set, not part of this.
 const SPACING          = 4.43;
 const CONE_HEIGHT_SCALE = 6.175; // was 6.5 — reduced 5% 2026-08-08 (Founder request, cones read too large)
 const FORMATION_SCALE   = 0.90; // was 0.85 — nudged up slightly 2026-08-09 (Founder request, read a touch too small)
@@ -1203,8 +1204,19 @@ const CONVERGENCE_COLOR = {
   HIGH_CONVERGENCE:      '#8A2BE2', // purple
 };
 
-function PulseFloor({ ringCount = 6, maxRadius = 8, pressure = 0, convergenceState = 'INSUFFICIENT_SIGNAL' }) {
+const DISC_GROW_DURATION = 1.6; // seconds — KRYL-1174 (2026-08-14), "disc of rings the cones sit on gets bigger slowly." Deliberately slower than CONE_GROW_DURATION.
+
+function PulseFloor({ ringCount = 6, maxRadius = 8, pressure = 0, convergenceState = 'INSUFFICIENT_SIGNAL', revealed = true }) {
   const matRef = useRef();
+  const groupRef = useRef();
+  const growRef = useRef(revealed ? 1 : 0.001);
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    const target = revealed ? 1 : 0.001;
+    const lerpFactor = Math.min(1, delta / DISC_GROW_DURATION);
+    growRef.current = growRef.current + (target - growRef.current) * lerpFactor;
+    groupRef.current.scale.setScalar(growRef.current);
+  });
   const positions = useMemo(() => {
     const segs = 64;
     const verts = [];
@@ -1233,12 +1245,14 @@ function PulseFloor({ ringCount = 6, maxRadius = 8, pressure = 0, convergenceSta
   });
 
   return (
-    <lineSegments position={[0, -0.4, 0]}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <lineBasicMaterial ref={matRef} color={color} transparent opacity={0.45} />
-    </lineSegments>
+    <group ref={groupRef}>
+      <lineSegments position={[0, -0.4, 0]}>
+        <bufferGeometry>
+          <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        </bufferGeometry>
+        <lineBasicMaterial ref={matRef} color={color} transparent opacity={0.45} />
+      </lineSegments>
+    </group>
   );
 }
 
@@ -1816,11 +1830,22 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const frozenAngleRef  = useRef(0);
   const stepAnimRef     = useRef(null); // { startAngle, targetAngle, startTime } while an arrow-step eases in
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
+  // KRYL-1174 (2026-08-14) — scale-only grow on suppression toggle, reintroduced deliberately
+  // to mask a small remaining render delay. Position stays instant-set (not reintroduced — the
+  // position-travel version of this was a separate, worse-looking bug). Single owner: this ref
+  // is written ONLY inside the imperative useFrame loop below, never a declarative scale prop
+  // on the group (see the JSX below) — that dual-writer race was the original choppiness bug.
+  const suppressionScaleRef = useRef({});
   const { camera, size, clock } = useThree();
 
-  // KRYL-1174 — position and scale are both instant-set now (no lerp, see coneState.forEach
-  // below), so neither needs seeding while the frameloop is frozen. Rotation still does:
   if (!surfaceVisible) {
+    // Seed suppressionScaleRef to its settled target while frozen, so the first live frame
+    // after unfreeze starts the grow from the correct value instead of an unset default
+    // (which would read as a snap, not a grow — the same class of bug as the rotation fix
+    // below).
+    coneState.forEach(s => {
+      suppressionScaleRef.current[s.domain] = s.suppressed ? 0.001 : 1;
+    });
     // spinRef's free-spin rotation is driven by
     // clock.getElapsedTime() * SPIN, and the clock keeps advancing in real time even
     // while frozen. Without this, the first live frame snaps rotation.y to match
@@ -1913,10 +1938,9 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     }
     prevTopoRef.current = topoMode;
 
-    // KRYL-1174 — position and suppression-scale are both instant-set, no lerp: cone count
-    // never actually changes (all 6 domains always exist, see coneState above — this only
-    // toggles .suppressed), so there is nothing to transition between and no per-domain
-    // state to carry across frames.
+    // KRYL-1174 — position is instant-set, no lerp: cone count never actually changes (all 6
+    // domains always exist, see coneState above — this only toggles .suppressed), so there is
+    // no position to transition between. Scale (below) intentionally still lerps.
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
       if (!ref?.current) return;
@@ -1926,7 +1950,16 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
       ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
 
-      const nextSuppress = state.suppressed ? 0.001 : 1;
+      // KRYL-1174 (2026-08-14) — scale-only grow, reintroduced deliberately to mask a small
+      // remaining render delay. Sole writer of this ref and of the group's scale — no
+      // declarative scale prop competes with it (see the JSX below), so there's nothing to
+      // race this time.
+      const suppressTarget = state.suppressed ? 0.001 : 1;
+      const prevSuppress = suppressionScaleRef.current[state.domain] ?? suppressTarget;
+      const lerpFactor = Math.min(1, delta / CONE_GROW_DURATION);
+      const nextSuppress = prevSuppress + (suppressTarget - prevSuppress) * lerpFactor;
+      suppressionScaleRef.current[state.domain] = nextSuppress;
+
       ref.current.scale.setScalar(nextSuppress);
       ref.current.visible = nextSuppress > 0.002; // skip raycasting/render cost once fully suppressed
     });
@@ -2042,7 +2075,7 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   return (
     <>
       <group ref={gridGroupRef}>
-        <PulseFloor ringCount={7} maxRadius={R + 6} />
+        <PulseFloor ringCount={7} maxRadius={R + 6} revealed={!maxCones} />
         {/* KRYL-1171 — threshold band scale labels (LO·50/MID·75/HI·90 + tics) are cone-field
             HUD chrome for the default landing state only. Once a report/analysis surface is
             showing (OBSERVE banner, any AnalysisField lens), these Html-portaled labels float
