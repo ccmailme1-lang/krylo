@@ -1312,7 +1312,10 @@ export default function App() {
         // KRYL-1174 (2026-08-14) -- no transition on `bottom`. This animated the whole 3D
         // viewport's bounding box over 900ms on every surfaceExpanded toggle -- removed per
         // Founder directive, same instant-set pattern as the cone scale/position fixes.
-        position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0,
+        // KRYL-1174 (2026-08-14) -- bottom is a fixed value, not conditional on surfaceExpanded.
+        // The conditional jumped 96->56 instantly on nav click, resizing the container and
+        // shifting where the fixed-camera scene sits inside it.
+        position: 'fixed', top: 56, left: 72, right: 0, bottom: 56, zIndex: 0,
         visibility: isSurface ? 'visible' : 'hidden',
         pointerEvents: isSurface ? 'auto' : 'none',
       }}>
