@@ -1861,9 +1861,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const mapMatRef      = useRef();
   const raycasterRef = useRef();
   if (!raycasterRef.current) raycasterRef.current = new THREE.Raycaster();
-  // FOUNDER-LOCKED DEFAULT VIEW (2026-08-14) — this exact camera framing is the permanent
-  // default cone view. Do not change without explicit Founder go-ahead.
-  useEffect(() => { camera.position.z = LOCKED_DEFAULT_CAMERA_Z; }, [camera]);
   // Per-cone position + apex Y lookup for event rendering
   const coneData = useMemo(() => {
     const out = {};
@@ -2509,7 +2506,11 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
         setLocalClick({ x: e.clientX - rect.left, y: e.clientY - rect.top, ts: Date.now() });
       }}
     >
-      <Canvas flat camera={{ position: [0, 2.1, 18], fov: 50 }} onCreated={onCanvasCreated} frameloop={surfaceVisible ? 'always' : 'never'}>
+      {/* FOUNDER-LOCKED DEFAULT VIEW (2026-08-14) — camera mounts directly at
+          LOCKED_DEFAULT_CAMERA_Z now. Previously mounted at z=18 then a useEffect snapped it to
+          16.2 one frame later -- a visible two-step jump on every load. Removed the effect,
+          camera now starts correct, no snap. Do not change without explicit Founder go-ahead. */}
+      <Canvas flat camera={{ position: [0, 2.1, LOCKED_DEFAULT_CAMERA_Z], fov: 50 }} onCreated={onCanvasCreated} frameloop={surfaceVisible ? 'always' : 'never'}>
         <ConeScene
           coneState={coneState}
           selectedDomain={activeDomain}
