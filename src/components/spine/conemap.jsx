@@ -1982,11 +1982,6 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
 
       ref.current.scale.setScalar(spawnScale * nextSuppress);
       ref.current.visible = nextSuppress > 0.002; // skip raycasting/render cost once fully suppressed
-
-      // Frame-by-frame TRACE/LONGTRACE logging disabled — was adding real console load and
-      // ConeMap's C-layer (renderer) is already confirmed correct. Investigation has moved
-      // to the A->B boundary (source state -> coneState.suppressed derivation), covered by
-      // the single change-triggered [KRYL-1180 MAXCONES] log above, in ConeMap itself.
     });
 
     if (gridGroupRef.current) {
@@ -2316,15 +2311,6 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
 }
 
 export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true }) {
-  // TEMP INSTRUMENTATION — KRYL-1180 verification. Logs the actual maxCones prop this
-  // component received, only when it changes, with a stack trace so we can see the real
-  // caller/re-render source instead of inferring it from state.suppressed downstream.
-  const prevMaxConesRef = useRef(undefined);
-  if (prevMaxConesRef.current !== maxCones) {
-    console.log('[KRYL-1180 MAXCONES] changed from', prevMaxConesRef.current, 'to', maxCones, 'perceptionFrame?', !!perceptionFrame);
-    console.trace('[KRYL-1180 MAXCONES] stack');
-    prevMaxConesRef.current = maxCones;
-  }
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
