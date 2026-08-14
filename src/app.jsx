@@ -602,10 +602,12 @@ function AnalysisLensPage({ lens, leaderboardState }) {
 
 // ── History Bay ──────────────────────────────────────────────
 
-// ── WO-1344D: Bay SignalMap Projection ───────────────────────
-// Renders SignalMap overlay for viewMode='signalmap' OR xrayOpen on assigned bays.
-// X-RAY mode: targeted — triggers setquery for that subject, shows focused signal map.
-// SIGMAP mode: ambient — full live signal map for the assignment.
+// ── ARCHIVED — WO-1344D: Bay SignalMap Projection (original KRYLO X-RAY overlay) ──
+// Founder directive: explored, deployed, tested, decided against — extremely resource
+// intensive given the X-RAY capabilities. Kept commented (not deleted) to preserve
+// original-KRYLO history in the live tree. Do not re-enable without explicit Go.
+// Call site also archived below, at the WO-1344D render marker.
+/*
 function BaySignalMapProjection({ signals, xraySignals = [], resetKey }) {
   const bays = useBayStore(s => s.bays);
   const bayList = Object.values(bays);
@@ -625,7 +627,6 @@ function BaySignalMapProjection({ signals, xraySignals = [], resetKey }) {
       zIndex: 15, background: '#000',
       borderRight: `1px solid ${accentColor}22`,
     }}>
-      {/* Bay identity header */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: 32, zIndex: 2,
         display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px',
@@ -651,6 +652,7 @@ function BaySignalMapProjection({ signals, xraySignals = [], resetKey }) {
     </div>
   );
 }
+*/
 
 // KRYL-DIAG-1 — Domain Provenance Trace. Wraps a connector call with dispatch/resolve/fail
 // telemetry, additive-only: does not change what the connector returns, does not touch
@@ -1083,9 +1085,11 @@ export default function App() {
           // surfaceActivated — that stays owned by krylo-submit/krylo-reset only, so
           // FloatingToolbar/visorReady/AnalysisField-vs-OrientationSurface component swap
           // are unaffected (avoids the WO-nav-force-activate regression).
+          console.log('[KRYL-1180 SURFACEEXPANDED] -> true, ev.data=', JSON.stringify(ev.data)); // TEMP
           setSurfaceExpanded(true);
           setSurfaceEntryCount(c => c + 1);
         } else {
+          console.log('[KRYL-1180 SURFACEEXPANDED] -> false, ev.data=', JSON.stringify(ev.data)); // TEMP
           setSurfaceExpanded(false);
         }
       }
@@ -1292,52 +1296,59 @@ export default function App() {
       {/* ── Surface Bay ───────────────────────────────────────── */}
 
       {/* Surface Field — single canonical renderer (CL-11) */}
+
+      {/* KRYL-1171 — ConeMap mounts once for the lifetime of the app shell and is never
+          unmounted again. Previously gated by `isSurface &&`, which meant every trip to
+          History/Community/News Feed/Settings/etc. (anything that changes navMode away from
+          'surface') tore down the whole Canvas/WebGL context/formation state, then rebuilt it
+          from scratch — including replaying the camera's zoom-in-on-engage animation — on the
+          way back. That rebuild was the load delay. Fix: this div (and the Canvas inside
+          ConeMap) always stays mounted; only `visibility`/`pointerEvents` follow `isSurface`
+          now, and ConeMap's `surfaceVisible` prop pauses its r3f frameloop while hidden so it
+          doesn't keep rendering in the background on other nav tabs. Lens switching within
+          Surface (viewportLens) was already untouched by this — surfaceActivated only ever
+          swapped props, never existence — and stays exactly as-is. */}
+      <div style={{
+        position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear',
+        visibility: isSurface ? 'visible' : 'hidden',
+        pointerEvents: isSurface ? 'auto' : 'none',
+      }}>
+        <ConeMap
+          signals={surfaceActivated ? liveSignals : liveSignals}
+          replayedSignals={replayedSignals}
+          perceptionFrame={surfaceActivated ? replayedPerceptionFrame : perceptionFrame}
+          lens={selectedLens ?? 'INVESTOR'}
+          selectedDomain={selection}
+          clickEvent={clickEvent}
+          onSelectCone={setSelection}
+          onActiveConeChange={handleActiveConeChange}
+          topoMode={topoMode}
+          onArcClick={handleArcClick}
+          maxCones={surfaceActivated ? undefined : (surfaceExpanded ? undefined : 3)}
+          dollyKey={surfaceEntryCount}
+          coneColorOverrides={coneColorOverrides}
+          viewportLens={viewportLens}
+          connectorTier={surfaceActivated ? 'surface' : 'hero'}
+          surfaceActivated={surfaceActivated}
+          surfaceVisible={isSurface}
+        />
+        {isSurface && surfaceExpanded && (viewportLens === 'OBSERVE' || viewportLens === 'NAV_SURFACE') && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
+        {isSurface && surfaceActivated && (
+          <AnalysisField
+            signals={liveSignals}
+            replayedSignals={replayedSignals}
+            history={history}
+            selectedLens={selectedLens}
+            topoMode={topoMode}
+            onTopoToggle={handleTopoToggle}
+          />
+        )}
+      </div>
+
       {isSurface && (
         <>
           <GridOverlay />
           {surfaceExpanded && <FloatingToolbar />}
-
-
-          {/* KRYL-1169 Tier B — ONE persistent ConeMap for the lifetime of the Surface screen.
-              surfaceActivated switches PROPS (which signal source, maxCones, connectorTier),
-              never the existence of ConeMap. OrientationSurface owned no chrome of its own (just
-              a wrapper around ConeMap) so it's retired from this render path entirely.
-              AnalysisField keeps its report/topology chrome, rendered as a sibling overlay — its
-              own internal ConeMap call is removed (see analysisfield.jsx). isSurface itself
-              (navMode-driven) is NOT part of this condition — confirmed it never toggles as part
-              of the activation transition, so this div and the Canvas inside ConeMap mount once
-              per Surface visit, full stop. */}
-          <div style={{ position: 'fixed', top: 56, left: 72, right: 0, bottom: surfaceExpanded ? 56 : 96, zIndex: 0, transition: 'bottom 900ms linear' }}>
-            <ConeMap
-              signals={surfaceActivated ? liveSignals : liveSignals}
-              replayedSignals={replayedSignals}
-              perceptionFrame={surfaceActivated ? replayedPerceptionFrame : perceptionFrame}
-              lens={selectedLens ?? 'INVESTOR'}
-              selectedDomain={selection}
-              clickEvent={clickEvent}
-              onSelectCone={setSelection}
-              onActiveConeChange={handleActiveConeChange}
-              topoMode={topoMode}
-              onArcClick={handleArcClick}
-              maxCones={surfaceActivated ? undefined : (surfaceExpanded ? undefined : 3)}
-              dollyKey={surfaceEntryCount}
-              coneColorOverrides={coneColorOverrides}
-              viewportLens={viewportLens}
-              connectorTier={surfaceActivated ? 'surface' : 'hero'}
-              surfaceActivated={surfaceActivated}
-            />
-            {surfaceExpanded && (viewportLens === 'OBSERVE' || viewportLens === 'NAV_SURFACE') && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
-            {surfaceActivated && (
-              <AnalysisField
-                signals={liveSignals}
-                replayedSignals={replayedSignals}
-                history={history}
-                selectedLens={selectedLens}
-                topoMode={topoMode}
-                onTopoToggle={handleTopoToggle}
-              />
-            )}
-          </div>
 
           {/* Bottom panel — Console Dashboard, slides above scrubber.
               KRYL-1163: pointerEvents moved onto THIS outer div (zIndex:100, higher than
@@ -1363,8 +1374,9 @@ export default function App() {
 
           {/* WO-1718A: Surface Panel — removed from hero per Founder */}
 
-          {/* WO-1344D: Bay projection overlay (xray/signalmap modes) */}
-          <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} resetKey={mapResetKey} />
+          {/* WO-1344D: Bay projection overlay (xray/signalmap modes) — ARCHIVED, not deleted.
+              See BaySignalMapProjection definition above for Founder directive/reason. */}
+          {/* <BaySignalMapProjection signals={liveSignals} xraySignals={xraySignals} resetKey={mapResetKey} /> */}
 
 
           {/* WO-1344B: Assignment Intent Modal */}

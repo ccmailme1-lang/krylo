@@ -10,6 +10,14 @@ import { entityTopologyRegistry } from '../entitytopologyregistry.js';
 
 const OSH_API = 'https://opensupplyhub.org/api';
 
+// OSH requires DRF Token auth (confirmed via www-authenticate: Token header + "Authentication
+// credentials were not provided" — not a KRYLO bug, a real required credential that doesn't
+// exist in this environment). Same skip-gracefully-if-absent pattern as Versed AI below, so
+// this stops firing guaranteed-401/CORS requests on every load until a real key is added.
+const OSH_KEY = typeof import.meta !== 'undefined'
+  ? import.meta.env?.VITE_OPENSUPPLYHUB_API_KEY
+  : undefined;
+
 // Optional Versed AI — skips gracefully if key absent
 const VERSED_KEY = typeof import.meta !== 'undefined'
   ? import.meta.env?.VITE_VERSED_AI_KEY
@@ -33,10 +41,11 @@ function getTrackedEntities() {
 }
 
 async function fetchFacilityStatus(entityName) {
+  if (!OSH_KEY) return null; // OSH requires DRF Token auth — skip rather than fire a guaranteed 401/CORS failure
   try {
     const res = await fetch(
       `${OSH_API}/facilities/?contributor_name=${encodeURIComponent(entityName)}&page_size=10`,
-      { headers: { 'Accept': 'application/json' } }
+      { headers: { 'Accept': 'application/json', 'Authorization': `Token ${OSH_KEY}` } }
     );
     if (!res.ok) return null;
     const data = await res.json();

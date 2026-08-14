@@ -73,6 +73,7 @@ function getCached(key, ttlMs) {
 }
 
 function setCached(key, statusCode, body) {
+  if (statusCode >= 400) return; // don't cache failures — let the next request retry upstream instead of replaying a stale error for the full TTL
   PROXY_CACHE.set(key, { statusCode, body, ts: Date.now() });
 }
 
@@ -915,7 +916,7 @@ function handleTreasuryProxy(req, res) {
   const filter  = encodeURIComponent('security_desc:in:(Treasury Notes-10 Yr,Treasury Bills-2 Yr)');
   const options = {
     hostname: 'api.fiscaldata.treasury.gov',
-    path: `/v1/accounting/od/avg_interest_rates?fields=${fields}&filter=${filter}&sort=-record_date&page[size]=4`,
+    path: `/services/api/fiscal_service/v1/accounting/od/avg_interest_rates?fields=${fields}&filter=${filter}&sort=-record_date&page[size]=4`,
     method: 'GET', headers: { 'Accept': 'application/json', 'User-Agent': 'krylo/1.0' },
   };
   const proxy = https.request(options, upstream => {

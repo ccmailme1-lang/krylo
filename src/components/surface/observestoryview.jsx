@@ -16,7 +16,7 @@
 // the same live pool the cones read, and classifying it with the exact same formula conemap.jsx
 // uses for its own per-cone convergence color (coneConvergenceVector + classifyConvergenceState,
 // mirrored below since those helpers aren't exported from conemap.jsx).
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
 import { deriveRelationships, filterForSurface, RELATIONSHIP_STATE } from '../../formationlayer/formationrelationship.js';
 
@@ -96,9 +96,25 @@ function buildNarrative(domains, relationships) {
   return { headlinePre, emphasis, headlinePost, paragraph: paragraphParts.join(' ') };
 }
 
+// KRYL-1174 Symptom 2 — this component mounts as soon as surfaceExpanded flips true and reads
+// coneState (raw signals) immediately, so the narrative used to claim "N domains are moving
+// together" while conemap.jsx's cones were still mid-flight through their own suppression-scale
+// reveal. This component has no access to that per-cone scale state (coneState here is the raw
+// leaderboardState array, not conemap.jsx's internal coneState with .suppressed) — plumbing that
+// through would mean new props across conemap.jsx -> app.jsx -> here. Cheaper and just as
+// correct: hold the narrative until conemap.jsx's own reveal animation has had time to finish.
+// Duration must stay matched to SUPPRESSION_TRANSITION_DURATION in conemap.jsx.
+const SUPPRESSION_TRANSITION_DURATION_MS = 500;
+
 // coneState: [{ domain, pressure, volatility }] — see file header. domain strings are already
 // uppercase CANONICAL_DOMAINS values (app.jsx's CANONICAL_FEEDERS = CANONICAL_DOMAINS).
 export default function ObserveStoryBanner({ activeDomain = null, coneState = [] }) {
+  const [revealReady, setRevealReady] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setRevealReady(true), SUPPRESSION_TRANSITION_DURATION_MS);
+    return () => clearTimeout(t);
+  }, []);
+
   const domains = useMemo(() => {
     return coneState.map(({ domain, pressure, volatility }) => {
       const { stateId, label: stateLabel } = classifyConvergenceState(
@@ -135,6 +151,10 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
   );
 
   const activeInfo = activeDomain ? domains.find(d => d.domain === activeDomain?.toUpperCase?.() || d.domain === activeDomain) : null;
+
+  // KRYL-1174 Symptom 2 — don't render the narrative until conemap.jsx's own suppression
+  // reveal has had time to settle (see SUPPRESSION_TRANSITION_DURATION_MS above).
+  if (!revealReady) return null;
 
   return (
     <>
