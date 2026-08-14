@@ -1327,7 +1327,12 @@ export default function App() {
           onActiveConeChange={handleActiveConeChange}
           topoMode={topoMode}
           onArcClick={handleArcClick}
-          maxCones={surfaceActivated ? undefined : (surfaceExpanded ? undefined : 3)}
+          // KRYL-1174 (2026-08-14) — DEMO MODE: always show all 6 cones, no Hero-suppression
+          // (was: 3 -> 6 on surfaceExpanded). Nothing is ever suppressed, so the cone-grow/
+          // disc-grow animations never have anything to transition from -- no cone movement
+          // at all, by construction, without touching the animation code itself. Scoped to
+          // cones only, per Founder direction -- marquee text and other UI motion untouched.
+          maxCones={undefined}
           dollyKey={surfaceEntryCount}
           coneColorOverrides={coneColorOverrides}
           viewportLens={viewportLens}
