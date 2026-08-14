@@ -2109,6 +2109,8 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
             if (!kalshiMap[d] || s.oi > (kalshiMap[d]?.oi ?? 0)) kalshiMap[d] = s;
           }
           return coneState.map((state, i) => {
+          const angle = (i / total) * Math.PI * 2;
+          const pos   = [R * Math.cos(angle), 0, R * Math.sin(angle)];
           const kDomain = CONE_TO_KALSHI_DOMAIN[state.domain] ?? 'SIGNAL';
           const kalshiSignal = kalshiMap[kDomain] ?? null;
           // Footprint ring must track the cone's own base radius — was hardcoded
@@ -2119,16 +2121,14 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           // matches what's actually rendered.
           const { radius: footRadius } = encodeCone(state, { focusId: null });
           return (
-            // KRYL-1174 (2026-08-14) — neither position NOR scale is set declaratively here.
-            // The imperative useFrame code above is the sole owner of both. A declarative
-            // position prop here (freshly computed every render, new array reference every
-            // time) raced the imperative position write the exact same way the old declarative
-            // scale prop raced the scale write: any re-render (e.g. the nav-surface click)
-            // caused React to snap position back to this render's value, independent of
-            // whatever the imperative code had just set -- "the whole map drops." Domain
-            // groups never unmount (all 6 domains are always created — see coneState above),
-            // so there's no first-frame gap where position would sit at an unset default.
-            <group key={state.domain} ref={coneGroupRefs.current[i]}>
+            // KRYL-1174 — scale is NOT set declaratively here. The imperative useFrame code
+            // above (ref.current.scale.setScalar, instant-set) is the sole owner of this
+            // group's scale. A declarative scale prop here used to race it: every time
+            // state.suppressed flipped, React would re-apply this prop and snap scale to
+            // 0.001/1, stomping whatever the imperative code had just set. Domain groups never
+            // unmount (all 6 domains are always created — see coneState above), so there is no
+            // first-frame gap where scale would sit at an unset default.
+            <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
               <Footprint position={[0, 0, 0]} radius={footRadius * 1.5972} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
               <Cone

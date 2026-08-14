@@ -59,31 +59,11 @@ function buildNarrative(domains, relationships) {
   const emerging = domains.filter(d => d.formationState === 'EMERGING');
   const topRel = relationships[0] ?? null;
 
-  // KRYL-1174 (2026-08-14) — Founder direction: "no one wants to study" a repeated generic
-  // count. Lead with the most specific real fact available instead — a named pair (if two
-  // domains are actually linked) or the single fastest mover — so the headline names something
-  // concrete every time rather than repeating "N domains are moving together" regardless of
-  // which domains or how strongly. Falls back to the count only when neither specific fact
-  // exists. Uses only data already computed above -- no new numbers invented.
-  const fastest = stable.length >= 1
-    ? [...stable].sort((a, b) => Math.abs(b.magnitude - 50) - Math.abs(a.magnitude - 50))[0]
-    : null;
-
   let headlinePre, emphasis, headlinePost;
-  if (stable.length >= 2 && topRel) {
-    const a = domains.find(d => d.formationId === topRel.sourceFormationId)?.label ?? topRel.sourceFormationId;
-    const b = domains.find(d => d.formationId === topRel.targetFormationId)?.label ?? topRel.targetFormationId;
-    headlinePre = `${a} and`;
-    emphasis = b;
-    headlinePost = ` are moving in lockstep — ${stable.length} domains total are converging this cycle.`;
-  } else if (stable.length >= 2 && fastest) {
-    headlinePre = `${fastest.label} is leading a`;
-    emphasis = `${stable.length}-domain convergence`;
-    headlinePost = ` — ${listWithAnd(stable.filter(d => d !== fastest).map(d => d.label))} are moving with it.`;
-  } else if (stable.length >= 2) {
+  if (stable.length >= 2) {
     headlinePre = `${stable.length} domains are moving`;
     emphasis = 'together';
-    headlinePost = '.';
+    headlinePost = topRel ? ' — and two of them are quietly connected.' : '.';
   } else if (stable.length === 1) {
     headlinePre = `${stable[0].label} is the`;
     emphasis = 'one domain';
@@ -183,7 +163,7 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 11, letterSpacing: '0.32em', textTransform: 'uppercase', color: LIME, marginBottom: 9 }}>
+        <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
           What changed
         </div>
         <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 265, margin: '0 0 10px', textWrap: 'balance' }}>
