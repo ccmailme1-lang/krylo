@@ -633,11 +633,10 @@ export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log =
   }, []);
 
   // KRYL-1171 — FIELD CONVERGENCE's "PROJECTION · N=" (StateDistribution, fed by
-  // coneState.length) used to hard-cut 3->6 the instant surfaceExpanded changed the cone count —
-  // same frame as the cone formation's own expansion. Cross-fade it on the same 620ms clock
-  // ConeScene's layoutLerpRef already uses for the cone reposition/entrance lerp (see
-  // LAYOUT_TRANSITION_DURATION in ConeScene) so the panel and the 3D formation read as one
-  // coordinated expansion instead of three separate UI changes landing at once.
+  // coneState.length) used to hard-cut 3->6 the instant surfaceExpanded changed the cone count.
+  // Cross-fades over 620ms on its own independent timer below. KRYL-1174 (2026-08-14) made the
+  // cone formation itself instant-set (no lerp) -- this panel's cross-fade is a deliberate,
+  // separate UI choice, not synced to anything in ConeScene anymore.
   const [fieldCountTransitioning, setFieldCountTransitioning] = React.useState(false);
   const prevFieldCountRef = React.useRef(coneState.length);
   React.useEffect(() => {
@@ -1780,16 +1779,13 @@ const CONE_TO_KALSHI_DOMAIN = {
 function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
-  // Layout-count transition, part 2 (see coneGroupRefs/layoutLerpRef below for part 1 — the
-  // cone-body lerp). Event pulses / flow arcs / formation-relationship lines all read
-  // coneData[domain].pos, a useMemo keyed on [coneState, total, R] that snaps to the NEW
-  // target position the instant `total` changes (same render tick as the prop change) — while
-  // the cone bodies are still easing toward it via direct ref mutation in useFrame over the
-  // next ~0.6s. That's two independent position sources going out of sync mid-transition,
-  // visible as arcs/particles detached from the cone they're supposed to connect to. Simplest
-  // safe fix: hide these secondary/decorative overlays for the transition window instead of
-  // teaching three separate child components (EventPulse, FlowArc, relationship Line) to do
-  // their own per-frame lerp — a much larger change to components not yet audited here.
+  // KRYL-1174 (2026-08-14) — `total` (coneState.length) never actually changes anymore: all 6
+  // domains always exist, only `.suppressed` toggles (see coneState above), and cone position/
+  // scale are both instant-set now, no lerp. This useEffect's `total` dependency therefore never
+  // fires in practice; layoutSettling stays permanently false. Left in place (inert, not
+  // harmful) rather than removed in this pass -- flagged as a second dead-code candidate
+  // alongside the layoutFromRef/layoutLerpRef cleanup above, pending confirmation it's safe to
+  // remove outright.
   const [layoutSettling, setLayoutSettling] = useState(false);
   const prevTotalForSettleRef = useRef(total);
   useEffect(() => {
@@ -1820,40 +1816,12 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
   const frozenAngleRef  = useRef(0);
   const stepAnimRef     = useRef(null); // { startAngle, targetAngle, startTime } while an arrow-step eases in
   const coneGroupRefs  = useRef(Array.from({ length: 10 }, () => ({ current: null })));
-  // Layout-count transition (e.g. maxCones 3 -> 6 on surfaceExpanded): coneState.length
-  // changing shifts every cone's angle + R in the SAME frame it happens, previously a hard
-  // snap. Lerp from each domain's last rendered position to its new target instead, same
-  // time-normalized ease-out pattern as the arrow-step animation above.
-  const lastPosRef     = useRef({});   // domain -> [x, z], last rendered (post-lerp) position
-  const layoutFromRef  = useRef({});   // domain -> [x, z] snapshot at the start of a transition
-  const layoutLerpRef  = useRef(1);    // 0..1, 1 = settled
-  const prevTotalRef   = useRef(total);
-  const suppressionScaleRef = useRef({}); // domain -> 0..1 current Hero-suppression scale (KRYL-1180)
   const { camera, size, clock } = useThree();
 
-  // KRYL-1180 fix: while frameloop is frozen (surfaceVisible false), useFrame never runs,
-  // so suppressionScaleRef never tracks what the declarative `scale` prop actually rendered.
-  // On unfreeze, the ref read as undefined and fell back to the target itself — zero
-  // interpolation distance, so the first live frame snapped instead of animating. Keep the
-  // ref mirroring the declarative value every render while frozen, so it's seeded correctly
-  // the moment useFrame starts driving it.
-  // Same handoff gap for position: layoutFromRef only gets written inside useFrame, so it's
-  // empty for every domain the first time useFrame ever fires (right when frameloop unfreezes).
-  // isNewCone then reads true for all six, and they lerp in from [0,0] instead of staying at
-  // the position React already rendered them at — the "sliding forward from center" motion.
-  // Seed it (and layoutLerpRef=settled) with the same [R*cos, R*sin] formula the declarative
-  // `pos` prop uses, so isNewCone is false on that first frame and there's nothing to travel.
+  // KRYL-1174 — position and scale are both instant-set now (no lerp, see coneState.forEach
+  // below), so neither needs seeding while the frameloop is frozen. Rotation still does:
   if (!surfaceVisible) {
-    coneState.forEach((s, i) => {
-      suppressionScaleRef.current[s.domain] = s.suppressed ? 0.001 : 1;
-      const angle = (i / total) * Math.PI * 2;
-      const settledPos = [R * Math.cos(angle), R * Math.sin(angle)];
-      layoutFromRef.current[s.domain] = settledPos;
-      lastPosRef.current[s.domain] = settledPos;
-    });
-    layoutLerpRef.current = 1;
-
-    // Fourth instance of the same class: spinRef's free-spin rotation is driven by
+    // spinRef's free-spin rotation is driven by
     // clock.getElapsedTime() * SPIN, and the clock keeps advancing in real time even
     // while frozen. Without this, the first live frame snaps rotation.y to match
     // real-elapsed-time * SPIN — an instant jump of the whole cone formation ("entire
@@ -1945,37 +1913,21 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
     }
     prevTopoRef.current = topoMode;
 
-    if (prevTotalRef.current !== total) {
-      layoutFromRef.current = { ...lastPosRef.current };
-      layoutLerpRef.current = 0;
-      prevTotalRef.current = total;
-    }
+    // KRYL-1174 — position and suppression-scale are both instant-set, no lerp: cone count
+    // never actually changes (all 6 domains always exist, see coneState above — this only
+    // toggles .suppressed), so there is nothing to transition between and no per-domain
+    // state to carry across frames.
     coneState.forEach((state, i) => {
       const ref = coneGroupRefs.current[i];
       if (!ref?.current) return;
-      const angle  = (i / total) * Math.PI * 2;
-      const targetSx = R * Math.cos(angle), targetSz = R * Math.sin(angle);
-      // KRYL-1174 — the "spawn new cone from center [0,0] and travel outward" behavior below
-      // is disabled per Founder directive: it produced a visible "sliding forward from center"
-      // motion that was reproducing even after the frozen-frameloop seeding fix (a gap in when
-      // that seed actually runs, not a timing fix worth chasing further). Cones now always
-      // render directly at their target position — no travel, no spawn ramp.
-      const sx = targetSx, sz = targetSz;
-      lastPosRef.current[state.domain] = [sx, sz];
+      const angle = (i / total) * Math.PI * 2;
+      const sx = R * Math.cos(angle), sz = R * Math.sin(angle);
       const anchor = TOPOLOGY_ANCHORS[state.domain] ?? [sx, 0, sz];
       ref.current.position.x = sx + (anchor[0] - sx) * lerpT;
       ref.current.position.z = sz + (anchor[2] - sz) * lerpT;
-      const spawnScale = 1;
 
-      // KRYL-1174 — no grow/fade animation on suppression toggle, either direction. Cones jump
-      // directly to target scale, same as position above (no travel, no ramp). This makes
-      // forward (3->6) and backward (6->3, e.g. krylo-reset) run the exact same instant-set
-      // code, symmetric both ways — nothing left to lerp, nothing left to race, nothing left
-      // to read as choppy in either direction.
       const nextSuppress = state.suppressed ? 0.001 : 1;
-      suppressionScaleRef.current[state.domain] = nextSuppress;
-
-      ref.current.scale.setScalar(spawnScale * nextSuppress);
+      ref.current.scale.setScalar(nextSuppress);
       ref.current.visible = nextSuppress > 0.002; // skip raycasting/render cost once fully suppressed
     });
 
@@ -2139,14 +2091,13 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           // matches what's actually rendered.
           const { radius: footRadius } = encodeCone(state, { focusId: null });
           return (
-            // KRYL-1174 — scale is NOT set declaratively here. The imperative useFrame lerp
-            // above (suppressionScaleRef / ref.current.scale.setScalar) is the sole owner of
-            // this group's scale. A declarative scale prop here used to race it: every time
-            // state.suppressed flips, React re-applies this prop and snaps scale to 0.001/1
-            // with zero interpolation, stomping the smooth lerp mid-frame — that was the
-            // choppy/indecisive 3->6 cone growth. Domain groups never unmount (all 6 domains
-            // are always created — see coneState above), so there is no first-frame gap where
-            // scale would sit at an unset default before useFrame runs.
+            // KRYL-1174 — scale is NOT set declaratively here. The imperative useFrame code
+            // above (ref.current.scale.setScalar, instant-set) is the sole owner of this
+            // group's scale. A declarative scale prop here used to race it: every time
+            // state.suppressed flipped, React would re-apply this prop and snap scale to
+            // 0.001/1, stomping whatever the imperative code had just set. Domain groups never
+            // unmount (all 6 domains are always created — see coneState above), so there is no
+            // first-frame gap where scale would sit at an unset default.
             <group key={state.domain} ref={coneGroupRefs.current[i]} position={pos}>
               <Footprint position={[0, 0, 0]} radius={footRadius * 1.5972} />
               <GhostLayer domainIdx={i} buf={ghostBuf.current} />
@@ -2165,10 +2116,9 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         })()}
 
         {/* Wave 2: live event pulses — particles rise from each firing cone.
-            Gated on !layoutSettling (see coneGroupRefs/layoutLerpRef above) — coneData.pos is a
-            useMemo that snaps to the new target the instant total changes, while cone bodies
-            ease toward it over ~0.6s via ref mutation. Rendering these against the un-lerped
-            static position during that window is what produced the "misaligned" look. */}
+            layoutSettling is now permanently false (see its declaration above) since `total`
+            never actually changes anymore — kept as a gate rather than removed pending
+            confirmation it's safe to delete outright. */}
         {!layoutSettling && events.map(ev => {
           const data = coneData[ev.target];
           if (!data) return null;
