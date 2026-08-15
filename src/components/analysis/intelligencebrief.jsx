@@ -114,11 +114,10 @@ function buildBrief(session, synthesis, hp = null) {
     opportunities:  synthesis?.opportunities  ?? adapter.opportunities(payload),
     coas:           adapter.coas(payload),
     alternativeView: synthesis?.alternativeView ?? `A minority position holds that current signals reflect seasonal variance rather than structural shift.`,
-    outlook:        synthesis?.outlook ?? [
-      { prob: 0.78, label: 'Phase transition completes — HIGH CONVERGENCE lock within 48h',  color: LIME },
-      { prob: 0.15, label: 'Signal attenuates — BUILDING CONVERGENCE sustained without lock', color: BLUE },
-      { prob: 0.07, label: 'Rapid dissolution — return to INSUFFICIENT SIGNAL baseline',      color: DIM  },
-    ],
+    // KRYL-1175: the old fallback fabricated specific outcome probabilities (0.78/0.15/0.07)
+    // whenever synthesis.outlook was null/undefined -- same fabrication class found and removed
+    // throughout querysynthesis.js. Honest empty state instead of an invented forecast.
+    outlook:        synthesis?.outlook ?? [],
   };
 }
 
