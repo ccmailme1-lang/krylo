@@ -228,7 +228,7 @@ see git log / Jira KRYL project for history. This list is the only thing to read
                 WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
                            rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
                            edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§27):
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§28):
                 "COMPLETE" below means code exists correctly (Maturity B). It does NOT mean wired
                 into the live app — re-audit found zero live callers for CI-R, RBCS, LFOS, IB,
                 Decision, Execution, Calibration, and Feedback's applyObservedOutcomes() bridge.
@@ -898,7 +898,174 @@ WIRING SEQUENCE:
     completed, the unknown relationship, and what evidence is still required. Do not modify code
     while blocked.
 
-27. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
+27. SPECIFICATION / IMPLEMENTATION RECONCILIATION GATE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
+
+    This gate is mandatory before modifying any existing function, module, shared contract, or
+    runtime path that has an associated WO, ticket, specification, doctrine, or historical
+    implementation claim.
+
+    1. SPECIFICATION IS NOT IMPLEMENTATION
+
+    Never infer intended behavior from the current implementation alone.
+
+    Current code establishes what exists, not necessarily what was intended.
+
+    If a WO/specification exists, locate and inspect it before proposing or making changes.
+
+    2. RECONCILE BEFORE EDITING
+
+    Before editing, explicitly compare:
+
+        - authoritative specification / WO
+        - current implementation
+        - current return/data contract
+        - runtime reachability
+        - known consumers
+        - relevant git history
+
+    Classify the relationship as exactly one of:
+
+        - MATCH
+        - PARTIAL
+        - DIVERGENT
+        - UNKNOWN
+
+    If DIVERGENT or UNKNOWN, STOP implementation.
+
+    Do not silently choose the implementation, specification, or a presumed migration path.
+
+    3. NO CONTRACT INFERENCE
+
+    Do not describe an implementation as an "older contract," "legacy contract," "migration
+    candidate," or "intentional architectural split" unless repository evidence establishes that
+    conclusion.
+
+    Similar shapes, naming, chronology, or neighboring functions are evidence only. They are not
+    authorization.
+
+    4. TRACE THE WO
+
+    For any WO-driven implementation, establish:
+
+        1. where the WO/specification was defined;
+        2. whether implementation was actually authorized;
+        3. which commit introduced the implementation;
+        4. whether the implementation matches the specification;
+        5. whether a later specification superseded it;
+        6. whether an explicit decision accepted divergence.
+
+    If the evidence does not establish the answer, report it as UNKNOWN.
+
+    5. NO REMEDIATION FROM DIVERGENCE ALONE
+
+    Finding a specification/implementation mismatch does NOT authorize:
+
+        - migration;
+        - rewrite;
+        - adapter creation;
+        - contract expansion;
+        - deletion;
+        - deprecation;
+        - replacement;
+        - "cleanup."
+
+    First establish which artifact is authoritative.
+
+    6. CONCEPT SEARCH BEFORE DECLARING DATA ABSENT
+
+    Before stating that data, a source, consumer, or equivalent representation "does not exist,"
+    search for:
+
+        - alternate field names;
+        - alternate modules;
+        - historical implementations;
+        - shared utilities;
+        - connector output;
+        - downstream consumers;
+        - git history;
+        - specifications and archived documentation.
+
+    Report the search boundary explicitly.
+
+    7. RUNTIME REACHABILITY MUST BE SEPARATE FROM EXISTENCE
+
+    Do not equate:
+
+        - function exists → function is reachable;
+        - consumer exists → consumer is live;
+        - field exists → field is consumed;
+        - resolver exists → resolver can actually execute.
+
+    Trace the runtime path before claiming a defect is live.
+
+    8. VALIDATION CLAIMS MUST BE TRACEABLE
+
+    Never report a test count, assertion count, build result, or validation result from
+    conversational memory.
+
+    Every validation claim must be:
+
+        - directly supported by the command output being cited, or
+        - rerun before reporting.
+
+    If not reverified, state: "Previously reported; not independently reverified."
+
+    Do not transfer validation results between commits, tickets, or investigations.
+
+    9. NO IMPLIED GUARANTEES
+
+    Do not use terms such as "permanently unreachable," "always," "never," "exhaustive," "safe,"
+    "fully verified," "no other consumers," "no other paths" — unless the repository inspection
+    actually establishes that scope.
+
+    State the inspected boundary.
+
+    10. PRE-EDIT REPORT REQUIRED
+
+    Before any edit triggered by an investigation, provide:
+
+        Target — exact file/function/path.
+        Authority — specification/WO/doctrine establishing intended behavior.
+        Current implementation — what the code actually does.
+        Reconciliation — MATCH / PARTIAL / DIVERGENT / UNKNOWN.
+        Runtime path — how the behavior is reached.
+        Consumers — known readers/dependencies.
+        Evidence gaps — anything not established.
+        Proposed change — only after the above is established.
+        Non-goals — what will explicitly remain untouched.
+        Acceptance test — observable evidence proving the intended change.
+
+    No code edit before this report.
+
+    11. STOP CONDITIONS
+
+    STOP and ask for a decision when:
+
+        - specification and implementation materially disagree;
+        - multiple plausible authorities exist;
+        - a WO appears to have been implemented differently from its specification;
+        - a specification may have been superseded but this is not established;
+        - remediation would require inventing a new contract;
+        - a required classification rule does not exist;
+        - runtime reachability remains unresolved;
+        - validation evidence is contradictory.
+
+    Do not resolve these conditions by choosing the most convenient interpretation.
+
+    12. INVESTIGATION ≠ AUTHORIZATION
+
+    An investigation may discover defects, divergences, missing wiring, unreachable code, or
+    obsolete specifications.
+
+    That discovery does not authorize fixing them.
+
+    Maintain the distinction:
+
+        INVESTIGATED → CLASSIFIED → DECISION → AUTHORIZED → EDITED → VALIDATED → COMMITTED
+
+    Never skip directly from INVESTIGATED to EDITED.
+
+28. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
 
     §25 defines HOW to check a claim (three questions). This section defines HOW TO RECORD what
     was found. It applies architecture-wide — to CLAUDE.md itself, every spec file, every WO
@@ -945,7 +1112,7 @@ WIRING SEQUENCE:
     previously declared this complete" — it is "state both the implementation maturity and the
     level of evidence supporting that claim."
 
-28. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
+29. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
 
     Every report-style output surface (banner narratives, macro/domain state reports, brief and
     packet bodies) uses exactly THREE text sizes. No ad-hoc font-size value may be introduced on
@@ -980,7 +1147,7 @@ WIRING SEQUENCE:
     report text that matches none of the three is a contract violation — flag it, do not leave it
     unresolved.
 
-29. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
+30. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
 
     INCIDENT RECORD: two separate cone-scene HUD elements — ThresholdBands (LO·50/MID·75/HI·90
     scale labels, conemap.jsx) and FlowArc (bay-pulse "X ↔ Y / WATCH: ..." labels, conemap.jsx) —
