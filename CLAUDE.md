@@ -472,6 +472,34 @@ SHARED POOL PATTERN — ALL SIGNAL SOURCES MUST FOLLOW THIS CONTRACT:
     SCALE RATIONALE: Marginal cost of adding a new signal source = near zero.
     Every future feed plugs into one ingestion point. No new WO per connector.
 
+    BACKPRESSURE ACTIVATION RULE (added 2026-08-15):
+
+    The SHARED POOL PATTERN above is necessary but not sufficient. dispatchBatch() routes every
+    signal through surfaceRouter, but surfaceRouter's own overload protection (queue, priority-
+    based shedding, backpressure states OPEN/BACKPRESSURE/DROPPING) is inert unless
+    setBackpressure() is actually called by something monitoring real runtime load. Code that
+    exists but is never invoked is not a contract satisfied — it is a contract claimed.
+
+    RULE: before any new signal source, connector, or previously-unwired engine module is wired
+    into a live dispatchBatch() call path, the agent MUST verify surfaceRouter's backpressure
+    mechanism is actively triggered by a real runtime load signal (e.g. queue depth, dispatch
+    rate). If it is not, wiring that trigger is part of that same WO — not a follow-up, not
+    assumed pre-existing.
+
+    FORBIDDEN: adding a new dispatcher to the shared pool while surfaceRouter._bpState can only
+    ever be 'OPEN' — i.e., setBackpressure() has no caller anywhere in the repo other than its
+    own definition. This reproduces the exact condition already found and logged (KRYL-1175 /
+    KRYL-1176 / KRYL-1177, 2026-08-15): protective machinery written into the code, never
+    connected to anything that would turn it on.
+
+    INCIDENT RECORD (2026-08-15): audit of src/engine/surfacerouter.js found a fully-built
+    200-item priority queue, priority-based shedding, and 3-state backpressure system with
+    setBackpressure() having no caller anywhere in the repo other than its own definition. ~30
+    existing connectors stayed safe only by accident — each polls on its own slow, staggered
+    interval (60s–15min), not because the router was protecting anything. Filed as an acceptance
+    criterion on KRYL-1175 and KRYL-1176, and as its own implementation ticket, KRYL-1177;
+    elevated here so it binds every future WO touching this file, not just those three.
+
 17. ROLE-PLAY PROTOCOL (LOCKED — FOUNDER DIRECTIVE 2026-06-13)
 
 When Mr. XS initiates a role-play by providing a Subject (person, persona, archetype, or use case), the agent MUST respond in this exact format — no deviation:
