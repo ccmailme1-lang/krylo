@@ -263,6 +263,12 @@ export default function IntelligenceBrief() {
 
   function handleExport() {
     if (!session) return;
+    // §26 -- export must enforce the same intelligence-eligibility contract the screen does.
+    // Currently unreachable via the export button (it renders inside the same gated block the
+    // screen uses), but handleExport() had no defense of its own -- relied entirely on the
+    // button never being exposed elsewhere. isBriefWithheld is the single source of truth,
+    // shared with the render path above, not a second copy of the condition.
+    if (isBriefWithheld) return;
     const brief   = buildBrief(session, synthesis, hp);
     const payload = buildExportPayload(brief, { ...session, pendingAcquisition }, fs, hp);
     triggerDownload(payload);
@@ -426,7 +432,14 @@ export default function IntelligenceBrief() {
   const isComparative = synthesis?.mode === 'COMPARATIVE';
   const isDicPath = synthesis?.mode === 'INSUFFICIENT_INPUT' && !!synthesis?.decisionInputContract;
   const isDicReady = synthesis?.mode === 'DIC_READY';
-  const brief = (isComparative || isDicPath || isDicReady) ? null : buildBrief(session, synthesis, hp);
+  // §26 -- single source of truth for "the screen deliberately withholds intelligence for this
+  // mode". buildBrief() has no awareness of `mode` (only resolutionEligible/queryDomain), so
+  // these three modes are NOT self-defending inside buildBrief() the way AMBIGUOUS is -- any
+  // caller that invokes buildBrief() without checking this first will get a fabricated brief.
+  // Referenced by both the render path below and handleExport() so there is exactly one
+  // definition of "withheld," not a duplicated condition that can drift out of sync.
+  const isBriefWithheld = isComparative || isDicPath || isDicReady;
+  const brief = isBriefWithheld ? null : buildBrief(session, synthesis, hp);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   if (isComparative) {
