@@ -5,6 +5,7 @@ import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
+import { getVisibleCards }   from '../../engine/editorialgate.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { useHappyPathEngine, useUnicornAlerts } from '../../engine/happypathdisplacementengine.js';
@@ -45,6 +46,29 @@ const LIME_DIM = 'rgba(102,255,0,0.25)';
 const LIME_MID = 'rgba(102,255,0,0.5)';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
+
+// KRYL-1175 / §26: synthesis.actions ({IMMEDIATE,SHORT_TERM,STRUCTURAL}) is the real,
+// per-domain courses-of-action data every synth* function already produces (post-gated by
+// applyEditorialGate at the synthesizeQuery() return point). adapter.coas() previously ran
+// unconditionally, ignoring this real data and fabricating a substitute instead. This maps the
+// real data into coas's existing external shape (num/verb/action/horizon/confidence/impact/
+// rationale) rather than inventing a new contract -- reuses getVisibleCards() (editorialgate.js),
+// the same flattening function actionmatrix.jsx already uses in production, and the same
+// horizon labels + >=0.8 "high impact" threshold actionmatrix.jsx already treats as authoritative.
+const HORIZON_LABEL = { IMMEDIATE: '0–30 DAYS', SHORT_TERM: '1–6 MONTHS', STRUCTURAL: '6+ MONTHS' };
+
+function mapActionsToCoas(actions) {
+  return getVisibleCards(actions).map((c, i) => ({
+    num:        i + 1,
+    verb:       (c.label ?? '').split(' ')[0],
+    action:     c.label,
+    horizon:    HORIZON_LABEL[c._horizon] ?? c._horizon,
+    confidence: c.impact,
+    impact:     c.impact >= 0.8 ? 'HIGH' : c.impact >= 0.6 ? 'MEDIUM' : 'SUPPORTING',
+    rationale:  c.rationale,
+  }));
+}
+
 function buildBrief(session, synthesis, hp = null) {
   const entity     = getDisplayEntity(session?.query ?? 'Unknown Signal');
   const lens       = session?.lens  ?? null;
@@ -112,7 +136,7 @@ function buildBrief(session, synthesis, hp = null) {
     assessment:     synthesis?.assessment     ?? adapter.assessmentFrame(payload),
     threats:        synthesis?.threats        ?? adapter.threatContext(payload),
     opportunities:  synthesis?.opportunities  ?? adapter.opportunities(payload),
-    coas:           adapter.coas(payload),
+    coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : adapter.coas(payload),
     alternativeView: synthesis?.alternativeView ?? `A minority position holds that current signals reflect seasonal variance rather than structural shift.`,
     // KRYL-1175: the old fallback fabricated specific outcome probabilities (0.78/0.15/0.07)
     // whenever synthesis.outlook was null/undefined -- same fabrication class found and removed
