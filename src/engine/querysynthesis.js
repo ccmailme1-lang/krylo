@@ -442,81 +442,74 @@ function synthRealEstate(session, numbers, query) {
   const price  = (Number.isFinite(numbers[0]) && numbers[0] > 0) ? numbers[0] : 350000;
   const down   = Number.isFinite(numbers[1]) ? Math.max(0, Math.min(numbers[1], price)) : Math.round(price * 0.10);
   const loan   = Math.max(price - down, 0);
-  const rate   = 6.9;
-  const m360   = Math.round(calcMonthly(loan, rate, 360));
-  const totalI = fmtN(Math.max(m360 * 360 - loan, 0));
-  const pct28income = fmtN((m360 + 650) / 0.28);
+  // KRYL-1175: rate was a hardcoded "30yr fixed avg" (6.9%) driving the entire P&I/PITI/income-
+  // requirement chain, plus a flat unsourced $650/mo tax+insurance addon. Same fabrication class
+  // as synthAuto/synthCareer — removed. checkRealEstateEligibility() (ienbg.js) truncates
+  // synthNumbers to [price, down] before this function runs (confirmed by trace, same as AUTO),
+  // so rate is parsed from query text directly, not the numbers array.
+  const rateMatch = query.match(/(\d+(?:\.\d+)?)\s*%/);
+  const rate = rateMatch ? parseFloat(rateMatch[1]) : null;
+  const m360   = rate != null ? Math.round(calcMonthly(loan, rate, 360)) : null;
+  const totalI = rate != null ? fmtN(Math.max(m360 * 360 - loan, 0)) : null;
+  const paymentLine = rate != null
+    ? `At ${rate}%: $${fmtN(m360)}/mo P&I, $${totalI} total interest over 30 years. This does not include property tax, insurance, or HOA — get those figures from your lender/insurer, not a guess.`
+    : `No rate provided — get a real quote (lender or broker) before any payment figure means anything. A guessed rate produces a fake payment number.`;
 
   return {
     stateLabel: 'MARKET ACTIVE',
-    confidence: 0.79,
-    primaryInsight: `$${fmtN(loan)} loan at ${rate}% = $${fmtN(m360)}/mo P&I. Total interest (30yr): $${totalI}. PITI estimate: $${fmtN(m360 + 650)}/mo. Requires ~$${pct28income}/mo gross income (28% rule).`,
-    momentum:   { value: '+6%', h1: '+1%', h24: '+6%' },
-    trajPoints: [0.28,0.33,0.38,0.44,0.50,0.55,0.60,0.64,0.68,0.72,0.76,0.79],
+    primaryInsight: `$${fmtN(loan)} to finance on a $${fmtN(price)} purchase, $${fmtN(down)} down. ${paymentLine}`,
     attentionStack: [
-      { rank:1, signal:'Mortgage Rate',      category:'Finance / Fixed Rate',  trend:'↘', momentum:'Moderating', mColor:LIME, conf:0.86 },
-      { rank:2, signal:'Housing Inventory',  category:'Supply / Local Market', trend:'↗', momentum:'Improving',  mColor:LIME, conf:0.72 },
-      { rank:3, signal:'Price-to-Income',    category:'Affordability Index',   trend:'↑', momentum:'Stressed',   mColor:BLUE, conf:0.68 },
-      { rank:4, signal:'Days on Market',     category:'Demand / Local',        trend:'↗', momentum:'Extending',  mColor:DIM,  conf:0.55 },
+      { rank:1, signal:'Purchase Price',     category:'Real Estate',  trend:'→', momentum:'Known' },
+      { rank:2, signal:'Down Payment',       category:'Real Estate',  trend:'→', momentum:'Known' },
     ],
     keyDrivers: [
-      { label:'30yr fixed avg rate',         delta:'6.9%',  pos:false },
-      { label:'Inventory months of supply',  delta:'+2.1',  pos:true  },
-      { label:'Median price change (YoY)',   delta:'+4.2%', pos:false },
-      { label:'Avg days on market',          delta:'+18',   pos:true  },
+      { label:'Loan amount', delta:`$${fmtN(loan)}`, pos: false },
+      { label:'Down payment', delta:`$${fmtN(down)} (${Math.round(down/price*100)}%)`, pos: true },
     ],
-    recommendedAction: `Get pre-approved and lock your rate before making an offer. Inventory is rising — you have time to negotiate. Rate locks expire in 45–60 days.`,
-    timeHorizon: '30–45 days',
+    recommendedAction: `Get pre-approved and lock a real rate before making an offer — payment math built on a guessed rate is not useful for deciding what to offer.`,
+    timeHorizon: 'Your call — no invented deadline',
     impactLevel: 'High',
-    bluf: `A $${fmtN(price)} purchase at ${rate}% creates a $${fmtN(m360 + 650)}/mo obligation (PITI). Total 30-year interest: $${totalI}. Rate lock before offer is the single highest-leverage action.`,
-    purpose: `Home purchase decision analysis for $${fmtN(price)}. Covers financing math, market position, and negotiation sequence.`,
+    bluf: rate != null
+      ? `A $${fmtN(price)} purchase at ${rate}% carries $${fmtN(m360)}/mo P&I and $${totalI} total interest over 30 years. Real property tax, insurance, and HOA are still unknown — get those before deciding affordability.`
+      : `$${fmtN(price)} purchase, $${fmtN(loan)} to finance. No real rate is known yet — get a written pre-approval before any payment number means anything.`,
+    purpose: `Home purchase decision analysis for $${fmtN(price)}. Financing math when a real rate is known; negotiation sequence either way.`,
     fiveWs: [
-      { w:'WHO',   answer:`Buyer at $${fmtN(price)} price point. Local seller and market inventory determine negotiation leverage.` },
+      { w:'WHO',   answer:`Buyer at $${fmtN(price)} price point.` },
       { w:'WHAT',  answer:`$${fmtN(price)} purchase, $${fmtN(down)} down (${Math.round(down/price*100)}%). Financed: $${fmtN(loan)}.` },
-      { w:'WHEN',  answer:`Inventory rising — buyers gaining time. Rate environment: ${rate}% avg 30yr. Rate buy-down worth modeling for 7+ year hold.` },
-      { w:'WHERE', answer:`Rate and local inventory are primary levers. Local comps determine price negotiation position.` },
-      { w:'WHY',   answer:`Rising inventory shifts power toward buyers. Rate is the largest variable in total cost of ownership.` },
+      { w:'WHEN',  answer:`Get pre-approved and lock a real rate before making an offer.` },
+      { w:'WHERE', answer:`Local comps set your offer anchor — pull recent sales near the property before offering.` },
+      { w:'WHY',   answer:`A locked, real rate protects the deal from moving during escrow; a guessed rate protects nothing.` },
     ],
     evidence: [
-      `At ${rate}%, 30-year total interest: $${totalI}${loan > 0 ? ` — ${Math.round((m360 * 360) / loan * 10)/10}x the financed amount` : ''}.`,
-      `1 point rate buy-down costs ~1% of loan ($${fmtN(loan/100)}) and reduces payment by ~$${fmtN(calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.25, 360))}/mo.`,
-      `Inventory rising YoY — days on market extending, price reductions more common.`,
-      `Property tax + insurance adds $400–$900/mo (regime-dependent) to base P&I — see MCV for structural context.`,
+      `$${fmtN(price)} price, $${fmtN(down)} down, $${fmtN(loan)} financed — the only numbers here that are real.`,
+      rate != null
+        ? `At ${rate}% (as stated), 30-year total interest: $${totalI}.`
+        : `No live mortgage-rate connector exists — any specific rate quoted here would be invented, not real.`,
     ],
-    assumptions: [
-      `Credit score 740+ assumed for advertised rates. Sub-740 carries 0.5–1.5% rate premium.`,
-      `Market regime conditions may vary — see MCV for structural context.`,
-    ],
-    assessment: `True monthly cost of ownership: $${fmtN(m360 + 650)}/mo. At the 28% front-end ratio, this requires $${pct28income}/mo gross income. Each 0.25% rate move changes payment by $${fmtN(calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.25, 360))}/mo. Rate lock before offer is non-negotiable.`,
+    assumptions: [],
+    assessment: `Pull recent local comps (sales within the last 90 days, nearby) before offering — paying materially above comps risks an appraisal gap the bank won't lend against. Get a written pre-approval and lock a real rate before making an offer; the negotiation sequence matters independent of what the rate turns out to be.`,
     threats: [
-      { label:'Rate increase before close',  level:'HIGH',   color:LIME },
-      { label:'Appraisal gap risk',          level:'MEDIUM', color:BLUE },
-      { label:'Inspection cost exposure',    level:'MEDIUM', color:BLUE },
-      { label:'Property tax reassessment',   level:'LOW',    color:DIM  },
+      { label:'Making an offer without a locked, real rate', level:'HIGH', color:LIME },
+      { label:'Appraisal gap risk',                          level:'MEDIUM', color:BLUE },
     ],
     opportunities: [
-      { label:`Rising inventory = seller concessions. Request 1–2 points of rate buy-down as seller contribution.` },
-      { label:`Extended days on market = negotiation window. Offer below ask with local comps as anchor.` },
-      { label:`45–60 day rate lock before offer protects against rate volatility during escrow.` },
+      { label:`Ask about seller concessions (e.g. a rate buy-down) — whether this makes sense depends on your real rate, not a guessed one.` },
+      { label:`Days-on-market and local comps are real negotiation leverage — pull them before offering.` },
     ],
-    alternativeView: `Renting while rates decline is rational if relocation is possible within 5 years. Break-even on closing costs ($${fmtN(price * 0.03)}–$${fmtN(price * 0.05)}) typically requires 4–6 year hold.`,
-    outlook: [
-      { prob:0.65, label:`Purchase with pre-approval + rate lock captures current inventory advantage`,  color:LIME },
-      { prob:0.25, label:`Rate environment improves — refinance opportunity opens within 12–24 months`,  color:BLUE },
-      { prob:0.10, label:`Market softening continues — 6-month wait yields materially better terms`,     color:DIM  },
-    ],
+    alternativeView: `Renting while you wait for a better rate or market is a legitimate choice — there's no real data here to tell you the odds of it paying off for your specific situation.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'GET PRE-APPROVED + LOCK RATE',    impact:0.92, rationale:`Pre-approval sets your ceiling. Rate lock (45 days) prevents cost increase during escrow. Apply today — takes 1–3 business days.`,                                                                                  tag:'FINANCING' },
-        { id:'a2', label:'PULL LOCAL COMPS',                impact:0.77, rationale:`Recent sales within 0.5mi, 90 days. This is your offer anchor. Paying above comps creates appraisal gap — bank won't lend above appraised value, you cover the difference.`,                                tag:'RESEARCH'  },
+        { id:'a1', label:'GET PRE-APPROVED + LOCK RATE',    impact:0.92, rationale:`A written pre-approval sets your real ceiling, and a locked rate prevents cost increase during escrow. This is the one step that turns every other number here from a guess into a fact.`, tag:'FINANCING' },
+        { id:'a2', label:'PULL LOCAL COMPS',                impact:0.77, rationale:`Recent sales nearby (last ~90 days) are your real offer anchor. Paying materially above comps risks an appraisal gap — the bank won't lend above appraised value, you'd cover the difference.`, tag:'RESEARCH'  },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'NEGOTIATE SELLER CONCESSIONS',    impact:0.81, rationale:`In rising inventory, request 1–2 points of rate buy-down from seller. Costs them ~$${fmtN(loan/100 * 1.5)} but saves $${fmtN((calcMonthly(loan, rate, 360) - calcMonthly(loan, rate - 0.375, 360)) * 360)} over 30 years.`,  tag:'LEVERAGE'  },
-        { id:'b2', label:'BUDGET CLOSING COSTS',            impact:0.68, rationale:`Closing costs: 2–5% of purchase price ($${fmtN(price * 0.03)}–$${fmtN(price * 0.05)}). Due at signing — verify liquid reserves cover both down payment AND closing costs before making offers.`,              tag:'CASH'      },
+        { id:'b1', label:'ASK ABOUT SELLER CONCESSIONS',    impact:0.70, rationale:`Once you have a real rate, ask whether a seller-paid rate buy-down makes sense for your numbers — it depends on your actual rate and hold timeline, not a guessed one.`, tag:'LEVERAGE'  },
+        { id:'b2', label:'BUDGET REAL CLOSING COSTS',       impact:0.68, rationale:`Get a real closing-cost estimate from your lender before making offers — don't rely on a generic percentage. Verify liquid reserves cover both down payment and closing costs.`, tag:'CASH'      },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'BUILD 6-MONTH PITI RESERVE',      impact:0.85, rationale:`Fixed monthly obligations require $${fmtN((m360 + 650) * 6)} in liquid reserves. This covers 6 months of PITI — the standard emergency buffer for homeowners.`,                                              tag:'STABILITY' },
-        { id:'c2', label:'MODEL 5-YEAR BREAK-EVEN',         impact:0.62, rationale:`Closing costs require 4–6 years to break even vs renting. If job mobility or relocation is possible within 5 years, the purchase economics weaken materially.`,                                               tag:'PLANNING'  },
+        { id:'c1', label:'BUILD A REAL RESERVE ESTIMATE',   impact:0.85, rationale:`Once you have real PITI figures from a lender, size a liquid reserve against them rather than guessing a buffer against fabricated numbers.`, tag:'STABILITY' },
+        { id:'c2', label:'MODEL YOUR OWN BREAK-EVEN',       impact:0.62, rationale:`If job mobility or relocation is possible in the next few years, model your own rent-vs-buy break-even with real closing costs — don't rely on a generic timeline.`, tag:'PLANNING'  },
       ],
     },
     leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / Math.max(down, 1)).toFixed(1))), deRatio: parseFloat((loan / Math.max(down, 1)).toFixed(1)), permissionless: true, industryNorm: 3.0 },
