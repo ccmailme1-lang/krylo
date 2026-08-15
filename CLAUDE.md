@@ -228,7 +228,7 @@ see git log / Jira KRYL project for history. This list is the only thing to read
                 WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
                            rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
                            edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§26):
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§27):
                 "COMPLETE" below means code exists correctly (Maturity B). It does NOT mean wired
                 into the live app — re-audit found zero live callers for CI-R, RBCS, LFOS, IB,
                 Decision, Execution, Calibration, and Feedback's applyObservedOutcomes() bridge.
@@ -814,7 +814,91 @@ WIRING SEQUENCE:
     external audience (investors, patent counsel, technical diligence) — the exact opposite
     failure mode from §24, but the same root cause: a shortcut mistaken for a completed check.
 
-26. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
+26. SHARED DATA / FUNCTION CHANGE GATE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
+
+    §25 governs whether a capability exists. This section governs what happens next: before
+    modifying any field, function, adapter, resolver, state property, fallback, or other element
+    that could be read or written from more than one place, the agent MUST establish its full
+    existing role in the application before editing it. §25's lexical/concept/behavioral triad is
+    the mechanism this section invokes before a code change, not only before a verdict.
+
+    RULE — VALUES CROSSING A BOUNDARY ARE SHARED BY DEFAULT: any value that crosses two or more
+    architectural boundaries (session ↔ UI, synthesis ↔ UI, synthesis ↔ export, connector ↔
+    resolver, resolver ↔ presentation layer, presentation ↔ export/persistence, or equivalent) is
+    presumed SHARED — not local to the file being edited — until proven otherwise. Shared status
+    requires the full gate below even when the requested change looks local, small, or obvious.
+
+    THE GATE — four stages, in order, before any edit:
+
+        1. LEXICAL TRACE — search the entire repository, not just the file being edited, for the
+           exact symbol/field/function name: assignments, reads, destructuring, imports/exports,
+           serialization, fallback operators (??, ||, ternaries), object construction, API
+           payloads, persistence, exports/downloads. Record writers, readers, transformers,
+           exports, persistence, and fallbacks found.
+
+        2. CONCEPT TRACE — search for semantically equivalent representations under different
+           names (renamed fields, parallel adapters, prior WO/ticket names, adjacent subsystems).
+           A zero result on the lexical trace is not evidence the concept is absent — it only
+           proves the searched term is absent (§25's own rule, applied here to code changes, not
+           only to BUILT/NOT BUILT verdicts).
+
+        3. BEHAVIORAL TRACE — follow one real execution path: input → state → transformation →
+           authoritative source → consumer → UI / API / export / persistence. Establish which
+           path actually executes vs. which is dormant, which source is authoritative, whether a
+           downstream value is already computed elsewhere, whether an apparent fallback is
+           actually the primary path, and whether a presentation or export layer manufactures its
+           own value independently of the source being edited. Imported ≠ invoked. Defined ≠
+           active. Available ≠ authoritative.
+
+        4. CLASSIFY, THEN EDIT — only after stages 1-3 may the target be classified as exactly
+           one of:
+               A — AUTHORITATIVE / WORKING: no change required.
+               B — DUPLICATE / SHADOW IMPLEMENTATION: an authoritative path already exists;
+                   remove, bypass, or reconnect only after every consumer is confirmed.
+               C — FABRICATION / UNSOURCED GENERATION: output has no evidence-backed source;
+                   replace with the existing authoritative path, or honest absence (§22) — never
+                   a newly invented value.
+               D — BROKEN TRANSITION: both sides of the contract already exist but the runtime
+                   transition between them is missing; repair only that transition.
+               E — ACTUAL GAP: no authoritative implementation exists anywhere; stop and specify
+                   the required contract before writing any code — do not invent one during what
+                   was scoped as cleanup.
+               F — UNKNOWN: evidence is insufficient; do not edit, continue investigating.
+
+    HARD STOP CONDITIONS — the agent MUST NOT edit when any of the following is true: a shared
+    field has not been searched repository-wide; a function's consumers have not been identified;
+    an apparently missing value has not undergone concept search; an apparently dead function has
+    not been checked for runtime invocation; an apparently fabricated fallback has not been
+    checked for an existing authoritative source; a replacement is being proposed before the
+    current producer/consumer relationship is understood; the proposed fix would create a second
+    state store, parallel representation, or duplicate source of truth; or the proposed fix
+    assumes the file currently open contains the entire behavior.
+
+    "I DIDN'T FIND A CONSUMER" IS NOT "THERE IS NO CONSUMER": that conclusion is only valid after
+    lexical, concept, AND behavioral verification have all been performed — a narrow search
+    returning nothing proves the search was narrow, not that nothing exists (§25's rule, restated
+    here for code changes rather than verdicts).
+
+    "SMALL" IS NOT AN EXEMPTION: do not skip the gate because a change seems small, obvious, "just
+    a fallback," "just cleanup," "only UI," "only a refactor," or because the existing behavior
+    looks clearly wrong on its face. The size of a change does not exempt it from grounding.
+
+    EXPORT INTEGRITY: any field that reaches a downloadable document, report, consulting brief,
+    API response, persisted record, or external integration must have its provenance traced
+    through that final consumer, not just the screen. A screen-only check is insufficient when an
+    export or persistence path exists.
+
+    REQUIRED PRE-EDIT REPORT — before the first code modification on a shared target, state:
+    target, authoritative source, known writers, known consumers, parallel representations,
+    runtime path verified (yes/no + how), existing replacement/path if any, the actual defect
+    (using the A-F classification above), the minimal change, explicit non-goals, and the
+    acceptance test that proves the fix. Only then may implementation begin.
+
+    WHEN BLOCKED — if the gate cannot be completed, report plainly: target, reason, searches
+    completed, the unknown relationship, and what evidence is still required. Do not modify code
+    while blocked.
+
+27. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
 
     §25 defines HOW to check a claim (three questions). This section defines HOW TO RECORD what
     was found. It applies architecture-wide — to CLAUDE.md itself, every spec file, every WO
@@ -861,7 +945,7 @@ WIRING SEQUENCE:
     previously declared this complete" — it is "state both the implementation maturity and the
     level of evidence supporting that claim."
 
-27. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
+28. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
 
     Every report-style output surface (banner narratives, macro/domain state reports, brief and
     packet bodies) uses exactly THREE text sizes. No ad-hoc font-size value may be introduced on
@@ -896,7 +980,7 @@ WIRING SEQUENCE:
     report text that matches none of the three is a contract violation — flag it, do not leave it
     unresolved.
 
-28. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
+29. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
 
     INCIDENT RECORD: two separate cone-scene HUD elements — ThresholdBands (LO·50/MID·75/HI·90
     scale labels, conemap.jsx) and FlowArc (bay-pulse "X ↔ Y / WATCH: ..." labels, conemap.jsx) —
