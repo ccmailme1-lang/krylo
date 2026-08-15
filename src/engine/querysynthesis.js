@@ -346,85 +346,77 @@ function synthAuto(session, numbers, query) {
   const rawDown = moneyNums[1] || null;
   const down  = rawDown ? Math.min(rawDown, price * 0.50) : Math.round(price * 0.10);
   const loan  = Math.max(price - down, 0);
-  const rate  = 6.8;
-  const cuRate = 5.9;
-  const m48 = Math.round(calcMonthly(loan, rate, 48));
-  const m60 = Math.round(calcMonthly(loan, rate, 60));
-  const m72 = Math.round(calcMonthly(loan, rate, 72));
-  const m60cu = Math.round(calcMonthly(loan, cuRate, 60));
-  const rateSavings = fmtN((m60 - m60cu) * 60);
+  // KRYL-1175: rate/cuRate were hardcoded "current avg" loan rates driving the entire
+  // financing recommendation — same fabrication class as synthCareer's removed 1.13x
+  // multiplier, and worse in one way: loan rates move constantly, so a hardcoded snapshot
+  // goes stale and misleading the day it's read, not just on day one. No real rate connector
+  // exists for this. Removed — the function now shows real payment math ONLY when the user
+  // states a real rate in the query text, and otherwise tells them to get one instead of
+  // assuming a number.
+  // NOTE: parsed from query TEXT, not the numbers[] array — checkAutoEligibility() (ienbg.js)
+  // truncates synthNumbers to [price, down] before this function ever runs, so a 3rd numeric
+  // slot can never be populated through the real dispatch path. Confirmed by tracing
+  // synthesizeQuery()'s AUTO branch, not assumed.
+  const rateMatch = query.match(/(\d+(?:\.\d+)?)\s*%/);
+  const rate = rateMatch ? parseFloat(rateMatch[1]) : null;
+  const m48 = rate != null ? Math.round(calcMonthly(loan, rate, 48)) : null;
+  const m60 = rate != null ? Math.round(calcMonthly(loan, rate, 60)) : null;
+  const m72 = rate != null ? Math.round(calcMonthly(loan, rate, 72)) : null;
   const shortQ = query.length > 48 ? query.slice(0, 48) + '…' : query;
+  const paymentLine = rate != null
+    ? `At ${rate}%: $${fmtN(m48)}/mo (48mo) · $${fmtN(m60)}/mo (60mo) · $${fmtN(m72)}/mo (72mo).`
+    : `No rate provided — get a real quote (dealer, bank, or credit union pre-approval) before payment figures mean anything. A guessed rate produces a fake payment number.`;
 
   return {
     stateLabel:  'ACTIVE MARKET',
-    confidence:  0.82,
-    primaryInsight: `Financing $${fmtN(loan)} at current avg (${rate}%). Payments: $${fmtN(m48)}/mo (48mo) · $${fmtN(m60)}/mo (60mo) · $${fmtN(m72)}/mo (72mo). Pre-approval target: ${cuRate}% (saves $${rateSavings} over term).`,
-    momentum:    { value: '+14%', h1: '+4%', h24: '+14%' },
-    trajPoints:  [0.32,0.38,0.43,0.50,0.55,0.60,0.64,0.68,0.72,0.76,0.79,0.82],
+    primaryInsight: `Financing $${fmtN(loan)} on a $${fmtN(price)} purchase, $${fmtN(down)} down. ${paymentLine}`,
     attentionStack: [
-      { rank:1, signal:'Financing Rate',     category:'Auto / Finance',    trend:'↑', momentum:'Elevated',    mColor:LIME, conf:0.88 },
-      { rank:2, signal:'Dealer Margin',      category:'Retail / Auto',     trend:'↘', momentum:'Compressing', mColor:BLUE, conf:0.74 },
-      { rank:3, signal:'Inventory Position', category:'Supply / Market',   trend:'↗', momentum:'Improving',   mColor:LIME, conf:0.66 },
-      { rank:4, signal:'Trade-in Market',    category:'Used / Automotive', trend:'→', momentum:'Stable',      mColor:DIM,  conf:0.51 },
+      { rank:1, signal:'Loan Amount',        category:'Auto / Finance',    trend:'→', momentum:'Known' },
+      { rank:2, signal:'Down Payment',       category:'Auto / Finance',    trend:'→', momentum:'Known' },
     ],
     keyDrivers: [
-      { label:'Avg auto loan rate',          delta:'6.8%',   pos:false },
-      { label:'Dealer inventory (+YoY)',     delta:'+14%',   pos:true  },
-      { label:'OEM incentive programs',      delta:'+$1.2K', pos:true  },
-      { label:'Entry segment resale value',  delta:'-8%',    pos:false },
+      { label:'Loan amount', delta:`$${fmtN(loan)}`, pos: false },
+      { label:'Down payment', delta:`$${fmtN(down)}`, pos: true },
     ],
-    recommendedAction: `Get pre-approved at your credit union before the dealership. Their avg rate (${cuRate}%) vs dealer markup (${rate}%) saves $${rateSavings} over the loan.`,
+    recommendedAction: `Get pre-approved by your bank or credit union before the dealership names a rate — walking in with a real, written rate is the actual leverage, not a number KRYLO guesses for you.`,
     timeHorizon: '7–14 days',
     impactLevel:  'High',
-    bluf: `A $${fmtN(loan)} loan at ${rate}% avg carries $${fmtN(m60 * 60 - loan)} in total interest over 60 months. Pre-approval at ${cuRate}% recovers $${rateSavings}. Dealer financing is a profit center — not a service.`,
-    purpose: `Purchase decision analysis for: ${shortQ}. Covers financing cost, dealer margin, negotiation sequence, and timing.`,
+    bluf: rate != null
+      ? `A $${fmtN(loan)} loan at ${rate}% carries $${fmtN(m60 * 60 - loan)} in total interest over 60 months.`
+      : `$${fmtN(loan)} needs financing. No real rate is known yet — get a written pre-approval before comparing any numbers.`,
+    purpose: `Purchase decision analysis for: ${shortQ}. Covers financing cost and negotiation sequence.`,
     fiveWs: [
-      { w:'WHO',   answer:`${shortQ} — regional dealer network and retail financing market.` },
+      { w:'WHO',   answer:`${shortQ} — dealer and retail financing market.` },
       { w:'WHAT',  answer:`$${fmtN(price)} purchase, $${fmtN(down)} down. Financed: $${fmtN(loan)}.` },
-      { w:'WHEN',  answer:`Inventory up 14% YoY — buyer market. Best negotiating: end of month, end of quarter.` },
-      { w:'WHERE', answer:`Primary cost exposure: financing layer. Secondary: dealer margin (3–8% of MSRP on new vehicles).` },
-      { w:'WHY',   answer:`Rates elevated vs 2021–2022. Pre-approval converts dealer financing from their revenue to your leverage.` },
+      { w:'WHEN',  answer:`Best negotiating leverage comes from a written pre-approval in hand before you talk price.` },
+      { w:'WHERE', answer:`Primary cost exposure: financing layer.` },
+      { w:'WHY',   answer:`Dealer financing is a profit center for the dealer, not a service to you — a real competing rate is your leverage.` },
     ],
     evidence: [
-      `Avg new-car loan rate: ${rate}%. Credit union avg: ${cuRate}%. Spread over 60 months = $${rateSavings}.`,
-      `Dealer inventory +14% YoY — reduced urgency pressure, more room to walk.`,
-      `OEM incentive programs avg $1,200–$2,400 on this segment. Stackable with negotiated price (not with dealer financing).`,
-      `End-of-month dealer volume quotas create a consistent negotiating window.`,
+      `$${fmtN(price)} price, $${fmtN(down)} down, $${fmtN(loan)} financed — the only numbers here that are real.`,
+      `No live rate connector exists for auto loan rates — any specific rate quoted here would be invented, not real.`,
     ],
-    assumptions: [
-      `Credit score 720+ assumed for prime auto lending rates.`,
-      `Trade-in (if any) valued independently — dealer offers avg 10–15% below private sale.`,
-    ],
-    assessment: `Total interest at ${rate}% over 60 months: $${fmtN(m60 * 60 - loan)}. At ${cuRate}% (credit union): $${fmtN(m60cu * 60 - loan)}. The negotiation sequence matters: pre-approval → OTD price → trade-in → ignore dealer financing pitch. Settling these in the wrong order costs thousands.`,
+    assumptions: [],
+    assessment: `The negotiation sequence matters regardless of rate: pre-approval → out-the-door price → trade-in (if any) → ignore dealer financing pitch until you've compared it to your written pre-approval. Settling these in the wrong order costs money even if every rate involved is real.`,
     threats: [
-      { label:'Dealer financing markup',    level:'HIGH',   color:LIME },
-      { label:'Trade-in undervaluation',    level:'MEDIUM', color:BLUE },
-      { label:'F&I add-on products',        level:'MEDIUM', color:BLUE },
-      { label:'Rate lock window expiry',    level:'LOW',    color:DIM  },
+      { label:'Dealer financing markup without a comparison rate', level:'HIGH', color:LIME },
     ],
     opportunities: [
-      { label:`End-of-month timing — dealer quota pressure opens $500–$1,500 additional margin.` },
-      { label:`OEM incentive stacking: verify with manufacturer site before accepting any offer.` },
-      { label:`Pre-approval as anchor: show your rate, ask dealer to beat it — they sometimes can.` },
+      { label:`Pre-approval as anchor: show your real rate, ask the dealer to beat it — they sometimes can.` },
     ],
-    alternativeView: `Manufacturer captive lenders (e.g., GM Financial) occasionally offer rates below credit union. True in promotional periods — verify before assuming dealer financing is always inferior.`,
-    outlook: [
-      { prob:0.72, label:`Pre-approval + negotiated OTD saves $${fmtN(parseInt(rateSavings.replace(/,/g,'')) + 800)} vs walk-in MSRP financing`, color:LIME },
-      { prob:0.20, label:`Dealer matches pre-approval rate — net saving via incentives only`,                                                       color:BLUE },
-      { prob:0.08, label:`OEM promotional rate available — beats credit union for this model/trim`,                                                color:DIM  },
-    ],
+    alternativeView: `Manufacturer captive lenders occasionally beat credit unions during promotional periods — worth asking, not worth assuming either way without a real quote.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'GET PRE-APPROVED',           impact:0.94, rationale:`Apply to your credit union or bank today. A pre-approval letter at ${cuRate}% vs dealer avg ${rate}% saves $${rateSavings} over the loan term. Takes 1 business day.`,                                                    tag:'FINANCING' },
-        { id:'a2', label:'CHECK OEM INCENTIVES',       impact:0.78, rationale:`Visit the manufacturer's site to verify current offers for this model/trim. Avg $1,200–$2,400 on this segment. Incentives are often stackable with price but not with dealer financing.`,                          tag:'SAVINGS'   },
+        { id:'a1', label:'GET PRE-APPROVED',           impact:0.94, rationale:`Apply to your bank or credit union today for a real rate. Takes about a day and turns dealer financing from their revenue into your leverage.`, tag:'FINANCING' },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'NEGOTIATE OTD PRICE FIRST',  impact:0.85, rationale:`Agree on out-the-door price before revealing your financing or trade-in. Bundling gives the dealer margin to hide profit in whichever line they choose.`,                                                             tag:'LEVERAGE'  },
-        { id:'b2', label:'GET WRITTEN TRADE-IN OFFER', impact:0.66, rationale:`Get a written appraisal from CarMax or Carvana before trading in. Dealer offers avg 10–15% below private sale. Use the written offer as a floor in trade-in negotiation.`,                                         tag:'VALUE'     },
+        { id:'b1', label:'NEGOTIATE OTD PRICE FIRST',  impact:0.85, rationale:`Agree on out-the-door price before revealing your financing or trade-in. Bundling gives the dealer room to hide margin in whichever line they choose.`, tag:'LEVERAGE'  },
+        { id:'b2', label:'GET WRITTEN TRADE-IN OFFER', impact:0.66, rationale:`Get a written appraisal from a third party (e.g. CarMax, Carvana) before trading in, and use it as a floor in negotiation.`, tag:'VALUE'     },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'BUILD PAYMENT BUFFER',        impact:0.71, rationale:`$${fmtN(m60)}/mo is a fixed obligation. Have 1–2 months of payments ($${fmtN(m60 * 2)}) in liquid savings before taking delivery. Volatility in income creates immediate risk on fixed auto payments.`,         tag:'STABILITY' },
-        { id:'c2', label:'SHOP FULL COVERAGE QUOTES',   impact:0.58, rationale:`Full coverage on a $${fmtN(price)} vehicle adds $150–$300/mo to true cost of ownership. Get quotes before signing — insurance is a locked cost for the loan term and lender requires full coverage.`,            tag:'COST'      },
+        { id:'c1', label:'BUILD PAYMENT BUFFER',        impact:0.71, rationale:`Once you have a real payment figure, keep 1-2 months of it in liquid savings before taking delivery — a fixed obligation on variable income is real risk.`, tag:'STABILITY' },
+        { id:'c2', label:'SHOP FULL COVERAGE QUOTES',   impact:0.58, rationale:`Get real insurance quotes before signing — full coverage is typically required by the lender and is a locked cost for the loan term.`, tag:'COST'      },
       ],
     },
     leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / (down || 1)).toFixed(1))), deRatio: parseFloat((loan / (down || 1)).toFixed(1)), permissionless: true, industryNorm: 1.8 },
