@@ -615,15 +615,14 @@ function synthCareerTransition(session, numbers, query) {
 
   return {
     stateLabel: 'TRANSITION WINDOW',
-    confidence: 0.76,
     primaryInsight: `Career transition${ageStr} detected. ROI and timing are the dominant variables — not resume format. The structural question: does the destination field have entry-level demand, and is the training runway shorter than the payback horizon?`,
-    momentum:   { value: '+7%', h1: '+2%', h24: '+7%' },
-    trajPoints: [0.30,0.35,0.40,0.46,0.52,0.57,0.61,0.65,0.68,0.71,0.74,0.76],
+    // KRYL-1175: attentionStack conf: values were unsourced per-row fabrications (no
+    // computation behind them). Dropped rather than invented.
     attentionStack: [
-      { rank:1, signal:'Field Demand Signal',     category:'Labor / Destination',   trend:'↑', momentum:'Active',       mColor:LIME, conf:0.78 },
-      { rank:2, signal:'Training Time-to-Entry',  category:'Education / Runway',    trend:'→', momentum:'Quantifiable', mColor:BLUE, conf:0.70 },
-      { rank:3, signal:'Income Interruption Risk',category:'Capital / Risk',        trend:'↗', momentum:'Manageable',   mColor:LIME, conf:0.65 },
-      { rank:4, signal:'Age Discount Signal',     category:'Labor / Market Bias',   trend:'?', momentum:'Sector-dependent', mColor:DIM, conf:0.52 },
+      { rank:1, signal:'Field Demand Signal',     category:'Labor / Destination',   trend:'↑', momentum:'Active' },
+      { rank:2, signal:'Training Time-to-Entry',  category:'Education / Runway',    trend:'→', momentum:'Quantifiable' },
+      { rank:3, signal:'Income Interruption Risk',category:'Capital / Risk',        trend:'↗', momentum:'Manageable' },
+      { rank:4, signal:'Age Discount Signal',     category:'Labor / Market Bias',   trend:'?', momentum:'Sector-dependent' },
     ],
     keyDrivers: [
       { label:'Destination field entry demand',   delta:'Verify first',             pos:true  },
@@ -666,11 +665,9 @@ function synthCareerTransition(session, numbers, query) {
       { label:`Bridge roles (adjacent to destination) allow income continuity while building credential — lower-risk transition path.` },
     ],
     alternativeView: `Staying in current field with lateral move to a new specialization may achieve the same destination faster than a degree. Assess whether the credential is the actual gate or just a perceived one.`,
-    outlook: [
-      { prob:0.55, label:`Transition completes with positive ROI — demand validated + runway confirmed`,             color:LIME },
-      { prob:0.30, label:`Partial transition — adjacent role in current field with new skills, no full pivot`,       color:BLUE },
-      { prob:0.15, label:`Transition stalls — credential saturation or income gap longer than modeled`,              color:DIM  },
-    ],
+    // KRYL-1175: outlook probabilities (0.55/0.30/0.15) were unsourced fabrications — no real
+    // basis for any specific percentage on how a transition resolves. Removed rather than guessed.
+    outlook: [],
     actions: {
       IMMEDIATE: [
         { id:'a1', label:'VALIDATE ENTRY-LEVEL DEMAND', impact:0.92, rationale:`Pull live job postings in the destination field at entry level right now. Count open roles, not projected growth. This is the single most important data point before any enrollment decision.`, tag:'DEMAND'     },
@@ -685,81 +682,76 @@ function synthCareerTransition(session, numbers, query) {
         { id:'c2', label:'SET A COMMITMENT THRESHOLD',   impact:0.57, rationale:`Define the conditions under which you proceed: minimum destination salary, maximum program cost, maximum income gap. Decide the threshold before research — post-research anchoring distorts the math.`, tag:'DISCIPLINE'  },
       ],
     },
-    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(0.8), deRatio: 0.8, permissionless: true, industryNorm: 1.0 },
+    // KRYL-1175: leverage.deRatio was a flat hardcoded 0.8, not computed from anything — same
+    // fabrication pattern as synthCareer's original leverage block. Removed; UI already has an
+    // honest "No leverage signal" fallback for this.
   };
 }
 
 function synthCareerJobSearch(session, numbers, query) {
+  // KRYL-1175: removed unsourced empirical claims that appeared throughout ("referrals convert
+  // at 3-4x", "response rate baseline 3-5%", "most offers occur within 90 days") -- no citation,
+  // no live source, same fabrication class as synthCareer's original stats. The funnel-diagnosis
+  // structure (measure applications/responses/interviews yourself) doesn't need those numbers to
+  // be useful -- it's a real, general technique regardless of what the true conversion rates are.
   return {
     stateLabel: 'SEARCH ACTIVE',
-    confidence: 0.73,
-    primaryInsight: `Active job search signal detected. The structural bottleneck is almost never the resume — it is volume, channel selection, and response rate. Measure inputs (applications per week, response rate) before diagnosing.`,
-    momentum:   { value: '+6%', h1: '+2%', h24: '+6%' },
-    trajPoints: [0.25,0.30,0.36,0.42,0.47,0.52,0.57,0.61,0.65,0.68,0.71,0.73],
+    primaryInsight: `Active job search signal detected. The structural bottleneck is almost never the resume — it is volume, channel selection, and response rate. Measure your own inputs (applications per week, response rate, interview conversion) before diagnosing what to fix.`,
     attentionStack: [
-      { rank:1, signal:'Application Volume',      category:'Search / Activity',     trend:'↑', momentum:'Controllable',  mColor:LIME, conf:0.82 },
-      { rank:2, signal:'Channel Signal',          category:'Network / Inbound',     trend:'↗', momentum:'Underweighted', mColor:BLUE, conf:0.72 },
-      { rank:3, signal:'Response Rate',           category:'Funnel / Conversion',   trend:'→', momentum:'Baseline 3–5%', mColor:LIME, conf:0.65 },
-      { rank:4, signal:'Market Timing',           category:'Labor / Cycle',         trend:'?', momentum:'Sector-varying', mColor:DIM, conf:0.55 },
+      { rank:1, signal:'Application Volume',      category:'Search / Activity',     trend:'↑', momentum:'Controllable' },
+      { rank:2, signal:'Channel Signal',          category:'Network / Inbound',     trend:'↗', momentum:'Underweighted' },
+      { rank:3, signal:'Response Rate',           category:'Funnel / Conversion',   trend:'→', momentum:'Measure your own' },
+      { rank:4, signal:'Market Timing',           category:'Labor / Cycle',         trend:'?', momentum:'Sector-varying' },
     ],
     keyDrivers: [
-      { label:'Applications per week',            delta:'Volume is primary input',  pos:true  },
-      { label:'Inbound vs outbound ratio',        delta:'Inbound converts 3× higher', pos:true },
-      { label:'Response rate baseline',           delta:'3–5% cold outbound',       pos:false },
-      { label:'Time in market',                   delta:'90-day cliff',             pos:false },
+      { label:'Applications per week', delta:'Volume is primary input', pos: true },
+      { label:'Inbound vs outbound ratio', delta:'Track which channel actually converts for you', pos: true },
     ],
-    recommendedAction: `Track three numbers this week: applications sent, responses received, and interviews booked. If response rate < 3%, the content is the problem. If response rate > 3% and interviews aren't converting, the interview is the problem. Diagnose before changing strategy.`,
-    timeHorizon: '30–90 days',
+    recommendedAction: `Track three numbers this week: applications sent, responses received, and interviews booked. If your response rate is low, the content or targeting is likely the problem. If interviews aren't converting, the interview itself is the problem. Diagnose with your own numbers before changing strategy.`,
+    timeHorizon: 'Your call — no invented deadline',
     impactLevel: 'High',
-    bluf: `Job search is a funnel problem: applications → response → interview → offer. Identify where the drop-off is before changing tactics. The highest-leverage variable is usually network (inbound) vs. cold application (outbound).`,
-    purpose: `Active job search analysis. Covers funnel diagnosis, channel strategy, and response rate benchmarks.`,
+    bluf: `Job search is a funnel problem: applications → response → interview → offer. Measure your own drop-off point before changing tactics — KRYLO doesn't have real conversion-rate benchmarks to compare you against.`,
+    purpose: `Active job search analysis. Covers funnel diagnosis and channel strategy.`,
     fiveWs: [
-      { w:'WHO',   answer:`Active job seeker. Hiring manager pool is the counterparty — their response rate is the signal, not your resume quality alone.` },
+      { w:'WHO',   answer:`Active job seeker. Hiring manager response rate is the real signal, not resume quality alone.` },
       { w:'WHAT',  answer:`Job search optimization. Funnel: applications → response → interview → offer. Each stage has a distinct lever.` },
-      { w:'WHEN',  answer:`90-day active search window is the signal horizon. Beyond 90 days without offers: reposition, not just retry.` },
-      { w:'WHERE', answer:`Channel matters: employee referral converts at 3–4× cold application. Network signal is the primary distribution advantage.` },
+      { w:'WHEN',  answer:`There's no real data behind a specific "signal horizon" — track your own trend over time instead.` },
+      { w:'WHERE', answer:`Channel matters — a warm referral is generally understood to outperform a cold application, though KRYLO has no live data to quantify by how much for you specifically.` },
       { w:'WHY',   answer:`Time is the highest-cost resource in a search. Optimizing inputs (channel + volume) compounds faster than optimizing content alone.` },
     ],
     evidence: [
-      `Employee referrals convert at 3–4× the rate of cold applications — channel is a structural multiplier.`,
-      `Cold outbound response rate baseline: 3–5%. Below 3% = content or targeting problem. Above 5% = scalable.`,
-      `Most offers occur within the first 90 days. Extended search past 90 days signals a positioning mismatch, not bad luck.`,
+      `No live connector exists for real recruiting-funnel benchmarks (response rates, referral conversion multiples) — any specific number here would be invented, not real.`,
+      `Referrals are widely understood in recruiting to outperform cold applications, though the actual multiplier varies by company, role, and market — track your own for a real number.`,
     ],
     assumptions: [
       `Search is active — applications are being submitted regularly.`,
-      `Target role and level are defined. Undifferentiated search (any role, any level) degrades conversion rates.`,
     ],
-    assessment: `Measure the funnel before changing tactics. Applications → response → interview → offer. Each stage has a different fix: application volume (channel + targeting), response rate (resume/outreach quality), interview conversion (prep + positioning), offer rate (comp anchoring + close technique).`,
+    assessment: `Measure the funnel yourself before changing tactics: applications → response → interview → offer. Each stage has a different real fix — application volume (channel + targeting), response rate (resume/outreach quality), interview conversion (prep + positioning), offer rate (comp anchoring). Your own measured numbers are more useful here than any generic benchmark KRYLO could quote.`,
     threats: [
-      { label:'90-day cliff — extended search signals to market', level:'HIGH',   color:LIME },
-      { label:'Over-reliance on cold inbound applications',       level:'MEDIUM', color:BLUE },
-      { label:'Undefined target role or level',                   level:'MEDIUM', color:BLUE },
+      { label:'Extended search without measuring the funnel', level:'HIGH',   color:LIME },
+      { label:'Over-reliance on cold outbound applications',  level:'MEDIUM', color:BLUE },
+      { label:'Undefined target role or level',               level:'MEDIUM', color:BLUE },
     ],
     opportunities: [
-      { label:`Referral network activation: one warm intro converts at 3–4× a cold application — identify 5 people who can refer, not 50 more job boards.` },
-      { label:`Inbound positioning: a targeted LinkedIn presence generates inbound recruiter contact — highest-leverage passive channel.` },
+      { label:`Referral network activation: identify 5-10 people who could refer you, and reach out directly — not another job-board application.` },
+      { label:`Inbound positioning: a targeted LinkedIn presence can generate inbound recruiter contact without active application effort.` },
     ],
-    alternativeView: `High-volume cold applications can work at scale — but network-first strategies consistently outperform on time-to-offer. The tradeoff: network takes relationship investment upfront.`,
-    outlook: [
-      { prob:0.65, label:`Offer within 90 days — volume + channel optimization`,           color:LIME },
-      { prob:0.25, label:`Extended search — positioning refinement needed beyond 90 days`, color:BLUE },
-      { prob:0.10, label:`Search stalls — market or role mismatch requires reframe`,        color:DIM  },
-    ],
+    alternativeView: `High-volume cold applications can work at scale for some roles/markets — there's no universal answer on network-first vs. volume-first. Track your own conversion by channel and let that decide it.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'MEASURE YOUR FUNNEL',            impact:0.90, rationale:`Count: applications sent this week, responses received, interviews scheduled. You cannot optimize what you haven't measured. This number set tells you exactly where the problem is.`, tag:'DIAGNOSIS'  },
-        { id:'a2', label:'ACTIVATE REFERRAL NETWORK',      impact:0.84, rationale:`Identify 5–10 people who could refer you to a role at their company. A warm referral converts at 3–4× a cold application. Email today — not LinkedIn message.`,                  tag:'CHANNEL'    },
+        { id:'a1', label:'MEASURE YOUR FUNNEL',            impact:0.90, rationale:`Count: applications sent this week, responses received, interviews scheduled. You cannot optimize what you haven't measured. This tells you exactly where your problem is, without needing a generic benchmark.`, tag:'DIAGNOSIS'  },
+        { id:'a2', label:'ACTIVATE REFERRAL NETWORK',      impact:0.84, rationale:`Identify 5-10 people who could refer you to a role at their company. Email or message directly today.`, tag:'CHANNEL'    },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'DEFINE TARGET ROLE PRECISELY',   impact:0.74, rationale:`Undifferentiated search degrades every conversion rate. Define: role, level, sector, company size range. Narrower targeting improves response rates even at lower volume.`,           tag:'FOCUS'      },
-        { id:'b2', label:'BUILD INBOUND SIGNAL',           impact:0.65, rationale:`A targeted LinkedIn headline + summary generates recruiter inbound without active application effort. Highest-leverage passive channel for mid-to-senior roles.`,                      tag:'INBOUND'    },
+        { id:'b1', label:'DEFINE TARGET ROLE PRECISELY',   impact:0.74, rationale:`Undifferentiated search tends to degrade conversion. Define: role, level, sector, company size range, then track whether narrowing improves your own response rate.`, tag:'FOCUS'      },
+        { id:'b2', label:'BUILD INBOUND SIGNAL',           impact:0.65, rationale:`A targeted LinkedIn headline + summary can generate recruiter inbound without active application effort.`, tag:'INBOUND'    },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'SET 90-DAY CHECKPOINT',          impact:0.60, rationale:`If no offers in 90 days: the problem is positioning, not persistence. Scheduled reframe prevents sunk-cost tunnel vision.`,                                                            tag:'DISCIPLINE' },
-        { id:'c2', label:'PREP COMP ANCHORING SEQUENCE',   impact:0.55, rationale:`When offers arrive, comp anchoring matters. Research market rate before first call. Never give a number first. The counter sequence is: enthusiasm → anchor → data → silence.`,       tag:'NEGOTIATION'},
+        { id:'c1', label:'SET YOUR OWN CHECKPOINT',        impact:0.60, rationale:`Pick a real date to reassess: if your measured funnel shows no movement by then, the problem is likely positioning, not persistence. Prevents open-ended searching without a decision point.`, tag:'DISCIPLINE' },
+        { id:'c2', label:'PREP FOR COMP DISCUSSIONS',      impact:0.55, rationale:`When offers arrive, research real market rate for the specific role before the call. Never give a number first.`, tag:'NEGOTIATION'},
       ],
     },
-    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(0.7), deRatio: 0.7, permissionless: false, industryNorm: 1.0 },
   };
 }
 
