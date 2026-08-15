@@ -1070,15 +1070,12 @@ function synthHealth(session, numbers, query) {
 
   return {
     stateLabel: 'HEALTH SIGNAL ACTIVE',
-    confidence: 0.84,
     primaryInsight: `Health & access pathway identified. Medicaid waiver eligibility and adaptive program access are the highest-leverage entry points.`,
-    momentum:   { value: '+12%', h1: '+4%', h24: '+12%' },
-    trajPoints: [0.40,0.48,0.54,0.60,0.66,0.71,0.76,0.79,0.81,0.83,0.84,0.84],
     attentionStack: [
-      { rank:1, signal:'Medicaid HCBS Waiver',   category:'Funding / Access',   trend:'↗', momentum:'Open Enrollment', mColor:LIME, conf:0.84 },
-      { rank:2, signal:'PT/OT Clinical Access',  category:'Therapy / Program',  trend:'↑', momentum:'Expanding',       mColor:LIME, conf:0.78 },
-      { rank:3, signal:'Adaptive Equipment DME', category:'Funding / Equipment',trend:'↗', momentum:'Grant Available',  mColor:BLUE, conf:0.72 },
-      { rank:4, signal:'Title V / CYSHCN',       category:'State Program',      trend:'→', momentum:'Stable',           mColor:LIME, conf:0.68 },
+      { rank:1, signal:'Medicaid HCBS Waiver',   category:'Funding / Access',   trend:'↗', momentum:'Apply early' },
+      { rank:2, signal:'PT/OT Clinical Access',  category:'Therapy / Program',  trend:'↑', momentum:'Get a referral' },
+      { rank:3, signal:'Adaptive Equipment DME', category:'Funding / Equipment',trend:'↗', momentum:'Needs diagnosis doc' },
+      { rank:4, signal:'Title V / CYSHCN',       category:'State Program',      trend:'→', momentum:'Free navigator' },
     ],
     keyDrivers: [
       { label:'Medicaid HCBS waiver availability', delta:'State-dependent',     pos:true  },
@@ -1092,13 +1089,13 @@ function synthHealth(session, numbers, query) {
     timeHorizon: '30–90 days',
     impactLevel: 'High',
     bluf: hasChild
-      ? `Pediatric mobility support: Medicaid HCBS waiver + adaptive equipment grant are the two highest-leverage funding channels. Apply now — waitlists are 1–3 years.`
+      ? `Pediatric mobility support: Medicaid HCBS waiver + adaptive equipment grant are the two highest-leverage funding channels. Apply now — waitlist length varies significantly by state, so filing early preserves your position regardless.`
       : `Mobility access pathway: Medicaid waiver + PT/OT clinical access + adaptive equipment DME funding.`,
     purpose: `Health access analysis for: "${shortQ}". Domain locked to HEALTH via protected entity detection.`,
     fiveWs: [
       { w:'WHO',   answer: hasChild ? `Child with diagnosed mobility impairment. Caregiver is the decision-maker and primary intake agent.` : `Individual with mobility-related health needs.` },
       { w:'WHAT',  answer:`Medicaid HCBS waiver, adaptive equipment DME, PT/OT program access, Title V CYSHCN state navigator, school district IEP (age 3+).` },
-      { w:'WHEN',  answer:`Apply for Medicaid HCBS waiver immediately — waitlists are 1–3 years in most states. PT/OT referral: this week.` },
+      { w:'WHEN',  answer:`Apply for Medicaid HCBS waiver immediately — waitlist length varies significantly by state, and position is generally set at filing. PT/OT referral: this week.` },
       { w:'WHERE', answer:`State Medicaid agency (HCBS waiver). Pediatric rehab center (PT/OT). State Title V / CYSHCN office. Local school district (IEP at 3+).` },
       { w:'WHY',   answer:`Waitlist position is established at application, not approval. Filing now preserves optionality regardless of current eligibility status.` },
     ],
@@ -1114,24 +1111,24 @@ function synthHealth(session, numbers, query) {
     ],
     assessment: `The highest-leverage action is immediate Medicaid HCBS waiver application — waitlist position is established at filing. PT/OT access follows a physician referral and is typically covered under Medicaid or private insurance. Title V / CYSHCN provides a free state navigator who maps every available program. For children age 3+, the school district IEP is legally mandated and PT/OT services are enforceable.`,
     threats: [
-      { label:'HCBS waiver waitlist: 1–3 years in most states', level:'HIGH',   color:LIME },
+      { label:'HCBS waiver waitlists exist in many states — length varies widely', level:'HIGH',   color:LIME },
       { label:'Documentation gaps slow DME approval',            level:'MEDIUM', color:BLUE },
       { label:'Program eligibility varies by state',             level:'MEDIUM', color:BLUE },
     ],
     opportunities: [
-      { label:`Medicaid HCBS waiver: apply immediately — waitlist position is locked at filing.` },
+      { label:`Medicaid HCBS waiver: apply immediately — waitlist position is generally locked at filing, so applying early preserves optionality regardless of current eligibility status.` },
       { label:`Title V CYSHCN free navigator call: available in all 50 states, no prior documentation required.` },
       { label:`School district IEP: legally mandated at age 3+. PT/OT is enforceable if educationally necessary.` },
     ],
-    alternativeView: `Private-pay PT/OT ($150–$300/session) bypasses waitlists if budget allows. Begin private pay while waiver application processes to avoid therapy gap.`,
-    outlook: [
-      { prob:0.70, label:`Medicaid HCBS waiver approval within 12–24 months unlocks full adaptive program access`, color:LIME },
-      { prob:0.20, label:`Immediate PT/OT access via insurance referral while waiver processes`,                    color:BLUE },
-      { prob:0.10, label:`Funding gap — private-pay bridge required during waiver waitlist period`,                 color:DIM  },
-    ],
+    alternativeView: `Private-pay PT/OT bypasses waitlists if budget allows — get a real quote from a local provider rather than assume a price, since it varies widely by region. Some families begin private pay while a waiver application processes to avoid a therapy gap.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'APPLY: MEDICAID HCBS WAIVER',   impact:0.92, rationale:`File today — waitlist position is established at application. Contact your state Medicaid agency or call 1-800-MEDICARE for a direct referral to the waiver program.`, tag:'FUNDING'    },
+        // KRYL-1175: corrected a real factual error, not just a fabrication -- 1-800-MEDICARE
+        // is the number for Medicare, a different federal program. Medicaid HCBS waivers are
+        // administered at the state level; that number would misdirect a parent trying to
+        // reach the right agency for their child.
+        { id:'a1', label:'APPLY: MEDICAID HCBS WAIVER',   impact:0.92, rationale:`File today — waitlist position is generally established at application. Contact your state Medicaid agency directly (search "[your state] Medicaid HCBS waiver") — this is administered at the state level, not through a single federal number.`, tag:'FUNDING'    },
         { id:'a2', label:'CALL TITLE V / CYSHCN',          impact:0.85, rationale:`Every state has a Children with Special Health Care Needs program. Free intake call maps every available state + federal program. Find yours at mchb.hrsa.gov.`, tag:'NAVIGATION' },
       ],
       SHORT_TERM: [
@@ -1143,7 +1140,9 @@ function synthHealth(session, numbers, query) {
         { id:'c2', label:'MAP STATE DISABILITY PROGRAMS',  impact:0.60, rationale:`States maintain additional programs beyond federal coverage. State DD councils and Disability Rights Advocates maintain searchable program databases.`, tag:'ACCESS'     },
       ],
     },
-    leverage: { typeY: 1, typeLabel: 'CODE', tierLabel: classifyLeverageTier(0.0), deRatio: 0.0, permissionless: true, industryNorm: 0.0 },
+    // KRYL-1175: removed leverage.typeLabel 'CODE' — a technology/leverage-domain label that
+    // doesn't apply to a HEALTH query at all, apparent copy-paste from an unrelated template.
+    // deRatio: 0.0 was also flatly hardcoded, not computed from anything.
   };
 }
 
