@@ -4217,10 +4217,29 @@ export function synthesizeQuery(session) {
     }
     const cw = {};
     for (const [d, v] of Object.entries(canon.classification.weights)) cw[d.toUpperCase()] = v;
+
+    // KRYL-1175 / §26: assessment/threats/opportunities wired directly from the live canon
+    // data already computed above — not lensadapters.js, not a new fabricated value. §20
+    // Direction Honesty Principle already establishes fracture=threat-class, constructive=
+    // opportunity-class; severity reuses canon.stateLabel (itself from the existing, already-
+    // locked deriveState() thresholds), not a new invented scale.
+    const coActiveUpper = canon.coActive.map(d => d.toUpperCase());
+    const assessment = `Resolved to ${canon.primary.toUpperCase()} with ${canon.signalCount} live signal(s), ${canon.direction} polarity, magnitude ${Math.round(canon.confidence * 100)}/100.` +
+      (coActiveUpper.length ? ` Co-active domains: ${coActiveUpper.join(', ')}.` : '') +
+      (canon.momentum?.value ? ` Momentum: ${canon.momentum.value} vs. the live cross-domain mean.` : '');
+    const threats = canon.direction === 'fracture'
+      ? [{ label: `${canon.primary.toUpperCase()} — ${canon.stateLabel} (live signal field, §20 fracture polarity)`,
+           level: canon.stateLabel === 'ACTIVE FRACTURE' ? 'HIGH' : 'MEDIUM',
+           color: canon.stateLabel === 'ACTIVE FRACTURE' ? LIME : BLUE }]
+      : [];
+    const opportunities = canon.direction === 'constructive'
+      ? [{ label: `${canon.primary.toUpperCase()} — ${canon.stateLabel} (live signal field, §20 constructive polarity)` }]
+      : [];
+
     return {
       queryDomain: canon.primary.toUpperCase(),
       domainVector: { ...vector, primary: canon.primary.toUpperCase(), weights: cw,
-                      coActive: canon.coActive.map(d => d.toUpperCase()) },
+                      coActive: coActiveUpper },
       resolutionEligible: true,
       stateType:   STATE_TYPE.PROJECTION,         // DEF-1863 — inferred from signals, never TERMINAL
       stateLabel:  canon.stateLabel,
@@ -4231,6 +4250,7 @@ export function synthesizeQuery(session) {
       provenance:  canon.provenance,             // 'LIVE_DOMAIN_FIELD' — never a template
       grounded:    true,
       canonical:   canon,
+      assessment, threats, opportunities,
       ses, provenanceState,
     };
   }
