@@ -41,8 +41,6 @@ const KEY_DRIVERS = [
 
 const REVELATION_STEPS = ['Scanning', 'Interpreting', 'Stabilizing', 'Ready'];
 
-const TRAJ_POINTS = [0.18, 0.22, 0.28, 0.31, 0.35, 0.42, 0.50, 0.55, 0.61, 0.68, 0.74, 0.78];
-
 const MESH_NODES = [
   {x:28,y:18},{x:55,y:10},{x:78,y:24},{x:82,y:50},{x:55,y:62},{x:24,y:50},{x:50,y:34},
 ];
@@ -252,7 +250,9 @@ export default function TargetPacket() {
   // DEF-1863: nothing in this pipeline produces an observed/closed outcome yet — default PROJECTION.
   const stateType   = synthesis?.stateType ?? STATE_TYPE.PROJECTION;
   const KEY_DRIVERS = synthesis?.keyDrivers ?? [];
-  const TRAJ_POINTS = synthesis?.trajPoints ?? [0.18,0.22,0.28,0.31,0.35,0.42,0.50,0.55,0.61,0.68,0.74,0.78];
+  // KRYL-1175: no real historical trend series exists anywhere in this system — the old fallback
+  // was a fabricated climbing curve. null means "no data", not "assume an upward trend".
+  const TRAJ_POINTS = synthesis?.trajPoints ?? null;
 
   // LEV-02: ranked candidates from arbitration engine
   const arbitration  = session?.tensor?.arbitration ?? null;
@@ -420,7 +420,9 @@ export default function TargetPacket() {
             </div>
             <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, letterSpacing: '0.05em' }}>{synthesis?.momentum?.value ?? '+—'}</span>
           </div>
-          <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={55} />
+          {TRAJ_POINTS
+            ? <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={55} />
+            : <div style={{ height: 55, display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.05em' }}>No trend data</div>}
           <div style={{ display: 'flex', gap: 24 }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 1H ago</span>

@@ -4363,6 +4363,12 @@ export function synthesizeQuery(session) {
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
            narrativeFidelity: 'TEMPLATE',      // KRYL-1175 — evidence/bluf/etc. are static, not live-derived
            narrativeProvenance: 'Static template content selected by keyword/category match — not derived from live signal data. Distinct from the grounded confidence/momentum above.',
+           // KRYL-1175 — every synth* function's trajPoints is a hand-typed fake climbing curve
+           // (or a fake decline pattern derived from one real score) with no real historical
+           // series behind it anywhere in this system. No exceptions found across all ~39
+           // functions. Same treatment as confidence: null it here rather than let a fabricated
+           // chart render as if it were real trend data.
+           trajPoints: null,
            queryDomain: effectiveDomain, domainVector: vector,
            actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses, provenanceState };
 }
