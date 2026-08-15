@@ -833,78 +833,73 @@ function synthRetirement(session, numbers, query) {
   const needed  = annual * 25;
   const gap     = Math.max(0, needed - savings);
   const annualContrib = gap > 0 ? Math.round(gap / ((Math.pow(1.07, yearsTo) - 1) / 0.07)) : 0;
-  const ssIncrease = fmtN(annual * 0.15 * 4);
+  // KRYL-1175: removed. ssIncrease used an unexplained 15%/year coefficient (annual * 0.15 * 4)
+  // that contradicts this function's own correctly-cited SSA figure (~76% total over 8 years,
+  // i.e. ~8-9.5%/year) -- an internally inconsistent fabricated calculation, not just an
+  // unsourced one. The real 76% figure (kept below) is the actual SSA delayed-retirement-credit
+  // relationship; this second number was never derived from anything real.
 
   return {
     stateLabel: 'PLANNING ACTIVE',
-    confidence: 0.81,
     primaryInsight: `Target (4% rule at $${fmtN(annual)}/yr): $${fmtN(needed)}. Current: $${fmtN(savings)}. Gap: $${fmtN(gap)}. Needed to close in ${yearsTo}yr: ~$${fmtN(annualContrib)}/yr at 7% growth.`,
-    momentum:   { value: '+7%', h1: '+1%', h24: '+7%' },
-    trajPoints: [0.22,0.28,0.35,0.42,0.50,0.57,0.63,0.68,0.72,0.76,0.79,0.81],
     attentionStack: [
-      { rank:1, signal:'Savings Gap',         category:'Retirement / Coverage',  trend:'↘', momentum:'Closeable',    mColor:LIME, conf:0.89 },
-      { rank:2, signal:'Healthcare Inflation',category:'Cost / Medical',          trend:'↑', momentum:'Accelerating', mColor:BLUE, conf:0.82 },
-      { rank:3, signal:'SS Claiming Age',     category:'Income / Benefit',       trend:'→', momentum:'Stable',       mColor:LIME, conf:0.76 },
-      { rank:4, signal:'Sequence of Returns', category:'Risk / Timing',          trend:'?', momentum:'Unknown',      mColor:DIM,  conf:0.61 },
+      { rank:1, signal:'Savings Gap',         category:'Retirement / Coverage',  trend:'↘', momentum:'Closeable' },
+      { rank:2, signal:'Healthcare Cost',     category:'Cost / Medical',          trend:'↑', momentum:'Get a real estimate' },
+      { rank:3, signal:'SS Claiming Age',     category:'Income / Benefit',       trend:'→', momentum:'Stable' },
+      { rank:4, signal:'Sequence of Returns', category:'Risk / Timing',          trend:'?', momentum:'Unknown' },
     ],
     keyDrivers: [
       { label:'Years to retirement',           delta:`${yearsTo}yr`,  pos:true  },
-      { label:'Healthcare cost inflation',     delta:'+5.4%/yr',      pos:false },
       { label:'SS delay credit (62→70)',       delta:'+76%',          pos:true  },
       { label:'Current 4% withdrawal yield',  delta:`$${fmtN(savings * 0.04)}/yr`, pos:true },
     ],
-    recommendedAction: `Max 401k ($23,500/yr) + IRA ($7,000/yr) today. Delaying SS from 62→70 increases monthly benefit by ~76%. Healthcare bridge (60–65) is the #1 underestimated cost.`,
+    recommendedAction: `Max 401k and IRA contributions today (verify this year's IRS limits — they're indexed and change annually). Delaying SS from 62→70 increases the monthly benefit by ~76% (SSA rule). Get a real healthcare-cost estimate for the 60-65 bridge before retiring — it's commonly the most underestimated cost.`,
     timeHorizon: `${yearsTo} years`,
     impactLevel: 'High',
     bluf: `Current savings ($${fmtN(savings)}) support $${fmtN(savings * 0.04)}/yr at 4% — a $${fmtN(Math.max(0, annual - savings * 0.04))}/yr income gap vs your $${fmtN(annual)} target. Closing the gap requires $${fmtN(annualContrib)}/yr in additional contributions at 7% growth over ${yearsTo} years.`,
-    purpose: `Retirement readiness analysis. Covers savings gap, contribution math, healthcare cost exposure, and Social Security timing.`,
+    purpose: `Retirement readiness analysis. Covers savings gap, contribution math, and Social Security timing.`,
     fiveWs: [
       { w:'WHO',   answer:`Individual at ~age ${age}, targeting retirement at ~65.` },
       { w:'WHAT',  answer:`Savings: $${fmtN(savings)}. Target (4% rule): $${fmtN(needed)}. Gap: $${fmtN(gap)}.` },
-      { w:'WHEN',  answer:`${yearsTo} years to close gap. Every year of delay requires higher annual contribution to reach same outcome.` },
-      { w:'WHERE', answer:`Primary gap: savings accumulation. Secondary: healthcare ($315K avg couple estimate, Fidelity 2025).` },
-      { w:'WHY',   answer:`Healthcare costs are the largest unplanned retirement expense — routinely underestimated by 40–60%.` },
+      { w:'WHEN',  answer:`${yearsTo} years to close gap. Every year of delay requires higher annual contribution to reach the same outcome.` },
+      { w:'WHERE', answer:`Primary gap: savings accumulation. Secondary: healthcare — get a real, current estimate rather than assuming a number.` },
+      { w:'WHY',   answer:`Healthcare costs are commonly the largest unplanned retirement expense — worth budgeting explicitly rather than assuming it's covered.` },
     ],
     evidence: [
-      `4% rule: $${fmtN(needed)} supports $${fmtN(annual)}/yr for 30 years with 95% historical success.`,
-      `Max 401k contribution ($23,500) grows to $${fmtN(23500 * Math.pow(1.07, yearsTo))} in ${yearsTo}yr at 7%.`,
-      `SS delay 62→70: benefit increases ~76%. Break-even vs claiming at 66: approximately age 79.`,
-      `Medicare starts at 65 — bridge coverage at 60–65 often the most expensive healthcare period.`,
+      `4% rule (Bengen/Trinity Study): $${fmtN(needed)} supports $${fmtN(annual)}/yr, the standard real-world methodology behind this target figure.`,
+      `SS delay 62→70: benefit increases ~76% (SSA rule, real and fixed by law) — verify your own break-even age at SSA.gov given your specific benefit amount.`,
+      `Medicare starts at 65 — bridge coverage before 65 needs a real quote, not an assumed cost.`,
+      `401k/IRA/HSA contribution limits are real IRS figures but are indexed and change annually — verify this year's exact numbers at IRS.gov before planning contributions around them.`,
     ],
     assumptions: [
-      `7% average annual portfolio return assumed (balanced 60/40 allocation).`,
-      `3% annual inflation applied to expense projections.`,
+      `7% average annual portfolio return assumed (balanced 60/40 allocation) — a common planning assumption, not a guarantee.`,
+      `3% annual inflation applied to expense projections — a common planning assumption, not a guarantee.`,
     ],
-    assessment: `Closing the $${fmtN(gap)} gap in ${yearsTo} years requires $${fmtN(annualContrib)}/yr in contributions (at 7% growth). Healthcare is the primary wildcard — plan $150,000–$300,000 in out-of-pocket costs independent of Medicare premiums. Sequence of returns risk is highest in the 5 years before and after retirement date.`,
+    assessment: `Closing the $${fmtN(gap)} gap in ${yearsTo} years requires $${fmtN(annualContrib)}/yr in contributions (at 7% growth). Healthcare is the primary wildcard — get a real estimate rather than assuming a range. Sequence of returns risk is generally understood to be highest in the years immediately before and after retirement.`,
     threats: [
       { label:'Sequence of returns risk',      level:'HIGH',   color:LIME },
-      { label:'Healthcare cost inflation',     level:'HIGH',   color:LIME },
+      { label:'Unbudgeted healthcare cost',    level:'HIGH',   color:LIME },
       { label:'Longevity beyond 30 years',     level:'MEDIUM', color:BLUE },
-      { label:'Social Security solvency',      level:'LOW',    color:DIM  },
     ],
     opportunities: [
-      { label:`Catch-up contributions (age 50+): additional $7,500/yr in 401k, $1,000/yr in IRA.` },
-      { label:`SS delay 66→70: adds $${ssIncrease} in cumulative lifetime benefit (avg longevity).` },
-      { label:`HSA as retirement vehicle: triple tax advantage, rolls over, invests.` },
+      { label:`Catch-up contributions (age 50+) exist for 401k and IRA — verify this year's exact IRS limits before planning around a specific number.` },
+      { label:`SS delay 66→70 increases lifetime benefit — model your own numbers at SSA.gov rather than a generic estimate.` },
+      { label:`HSA (if eligible): triple tax advantage, rolls over, invests — verify current-year contribution limits.` },
     ],
-    alternativeView: `A 5% withdrawal rate (vs 4%) is defended by some planners for modern portfolios. Not stress-tested against prolonged low-return environments (2000–2010 precedent).`,
-    outlook: [
-      { prob:0.68, label:`Max contribution path closes gap within ${yearsTo} years with margin`, color:LIME },
-      { prob:0.22, label:`Partial gap remains — SS timing + expense reduction closes remainder`,  color:BLUE },
-      { prob:0.10, label:`Healthcare event materially changes plan before retirement target`,     color:DIM  },
-    ],
+    alternativeView: `A 5% withdrawal rate (vs 4%) is defended by some planners for modern portfolios. Not stress-tested against prolonged low-return environments (2000-2010 precedent) — the 4% rule remains the more conservative default.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'MAX TAX-ADVANTAGED ACCOUNTS', impact:0.95, rationale:`401k: $23,500/yr ($1,958/mo). IRA: $7,000/yr. Age 50+: add $8,500 catch-up. These reduce taxable income AND compound tax-deferred. Front-load if cash flow allows.`,     tag:'CONTRIBUTIONS' },
-        { id:'a2', label:'OPEN OR FUND HSA',             impact:0.80, rationale:`If on HDHP: $4,150 single / $8,300 family. Invests like an IRA, withdrawals tax-free for medical. Triple tax advantage — the most tax-efficient savings vehicle available.`, tag:'HEALTHCARE'    },
+        { id:'a1', label:'MAX TAX-ADVANTAGED ACCOUNTS', impact:0.95, rationale:`Check this year's 401k/IRA limits at IRS.gov (they're indexed and change annually) and contribute the max your cash flow allows. Reduces taxable income and compounds tax-deferred.`, tag:'CONTRIBUTIONS' },
+        { id:'a2', label:'OPEN OR FUND HSA',             impact:0.80, rationale:`If on an HDHP, check this year's HSA limit at IRS.gov. Triple tax advantage — contributions, growth, and qualified withdrawals are all tax-free.`, tag:'HEALTHCARE'    },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'MODEL SS CLAIMING SCENARIOS',  impact:0.82, rationale:`SSA.gov estimator: model income at 62, 66, and 70. Delay 62→70 = 76% benefit increase. For average longevity, delay from 66→70 break-even is approximately age 79.`,          tag:'INCOME'    },
-        { id:'b2', label:'ESTIMATE HEALTHCARE BRIDGE',   impact:0.73, rationale:`Retiring before 65: model COBRA or marketplace premiums ($600–$1,200/mo individual). This is the #1 underestimated retirement cost — plan it explicitly before retiring.`,       tag:'COVERAGE'  },
+        { id:'b1', label:'MODEL SS CLAIMING SCENARIOS',  impact:0.82, rationale:`Use the real SSA.gov estimator with your own earnings record to model claiming at 62, 66, and 70 — a generic estimate can't use your actual benefit amount.`, tag:'INCOME'    },
+        { id:'b2', label:'GET A REAL HEALTHCARE BRIDGE QUOTE', impact:0.73, rationale:`If retiring before 65, get a real COBRA or marketplace premium quote for your situation rather than assuming a cost — this is commonly underestimated.`, tag:'COVERAGE'  },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'BUILD ALLOCATION GLIDE PATH',  impact:0.79, rationale:`Shift toward lower volatility as retirement nears. Sequence of returns risk peaks in the 5 years before and 5 years after retirement date — position before you need to.`, tag:'RISK'          },
-        { id:'c2', label:'AUDIT ESTATE DOCUMENTS',       impact:0.61, rationale:`Will, beneficiary designations, power of attorney — annual review required. Outdated beneficiary designations override wills in most states. One of the highest-impact zero-cost actions.`, tag:'PROTECTION' },
+        { id:'c1', label:'BUILD ALLOCATION GLIDE PATH',  impact:0.79, rationale:`Shift toward lower volatility as retirement nears — sequence of returns risk is generally highest in the years immediately before and after retirement.`, tag:'RISK'          },
+        { id:'c2', label:'AUDIT ESTATE DOCUMENTS',       impact:0.61, rationale:`Will, beneficiary designations, power of attorney — beneficiary designations generally override wills, so keep them current. A high-impact, low-cost action.`, tag:'PROTECTION' },
       ],
     },
     leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((gap / Math.max(savings, 1)).toFixed(1))), deRatio: parseFloat((gap / Math.max(savings, 1)).toFixed(1)), permissionless: true, industryNorm: 0.8 },
