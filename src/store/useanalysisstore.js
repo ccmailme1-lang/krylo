@@ -105,4 +105,29 @@ export const useAnalysisStore = create((set) => ({
     };
   }),
 
+  // Closes the DIC intake loop (KRYL-1175): merges user-supplied required fields into the
+  // existing tensor, preserving domainLock and everything else already on it. Also clears the
+  // stale cached tensor.synthesis, so intelligencebrief.jsx's useMemo
+  // (`session.tensor?.synthesis ?? synthesizeQuery(session)`) falls through to a fresh
+  // synthesizeQuery(session) call that sees the new fields, instead of serving the old cached
+  // result computed before the fields existed.
+  setTensorFields: (sessionId, fields) => set((state) => {
+    const session = state.sessions[sessionId];
+    if (!session) return {};
+    const { synthesis, ...tensorRest } = session.tensor ?? {};
+    return {
+      sessions: {
+        ...state.sessions,
+        [sessionId]: {
+          ...session,
+          tensor: {
+            ...tensorRest,
+            fields: { ...(tensorRest.fields ?? {}), ...fields },
+          },
+          metadata: { ...session.metadata, updated: Date.now() },
+        },
+      },
+    };
+  }),
+
 }));

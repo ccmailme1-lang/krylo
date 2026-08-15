@@ -3,7 +3,7 @@
 // derivations, and missing inputs that already exist. Never retrieves, never calculates, never
 // infers. That work happened upstream in homePurchaseEvidence.js.
 
-import React from 'react';
+import React, { useState } from 'react';
 
 const MONO  = "'IBM Plex Mono', monospace";
 const LIME  = '#66FF00';
@@ -83,8 +83,34 @@ export function PartialAnswer({ evidence, dic }) {
  * attempted. Distinct component from PartialAnswer's INSUFFICIENT_INPUT-after-evidence case, so
  * the "we haven't even tried yet" state and the "we tried, still not enough" state read
  * differently to the user.
+ *
+ * KRYL-1175: was read-only (labels only, no way to actually supply the missing values — the DIC
+ * loop dead-ended here). Now collects them. Local state only, exactly the fields the DIC already
+ * declares as required (no invented field names, no duplicated contract) — nothing is written to
+ * the canonical session until submit.
  */
-export function InsufficientInput({ missingRequiredInputs, dic }) {
+export function InsufficientInput({ missingRequiredInputs, dic, onSubmit }) {
+  const [values, setValues] = useState({});
+  const allFilled = missingRequiredInputs.every(f => (values[f.key] ?? '').toString().trim().length > 0);
+
+  function handleChange(key, raw) {
+    setValues(v => ({ ...v, [key]: raw }));
+  }
+
+  function handleSubmit() {
+    if (!allFilled || !onSubmit) return;
+    // Numeric units get parsed to numbers (formulaRegistry/resolveHomePurchaseEvidence expect
+    // numbers for USD/years fields); non-numeric units (e.g. 'geo') pass through as entered.
+    const parsed = {};
+    for (const f of missingRequiredInputs) {
+      const raw = values[f.key];
+      parsed[f.key] = (f.units === 'USD' || f.units === 'years' || f.units === 'pct')
+        ? parseFloat(raw)
+        : raw;
+    }
+    onSubmit(parsed);
+  }
+
   return (
     <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
@@ -94,10 +120,34 @@ export function InsufficientInput({ missingRequiredInputs, dic }) {
         Add the following to get a real, evidence-based partial answer:
       </div>
       {missingRequiredInputs.map(f => (
-        <div key={f.key} style={{ fontFamily: MONO, fontSize: 10, color: BRT, padding: '3px 0' }}>
-          {f.label} {f.units ? <span style={{ color: FAINT }}>({f.units})</span> : null}
+        <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '3px 0' }}>
+          <label style={{ fontFamily: MONO, fontSize: 10, color: BRT }}>
+            {f.label} {f.units ? <span style={{ color: FAINT }}>({f.units})</span> : null}
+          </label>
+          <input
+            type="text"
+            value={values[f.key] ?? ''}
+            onChange={e => handleChange(f.key, e.target.value)}
+            style={{
+              fontFamily: MONO, fontSize: 11, color: BRT, background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.12)', padding: '6px 8px', outline: 'none',
+            }}
+          />
         </div>
       ))}
+      <button
+        type="button"
+        disabled={!allFilled}
+        onClick={handleSubmit}
+        style={{
+          marginTop: 6, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase',
+          color: allFilled ? '#000' : FAINT, background: allFilled ? LIME : 'rgba(255,255,255,0.04)',
+          border: '1px solid ' + (allFilled ? LIME : 'rgba(255,255,255,0.12)'),
+          padding: '8px 14px', cursor: allFilled ? 'pointer' : 'not-allowed', alignSelf: 'flex-start',
+        }}
+      >
+        Submit
+      </button>
     </div>
   );
 }

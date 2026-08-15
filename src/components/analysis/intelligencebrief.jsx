@@ -186,6 +186,7 @@ export default function IntelligenceBrief() {
   const pendingAcquisition     = useAnalysisStore(s => s.pendingAcquisition);
   const createSession          = useAnalysisStore(s => s.createSession);
   const setPendingAcquisition  = useAnalysisStore(s => s.setPendingAcquisition);
+  const setTensorFields        = useAnalysisStore(s => s.setTensorFields);
   const liveSession            = activeId ? sessions[activeId] : null;
   const staleSessionRef        = useRef(null);
   const [fadeIn, setFadeIn]    = useState(true);
@@ -409,7 +410,13 @@ export default function IntelligenceBrief() {
     return <ComparativeField diff={synthesis.diff} />;
   }
   if (isDicPath) {
-    return <InsufficientInput missingRequiredInputs={synthesis.missingRequiredInputs} dic={synthesis.decisionInputContract} />;
+    return (
+      <InsufficientInput
+        missingRequiredInputs={synthesis.missingRequiredInputs}
+        dic={synthesis.decisionInputContract}
+        onSubmit={fields => activeId && setTensorFields(activeId, fields)}
+      />
+    );
   }
   if (isDicReady) {
     return dicEvidence
