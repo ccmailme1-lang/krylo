@@ -784,83 +784,67 @@ function synthCareer(session, numbers, query) {
   if (CAREER_SEARCH_INTENT.test(query))     return synthCareerJobSearch(session, numbers, query);
 
   // Default: salary negotiation (original template — requires a concrete offer signal)
-  const salary  = numbers[0] || 85000;
-  const ask     = Math.round(salary * 1.13);
-  const mid     = Math.round((salary + ask) / 2);
-  const gap5yr  = fmtN((ask - salary) * 5);
+  // KRYL-1175: the previous version derived a "counter target" from an unsourced 1.13x
+  // multiplier, then cited fabricated statistics ("85% of hiring managers", "~12% rejection
+  // risk") to justify it. Removed — KRYLO has no real compensation-benchmark data source, so it
+  // cannot honestly produce a specific target number. What's left: the one real number the user
+  // gave us, and negotiation process guidance that doesn't require a citation (it's strategy
+  // advice, not a factual claim about the world) plus pointers to real external sources for the
+  // number itself.
+  const salary = numbers[0] || 85000;
 
   return {
     stateLabel: 'NEGOTIATION OPEN',
-    confidence: 0.84,
-    primaryInsight: `Offer: $${fmtN(salary)}. Counter target: $${fmtN(ask)} (1.13×). Midpoint settlement: $${fmtN(mid)}. 5-year compounding delta: $${gap5yr}+. Counter rejection rate: ~12%.`,
-    momentum:   { value: '+8%', h1: '+2%', h24: '+8%' },
-    trajPoints: [0.40,0.45,0.50,0.55,0.60,0.64,0.68,0.72,0.76,0.79,0.82,0.84],
+    primaryInsight: `Offer: $${fmtN(salary)}. No counter target is computed here — KRYLO does not have a real compensation-benchmark data source. Pull real market comps (see below) before deciding a number.`,
     attentionStack: [
-      { rank:1, signal:'Offer vs Market Rate',  category:'Compensation / Role',  trend:'↑', momentum:'Above Floor',  mColor:LIME, conf:0.87 },
-      { rank:2, signal:'Equity Component',      category:'Total Comp / Upside',  trend:'?', momentum:'Unverified',    mColor:BLUE, conf:0.65 },
-      { rank:3, signal:'Response Timeline',     category:'Leverage / Urgency',   trend:'→', momentum:'Controlled',    mColor:LIME, conf:0.71 },
-      { rank:4, signal:'Counter Rejection Risk',category:'Risk / Walkaway',      trend:'↗', momentum:'Low Risk',      mColor:DIM,  conf:0.58 },
+      { rank:1, signal:'Offer Amount',          category:'Compensation / Role',  trend:'→', momentum:'Known',      mColor:LIME },
+      { rank:2, signal:'Equity Component',      category:'Total Comp / Upside',  trend:'?', momentum:'Unverified', mColor:BLUE },
+      { rank:3, signal:'Response Timeline',     category:'Process',              trend:'→', momentum:'Your call',  mColor:DIM  },
     ],
     keyDrivers: [
-      { label:'Counter rejection rate',         delta:'12%',   pos:true  },
-      { label:'YoY comp growth (sector)',        delta:'+8%',   pos:true  },
-      { label:'Offer-to-ask spread',            delta:`$${fmtN(ask - salary)}`, pos:true  },
-      { label:'Counter response window',        delta:'72h',   pos:false },
+      { label:'Offer amount', delta:`$${fmtN(salary)}`, pos:true },
     ],
-    recommendedAction: `Counter at $${fmtN(ask)}. Cite market data. If they return at $${fmtN(mid)}, accept — that's a win. Never give a number first.`,
-    timeHorizon: '24–72 hours',
+    recommendedAction: `Pull real market comps for this role/level/market before naming a number. Then counter based on what you find — never give a number first.`,
+    timeHorizon: 'Your call — no invented deadline',
     impactLevel: 'High',
-    bluf: `This offer has room. A counter at $${fmtN(ask)} (1.13×) carries ~12% rejection risk. The $${fmtN(ask - salary)} annual spread compounds to $${gap5yr}+ over 5 years with raises. Not countering is the highest-cost decision available.`,
-    purpose: `Job offer negotiation analysis at $${fmtN(salary)} base. Covers counter strategy, leverage position, and total comp approach.`,
+    bluf: `Offer is $${fmtN(salary)}. KRYLO does not have real compensation-benchmark data to name a counter target or a success rate for you — get real market comps first, then decide.`,
+    purpose: `Job offer negotiation analysis at $${fmtN(salary)} base. Process guidance only — no fabricated target or probability.`,
     fiveWs: [
-      { w:'WHO',   answer:`You as candidate. Employer with open position — they've invested ~$${fmtN(salary * 0.15)} in recruiting cost selecting you.` },
-      { w:'WHAT',  answer:`Offer at $${fmtN(salary)}. Counter target: $${fmtN(ask)}. Negotiation spread: $${fmtN(ask - salary)}.` },
-      { w:'WHEN',  answer:`Counter within 24–48 hours. Beyond 72h signals hesitation and weakens position.` },
-      { w:'WHERE', answer:`Base salary is primary lever. Secondary: signing bonus (cash, immediate), equity vesting schedule.` },
-      { w:'WHY',   answer:`85% of hiring managers expect a counter. Not countering leaves structured money on the table.` },
+      { w:'WHO',   answer:`You as candidate. Employer with open position.` },
+      { w:'WHAT',  answer:`Offer at $${fmtN(salary)}. No counter target computed — see recommended action.` },
+      { w:'WHEN',  answer:`Your call. There is no real data behind any specific response-window claim.` },
+      { w:'WHERE', answer:`Base salary is one lever. Others: signing bonus, equity vesting schedule, start date, title.` },
+      { w:'WHY',   answer:`Negotiating is normal practice. KRYLO won't invent a statistic to justify that — it's true regardless.` },
     ],
     evidence: [
-      `85% of hiring managers report initial offers include 5–10% negotiation margin.`,
-      `Counter rejection rate: ~12% — most counters succeed, especially at 1.10–1.15× range.`,
-      `$${fmtN(ask - salary)}/yr compounds: over 5 years at 3% raises = $${gap5yr}+ cumulative delta.`,
-      `Signing bonus and equity are often easier to unlock than base — always negotiate holistically.`,
+      `$${fmtN(salary)} is the offer figure you provided — the only number in this brief that's real.`,
+      `Real market comps: Levels.fyi, Glassdoor, LinkedIn Salary, or a recruiter in your field. KRYLO does not have a live connector to any of these yet.`,
     ],
     assumptions: [
-      `You are the preferred candidate — offer was extended. Counter does not restart their search.`,
-      `Employer comp band likely has ceiling. Ask of $${fmtN(ask)} is within or near their approved range.`,
+      `You are the candidate the employer wants — an offer was extended.`,
     ],
-    assessment: `The cost of not countering: $${fmtN(ask - salary)}/yr × career. The counter sequence: express genuine enthusiasm, anchor at $${fmtN(ask)}, cite 2–3 market data points, then stop talking. If base is fixed, pivot to signing bonus ($${fmtN(salary * 0.10)} target) or equity acceleration.`,
+    assessment: `Get 5–8 real comps for this role/level/market before naming a counter number. Express genuine interest, state your researched number, cite the comps, then stop talking. If base is fixed, ask about signing bonus, equity, or start date instead of pushing on base alone.`,
     threats: [
-      { label:'Offer expiry without counter',    level:'HIGH',  color:LIME },
-      { label:'Equity overvaluation',            level:'MEDIUM',color:BLUE },
-      { label:'Counter perceived as disinterest',level:'LOW',   color:DIM  },
+      { label:'Offer expiry without a response', level:'MEDIUM', color:BLUE },
     ],
     opportunities: [
-      { label:`Signing bonus: one-time, easier to approve than base increase. Target: $${fmtN(salary * 0.10)}.` },
-      { label:`Equity vesting acceleration or cliff reduction — high upside, low annual cost to employer.` },
-      { label:`Remote/hybrid flexibility as implicit comp — reduces commute, adds effective income.` },
+      { label:`Signing bonus, equity terms, and start date are often more flexible than base — worth asking about regardless of the base number.` },
+      { label:`Remote/hybrid flexibility functions as compensation even when not itemized as one.` },
     ],
-    alternativeView: `Expressing full enthusiasm at offer price builds goodwill. Data doesn't support this — negotiation is expected and rarely impacts professional relationships at the offer stage.`,
-    outlook: [
-      { prob:0.72, label:`Counter at $${fmtN(ask)} accepted or settled at midpoint ($${fmtN(mid)})`, color:LIME },
-      { prob:0.20, label:`Base fixed — signing bonus or equity offered as package compromise`,         color:BLUE },
-      { prob:0.08, label:`Offer not extended further — accept at $${fmtN(salary)} or walk`,           color:DIM  },
-    ],
+    alternativeView: `Accepting at the offer price without countering is a legitimate choice, not a mistake — there's no real data here to tell you the odds either way.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'SEND COUNTER TODAY',        impact:0.94, rationale:`Counter at $${fmtN(ask)}. Email: express enthusiasm, state your market-based number, confirm your continued interest. Do not apologize for asking.`,                                                              tag:'NEGOTIATION' },
-        { id:'a2', label:'PULL MARKET COMPS',         impact:0.81, rationale:`Levels.fyi, Glassdoor, LinkedIn Salary. Get 5–8 data points for this role/level in this market. Cite 2–3 in your counter email — data anchors outperform feelings.`,                                       tag:'LEVERAGE'    },
+        { id:'a1', label:'PULL MARKET COMPS',         impact:0.81, rationale:`Levels.fyi, Glassdoor, LinkedIn Salary. Get 5–8 real data points for this role/level in this market before naming any number.`, tag:'RESEARCH' },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'NEGOTIATE TOTAL PACKAGE',   impact:0.77, rationale:`If base is fixed at $${fmtN(salary)}, pivot: signing bonus ($${fmtN(salary * 0.10)} target), equity acceleration, extra PTO, or remote flexibility. Total comp is what matters.`,                          tag:'TOTAL COMP'  },
-        { id:'b2', label:'GET ALL TERMS IN WRITING',  impact:0.65, rationale:`Revised offer letter before accepting. Verbal commitments on equity, title, future comp, or start date are not enforceable.`,                                                                                tag:'PROTECTION'  },
+        { id:'b1', label:'NEGOTIATE TOTAL PACKAGE',   impact:0.70, rationale:`If base is fixed at $${fmtN(salary)}, ask about signing bonus, equity acceleration, extra PTO, or remote flexibility instead. Total comp is what matters.`, tag:'TOTAL COMP' },
+        { id:'b2', label:'GET ALL TERMS IN WRITING',  impact:0.65, rationale:`Revised offer letter before accepting. Verbal commitments on equity, title, future comp, or start date are not enforceable.`, tag:'PROTECTION' },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'ANCHOR 12-MONTH REVIEW',    impact:0.72, rationale:`Ask for a 6 or 12-month performance review with comp discussion baked into the offer letter. This anchors your next raise conversation before your first day.`,                                              tag:'TRAJECTORY'  },
-        { id:'c2', label:'TRACK YOUR MARKET RATE',    impact:0.60, rationale:`Set a recurring 6-month calendar reminder to pull fresh market comps. Comp stagnates when you stop looking — knowing the market is your single biggest negotiating advantage.`,                            tag:'AWARENESS'   },
+        { id:'c1', label:'ASK FOR A COMP REVIEW DATE', impact:0.60, rationale:`Ask for a defined performance/comp review date in the offer letter itself. Anchors your next comp conversation before your first day.`, tag:'TRAJECTORY' },
       ],
     },
-    leverage: { typeY: 4, typeLabel: 'LABOR', tierLabel: classifyLeverageTier(1.0), deRatio: 1.0, permissionless: false, industryNorm: 1.0 },
   };
 }
 
@@ -4341,9 +4325,15 @@ export function synthesizeQuery(session) {
   const groundedMetrics = grounded.grounded
     ? { confidence: grounded.confidence, momentum: grounded.momentum,
         fidelity: 'MEASURED', metricProvenance: grounded.provenance,
-        signalDirection: grounded.direction }
+        signalDirection: grounded.direction,
+        // KRYL-1175: the same live number that grounds confidence, surfaced as an actual
+        // evidence line instead of being used invisibly. Real replacement for template
+        // statistics, not a label on top of them — absent (not fabricated) when no live
+        // signal exists, same as confidence itself.
+        groundedEvidence: `Live ${grounded.domain.toUpperCase()} signal: ${Math.round(grounded.confidence * 100)}/100 magnitude across ${grounded.signalCount} active signal(s), ${grounded.direction} polarity.` }
     : { confidence: null, momentum: null,
-        fidelity: 'UNGROUNDED', metricProvenance: grounded.reason };
+        fidelity: 'UNGROUNDED', metricProvenance: grounded.reason,
+        groundedEvidence: null };
 
   // KRYL-1010: SES computed at intake above; attach here (annotation only, no score mutation).
   // KRYL-1175: confidence/momentum are grounded above (KRYL-1089 seam) — real measured values or
@@ -4363,6 +4353,9 @@ export function synthesizeQuery(session) {
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
            narrativeFidelity: 'TEMPLATE',      // KRYL-1175 — evidence/bluf/etc. are static, not live-derived
            narrativeProvenance: 'Static template content selected by keyword/category match — not derived from live signal data. Distinct from the grounded confidence/momentum above.',
+           // KRYL-1175: append the real evidence line (not just use it invisibly for confidence)
+           // when live signal exists. Filter, not fabrication — absent when groundedEvidence is null.
+           evidence: [...(result.evidence ?? []), groundedMetrics.groundedEvidence].filter(Boolean),
            // KRYL-1175 — every synth* function's trajPoints is a hand-typed fake climbing curve
            // (or a fake decline pattern derived from one real score) with no real historical
            // series behind it anywhere in this system. No exceptions found across all ~39
