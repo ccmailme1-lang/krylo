@@ -35,6 +35,16 @@ export const SURFACE_TTL = {
 const HIGH_PRIORITY_FS = 0.70;
 const ROUTE_QUEUE_MAX  = 200;
 
+// KRYL-1177 — real runtime-load trigger for backpressure. Rate-based, not queue-depth: the
+// queue only fills once already in BACKPRESSURE (dispatch() only enqueues in that state), so
+// queue depth can't be the entry signal — it's a symptom of backpressure, not a cause detector.
+const RATE_WINDOW_MS              = 1000; // rolling window for dispatch-rate measurement
+const BACKPRESSURE_RATE_THRESHOLD = 50;   // events/sec — enter BACKPRESSURE
+const DROPPING_RATE_THRESHOLD     = 150;  // events/sec — enter DROPPING
+const RECOVERY_RATE_THRESHOLD     = 20;   // events/sec — required to fall back to OPEN (hysteresis
+                                           // band between this and BACKPRESSURE_RATE_THRESHOLD
+                                           // prevents flapping at the edge)
+
 // Tracked fields per surface — only changes to these trigger PATCH
 const TRACKED_FIELDS = {
   oracle:   ['confidence', 'convergenceState', 'fs', 'truth_statement'],
@@ -89,6 +99,7 @@ class SurfaceRouter {
     this._clusters = new Map();  // surfaceId → Map(clusterKey → Set(eventId))
     this._queue    = [];
     this._bpState  = 'OPEN';
+    this._dispatchTimes = []; // KRYL-1177 — rolling timestamps for rate-based backpressure trigger
   }
 
   subscribe(surfaceId, domains, handler) {
@@ -115,6 +126,24 @@ class SurfaceRouter {
     if (state === 'OPEN' || state === 'THROTTLED') this._drain();
   }
 
+  // KRYL-1177 — measures real dispatch rate and drives OPEN/BACKPRESSURE/DROPPING transitions.
+  // Called on every dispatch() so the state reflects current load, not a value nobody sets.
+  _recordDispatchAndUpdateBackpressure() {
+    const now = Date.now();
+    this._dispatchTimes.push(now);
+    const cutoff = now - RATE_WINDOW_MS;
+    while (this._dispatchTimes.length && this._dispatchTimes[0] < cutoff) this._dispatchTimes.shift();
+    const rate = this._dispatchTimes.length;
+
+    let next = this._bpState;
+    if (rate >= DROPPING_RATE_THRESHOLD) next = 'DROPPING';
+    else if (rate >= BACKPRESSURE_RATE_THRESHOLD) next = 'BACKPRESSURE';
+    else if (rate <= RECOVERY_RATE_THRESHOLD) next = 'OPEN';
+    // else: hold current state — hysteresis band between RECOVERY and BACKPRESSURE thresholds
+
+    if (next !== this._bpState) this.setBackpressure(next);
+  }
+
   // Pressure-driven reconcile — called externally by flow events, not a timer
   triggerReconcile() {
     for (const [, sub] of this._subs) {
@@ -124,6 +153,7 @@ class SurfaceRouter {
   }
 
   dispatch(event) {
+    this._recordDispatchAndUpdateBackpressure();
     const bp = this._bpState;
     if (bp === 'DROPPING') {
       if ((event.fs ?? 0) < HIGH_PRIORITY_FS) return;
