@@ -912,79 +912,72 @@ function synthExpenseReduction(session, numbers, query) {
   const runway  = capital && burn ? (capital / burn).toFixed(1) : null;
   const shortQ  = query.length > 50 ? query.slice(0, 50) + '…' : query;
 
+  // KRYL-1175: kept every real, named, official program and its real structural rule (SNAP's
+  // 130% federal poverty line test, Medicare's Oct 15-Dec 7 Annual Enrollment window, the FCC's
+  // real $9.25/mo Lifeline discount). Removed every specific dollar-savings figure attached to
+  // them ($281/mo SNAP average, $400-600 LIHEAP, $100-300/mo Medicare Advantage savings, etc.) --
+  // none were sourced, and real benefit amounts vary hugely by state, household size, and income,
+  // so a single hardcoded number was never going to be accurate for a given person anyway.
   return {
     stateLabel: 'EXPENSE AUDIT ACTIVE',
-    confidence: 0.81,
-    primaryInsight: `Fixed income scenario. ${runway ? `Runway: ${runway}mo at current burn ($${fmtN(burn)}/mo). ` : ''}Primary lever: expense reduction, not accumulation. Medicare optimization + assistance programs are the highest-yield actions.`,
-    momentum:   { value: '+6%', h1: '+1%', h24: '+6%' },
-    trajPoints: [0.30,0.36,0.42,0.48,0.54,0.60,0.64,0.68,0.72,0.76,0.78,0.81],
+    primaryInsight: `Fixed income scenario. ${runway ? `Runway: ${runway}mo at current burn ($${fmtN(burn)}/mo). ` : ''}Primary lever: expense reduction, not accumulation. Medicare optimization and federal/state assistance programs are real, named resources worth checking — actual savings depend on your specific plan and location.`,
     attentionStack: [
-      { rank:1, signal:'Medicare Plan Fit',      category:'Healthcare / Monthly',  trend:'↘', momentum:'Optimizable', mColor:LIME, conf:0.88 },
-      { rank:2, signal:'Assistance Eligibility', category:'Benefits / Federal',    trend:'↑', momentum:'Unclaimed',   mColor:LIME, conf:0.83 },
-      { rank:3, signal:'Subscription Bleed',     category:'Fixed / Discretionary', trend:'↑', momentum:'Recoverable', mColor:BLUE, conf:0.76 },
-      { rank:4, signal:'Prescription Costs',     category:'Drug / Out-of-Pocket',  trend:'↘', momentum:'Reducible',   mColor:LIME, conf:0.71 },
+      { rank:1, signal:'Medicare Plan Fit',      category:'Healthcare / Monthly',  trend:'↘', momentum:'Check Medicare.gov' },
+      { rank:2, signal:'Assistance Eligibility', category:'Benefits / Federal',    trend:'↑', momentum:'Often unclaimed' },
+      { rank:3, signal:'Subscription Bleed',     category:'Fixed / Discretionary', trend:'↑', momentum:'Audit your own' },
+      { rank:4, signal:'Prescription Costs',     category:'Drug / Out-of-Pocket',  trend:'↘', momentum:'Check GoodRx' },
     ],
     keyDrivers: [
-      { label:'Medicare Advantage savings',     delta:'$100–300/mo', pos:true },
-      { label:'SNAP avg senior benefit',        delta:'$281/mo',     pos:true },
-      { label:'LIHEAP utility assistance',      delta:'$400–600/yr', pos:true },
-      { label:'Senior property tax exemption',  delta:'$500–2K/yr',  pos:true },
+      { label:'Medicare Annual Enrollment', delta:'Oct 15 – Dec 7', pos: true },
+      { label:'SNAP eligibility threshold', delta:'130% of federal poverty line', pos: true },
     ],
-    recommendedAction: `Start with Medicare plan comparison (Medicare.gov) — highest-leverage monthly cost reduction available. Then check SNAP eligibility for food assistance.`,
+    recommendedAction: `Start with a Medicare plan comparison at Medicare.gov — real, current numbers for your specific plan. Then check SNAP eligibility at Benefits.gov for food assistance.`,
     timeHorizon: '30–60 days',
     impactLevel: 'High',
-    bluf: `On a fixed income, the only lever is expense reduction. Medicare optimization, federal assistance programs, and a subscription audit can recover $300–600/mo without reducing quality of life.`,
-    purpose: `Expense reduction analysis for fixed-income senior. Covers Medicare optimization, assistance program eligibility, discretionary audit, and prescription cost reduction.`,
+    bluf: `On a fixed income, the main lever is expense reduction. Medicare optimization, federal/state assistance programs, and a subscription audit are all real avenues — KRYLO doesn't have live data on your specific benefit amounts, so check the real sources below rather than trust an assumed dollar figure.`,
+    purpose: `Expense reduction analysis for fixed-income senior. Points to real assistance programs and their real eligibility rules — does not fabricate specific savings amounts.`,
     fiveWs: [
-      { w:'WHO',   answer:`Retired individual on fixed income. Income is fixed — expense reduction is the only financial lever.` },
-      { w:'WHAT',  answer:`Monthly expense audit. Largest senior cost categories: healthcare, food, housing, transportation, prescriptions.` },
-      { w:'WHEN',  answer:`Medicare plan comparison: Oct 15–Dec 7 (Annual Enrollment). LIHEAP: Oct–April. SNAP: open year-round.` },
-      { w:'WHERE', answer:`Primary savings: Medicare plan optimization. Secondary: federal/state assistance programs. Tertiary: subscription and insurance audit.` },
-      { w:'WHY',   answer:`Many seniors on fixed income qualify for assistance programs they never applied for. Medicare Advantage vs Original Medicare gap is often $100–300/mo unclaimed.` },
+      { w:'WHO',   answer:`Retired individual on fixed income. Income is fixed — expense reduction is the main financial lever.` },
+      { w:'WHAT',  answer:`Monthly expense audit. Largest senior cost categories are typically healthcare, food, housing, and prescriptions.` },
+      { w:'WHEN',  answer:`Medicare plan comparison: Oct 15 – Dec 7 (Annual Enrollment, real dates). LIHEAP and SNAP windows vary by state — check your local office.` },
+      { w:'WHERE', answer:`Primary savings avenue: Medicare plan optimization. Secondary: federal/state assistance programs. Tertiary: your own subscription and insurance audit.` },
+      { w:'WHY',   answer:`Many seniors on fixed income qualify for assistance programs they never applied for — the eligibility rules are real, worth checking even if you assume you won't qualify.` },
     ],
     evidence: [
-      `Medicare Advantage plans can reduce monthly costs vs Original Medicare + Medigap by $100–300/mo.`,
-      `SNAP: seniors at or below 130% of poverty line qualify. Average senior benefit: $281/mo.`,
-      `LIHEAP: federal heating/cooling assistance. Enrollment Oct–April. Avg benefit: $400–600.`,
-      `Senior homestead exemptions reduce property tax $500–2,000/yr in most states — must apply annually.`,
+      `SNAP: seniors at or below 130% of the federal poverty line generally qualify (real SNAP rule) — actual benefit amount depends on household size and income, check Benefits.gov for your real number.`,
+      `Medicare Annual Enrollment is real and fixed: Oct 15 - Dec 7 each year. Outside that window, call 1-800-MEDICARE.`,
+      `FCC Lifeline program: real $9.25/mo discount on phone or internet service for qualifying households — apply through your provider.`,
+      `LIHEAP (federal heating/cooling assistance) is real; both eligibility and benefit amount vary by state — check your local Community Action Agency for real figures.`,
     ],
     assumptions: [
-      `Medicare-eligible (age 65+). Part A and B enrolled or eligible.`,
-      `Income qualifies for one or more assistance programs at fixed-income levels.`,
+      `Medicare-eligible (age 65+), Part A and B enrolled or eligible.`,
     ],
-    assessment: `The highest-yield actions for a fixed-income senior are cost recovery actions, not savings strategies. Medicare plan optimization, SNAP, and LIHEAP together can recover $400–700/mo. Prescription drug costs (Part D optimization or GoodRx) add $50–200/mo depending on medications. Subscription and insurance audit typically recovers $50–150/mo.`,
+    assessment: `The highest-yield actions for a fixed-income senior are real cost-recovery steps, not savings strategies: compare Medicare plans at Medicare.gov, check SNAP/LIHEAP eligibility at Benefits.gov, and audit your own subscriptions for unused recurring charges. KRYLO can point you to the real programs and rules; it can't tell you your specific dollar savings without your actual plan and location.`,
     threats: [
-      { label:'Healthcare cost inflation',              level:'HIGH',   color:LIME },
-      { label:'Medicare plan changes (annual)',          level:'MEDIUM', color:BLUE },
-      { label:'Assistance program enrollment deadlines', level:'MEDIUM', color:BLUE },
-      { label:'Utility rate increases',                 level:'LOW',    color:DIM  },
+      { label:'Not comparing Medicare plans during Annual Enrollment', level:'HIGH', color:LIME },
+      { label:'Unclaimed assistance program eligibility',              level:'MEDIUM', color:BLUE },
     ],
     opportunities: [
-      { label:`Medicare Extra Help (LIS): reduces Part D drug costs to near zero if income qualifies.` },
-      { label:`Senior Farmers Market Nutrition Program: additional food assistance in participating states.` },
-      { label:`Telephone Lifeline program: $9.25/mo credit on phone/internet — apply through provider.` },
+      { label:`Medicare Extra Help (LIS): real program that reduces Part D drug costs for income-qualifying seniors — check eligibility at SSA.gov.` },
+      { label:`Senior Farmers Market Nutrition Program: real additional food assistance in participating states.` },
+      { label:`FCC Lifeline: real $9.25/mo credit on phone/internet — apply through your provider.` },
     ],
-    alternativeView: `Reverse mortgage products provide monthly income against home equity for homeowners. High-fee product — appropriate only if no plans to relocate and estate considerations are resolved.`,
-    outlook: [
-      { prob:0.72, label:`Medicare optimization + assistance programs recover $400–600/mo`, color:LIME },
-      { prob:0.20, label:`Partial recovery — one or two programs accessible, not all`,       color:BLUE },
-      { prob:0.08, label:`Income or asset threshold disqualifies most programs`,             color:DIM  },
-    ],
+    alternativeView: `Reverse mortgage products provide monthly income against home equity for homeowners. Real product, high-fee — appropriate only if you have no plans to relocate and estate considerations are resolved. Get independent advice before pursuing one.`,
+    outlook: [],
     actions: {
       IMMEDIATE: [
-        { id:'a1', label:'COMPARE MEDICARE PLANS',   impact:0.92, rationale:`Go to Medicare.gov Plan Finder. Compare your current plan vs Medicare Advantage options. Many seniors save $100–300/mo. Annual Enrollment: Oct 15–Dec 7. Outside that window, call 1-800-MEDICARE to review options.`, tag:'HEALTHCARE' },
-        { id:'a2', label:'AUDIT SUBSCRIPTIONS',      impact:0.78, rationale:`List every recurring charge: cable, streaming, insurance riders, club memberships. Cancel anything unused. Average senior household recovers $50–150/mo from subscription bleed.`,                                   tag:'CASH FLOW'  },
+        { id:'a1', label:'COMPARE MEDICARE PLANS',   impact:0.92, rationale:`Go to Medicare.gov Plan Finder and compare your current plan against alternatives using your real prescriptions and providers. Annual Enrollment: Oct 15 - Dec 7. Outside that window, call 1-800-MEDICARE.`, tag:'HEALTHCARE' },
+        { id:'a2', label:'AUDIT SUBSCRIPTIONS',      impact:0.78, rationale:`List every recurring charge — cable, streaming, insurance riders, memberships — and cancel anything unused. Your own numbers, not an assumed average.`, tag:'CASH FLOW'  },
       ],
       SHORT_TERM: [
-        { id:'b1', label:'APPLY FOR SNAP BENEFITS',  impact:0.88, rationale:`Seniors at or below 130% of poverty line qualify. Apply at Benefits.gov or local DHS office. Average senior benefit: $281/mo in groceries. Most seniors who qualify have never applied.`,                         tag:'FOOD'       },
-        { id:'b2', label:'APPLY FOR LIHEAP',         impact:0.74, rationale:`Federal heating and cooling assistance. Apply through local Community Action Agency. Enrollment typically Oct–April. Avg benefit: $400–600. Covers electric, gas, or fuel oil.`,                                  tag:'UTILITIES'  },
+        { id:'b1', label:'CHECK SNAP ELIGIBILITY',  impact:0.88, rationale:`Seniors at or below 130% of the federal poverty line generally qualify (real rule). Apply at Benefits.gov or your local DHS office to get your real benefit amount — many who qualify never apply.`, tag:'FOOD'       },
+        { id:'b2', label:'CHECK LIHEAP ELIGIBILITY',         impact:0.74, rationale:`Federal heating and cooling assistance program (real). Apply through your local Community Action Agency for real eligibility and benefit figures — both vary by state.`, tag:'UTILITIES'  },
       ],
       STRUCTURAL: [
-        { id:'c1', label:'FILE PROPERTY TAX EXEMPTION', impact:0.81, rationale:`Most states offer homestead exemptions for seniors 65+. Reduces annual tax bill $500–2,000. File with county assessor — many seniors miss this. Check your state deadline.`,                                tag:'HOUSING'       },
-        { id:'c2', label:'OPTIMIZE PRESCRIPTIONS',   impact:0.69, rationale:`Check GoodRx or RxSaver for every medication. Brand-to-generic switch cuts costs 80%+. Apply for Medicare Extra Help (LIS) if income qualifies — reduces Part D costs to near zero.`,                          tag:'PRESCRIPTIONS' },
+        { id:'c1', label:'CHECK PROPERTY TAX EXEMPTION', impact:0.81, rationale:`Most states offer real homestead exemptions for seniors 65+. File with your county assessor for your real exemption amount and deadline — many seniors miss this simply by not filing.`, tag:'HOUSING'       },
+        { id:'c2', label:'CHECK PRESCRIPTION COSTS',   impact:0.69, rationale:`Check GoodRx or RxSaver for every medication and compare to your current cost. Ask about generic alternatives. If income-qualifying, apply for Medicare Extra Help (LIS) to reduce Part D costs.`, tag:'PRESCRIPTIONS' },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(0.1), deRatio: 0.1, permissionless: true, industryNorm: 0.5 },
   };
 }
 
