@@ -4346,12 +4346,23 @@ export function synthesizeQuery(session) {
         fidelity: 'UNGROUNDED', metricProvenance: grounded.reason };
 
   // KRYL-1010: SES computed at intake above; attach here (annotation only, no score mutation).
+  // KRYL-1175: confidence/momentum are grounded above (KRYL-1089 seam) — real measured values or
+  // honest null. Nothing does the same for the prose fields (evidence, bluf, fiveWs, keyDrivers,
+  // assumptions, assessment, threats, opportunities, outlook, recommendedAction, primaryInsight,
+  // attentionStack[].conf): every synth* function's version of these is static template text
+  // selected by keyword/category match, not derived from live signal data — audited across all
+  // ~39 functions, uniformly true, no exception. Disclosing this honestly here (same pattern as
+  // fidelity/metricProvenance above) rather than letting static content imply the same grounding
+  // as the confidence score sitting next to it. Data-layer disclosure only — how/whether this
+  // renders in the UI is a separate decision, not made here.
   return { ...result, ...groundedMetrics,
            // Always-present estimate: classification confidence (0–1) is computed for every query,
            // so the UI never has to render an empty window — it shows this labeled EST when the
            // signal-grounded confidence is null. Real number, honestly labeled, never fabricated.
            classificationConfidence: classifyCanonicalDomain(query).confidence,
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
+           narrativeFidelity: 'TEMPLATE',      // KRYL-1175 — evidence/bluf/etc. are static, not live-derived
+           narrativeProvenance: 'Static template content selected by keyword/category match — not derived from live signal data. Distinct from the grounded confidence/momentum above.',
            queryDomain: effectiveDomain, domainVector: vector,
            actions: applyEditorialGate(result.actions, contractLens), gateSignal, mcv, inputNumbers: synthNumbers, ses, provenanceState };
 }
