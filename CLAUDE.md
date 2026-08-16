@@ -228,7 +228,7 @@ see git log / Jira KRYL project for history. This list is the only thing to read
                 WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
                            rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
                            edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§28):
+  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§29):
                 "COMPLETE" below means code exists correctly (Maturity B). It does NOT mean wired
                 into the live app — re-audit found zero live callers for CI-R, RBCS, LFOS, IB,
                 Decision, Execution, Calibration, and Feedback's applyObservedOutcomes() bridge.
@@ -1065,7 +1065,67 @@ WIRING SEQUENCE:
 
     Never skip directly from INVESTIGATED to EDITED.
 
-28. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
+28. WORK CLASSIFICATION & EVIDENCE-VS-AUTHORITY DOCTRINE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
+
+    Before any edit governed by §26/§27, classify the work as exactly one of three classes. The
+    classification determines what is permitted.
+
+    CLASS A — WIRING DEFECT
+
+    Authoritative intelligence already exists and is simply not connected to its contract. The
+    producer's semantics are not in question — only the connection is missing.
+
+    Example: canon.direction existed, was correct, and was not reaching threats/opportunities.
+
+    Permitted: connect the existing authoritative data to the existing contract. Nothing else.
+
+    CLASS B — CONTRACT MIGRATION
+
+    The existing implementation is substantially the specified thing — its semantics are correct
+    — but its interface/shape disagrees with a newer or different consumer contract.
+
+    Permitted only after establishing that the producer's semantics genuinely match the
+    specification. Migrating a shape does not require re-deciding what the thing means — only how
+    it's expressed. If that semantic match has not been established, this is not Class B; treat it
+    as Class C until proven otherwise.
+
+    CLASS C — SPECIFICATION/IMPLEMENTATION DIVERGENCE
+
+    The existing implementation may run, compile, and produce plausible output, but evidence
+    indicates it implements a materially different thing than what the governing specification
+    describes.
+
+    This is NOT a migration. Reshaping a Class C implementation to fit a newer contract would
+    ratify the wrong system into the right shape.
+
+    Requires an explicit authority decision before any migration, reuse, wiring, or rewrite: which
+    artifact governs — the specification or the implementation? Claude does not answer this by
+    editing code. Only the Founder decides.
+
+    RULE — EVIDENCE IS NOT AUTHORITY.
+
+    None of the following, individually or combined, establishes that an implementation is
+    semantically correct:
+
+        - a WO number attached to a function (establishes recorded intent only)
+        - a function's name (establishes a label only)
+        - an existing implementation (establishes behavior only — behavior is not proof of correctness)
+        - a passing build (establishes syntactic/runtime viability only)
+        - an existing consumer (establishes a dependency only — a consumer can depend on a wrong thing)
+
+    Each of these is evidence toward an eventual decision. None of them, alone or together, is the
+    decision. Do not let "it exists," "it runs," "it's wired," or "it's been running for months"
+    gradually stand in for "it is correct." That drift — existence quietly becoming correctness —
+    is the specific failure mode this rule exists to block.
+
+    DEFAULT AUTHORITY RULE: when a specification and an implementation disagree, the specification
+    remains authoritative unless a deliberate, recorded decision changes the specification itself.
+    Silence, prior implementation, or the passage of time does not transfer authority to the
+    implementation. A "migration" that reshapes a Class C implementation without first resolving
+    this question is not a migration — it is an undisclosed decision to ratify the implementation
+    over the specification, made by omission rather than on purpose.
+
+29. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
 
     §25 defines HOW to check a claim (three questions). This section defines HOW TO RECORD what
     was found. It applies architecture-wide — to CLAUDE.md itself, every spec file, every WO
@@ -1112,7 +1172,7 @@ WIRING SEQUENCE:
     previously declared this complete" — it is "state both the implementation maturity and the
     level of evidence supporting that claim."
 
-29. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
+30. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
 
     Every report-style output surface (banner narratives, macro/domain state reports, brief and
     packet bodies) uses exactly THREE text sizes. No ad-hoc font-size value may be introduced on
@@ -1147,7 +1207,7 @@ WIRING SEQUENCE:
     report text that matches none of the three is a contract violation — flag it, do not leave it
     unresolved.
 
-30. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
+31. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
 
     INCIDENT RECORD: two separate cone-scene HUD elements — ThresholdBands (LO·50/MID·75/HI·90
     scale labels, conemap.jsx) and FlowArc (bay-pulse "X ↔ Y / WATCH: ..." labels, conemap.jsx) —
