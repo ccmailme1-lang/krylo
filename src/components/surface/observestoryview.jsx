@@ -189,17 +189,17 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
   return (
     <>
       <div style={{
-        position: 'absolute', top: 100, left: 0, width: 680, zIndex: 15,
+        position: 'absolute', top: 78, left: '1%', width: 551, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
           Quick read
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 43, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 680, margin: '0 0 10px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 35, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 551, margin: '0 0 10px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 480, margin: 0 }}>
+        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 389, margin: 0 }}>
           {paragraph}
         </p>
       </div>
