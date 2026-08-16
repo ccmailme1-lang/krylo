@@ -52,6 +52,13 @@ function listWithAnd(names) {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
+// Rotation, keyed to the calendar day: the same classified state (STABLE/EMERGING buckets
+// rarely flip day to day) was rendering the exact same sentence for as long as the bucket held
+// -- looked frozen even though the underlying pressures were live. These variants are all
+// derived from the same real per-domain magnitudes/relationships, just leading with a different
+// true fact each day, so a returning visitor sees the data move even when the bucket doesn't.
+const DAY_INDEX = Math.floor(Date.now() / 86400000);
+
 // Returns { emphasis, headlineRest, paragraph } -- emphasis is the one word/phrase rendered in
 // lime, matching the Dual Voice doctrine's use of color as meaning, not decoration.
 function buildNarrative(domains, relationships) {
@@ -61,9 +68,36 @@ function buildNarrative(domains, relationships) {
 
   let headlinePre, emphasis, headlinePost;
   if (stable.length >= 2) {
-    headlinePre = `${stable.length} domains are moving`;
-    emphasis = 'together';
-    headlinePost = topRel ? ' — and two of them are quietly connected.' : '.';
+    const names = listWithAnd(stable.map(d => d.label));
+    const deltas = listWithAnd(stable.map(d => velocityText(d.magnitude)));
+    const leader = stable.reduce((max, d) => Math.abs(d.magnitude - 50) > Math.abs(max.magnitude - 50) ? d : max, stable[0]);
+    const leaderDelta = velocityText(leader.magnitude);
+
+    const variants = [
+      {
+        headlinePre: `${stable.length} domains are moving`, emphasis: 'together',
+        headlinePost: topRel ? ' — and two of them are quietly connected.' : '.',
+      },
+      {
+        headlinePre: `${leader.label} moved the`, emphasis: 'most',
+        headlinePost: ` of ${stable.length} domains this cycle.`,
+      },
+    ];
+    if (topRel) {
+      const a = domains.find(d => d.formationId === topRel.sourceFormationId)?.label ?? topRel.sourceFormationId;
+      const b = domains.find(d => d.formationId === topRel.targetFormationId)?.label ?? topRel.targetFormationId;
+      variants.push({
+        headlinePre: `${a} and ${b} are`, emphasis: 'the clearest link',
+        headlinePost: ' this cycle.',
+      });
+    }
+    const picked = variants[DAY_INDEX % variants.length];
+    headlinePre = picked.headlinePre; emphasis = picked.emphasis; headlinePost = picked.headlinePost;
+
+    return {
+      headlinePre, emphasis, headlinePost,
+      paragraph: `${names} all moved by ${stable.length === 1 ? 'the same' : 'similar'} amounts this cycle (${deltas}) — that's not ${stable.length} coincidences, it's one pattern. ${leader.label} led at ${leaderDelta} — that's the one to look at first.`,
+    };
   } else if (stable.length === 1) {
     headlinePre = `${stable[0].label} is the`;
     emphasis = 'one domain';
@@ -78,12 +112,8 @@ function buildNarrative(domains, relationships) {
     headlinePost = ' to establish any pattern.';
   }
 
+  // stable.length is 0 or 1 here — the >=2 case returns above.
   const paragraphParts = [];
-  if (stable.length >= 2) {
-    const names = listWithAnd(stable.map(d => d.label));
-    const deltas = listWithAnd(stable.map(d => velocityText(d.magnitude)));
-    paragraphParts.push(`${names} all moved by ${stable.length === 1 ? 'the same' : 'similar'} amounts this cycle (${deltas}) — that's not ${stable.length} coincidences, it's one pattern.`);
-  }
   if (emerging.length > 0) {
     const names = listWithAnd(emerging.map(d => d.label));
     paragraphParts.push(`${names} ${emerging.length === 1 ? 'is' : 'are'} also moving together, just at a smaller scale — not yet confirmed.`);
@@ -159,14 +189,14 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
   return (
     <>
       <div style={{
-        position: 'absolute', bottom: 70, left: 346, right: 40, zIndex: 15,
+        position: 'absolute', top: 100, left: 0, width: 680, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 6, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
-          What changed
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
+          Quick read
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 28, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 265, margin: '0 0 10px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 43, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 680, margin: '0 0 10px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
         <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 480, margin: 0 }}>

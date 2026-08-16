@@ -1,0 +1,24 @@
+Summary,Issue Type,Description,Labels
+"KRYLO Lean Ontology Adoption & Closure (COMPLETE)","Task","COMPLETE. Full 8-step Definition of Done executed and closed. Final declaration: KRYLO HAS ADOPTED THE LEAN ONTOLOGY.
+
+OBJECTIVE: prove the Lean Ontology is the authoritative organizing model for KRYLO's active O/E/R production paths -- not merely a set of modules that happen to exist, but the actual operating substrate, with Gaw, sigma, Sigma, and piSigma functioning as shared structural machinery, and no competing representation remaining authoritative for the same role.
+
+PRIMITIVES LOCKED: O (Object), E (Event), R (Relationship), ST (State), T (Time), SO (Source) -- six primitives, plus extended contracts L (observation/epistemic status), Gaw (windowed snapshot graph), sigma (signal), Sigma (signal structure), piSigma (element-level traceability). Lineage represented through R where its semantics satisfy the R contract -- no seventh primitive introduced, checked explicitly at every step that could have added one.
+
+8-STEP DOD, ALL CLOSED:
+1-2. Adoption map + primitive coverage -- O has one authoritative identity substrate (entityresolution.js); E has two complementary representations with distinct consumer sets, not a conflict (RKM + WO-2004); R has one authoritative relationship substrate (entitytopologyregistry.js).
+3. Representation-overlap resolution -- every found overlap (RKM/WO-2004, CI-F/CI-R/RBCS, Signal Genealogy) has an explicit owner, none unexplained.
+4. piSigma / ProvenanceDAG adoption -- confirmed sole implementation (causalos/provenance.js), provenance grade honestly differentiated per path (epistemic for EDGAR, structural-only for chokepoint), not normalized to look uniform.
+5. Multi-cycle persistence/coherence -- proven with real assertions (not just non-throwing) on both live production paths: EDGAR/RKM and chokepoint/topology. A real scoping bug was caught and fixed during this step (chokepoint absorbing unrelated edges from the shared store).
+6. Lineage predicate disposition -- RKM genealogy predicates and Signal Genealogy predicates both classified as downstream M4 config, not promoted to a new primitive. Live signalgenealogy.js system found and correctly classified mid-pass after an initial premature not-observed conclusion was caught and corrected.
+7. L (epistemic status) verification -- grounded in real code (RKM epistemicState, decisioninvariants.js populated field, gwrealiser.js presence filters) without inventing an exact 3-value implementation that does not exist. Honestly reported as concept-grounded, not exact-shape-grounded.
+8A. Real-runtime production acceptance -- GO. Executed against real, live, unmocked EDGAR data (confirmed via curl before testing: real accession numbers, real filing dates, 2524 real filings in the trailing week). 13 acceptance dimensions all PASS: O/E identity stability, R integrity, Gaw isolation, sigma/Sigma construction, piSigma persistence, evidence integrity, replay/idempotency, regression suite, production build.
+8B. Extended-duration soak -- NOT EXECUTED, explicitly deferred at Founder direction ('no worries about the soak test... in due time'). Environmental limitation (no unattended 24hr+ background loop possible in an interactive session), not a failed acceptance criterion. Does not block closure.
+
+TWO LIVE PRODUCTION PATHS PROVEN, both with real data: EDGAR/RKM (edgar8kconnector.js) and chokepoint/topology (chokepointedges.js).
+
+RESIDUAL LIMITATIONS, DOCUMENTED NOT HIDDEN: RKM evidence[] to ProvenanceDAG translation recommended, not built. DOMAIN_DEP_FACT has no canonical external source artifact, chokepoint piSigma stays structural-grade permanently unless one is found. L's exact 3-value shape not literally implemented anywhere. secownershipconnector.js and edgarnarrativeconnector.js are dead code, real capability, zero live callers. patentsviewconnector.js disabled at entry point (CORS/decommissioned API).
+
+FULL AUDIT TRAIL: architecture-recon/001 through 029 (this repo). Closure document: architecture-recon/027_step8_adoption_closure.md. Production acceptance evidence: architecture-recon/029_LEAN_ONTOLOGY_PRODUCTION_ACCEPTANCE.md. Source spec: specs/KRYLO LEAN ONTOLOGY & SIGNAL STRUCTURE SPECIFICATION.md.
+
+STATUS: architecture decision is CLOSED. Future work builds on top of this substrate as ordinary platform expansion -- new data through existing primitives, existing structural mechanisms, existing provenance -- not as architecture rediscovery. Do not reopen as an architecture question.","lean-ontology architecture closure edgar rkm provenance complete"
