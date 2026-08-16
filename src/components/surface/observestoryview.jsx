@@ -92,11 +92,13 @@ function buildNarrative(domains, relationships) {
       });
     }
     const picked = variants[DAY_INDEX % variants.length];
+    const nextVariant = variants.length > 1 ? variants[(DAY_INDEX + 1) % variants.length] : null;
     headlinePre = picked.headlinePre; emphasis = picked.emphasis; headlinePost = picked.headlinePost;
 
     return {
       headlinePre, emphasis, headlinePost,
       paragraph: `${names} all moved by ${stable.length === 1 ? 'the same' : 'similar'} amounts this cycle (${deltas}) — that's not ${stable.length} coincidences, it's one pattern. ${leader.label} led at ${leaderDelta} — that's the one to look at first.`,
+      next: nextVariant,
     };
   } else if (stable.length === 1) {
     headlinePre = `${stable[0].label} is the`;
@@ -176,7 +178,7 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
     return filterForSurface(deriveRelationships(formations)).filter(r => r.state !== RELATIONSHIP_STATE.UNKNOWN);
   }, [domains]);
 
-  const { headlinePre, emphasis, headlinePost, paragraph } = useMemo(
+  const { headlinePre, emphasis, headlinePost, paragraph, next } = useMemo(
     () => buildNarrative(domains, relationships), [domains, relationships]
   );
 
@@ -189,19 +191,33 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
   return (
     <>
       <div style={{
-        position: 'absolute', top: 78, left: '1%', width: 551, zIndex: 15,
+        position: 'absolute', top: 78, left: '1%', width: 401, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 9 }}>
-          Quick read
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: LIME, marginBottom: 9 }}>
+          <span style={{ position: 'relative', display: 'inline-block' }}>
+            Quick read
+            <span style={{ position: 'absolute', left: 0, right: 0, bottom: -6, height: 1, background: LIME }} />
+          </span>
         </div>
-        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 35, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 551, margin: '0 0 10px', textWrap: 'balance' }}>
+        <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 401, margin: '0 0 10px', textWrap: 'balance' }}>
           {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
         </p>
-        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 389, margin: 0 }}>
+        <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 284, margin: 0 }}>
           {paragraph}
         </p>
+
+        {next && (
+          <div style={{ marginTop: 18, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', marginBottom: 6 }}>
+              Next update
+            </div>
+            <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 16, lineHeight: 1.2, fontWeight: 400, color: 'rgba(237,239,232,0.6)', maxWidth: 284, margin: 0 }}>
+              {next.headlinePre} <span style={{ color: 'rgba(102,255,0,0.6)' }}>{next.emphasis}</span>{next.headlinePost}
+            </p>
+          </div>
+        )}
       </div>
 
       <div style={{
