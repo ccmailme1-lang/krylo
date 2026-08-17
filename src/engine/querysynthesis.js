@@ -988,15 +988,16 @@ function synthGeneral(session, numbers, query) {
 
   return {
     stateLabel: 'SIGNAL ACTIVE',
-    confidence: 0.71,
     primaryInsight: `Analysis active: "${shortQ}". Fidelity: ESTIMATED. Add dollar amounts, a specific decision, or a timeline to increase precision.`,
-    momentum:   { value: '+9%', h1: '+3%', h24: '+9%' },
-    trajPoints: [0.20,0.26,0.32,0.38,0.44,0.50,0.55,0.60,0.64,0.67,0.69,0.71],
+    // KRYL-1181/KRYL-1175: confidence/momentum/trajPoints removed -- hardcoded
+    // (0.71 / "+9%" / a hand-typed climbing curve), not derived from anything. The single
+    // grounding seam in synthesizeQuery() already supplies the real values (or honest null)
+    // for these fields; no need for a fabricated placeholder here too.
     attentionStack: [
-      { rank:1, signal:'Signal Clarity',     category:'Input / Fidelity',    trend:'↗', momentum:'Improving',  mColor:LIME, conf:0.71 },
-      { rank:2, signal:'Parameter Coverage', category:'Context / Breadth',   trend:'↑', momentum:'Expanding',  mColor:BLUE, conf:0.62 },
-      { rank:3, signal:'Domain Match',       category:'Relevance / Routing', trend:'→', momentum:'Stable',     mColor:LIME, conf:0.55 },
-      { rank:4, signal:'Time Horizon',       category:'Planning / Temporal', trend:'?', momentum:'Unset',      mColor:DIM,  conf:0.40 },
+      { rank:1, signal:'Signal Clarity',     category:'Input / Fidelity',    trend:'↗', momentum:'Improving' },
+      { rank:2, signal:'Parameter Coverage', category:'Context / Breadth',   trend:'↑', momentum:'Expanding' },
+      { rank:3, signal:'Domain Match',       category:'Relevance / Routing', trend:'→', momentum:'Stable'    },
+      { rank:4, signal:'Time Horizon',       category:'Planning / Temporal', trend:'?', momentum:'Unset'     },
     ],
     keyDrivers: [
       { label:'Query specificity',            delta:'Medium',               pos:true  },
@@ -1038,11 +1039,11 @@ function synthGeneral(session, numbers, query) {
       { label:`Add a capital floor to enable affordability and leverage calculations.` },
     ],
     alternativeView: `Open-lens queries are appropriate for orientation and exploration. If the decision is not yet defined, broad signal framing is a valid first step.`,
-    outlook: [
-      { prob:0.60, label:`Refined query with parameters produces high-precision actionable output`, color:LIME },
-      { prob:0.30, label:`Broad signals directionally useful for initial orientation`,              color:BLUE },
-      { prob:0.10, label:`Insufficient specificity — output remains directional only`,             color:DIM  },
-    ],
+    // KRYL-1181/KRYL-1175: outlook was 3 hardcoded probabilities (60/30/10) with no basis --
+    // an open-lens/no-domain-match query has no live signal to derive an outlook distribution
+    // from. Empty, same treatment as synthRetirement's fix (63885c3), rather than fabricating
+    // percentages for a query this function admits it can't yet analyze precisely.
+    outlook: [],
     actions: {
       IMMEDIATE: [
         { id:'a1', label:'REFINE YOUR QUERY',       impact:0.85, rationale:`Add specifics: "I'm considering X vs Y, budget is $Z, I need to decide by [date]." Specificity is the primary driver of output quality.`, tag:'FIDELITY'  },
