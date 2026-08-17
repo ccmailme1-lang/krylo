@@ -61,6 +61,15 @@ const BAY_NUM_TO_DOMAIN = Object.fromEntries(
   Object.entries(BAY_MAP).map(([k, v]) => [Number(k.slice(1)), v])
 );
 
+// KRYL-1180: a domain with zero matching live signals is a TEMPORAL absence (§22), not a
+// value of 0.82/0.55/0.63/0.71/0.66/0.58 -- the CONES constant above was a fabricated fallback
+// (fixed trend arrays, fake alert strings like "Liquidity tightening") substituted silently
+// whenever liveSignals didn't populate a domain, which is why unrelated queries showed
+// near-identical SLAB readings. Honest absence instead: null value, no trend, no alerts.
+function absenceCone() {
+  return { value: null, trend: [], alerts: [], color: 'rgba(255,255,255,0.2)', absence: 'TEMPORAL' };
+}
+
 export function buildActiveCones(liveSignals, colorOverrides = {}) {
   const live = liveSignals?.length ? deriveConesFromSignals(liveSignals) : {};
 
@@ -73,7 +82,7 @@ export function buildActiveCones(liveSignals, colorOverrides = {}) {
 
   return Object.fromEntries(
     Object.keys(CONES).map(d => {
-      const cone = live[d] ?? CONES[d];
+      const cone = live[d] ?? absenceCone();
       return [d, domainOverrides[d] ? { ...cone, color: domainOverrides[d] } : cone];
     })
   );
