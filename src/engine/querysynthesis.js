@@ -281,6 +281,17 @@ export function detectDomain(query, lens) {
   // Lens fallback is removed; bare queries must not escalate to a life domain.
   const totalScore = Object.values(scores).reduce((s, v) => s + v, 0);
   if (primary === 'GENERAL' && totalScore === 0) {
+    // KRYL-1179: scoreDomains()/DOMAIN_SCORE_PATTERNS only recognizes 7 life-domain categories
+    // (AUTO/REAL_ESTATE/RETIREMENT/etc.) -- it was never built to recognize institutional/
+    // structural queries, so totalScore===0 here proved nothing about whether the query was
+    // actually ambiguous. canonicalresolution.js (KRYL-1080/1089/1091) already defines what
+    // counts as legitimate institutional evidence via its own DOMAIN_LEXICON covering all 6
+    // canonical domains -- reuse that existing contract instead of inventing a new threshold.
+    // synthCanonical() still withholds (§22) downstream if the live signal field has nothing
+    // for the resolved domain; this only restores reachability, it does not force an answer.
+    if (classifyCanonicalDomain(query).resolved) {
+      return { primary: 'GENERAL', weights: {}, state: 'SOFT', entropy: 0, coActive: [], resolutionEligible: true };
+    }
     return { primary: 'AMBIGUOUS', weights: {}, state: 'HOLD', entropy: 0, coActive: [], resolutionEligible: false };
   }
 
