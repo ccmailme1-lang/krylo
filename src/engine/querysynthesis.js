@@ -3378,6 +3378,21 @@ function synthLaborVolatility(session, numbers, query) {
       { id:'lv3', label:'LEVERAGE WINDOW',   value: laborVector === 'FREE_AGENCY_WINDOW' ? 'OPEN' : 'CONDITIONAL', type:'status' },
       { id:'lv4', label:'COLLECTIVE ACTION', value: laborVector === 'UNIONIZATION_PRESSURE' ? 'BUILDING' : 'LATENT', type:'status' },
     ],
+    // KRYL-1178/KRYL-1175: assessment/threats/opportunities were absent on this older-contract
+    // function, which let intelligencebrief.jsx's buildBrief() fall through to lensadapters.js's
+    // fully fabricated confident narrative (fake 0.88/0.71/0.62 scores) for any query routed
+    // here. Built from laborVector/industryContext -- real keyword classification already
+    // computed above, not invented statistics. Does not reshape metrics/actions/leverage below
+    // (that's the separate WO-1795 contract-migration question, not this fix).
+    assessment: `Labor signal classified as ${laborVector.replace(/_/g,' ')} in a ${industryContext} context. ${primaryInsight}`,
+    threats: laborVector === 'WORK_STOPPAGE_RISK'
+      ? [{ label: 'Work stoppage risk — event/schedule disruption', level: 'HIGH', color: LIME }]
+      : laborVector === 'UNIONIZATION_PRESSURE'
+      ? [{ label: 'Organizing pressure — compensation structure at risk of repricing', level: 'MEDIUM', color: BLUE }]
+      : [{ label: 'Labor volatility latent — monitor for trigger events', level: 'LOW', color: DIM }],
+    opportunities: laborVector === 'FREE_AGENCY_WINDOW'
+      ? [{ label: 'Free agency leverage window open — time-limited by deal urgency and competitor depth' }]
+      : [{ label: 'Map labor concentration and contract expiry cadence before volatility triggers' }],
     actions: {
       primary:    { id:'a1', label:'MAP LABOR CONCENTRATION', impact:0.82, rationale:'Identify which promotions hold the greatest share of top-ranked fighters. Concentration = structural risk when labor organizes.', tag:'STRUCTURE' },
       secondary:  { id:'a2', label:'TRACK CONTRACT EXPIRY CADENCE', impact:0.71, rationale:'Free agency windows cluster by promotion cycle. The window is widest when multiple top fighters hit free agency simultaneously.', tag:'TIMING' },
@@ -3438,6 +3453,17 @@ function synthBrandEquityStability(session, numbers, query) {
       { id:'be3', label:'TRANSMISSION LAG',  value: '1–3 QUARTERS',                    type:'duration' },
       { id:'be4', label:'DETECTION WINDOW',  value: brandSignal === 'BRAND_CRISIS' ? 'IMMEDIATE' : 'LEADING', type:'status' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from brandSignal/
+    // enterpriseSignal -- real classification already computed above.
+    assessment: `Brand-enterprise signal classified as ${brandSignal.replace(/_/g,' ')}, enterprise exposure ${enterpriseSignal.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: brandSignal === 'BRAND_CRISIS'
+      ? [{ label: 'Brand crisis — asymmetric enterprise value destruction risk', level: 'HIGH', color: LIME }]
+      : brandSignal === 'BRAND_EROSION'
+      ? [{ label: 'Chronic brand erosion — durability risk invisible in quarterly earnings', level: 'MEDIUM', color: BLUE }]
+      : [{ label: 'Brand-enterprise linkage stable — monitor for inflection', level: 'LOW', color: DIM }],
+    opportunities: brandSignal === 'BRAND_APPRECIATION'
+      ? [{ label: 'Brand equity appreciating — leading indicator of enterprise stability and cheaper capital access' }]
+      : [{ label: 'Track NPS and search-share velocity — highest-signal leading indicators of brand direction' }],
     actions: {
       primary:    { id:'a1', label:'TRACK NPS + SEARCH SHARE VELOCITY', impact:0.85, rationale:'NPS trajectory and organic search share are the highest-signal leading indicators of brand equity direction. Both move before revenue does.', tag:'SIGNAL' },
       secondary:  { id:'a2', label:'MAP MULTIPLE SENSITIVITY TO BRAND', impact:0.73, rationale:'Quantify how much of the current enterprise multiple is attributable to brand premium. This determines downside exposure in a brand-damage scenario.', tag:'VALUATION' },
@@ -3497,6 +3523,15 @@ function synthCatalogIpAcquisition(session, numbers, query) {
       { id:'ci2', label:'RIGHTS STRUCTURE',   value: rightsStructure.replace(/_/g,' '),   type:'tag' },
       { id:'ci3', label:'VALUATION BASIS',    value: dealType === 'MUSIC_CATALOG' ? 'ROYALTY YIELD' : 'RIGHTS SCOPE', type:'status' },
       { id:'ci4', label:'OWNERSHIP TRANSFER', value: dealType === 'LICENSING_AGREEMENT' ? 'NO — USAGE RIGHTS ONLY' : 'YES — ASSET TRANSFER', type:'status' },
+    ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from dealType/
+    // rightsStructure -- real classification already computed above.
+    assessment: `Rights transaction classified as ${dealType.replace(/_/g,' ')}, rights structure ${rightsStructure.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: dealType === 'LICENSING_AGREEMENT'
+      ? [{ label: 'Usage rights only — licensor retains underlying IP and residual value', level: 'MEDIUM', color: BLUE }]
+      : [{ label: 'Headline deal size without rights-scope detail is not analyzable', level: 'MEDIUM', color: BLUE }],
+    opportunities: [
+      { label: 'Confirm rights scope and term before modeling economics — territory, exclusivity, and format drive actual value' },
     ],
     actions: {
       primary:    { id:'a1', label:'CONFIRM RIGHTS SCOPE + TERM', impact:0.86, rationale:'Territory, exclusivity, term length, and format scope determine actual deal value more than headline price. Get the rights schedule before modeling economics.', tag:'DILIGENCE' },
@@ -3563,6 +3598,15 @@ function synthStructuralResilience(session, numbers, query) {
       { id:'sr3', label:'BUFFER THRESHOLD',    value: resilienceVector === 'CAPITAL_BUFFER' ? 'CET1 ≥ 12%' : 'CONTEXT-DEPENDENT', type:'benchmark' },
       { id:'sr4', label:'CRISIS SEQUENCING',   value: 'LIQUIDITY → SOLVENCY',               type:'framework' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from resilienceVector/
+    // institutionType -- real classification already computed above.
+    assessment: `Resilience signal classified as ${resilienceVector.replace(/_/g,' ')} for a ${institutionType.replace(/_/g,' ')} institution. ${primaryInsight}`,
+    threats: (resilienceVector === 'STRESS_TEST_POSTURE' || resilienceVector === 'LIQUIDITY_POSITION')
+      ? [{ label: `${resilienceVector.replace(/_/g,' ')} — elevated near-term stress signal`, level: 'HIGH', color: LIME }]
+      : [{ label: `${resilienceVector.replace(/_/g,' ')} — monitor for deterioration`, level: 'MEDIUM', color: BLUE }],
+    opportunities: [
+      { label: 'Run capital ratio comparables and deposit concentration mapping before committing capital' },
+    ],
     actions: {
       primary:    { id:'a1', label:'RUN CAPITAL RATIO COMPARABLES', impact:0.88, rationale:'CET1 ratio trajectory across peer institutions reveals which are building buffer vs. consuming it. Direction matters more than level.', tag:'CAPITAL' },
       secondary:  { id:'a2', label:'MAP DEPOSIT CONCENTRATION', impact:0.76, rationale:'SVB demonstrated that deposit concentration (uninsured, single-sector) is the hidden liquidity risk. Standard LCR reporting does not reveal concentration until it is too late.', tag:'LIQUIDITY' },
@@ -3628,6 +3672,15 @@ function synthPrivateCredit(session, numbers, query) {
       { id:'pc3', label:'VALUATION LAG',    value: '1–2 QUARTERS',                   type:'duration' },
       { id:'pc4', label:'PIK SIGNAL',       value: fractureVector === 'DEFAULT_PRESSURE' ? 'MONITOR' : 'BASELINE', type:'status' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from fractureVector/
+    // marketContext -- real classification already computed above.
+    assessment: `Private credit signal classified as ${fractureVector.replace(/_/g,' ')} in a ${marketContext.replace(/_/g,' ')} context. ${primaryInsight}`,
+    threats: (fractureVector === 'DEFAULT_PRESSURE' || fractureVector === 'LIQUIDITY_MISMATCH')
+      ? [{ label: `${fractureVector.replace(/_/g,' ')} — active fracture signal`, level: 'HIGH', color: LIME }]
+      : [{ label: `${fractureVector.replace(/_/g,' ')} — structural risk, not yet acute`, level: 'MEDIUM', color: BLUE }],
+    opportunities: [
+      { label: 'Track PIK election rates and valuation dispersion vs. public comps for early signal' },
+    ],
     actions: {
       primary:    { id:'a1', label:'TRACK PIK ELECTION RATES', impact:0.87, rationale:'Rising PIK elections in direct lending portfolios are the 6–18 month leading indicator of default cycles. This data point is available in BDC quarterly filings.', tag:'SIGNAL' },
       secondary:  { id:'a2', label:'MAP VALUATION DISPERSION VS. PUBLIC COMPS', impact:0.75, rationale:'Compare GP marks on private credits to equivalent-rated public bonds. Widening dispersion signals valuation lag accumulation — a correction is building.', tag:'VALUATION' },
@@ -3692,6 +3745,15 @@ function synthSovereignCapital(session, numbers, query) {
       { id:'sc3', label:'HOLDING HORIZON',   value: '5–15 YEARS',                       type:'duration' },
       { id:'sc4', label:'CAPITAL SCALE',     value: '$12T+ AUM GLOBALLY',               type:'benchmark' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from deploymentVector/
+    // fundOrigin -- real classification already computed above.
+    assessment: `Sovereign capital signal classified as ${deploymentVector.replace(/_/g,' ')}, fund origin ${fundOrigin.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: [
+      { label: 'Repatriation risk — sovereign capital exits on political, not financial, logic', level: 'LOW', color: DIM },
+    ],
+    opportunities: deploymentVector === 'DIRECT_EQUITY'
+      ? [{ label: 'Direct equity stake signals structural conviction — typically 5-15 year holding horizon' }]
+      : [{ label: 'Map sector concentration by SWF — disproportionate deployment signals a valuation floor forming' }],
     actions: {
       primary:    { id:'a1', label:'MAP SECTOR CONCENTRATION BY SWF', impact:0.86, rationale:'Which sectors are receiving disproportionate sovereign capital? Concentration signals structural conviction — these sectors get a valuation floor that private capital alone cannot sustain.', tag:'MAPPING' },
       secondary:  { id:'a2', label:'TRACK DIRECT STAKE ANNOUNCEMENTS', impact:0.77, rationale:'Direct equity stake announcements from PIF, ADIA, or GIC are the highest-signal sovereign capital events. Track them by sector and geography to identify structural deployment themes.', tag:'SIGNAL' },
@@ -3754,6 +3816,15 @@ function synthStartupReadiness(session, numbers, query) {
       { id:'mr3', label:'WINDOW HORIZON',    value: '18–36 MONTHS',                    type:'duration' },
       { id:'mr4', label:'PMF GATE',          value: readinessVector === 'PMF_SIGNAL' ? 'ACTIVE' : 'UPSTREAM', type:'status' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from readinessVector/
+    // marketSignal -- real classification already computed above.
+    assessment: `Startup readiness signal classified as ${readinessVector.replace(/_/g,' ')} in a ${marketSignal} market context. ${primaryInsight}`,
+    threats: readinessVector === 'COMPETITIVE_WINDOW'
+      ? [{ label: 'Competitive window time-bounded — category leaders consolidate in 18-36 months', level: 'MEDIUM', color: BLUE }]
+      : [{ label: 'Launch timing miscalibration — waiting for product perfection is the most common error', level: 'LOW', color: DIM }],
+    opportunities: readinessVector === 'PMF_SIGNAL'
+      ? [{ label: 'PMF signal detected — measure D30 retention baseline to confirm and accelerate launch' }]
+      : [{ label: 'Map category leader consolidation before committing to launch timing' }],
     actions: {
       primary:    { id:'a1', label:'MEASURE D30 RETENTION BASELINE', impact:0.91, rationale:'D30 retention is the canonical PMF metric. B2C: >25% is strong. B2B: >80% monthly retention. If you don\'t know these numbers you don\'t know if you have PMF.', tag:'METRIC' },
       secondary:  { id:'a2', label:'MAP CATEGORY LEADER CONSOLIDATION', impact:0.74, rationale:'Quantify how consolidated the target category is. Search share, funding concentration, and TAM coverage by existing players determine entry difficulty.', tag:'COMPETITIVE' },
@@ -3815,6 +3886,15 @@ function synthLongDurationConvergence(session, numbers, query) {
       { id:'ld2', label:'HORIZON SIGNAL',    value: horizonSignal.replace(/_/g,' '),    type:'tag' },
       { id:'ld3', label:'CONVICTION WINDOW', value: '5–15 YEARS',                       type:'duration' },
       { id:'ld4', label:'COMPOUNDING STAGE', value: 'INFRASTRUCTURE PHASE',             type:'status' },
+    ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from convergenceType/
+    // horizonSignal -- real classification already computed above.
+    assessment: `Long-duration convergence signal classified as ${convergenceType.replace(/_/g,' ')}, horizon ${horizonSignal.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: [
+      { label: 'Post-inflection risk — multiple compression as visibility improves', level: 'LOW', color: DIM },
+    ],
+    opportunities: [
+      { label: 'Map infrastructure layer ownership before applications become visible — pre-inflection is the maximum asymmetry window' },
     ],
     actions: {
       primary:    { id:'a1', label:'MAP INFRASTRUCTURE LAYER OWNERSHIP', impact:0.89, rationale:'In every decade-scale convergence, the infrastructure layer owners capture disproportionate value before applications are visible. Identify who owns the compute/grid/platform/network for this convergence.', tag:'STRUCTURE' },
@@ -3879,6 +3959,15 @@ function synthFlexibleSpace(session, numbers, query) {
       { id:'fs3', label:'UTILIZATION TREND',value: 'RISING',                         type:'status' },
       { id:'fs4', label:'LEASE STRUCTURE',  value: 'VARIABLE COST MODEL',            type:'framework' },
     ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from demandVector/
+    // marketContext -- real classification already computed above.
+    assessment: `Flexible space signal classified as ${demandVector.replace(/_/g,' ')} in the ${marketContext} market. ${primaryInsight}`,
+    threats: [
+      { label: 'Operator model risk — below-cost pricing distortion (post-WeWork) still unwinding', level: 'LOW', color: DIM },
+    ],
+    opportunities: [
+      { label: 'Track enterprise flex penetration rate and sublease market as leading demand indicators' },
+    ],
     actions: {
       primary:    { id:'a1', label:'TRACK ENTERPRISE FLEX PENETRATION RATE', impact:0.83, rationale:'Enterprise flex as % of total commercial real estate portfolio is the growth indicator. Current penetration (~5%) suggests substantial runway before flex becomes the dominant office format.', tag:'SIGNAL' },
       secondary:  { id:'a2', label:'COMPARE OPERATOR UNIT ECONOMICS', impact:0.72, rationale:'Management contract model (Industrious) vs. master lease model (legacy WeWork) have fundamentally different risk profiles. Operator unit economics determine which companies survive the next real estate cycle.', tag:'FINANCIAL' },
@@ -3940,6 +4029,15 @@ function synthFintechInfra(session, numbers, query) {
       { id:'fi2', label:'MARKET LAYER',    value: marketLayer.replace(/_/g,' '),    type:'tag' },
       { id:'fi3', label:'CYCLE DURATION',  value: '10–20 YEARS',                   type:'duration' },
       { id:'fi4', label:'API DENSITY',     value: infraVector === 'DEVELOPER_API' ? 'HIGH' : 'MODERATE', type:'status' },
+    ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from infraVector/
+    // marketLayer -- real classification already computed above.
+    assessment: `Fintech infrastructure signal classified as ${infraVector.replace(/_/g,' ')} at the ${marketLayer.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: [
+      { label: 'Regulatory arbitrage ceiling — BaaS scrutiny rises as non-bank companies absorb bank-like functions', level: 'MEDIUM', color: BLUE },
+    ],
+    opportunities: [
+      { label: 'Map API ecosystem dependency graph — infrastructure-layer companies capture pricing power application layers don\'t' },
     ],
     actions: {
       primary:    { id:'a1', label:'MAP API ECOSYSTEM DEPENDENCY GRAPH', impact:0.87, rationale:'Identify which fintech companies are upstream vs. downstream in the API dependency chain. Infrastructure layer companies have pricing power that application layer companies do not — they become the toll road.', tag:'STRUCTURE' },
@@ -4004,6 +4102,15 @@ function synthForwardCompute(session, numbers, query) {
       { id:'fc2', label:'SUPPLY/DEMAND',      value: supplyDemandBalance.replace(/_/g,' '),  type:'tag' },
       { id:'fc3', label:'DEMAND HORIZON',     value: '3–7 YEARS STRUCTURAL',                 type:'duration' },
       { id:'fc4', label:'BINDING CONSTRAINT', value: computeVector === 'ENERGY_CONSTRAINT' ? 'POWER' : 'SILICON', type:'status' },
+    ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from computeVector/
+    // supplyDemandBalance -- real classification already computed above.
+    assessment: `Forward compute signal classified as ${computeVector.replace(/_/g,' ')}, supply-demand balance ${supplyDemandBalance.replace(/_/g,' ')}. ${primaryInsight}`,
+    threats: supplyDemandBalance === 'DEMAND_EXCEEDS_SUPPLY'
+      ? [{ label: 'Demand exceeds supply — allocation-constrained, structural not temporary', level: 'HIGH', color: LIME }]
+      : [{ label: `${computeVector.replace(/_/g,' ')} — monitor supply/demand shift`, level: 'MEDIUM', color: BLUE }],
+    opportunities: [
+      { label: 'Map GPU allocation concentration — leading indicator of AI capability leadership 12-18 months out' },
     ],
     actions: {
       primary:    { id:'a1', label:'MAP GPU ALLOCATION CONCENTRATION', impact:0.92, rationale:'Track which organizations are securing H100/B200 allocations by volume. GPU allocation is the leading indicator of who will lead AI capability development — 12–18 months before model releases reveal the outcome.', tag:'SIGNAL' },
@@ -4070,6 +4177,17 @@ function synthAttentionSaturation(session, numbers, query) {
       { id:'as2', label:'CHANNEL CONTEXT',    value: channelContext,                      type:'tag' },
       { id:'as3', label:'PERMISSION ASSET',   value: saturationVector === 'PERMISSION_MARKETING' ? 'PRIMARY SIGNAL' : 'UPSTREAM', type:'status' },
       { id:'as4', label:'REACH TRAJECTORY',   value: saturationVector === 'ORGANIC_REACH_COMPRESSION' ? 'DECLINING' : 'CHANNEL-DEPENDENT', type:'status' },
+    ],
+    // KRYL-1178/KRYL-1175: see synthLaborVolatility for rationale. Built from saturationVector/
+    // channelContext -- real classification already computed above.
+    assessment: `Attention saturation signal classified as ${saturationVector.replace(/_/g,' ')} in the ${channelContext} channel. ${primaryInsight}`,
+    threats: saturationVector === 'ORGANIC_REACH_COMPRESSION'
+      ? [{ label: 'Organic reach compression — structural, not cyclical, forces paid dependency', level: 'HIGH', color: LIME }]
+      : saturationVector === 'PAID_ATTENTION_COST'
+      ? [{ label: 'Paid attention cost escalation — CAC/LTV inversion risk', level: 'MEDIUM', color: BLUE }]
+      : [{ label: 'Attention saturation rising — monitor channel-dependent reach trends', level: 'LOW', color: DIM }],
+    opportunities: [
+      { label: 'Audit owned audience assets — the only assets that appreciate as platform reach compresses' },
     ],
     actions: {
       primary:    { id:'a1', label:'AUDIT OWNED AUDIENCE ASSETS', impact:0.88, rationale:'Inventory all permission assets: email list size + open rate, SMS subscribers, podcast listeners, community members. These are the only assets that appreciate as platform reach compresses. Measure them independently of social following.', tag:'AUDIT' },
