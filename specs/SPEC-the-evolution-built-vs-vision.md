@@ -40,7 +40,7 @@ separate engines:
 | Formation type | Real engine | Tier |
 |---|---|---|
 | Emerging | Combination Formation System (Line/Triangle/Diamond) | 1 — Implemented |
-| Missing | `src/engine/voidclassifier.js` (WO-1854, Structural Void Classifier) | 1 — Implemented — absence-is-signal, per-domain expected-class silence detection |
+| Missing | `src/engine/voidclassifier.js` (WO-1854, Structural Void Classifier) | **CORRECTED 2026-08-18 (KRYL-1176) — see note below.** Not Tier 1. |
 | Breaking | `src/engine/happypathdisplacementengine.js` (WO-1826) | 1 — Implemented — challenger-displacement with hysteresis |
 | Novel (no historical precedent) | — | 3 — Research / vision |
 
@@ -56,6 +56,36 @@ not a validated definition — flagged correctly in review. If the existing topo
 produces false positives (calls something "novel" that's really just an uncatalogued known
 pattern). Present it in the meeting as a candidate approach to prototype, not as settled
 architecture.
+
+## Correction, 2026-08-18 (KRYL-1176): the "Missing" row above was wrong
+
+The "Missing" row's Tier 1 "Implemented" call for `voidclassifier.js` (WO-1854) was checked
+during KRYL-1176's orphaned-module audit and does not hold up. `voidclassifier.js` is real,
+complete, and correctly integrates with live infrastructure (`surfaceRouter.dispatchBatch()`,
+`POLARITY` from `signalconstants.js`) — but nothing in the repository calls its entry point
+(`runVoidCheck()`). Git history confirms a single introducing commit (2026-06-23) and nothing
+since — no scheduler was ever wired, and none was removed later. The 2026-08-03 audit's
+"Implemented" claim was inaccurate at the time it was written, not something that broke
+afterward.
+
+**The root error, worth stating precisely so it doesn't recur:** that audit conflated *"module
+is wired into infrastructure"* (true — its own calls out to `dispatchBatch()` are real) with
+*"module is actively scheduled/executed"* (false — nothing calls in). Those are different
+architectural facts. A module can correctly integrate with live systems on its output side while
+still never running, because nothing on the input side invokes it. The absence of a scheduler is
+an execution-path gap, not evidence the module is dead or fictional — but it also means "1 —
+Implemented, demonstrable live" was the wrong tier. Per this doc's own three-tier definition
+(§ "Three-tier taxonomy"), Tier 1 requires demonstrable live behavior; a correct-but-unscheduled
+module doesn't clear that bar. It isn't Tier 3 (research/vision) either — real, tested code
+exists, not just prose. It sits in the same "Maturity B / code complete, unwired" state
+CLAUDE.md already documents for the Platform Framework Sequence (§29) — this doc's own
+three-tier scale doesn't have a clean slot for that state, which is itself worth noting for
+future revisions of this taxonomy.
+
+KRYL-1176's broader finding: this same "complete, unwired" pattern holds for all 29 modules
+that audit investigated — none were dead, none superseded, all real WO-backed infrastructure
+built ahead of its wiring. Disposition: HOLD, no deletion, no automatic wiring. See KRYL-1176
+for the full classification.
 
 ## 2026-08-03 re-audit: the Platform Framework chain was orphaned, now partially fixed
 
