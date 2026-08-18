@@ -540,15 +540,15 @@ function synthRealEstateSell(session, numbers, query) {
 
   return {
     stateLabel: 'MARKET ACTIVE',
-    confidence: 0.74,
+    // KRYL-1175: confidence/momentum/trajPoints removed -- hardcoded (0.74 / "+4%" / a
+    // hand-typed climbing curve), already superseded downstream by the single grounding seam.
+    // Missed in the original synthRealEstateSell fix (d7f3d56); cleaned up here for consistency.
     primaryInsight: `Disposition of a $${fmtN(value)} property. Estimated cost of sale: commission $${fmtN(commission)} (6%) + closing $${fmtN(closing)} (2%)${mortgage > 0 ? ` + mortgage payoff $${fmtN(mortgage)}` : ''}. Net proceeds today ≈ $${fmtN(netProceeds)}.${crossBorder ? ' Cross-border sale — tax exposure spans both jurisdictions; net will be lower after tax.' : ''}`,
-    momentum:   { value: '+4%', h1: '+1%', h24: '+4%' },
-    trajPoints: [0.30,0.34,0.38,0.42,0.46,0.50,0.54,0.58,0.62,0.66,0.70,0.74],
     attentionStack: [
-      { rank:1, signal:'Local Comps / CMA',    category:'Pricing / Local Market',  trend:'↗', momentum:'Firming',    mColor:LIME, conf:0.80 },
-      { rank:2, signal:'Days on Market',        category:'Demand / Local',          trend:'↗', momentum:'Extending',  mColor:BLUE, conf:0.68 },
-      { rank:3, signal:'Cost of Sale',          category:'Transaction Friction',    trend:'→', momentum:'Fixed',      mColor:DIM,  conf:0.85 },
-      { rank:4, signal:'Tax Exposure',          category:crossBorder ? 'Cross-Border' : 'Capital Gains', trend:'↑', momentum:'Material', mColor:BLUE, conf:0.62 },
+      { rank:1, signal:'Local Comps / CMA',    category:'Pricing / Local Market',  trend:'↗', momentum:'Firming'    },
+      { rank:2, signal:'Days on Market',        category:'Demand / Local',          trend:'↗', momentum:'Extending'  },
+      { rank:3, signal:'Cost of Sale',          category:'Transaction Friction',    trend:'→', momentum:'Fixed'      },
+      { rank:4, signal:'Tax Exposure',          category:crossBorder ? 'Cross-Border' : 'Capital Gains', trend:'↑', momentum:'Material' },
     ],
     keyDrivers: [
       { label:'Cost of sale (commission+closing)', delta:`-$${fmtN(commission + closing)}`, pos:false },
