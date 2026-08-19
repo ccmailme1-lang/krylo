@@ -73,7 +73,6 @@ import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges, buildChokepointStructure } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import ConeMap            from './components/spine/conemap.jsx';
-import ObserveStoryBanner from './components/surface/observestoryview.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -1343,7 +1342,8 @@ export default function App() {
           surfaceActivated={surfaceActivated}
           surfaceVisible={isSurface}
         />
-        {isSurface && surfaceExpanded && (viewportLens === 'OBSERVE' || viewportLens === 'NAV_SURFACE') && <ObserveStoryBanner activeDomain={selection} coneState={leaderboardState} />}
+        {/* ObserveStoryBanner ("domain insights" / Quick Read) removed from surface render 2026-08-19 —
+            final placement TBD, component left intact in observestoryview.jsx for later relocation. */}
         {isSurface && surfaceActivated && (
           <AnalysisField
             signals={liveSignals}

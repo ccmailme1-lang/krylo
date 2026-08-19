@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Structural Resolution Field</title>
+<style>
+  @font-face {
+    font-family: 'IBM Plex Mono';
+    src: local('IBM Plex Mono');
+    font-weight: 400 600;
+  }
+
+  :root {
+    --moat-bg: #000000;
+    --signal-lime: #66FF00;
+    --signal-blue: #007FFF;
+    --unicorn-purple: #8A2BE2;
+    --hairline: rgba(255, 255, 255, 0.08);
+    --hairline-strong: rgba(255, 255, 255, 0.22);
+    --node-fill: #0A0C0D;
+    --text-mono: rgba(255, 255, 255, 0.62);
+    --text-mono-dim: rgba(255, 255, 255, 0.32);
+    --panel-bg: rgba(6, 7, 8, 0.94);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: var(--moat-bg);
+    overflow: hidden;
+  }
+
+  body {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    color: var(--text-mono);
+    user-select: none;
+  }
+
+  #field { position: fixed; inset: 0; display: block; touch-action: none; cursor: default; }
+
+  .hud { position: fixed; z-index: 2; pointer-events: none; }
+  .hud a, .hud button, .hud .scrubber, .hud .ctrl { pointer-events: auto; }
+
+  .hud-top {
+    top: 26px; left: 32px; right: 32px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+  }
+
+  .mark { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-mono); }
+  .mark span {
+    color: var(--text-mono-dim); letter-spacing: 0.04em; text-transform: none;
+    display: block; margin-top: 4px; font-size: 11px; max-width: 420px; line-height: 1.45;
+  }
+
+  .status { text-align: right; font-size: 11px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
+  .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
+
+  .disclosure {
+    bottom: 96px; right: 32px; text-align: right; font-size: 10px;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.8;
+  }
+  .disclosure b { color: var(--signal-blue); font-weight: 500; }
+
+  .hint {
+    bottom: 96px; left: 32px; font-size: 10px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.8;
+  }
+  .hint b { color: rgba(255,255,255,0.6); font-weight: 500; }
+
+  .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
+  .scrubber-readout {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-mono-dim); margin-bottom: 8px;
+  }
+  .scrubber-readout b { color: rgba(255,255,255,0.75); font-weight: 500; letter-spacing: 0.02em; text-transform: none; }
+
+  .scrubber-row {
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .ctrl {
+    flex: 0 0 auto;
+    width: 28px; height: 28px;
+    border: 1px solid var(--hairline-strong);
+    background: #050505;
+    color: rgba(255,255,255,0.7);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 2px;
+    transition: border-color 160ms, color 160ms;
+  }
+  .ctrl:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+  .ctrl[aria-pressed="true"] {
+    border-color: rgba(102,255,0,0.45);
+    color: var(--signal-lime);
+  }
+
+  .scrubber { position: relative; height: 28px; cursor: pointer; flex: 1; }
+  .scrubber-track { position: absolute; left: 0; right: 0; top: 13px; height: 1px; background: var(--hairline-strong); }
+  .scrubber-fill { position: absolute; left: 0; top: 13px; height: 1px; background: rgba(255,255,255,0.5); }
+  .scrubber-ticks { position: absolute; left: 0; right: 0; top: 13px; height: 1px; pointer-events: none; }
+  .scrubber-tick {
+    position: absolute; top: -3px; width: 1px; height: 7px;
+    background: rgba(255,255,255,0.18);
+  }
+  .scrubber-thumb {
+    position: absolute; top: 5px; width: 16px; height: 16px; margin-left: -8px;
+    border: 1px solid rgba(255,255,255,0.7); border-radius: 50%; background: #050505;
+    transition: box-shadow 180ms;
+  }
+  .scrubber-thumb::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: rgba(255,255,255,0.75); }
+  .scrubber.dragging .scrubber-thumb,
+  .scrubber:hover .scrubber-thumb {
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
+  }
+
+  /* ---- detail card — fixed corner placement on the main field, not a
+     full-height screen-edge dock. Matches a quant-terminal's inset panel
+     (e.g. a scatter inset in the corner of the main chart). ---- */
+  #panel {
+    position: fixed; left: 32px; top: 100px;
+    width: 300px;
+    background: var(--panel-bg); border: 1px solid var(--hairline-strong);
+    border-radius: 3px;
+    z-index: 3; padding: 16px 18px 14px;
+    opacity: 0; transform: translateY(8px); transform-origin: top left;
+    pointer-events: none;
+    transition: opacity 200ms ease, transform 200ms ease;
+    display: flex; flex-direction: column; gap: 10px;
+    backdrop-filter: blur(3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+    max-height: min(460px, calc(100vh - 40px));
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.28) transparent;
+  }
+  #panel.open { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  #panel.dragging { transition: none; }
+  #panel::-webkit-scrollbar { width: 6px; }
+  #panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.22); border-radius: 3px; }
+  #panel::-webkit-scrollbar-track { background: transparent; }
+
+  .panel-drag-handle {
+    position: absolute; top: 0; left: 0; right: 0; height: 34px;
+    cursor: grab; touch-action: none;
+  }
+  .panel-drag-handle:active { cursor: grabbing; }
+
+  .panel-close {
+    position: absolute; top: 16px; right: 16px; background: none; border: none;
+    color: var(--text-mono-dim); font-family: inherit; font-size: 9px; letter-spacing: 0.1em;
+    cursor: pointer; padding: 4px;
+  }
+  .panel-close:hover { color: var(--text-mono); }
+
+  .panel-eyebrow { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-mono-dim); }
+  .panel-title {
+    font-family: Georgia, 'Times New Roman', serif; color: #fff; line-height: 1.15; margin-top: 3px;
+    font-size: 16px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .panel-domain { font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-mono-dim); margin-top: 4px; line-height: 1.4; }
+
+  .panel-meta {
+    display: flex; gap: 14px; margin-top: 6px;
+    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mono-dim);
+  }
+  .panel-meta b { color: rgba(255,255,255,0.72); font-weight: 500; letter-spacing: 0.01em; }
+
+  .panel-canvas-wrap { border: 1px solid var(--hairline); position: relative; }
+  #detail-canvas { display: block; width: 100%; height: 110px; }
+
+  .panel-section-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mono-dim); margin-bottom: 6px; }
+
+  .op-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 1px solid var(--hairline); font-size: 10px; }
+  .op-row:first-child { border-top: none; }
+  .op-name { color: rgba(255,255,255,0.7); letter-spacing: 0.01em; }
+  .op-class { color: var(--text-mono-dim); font-size: 8px; margin-left: 5px; }
+  .op-pill {
+    font-size: 8px; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px;
+    border: 1px solid; text-transform: uppercase;
+  }
+  .op-pass { color: var(--signal-lime); border-color: rgba(102,255,0,0.4); }
+  .op-undetermined { color: var(--text-mono-dim); border-color: var(--hairline-strong); }
+  .op-conflict { color: var(--signal-blue); border-color: rgba(0,127,255,0.45); }
+  .op-na { color: var(--text-mono-dim); border-color: var(--hairline); opacity: 0.6; }
+
+  .panel-footer { margin-top: auto; font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.6; }
+  .panel-footer b { color: var(--signal-blue); }
+
+  .kbd {
+    display: inline-block; padding: 1px 5px; margin: 0 1px;
+    border: 1px solid rgba(255,255,255,0.18); border-radius: 2px;
+    font-size: 9px; letter-spacing: 0.04em; color: rgba(255,255,255,0.45);
+  }
+
+  @media (max-width: 900px) {
+    #panel { right: 16px; left: 16px; width: auto; top: 100px; }
+    .hud-top { flex-direction: column; gap: 14px; }
+    .status { text-align: left; }
+    .hint, .disclosure { bottom: 150px; }
+    .mark span { max-width: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="field"></canvas>
+
+<div class="hud hud-top">
+  <div class="mark">
+    STRUCTURAL RESOLUTION FIELD
+    <span>Validated relationship graph — positioned on φ (strength) × φ̇ (momentum), not laid out by hand</span>
+  </div>
+  <div class="status">
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b><br />
+    RESOLVED <b id="integrity">—</b>
+  </div>
+</div>
+
+<div class="hud hint">
+  Select <b>any formation</b> to inspect its evidentiary field<br />
+  <span style="opacity:0.7"><span class="kbd">←</span><span class="kbd">→</span> scrub &nbsp; <span class="kbd">Space</span> play &nbsp; <span class="kbd">Esc</span> close</span>
+</div>
+<div class="hud disclosure">
+  <b>SYNTHETIC</b><br />
+  Conceptual fixture data, scrubber-driven.<br />
+  Not a live KRYLO detection.
+</div>
+
+<div class="hud scrubber-wrap">
+  <div class="scrubber-readout">
+    <span>OBSERVATION WINDOW</span>
+    <span>T+<b id="t-readout">00:00</b> &nbsp; / &nbsp; T+47:00</span>
+  </div>
+  <div class="scrubber-row">
+    <button class="ctrl" id="play-btn" aria-pressed="false" title="Play / Pause (Space)">▶</button>
+    <div class="scrubber" id="scrubber">
+      <div class="scrubber-track"></div>
+      <div class="scrubber-ticks" id="scrubber-ticks"></div>
+      <div class="scrubber-fill" id="scrubber-fill"></div>
+      <div class="scrubber-thumb" id="scrubber-thumb"></div>
+    </div>
+  </div>
+</div>
+
+<div id="panel">
+  <div class="panel-drag-handle" id="panel-drag-handle"></div>
+  <button class="panel-close" id="panel-close">CLOSE ✕</button>
+  <div>
+    <div class="panel-eyebrow" id="panel-domain-eyebrow">—</div>
+    <div class="panel-title" id="panel-title">—</div>
+    <div class="panel-domain" id="panel-domain">—</div>
+    <div class="panel-meta">
+      <span>CONTRIBUTION <b id="panel-contrib">—</b></span>
+      <span>φ <b id="panel-phi">—</b></span>
+      <span>φ̇ <b id="panel-phidot">—</b></span>
+    </div>
+  </div>
+  <div>
+    <div class="panel-section-title">Evidentiary field</div>
+    <div class="panel-canvas-wrap"><canvas id="detail-canvas"></canvas></div>
+  </div>
+  <div>
+    <div class="panel-section-title">Validation profile (Class A)</div>
+    <div id="op-rows"></div>
+  </div>
+  <div class="panel-footer">
+    <b>SYNTHETIC</b> — profile shape matches the real 8-operator<br />contract; values are fixture data, not computed.
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('field');
+  const ctx = canvas.getContext('2d');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const nNodesEl = document.getElementById('n-nodes');
+  const nEdgesEl = document.getElementById('n-edges');
+  const integrityEl = document.getElementById('integrity');
+  const tReadoutEl = document.getElementById('t-readout');
+  const playBtn = document.getElementById('play-btn');
+
+  let W = 0, H = 0, DPR = 1;
+  let plot = { x: 0, y: 0, w: 0, h: 0 };
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W * DPR; canvas.height = H * DPR;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    const marginL = Math.max(50, Math.min(90, W * 0.08));
+    const marginR = Math.max(40, Math.min(60, W * 0.05));
+    const marginT = Math.max(70, Math.min(120, H * 0.10));
+    const marginB = Math.max(90, Math.min(150, H * 0.16));
+    plot = { x: marginL, y: marginT, w: W - marginL - marginR, h: H - marginT - marginB };
+  }
+
+  // ---- reusable primitives ------------------------------------------------
+
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gaussianPair(rand) {
+    let u = 0, v = 0;
+    while (u === 0) u = rand();
+    while (v === 0) v = rand();
+    const mag = Math.sqrt(-2.0 * Math.log(u));
+    return [mag * Math.cos(2 * Math.PI * v), mag * Math.sin(2 * Math.PI * v)];
+  }
+  function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
+  function smoothstep(t) { const c = clamp01(t); return c * c * (3 - 2 * c); }
+  function lerpPath(keyframes, t) {
+    const n = keyframes.length - 1;
+    const seg = clamp01(t) * n;
+    const i = Math.min(n - 1, Math.floor(seg));
+    const localT = smoothstep(seg - i);
+    const a = keyframes[i], b = keyframes[i + 1];
+    if (typeof a === 'number') return a + (b - a) * localT;
+    return { x: a.x + (b.x - a.x) * localT, y: a.y + (b.y - a.y) * localT };
+  }
+  function hexToRgb(hex) { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+  const BLUE = hexToRgb('#007FFF'), LIME = hexToRgb('#66FF00');
+  function momentumColor(m01) {
+    const t = clamp01(m01);
+    return `rgb(${Math.round(BLUE[0] + (LIME[0] - BLUE[0]) * t)},${Math.round(BLUE[1] + (LIME[1] - BLUE[1]) * t)},${Math.round(BLUE[2] + (LIME[2] - BLUE[2]) * t)})`;
+  }
+  function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+
+  const DOMAIN = { min: -1, max: 1 };
+  function toPxX(v) { return plot.x + ((v - DOMAIN.min) / (DOMAIN.max - DOMAIN.min)) * plot.w; }
+  function toPxY(v) { return plot.y + plot.h - ((v - DOMAIN.min) / (DOMAIN.max - DOMAIN.min)) * plot.h; }
+  function fromPxX(px) { return DOMAIN.min + ((px - plot.x) / plot.w) * (DOMAIN.max - DOMAIN.min); }
+  function fromPxY(py) { return DOMAIN.min + ((plot.y + plot.h - py) / plot.h) * (DOMAIN.max - DOMAIN.min); }
+
+  // ---- graph model -----------------------------------------------------
+
+  const NODES = [
+    { id: 'wage',     label: 'WAGE PRESSURE',     provenance: 'labor',     contribution: 0.55,
+      path: [{x:-0.62,y:-0.18},{x:-0.48,y:-0.05},{x:-0.30,y:0.10},{x:-0.14,y:0.22}] },
+    { id: 'input',    label: 'INPUT COST',        provenance: 'capital',   contribution: 0.80,
+      path: [{x:-0.20,y:0.05},{x:-0.02,y:0.18},{x:0.16,y:0.30},{x:0.30,y:0.38}] },
+    { id: 'pricing',  label: 'PRICING PRESSURE',  provenance: 'media',     contribution: 0.45,
+      path: [{x:-0.70,y:0.55},{x:-0.55,y:0.42},{x:-0.40,y:0.30},{x:-0.28,y:0.22}] },
+    { id: 'process',  label: 'PROCESS EFFICIENCY',provenance: 'knowledge', contribution: 0.35,
+      path: [{x:0.30,y:-0.62},{x:0.38,y:-0.42},{x:0.44,y:-0.20},{x:0.48,y:-0.02}] },
+    { id: 'automation', label: 'AUTOMATION',      provenance: 'technology',contribution: 0.40,
+      path: [{x:0.55,y:-0.55},{x:0.62,y:-0.35},{x:0.66,y:-0.14},{x:0.68,y:0.05}] },
+    { id: 'labor_cap',label: 'LABOR CAPACITY',    provenance: 'labor',     contribution: 0.30,
+      path: [{x:0.72,y:-0.65},{x:0.74,y:-0.45},{x:0.75,y:-0.22},{x:0.74,y:-0.06} ] },
+    { id: 'market',   label: 'MARKET DEMAND',     provenance: 'capital',   contribution: 0.38,
+      path: [{x:-0.55,y:-0.62},{x:-0.48,y:-0.52},{x:-0.42,y:-0.42},{x:-0.38,y:-0.34}] },
+    { id: 'capconst', label: 'CAPITAL CONSTRAINT',provenance: 'capital',   contribution: 0.42,
+      path: [{x:-0.30,y:-0.72},{x:-0.26,y:-0.58},{x:-0.20,y:-0.44},{x:-0.16,y:-0.34}] },
+    { id: 'margin',   label: 'MARGIN CONTROL',    provenance: 'ownership',contribution: 0.50,
+      path: [{x:0.15,y:-0.78},{x:0.14,y:-0.60},{x:0.12,y:-0.40},{x:0.10,y:-0.28}] },
+    { id: 'formation',label: 'PRODUCTION COST PRESSURE', provenance: null, contribution: 1.0, resolved: true,
+      path: [{x:0.06,y:0.02},{x:0.28,y:0.22},{x:0.46,y:0.40},{x:0.62,y:0.58}] },
+  ];
+
+  const EDGES = [
+    { from: 'wage',       to: 'input',     label: 'increases', stagger: 0.00, strength: 0.62 },
+    { from: 'input',      to: 'formation', label: 'increases', stagger: 0.10, strength: 0.85 },
+    { from: 'pricing',    to: 'formation', label: 'limits',    stagger: 0.22, strength: 0.40 },
+    { from: 'process',    to: 'automation',label: 'offsets',   stagger: 0.05, strength: 0.50 },
+    { from: 'automation', to: 'labor_cap', label: 'offsets',   stagger: 0.30, strength: 0.45 },
+    { from: 'market',     to: 'input',     label: 'constrains',stagger: 0.15, strength: 0.55 },
+    { from: 'capconst',   to: 'formation', label: 'constrains',stagger: 0.38, strength: 0.35 },
+    { from: 'margin',     to: 'formation', label: 'constrains',stagger: 0.45, strength: 0.48 },
+  ];
+
+  const nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
+
+  function nodeStateAt(node, t) {
+    const pos = lerpPath(node.path, t);
+    return { pos, px: toPxX(pos.x), py: toPxY(pos.y) };
+  }
+
+  function edgeResolution(edge, t) {
+    const local = clamp01((t - edge.stagger) / (1 - edge.stagger));
+    return smoothstep(local);
+  }
+
+  // ---- ambient texture field --------------------------------------------
+  let ambient = [];
+  function buildAmbient() {
+    const rand = mulberry32(778812);
+    ambient = Array.from({ length: 180 }, () => {
+      const [gx, gy] = gaussianPair(rand);
+      return {
+        x: DOMAIN.min + rand() * (DOMAIN.max - DOMAIN.min),
+        y: DOMAIN.min + rand() * (DOMAIN.max - DOMAIN.min),
+        phase: rand() * Math.PI * 2,
+        amp: 0.012 + rand() * 0.02,
+        size: 1.1 + rand() * 0.6,
+      };
+    });
+  }
+
+  function drawAxes() {
+    ctx.save();
+    for (let v = -1; v <= 1.0001; v += 0.25) {
+      ctx.strokeStyle = getVar('--hairline'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(toPxX(v), plot.y); ctx.lineTo(toPxX(v), plot.y + plot.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(plot.x, toPxY(v)); ctx.lineTo(plot.x + plot.w, toPxY(v)); ctx.stroke();
+    }
+    ctx.font = "10px 'IBM Plex Mono', monospace";
+    ctx.fillStyle = getVar('--text-mono-dim');
+    ctx.textAlign = 'center';
+    for (let v = -1; v <= 1.0001; v += 0.5) ctx.fillText(v.toFixed(1), toPxX(v), plot.y + plot.h + 18);
+    ctx.textAlign = 'right';
+    for (let v = -1; v <= 1.0001; v += 0.5) ctx.fillText(v.toFixed(1), plot.x - 12, toPxY(v) + 3);
+    ctx.textAlign = 'center';
+    ctx.fillStyle = getVar('--text-mono');
+    ctx.fillText('STRENGTH  ( φ )', plot.x + plot.w / 2, plot.y + plot.h + 40);
+    ctx.save();
+    ctx.translate(plot.x - 54, plot.y + plot.h / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillText('MOMENTUM  ( φ̇ )', 0, 0);
+    ctx.restore();
+    ctx.restore();
+  }
+
+  let hoverId = null;
+  let timeMs = 0;
+  let crosshairPx = null; // {x,y} in canvas px, or null when pointer is off the plot
+
+  // drawCrosshair — spatial (φ, φ̇) readout at the cursor. Independent of the
+  // scrubber's t: crosshair reads whatever frame is currently rendered, it
+  // doesn't control time — the two axes (space vs. time) don't collide.
+  function drawCrosshair() {
+    if (!crosshairPx) return;
+    const { x: px, y: py } = crosshairPx;
+    if (px < plot.x || px > plot.x + plot.w || py < plot.y || py > plot.y + plot.h) return;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.32)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.moveTo(px, plot.y); ctx.lineTo(px, plot.y + plot.h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(plot.x, py); ctx.lineTo(plot.x + plot.w, py); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    const phi = fromPxX(px), phidot = fromPxY(py);
+
+    // value tags on the axes, where the crosshair lines meet them
+    ctx.save();
+    ctx.font = "10px 'IBM Plex Mono', monospace";
+    const xLabel = phi.toFixed(2), yLabel = phidot.toFixed(2);
+    const xTagW = ctx.measureText(xLabel).width + 12;
+    ctx.fillStyle = 'rgba(20,20,22,0.92)';
+    ctx.fillRect(px - xTagW / 2, plot.y + plot.h + 6, xTagW, 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1;
+    ctx.strokeRect(px - xTagW / 2, plot.y + plot.h + 6, xTagW, 16);
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+    ctx.fillText(xLabel, px, plot.y + plot.h + 17);
+
+    const yTagW = ctx.measureText(yLabel).width + 12;
+    ctx.fillStyle = 'rgba(20,20,22,0.92)';
+    ctx.fillRect(plot.x - yTagW - 14, py - 8, yTagW, 16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.strokeRect(plot.x - yTagW - 14, py - 8, yTagW, 16);
+    ctx.fillStyle = '#fff';
+    ctx.fillText(yLabel, plot.x - yTagW / 2 - 14, py + 3);
+    ctx.restore();
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    drawAxes();
+
+    // ambient — faint unresolved observations with subtle drift
+    const drift = reduceMotion ? 0 : timeMs * 0.00012;
+    for (const p of ambient) {
+      const dx = Math.sin(p.phase + drift) * p.amp;
+      const dy = Math.cos(p.phase * 0.7 + drift * 0.85) * p.amp;
+      const px = toPxX(p.x + dx), py = toPxY(p.y + dy);
+      if (px < plot.x - 4 || px > plot.x + plot.w + 4 || py < plot.y - 4 || py > plot.y + plot.h + 4) continue;
+      ctx.beginPath();
+      ctx.fillStyle = momentumColor((p.y - DOMAIN.min) / 2);
+      ctx.globalAlpha = 0.11 + (p.size - 1.1) * 0.06;
+      ctx.arc(px, py, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // edges
+    let resolvedCount = 0;
+    for (const e of EDGES) {
+      const a = nodeStateAt(nodeById[e.from], t);
+      const b = nodeStateAt(nodeById[e.to], t);
+      const r = edgeResolution(e, t);
+      if (r < 0.03) continue;
+      if (r > 0.96) resolvedCount++;
+
+      const angle = Math.atan2(b.py - a.py, b.px - a.px);
+      const toRadius = (nodeById[e.to].resolved ? 5.5 : 3.2) * (hoverId === e.to || hoverId === e.from ? 1.15 : 1);
+      const endX = b.px - Math.cos(angle) * (toRadius + 6);
+      const endY = b.py - Math.sin(angle) * (toRadius + 6);
+      const weight = 0.6 + e.strength * 2.0;
+      const related = hoverId && (hoverId === e.from || hoverId === e.to);
+
+      ctx.save();
+      ctx.globalAlpha = (0.22 + r * 0.58) * (related || !hoverId ? 1 : 0.28);
+      ctx.strokeStyle = r > 0.85 ? getVar('--signal-lime') : 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = weight * (related ? 1.25 : 1);
+      ctx.setLineDash(r > 0.85 ? [] : r > 0.4 ? [6, 4] : [1, 4]);
+      ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(endX, endY); ctx.stroke();
+
+      if (r > 0.4) {
+        ctx.setLineDash([]);
+        ctx.globalAlpha = clamp01((r - 0.4) / 0.3) * (0.25 + r * 0.55) * (related || !hoverId ? 1 : 0.28);
+        const ah = 5 + weight * 0.6;
+        ctx.beginPath();
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX - Math.cos(angle - 0.4) * ah, endY - Math.sin(angle - 0.4) * ah);
+        ctx.lineTo(endX - Math.cos(angle + 0.4) * ah, endY - Math.sin(angle + 0.4) * ah);
+        ctx.closePath();
+        ctx.fillStyle = ctx.strokeStyle;
+        ctx.fill();
+      }
+      ctx.restore();
+
+      if (r > 0.5) {
+        const mx = (a.px + b.px) / 2, my = (a.py + b.py) / 2;
+        ctx.save();
+        ctx.globalAlpha = clamp01((r - 0.5) / 0.5) * (related || !hoverId ? 1 : 0.22);
+        ctx.font = "9px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = related ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.55)';
+        ctx.textAlign = 'center';
+        ctx.fillText(e.label, mx, my - 5);
+        ctx.restore();
+      }
+    }
+    nEdgesEl.textContent = `${resolvedCount}/${EDGES.length}`;
+
+    // nodes
+    let formationIntegrity = 0;
+    for (const n of NODES) {
+      const s = nodeStateAt(n, t);
+      n._px = s.px; n._py = s.py;
+      n._pos = s.pos;
+      const m01 = (s.pos.y - DOMAIN.min) / 2;
+      const color = n.resolved ? getVar('--unicorn-purple') : momentumColor(m01);
+      const isHover = hoverId === n.id;
+      const dim = hoverId && !isHover;
+      const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1);
+
+      // local density halo
+      if (!n._haloRand) n._haloRand = mulberry32(hashStr(n.id));
+      if (!n._haloOffsets) {
+        const rand = n._haloRand;
+        n._haloOffsets = Array.from({ length: Math.round(14 + n.contribution * 40) }, () => {
+          const [gx, gy] = gaussianPair(rand);
+          return { x: gx, y: gy };
+        });
+      }
+      const haloRadius = (10 + n.contribution * 22) * (isHover ? 1.12 : 1);
+      const haloAlpha = (0.10 + n.contribution * 0.10) * (dim ? 0.35 : 1);
+      for (const o of n._haloOffsets) {
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = haloAlpha;
+        ctx.arc(s.px + o.x * haloRadius, s.py + o.y * haloRadius, 1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      if (n.resolved) {
+        const final = n.path[n.path.length - 1];
+        const dist = Math.hypot(s.pos.x - final.x, s.pos.y - final.y);
+        formationIntegrity = clamp01(1 - dist / 0.9);
+        if (formationIntegrity > 0.3) {
+          const pulse = reduceMotion ? 0 : Math.sin(timeMs * 0.0022) * 0.5 + 0.5;
+          ctx.save();
+          ctx.globalAlpha = clamp01((formationIntegrity - 0.3) / 0.3) * 0.75 * (dim ? 0.4 : 1);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 1 + pulse * 0.4;
+          const ringR = 14 + formationIntegrity * 10 + pulse * 1.5;
+          ctx.beginPath(); ctx.arc(s.px, s.py, ringR, 0, Math.PI * 2); ctx.stroke();
+          // soft outer glow
+          ctx.globalAlpha *= 0.35;
+          ctx.lineWidth = 6;
+          ctx.beginPath(); ctx.arc(s.px, s.py, ringR + 4, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+        }
+      }
+
+      // hover ring
+      if (isHover) {
+        ctx.save();
+        ctx.globalAlpha = 0.55;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(s.px, s.py, r + 7, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.beginPath();
+      ctx.fillStyle = getVar('--node-fill');
+      ctx.arc(s.px, s.py, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = isHover ? 1.8 : 1.4;
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = dim ? 0.4 : 1;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      ctx.font = n.resolved
+        ? `${Math.max(16, Math.min(26, W * 0.016))}px Georgia, 'Times New Roman', serif`
+        : "11px 'IBM Plex Mono', monospace";
+      ctx.fillStyle = n.resolved ? color : 'rgba(255,255,255,0.82)';
+      ctx.globalAlpha = dim ? 0.35 : 1;
+      ctx.textAlign = s.px > plot.x + plot.w * 0.72 ? 'right' : 'left';
+      const lx = s.px + (ctx.textAlign === 'right' ? -12 : 12);
+      ctx.fillText(n.label, lx, s.py - (n.resolved ? 10 : 4));
+
+      if (n.provenance) {
+        ctx.font = "8px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.24)';
+        ctx.fillText(`[${n.provenance}]`, lx, s.py + (n.resolved ? 10 : 10));
+      } else if (n.resolved) {
+        ctx.font = "10px 'IBM Plex Mono', monospace";
+        ctx.fillStyle = 'rgba(255,255,255,0.42)';
+        ctx.fillText(`EMERGING · integrity ${formationIntegrity.toFixed(2)}`, lx, s.py + 12);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    integrityEl.textContent = formationIntegrity.toFixed(2);
+    nNodesEl.textContent = NODES.length;
+    tReadoutEl.textContent = String(Math.round(t * 47)).padStart(2, '0') + ':00';
+
+    drawCrosshair();
+  }
+
+  // ---- scrubber --------------------------------------------------------
+  let currentT = 0;
+  const scrubberEl = document.getElementById('scrubber');
+  const fillEl = document.getElementById('scrubber-fill');
+  const thumbEl = document.getElementById('scrubber-thumb');
+  const ticksEl = document.getElementById('scrubber-ticks');
+
+  function buildTicks() {
+    ticksEl.innerHTML = '';
+    const staggers = [...new Set(EDGES.map(e => e.stagger))].sort((a, b) => a - b);
+    for (const s of staggers) {
+      const tick = document.createElement('div');
+      tick.className = 'scrubber-tick';
+      tick.style.left = (s * 100) + '%';
+      ticksEl.appendChild(tick);
+    }
+  }
+
+  function setT(t, redraw = true) {
+    currentT = clamp01(t);
+    const pct = currentT * 100;
+    fillEl.style.width = pct + '%';
+    thumbEl.style.left = pct + '%';
+    if (redraw) {
+      draw(currentT);
+      if (panelOpenFor) renderPanel(panelOpenFor);
+    }
+  }
+
+  function tFromEvent(e) {
+    const rect = scrubberEl.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+    return x / rect.width;
+  }
+
+  let dragging = false;
+  scrubberEl.addEventListener('pointerdown', (e) => {
+    dragging = true;
+    scrubberEl.classList.add('dragging');
+    scrubberEl.setPointerCapture(e.pointerId);
+    stopPlay();
+    setT(tFromEvent(e));
+  });
+  scrubberEl.addEventListener('pointermove', (e) => { if (dragging) setT(tFromEvent(e)); });
+  scrubberEl.addEventListener('pointerup', () => { dragging = false; scrubberEl.classList.remove('dragging'); });
+  scrubberEl.addEventListener('pointercancel', () => { dragging = false; scrubberEl.classList.remove('dragging'); });
+
+  // ---- autoplay --------------------------------------------------------
+  let playing = false;
+  let playRaf = null;
+  let lastPlayTs = null;
+  const PLAY_SPEED = 0.045;
+
+  function stopPlay() {
+    playing = false;
+    playBtn.setAttribute('aria-pressed', 'false');
+    playBtn.textContent = '▶';
+    if (playRaf) { cancelAnimationFrame(playRaf); playRaf = null; }
+    lastPlayTs = null;
+  }
+
+  function playFrame(ts) {
+    if (!playing) return;
+    if (lastPlayTs === null) lastPlayTs = ts;
+    const dt = Math.min(0.05, (ts - lastPlayTs) / 1000);
+    lastPlayTs = ts;
+    let next = currentT + dt * PLAY_SPEED;
+    if (next >= 1) {
+      next = 1;
+      setT(next);
+      stopPlay();
+      return;
+    }
+    setT(next);
+    playRaf = requestAnimationFrame(playFrame);
+  }
+
+  function togglePlay() {
+    if (playing) {
+      stopPlay();
+    } else {
+      if (currentT >= 0.995) setT(0, false);
+      playing = true;
+      playBtn.setAttribute('aria-pressed', 'true');
+      playBtn.textContent = '❚❚';
+      lastPlayTs = null;
+      playRaf = requestAnimationFrame(playFrame);
+    }
+  }
+  playBtn.addEventListener('click', togglePlay);
+
+  // ---- continuous time for ambient / pulse ----
+  let rafId = null;
+  function loop(ts) {
+    timeMs = ts;
+    if (!dragging) {
+      draw(currentT);
+      if (panelOpenFor) renderPanel(panelOpenFor, false);
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // ---- node selection -> detail panel -----------------------------------
+  const panel = document.getElementById('panel');
+  const panelDragHandle = document.getElementById('panel-drag-handle');
+  const panelTitle = document.getElementById('panel-title');
+  const panelDomain = document.getElementById('panel-domain');
+  const panelEyebrow = document.getElementById('panel-domain-eyebrow');
+  const panelContrib = document.getElementById('panel-contrib');
+  const panelPhi = document.getElementById('panel-phi');
+  const panelPhidot = document.getElementById('panel-phidot');
+  const opRows = document.getElementById('op-rows');
+  const detailCanvas = document.getElementById('detail-canvas');
+  const dctx = detailCanvas.getContext('2d');
+  let panelOpenFor = null;
+
+  const OP_LIBRARY = ['TEMPORAL', 'STRUCTURAL', 'INDEPENDENCE', 'STABILITY'];
+  const OP_STATES = { PASS: 'op-pass', UNDETERMINED: 'op-undetermined', CONFLICT: 'op-conflict', 'N/A': 'op-na' };
+
+  function syntheticOpsFor(nodeId) {
+    const rand = mulberry32(hashStr(nodeId));
+    return OP_LIBRARY.map(name => {
+      const r = rand();
+      const state = r < 0.55 ? 'PASS' : r < 0.75 ? 'UNDETERMINED' : r < 0.9 ? 'CONFLICT' : 'N/A';
+      return { name, state };
+    });
+  }
+
+  function renderDetailScatter(nodeId) {
+    const rect = detailCanvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    detailCanvas.width = rect.width * dpr; detailCanvas.height = rect.height * dpr;
+    dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dctx.clearRect(0, 0, rect.width, rect.height);
+
+    const node = nodeById[nodeId];
+    const rand = mulberry32(hashStr(nodeId) ^ 0x9e3779b9);
+    const cx = rect.width / 2, cy = rect.height / 2;
+
+    // faint path trail
+    if (node.path && node.path.length > 1) {
+      dctx.save();
+      dctx.strokeStyle = 'rgba(255,255,255,0.10)';
+      dctx.lineWidth = 1;
+      dctx.setLineDash([3, 4]);
+      dctx.beginPath();
+      for (let i = 0; i < node.path.length; i++) {
+        const p = node.path[i];
+        const x = cx + p.x * rect.width * 0.38;
+        const y = cy - p.y * rect.height * 0.38;
+        if (i === 0) dctx.moveTo(x, y); else dctx.lineTo(x, y);
+      }
+      dctx.stroke();
+      dctx.restore();
+    }
+
+    // density cloud
+    for (let i = 0; i < 100; i++) {
+      const [gx, gy] = gaussianPair(rand);
+      const x = cx + gx * rect.width * 0.16;
+      const y = cy + gy * rect.height * 0.22;
+      dctx.beginPath();
+      dctx.fillStyle = momentumColor(clamp01(0.5 + gy * 0.3));
+      dctx.globalAlpha = 0.55;
+      dctx.arc(x, y, 1.35, 0, Math.PI * 2);
+      dctx.fill();
+    }
+    dctx.globalAlpha = 1;
+
+    // current position marker
+    const pos = node._pos || lerpPath(node.path, currentT);
+    const mx = cx + pos.x * rect.width * 0.38;
+    const my = cy - pos.y * rect.height * 0.38;
+    dctx.beginPath();
+    dctx.fillStyle = node.resolved ? getVar('--unicorn-purple') : momentumColor((pos.y - DOMAIN.min) / 2);
+    dctx.arc(mx, my, 3.2, 0, Math.PI * 2);
+    dctx.fill();
+    dctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    dctx.lineWidth = 1;
+    dctx.beginPath(); dctx.arc(mx, my, 6, 0, Math.PI * 2); dctx.stroke();
+
+    // axes
+    dctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    dctx.beginPath(); dctx.moveTo(0, cy); dctx.lineTo(rect.width, cy); dctx.stroke();
+    dctx.beginPath(); dctx.moveTo(cx, 0); dctx.lineTo(cx, rect.height); dctx.stroke();
+  }
+
+  function renderPanel(nodeId, rebuildOps = true) {
+    const node = nodeById[nodeId];
+    const pos = node._pos || lerpPath(node.path, currentT);
+    panelEyebrow.textContent = node.resolved ? 'RESOLVED FORMATION' : 'COMPONENT';
+    panelTitle.textContent = node.label;
+    panelDomain.textContent = node.provenance
+      ? `PROVENANCE — ${node.provenance}`
+      : 'PROVENANCE — cross-component (no single origin)';
+    panelContrib.textContent = node.contribution.toFixed(2);
+    panelPhi.textContent = pos.x.toFixed(2);
+    panelPhidot.textContent = pos.y.toFixed(2);
+
+    if (rebuildOps) {
+      opRows.innerHTML = syntheticOpsFor(nodeId).map(op => `
+        <div class="op-row">
+          <span class="op-name">${op.name}<span class="op-class">CLASS A</span></span>
+          <span class="op-pill ${OP_STATES[op.state]}">${op.state}</span>
+        </div>`).join('');
+    }
+    renderDetailScatter(nodeId);
+  }
+
+  document.getElementById('panel-close').addEventListener('click', () => {
+    panel.classList.remove('open');
+    panelOpenFor = null;
+  });
+
+  // ---- draggable panel — grab the top strip, reposition anywhere on the
+  // field. Switches from right/bottom-anchored to left/top-anchored on
+  // first drag so it stays exactly where dropped.
+  let panelDrag = null;
+  let panelUserPositioned = false;
+  panelDragHandle.addEventListener('pointerdown', (e) => {
+    const rect = panel.getBoundingClientRect();
+    panel.style.left = rect.left + 'px';
+    panel.style.top = rect.top + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+    panelUserPositioned = true;
+    panelDrag = { dx: e.clientX - rect.left, dy: e.clientY - rect.top };
+    panel.classList.add('dragging');
+    panelDragHandle.setPointerCapture(e.pointerId);
+  });
+  panelDragHandle.addEventListener('pointermove', (e) => {
+    if (!panelDrag) return;
+    const rect = panel.getBoundingClientRect();
+    const maxL = window.innerWidth - rect.width - 8;
+    const maxT = window.innerHeight - rect.height - 8;
+    panel.style.left = Math.max(8, Math.min(maxL, e.clientX - panelDrag.dx)) + 'px';
+    panel.style.top = Math.max(8, Math.min(maxT, e.clientY - panelDrag.dy)) + 'px';
+  });
+  panelDragHandle.addEventListener('pointerup', () => {
+    panelDrag = null;
+    panel.classList.remove('dragging');
+  });
+  panelDragHandle.addEventListener('pointercancel', () => {
+    panelDrag = null;
+    panel.classList.remove('dragging');
+  });
+
+  function hitTest(clientX, clientY) {
+    return NODES.find(n => {
+      const r = n.resolved ? 22 : 15;
+      return Math.hypot(n._px - clientX, n._py - clientY) < r;
+    });
+  }
+
+  let pointerDownPos = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    pointerDownPos = { x: e.clientX, y: e.clientY };
+  });
+  canvas.addEventListener('pointerup', (e) => {
+    if (!pointerDownPos) return;
+    const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
+    pointerDownPos = null;
+    if (moved > 6) return;
+    const hit = hitTest(e.clientX, e.clientY);
+    if (hit) {
+      panelOpenFor = hit.id;
+      renderPanel(hit.id);
+      panel.classList.add('open');
+    }
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const hit = hitTest(e.clientX, e.clientY);
+    const next = hit ? hit.id : null;
+    if (next !== hoverId) {
+      hoverId = next;
+      canvas.style.cursor = next ? 'pointer' : 'default';
+    }
+    crosshairPx = { x: e.clientX, y: e.clientY };
+    draw(currentT);
+  });
+  canvas.addEventListener('pointerleave', () => {
+    hoverId = null;
+    crosshairPx = null;
+    canvas.style.cursor = 'default';
+    draw(currentT);
+  });
+
+  // ---- keyboard --------------------------------------------------------
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.key === 'Escape') {
+      panel.classList.remove('open');
+      panelOpenFor = null;
+      stopPlay();
+      return;
+    }
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      togglePlay();
+      return;
+    }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      stopPlay();
+      const step = e.shiftKey ? 0.08 : 0.02;
+      setT(currentT + (e.key === 'ArrowRight' ? step : -step));
+    }
+  });
+
+  // ---- load sequence -----------------------------------------------------
+  const DEFAULT_T = 0.68;
+  const DURATION = 2000;
+  let animStart = null;
+  function loadFrame(ts) {
+    if (animStart === null) animStart = ts;
+    const p = Math.min(1, (ts - animStart) / DURATION);
+    setT(smoothstep(p) * DEFAULT_T);
+    if (p < 1) requestAnimationFrame(loadFrame);
+    else rafId = requestAnimationFrame(loop);
+  }
+
+  // positionPanelDefault — places the panel relative to the REAL computed
+  // plot bounds (plot.x/plot.y), not a guessed CSS constant. A fixed
+  // `left:32px` can't know where the y-axis labels actually render (that's
+  // JS-computed in resize()) — this is what makes the default position
+  // correct on any viewport instead of overlapping the axis column.
+  function positionPanelDefault() {
+    if (panelUserPositioned) return;
+    panel.style.left = (plot.x + 24) + 'px';
+    panel.style.top = (plot.y + 16) + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  }
+
+  function init() {
+    resize();
+    buildAmbient();
+    buildTicks();
+    positionPanelDefault();
+    if (reduceMotion) {
+      setT(DEFAULT_T);
+      rafId = requestAnimationFrame(loop);
+    } else {
+      setT(0, false);
+      requestAnimationFrame(loadFrame);
+    }
+  }
+  window.addEventListener('resize', () => { resize(); positionPanelDefault(); draw(currentT); });
+  init();
+})();
+</script>
+
+</body>
+</html>

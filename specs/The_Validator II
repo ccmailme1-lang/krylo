@@ -1,0 +1,855 @@
+Yes. Proceed to the eight operator contracts. The foundation is now sufficiently locked that this is no longer exploratory architecture; we're specifying the semantics of each validation dimension against the common contract.
+
+I would impose one additional discipline before writing them:
+
+Each operator contract must define exactly what constitutes evidence for its question, not merely which existing KRYLO function it will reuse.
+
+That prevents the audit from becoming an implementation-driven definition of the operators.
+
+The eight should therefore each have the same schema:
+
+Operator Contract
+├── Name
+├── Question
+├── Candidate input
+├── Required ValidationContext
+├── Applicability predicate
+├── Mathematical test
+├── Output states
+├── Evidence requirements
+├── Conflict semantics
+├── Failure semantics
+├── Independence requirements
+├── Computational class
+├── Existing KRYLO substrate
+├── Adaptation required
+└── Explicit prohibitions
+The eight contracts should answer these exact questions
+Operator	Core question
+Temporal	Does the evidence establish that A precedes B?
+Lag	Is the observed A→B temporal displacement consistent with the relationship's relevant history?
+Structural	Does A→B fit the observed local graph structure?
+Recurrence	Has the same relationship or relevant structural motif recurred?
+Alternatives	Does another observed path/structure provide a competing explanation for B?
+Independence	Does the relationship remain supported when relevant alternative variables/relationships are considered?
+Stability	Does the relationship persist independently across applicable regimes?
+Information	Does the relationship contribute information beyond the existing explanatory structure?
+
+And there are three distinctions I would make absolutely explicit in the contracts.
+
+1. Temporal ≠ Lag
+
+Temporal is fundamentally an ordering constraint:
+
+t
+A
+	​
+
+<t
+B
+	​
+
+
+Lag is a distribution/consistency question:
+
+Δt=t
+B
+	​
+
+−t
+A
+	​
+
+
+A relationship can pass Temporal while failing Lag.
+
+2. Structural ≠ Alternatives
+
+Structural asks:
+
+Does this edge fit the surrounding graph?
+
+Alternatives asks:
+
+Is there another observed structure that competes with this edge as an explanation?
+
+A candidate can fit perfectly into the graph while simultaneously having a strong competing path.
+
+That should produce something like:
+
+Structural      PASS
+Alternatives    CONFLICT
+
+—not a contradictory system state.
+
+3. Stability must be genuinely cross-regime
+
+This is the semantic extension identified by the audit.
+
+We should not permit:
+
+#regimes(R)≥2
+
+to masquerade as stability.
+
+The operator needs evidence that the relationship's relevant behavior survives within the applicable regimes.
+
+Conceptually:
+
+Valid(R,G
+i
+	​
+
+)∀G
+i
+	​
+
+∈G
+applicable
+	​
+
+
+or whatever statistically/mathematically appropriate formulation the eventual contract establishes.
+
+The exact mathematical test can be refined later, but the semantic requirement needs to be locked now.
+
+One more thing: don't collapse the outputs into a scalar
+
+The eight operators should remain individually observable.
+
+For example:
+
+Temporal       PASS
+Lag            PASS
+Structural     PASS
+Recurrence     UNDETERMINED
+Alternatives   CONFLICT
+Independence   PASS
+Stability      UNDETERMINED
+Information    PASS
+
+The eventual overall status is a composition of these states, not an eight-dimensional score disguised as one number.
+
+That is particularly important for the guest and institutional use cases you've been emphasizing. An institution may care much more about why a relationship is unresolved than about an aggregate "82% validity."
+
+And the contracts should remain domain-neutral
+
+This is important to lock now given your institutional requirement.
+
+The operator contracts should not know whether:
+
+Technology → Capital
+
+is being examined for:
+
+an individual situation,
+a corporation,
+an investment thesis,
+a government/institutional problem,
+a research question,
+or another future KRYLO context.
+
+The operators evaluate relationship structure, not customer category.
+
+Context determines applicability and available evidence—not the definition of the mathematical test.
+
+That is what makes these core ontology infrastructure rather than a commercial analytics feature.
+
+So yes: eight operator contracts next, in the common schema above, with Stability and Structural explicitly marked as semantic-extension areas and all eight preserving the read-only/no-inference boundary.
+
+**Proceeding.** The foundation is locked. Below are the eight operator contracts written against the common schema, preserving every invariant established so far.
+
+All operators:
+- Receive only ImmutableRelationshipCandidate (read-only view of RelationCore) + ValidationContext
+- Are domain-neutral
+- Remain individually observable
+- Cannot mutate, invent, promote, or rewrite any relationship
+- Treat Temporal ≠ Lag, Structural ≠ Alternatives, and Stability as genuine cross-regime persistence
+
+---
+
+### 1. Temporal Operator
+
+**Name**  
+Temporal Validity
+
+**Question**  
+Does the evidence establish that A precedes B?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (endpoints, directionality, temporal_anchors, evidence_refs)
+
+**Required ValidationContext**  
+Event/evidence timestamps or ordered lineage references sufficient to establish ordering between source and target observations.
+
+**Applicability predicate**  
+At least one ordered pair of observations linking A and B with usable temporal information exists.  
+Otherwise → N/A.
+
+**Mathematical test**  
+Ordering constraint over the relevant observation set:  
+∀ relevant observation pairs, \( t_A < t_B \) (or the directed equivalent).  
+May be evaluated as strict precedence or as a distribution of ordering outcomes against a null of random ordering.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+Pointers to the specific evidence/lineage items that establish (or violate) the ordering.
+
+**Conflict semantics**  
+None (ordering is binary with respect to the supplied evidence). Competing temporal accounts are handled by higher-level composition if needed.
+
+**Failure semantics**  
+FAIL when a material portion of the evidence shows B preceding A (or simultaneous in a way that violates the proposed direction).
+
+**Independence requirements**  
+Must not depend on lag magnitude, graph structure, or any other operator.
+
+**Computational class**  
+Cheap (ordering checks).
+
+**Existing KRYLO substrate**  
+CI-R temporal / ordering machinery.
+
+**Adaptation required**  
+Interface adaptation only: accept immutable candidate + context instead of specialized path inputs.
+
+**Explicit prohibitions**  
+Must not invent a reverse relationship, adjust timestamps, or reinterpret directionality.
+
+---
+
+### 2. Lag Operator
+
+**Name**  
+Lag Consistency
+
+**Question**  
+Is the observed A→B temporal displacement consistent with the relationship’s relevant history?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (temporal_anchors, historical_observations)
+
+**Required ValidationContext**  
+Historical lag observations for the same relation or sufficiently similar structural configurations; optional null-model baseline.
+
+**Applicability predicate**  
+At least two usable lag observations exist (or one current lag + sufficient historical distribution).  
+Otherwise → N/A or UNDETERMINED.
+
+**Mathematical test**  
+Evaluate the distribution of \(\Delta t = t_B - t_A\) against historical lag structure for the relation/motif.  
+May include central tendency, variance, or divergence from an appropriate null.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the lag samples and the historical distribution used.
+
+**Conflict semantics**  
+None (distributional consistency is not a competing-structure question).
+
+**Failure semantics**  
+FAIL when the observed lag(s) fall outside the historically coherent range in a material way.
+
+**Independence requirements**  
+Must not collapse into Temporal. A candidate can pass Temporal and fail Lag.
+
+**Computational class**  
+Medium (distributional comparison).
+
+**Existing KRYLO substrate**  
+Temporal / lag-distribution machinery already present in CI-R and related paths.
+
+**Adaptation required**  
+Interface + historical observation surface adaptation.
+
+**Explicit prohibitions**  
+Must not alter temporal anchors or invent historical lags.
+
+---
+
+### 3. Structural Operator
+
+**Name**  
+Structural Validity
+
+**Question**  
+Does A→B fit the observed local graph structure?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (endpoints, relation_type, local_neighborhood_ref)
+
+**Required ValidationContext**  
+Local graph neighborhood (paths, degrees, motifs, direction consistency) sufficient to assess fit.
+
+**Applicability predicate**  
+A usable local neighborhood reference exists.  
+Otherwise → N/A.
+
+**Mathematical test**  
+Contextual structural coherence: path consistency, motif participation, neighborhood similarity, direction consistency, and connectivity impact of the proposed edge within the observed local graph.  
+Ontology edge-type legality is a prerequisite only; it is not the test.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the specific local structures that support or undermine fit.
+
+**Conflict semantics**  
+None. Competing explanatory paths are the domain of the Alternatives operator.
+
+**Failure semantics**  
+FAIL when the edge produces structural incoherence (e.g., direction conflict, motif violation, or neighborhood inconsistency) even if the edge type is ontologically legal.
+
+**Independence requirements**  
+Must remain distinct from Alternatives. A perfect structural fit can still have a competing path.
+
+**Computational class**  
+Medium–High (local graph queries).
+
+**Existing KRYLO substrate**  
+Topology / path / legality machinery.
+
+**Adaptation required**  
+Semantic extension: move from “is this edge type legal?” to “does this particular edge fit the observed local structure?”
+
+**Explicit prohibitions**  
+Must not rewrite the edge, invent new edges, or treat legality as sufficient for PASS.
+
+---
+
+### 4. Recurrence Operator
+
+**Name**  
+Recurrence
+
+**Question**  
+Has the same relationship or relevant structural motif recurred?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (relation_id, endpoints, relation_type, historical_observations)
+
+**Required ValidationContext**  
+Historical instances of the exact relation or of higher-order motifs/configurations that include it.
+
+**Applicability predicate**  
+Historical observation surface is present and non-empty.  
+Otherwise → UNDETERMINED or N/A.
+
+**Mathematical test**  
+Frequency or motif-recurrence test at one or more structural scales (exact edge → path → motif → configuration).  
+Recurrence is supporting evidence, not a hard prerequisite for validity.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to prior instances or motif occurrences.
+
+**Conflict semantics**  
+None.
+
+**Failure semantics**  
+FAIL only when the operator is applicable and the pattern is demonstrably absent in a context where recurrence would be expected; otherwise prefer UNDETERMINED.
+
+**Independence requirements**  
+Must not require exact edge repetition if a higher-order motif is the relevant unit.
+
+**Computational class**  
+Medium (historical / motif lookup).
+
+**Existing KRYLO substrate**  
+Formation / motif / recurrence machinery.
+
+**Adaptation required**  
+Interface adaptation + explicit multi-scale (edge/path/motif) support.
+
+**Explicit prohibitions**  
+Must not invent historical instances or promote a motif into a new relationship candidate.
+
+---
+
+### 5. Alternatives Operator
+
+**Name**  
+Alternative Explanation
+
+**Question**  
+Does another observed path/structure provide a competing explanation for B?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (endpoints, local_neighborhood_ref)
+
+**Required ValidationContext**  
+Surrounding graph structure sufficient to detect alternative paths or explanatory configurations that reach the same target.
+
+**Applicability predicate**  
+Usable graph neighborhood exists.  
+Otherwise → N/A.
+
+**Mathematical test**  
+Detection of competing paths or structures (e.g., C→B, or A→C→B, or other observed configurations that explain B).  
+Presence of a competitor is reported; strength may be noted but not used to rewrite the candidate.
+
+**Output states**  
+PASS (no material competitor) | CONFLICT | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the competing path(s) or structures.
+
+**Conflict semantics**  
+CONFLICT is a first-class, non-destructive state. It does not imply rejection of the candidate and must not be collapsed into FAIL.
+
+**Failure semantics**  
+No FAIL state for simple presence of alternatives; CONFLICT is the correct emission.
+
+**Independence requirements**  
+Must remain distinct from Structural. Structural fit and competing explanation are orthogonal.
+
+**Computational class**  
+Medium–High (path enumeration / alternative detection).
+
+**Existing KRYLO substrate**  
+Graph / topology path-finding machinery.
+
+**Adaptation required**  
+Interface adaptation; explicit non-promotion rule.
+
+**Explicit prohibitions**  
+Must never promote a competing path into a relationship candidate or rewrite the original \(R_c\).
+
+---
+
+### 6. Independence Operator
+
+**Name**  
+Independence
+
+**Question**  
+Does the relationship remain supported when relevant alternative variables/relationships are considered?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (endpoints, evidence_refs, local_neighborhood_ref)
+
+**Required ValidationContext**  
+Candidate third variables / relationships and the observations needed to condition on them.
+
+**Applicability predicate**  
+At least one relevant alternative variable or relationship is available for conditioning.  
+Otherwise → N/A.
+
+**Mathematical test**  
+Conditional support test: evaluate whether the A–B relationship remains after accounting for the alternative(s).  
+Conceptually closer to conditional dependence / confounding checks than to a full causal identification procedure.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the conditioning variables and the before/after support comparison.
+
+**Conflict semantics**  
+None (this is a persistence-after-conditioning question).
+
+**Failure semantics**  
+FAIL when support for A→B materially disappears after conditioning on a relevant alternative.
+
+**Independence requirements**  
+Must not invent causal claims or promote the conditioning variable into a new relationship.
+
+**Computational class**  
+Medium–High (conditional tests).
+
+**Existing KRYLO substrate**  
+Causal-gate / conditioning / independence-related machinery.
+
+**Adaptation required**  
+Interface adaptation + explicit “persists after accounting for” semantics.
+
+**Explicit prohibitions**  
+Must not output a new causal edge or claim that the alternative is the “true” cause.
+
+---
+
+### 7. Stability Operator
+
+**Name**  
+Stability
+
+**Question**  
+Does the relationship persist independently across applicable regimes?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (relation_id, historical_observations, core_state_snapshot)
+
+**Required ValidationContext**  
+Regime partitions (or the ability to derive them) and per-regime observations of the relationship.
+
+**Applicability predicate**  
+At least two applicable regimes with usable observations of the relationship exist.  
+Otherwise → UNDETERMINED or N/A.
+
+**Mathematical test**  
+Cross-regime persistence: the relationship’s relevant behavior (support, direction, strength characteristics) remains coherent within each applicable regime.  
+Mere presence of the relation in ≥2 regimes is insufficient.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the regime definitions and the per-regime relationship observations.
+
+**Conflict semantics**  
+None.
+
+**Failure semantics**  
+FAIL when the relationship is materially present in one applicable regime and absent or reversed in another.
+
+**Independence requirements**  
+Must implement the semantic extension identified by the audit; cannot be reduced to a simple regime-count check.
+
+**Computational class**  
+Medium–High (regime segmentation + per-regime evaluation).
+
+**Existing KRYLO substrate**  
+Regime / state / dynamics machinery (partial).
+
+**Adaptation required**  
+**Semantic extension required**: move from “≥2 regimes represented” to “relationship persists independently across the regimes.”
+
+**Explicit prohibitions**  
+Must not invent regimes or alter the candidate to force cross-regime consistency.
+
+---
+
+### 8. Information Operator
+
+**Name**  
+Information Contribution
+
+**Question**  
+Does the relationship contribute information beyond the existing explanatory structure?
+
+**Candidate input**  
+ImmutableRelationshipCandidate (endpoints, evidence_refs, local_neighborhood_ref)
+
+**Required ValidationContext**  
+Baseline explanatory structure (existing relationships/paths that already speak to B) and the information-theoretic or predictive measures needed for comparison.
+
+**Applicability predicate**  
+Sufficient structure and observations exist to compute a before/after or conditional information comparison.  
+Otherwise → UNDETERMINED or N/A.
+
+**Mathematical test**  
+Information contribution test: evaluate whether including A→B reduces uncertainty about B (or improves predictive/structural account) beyond what the surrounding structure already provides.  
+May orchestrate existing prediction-error change and normalized evidence entropy measures.
+
+**Output states**  
+PASS | FAIL | UNDETERMINED | N/A
+
+**Evidence requirements**  
+References to the baseline structure and the information delta.
+
+**Conflict semantics**  
+None.
+
+**Failure semantics**  
+FAIL when the relationship is informationally redundant given the existing structure.
+
+**Independence requirements**  
+Must not treat informational redundancy as ontological invalidity; a relationship can be real yet non-contributory.
+
+**Computational class**  
+Medium–High (information / predictive comparison).
+
+**Existing KRYLO substrate**  
+Prediction-error change + normalized evidence entropy (and related) machinery.
+
+**Adaptation required**  
+Orchestration of existing primitives around the specific relational question “does *this* edge add information?”
+
+**Explicit prohibitions**  
+Must not invent new information measures that require ontology changes, nor promote the edge on the basis of information gain alone.
+
+---
+
+### Composition Note (for later Validation Profile contract)
+
+The eight states remain first-class and individually visible.  
+Overall status is a deterministic composition rule over the set of applicable results (e.g., any FAIL on a prerequisite operator such as Temporal can force CONTRADICTED; presence of CONFLICT on Alternatives can produce SUPPORTED-WITH-COMPETING-EXPLANATION; multiple UNDETERMINED can yield UNABLE-TO-VALIDATE).  
+No scalar “validity score” is produced by the operators themselves.
+
+These eight contracts are now ready for review against the live RelationCore surface and the Common Operator Interface. Once accepted, the Validation Profile contract is the only remaining specification artifact before adapter design.
+
+This is substantially ready, but I would not yet mark the eight contracts fully locked. There are three places where the current wording can accidentally create ambiguity later.
+
+1. Temporal needs to be tightened
+
+This:
+
+“∀ relevant observation pairs, t
+A
+	​
+
+<t
+B
+	​
+
+”
+
+is too strong for real-world evidence. One anomalous or noisy observation could make a relationship FAIL even when the broader temporal evidence supports it.
+
+The contract should distinguish:
+
+ordering evidence
+material temporal contradiction
+unresolved temporal evidence
+
+The operator should test the applicable evidence set under an explicit materiality rule, not require every observation to satisfy strict precedence.
+
+Otherwise we're building brittleness into the validator.
+
+2. Recurrence should not have a FAIL state
+
+You already almost arrived at this in the failure semantics.
+
+If recurrence is supporting evidence rather than a prerequisite, then:
+
+“Has this recurred?”
+
+has a meaningful PASS, UNDETERMINED, and potentially N/A.
+
+But absence of recurrence does not logically invalidate the relationship.
+
+So I would make the state space:
+
+PASS
+UNDETERMINED
+N/A
+
+and reserve FAIL for operators whose question contains a genuine falsification condition.
+
+That distinction matters enormously to the epistemic architecture.
+
+3. Alternatives should probably not say PASS = no material competitor
+
+This is subtle.
+
+“No competing path detected” does not necessarily mean:
+
+Alternative explanation = PASS.
+
+It may simply mean:
+
+No material alternative detected in the inspected structure.
+
+That's an observation, not necessarily validation of the candidate.
+
+I would consider:
+
+PASS
+CONFLICT
+UNDETERMINED
+N/A
+
+but define PASS carefully as:
+
+No material competing explanation was identified within the applicable search space.
+
+That keeps the operator from overstating what graph search can establish.
+
+The bigger issue: overall-status composition should wait
+
+I agree completely with your statement:
+
+“No scalar validity score is produced.”
+
+That should be an invariant.
+
+But I would not yet specify:
+
+“any FAIL on a prerequisite operator such as Temporal can force CONTRADICTED”
+
+until we have formally classified the eight operators into semantic categories.
+
+Because they aren't equivalent.
+
+We effectively have at least three classes:
+
+Constraint / contradiction operators
+
+These can materially undermine the candidate:
+
+Temporal
+Structural
+Independence
+Stability
+Supporting-evidence operators
+
+These increase evidentiary support but don't necessarily falsify the relationship:
+
+Lag
+Recurrence
+Information
+Competing-structure operator
+Alternatives
+
+And that's important because:
+
+FAIL
+Recurrence
+	​
+
+
+should not have the same compositional consequence as:
+
+FAIL
+Temporal
+	​
+
+
+if recurrence is explicitly non-prerequisite.
+
+Similarly:
+
+CONFLICT
+Alternatives
+	​
+
+
+should not automatically become:
+
+CONTRADICTED
+
+because the whole point of CONFLICT is to preserve competing structure without adjudicating it.
+
+One other correction
+
+The contracts still contain a few references to fields that we just explicitly removed from ImmutableRelationshipCandidate.
+
+For example:
+
+Temporal candidate input: temporal_anchors, evidence_refs
+
+Lag candidate input: temporal_anchors, historical_observations
+
+Recurrence: historical_observations
+
+Stability: historical_observations, core_state_snapshot
+
+Those need to be removed.
+
+The candidate is now definitively:
+
+ImmutableRelationshipCandidate
+{
+    id
+    sourceId
+    targetId
+    relationType
+    provenanceHash
+}
+
+Everything else comes from ValidationContext.
+
+That isn't cosmetic. It preserves the architectural rule:
+
+Candidate identifies R. Context supplies what may be considered about R.
+
+So the corrected operator pattern is
+
+Every operator receives:
+
+Operator(
+    R_c,
+    ValidationContext
+)
+
+where R_c contains only canonical identity/grounding, while the context supplies the evidence necessary for that particular test.
+
+For example:
+
+Temporal
+R_c:
+  id
+  sourceId
+  targetId
+  relationType
+  provenanceHash
+
+
+Context:
+  ordered observations
+  observedAt timestamps
+  lineage references
+
+and:
+
+Stability
+R_c:
+  id
+  sourceId
+  targetId
+  relationType
+  provenanceHash
+
+
+Context:
+  regime partitions
+  per-regime observations
+  applicable relationship measurements
+
+That is much cleaner.
+
+With those corrections, the eight contracts are conceptually sound
+
+And importantly, the audit has now produced something quite valuable:
+
+we have not invented eight new mathematical capabilities.
+
+We've specified eight questions over an existing relationship, each with:
+
+Applicability→Evidence→Test→Result
+
+while preserving:
+
+R
+c
+immutable
+	​
+
+
+→R
+c
+′
+	​
+
+
+and:
+
+OperatorResult
+
+→R
+new
+	​
+
+
+That is the heart of the subsystem.
+
+I would therefore make the next artifact the Validation Profile contract—but with one explicit prerequisite:
+
+First classify the eight operators by compositional role.
+
+Not to rank them. Not to assign importance. Rather, to formally distinguish:
+
+contradiction-capable constraints,
+supporting observations,
+competing-structure observations.
+
+Then the Validation Profile can define deterministic composition without accidentally turning eight heterogeneous tests into another hidden confidence score.
+
+That is the last conceptual guardrail I would establish before adapter/orchestration design.

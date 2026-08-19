@@ -39,8 +39,11 @@ function domainLabel(domain) {
 
 // Same formula as conemap.jsx's Cone component -- reused exactly so this text's percentages
 // never diverge from what the cones themselves show.
+function rawVelocity(pressure) {
+  return (pressure - 50) * 0.3;
+}
 function velocityText(pressure) {
-  const v = (pressure - 50) * 0.3;
+  const v = rawVelocity(pressure);
   const sign = v > 0 ? '+' : '';
   return `${sign}${Math.round(v)}%`;
 }
@@ -52,80 +55,156 @@ function listWithAnd(names) {
   return `${names.slice(0, -1).join(', ')}, and ${names[names.length - 1]}`;
 }
 
-// Rotation, keyed to the calendar day: the same classified state (STABLE/EMERGING buckets
-// rarely flip day to day) was rendering the exact same sentence for as long as the bucket held
-// -- looked frozen even though the underlying pressures were live. These variants are all
-// derived from the same real per-domain magnitudes/relationships, just leading with a different
-// true fact each day, so a returning visitor sees the data move even when the bucket doesn't.
-const DAY_INDEX = Math.floor(Date.now() / 86400000);
+function domainByFormationId(domains, id) {
+  return domains.find(d => d.formationId === id)?.label ?? id;
+}
 
-// Returns { emphasis, headlineRest, paragraph } -- emphasis is the one word/phrase rendered in
-// lime, matching the Dual Voice doctrine's use of color as meaning, not decoration.
-function buildNarrative(domains, relationships) {
+// Selection is a hash of the REAL current per-domain magnitudes/volatilities -- not the
+// calendar. It only changes when the underlying signal actually changes, so a guest sees new
+// framing exactly as fast as new data comes in, and two visits with identical data get the same
+// (honest) read rather than a fake illusion of change. Was DAY_INDEX-keyed before; that rotated
+// on a 24h timer regardless of whether anything real had moved, which read as stagnant.
+function stateHash(domains) {
+  return domains.reduce((h, d) => h + Math.round(d.magnitude) + Math.round(d.volatility * 100), 0);
+}
+
+// Builds every candidate headline the CURRENT real data actually supports -- relationship
+// dynamics (CONVERGING/WEAKENING/DIVERGING, real fields from formationrelationship.js, not
+// previously surfaced here), volatility standouts, opposite-direction pairs, and an emerging
+// domain closing in on a confirmed one -- on top of the original aggregate/leader read. Each
+// candidate has its own real precondition; nothing is invented to pad the list (§22).
+function buildCandidates(domains, relationships) {
   const stable = domains.filter(d => d.formationState === 'STABLE');
   const emerging = domains.filter(d => d.formationState === 'EMERGING');
+  const active = domains.filter(d => d.formationState);
   const topRel = relationships[0] ?? null;
+  const candidates = [];
 
-  let headlinePre, emphasis, headlinePost;
   if (stable.length >= 2) {
     const names = listWithAnd(stable.map(d => d.label));
     const deltas = listWithAnd(stable.map(d => velocityText(d.magnitude)));
     const leader = stable.reduce((max, d) => Math.abs(d.magnitude - 50) > Math.abs(max.magnitude - 50) ? d : max, stable[0]);
     const leaderDelta = velocityText(leader.magnitude);
+    const groupParagraph = `${names} all moved by similar amounts this cycle (${deltas}) — that's not ${stable.length} coincidences, it's one pattern. ${leader.label} led at ${leaderDelta} — that's the one to look at first.`;
 
-    const variants = [
-      {
-        headlinePre: `${stable.length} domains are moving`, emphasis: 'together',
-        headlinePost: topRel ? ' — and two of them are quietly connected.' : '.',
-      },
-      {
-        headlinePre: `${leader.label} moved the`, emphasis: 'most',
-        headlinePost: ` of ${stable.length} domains this cycle.`,
-      },
-    ];
-    if (topRel) {
-      const a = domains.find(d => d.formationId === topRel.sourceFormationId)?.label ?? topRel.sourceFormationId;
-      const b = domains.find(d => d.formationId === topRel.targetFormationId)?.label ?? topRel.targetFormationId;
-      variants.push({
-        headlinePre: `${a} and ${b} are`, emphasis: 'the clearest link',
-        headlinePost: ' this cycle.',
+    candidates.push({
+      headlinePre: `${stable.length} domains are moving`, emphasis: 'together',
+      headlinePost: topRel ? ' — and two of them are quietly connected.' : '.',
+      paragraph: groupParagraph,
+    });
+    candidates.push({
+      headlinePre: `${leader.label} moved the`, emphasis: 'most',
+      headlinePost: ` of ${stable.length} domains this cycle.`,
+      paragraph: groupParagraph,
+    });
+  } else if (stable.length === 1) {
+    candidates.push({
+      headlinePre: `${stable[0].label} is the`, emphasis: 'one domain',
+      headlinePost: ' in a confirmed pattern right now.',
+      paragraph: emerging.length > 0
+        ? `${listWithAnd(emerging.map(d => d.label))} ${emerging.length === 1 ? 'is' : 'are'} also moving, just not confirmed yet.`
+        : `Nothing else in the field has confirmed a pattern this cycle.`,
+    });
+  }
+
+  // Relationship state -- real field from formationrelationship.js's deriveState(), never
+  // surfaced in the narrative before this pass.
+  if (topRel) {
+    const a = domainByFormationId(domains, topRel.sourceFormationId);
+    const b = domainByFormationId(domains, topRel.targetFormationId);
+    const relParagraph = `${a} and ${b} specifically are linked — see the connecting line below.`;
+    if (topRel.state === 'CONVERGING') {
+      candidates.push({ headlinePre: `${a} and ${b} are`, emphasis: 'pulling into alignment', headlinePost: ' — the link is strengthening this cycle.', paragraph: relParagraph });
+    } else if (topRel.state === 'WEAKENING') {
+      candidates.push({ headlinePre: `${a} and ${b} were linked —`, emphasis: 'now pulling apart', headlinePost: '.', paragraph: relParagraph });
+    } else if (topRel.state === 'DIVERGING') {
+      candidates.push({ headlinePre: `${a} and ${b} have`, emphasis: 'broken from', headlinePost: ' each other this cycle — a real split, not noise.', paragraph: relParagraph });
+    } else {
+      candidates.push({ headlinePre: `${a} and ${b} are`, emphasis: 'the clearest link', headlinePost: ' this cycle.', paragraph: relParagraph });
+    }
+  }
+
+  // Volatility standout -- only when one domain is genuinely out ahead of the field average,
+  // not just nominally highest.
+  if (active.length >= 2) {
+    const avgVol = active.reduce((s, d) => s + d.volatility, 0) / active.length;
+    const mostVolatile = active.reduce((max, d) => (d.volatility > max.volatility ? d : max), active[0]);
+    if (mostVolatile.volatility - avgVol > 0.15) {
+      candidates.push({
+        headlinePre: `${mostVolatile.label} is the`, emphasis: 'least stable',
+        headlinePost: ' domain in the field right now.',
+        paragraph: `${mostVolatile.label} is swinging more than the rest of the field (${Math.round(mostVolatile.volatility * 100)}% volatility vs. a ${Math.round(avgVol * 100)}% average) — that instability is itself the signal worth watching.`,
       });
     }
-    const picked = variants[DAY_INDEX % variants.length];
-    const nextVariant = variants.length > 1 ? variants[(DAY_INDEX + 1) % variants.length] : null;
-    headlinePre = picked.headlinePre; emphasis = picked.emphasis; headlinePost = picked.headlinePost;
-
-    return {
-      headlinePre, emphasis, headlinePost,
-      paragraph: `${names} all moved by ${stable.length === 1 ? 'the same' : 'similar'} amounts this cycle (${deltas}) — that's not ${stable.length} coincidences, it's one pattern. ${leader.label} led at ${leaderDelta} — that's the one to look at first.`,
-      next: nextVariant,
-    };
-  } else if (stable.length === 1) {
-    headlinePre = `${stable[0].label} is the`;
-    emphasis = 'one domain';
-    headlinePost = ' in a confirmed pattern right now.';
-  } else if (emerging.length > 0) {
-    headlinePre = 'No domain has a';
-    emphasis = 'confirmed pattern';
-    headlinePost = ' yet — the field is still forming.';
-  } else {
-    headlinePre = 'Awaiting';
-    emphasis = 'enough signal';
-    headlinePost = ' to establish any pattern.';
   }
 
-  // stable.length is 0 or 1 here — the >=2 case returns above.
-  const paragraphParts = [];
-  if (emerging.length > 0) {
-    const names = listWithAnd(emerging.map(d => d.label));
-    paragraphParts.push(`${names} ${emerging.length === 1 ? 'is' : 'are'} also moving together, just at a smaller scale — not yet confirmed.`);
+  // Opposite-direction pair -- two real domains moving against each other, not the same
+  // pattern read two ways.
+  if (active.length >= 2) {
+    let bestPair = null, bestSpread = 6;
+    for (let i = 0; i < active.length; i++) {
+      for (let j = i + 1; j < active.length; j++) {
+        const vi = rawVelocity(active[i].magnitude), vj = rawVelocity(active[j].magnitude);
+        if (Math.sign(vi) !== 0 && Math.sign(vj) !== 0 && Math.sign(vi) !== Math.sign(vj)) {
+          const spread = Math.abs(vi - vj);
+          if (spread > bestSpread) { bestSpread = spread; bestPair = [active[i], active[j]]; }
+        }
+      }
+    }
+    if (bestPair) {
+      const [d1, d2] = bestPair;
+      candidates.push({
+        headlinePre: `${d1.label} and ${d2.label} are moving`, emphasis: 'in opposite directions',
+        headlinePost: ' this cycle.',
+        paragraph: `${d1.label} is at ${velocityText(d1.magnitude)} while ${d2.label} is at ${velocityText(d2.magnitude)} — a real split, not the same pattern read two ways.`,
+      });
+    }
   }
-  if (topRel) {
-    const a = domains.find(d => d.formationId === topRel.sourceFormationId)?.label ?? topRel.sourceFormationId;
-    const b = domains.find(d => d.formationId === topRel.targetFormationId)?.label ?? topRel.targetFormationId;
-    paragraphParts.push(`${a} and ${b} specifically are linked — see the connecting line below.`);
+
+  // Emerging domain closing the gap on a confirmed one -- a real transition signal, not a guess
+  // about whether it will confirm.
+  if (emerging.length > 0 && stable.length > 0) {
+    let closest = null, closestGap = 8;
+    for (const e of emerging) {
+      for (const s of stable) {
+        const gap = Math.abs(e.magnitude - s.magnitude);
+        if (gap < closestGap) { closestGap = gap; closest = [e, s]; }
+      }
+    }
+    if (closest) {
+      const [e, s] = closest;
+      candidates.push({
+        headlinePre: `${e.label} is closing in on`, emphasis: `${s.label}'s territory`,
+        headlinePost: ' — worth watching if it holds.',
+        paragraph: `${e.label} hasn't confirmed a pattern yet, but it's within ${Math.round(closestGap)} points of ${s.label}, which has. If that gap closes, it's a second confirmed domain, not a coincidence.`,
+      });
+    }
   }
-  return { headlinePre, emphasis, headlinePost, paragraph: paragraphParts.join(' ') };
+
+  return { candidates, stable, emerging };
+}
+
+// Returns { emphasis, headlineRest, paragraph, next } -- emphasis is the one word/phrase
+// rendered in lime, matching the Dual Voice doctrine's use of color as meaning, not decoration.
+function buildNarrative(domains, relationships) {
+  const { candidates, stable, emerging } = buildCandidates(domains, relationships);
+
+  if (candidates.length > 0) {
+    const idx = stateHash(domains) % candidates.length;
+    const picked = candidates[idx];
+    const next = candidates.length > 1 ? candidates[(idx + 1) % candidates.length] : null;
+    return { headlinePre: picked.headlinePre, emphasis: picked.emphasis, headlinePost: picked.headlinePost, paragraph: picked.paragraph, next };
+  }
+
+  // No candidate's precondition held -- genuinely low/no signal. Say so plainly (§22
+  // absence-is-signal) rather than forcing a variant that isn't real yet.
+  const headlinePre = emerging.length > 0 ? 'No domain has a' : 'Awaiting';
+  const emphasis = emerging.length > 0 ? 'confirmed pattern' : 'enough signal';
+  const headlinePost = emerging.length > 0 ? ' yet — the field is still forming.' : ' to establish any pattern.';
+  const paragraph = emerging.length > 0
+    ? `${listWithAnd(emerging.map(d => d.label))} ${emerging.length === 1 ? 'is' : 'are'} moving together, just at a smaller scale — not yet confirmed.`
+    : '';
+  return { headlinePre, emphasis, headlinePost, paragraph, next: null };
 }
 
 // KRYL-1174 Symptom 2 — this component mounts as soon as surfaceExpanded flips true and reads
