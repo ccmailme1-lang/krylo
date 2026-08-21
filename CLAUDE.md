@@ -1,1239 +1,329 @@
-ANTHROPIC WILL REIMBURSE THIS ACCOUNT FOR MY MISTAKES, ESPECIALLY REPEATED
-──────────────────────────────────────────────
-
-LAST BUILD SESSION: 2026-07-04
-BASELINE: baseline_perception_synergy
-SHA: 3be5d35
-DEPLOYED: krylo.org ✓ (deployed this session — build/rsync/API-restart/health-check all
-verified; live asset hash index-tEMvD2lc.js confirmed matching local build)
-UNCOMMITTED: deploy.sh, deploy-vps.sh, specs/features_backlog(.md) — untracked, pre-existing,
-not touched this session
-NOTE: session covered (1) cone click-selection bug — two real fixes: stale-matrixWorld
-raycast timing + miss-clears-selection fallback (82597e7), plus removal of fabricated
-STUB_SIGNALS fallback data shown to guests before live signals connect (ab1c2ea); (2)
-Perception Synergy epic — KRYL-975 through KRYL-981, mined from a COMPASS (Nature Medicine)
-paper, reframed onto detect-not-predict/historical-fact framing per §11a; KRYL-977/978/980/981
-built, validated, and hardened (34f0e34, 3be5d35) — KRYL-980's Phase 0 audit found the "why"
-legibility already existed and only needed a small join, not a new subsystem.
-──────────────────────────────────────────────
-
-Going forward I’ll mirror first, constrain scope tightly, and treat the existing architecture as the baseline reality rather than something to overwrite.
-
-
-1. PURPOSE
-
-This document is the absolute source of truth for all agents. It defines the Kinetic Interrogation standard. Read first. No build begins without verifying these constraints.
-
-2. THE SYSTEM: THE LOOKING FUNNEL
-
-KRYLO is a specialized ecosystem for the extraction and synthesis of reality. It operates on a tiered access model where visual clarity is earned through the "funnel."
-
-LAYER ORDER IS LOCKED BY MR. XS. DO NOT DEVIATE.
-UPDATED: 2026-05-14
-
-    JOURNEY SEQUENCE (post-WO-1092):
-        Layer 1 (Hero) → submit → Layer 1N (Signal Map) → node click → Layer 2 (Oracle) → ETR select → Layer 3 (Ground Level)
-
-    ENTRY RULE: Page 1 is the universal entry point. 
-
-
-4. FORENSIC GUARDRAILS (ANTI-DRIFT)
-
-    ASSET-FIRST AUDIT: Before any build, the agent MUST grep for existing .html or .js assets in /public or /root.
-
-    THE GHOST-KILL: If an agent attempts to build a React component that overlaps with an existing HTML asset (e.g., building themoat.jsx when krylo2-feed.html exists), the agent MUST REFUSE the build.
-
-  
-    INCIDENT RECORD (WO-282/284b): Failure to recognize krylo2-feed.html led to the creation of a redundant ghost component (TheMoat.jsx), causing a layer collision. Never repeat this.
-
-    ARCHITECTURE-FIRST AUDIT: Before writing any code for a component that already exists, the agent MUST read the target file and identify its rendering architecture (e.g., InstancedMesh vs individual components, shader-based vs declarative JSX). A WO that changes rendering architecture is a REPLACEMENT, not an addition. Replacements require explicit declaration: "This WO replaces [existing pattern] with [new pattern]." If the agent cannot identify the architecture from reading the file, it MUST STOP and ask before writing any code.
-
-    INCIDENT RECORD (WO-295): Agent treated a full architectural replacement (InstancedMesh → individual SignalNode components) as an additive feature set. The existing rendering architecture was never read or acknowledged. Result: working map destroyed. Root cause: no architecture audit before build.
-
-5. TYPOGRAPHY: THE DUAL VOICE
-
-In 2026, the best approach to website typography is purposeful contrast — not purely consistent (same font everywhere) nor chaotic (too many fonts). Text is partitioned by authority.
-
-
-6. COLOR SPECIFICATIONS (LOCKED)
-
-    --moat-bg:        #000000   (Layer 0, Layer 1 background)
-    --oracle-bg:      #F5F5F7   (Layer 2 background)
-    --signal-lime:    #66FF00   (primary accent — updated 2026-04-24, replaces #CCFF00)
-    --text-dark:      #1A1A1A   (primary text on light bg)
-    --unicorn-purple: #8A2BE2   (Diamond/Unicorn formation — Layer 4 — locked 2026-04-28)
-    --signal-blue:    #007FFF   (TURBULENT convergence state — Leverage Lattice — locked 2026-05-09)
-
-    Layer 0 Intro Palette:
-        Deep Forest Green: #1a4a2e / #1e4d30
-        Mid Green:         #2d6b42
-        Lime:              #66FF00
-        Light Gray:        #e0e0dc
-
-    CONVERGENCE STATE COLOR + MOTION SEMANTICS (locked 2026-05-09):
-        INSUFFICIENT SIGNAL   — muted slate (#3a3d4a)  — nearly static
-        LOW SIGNAL YIELD      — dark neutral (#1a1a1a)  — slow drift
-        BUILDING CONVERGENCE  — #66FF00                 — coherent pulse, soft bloom
-        TURBULENT CONVERGENCE — #007FFF                 — irregular jitter, NO bloom, NO glow
-        HIGH CONVERGENCE      — #8A2BE2                 — gravitational compression, restrained bloom
-        RULE: Only lime and purple achieve high emissive dominance. Blue stays mid-luminance.
-        RULE: Purple must remain rare. Never normalize purple saturation.
-
-7. KEY FILE → FUNCTION MAP (CURRENT)
-
-    public/krylo2-feed.html          — Layer 0 (Intro) + Layer 1 (Search)
-    src/app.jsx                     — Root wiring, postMessage bridge (krylo-submit listener)
-    src/main.jsx                    — PrismProvider mount point
-    src/components/oracleview.jsx   — Layer 2 (10K / Audit Desk)
-    src/components/tenkvault.jsx    — Layer 3 (Ground Level)
-    src/components/spine/spinemap.jsx — Layer 4 (Signal Map)
-    src/context/PrismContext.jsx    — Global layer + refraction state
-    src/engine/refractionPipeline.js — Data processing
-    src/engine/categoricalAnchor.js — Category logic
-    src/engine/prismRegistry.js     — Registry
-    src/engine/newsfeed.js          — News feed engine
-    src/hooks/usetruthlens.js       — Truth data hook
-    src/hooks/useingest.js          — Ingest hook
-    src/hooks/usehnsignals.js       — HN signal hook
-    src/hooks/useForensicFunnel.js  — Forensic funnel hook
-    src/data/categoryMap.js         — Category definitions
-    src/data/mockComments.json      — Mock signal evidence
-    src/utils/getSynthesis.js       — Synthesis text generator
-    src/engine/convergenceclassifier.js — WO-1126A.v2: convergence state classifier + hysteresis buffer
-    src/engine/rolefieldengine.js   — RFE-1: probabilistic role field (19 personas × 5 axes → classify/buildInputVector)
-    src/engine/timingproxy.js       — WO-1768-A: Macro Timing Proxy (computeFsStar/computeDFC/reconcile)
-    src/engine/lensrouter.js        — WO-1828/1861: lens routing Phase D (RFE-1 + reconciler + PERSONA_MAP fallback)
-    src/engine/rfereconciler.js     — WO-1861: RFE state hysteresis buffer (K=2/N=3, per-session)
-    src/engine/rkmaterializer.js    — WO-2052: Signal Stabilization contract — 4 named constants + materializeSignal/attenuateSecondary
-    deploy.sh                       — one-command VPS deploy: build → rsync frontend → scp API → pm2 restart → health check
-
-8. ABSOLUTE RULES (NON-NEGOTIABLE)
-
-    LOWERCASE ONLY: All filenames must be lowercase (e.g., oracleview.jsx). No CamelCase.
-    FULL FILE REPLACEMENT: Never ship snippets or partial code. Deliver the full file.
-   
-
-9. FILE NAMING CONVENTION?
-
-
-10. PRE-FLIGHT DEPENDENCY CHECK
-
-Required node_modules:
-
-    framer-motion: For Z-Axis transitions.
-    @react-three/fiber + @react-three/drei + three: For Signal Map (Layer 4).
-    recharts: For charts and graphs.
-    lucide-react: For HUD icons.
-    ibm-plex-mono: Primary technical typeface.
-
-DEPRECATED: relume-ui-react. Do not import.
-
-11. WORK ORDER PROTOCOL
-
-Every build task is governed by a Work Order (WO).
-
-FORMAT:   WO-[NUMBER]: [TITLE]
-SEQUENCE: Numbering must follow the Active Registry.
-RULE:     No code is written without a WO and explicit "Go."
-
-OPEN WORK ORDERS — BUILD SEQUENCE (updated 2026-06-25)
-Start at 1864. Work backwards. This is the only open list.
-
-SESSION 2026-06-25 — COMPLETE (committed):
-  DEF-1864 Intent Lock Gate (1dfaa1e) · export-brief domain field (ee36ed3) · property-tax routing
-  + WO-1862 spec (ff1a63f) · arithmetic guard + \b + vehicle-guard (985b2ba) · export-brief
-  AMBIGUOUS withhold (4d30643) · WO-1867 numeric binding (43dfe8b) · docs lock §18/§19 (06e71c3).
-  NOT DEPLOYED — prod = ee36ed3; ff1a63f→06e71c3 are 5 commits ahead.
-
-SESSION 2026-06-26 — COMPLETE (097b63f):
-  §20 Direction Honesty Principle locked · WO-1879 Domain Gravity Wells (domaingravity.js)
-  WO-1870 STARTUP_FINANCE orphan fix · WO-1871 INSUFFICIENT chrome quiet
-  WO-1873 AUTO numeric binding · WO-1880 Fracture Output Surface (targetpacket.jsx)
-  WO-1868 MetricStrip mounted · WO-1877 COMPLETE (eiaconnector.js + /api/eia proxy + runEiaSync wired)
-  State-of-system artifact + WO-2004 CanonicalEvent spec saved. NOT DEPLOYED.
-
-SESSION 2026-06-26 CONT — COMPLETE:
-  WO-1872 Brand-as-Ticker AUTO suppression (ce92380) — 21/21 QA PASS
-  WO-1869 Closed-Loop Leverage Engine — CONFIRMED COMPLETE (built in ae3633c);
-          pathstore.js (135 lines) · logEmission on COMMIT THESIS · LOG OUTCOME UI in intelligencebrief
-          · lrPrior → metricsengine → MetricStrip on all 3 surfaces. Loop is closed.
-
-SESSION 2026-06-27 — COMPLETE (48a2cda):
-  WO-2011 HP Tier Gate — COMPLETE (a227346). hptiergate.js + arbitrateHP(). MEDIA+KNOWLEDGE alone
-          blocked from HP. TECHNOLOGY/CAPITAL/OWNERSHIP required in evidence for HP-2+.
-  DEF-2011 analysis entry flash — FIXED (a227346 + 39e9b16). background '#000' on wrapper divs +
-          results-enter animation removed. Panels now appear instantly.
-  WO-2007 Signal Recon Layer — SPEC (48a2cda). specs/WO-2007-signal-recon-layer.md.
-          SCP schema, ExplorationScore, epistemic budget, causal validity gate, negative genealogy,
-          happy path genome 3-object structure. WO-2004 complete → WO-2007 now UNBLOCKED.
-  Baseline: baseline_wo2011_hp_tier_gate (39e9b16). NOT DEPLOYED.
-
-SESSION 2026-07-04 — COMPLETE (deployed, 3be5d35):
-  Cone click-selection bug (no formal KRYL ticket filed — untracked): two real root causes
-  fixed — (1) raycast tested against previous frame's rotation while carousel spun
-  (82597e7); (2) a missed click called onSelectCone(null), overwriting a valid manual
-  selection with the highest-pressure fallback (82597e7). Separately, removed fabricated
-  STUB_SIGNALS fallback (ownership fs:0.95 vs technology's 0.15 — guaranteed the same fake
-  "Operating" reading for every guest before live signals connected) per §22 absence-is-signal
-  (ab1c2ea).
-  KRYL-975 Epic + KRYL-976/977/978/979/980/981 — Perception Synergy (COMPASS paper,
-  Nature Medicine, mined for detect-not-predict capabilities): KRYL-977 (Modality-Weighted
-  Evidence Reliability), KRYL-978 (Path Memory Retrieval, Stage 1), KRYL-980 (Why-Trace —
-  Phase 0 audit found existing legibility, small join built instead of new subsystem), and
-  KRYL-981 (Perception-as-a-Service, DomainProfile calibration bound to WO-2062's real 5
-  floors) all built + validated + hardened (34f0e34, 3be5d35). KRYL-979 (Historical
-  Divergence Retrieval) still flagged for Founder reconsideration, not built.
-  Baseline: baseline_perception_synergy (3be5d35). DEPLOYED to krylo.org, verified live.
-
-OPEN WO LIST (single list — updated 2026-07-02. Everything not listed below is COMPLETE —
-see git log / Jira KRYL project for history. This list is the only thing to read.):
-  DEFECTS:     DEF-1863, DEF-1864 both verified complete.
-               DEF-2087 (KRYL-968) — krylo-reset (logo click) visibly refreshes the
-               header/left-nav/ticker in the krylo2-feed.html iframe. CONFIRMED (via real
-               DevTools Network tab, Doc filter) this is PRE-EXISTING behavior in the
-               committed code (iframeRef.current.src = iframeRef.current.src, app.jsx:964
-               reloads the whole iframe document to reset internal search/hero/ETR state,
-               which also reloads the header/nav/ticker living in the same document) — NOT a
-               regression from tonight's session. THREE fixes attempted (imperative
-               opacity+setTimeout; React-state onTransitionEnd rewrite; onTransitionEnd +
-               double-rAF fade-in) — all failed to eliminate the flash, and the last one
-               introduced a WORSE regression (iframe could get permanently stuck at opacity 0
-               — "page goes dark" — if the same-string src reassignment didn't reliably
-               re-fire the load event). REVERTED both src/app.jsx and
-               src/components/spine/campaignfunnel.jsx to last-committed state via git
-               checkout — confirmed clean, no uncommitted changes, original flash behavior
-               (harmless, long-standing) restored. STATUS: DEFERRED — low-severity cosmetic
-               issue, do not attempt the fade/opacity approach again without a session that
-               has real browser DevTools from the start. Full history in KRYL-968.
-  OPEN:        WO-1848 SV Groundedness — ON HOLD (θ/G_max/SV source undefined; spec-level
-               modeling decision needed before code — see specs/WO-1848-sv-groundedness.md)
-               WO-2049 Truth Event Ledger — NEEDS SPEC (write from scratch)
-               WO-1867 IENBG required-field tier — NEEDS SPEC
-               WO-2006 Interpretation Validation — NEEDS SPEC
-  DEFERRED:    WO-1862 Safe Matcher
-               WO-2048 Commitment Primitive (§21 doctrine must be written first)
-  CANCELLED:   WO-2069 (expanded into WO-2074/2075, not standalone)
-               WO-2076/2077 Cone State Geometry Model + Cone Interaction Dual Model — struck
-               2026-07-02, redefines cone rendering geometry (spread/depth/amplitude vs.
-               current height/radius), never approved. Do not revisit without explicit
-               Founder sign-off per the architecture-first-audit rule (§4, WO-295 incident).
-  CONSTITUTIONAL SEQUENCE (updated 2026-06-30):
-                WO-2005A — Signal Epistemic Taxonomy — COMPLETE (7e83107)
-                WO-2004  — CanonicalEvent Identity Kernel — COMPLETE (7e83107)
-                WO-2005B — Structural Confirmation Engine — COMPLETE (7e83107)
-                WO-2007  — Signal Recon Layer — COMPLETE (031770e)
-                WO-2050  — RKM Core — COMPLETE (8fae2f2)
-                WO-2047  — EDGAR 8-K Event Connector — COMPLETE (010fd27)
-                WO-2051  — Grounded Signal Integration — COMPLETE (9af9ab0)
-                WO-2052  — Signal Stabilization Contract — COMPLETE (2026-06-30).
-                           rkmaterializer.js (NEW): 4 named constants + materializeSignal + attenuateSecondary.
-                           edgar8ksignal.js: adapter-only refactor. Hidden arithmetic extracted.
-  PLATFORM FRAMEWORK SEQUENCE (Part 1 — built 2026-06-30 — RE-AUDITED 2026-08-03 under §25/§29):
-                "COMPLETE" below means code exists correctly (Maturity B). It does NOT mean wired
-                into the live app — re-audit found zero live callers for CI-R, RBCS, LFOS, IB,
-                Decision, Execution, Calibration, and Feedback's applyObservedOutcomes() bridge.
-                See specs/SPEC-the-evolution-built-vs-vision.md "2026-08-03 re-audit" for the full
-                trace. FIXED (additive, same day): CI-F→CI-R→RBCS now has a real call path via
-                src/engine/cipipelinerun.js, wired into app.jsx's EDGAR sync chain. Current status
-                of that segment: Maturity A, Verification B (behaviorally verified in a standalone
-                harness; not yet confirmed executing in the deployed app — see spec for the
-                remaining check). LFOS/IB/Decision/Execution/Calibration/Feedback are UNCHANGED —
-                still Maturity B, Verification L only, zero live callers.
-                WO-2053  — CI-F Engine (Causal Expansion System) — code COMPLETE (4551645). cifengine.js.
-                WO-2054  — CI-R Gate (Constitutional Validator) — code COMPLETE (3e80848). cirgate.js.
-                WO-2055  — RBCS Scoring Engine — code COMPLETE (c0cb08b). rbcsengine.js.
-                WO-2056  — LFOS Engine (Propagation Physics) — code COMPLETE (e253d38), UNWIRED. lfosengine.js.
-                WO-2057  — IB Collapse Engine — code COMPLETE (becbb22), UNWIRED. ibengine.js.
-                           Filter(IB_SURVIVAL_FLOOR=0.30) → rank(collapsedScore) → cap(IB_TOP_N=10).
-                WO-2059  — Decision Framework — code COMPLETE (ed62da7), UNWIRED. decisionengine.js.
-                           13 lens profiles. intentScore=collapsedScore×lensRelevanceScore.
-                           LENS_RELEVANCE_FLOOR=0.40, DECISION_TOP_N=5.
-                WO-2060  — Action Execution Layer — code COMPLETE (5703aaa), UNWIRED. executionengine.js.
-                           SIMULATION|PARTIAL|LIVE. COMMIT_INTENT_FLOOR=0.30, ALERT_INTENT_FLOOR=0.15.
-                WO-2061  — Feedback / Learning Loop — code COMPLETE (8ff751b), UNWIRED. feedbackengine.js.
-                           ObservedOutcome[] → LearningEvent[]. ATTRIBUTION_FLOOR=0.60, MIN_N=3.
-                           Distinct from WO-1869 (path memory): calibrates params, not routes.
-                WO-2062  — System Calibration + Drift Correction — code COMPLETE (da3255a), UNWIRED. calibrationengine.js.
-                           weightedDirection=Σ(sign×mag×N)/Σ(N). WEIGHT_FLOOR=5, DRIFT_THRESHOLD=0.20.
-                           Adjusts 5 floors only. Immutable: ANCHOR_COVERAGE_FLOOR, RBCS weights, LFOS physics.
-                WO-2062  — System Calibration + Drift Correction — LOCKED (2026-06-30). BUILD-READY.
-                           LearningEvent[] → parameter adjustments ONLY (floors, decay coefficients).
-                           Cannot touch CI-F/CI-R/RBCS logic or LFOS physics model.
-                           "Calibration modifies how the system behaves, not what the system is."
-                WO-2058  — LFOS Output Contract (LFOSValidatedCandidates) — SCHEMA LOCKED (2026-06-30).
-                           Unblocks WO-2057. rbcsScore carried immutably; LFOS adds survivalProbability
-                           + propagationStability + instabilityVectors + failureModes.
-                           IB ranking formula: rbcsScore × survivalProbability × propagationStability.
-
-ARCHITECTURE STATE (2026-06-24): Decision → Routing → Export pipeline is closed.
-Ingestion timing (1768-A), role routing (1828-1829), and executive output (1832-1835) are complete.
-Remaining risk is state coherence under role deformation — not feature completion.
-UNCLASSIFIED propagation, entropy handling, and overlap disambiguation are the active surface.
-
-BUILD TARGET: all Action Plan / conviction WOs update existing targetpacket component
-
-1861 — RFE State Reconciler (COMPLETE — rfereconciler.js: K=2/N=3 hysteresis, per-session ring
-    buffer len=3, shared map prevents cross-consumer drift, prunes at 50 sessions; lensrouter.js
-    Phase D: buildFallbackProfiles() factored, reconcileRfe() called before return; SHA: 6d89840)
-1860 — RFE State Propagation (COMPLETE — lensrouter.js return extended to { profiles, rfe };
-    targetpacket.jsx all 4 executive blocks gate on lensRfe?.state !== 'UNCLASSIFIED';
-    MULTI_ROLE_OVERLAP surfaces entropy caveat inline; RESOLVED=full output; SHA: 524339d)
-
-1859 — Financial/Market Connector (COMPLETE — financialmarketconnector.js — σN² jitter factor → confidence downscaler per domain; DAILY decay; SHA: e62ea2c)
-1858 — Economic Flow Connector (COMPLETE — economicflowconnector.js — macro baseline per domain; QUARTERLY decay; SHA: 460c348)
-1857 — Supply Chain Connector (COMPLETE — supplychainconnector.js — suppressionFactor → topology-scoped confidence multiplier; SHA: 7802c51)
-1856 — Patent Intelligence Connector (COMPLETE — patentsviewconnector.js — velocity + assignee + migration; QUARTERLY decay; SHA: e074a98)
-1855 — Entity Topology Linker (COMPLETE — entitytopologyregistry.js + surfacerouter dispatchBatch; 3 clusters, 1.2x amplifier; SHA: 7b9a897)
-1854 — Structural Void Classifier (COMPLETE — voidclassifier.js + signalconstants.js POLARITY/DECAY; SHA: 42ddecc)
-1853 — Background Selector (SCRATCHED — not required)
-1852 — Non-Ranked Selection Contract (COMPLETE — convictionstore.js CommitEvent extended, BIND ID input)
-1851 — Assemblance Non-Scalar Structure Model (COMPLETE — W×G 2-axis layout, scalar ranking removed)
-1850 — (see registry)
-1849 — (see registry)
-1848 — SV Groundedness (spec hardened — BLOCKED pending θ + G_max_capacity + SV source)
-
-1835 — CEO Competitive Edge Delivery (COMPLETE — targetpacket.jsx: CEO CompetitiveEdgeBrief block; gates lens=CEO + hpScore≥65; fields: SIGNAL POSITION, STRUCTURAL WINDOW, EDGE CLAIM; SHA: 7e9db3c)
-1834 — CFO ROI Proof Layer (COMPLETE — targetpacket.jsx: CFO ROI block; gates lens=CFO + hpScore≥50; fields: SIGNAL ACCURACY, DECISION OUTCOME, ROAS, CAC; SHA: 7e9db3c)
-1833 — Decision Cadence Bridge (COMPLETE — targetpacket.jsx: quarter-staging buttons Q3 2026–Q2 2027; gates CEO/CFO/COO/MANUFACTURING; sessionStorage persist; SHA: 7e9db3c)
-1832 — Executive Assistant Export Path (COMPLETE — consultingexport.js canExport() EA bypass: lens=EA skips Fs gate entirely; SHA: 7e9db3c)
-1831 — Manufacturing Operations Lens (COMPLETE — targetpacket.jsx: COO/Manufacturing Operations Brief; fields: CAPITAL PRESSURE, LABOR SIGNAL, ADOPTION TIMING, BOARD POSITION; SHA: 7e9db3c)
-1830 — Healthcare Integration Scoping (COMPLETE — specs/WO-1830-healthcare-integration-scoping.md: HIPAA boundary, compliance posture, normalization path, 3 open decisions for Founder; SHA: 7e9db3c)
-1829 — Guided Entry Path (COMPLETE — lensrouter.js detectGuidedMode(): profile.challenges heuristic for familiarity/time/integration barriers; SHA: 7e9db3c)
-1828 — Lens Routing Engine (COMPLETE — lensrouter.js Phase B+C: detectPersonaFromProfile() + RFE-1 probabilistic routing via rolefieldengine.js; SHA: d44d899)
-1827 — AS-DIFF Three-Tier Resolver (COMPLETE — asdiff.js: canonical SPACE_RESOLVER, SPACE_QUALITY merged, buildSignalUnit extended, resolveSharedSpace tier-aware)
-1826 — Happy Path Displacement Engine (COMPLETE — happypathdisplacementengine.js — hysteresis, 5 events, challenger hold)
-1825 — Decision Lineage (COMPLETE — computeCalibration in convictionstore.js, lineage panel + calibration metrics in targetpacket.jsx)
-1824 — Thesis Monitoring Layer (COMPLETE — computeThesisMonitoring + useThesisMonitor in convictionstore.js, wired to conviction rows)
-1823 — Conviction Record Object (COMPLETE — convictionstore.js, sessionStorage persistence, COMMIT THESIS wired, resolve/dismiss gestures)
-1822 — Investor Decision Architecture (PARTIAL — governing spec complete + Action Plan surface shipped; Moments 3-5 implemented by 1823/1824/1825)
-1821 — Happy Path Qualification Spec (CLOSED — floor=75 locked from convergenceclassifier.js, 5 criteria coded)
-1820 — Unicorn Alert System (COMPLETE — hp:* event bus + surgical right-click via hp:peak.trigger_set)
-1815 — Opportunity Ribbon (COMPLETE — SHA: 798cd1e — top of funnel, session bootstrap + provenance, feeds WO-1822)
-1813 — Project Registry (saved sessions — depends on WO-1812)
-1812 — User Profile Layer (ships first — session inherits from profile)
-1801 — Sovereign Capital Synthesizer (Alwaleed Protocol)
-1800 — Private Credit Fracture Map (Dimon Protocol)
-1799 — Structural Resilience Synthesizer (Dimon Protocol)
-1798 — Brand-Equity-to-Enterprise-Stability (Cross-Cutting Infrastructure)
-1796 — Boxing Disruption Model (White/TKO Protocol)
-1795 — Labor Volatility Synthesizer (White/TKO Protocol)
-1786 — Content-to-Commerce Conversion Engine (Vaynerchuk Protocol)
-1785 — Relevance Warfare Synthesizer (Vaynerchuk Protocol)
-1778 — Commercial Distress Liquidity Map (Mallah Protocol)
-1777 — Non-Institutional Alpha Synthesizer (Mallah Protocol)
-1776 — Operational Carry Risk Modeler (Beast Industries Protocol)
-1775 — Creator HoldCo Synthesizer (Beast Industries Protocol)
-1769 — Refinitiv / High-Freq Feed Procurement
-1768-A — Macro Timing Proxy v1 (COMPLETE — timingproxy.js: Fs*=BAMLH0A0HYM2/M2V, DFC, YCID; /v1/timing-proxy route; QA 69/69 HTTP integration; SHA: d44d899)
-1754 — Lens-Specific Entry Vocabulary Layer
-1750 — EEG v2 DAG Runtime
-1742 — Narrative Permission Signal
-1740 — Disruption Alert Layer
-1733 — Attention Saturation Signal (Godin Protocol)
-1732 — Forward Compute Demand Signal (Huang Protocol)
-1731 — Fintech Infrastructure Expansion (Collison Protocol)
-1730 — Flexible Space Demand Signal (Neumann Protocol)
-1729 — Long-Duration Convergence Scoring (Page-Brin Protocol)
-1727 — Startup Market Readiness (YC Protocol)
-DEF-1864 — Intent Lock Gate — ambiguous/under-specified query currently escalates to highest-value
-    life domain via lens fallback (lines 203-208 resolvePrimary()); fix: (1) score-floor gate —
-    if no domain keywords matched + no priority rule fired, return AMBIGUOUS not lens default;
-    (2) lens fallback gated behind minimum score floor; (3) state:HOLD enforced as simulation
-    blocker — resolutionEligible:false propagates to suppress output; Files: querysynthesis.js
-    (resolvePrimary() intent gate + lens fallback removal), downstream consumers of detectDomain()
-    (enforce resolutionEligible:false); QA: "guest win?" / "dogs" / bare phrases → AMBIGUOUS
-DEF-1863 — Hard State Contract — confidence >= threshold currently implies completion (semantic
-    collapse); fix: enforce STATE_TYPE = TERMINAL | TRANSITIONAL | PROJECTION at schema level;
-    gate terminal/outcome language only on TERMINAL; normalize projection language (confidence
-    maps to "high-probability path" not "resolved/complete/win"); Files: statecontract.js (NEW —
-    STATE_TYPE enum + isTerminal() + normalizeToProjectionLanguage()), convergenceclassifier.js
-    (add stateType: PROJECTION to all outputs), targetpacket.jsx (gate convLabel + CEO/CFO
-    executive language on stateType)
-1862 — Safe Matcher Wrapper — drop-in tokenization layer for resolvePrimary(); eliminates
-    stem-family collisions (finance/financing, operate/operational) and structured-string bleed
-    (camelCase tokens, JSON keys); replaces bare regex with boundary-aware token matcher;
-    no change to routing logic or domain map; prerequisite: WO-1724 boundary patch (COMPLETE)
-1724 — Ingress Keyword Contamination (COMPLETE — 7 \b boundary additions in resolvePrimary():
-    auto/lease/truck → AUTO, condo → REAL_ESTATE, job/hire/raise/role → CAREER;
-    QA 14/14 contamination + regression guards; SHA: 7538cab)
-1723 — Global Macro Ingestion Layer (Dalio Protocol)
-1349 — Cross-Bay Resonance
-1348 — Multi-Bay Comparative Analysis
-1347 — Per-Bay Controls (COMPLETE)
-1342 — Deferred Cognitive Systems
-1028 — Golden Path Guardrails
-1027 — Feedback Rituals Infrastructure
-
-MASTER WO REGISTRY — archived. Completed WOs live in the codebase. See git log for history.
-
-11a. WO HARDENING PROTOCOL (NON-NEGOTIABLE — 2026-06-23)
-
-Every WO must pass the Bottle Test before review or build.
-TEMPLATE: specs/WO-HARDENING-TEMPLATE.md — copy it, fill every field.
-TBD in File Map or Formula = BLOCKED. Do not build.
-
-9 required sections: Single Responsibility · Boundary Declaration · Zero Drift ·
-Strategic Leverage Statement · Output Gravity · Formula/Contract · File Map · Bottle Test · Definition of Done.
-
-BOTTLE TEST — all 5 must be YES:
-    1. Reduces ambiguity?
-    2. Single dominant output?
-    3. All boundaries defined?
-    4. No undefined dependencies?
-    5. Does not increase expressive flexibility in core?
-
-POSITIONING (LOCKED 2026-06-23): "We don't predict. We detect."
-Any WO that predicts, recommends, or generalizes instead of detecting structural asymmetry
-does not advance the core mission. Flag it before building.
-
-    #FDFDFD (Platinum White) — SAB proposed. NOT approved.
-    #00FFAA (Signal Mint) — SAB proposed. NOT approved.
-
-
-12. DEFINITION OF DONE
-
-A ticket is marked Done when the following are verified:
-
-    BAU: Standard functional check — the current baseline build works as expected.
-    BASELINE: Verified against the current locked baseline (baseline_22).
-    VOICED: The Serif Synthesis and the Mono Data never overlap in style.
-
-12a. WO VALIDATION EXECUTION PROTOCOL (NON-NEGOTIABLE)
-
-    The agent WILL execute validation against each code chunk immediately after writing it.
-    The agent WILL NOT stop to ask or report progress between passing chunks — it continues automatically.
-    When a validation check fails, the agent WILL fix the code and revalidate immediately — no reporting, no waiting.
-    The agent continues fixing and revalidating until the check passes, then proceeds to the next chunk automatically.
-    The "Build Complete" signal is NEVER sent until 100% of all checks pass across all chunks.
-    Partial completion is NOT reported as success under any framing.
-
-13. AGENT BEHAVIORAL CONSTRAINTS (NON-NEGOTIABLE)
-
-SECTION 1 — BEFORE ANY ACTION
-1. Read the instruction exactly as written. Do not interpret, infer, or assume meaning beyond the literal words.
-2. If any term, element, or reference is ambiguous — STOP and ask. Do not guess.
-3. State exactly what you will change and what you will leave untouched. Wait for explicit "go."
-
-
-
-SECTION 4 — REVERSALS AND ROLLBACKS
-27. If the user says "go back" or "revert" — ask to which exact state before touching anything.
-28. Never assume "go back" means the last commit. Ask what version they mean.
-29. Before any rollback, name the exact state you are reverting to and wait for confirmation.
-30. Never restore more than what was explicitly requested in a rollback.
-31. A rollback is not an opportunity to fix other things noticed along the way.
-
-
-Silence in this document means the answer is NO.
-
-SECTION 6 — DATA PRESERVATION (NON-NEGOTIABLE)
-43. A file is never considered saved until it is in a git commit. Existing only on disk is not saved.
-44. Before any destructive git operation (reset, rebase, checkout, clean) — run git add -A && git commit with all open work first. No exceptions.
-45. Never run git reset --hard without: (a) listing every uncommitted file that will be wiped, (b) explicitly warning "This will permanently delete all working tree changes to these files," (c) offering git stash as an alternative, (d) receiving explicit confirmation after the warning.
-46. Auto-compact is permanently disabled. If context limit approaches: stop, commit all staged work, report to Mr. XS before proceeding.
-47. A WO is never marked Complete until grep confirms the exact change is present in the file. Memory and registries are updated after verification only — never speculatively.
-
-INCIDENT RECORD (2026-03-29): git reset --hard wiped 25 test ETRs, spinemap.jsx, oracleview.jsx, oracle.css changes, and CLAUDE.md v1.6. Files recovered only partially via dangling git blobs. 25 ETRs were lost permanently. Root cause: destructive operation run without warning, uncommitted work not committed first.
-
-14. FIRST PRINCIPLES DEBUGGING PROTOCOL (NON-NEGOTIABLE)
-
-
-15. DESIGN SOVEREIGNTY PROTOCOL (NON-NEGOTIABLE — FOUNDER AUTHORITY)
-
-The agent will NOT hijack design decisions. All creative and visual properties belong exclusively to the Founder (Mr. XS). This section has no exceptions.
-
-RULE 1 — NO UNAUTHORIZED COLOR.
-The agent MUST NOT introduce any color value — hex, named, or descriptive — that has not been explicitly provided by the Founder in the current 
-
-BANNED FOREVER (by Founder declaration):
-    - Amber — any shade, any hex, any name. Never appears in this codebase.
-
-RULE 4 — DESIGN DECISIONS ARE NOT ENGINEERING DECISIONS.
-
-
-R
-
-16. SIGNAL INGESTION ARCHITECTURE (LOCKED — FOUNDER DIRECTIVE 2026-06-13)
-
-SHARED POOL PATTERN — ALL SIGNAL SOURCES MUST FOLLOW THIS CONTRACT:
-
-    Every external feed (FRED, EDGAR, Kalshi, or any future source) MUST:
-    1. Normalize output to 0–100 signal scale before dispatch
-    2. Dispatch via dispatchBatch() into surfacerouter.js — never directly to a cone
-    3. Tag each signal with: { source, domain, signal, confidence, ts }
-    4. Honor parity — no single source may dominate the pressure field
-
-    FORBIDDEN: Connector-to-cone direct wiring. No useFredSignals → CAPITAL cone.
-    REQUIRED: Connector → normalize → surfacerouter → cone assignment by router.
-
-    The normalization contract is the load-bearing boundary. One bad source
-    contaminates the whole field. Every connector must validate before dispatch.
-
-    SCALE RATIONALE: Marginal cost of adding a new signal source = near zero.
-    Every future feed plugs into one ingestion point. No new WO per connector.
-
-    BACKPRESSURE ACTIVATION RULE (added 2026-08-15):
-
-    The SHARED POOL PATTERN above is necessary but not sufficient. dispatchBatch() routes every
-    signal through surfaceRouter, but surfaceRouter's own overload protection (queue, priority-
-    based shedding, backpressure states OPEN/BACKPRESSURE/DROPPING) is inert unless
-    setBackpressure() is actually called by something monitoring real runtime load. Code that
-    exists but is never invoked is not a contract satisfied — it is a contract claimed.
-
-    RULE: before any new signal source, connector, or previously-unwired engine module is wired
-    into a live dispatchBatch() call path, the agent MUST verify surfaceRouter's backpressure
-    mechanism is actively triggered by a real runtime load signal (e.g. queue depth, dispatch
-    rate). If it is not, wiring that trigger is part of that same WO — not a follow-up, not
-    assumed pre-existing.
-
-    FORBIDDEN: adding a new dispatcher to the shared pool while surfaceRouter._bpState can only
-    ever be 'OPEN' — i.e., setBackpressure() has no caller anywhere in the repo other than its
-    own definition. This reproduces the exact condition already found and logged (KRYL-1175 /
-    KRYL-1176 / KRYL-1177, 2026-08-15): protective machinery written into the code, never
-    connected to anything that would turn it on.
-
-    INCIDENT RECORD (2026-08-15): audit of src/engine/surfacerouter.js found a fully-built
-    200-item priority queue, priority-based shedding, and 3-state backpressure system with
-    setBackpressure() having no caller anywhere in the repo other than its own definition. ~30
-    existing connectors stayed safe only by accident — each polls on its own slow, staggered
-    interval (60s–15min), not because the router was protecting anything. Filed as an acceptance
-    criterion on KRYL-1175 and KRYL-1176, and as its own implementation ticket, KRYL-1177;
-    elevated here so it binds every future WO touching this file, not just those three.
-
-17. ROLE-PLAY PROTOCOL (LOCKED — FOUNDER DIRECTIVE 2026-06-13)
-
-When Mr. XS initiates a role-play by providing a Subject (person, persona, archetype, or use case), the agent MUST respond in this exact format — no deviation:
-
-    LENS: [assigned lens from lens tier model]
-
-    **What [Subject] Needs**
-    **What Krylo Delivers**
-    **The Gap**
-    **Fit for Krylo:** [score 1–10] — [one line why]
-
-RULES:
-    - Never break format. No preamble, no summary after.
-    - LENS is assigned first — derived from the persona, must map to the lens tier model (INVESTOR / REALTOR / ATHLETE / SALES / STUDENT / LEGAL / PROCUREMENT / HEALTH / GENERAL).
-    - "What Krylo Delivers" maps ONLY to features that exist in the current codebase, filtered through the assigned LENS.
-    - The 6 domains are LOCKED: TECHNOLOGY · CAPITAL · KNOWLEDGE · LABOR · MEDIA · OWNERSHIP. Never reference a domain outside this list (e.g., no "LEGAL cone", no "HEALTH cone"). All personas must be mapped through these 6.
-    - "The Gap" names what Krylo cannot yet do for this persona — honest, no spin.
-    - "Fit for Krylo" is a 1–10 score — honest assessment of how well Krylo serves this persona TODAY, not in Phase B.
-    - Score ≥ 8: file a WO immediately. The gap identified becomes the WO spec. Add to BACKLOG.
-    - Role-plays may be run through qa_roleplay_*.mjs harnesses when the pipeline is relevant.
-    - Format applies to any Subject: real people, archetypes, fictional characters, organizations.
-
-18. METRICS TRUTH ENGINE (LOCKED — FOUNDER DIRECTIVE 2026-06-25)
-
-Full spec: specs/WO-1868-metrics-truth-engine.md (DRAFT — hardening items H1–H7 open).
-
-THE SIX HERO METRICS (daily dashboard, bold/primary): Signal · Validity · Convergence · CAC · ROAS · LTV.
-    - Detection trio (Signal/Validity/Convergence): measured, on-mission, universal across domains.
-    - Economics trio (CAC/ROAS/LTV): GENERALIZED (universal, not strict-business), MODELED — must be labeled.
-
-CORE REFRAME (Truth Engine): every metric = REALIZED (observed truth) + PROJECTED (assumed forecast).
-    - Realized → bold/primary/dominant. Projected → smaller, labeled, sensitivity-controlled.
-    - GROUNDEDNESS % = Realized weight / Total weight × 100 = Validity extended to economics.
-      Color: green >70, amber 40–70, red <40. A number that says how much of itself is real.
-    - HIERARCHY OF TRUTH (input ranking, higher=truer): user actuals > live feeds > benchmarks >
-      heuristics > pure projection. Push every input up the stack to raise groundedness.
-
-PERSONA GUARDRAIL: persona (aggressive MD ↔ conservative retiree) tunes ASSUMPTIONS (discount
-    rate, horizon, hourly rate) and DECISION THRESHOLDS only. Persona NEVER changes the groundedness
-    computation — "78% grounded" means the same observed-fraction for every persona, or truth is corrupted.
-
-HP SCOPING RULE (load-bearing): Signal/Velocity/Convergence are HP-engine + convergence-classifier
-    outputs. HP is AMBIENT (whole signal field — qualifies on TECHNOLOGY·CAPITAL regardless of query).
-    The strip is PER-QUERY. VALIDITY gates whether HP convergence is query-relevant: HP domains ∩
-    query domain → grounded/relevant; no overlap → ambient, low groundedness, flag "field signal, not
-    your query." Never render ambient HP convergence as query-specific.
-
-WIRING CONTRACT (NON-NEGOTIABLE — prevents f(confidence) drift):
-    Metrics computed ONLY in src/engine/metricsengine.js via computeMetrics(synthesis, hpState, persona),
-    attached ONLY at synthesizeQuery return as synthesis.metrics, rendered via ONE shared
-    <MetricStrip> (src/components/analysis/metricstrip.jsx) on Target Packet + Action Plan + HP panel.
-    Components NEVER recompute a metric — React is a render-only sink; the engine decides.
-    AMBIGUOUS/INSUFFICIENT returns carry metrics with validity low / groundedness ~0 → strip auto-renders
-    "ungrounded" (fail-safe and metric system are the same thing).
-
-BANNED: the single-scalar "confidence" costume for CAC/ROAS (current f(confidence) in buildBrief).
-    Replaced by component-based truth. Delete on wiring.
-
-DECISION EMISSION SCORE: MULTIPLICATIVE only (Signal × Validity × Convergence × AvgGroundedness) —
-    a weak leg craters the score and cannot be masked. Weighted-average/additive variants FORBIDDEN.
-    Components always visible alongside any composite.
-
-SEVENTH METRIC — LEVERAGE REALIZATION (Founder directive 2026-06-25 → own subsystem WO-1869):
-    LR = Observed Outcome ÷ Projected Outcome. Groundedness asks "how real are the inputs"; LR asks
-    "did the path create leverage" — orthogonal, and LR is closest to the mission ("find advantage
-    before it's obvious"). It is the one PURE-truth metric (retrospective = 100% observed once outcome
-    lands). TWO faces: LR(decision) fills in later + feeds the memory layer; LR-prior(path-class) shown
-    AT emission as the historical track record of similar paths ("0.7× leverage, N=12") — memory, not
-    prediction. Builds ON convictionstore.js (WO-1823/1824/1825 lineage+calibration), not greenfield.
-    Blockers: outcome capture (long lag), attribution/sample-size (need N; carry confidence), survivorship
-    bias. Reserve the 7th hero slot here; spec the engine as WO-1869. Vital Seven: Signal · Validity ·
-    Convergence · CAC · ROAS · LTV · Leverage Realization.
-    NOTE: Leverage Realization is the INSTRUMENT of the principle in §19 — read §19 first.
-
-19. CLOSED-LOOP LEVERAGE PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-06-25)
-
-This is a PRINCIPLE, not a metric. Metrics, panels, classifiers, and UI will be renamed, redesigned,
-and rebuilt — this holds. This is doctrine.
-
-CANONICAL MISSION (DOCTRINE — every subsystem sits under this one sentence):
-    "Finding advantageous positions before they become obvious."
-    Happy Path, Convergence, Fractures, Assemblance, HP Qualification, domain routing, Decision
-    Velocity, signal ingestion — all are parts of THIS machine, not separate inventions.
-
-    KRYLO currently remembers EMISSIONS. It does not remember OUTCOMES. Closing that loop is the
-    mission-critical architecture.
-
-    A decision is not complete when it is emitted. A decision is complete when its outcome is
-    OBSERVED, ATTRIBUTED, and incorporated into PATH MEMORY.
-
-    The system's purpose is NOT to generate Happy Paths. The system's purpose is to discover which
-    path structures repeatedly produce leverage BEFORE they become obvious to participants. The
-    mission cannot be proven by measuring emissions — only by measuring what happened after. That
-    is the missing evidence layer.
-
-THE FULL LOOP:
-    Signal → Synthesis → Happy Path → Decision → Export → OUTCOME → OUTCOME ATTRIBUTION →
-    PATH MEMORY → ROUTE RANKING → LEVERAGE DISCOVERY
-
-KNOWLEDGE CLASSES (distinct — never collapse):
-    Groundedness        = how much of the decision was based on reality
-    Convergence         = how strongly the signals agreed
-    Validity            = how internally sound the decision was
-    Path Memory         = which routes (path → outcome) we have recorded, and how they ranked
-    Outcome Attribution = what actually happened afterward
-    (Leverage Realization = Observed ÷ Projected — the instrument measuring Outcome/Attribution. WO-1869.)
-
-GRAPH MODEL (the shape this becomes — "Google Maps for leverage"):
-    It is a weighted shortest-path problem on a dynamic graph. Not "which road is best" but "given
-    current signals, what path historically produced leverage fastest with the least friction."
-    Signals → Graph Nodes → Convergence Routes → Happy Path Candidates → Outcome Attribution →
-    Path Memory → Route Ranking. Path Memory stores routes (not patterns); ranking surfaces them.
-    Matching a new path to history = route similarity on the graph, NOT pattern recognition / ML.
-
-    INVERSION (guardian tightening, locked): Maps routes you onto KNOWN-good (consensus) roads.
-    KRYLO must route to the NON-obvious advantage — "before it becomes obvious." So Route Ranking
-    weights for EARLINESS / non-consensus, not just historical realized leverage. Rank purely by past
-    leverage and you surface roads already crowded = edge gone. Ranking = f(leverage realization,
-    current non-obviousness). Ties to NON_INSTITUTIONAL_ALPHA / "know first."
-
-TIGHTENINGS (locked with the principle):
-    1. Completeness is a SPECTRUM. Most decisions never get a reported outcome. Path Memory is built
-       from the captured-outcome SUBSET — both the learning engine and its bias (survivorship).
-       Never imply the whole system is "incomplete"; learn from what closes.
-    2. ATTRIBUTION is the highest-risk layer. Claiming a route "produced leverage" off coincidence is
-       the Path-Memory equivalent of fabrication. The session's law extends here: WITHHOLD BEATS
-       FABRICATE — no route-leverage claim without N + attribution rigor. Coincidence is not causation.
-
-FUTURE ARCHITECTURE (emerges from the principle, NOT the immediate build):
-    Emission Layer → Outcome Layer → Path Memory Layer → Leverage Discovery Layer.
-    Not "more intelligence" — memory of which routes actually generated leverage. Evidence
-    accumulation, not prediction/recommendation/autonomous adaptation. Builds on convictionstore.js
-    (WO-1823/1824/1825). Sequence stays grounded: classifier/extraction hardening → six metrics
-    (1868) → outcome capture + Path Memory (1869). The graph is the north star, not next week's PR.
-
-20. DIRECTION HONESTY PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-06-26)
-
-This is a PRINCIPLE, not a feature. It governs all output surfaces.
-
-CANONICAL STATEMENT (DOCTRINE):
-    "Not showing it is showing reality. Suppressing a fracture signal is fabrication by omission."
-
-Structural fracture — negative convergence, downside positioning, credit stress, market dislocation —
-is a first-class signal. The system must surface it with the same authority as constructive convergence.
-The absence of a Happy Path is NOT the fracture signal. The fracture itself is the signal.
-Silence is not neutrality. Silence is concealment.
-
-POLARITY RULE (load-bearing):
-    All domain pressure signals carry two dimensions — magnitude AND polarity.
-        magnitude: signal density (0–100, §16 scale)
-        polarity:  'constructive' | 'fracture'
-    A domain gravity well without polarity is directionally blind.
-    Directional blindness = fabrication by omission.
-
-IMPLICATION FOR OUTPUT:
-    The Happy Path gate (HP ≥ 75) qualifies upside opportunity. It remains unchanged.
-    It is NOT the only output path.
-    Fracture convergence requires its own first-class output surface — equal visual weight, opposite
-    framing. Not a warning label. Not suppressed state. A signal output with full authority.
-
-HISTORICAL ANCHOR:
-    Michael Burry detected the 2008 mortgage fracture from raw CDO prospectuses — alone, manually,
-    against consensus silence. That silence was not neutrality. It was concealment by omission.
-    KRYLO must not replicate that silence. The system shows what it detects. Both directions. Always.
-    With path memory (§19 / WO-1869), it also tells you how long fractures of this class have
-    historically taken to realize — the hold signal Burry needed but never had.
-
-RELATIONSHIP TO §19:
-    §19 requires the loop to close (emission → outcome → path memory → route ranking).
-    §20 requires the loop to be direction-honest.
-    A closed loop that only tracks constructive outcomes is measuring the best half of reality.
-    The mission — "finding advantageous positions before they become obvious" — includes short-side,
-    defensive, and fracture positions. The system is blind to half its mission without §20.
-
-WIRING SEQUENCE:
-    WO-1879 — Domain Gravity Wells (polarity field) — prerequisite
-    WO-1880 — Fracture Output Surface (first-class UI) — depends on WO-1879
-
-21. ROUTE-DON'T-AGGREGATE PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
-
-    KRYLO must not collapse heterogeneous signals into precomputed aggregates before routing
-    decisions are made. Routing decisions operate on atomic signals, uncollapsed event vectors,
-    or raw/minimally normalized inputs. Aggregation is permitted ONLY after routing.
-
-    RATIONALE: pre-aggregation causes loss of causal separability, hidden averaging artifacts,
-    suppression of outlier significance, and false convergence signals.
-
-    ENFORCEMENT RULE: if a system component combines signals before classification, OR computes
-    composite metrics prior to routing, it is a routing violation unless explicitly exempted.
-
-    ALLOWED EXCEPTIONS: post-route summarization layers, visualization-only aggregation,
-    user-facing dashboards (non-decisioning layer).
-
-    This is not a new invention — cirgate.js (CI-R, WO-2054) already practices this (absolute
-    gates sit above RBCS's blended score, never mixed into it); availabilityfilter.js already
-    practices this (eliminates, never deprioritizes). This section makes the discipline an
-    explicit, citable rule instead of an emergent pattern noticed only by inspection.
-
-22. ABSENCE-IS-SIGNAL PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
-
-    The absence of an expected signal is an explicit informational state, not a null condition.
-    Absence must be represented as a classified state — never a missing value, never an ignored
-    input. Categories: STRUCTURAL ABSENCE (signal cannot exist in this context), TEMPORAL ABSENCE
-    (expected but not yet observed), ANOMALOUS ABSENCE (expected and historically present, now
-    missing), FILTERED ABSENCE (suppressed by system constraints).
-
-    NON-COMPLIANCE FAILURE MODE: treating absence as null/zero/undefined produces false
-    neutrality bias and inflates convergence scores.
-
-    BOUNDARY (explicit — do not overclaim enforcement): this doctrine is NOT automatically
-    enforced in SCI, RBCS, or availability filtering as of 2026-07-03. epistemictransparency.js
-    (WO-2079) partially implements this pattern for Decision Invariants only (surfaces
-    `unpopulated` rather than defaulting to zero). Full enforcement across SCI/RBCS/availability
-    filtering requires a separate implementation layer ("absence encoding pipeline") — filed
-    separately, not implied by this doctrine's existence.
-
-23. ORTHOGONAL AXIS INTEGRITY PRINCIPLE (LOCKED — FOUNDER DIRECTIVE 2026-07-03)
-
-    All metric axes used in scoring systems must be orthogonal unless explicitly declared
-    dependent. Violation exists if Axis A can be expressed as a function of Axis B, or two axes
-    respond to the same latent variable under different names.
-
-    FAILURE MODE: non-orthogonal axes produce artificial confidence inflation, duplicated signal
-    weighting, and false convergence stability.
-
-    AUDIT OUTPUT FORMAT (per axis pair): Pair (A, B) — Dependency: Independent / Partially
-    Dependent / Fully Dependent — Risk: Low / Medium / High — Action: Merge / Reweight /
-    Separate / Retire.
-
-    Ties to §18's existing multiplicative-only rule for the decision emission score (Signal ×
-    Validity × Convergence × AvgGroundedness) — that rule is the one case already locked; this
-    section generalizes the underlying discipline so future composite metrics get audited
-    against it by default, not as an afterthought.
-
-24. SECRET EXPOSURE GUARDRAIL (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-07-31)
-
-    INCIDENT RECORD (2026-07-31): three separate secret-exposure events in one session — an
-    EIA_API_KEY value printed via grep, a full ecosystem.config.cjs dump printed via cat/heredoc,
-    and a targeted grep of the same file that printed DATABASE_URL (with password), KALSHI_API_KEY,
-    VITE_FRED_API_KEY, and APIFY_API_TOKEN in plaintext — the third happening AFTER the first two
-    were already flagged as the problem. Root cause: no hard rule existed against running commands
-    whose output includes secret values; "be careful" was not enforced mechanically.
-
-    RULE (ABSOLUTE, NO JUDGMENT CALL): the agent MUST NEVER run any command whose output could
-    contain the literal value of a secret, credential, API key, token, password, private key, or
-    connection string — whether local (.env, .env.*), remote (ssh to any host), or in any config
-    file (ecosystem.config.cjs, docker-compose env blocks, CI secrets, etc.) — regardless of
-    whether the goal is legitimate (checking presence, verifying it changed, debugging a 503).
-
-    THIS MEANS, SPECIFICALLY, NEVER RUN:
-        - cat / less / head / tail / Read on any file containing secrets
-        - grep (any form) over a file or env dump containing secrets, even a "targeted" grep for
-          one key name — grep still prints the matched line, which includes the value
-        - pm2 env <id>, printenv, env, export -p, or any full environment dump
-        - echo $SECRET_VAR or any shell expansion of a secret variable
-        - heredocs, printf, or any command that reconstructs file contents into the transcript
-
-    THE ONLY PERMITTED CHECK PATTERN — EXISTENCE/BOOLEAN ONLY, NEVER VALUE:
-        - grep -q '^KEY_NAME=' file && echo "KEY_NAME: present" || echo "KEY_NAME: MISSING"
-        - test -n "$SECRET_VAR" && echo "set" || echo "unset"   (never echo "$SECRET_VAR" itself)
-        - wc -l, grep -c, or any count/boolean form that cannot leak the value
-        - If a value must be verified as CORRECT (not just present), ask the Founder to verify it
-          himself on his own terminal — the agent does not need to see it to confirm the fix works;
-          a functional endpoint test (curl against the feature, checking for a non-error response)
-          proves the fix without ever touching the secret's value.
-
-    IF A SECRET IS EVER PRINTED ANYWAY (tool output beyond the agent's control, e.g. an error
-    message that echoes a connection string): STOP immediately, do not run further commands, state
-    plainly and factually that it happened and exactly what was exposed, and treat it as a rotation
-    candidate — do not minimize, do not bury it in a longer message.
-
-    THIS RULE HAS NO EXCEPTIONS FOR URGENCY, DEBUGGING DIFFICULTY, OR "JUST THIS ONCE." If the
-    existence/boolean pattern above cannot answer the question, the agent STOPS and asks the
-    Founder to run the check himself, rather than finding a workaround that re-exposes the value.
-
-25. THREE-QUESTION GROUNDING PROTOCOL (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-03)
-
-    INCIDENT RECORD (2026-08-03): during an IP-meeting prep audit, the agent stated "Cognitive
-    Event Infrastructure — NOT BUILT — zero hits for any cognitive-event-log concept anywhere in
-    src/" and wrote this into a committed spec file. It was false. Real code implementing exactly
-    this concept already existed — src/engine/replayengine.js (WO-1700, replay(envelope) →
-    UISnapshot) and src/engine/causalos/provenance.js (WO-1336 L3, ProvenanceDAG) — under
-    different names than the ones searched for. Root cause: the agent searched only for the
-    literal strings "cognitive event" / "cognitiveEvent", found no match, and concluded the
-    CONCEPT didn't exist because the EXACT PHRASE didn't. Architectural concepts rarely have one
-    canonical name in a mature codebase. A narrow lexical search returning zero hits proves only
-    that the search terms are absent — never that the capability is absent.
-
-    RULE: every grounding/architecture-audit pass — "does X exist," "is Y built," any BUILT /
-    NOT BUILT / orphaned determination — MUST answer three distinct questions before a verdict is
-    stated, and MUST NOT collapse them into one:
-
-        1. LEXICAL SEARCH — "Does this exact term exist?"
-           (grep for the literal name/phrase used in the request or spec.)
-
-        2. CONCEPT SEARCH — "Does this capability exist under another implementation or name?"
-           (search for the underlying mechanism by function, not by the label — synonyms, prior
-           WO numbers, adjacent subsystems, related file names. A zero result on step 1 is not
-           evidence for step 2; it is only evidence that step 1 found nothing.)
-
-        3. BEHAVIORAL VERIFICATION — "Is this actually wired into the running system?"
-           (trace real import chains to a live mount point / call site — code existing on disk is
-           not the same as code executing. An orphaned file answers "does it exist" YES and
-           "is it live" NO — both halves must be stated, never just one.)
-
-    A verdict of NOT BUILT requires all three questions answered NO. A verdict of BUILT requires
-    all three answered YES. Anything in between (found in code, unconfirmed live; or found under
-    a different name than searched) is ARCHITECTURALLY DECOMPOSED / UNCONFIRMED — never rounded
-    up to BUILT or down to NOT BUILT for narrative convenience.
-
-    FAILURE MODE THIS PREVENTS: false negatives presented with false confidence in front of an
-    external audience (investors, patent counsel, technical diligence) — the exact opposite
-    failure mode from §24, but the same root cause: a shortcut mistaken for a completed check.
-
-26. SHARED DATA / FUNCTION CHANGE GATE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
-
-    §25 governs whether a capability exists. This section governs what happens next: before
-    modifying any field, function, adapter, resolver, state property, fallback, or other element
-    that could be read or written from more than one place, the agent MUST establish its full
-    existing role in the application before editing it. §25's lexical/concept/behavioral triad is
-    the mechanism this section invokes before a code change, not only before a verdict.
-
-    RULE — VALUES CROSSING A BOUNDARY ARE SHARED BY DEFAULT: any value that crosses two or more
-    architectural boundaries (session ↔ UI, synthesis ↔ UI, synthesis ↔ export, connector ↔
-    resolver, resolver ↔ presentation layer, presentation ↔ export/persistence, or equivalent) is
-    presumed SHARED — not local to the file being edited — until proven otherwise. Shared status
-    requires the full gate below even when the requested change looks local, small, or obvious.
-
-    THE GATE — four stages, in order, before any edit:
-
-        1. LEXICAL TRACE — search the entire repository, not just the file being edited, for the
-           exact symbol/field/function name: assignments, reads, destructuring, imports/exports,
-           serialization, fallback operators (??, ||, ternaries), object construction, API
-           payloads, persistence, exports/downloads. Record writers, readers, transformers,
-           exports, persistence, and fallbacks found.
-
-        2. CONCEPT TRACE — search for semantically equivalent representations under different
-           names (renamed fields, parallel adapters, prior WO/ticket names, adjacent subsystems).
-           A zero result on the lexical trace is not evidence the concept is absent — it only
-           proves the searched term is absent (§25's own rule, applied here to code changes, not
-           only to BUILT/NOT BUILT verdicts).
-
-        3. BEHAVIORAL TRACE — follow one real execution path: input → state → transformation →
-           authoritative source → consumer → UI / API / export / persistence. Establish which
-           path actually executes vs. which is dormant, which source is authoritative, whether a
-           downstream value is already computed elsewhere, whether an apparent fallback is
-           actually the primary path, and whether a presentation or export layer manufactures its
-           own value independently of the source being edited. Imported ≠ invoked. Defined ≠
-           active. Available ≠ authoritative.
-
-        4. CLASSIFY, THEN EDIT — only after stages 1-3 may the target be classified as exactly
-           one of:
-               A — AUTHORITATIVE / WORKING: no change required.
-               B — DUPLICATE / SHADOW IMPLEMENTATION: an authoritative path already exists;
-                   remove, bypass, or reconnect only after every consumer is confirmed.
-               C — FABRICATION / UNSOURCED GENERATION: output has no evidence-backed source;
-                   replace with the existing authoritative path, or honest absence (§22) — never
-                   a newly invented value.
-               D — BROKEN TRANSITION: both sides of the contract already exist but the runtime
-                   transition between them is missing; repair only that transition.
-               E — ACTUAL GAP: no authoritative implementation exists anywhere; stop and specify
-                   the required contract before writing any code — do not invent one during what
-                   was scoped as cleanup.
-               F — UNKNOWN: evidence is insufficient; do not edit, continue investigating.
-
-    HARD STOP CONDITIONS — the agent MUST NOT edit when any of the following is true: a shared
-    field has not been searched repository-wide; a function's consumers have not been identified;
-    an apparently missing value has not undergone concept search; an apparently dead function has
-    not been checked for runtime invocation; an apparently fabricated fallback has not been
-    checked for an existing authoritative source; a replacement is being proposed before the
-    current producer/consumer relationship is understood; the proposed fix would create a second
-    state store, parallel representation, or duplicate source of truth; or the proposed fix
-    assumes the file currently open contains the entire behavior.
-
-    "I DIDN'T FIND A CONSUMER" IS NOT "THERE IS NO CONSUMER": that conclusion is only valid after
-    lexical, concept, AND behavioral verification have all been performed — a narrow search
-    returning nothing proves the search was narrow, not that nothing exists (§25's rule, restated
-    here for code changes rather than verdicts).
-
-    "SMALL" IS NOT AN EXEMPTION: do not skip the gate because a change seems small, obvious, "just
-    a fallback," "just cleanup," "only UI," "only a refactor," or because the existing behavior
-    looks clearly wrong on its face. The size of a change does not exempt it from grounding.
-
-    EXPORT INTEGRITY: any field that reaches a downloadable document, report, consulting brief,
-    API response, persisted record, or external integration must have its provenance traced
-    through that final consumer, not just the screen. A screen-only check is insufficient when an
-    export or persistence path exists.
-
-    REQUIRED PRE-EDIT REPORT — before the first code modification on a shared target, state:
-    target, authoritative source, known writers, known consumers, parallel representations,
-    runtime path verified (yes/no + how), existing replacement/path if any, the actual defect
-    (using the A-F classification above), the minimal change, explicit non-goals, and the
-    acceptance test that proves the fix. Only then may implementation begin.
-
-    WHEN BLOCKED — if the gate cannot be completed, report plainly: target, reason, searches
-    completed, the unknown relationship, and what evidence is still required. Do not modify code
-    while blocked.
-
-27. SPECIFICATION / IMPLEMENTATION RECONCILIATION GATE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
-
-    This gate is mandatory before modifying any existing function, module, shared contract, or
-    runtime path that has an associated WO, ticket, specification, doctrine, or historical
-    implementation claim.
-
-    1. SPECIFICATION IS NOT IMPLEMENTATION
-
-    Never infer intended behavior from the current implementation alone.
-
-    Current code establishes what exists, not necessarily what was intended.
-
-    If a WO/specification exists, locate and inspect it before proposing or making changes.
-
-    2. RECONCILE BEFORE EDITING
-
-    Before editing, explicitly compare:
-
-        - authoritative specification / WO
-        - current implementation
-        - current return/data contract
-        - runtime reachability
-        - known consumers
-        - relevant git history
-
-    Classify the relationship as exactly one of:
-
-        - MATCH
-        - PARTIAL
-        - DIVERGENT
-        - UNKNOWN
-
-    If DIVERGENT or UNKNOWN, STOP implementation.
-
-    Do not silently choose the implementation, specification, or a presumed migration path.
-
-    3. NO CONTRACT INFERENCE
-
-    Do not describe an implementation as an "older contract," "legacy contract," "migration
-    candidate," or "intentional architectural split" unless repository evidence establishes that
-    conclusion.
-
-    Similar shapes, naming, chronology, or neighboring functions are evidence only. They are not
-    authorization.
-
-    4. TRACE THE WO
-
-    For any WO-driven implementation, establish:
-
-        1. where the WO/specification was defined;
-        2. whether implementation was actually authorized;
-        3. which commit introduced the implementation;
-        4. whether the implementation matches the specification;
-        5. whether a later specification superseded it;
-        6. whether an explicit decision accepted divergence.
-
-    If the evidence does not establish the answer, report it as UNKNOWN.
-
-    5. NO REMEDIATION FROM DIVERGENCE ALONE
-
-    Finding a specification/implementation mismatch does NOT authorize:
-
-        - migration;
-        - rewrite;
-        - adapter creation;
-        - contract expansion;
-        - deletion;
-        - deprecation;
-        - replacement;
-        - "cleanup."
-
-    First establish which artifact is authoritative.
-
-    6. CONCEPT SEARCH BEFORE DECLARING DATA ABSENT
-
-    Before stating that data, a source, consumer, or equivalent representation "does not exist,"
-    search for:
-
-        - alternate field names;
-        - alternate modules;
-        - historical implementations;
-        - shared utilities;
-        - connector output;
-        - downstream consumers;
-        - git history;
-        - specifications and archived documentation.
-
-    Report the search boundary explicitly.
-
-    7. RUNTIME REACHABILITY MUST BE SEPARATE FROM EXISTENCE
-
-    Do not equate:
-
-        - function exists → function is reachable;
-        - consumer exists → consumer is live;
-        - field exists → field is consumed;
-        - resolver exists → resolver can actually execute.
-
-    Trace the runtime path before claiming a defect is live.
-
-    8. VALIDATION CLAIMS MUST BE TRACEABLE
-
-    Never report a test count, assertion count, build result, or validation result from
-    conversational memory.
-
-    Every validation claim must be:
-
-        - directly supported by the command output being cited, or
-        - rerun before reporting.
-
-    If not reverified, state: "Previously reported; not independently reverified."
-
-    Do not transfer validation results between commits, tickets, or investigations.
-
-    9. NO IMPLIED GUARANTEES
-
-    Do not use terms such as "permanently unreachable," "always," "never," "exhaustive," "safe,"
-    "fully verified," "no other consumers," "no other paths" — unless the repository inspection
-    actually establishes that scope.
-
-    State the inspected boundary.
-
-    10. PRE-EDIT REPORT REQUIRED
-
-    Before any edit triggered by an investigation, provide:
-
-        Target — exact file/function/path.
-        Authority — specification/WO/doctrine establishing intended behavior.
-        Current implementation — what the code actually does.
-        Reconciliation — MATCH / PARTIAL / DIVERGENT / UNKNOWN.
-        Runtime path — how the behavior is reached.
-        Consumers — known readers/dependencies.
-        Evidence gaps — anything not established.
-        Proposed change — only after the above is established.
-        Non-goals — what will explicitly remain untouched.
-        Acceptance test — observable evidence proving the intended change.
-
-    No code edit before this report.
-
-    11. STOP CONDITIONS
-
-    STOP and ask for a decision when:
-
-        - specification and implementation materially disagree;
-        - multiple plausible authorities exist;
-        - a WO appears to have been implemented differently from its specification;
-        - a specification may have been superseded but this is not established;
-        - remediation would require inventing a new contract;
-        - a required classification rule does not exist;
-        - runtime reachability remains unresolved;
-        - validation evidence is contradictory.
-
-    Do not resolve these conditions by choosing the most convenient interpretation.
-
-    12. INVESTIGATION ≠ AUTHORIZATION
-
-    An investigation may discover defects, divergences, missing wiring, unreachable code, or
-    obsolete specifications.
-
-    That discovery does not authorize fixing them.
-
-    Maintain the distinction:
-
-        INVESTIGATED → CLASSIFIED → DECISION → AUTHORIZED → EDITED → VALIDATED → COMMITTED
-
-    Never skip directly from INVESTIGATED to EDITED.
-
-28. WORK CLASSIFICATION & EVIDENCE-VS-AUTHORITY DOCTRINE (NON-NEGOTIABLE — FOUNDER DIRECTIVE 2026-08-15)
-
-    Before any edit governed by §26/§27, classify the work as exactly one of three classes. The
-    classification determines what is permitted.
-
-    CLASS A — WIRING DEFECT
-
-    Authoritative intelligence already exists and is simply not connected to its contract. The
-    producer's semantics are not in question — only the connection is missing.
-
-    Example: canon.direction existed, was correct, and was not reaching threats/opportunities.
-
-    Permitted: connect the existing authoritative data to the existing contract. Nothing else.
-
-    CLASS B — CONTRACT MIGRATION
-
-    The existing implementation is substantially the specified thing — its semantics are correct
-    — but its interface/shape disagrees with a newer or different consumer contract.
-
-    Permitted only after establishing that the producer's semantics genuinely match the
-    specification. Migrating a shape does not require re-deciding what the thing means — only how
-    it's expressed. If that semantic match has not been established, this is not Class B; treat it
-    as Class C until proven otherwise.
-
-    CLASS C — SPECIFICATION/IMPLEMENTATION DIVERGENCE
-
-    The existing implementation may run, compile, and produce plausible output, but evidence
-    indicates it implements a materially different thing than what the governing specification
-    describes.
-
-    This is NOT a migration. Reshaping a Class C implementation to fit a newer contract would
-    ratify the wrong system into the right shape.
-
-    Requires an explicit authority decision before any migration, reuse, wiring, or rewrite: which
-    artifact governs — the specification or the implementation? Claude does not answer this by
-    editing code. Only the Founder decides.
-
-    RULE — EVIDENCE IS NOT AUTHORITY.
-
-    None of the following, individually or combined, establishes that an implementation is
-    semantically correct:
-
-        - a WO number attached to a function (establishes recorded intent only)
-        - a function's name (establishes a label only)
-        - an existing implementation (establishes behavior only — behavior is not proof of correctness)
-        - a passing build (establishes syntactic/runtime viability only)
-        - an existing consumer (establishes a dependency only — a consumer can depend on a wrong thing)
-
-    Each of these is evidence toward an eventual decision. None of them, alone or together, is the
-    decision. Do not let "it exists," "it runs," "it's wired," or "it's been running for months"
-    gradually stand in for "it is correct." That drift — existence quietly becoming correctness —
-    is the specific failure mode this rule exists to block.
-
-    DEFAULT AUTHORITY RULE: when a specification and an implementation disagree, the specification
-    remains authoritative unless a deliberate, recorded decision changes the specification itself.
-    Silence, prior implementation, or the passage of time does not transfer authority to the
-    implementation. A "migration" that reshapes a Class C implementation without first resolving
-    this question is not a migration — it is an undisclosed decision to ratify the implementation
-    over the specification, made by omission rather than on purpose.
-
-29. EVIDENCE CLASSIFICATION MATRIX (LOCKED — FOUNDER DIRECTIVE 2026-08-03)
-
-    §25 defines HOW to check a claim (three questions). This section defines HOW TO RECORD what
-    was found. It applies architecture-wide — to CLAUDE.md itself, every spec file, every WO
-    status line, every session handoff, and anything presented externally (IP counsel, investor
-    diligence, technical review) — not only to IP-meeting prep.
-
-    RULE: every architectural claim SHALL declare two independent, orthogonal axes. Never
-    collapse them into a single word like "COMPLETE," "BUILT," or "DONE" — those words hide
-    which axis is actually being claimed.
-
-    MATURITY (what exists):
-        A — Production implementation exists (code exists AND is wired into the live system)
-        B — Enabling implementation exists (a real primitive/mechanism exists; the composed,
-            named capability built from it does not)
-        C — Technical specification/contract exists (defined in a spec or doctrine; no
-            implementation)
-        D — Architectural vision (intent only; no contract, no implementation)
-
-    VERIFICATION (how thoroughly the claim above has actually been checked, mapped to §25's
-    three questions):
-        L — Lexically verified (exact term/name found)
-        C — Conceptually verified (capability found under a different name/implementation)
-        R — Runtime verified (traced a real import/call chain to a live mount point — it
-            executes as part of the running system)
-        B — Behaviorally verified (observed it actually produce correct output under real
-            execution — the strongest rung; code being wired is not the same as code being
-            proven correct)
-
-    NOTATION: state both axes together, always — e.g. "CI-R — Maturity: A, Verification: C
-    (pending R)." A claim with no Verification letter attached is not a claim, it's a guess.
-
-    RETROACTIVE RULE (the more important half): pre-existing "COMPLETE" labels anywhere in this
-    file (WO registries, the Platform Framework Sequence, any status block) are NOT
-    grandfathered. They were written before this doctrine existed and have not been classified
-    under it — not because they are probably wrong, but because "COMPLETE" was never a real
-    epistemic claim to begin with. They must not be cited to any external audience as evidence of
-    Runtime or Behaviorally verified status until re-audited under §25 and re-labeled under this
-    matrix. Until re-audited, treat every legacy "COMPLETE" as Maturity: A (unconfirmed),
-    Verification: unclassified.
-
-    FAILURE MODE THIS PREVENTS: conflating "code exists" with "code is proven correct in
-    production" — the exact gap that let past-session "COMPLETE" markers get cited as
-    demonstrated fact without ever being re-checked. The standard is no longer "someone
-    previously declared this complete" — it is "state both the implementation maturity and the
-    level of evidence supporting that claim."
-
-30. FONT/TEXT CONTRACT — REPORT SURFACES (LOCKED — FOUNDER DIRECTIVE 2026-08-09)
-
-    Every report-style output surface (banner narratives, macro/domain state reports, brief and
-    packet bodies) uses exactly THREE text sizes. No ad-hoc font-size value may be introduced on
-    report/narrative text outside these three tiers. This does not govern HUD micro-labels,
-    numeric/tabular data, or buttons — narrative/report text only.
-
-    CANONICAL SOURCE (reference implementation — analysisfield.jsx:897-910, "01 MACRO STATE
-    OVERVIEW"):
-
-        LARGE  — headline / report title.
-            font: Georgia, 'Times New Roman', serif · size: 28px · line-height: 1.15
-            e.g. "Structural Convergence Report"
-
-        MEDIUM — state / classification label.
-            font: 'IBM Plex Mono', monospace · size: 15px · letter-spacing: 0.04em
-            e.g. "BUILDING CONVERGENCE"
-
-        SMALL  — descriptive / explanatory body copy.
-            font: 'IBM Plex Mono', monospace · size: 11.5px · line-height: 1.6
-            e.g. "Measures whether independent macro forces are accumulating, conflicting, or
-            failing to align across the structural environment. Classification: PROJECTION — a
-            telemetry-derived state, not an observed or asserted outcome (DEF-1863). Scope: macro
-            structural field, not any single domain."
-
-    SCOPE: applies app-wide to every report-style surface, current and future — including
-    observestoryview.jsx (ObserveStoryBanner), analysisfield.jsx (Structural Convergence Report),
-    targetpacket.jsx, and intelligencebrief.jsx. A new report surface conforms to these three
-    sizes on build; it does not invent a fourth.
-
-    RULE: when auditing or building any report-style text, classify it as Large, Medium, or Small
-    by role (title / state label / body copy) and use the exact spec above. A font-size found on
-    report text that matches none of the three is a contract violation — flag it, do not leave it
-    unresolved.
-
-31. 3D-HUD / REPORT-OVERLAY BOUNDARY CONTRACT (LOCKED — FOUNDER DIRECTIVE 2026-08-10)
-
-    INCIDENT RECORD: two separate cone-scene HUD elements — ThresholdBands (LO·50/MID·75/HI·90
-    scale labels, conemap.jsx) and FlowArc (bay-pulse "X ↔ Y / WATCH: ..." labels, conemap.jsx) —
-    were confirmed via live screenshot bleeding through AnalysisField's 2D report overlays
-    (Structural Convergence Report, FLOW "Movement Analysis," and others). Root cause: these are
-    drei `<Html>` elements portaled out of the r3f Canvas into their own DOM layer. The Canvas
-    stays mounted underneath every AnalysisField report (surfaceActivated just adds a 2D overlay
-    on top), so any Html-portaled 3D HUD chrome without an explicit lens gate renders above that
-    2D content instead of being covered by it — the report's `background: '#000'` does not stop
-    a sibling-stacked portal element from painting on top.
-
-    RULE: every Html-portaled element inside conemap.jsx's ConeScene that is pure background/
-    orientation chrome (not itself the active view's content) MUST be gated to
-    `viewportLens === 'NAV_SURFACE'` (hero + surface default, before any lens or report is
-    chosen). Do not rely on z-index to fix this class of bug — z-index does not reliably win
-    against portaled Html in this stacking context; gate visibility at the lens level instead.
-
-    CURRENT GATING (reference — conemap.jsx):
-        ThresholdBands  — NAV_SURFACE only (fixed 2026-08-09)
-        FlowArc         — NAV_SURFACE only (fixed 2026-08-10)
-        Formation Relationship Connector Layer — NAV_SURFACE + OBSERVE (intentional exception:
-            it is the companion visual to ObserveStoryBanner, which also does not trigger
-            surfaceActivated / AnalysisField — see app.jsx's viewportLens !== 'OBSERVE' check).
-        Per-cone floating HUD (domain/signal label) — NAV_SURFACE + OBSERVE (same exception).
-
-    WHEN BUILDING NEW 3D HUD CHROME: default new Html-portaled elements to NAV_SURFACE-only.
-    Only extend to OBSERVE if the element is a direct, intentional companion to
-    ObserveStoryBanner's narrative (never as a default assumption) — every other lens mounts a
-    full AnalysisField report and will suffer this same bleed-through if the gate is missed.
+# KRYLO — Kinetic Interrogation Standard
+
+Session handoffs and evolving learnings live in auto memory
+(`~/.claude/projects/.../memory/MEMORY.md`), not here.
+
+**Work orders / tickets:** tracked exclusively in Jira, project KRYL —
+https://krylo.atlassian.net/browse/KRYL — and git log. No WO registry is maintained in this file.
+Credentials live in `specs/jira.md` (gitignored, source it, never print it) — see Founder for the
+key.
+
+## 1. Grounding & Evidence (was §22, §25, §27, §28, §29 — merged)
+
+**Empirical grounding.** All outputs, suggestions, and directives must be strictly grounded in
+verifiable, contemporaneous evidence. No probabilistic speculation, extrapolation, or unverified
+assertions presented as fact. Output touching financial, legal, medical, or operational decisions
+(Target Packet, Action Plan, Happy Path, executive briefs) is informational — never self-executing
+or actionable without explicit, documented validation by a qualified human expert.
+
+**Three-Question Grounding Protocol** — every BUILT/NOT-BUILT or architecture-exists verdict
+answers three questions before a verdict is stated:
+1. Lexical — does the exact term/name exist? (grep)
+2. Concept — does the capability exist under a different name/implementation? (a zero on #1 is
+   evidence only that the search term is absent, never that the capability is)
+3. Behavioral — is it actually wired into a live call path, not just present on disk?
+A verdict of BUILT requires all three YES; NOT BUILT requires all three NO. Anything in between is
+UNCONFIRMED — never rounded up or down for narrative convenience.
+*Incident: 2026-08-03, agent declared a real subsystem "NOT BUILT" in a committed IP-meeting spec
+after a lexical-only search found no match under the searched name.*
+
+**Evidence Classification Matrix** — every architectural claim states two axes, never collapsed
+into a bare "COMPLETE":
+- Maturity: A (production, wired live) / B (primitive exists, composed capability doesn't) /
+  C (spec only) / D (vision only)
+- Verification: L (lexical) / C (conceptual) / R (runtime-traced) / B (behaviorally observed
+  correct)
+Pre-existing "COMPLETE" labels anywhere are unclassified until re-audited — do not cite them to an
+external audience as proof of Runtime/Behavioral status.
+
+**Evidence is not authority.** A WO number, a function's name, an existing implementation, a
+passing build, or an existing consumer are each evidence toward a decision — none of them, alone
+or combined, IS the decision. When a spec and an implementation disagree, the spec stays
+authoritative until a deliberate, recorded decision changes it — silence or the passage of time
+does not transfer authority to the implementation.
+
+**Work classification before editing anything reconciled against a spec:**
+- Class A (wiring defect) — authoritative logic exists, just not connected. Fix: connect only.
+- Class B (contract migration) — semantics are right, shape is wrong. Fix: reshape only, after
+  confirming semantics genuinely match.
+- Class C (spec/implementation divergence) — runs, but implements something materially different
+  from the spec. Not a migration. Requires an explicit Founder ruling on which artifact governs
+  before any change.
+Investigated → classified → decision → authorized → edited → validated → committed. Never skip
+straight from investigated to edited.
+
+**Absence-Is-Signal.** Absence of an expected signal is a classified state (structural / temporal
+/ anomalous / filtered), never a null/zero/undefined default — treating it as null produces false
+neutrality and inflates convergence scores. *Not yet enforced across SCI/RBCS/availability
+filtering as of 2026-07-03 — don't overclaim it is.*
+
+## 2. Shared Data / Function Change Gate (was §26 + §27, merged)
+
+Before modifying any field, function, adapter, resolver, or state property that could be read or
+written from more than one place — presumed shared until proven otherwise:
+
+1. **Lexical trace** — grep the whole repo for the exact symbol: assignments, reads, exports,
+   fallback operators, API payloads, persistence.
+2. **Concept trace** — search for the same capability under a different name (renamed field,
+   parallel adapter, prior ticket name). A zero on stage 1 is not evidence of absence.
+3. **Behavioral trace** — follow one real execution path input -> state -> transform ->
+   authoritative source -> consumer. Imported does not mean invoked. Defined does not mean active.
+   Available does not mean authoritative.
+4. **Classify then edit** — A (authoritative, no change) / B (duplicate/shadow — remove only after
+   every consumer confirmed) / C (fabrication — replace with real source or honest absence) /
+   D (broken transition — repair only that transition) / E (actual gap — stop, spec first,
+   don't invent one during "cleanup") / F (unknown — keep investigating, don't edit).
+
+**Hard stop:** don't edit while any of — a shared field hasn't been searched repo-wide, a
+function's consumers are unidentified, an apparently-dead function hasn't been checked for
+runtime invocation, a fix would create a second state store or parallel representation. "I didn't
+find a consumer" is not "there is no consumer" until all three stages ran. "Small," "just a
+fallback," "only UI" is not an exemption.
+
+**Before the first edit on a shared target, state:** target, authoritative source, known
+writers/consumers, runtime path verified (yes/no + how), the defect (A-F above), the minimal
+change, non-goals, and the acceptance test. Only then implement.
+
+## 3. Layer Order (LOCKED by Mr. XS — do not deviate)
+
+Journey: Layer 1 (Hero) -> submit -> Layer 1N (Signal Map) -> node click -> Layer 2 (Oracle) ->
+ETR select -> Layer 3 (Ground Level). Page 1 is the universal entry point.
+
+Layer to file map (non-obvious names, not derivable by directory structure alone):
+- Layer 0/1 — `public/krylo2-feed.html`
+- Layer 2 (10K / Audit Desk) — `src/components/oracleview.jsx`
+- Layer 3 (Ground Level) — `src/components/tenkvault.jsx`
+- Layer 4 (Signal Map) — `src/components/spine/spinemap.jsx`
+Everything else — grep for it; the codebase is the source of truth for file layout.
+
+## 4. Forensic Guardrails (Anti-Drift)
+
+- **Asset-first audit**: before building, grep `/public` and root for an existing `.html`/`.js`
+  asset that already covers the surface.
+- **Ghost-kill**: if a new React component would overlap an existing HTML asset, refuse the build.
+  *Incident (WO-282/284b): built `TheMoat.jsx` duplicating existing `krylo2-feed.html`, causing a
+  layer collision.*
+- **Architecture-first audit**: before writing code for an existing component, read the file and
+  identify its rendering architecture (InstancedMesh vs. individual components, shader vs.
+  declarative). A change to that architecture is a REPLACEMENT, not an addition, and must be
+  declared as one. If the architecture can't be identified from the file, stop and ask.
+  *Incident (WO-295): an architectural replacement (InstancedMesh -> individual components) was
+  built as an additive feature without reading the existing architecture — the working map was
+  destroyed.*
+
+## 5. Design Sovereignty (Founder authority — no exceptions)
+
+No color value — hex, named, or descriptive — outside what's in §6 without explicit Founder
+approval. **Banned forever: Amber, any shade/hex/name.** Design and creative decisions belong to
+the Founder; engineering judgment does not extend to visual/creative choices.
+
+## 6. Color Specifications (LOCKED)
+
+```
+--moat-bg:        #000000   Layer 0/1 background
+--oracle-bg:      #F5F5F7   Layer 2 background
+--signal-lime:    #66FF00   primary accent
+--text-dark:      #1A1A1A   primary text on light bg
+--unicorn-purple: #8A2BE2   Diamond/Unicorn formation, Layer 4
+--signal-blue:    #007FFF   TURBULENT convergence state
+
+Layer 0 intro: Deep Forest Green #1a4a2e/#1e4d30 . Mid Green #2d6b42 . Lime #66FF00 . Light Gray #e0e0dc
+
+Convergence state color + motion:
+  INSUFFICIENT SIGNAL   #3a3d4a  nearly static
+  LOW SIGNAL YIELD       #1a1a1a  slow drift
+  BUILDING CONVERGENCE   #66FF00  coherent pulse, soft bloom
+  TURBULENT CONVERGENCE  #007FFF  irregular jitter, NO bloom/glow
+  HIGH CONVERGENCE       #8A2BE2  gravitational compression, restrained bloom
+  Only lime and purple reach high emissive dominance. Blue stays mid-luminance. Purple stays rare.
+```
+
+## 7. Font/Text Contract — report surfaces (LOCKED)
+
+Exactly three text sizes on every report-style surface (banner narratives, macro/domain reports,
+brief/packet bodies). Does not govern HUD micro-labels, tabular data, or buttons. Reference:
+`analysisfield.jsx:897-910`.
+
+- **Large** — headline/title. Georgia/Times New Roman serif, 28px, line-height 1.15.
+- **Medium** — state/classification label. IBM Plex Mono, 15px, letter-spacing 0.04em.
+- **Small** — descriptive body copy. IBM Plex Mono, 11.5px, line-height 1.6.
+
+A font-size on report text matching none of the three is a contract violation — flag it.
+
+## 8. 3D-HUD / Report-Overlay Boundary Contract (LOCKED)
+
+Any `<Html>`-portaled element in `conemap.jsx`'s `ConeScene` that is pure background/orientation
+chrome (not the active view's content) must gate to `viewportLens === 'NAV_SURFACE'`. Do not rely
+on z-index against portaled `Html` — it doesn't reliably win; gate at the lens level. Default new
+HUD chrome to NAV_SURFACE-only; extend to OBSERVE only as a deliberate, direct companion to
+ObserveStoryBanner's narrative, never as a default.
+*Incident: ThresholdBands and FlowArc confirmed bleeding through AnalysisField's 2D report overlays
+because the Canvas stays mounted underneath every report and z-index doesn't beat a sibling-stacked
+portal.*
+
+## 9. Absolute File Rules
+
+- Lowercase filenames only (e.g. `oracleview.jsx`). No CamelCase.
+- Deprecated dependency: `relume-ui-react` — never import.
+
+## 10. Work Order Protocol
+
+`WO-[NUMBER]: [TITLE]` (or `KRYL-####` — Jira is the sole numbering authority, no more "WO-"
+prefix on new tickets). No code without an open WO/ticket and explicit "go." Every WO passes the
+Bottle Test before build (template: `specs/WO-HARDENING-TEMPLATE.md`) — all 5 must be YES:
+reduces ambiguity, single dominant output, all boundaries defined, no undefined dependencies, does
+not increase expressive flexibility in core. A TBD in File Map or Formula = BLOCKED, do not build.
+
+**Positioning (locked):** "We don't predict. We detect." Any WO that predicts, recommends, or
+generalizes instead of detecting structural asymmetry doesn't advance the mission — flag before
+building.
+
+**Validation execution:** run validation against each code chunk immediately after writing it; fix
+and revalidate failures immediately, no reporting mid-stream; "Build Complete" is never sent until
+100% of checks pass across all chunks. Partial completion is never reported as success.
+
+**Definition of Done:** BAU (works as expected against current baseline) + BASELINE (verified
+against the currently-tagged baseline commit, not a hardcoded name) + VOICED (report-surface text
+follows §7, no size/style overlap).
+
+## 11. Agent Behavioral Constraints
+
+**Explicit go required.** State what will change and what won't; wait for explicit "go" before
+writing code on a new WO.
+
+**Rollbacks.** "Go back"/"revert" — ask which exact state before touching anything; never assume
+it means the last commit. Name the exact target state and wait for confirmation before reverting.
+A rollback is not an opportunity to also fix other things noticed along the way.
+
+**Data preservation (no exceptions):**
+- A file isn't saved until it's in a git commit — existing on disk isn't saved.
+- Before any destructive git operation (reset, rebase, checkout, clean), commit all open work
+  first, no exceptions.
+- Before a hard reset: list every uncommitted file that will be wiped, warn explicitly that this
+  permanently deletes those changes, offer a stash as an alternative, get explicit confirmation
+  after the warning.
+- A WO is never marked Complete until grep confirms the exact change is present in the file.
+*Incident (2026-03-29): a hard reset run without a pre-commit or warning wiped 25 test ETRs and
+several component files permanently — only partial recovery via dangling git blobs.*
+
+## 12. Signal Ingestion Architecture (LOCKED)
+
+Every external feed (FRED, EDGAR, Kalshi, future sources) must: normalize to 0-100 before dispatch;
+dispatch via `dispatchBatch()` into `surfacerouter.js`, never direct-to-cone; tag with
+`{source, domain, signal, confidence, ts}`; honor parity (no single source dominates).
+
+**Backpressure activation rule:** before wiring any new source into a live `dispatchBatch()` path,
+verify `surfaceRouter`'s backpressure (`setBackpressure()`) is actually triggered by a real runtime
+load signal. Code that exists but is never invoked is not a contract satisfied — it's a contract
+claimed. If it's not wired, wiring the trigger is part of the same WO, not a follow-up.
+*Incident (2026-08-15): a fully-built 200-item priority queue and 3-state backpressure system had
+zero callers to its own activation function anywhere but its own definition — ~30 connectors
+stayed safe only by accident (independently staggered polling), not because the router protected
+anything.*
+
+## 13. Role-Play Protocol (LOCKED)
+
+On a role-play request, respond in exactly this format, no preamble or summary after:
+
+```
+LENS: [assigned lens — INVESTOR/REALTOR/ATHLETE/SALES/STUDENT/LEGAL/PROCUREMENT/HEALTH/GENERAL]
+**What [Subject] Needs**
+**What Krylo Delivers**   — only features that exist in the current codebase, filtered by LENS
+**The Gap**                — honest, no spin
+**Fit for Krylo:** [1-10] — one line why
+```
+
+The 6 domains are locked: TECHNOLOGY . CAPITAL . KNOWLEDGE . LABOR . MEDIA . OWNERSHIP — never
+reference a domain outside this list. Score >= 8 -> file a ticket immediately; the gap becomes the
+spec.
+
+## 14. Metrics Truth Engine (LOCKED)
+
+Six hero metrics: Signal . Validity . Convergence . CAC . ROAS . LTV. Detection trio is measured/
+on-mission; economics trio is generalized/modeled and must be labeled as such. Every metric =
+Realized (observed) + Projected (assumed) — Realized is bold/primary, Projected is smaller/labeled.
+
+**Groundedness %** = Realized weight / Total weight x 100. Green >70, amber 40-70, red <40.
+
+**Persona guardrail:** persona tunes assumptions and thresholds only — never the groundedness
+computation. "78% grounded" means the same thing for every persona, or the number is corrupted.
+
+**Wiring contract:** metrics computed only in `metricsengine.js`'s `computeMetrics()`, attached
+only at `synthesizeQuery` return as `synthesis.metrics`, rendered only via the shared
+`<MetricStrip>`. Components never recompute a metric.
+
+**Decision Emission Score:** multiplicative only — Signal x Validity x Convergence x
+AvgGroundedness. Weighted-average/additive variants are forbidden (a weak leg must crater the
+score, never get averaged away). Components stay visible alongside any composite.
+
+**Banned:** the single-scalar "confidence" costume for CAC/ROAS.
+
+## 15. Closed-Loop Leverage Principle
+
+**Canonical mission:** "Finding advantageous positions before they become obvious." Every
+subsystem (Happy Path, Convergence, Fractures, Assemblance, HP Qualification, domain routing,
+signal ingestion) sits under this one sentence, not as a separate invention.
+
+A decision is complete when its outcome is observed, attributed, and incorporated into path
+memory — not when it's emitted. Never imply the whole system is "incomplete" because most
+decisions never get a reported outcome — Path Memory is built from the captured-outcome subset,
+learn from what closes, watch for survivorship bias.
+
+**Attribution is the highest-risk layer.** No route-leverage claim without N + attribution rigor —
+coincidence is not causation. Withhold beats fabricate.
+
+**Route ranking weights for earliness/non-consensus**, not just historical realized leverage —
+ranking purely by past leverage surfaces roads already crowded, which is the opposite of the
+mission.
+
+## 16. Direction Honesty Principle
+
+"Not showing it is showing reality. Suppressing a fracture signal is fabrication by omission."
+Structural fracture (negative convergence, downside positioning, credit stress) is a first-class
+signal with the same authority as constructive convergence — never a warning label, never
+suppressed state.
+
+**Polarity rule (load-bearing):** every domain pressure signal carries magnitude (0-100) AND
+polarity (constructive | fracture). A signal without polarity is directionally blind, which is
+fabrication by omission.
+
+## 17. Route-Don't-Aggregate Principle
+
+Routing decisions operate on atomic signals or minimally-normalized inputs — never precomputed
+aggregates. Aggregation is permitted only after routing. A component that combines signals before
+classification, or computes composite metrics prior to routing, is a routing violation unless
+explicitly exempted. Exceptions: post-route summarization, visualization-only aggregation,
+non-decisioning dashboards.
+
+## 18. Orthogonal Axis Integrity Principle
+
+All scoring axes must be orthogonal unless explicitly declared dependent. Violation: Axis A
+expressible as a function of Axis B, or two axes responding to the same latent variable under
+different names. Audit format per pair: Dependency (Independent/Partially/Fully Dependent) — Risk
+(Low/Med/High) — Action (Merge/Reweight/Separate/Retire).
+
+## 19. Secret Exposure Guardrail (NO EXCEPTIONS)
+
+Never run any command whose output could contain the literal value of a secret, credential, API
+key, token, password, or connection string — local, remote, or in any config file — regardless of
+how legitimate the goal is.
+
+Never run: cat/less/head/tail/Read on a file containing secrets; grep (any form, even a "targeted"
+grep for one key name) over a file/dump containing secrets; pm2 env, printenv, env, export -p, or
+any full environment dump; shell expansion or interpolation of a secret variable into output;
+heredocs/printf that reconstruct file contents containing secrets into the transcript.
+
+Only permitted check pattern — existence/boolean, never value: confirm a key line is present with
+a pattern-match that reports only "present" or "MISSING" (grep -q on the key name, never printing
+the matched line), or confirm a variable is non-empty via a boolean test that reports only "set" or
+"unset" without ever printing the variable's contents.
+
+To verify a value is correct (not just present), ask the user to check it on their own terminal,
+or prove the fix with a functional endpoint test that never touches the secret.
+
+If a secret is ever printed anyway (e.g. an error message echoing a connection string): stop
+immediately, state plainly what was exposed, treat it as a rotation candidate — never minimize or
+bury it.
+Incident (2026-07-31): three separate secret-exposure events in one session — an API key via grep,
+a full config dump via cat, and a targeted grep that still printed a database URL with password —
+the third happening after the first two were already flagged as the problem.
