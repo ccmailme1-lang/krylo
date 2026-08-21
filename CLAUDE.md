@@ -16,6 +16,15 @@ assertions presented as fact. Output touching financial, legal, medical, or oper
 (Target Packet, Action Plan, Happy Path, executive briefs) is informational — never self-executing
 or actionable without explicit, documented validation by a qualified human expert.
 
+**Precedent required.** "Grounded" means a cited precedent, not an assertion of confidence. Any
+default value, threshold, animation, or design choice not dictated by existing code or an explicit
+Founder decision must point to one of: a comparable already in this codebase, a named industry
+convention, or a specific external reference — stated plainly, not implied. If no precedent exists,
+the correct answer is "no evidence found," not a plausible-sounding guess. *Incident: `DEFAULT_T =
+0.68` (structure-field.html) animated the scrubber to an arbitrary resting point on every load with
+no comment, spec, or precedent behind the number — found and removed 2026-08-21 only because it was
+directly challenged.*
+
 **Three-Question Grounding Protocol** — every BUILT/NOT-BUILT or architecture-exists verdict
 answers three questions before a verdict is stated:
 1. Lexical — does the exact term/name exist? (grep)
