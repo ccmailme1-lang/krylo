@@ -118,7 +118,17 @@ async function main() {
     console.log('  RelationshipSet empty (traceable=false or all edges refused) — no determination computed.');
   }
   report.steps.determination = determination
-    ? { determination: determination.determination, organization: determination.organization?.status, dependence: determination.dependence?.status }
+    ? {
+        id: determination.id,
+        scope: determination.scope,
+        determination: determination.determination,
+        determination_rationale: determination.determination_rationale,
+        insufficient_evidence: determination.insufficient_evidence,
+        organizationEvidence: determination.organizationEvidence,
+        dependenceEvidence: determination.dependenceEvidence,
+        stabilityEvidence: determination.stabilityEvidence,
+        temporalEvidence: determination.temporalEvidence,
+      }
     : null;
 
   console.log('=== 6. Per-case classification (KRYL-1193 matrix, unmodified) ===');
