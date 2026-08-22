@@ -83,7 +83,10 @@ function reindexRuntimeEntity(entity) {
  * entity is returned unchanged rather than creating a duplicate — matches WO-2004's
  * "id uniqueness" discipline applied to O instead of E.
  */
-export function createEntity({ canonicalName, aliases = [], identifiers = {}, domainTags = [] } = {}) {
+export function createEntity({
+  canonicalName, aliases = [], identifiers = {}, domainTags = [],
+  admissionSource = null, admissionEvidence = null,
+} = {}) {
   if (!canonicalName || typeof canonicalName !== 'string') return null;
 
   const existing = resolve(canonicalName);
@@ -103,6 +106,12 @@ export function createEntity({ canonicalName, aliases = [], identifiers = {}, do
     aliases: [...aliases],
     identifiers: { edgar: null, fec: null, uei: null, ...identifiers },
     domainTags: [...domainTags],
+    // KRYL-1201 — admission provenance, set once at creation, never mutated by
+    // upsertEntity/mergeEntity. Records WHY this entity entered the runtime
+    // population (identity substrate), never treated as a relationship/formation
+    // signal itself.
+    admissionSource,
+    admissionEvidence,
     createdAt: now,
     updatedAt: now,
     mergedInto: null, // set by mergeEntity when this entity is superseded
@@ -234,7 +243,11 @@ export function resolveAll(names) {
 export function resolveByIdentifier(source, id) {
   if (!source || !id) return null;
   const normalizedId = String(id).replace(/^0+/, ''); // strip leading zeros for EDGAR CIKs
-  for (const entity of REGISTRY) {
+  // KRYL-1201 — static registry first, runtime-admitted entities second. Mirrors
+  // resolve()'s existing [...INDEX, ...RUNTIME_INDEX] pattern exactly, so a
+  // runtime-admitted CIK survives the same lookup path a curated entity already does.
+  const searchPool = RUNTIME_REGISTRY.size ? [...REGISTRY, ...RUNTIME_REGISTRY.values()] : REGISTRY;
+  for (const entity of searchPool) {
     const entityId = entity.identifiers?.[source];
     if (!entityId) continue;
     if (String(entityId).replace(/^0+/, '') === normalizedId) {

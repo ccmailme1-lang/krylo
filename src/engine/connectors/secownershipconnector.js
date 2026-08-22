@@ -12,9 +12,35 @@ import { POLARITY, DECAY } from '../signalconstants.js';
 import { registerOwnershipEdge, nodeId } from '../entitytopologyregistry.js';
 import { realiseSnapshot } from '../gwrealiser.js';
 import { buildStructure } from '../sigmaengine.js';
+import { makeRelationCore, RelationType } from '../relationontology.js';
+import { admitCandidate } from '../admissionengine.js';
+import { Vocabulary } from '../truthevent.js';
+import { resolveByIdentifier, createEntity } from '../entityresolution.js';
 
 const SEARCH_BASE = '/api/edgar';
 const MAX_HITS    = 100;
+
+// KRYL-1201 — Tier 2 entity admission. SEC/EDGAR CIK is the sole admission authority;
+// this connector doesn't assert identity, it only supplies what the filing schema
+// already established (same "structurally guaranteed pair" fact this file's own header
+// already relies on). CIK-first lookup before creation makes admission idempotent — a
+// CIK seen again in a later sync resolves to the existing runtime entity, never a
+// duplicate. domainTags stays [] always (no SIC->domain inference, out of scope per
+// SPEC-KRYL-1201). admissionEvidence reuses this sync's own accession number, the same
+// identifier already used as provenanceHash below — not a new provenance primitive.
+// This function creates identity substrate only; it never registers an edge, signal,
+// or relationship itself.
+function admitIfUnknown(cik, name, accession) {
+  if (!cik || !name) return;
+  if (resolveByIdentifier('edgar', cik)) return; // already known — static or runtime
+  createEntity({
+    canonicalName: name,
+    identifiers: { edgar: cik },
+    domainTags: [],
+    admissionSource: 'SEC/EDGAR',
+    admissionEvidence: accession ?? null,
+  });
+}
 
 async function searchOwnershipFilings(startdt, enddt) {
   const params = new URLSearchParams({
@@ -73,12 +99,44 @@ export async function runSecOwnershipSync({ from, to } = {}) {
     if (!pair) { errors.push({ hit: hit._id, error: 'malformed ciks/display_names pair' }); continue; }
 
     try {
+      admitIfUnknown(pair.subjectCik, pair.subjectName, pair.accession);
+      admitIfUnknown(pair.filerCik,   pair.filerName,   pair.accession);
+
       registerOwnershipEdge({
         subjectCik: pair.subjectCik, subjectName: pair.subjectName,
         filerCik:   pair.filerCik,   filerName:   pair.filerName,
       });
       if (!firstSeedId) firstSeedId = nodeId(pair.subjectCik, pair.subjectName);
       registered++;
+
+      // RelationCore + admission — real evidence, real provenance (SEC accession number, a
+      // unique, verifiable filing identifier — stronger than any hash placeholder). structurally
+      // guaranteed pair per this file's own header comment. DEPENDS_ON reflects Schedule 13D/13G's
+      // actual claim: the filer has taken/discloses a beneficial ownership position dependent on
+      // the subject company's shares existing — closer to the real relation than a symmetric type.
+      try {
+        const rc = makeRelationCore({
+          id: `rc_sec13d_${nodeId(pair.subjectCik, pair.subjectName)}_${nodeId(pair.filerCik, pair.filerName)}_${pair.accession ?? Date.now()}`,
+          sourceId: nodeId(pair.filerCik, pair.filerName),
+          targetId: nodeId(pair.subjectCik, pair.subjectName),
+          relationType: RelationType.DEPENDS_ON,
+          eta: 0.9, // structurally guaranteed field per SEC filing schema, not inferred
+          phi0: 0.5, // placeholder pending real calibration — no doctrine establishes this value
+          structuralSupport: 0.9,
+          provenanceHash: pair.accession ?? `no_accession_${Date.now()}`,
+          createdAt: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
+        });
+        const { decision, event } = admitCandidate(
+          { ...rc, vocabulary: Vocabulary.SRE_RELATIONCORE, relationType: RelationType.DEPENDS_ON, origin: 'OBSERVED' },
+          { decidedBy: 'sec_ownership_producer', rulesetVersion: '1.0.0', now: Date.now(),
+            sreRelationTypes: new Set(Object.values(RelationType)) }
+        );
+        if (decision !== 'VALIDATED') {
+          console.info(`[SEC13D->M7] ${rc.id}: ${decision} (${event.rationale.map(r => r.ruleId + ':' + r.outcome).join(', ')})`);
+        }
+      } catch (rcErr) {
+        console.warn('[SEC13D->M7] RelationCore/admission failed:', rcErr.message);
+      }
     } catch (err) {
       errors.push({ hit: hit._id, error: err.message });
     }
