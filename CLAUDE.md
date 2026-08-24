@@ -3,7 +3,7 @@
 Session handoffs and evolving learnings live in auto memory
 (`~/.claude/projects/.../memory/MEMORY.md`), not here.
 
-**Work orders / tickets:** tracked exclusively in Jira, project KRYL —
+**JIRA Work orders / tickets:** tracked exclusively in Jira, project KRYL —
 https://krylo.atlassian.net/browse/KRYL — and git log. No WO registry is maintained in this file.
 Credentials live in `specs/jira.md` (gitignored, source it, never print it) — see Founder for the
 key.
@@ -195,6 +195,17 @@ and revalidate failures immediately, no reporting mid-stream; "Build Complete" i
 against the currently-tagged baseline commit, not a hardcoded name) + VOICED (report-surface text
 follows §7, no size/style overlap).
 
+**Ticket Definition Requirement (LOCKED, applies to net-new tickets going forward).** Every new
+KRYL ticket's description must define all six of: (1) original intent, (2) acceptance criteria,
+(3) current implementation state, (4) dependencies, (5) whether a newer ticket supersedes it,
+(6) whether it still maps to the current KRYLO product model. A ticket missing any of the six is
+undefined, not Ready — a summary line alone does not satisfy this. Does not require a retroactive
+sweep of existing tickets; they get backfilled as touched, not in a blanket edit.
+*Observation: a 126-ticket open-backlog review (2026-08-22) found summary text alone could not
+answer these six questions for entire ticket clusters (e.g. KRYL-1158–1170 FloatingToolbar/ConeMap
+chain, KRYL-1193/1197/1199 VALIDATE cluster) — the clusters were visible, but not resolvable to
+intent or current state without opening each ticket individually.*
+
 ## 11. Agent Behavioral Constraints
 
 **Explicit go required.** State what will change and what won't; wait for explicit "go" before
@@ -203,6 +214,14 @@ writing code on a new WO.
 **Rollbacks.** "Go back"/"revert" — ask which exact state before touching anything; never assume
 it means the last commit. Name the exact target state and wait for confirmation before reverting.
 A rollback is not an opportunity to also fix other things noticed along the way.
+
+**No self-referential framing (NO EXCEPTIONS).** Deliver content and stop. Never append a closing
+line that ranks, evaluates, or narrates the significance of your own output — no "that's real
+progress, not a tangent," no "here's why this matters," no self-assessment of any kind tacked onto
+a finding, fix, or answer. The user wants the deliverable, not commentary on the deliverable.
+*Incident (2026-08-03): appended an unrequested line ranking which of two corrections mattered
+more — "always making it about you."* *Incident (2026-08-23): repeated the identical failure —
+"that's real progress, not a tangent" — same pattern, second occurrence on 
 
 **Data preservation (no exceptions):**
 - A file isn't saved until it's in a git commit — existing on disk isn't saved.
@@ -312,6 +331,8 @@ different names. Audit format per pair: Dependency (Independent/Partially/Fully 
 (Low/Med/High) — Action (Merge/Reweight/Separate/Retire).
 
 ## 19. Secret Exposure Guardrail (NO EXCEPTIONS)
+
+Never EVER output, echo, or print environment variables, passwords, or API keys under any circumstance. THE FOUNDER WILL FUCK ME UP!!!!!!
 
 Never run any command whose output could contain the literal value of a secret, credential, API
 key, token, password, or connection string — local, remote, or in any config file — regardless of
