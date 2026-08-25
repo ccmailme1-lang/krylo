@@ -2293,7 +2293,7 @@ function ResonanceArcs({ hudRef, baysForResonance }) {
   );
 }
 
-export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true }) {
+export default function ConeMap({ signals = [], perceptionFrame = null, timeOffset = 0, lens = 'INVESTOR', selectedDomain = null, clickEvent = null, onSelectCone = null, onActiveConeChange = null, topoMode = false, onArcClick = null, maxCones = null, dollyKey = 0, coneColorOverrides = {}, viewportLens = 'NAV_SURFACE', connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, panelVisible = surfaceVisible }) {
   const onCanvasCreated = useCanvasGuard();
   const { signals: kalshiSignals } = useKalshiSignals();
   const { coneState, rawDomains } = useMemo(() => {
@@ -2375,15 +2375,13 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
     );
   }
 
-  // Manual click selection takes priority; fall back to highest-pressure cone.
-  const autoHighest = coneState.reduce(
-    (max, c) => ((c.pressure ?? 0) > (max.pressure ?? 0) ? c : max),
-    coneState[0],
-  );
+  // SPEC I / KRYL-1213 (SEE state): only an explicit user click produces a selected
+  // cone. No automatic fallback to the highest-pressure cone — absent a click, no
+  // domain is forced into focal prominence.
   const manualPick   = selectedDomain
     ? coneState.find(c => c.domain === selectedDomain)
     : null;
-  const selectedCone = manualPick ?? autoHighest;
+  const selectedCone = manualPick;
   const activeDomain = selectedCone?.domain;
 
   // Report the currently-active cone domain up (drives sticky-note attach/visibility).
@@ -2541,28 +2539,27 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
       <ResonanceArcs hudRef={hudRef} baysForResonance={baysForResonance} />
 
       {/* InspectionPanel + ComparePanel portaled to root z:20 overlay.
-          §28 boundary contract (2026-08-11, corrected same day) — InspectionPanel is
+          §28 boundary contract, revised 2026-08-19 (Founder directive: panel must always be
+          available on Home, across all 7 lenses — no lens can hide it). InspectionPanel is
           Html-portaled out of the r3f Canvas AND out of ConeMap's own visibility-controlled
           wrapper (portals to a root-level DOM node, #krylo-hud-root, that app.jsx does not hide
           when navMode leaves 'surface' — ConeMap itself stays mounted underneath other pages by
-          design). Two conditions, both required: `surfaceVisible` (= isSurface in app.jsx,
-          navMode === 'surface') so it's gone from every other left-nav page (History/Community/
-          News/Analysis/Settings/etc — first real bug found, confirmed live: panel was showing
-          on History); `viewportLens === 'NAV_SURFACE' || viewportLens === 'OBSERVE'` so it's
-          gone from DRIFT and any activated analysis report, but stays through OBSERVE — OBSERVE
-          is still "the Surface page" to the Founder (confirmed live, 2026-08-11: panel was
-          missing during the ambient pre-click narrative state and that was wrong), matching the
-          same OBSERVE+NAV_SURFACE pairing ObserveStoryBanner and the per-cone floating HUD
-          already use for exactly this "still on Surface, no report yet" state. First cut of
-          this gate (NAV_SURFACE only, following ThresholdBands/FlowArc's narrower rule) was too
-          strict — those two intentionally exclude OBSERVE for a different reason (avoiding
-          their own visual clutter during the narrative moment); InspectionPanel does not share
-          that reason and should not have copied their exclusion.
+          design). Gate is `panelVisible` alone (app.jsx: `isSurface`, i.e. navMode === 'surface'
+          only) — the previous `viewportLens === 'NAV_SURFACE' || viewportLens === 'OBSERVE'`
+          restriction hid the panel the instant any of the other 6 lenses (SIGNAL/FLOW/PRESSURE/
+          CONVERGENCE/DRIFT/OPPORTUNITY) was clicked, which combined with AnalysisField only
+          mounting when surfaceActivated is true, made lens clicks look completely dead
+          pre-activation. Removed, not narrowed. Structure was tried and reverted same day —
+          the cone InspectionPanel (DOMAIN/CONE tabs, FIELD CONVERGENCE, ATTENTION STACK,
+          LEVERAGE TOWERS) collided with the Structure page's own native component panel
+          (confirmed live via screenshot: both panels on screen at once). `panelVisible` defaults
+          to `surfaceVisible` when the prop isn't passed, so any other ConeMap caller keeps the
+          old surface-only behavior.
           ComparePanel is left ungated — not requested, no incident reported for it. */}
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          {surfaceVisible && (viewportLens === 'NAV_SURFACE' || viewportLens === 'OBSERVE') && <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
+          {panelVisible && selectedCone && <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
         </>,
         document.getElementById('krylo-hud-root')
       )}
