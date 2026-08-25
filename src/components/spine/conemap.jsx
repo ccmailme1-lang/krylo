@@ -2383,6 +2383,11 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
     : null;
   const selectedCone = manualPick;
   const activeDomain = selectedCone?.domain;
+  // SPEC I perceptual states: SEE (nothing selected) vs INVESTIGATE (a cone is
+  // selected). RESOLVE is not yet reachable — ObserveStoryBanner stays unmounted
+  // per specs/SPEC-six-lens-design-system-decisions.md #6 — so this stays two-valued
+  // until that surface gets a real mount point.
+  const perceptualStage = selectedCone ? 'investigate' : 'see';
 
   // Report the currently-active cone domain up (drives sticky-note attach/visibility).
   React.useEffect(() => { onActiveConeChange?.(activeDomain ?? null); }, [activeDomain]);
@@ -2496,6 +2501,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
   return (
     <div
       ref={containerRef}
+      data-perceptual-stage={perceptualStage}
       style={{ position: 'absolute', inset: 0, background: '#000000' }}
       onClick={e => {
         if (e.detail >= 2) return; // double-click handled by native pointerdown
