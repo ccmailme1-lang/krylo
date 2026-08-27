@@ -998,10 +998,11 @@ function synthGeneral(session, numbers, query) {
   const shortQ = query.length > 50 ? query.slice(0, 50) + '…' : query;
 
   // KRYL-1218: recommendedAction is a per-query signal, not a Target Packet
-  // constant. Derive the next-observation direction from what THIS query carries
-  // vs. omits — the same three dimensions keyDrivers assesses below. Stays honest
-  // at low confidence: it names the query and the concrete gap, never asserts a
-  // formation the engine hasn't detected.
+  // constant — and it is PERCEPTION ONLY. It describes what the engine currently
+  // reads from the query; it does not tell the operator how to improve the query.
+  // The missing-input list is still derived (same three dimensions keyDrivers
+  // assesses) but is exposed as structured data (missingInputs) for ATTENTION/BASIS
+  // to carry — it never enters the Primary Signal string.
   const gq = (query ?? '').toLowerCase();
   const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|sell|invest|lease|hire|acquir|merg|refinanc|divest|exit|raise|expand|enter|relocat|consolidat)\b/.test(gq);
   const hasTimeline = /\b(deadline|by \d{4}|within \d|\d+\s*(?:year|month|week|quarter|yr|mo)s?\b|q[1-4]\s*'?\d{2}|next (?:year|quarter|month)|this (?:year|quarter))\b/.test(gq);
@@ -1011,14 +1012,14 @@ function synthGeneral(session, numbers, query) {
     hasTimeline && 'a horizon',
     lens && lens !== 'OPEN' && lens !== 'GENERAL' && `the ${lens} lens`,
   ].filter(Boolean);
-  const missing = [
+  const missingInputs = [
     !hasDecision && 'the specific decision on the table',
     !floor && 'a dollar figure',
     !hasTimeline && 'a decision date or horizon',
   ].filter(Boolean);
-  const recommendedAction = missing.length === 0
-    ? `"${shortQ}" names a decision, a figure, and a horizon but did not anchor to a domain. Re-run it naming the asset class, instrument, or counterparty so the engine can score it.`
-    : `"${shortQ}" reads as ${present.length ? present.join(' + ') + ', otherwise directional' : 'directional only'}. Add ${missing.join(', ')} to move it from orientation to a scored signal.`;
+  const recommendedAction = present.length
+    ? `"${shortQ}" reads as ${present.join(' + ')} — resolution is directional, not yet scored.`
+    : `"${shortQ}" reads as a directional signal with no anchoring inputs detected — resolution is directional, not yet scored.`;
 
   return {
     stateLabel: 'SIGNAL ACTIVE',
@@ -1040,6 +1041,7 @@ function synthGeneral(session, numbers, query) {
       { label:'Time horizon',                 delta:'Not set',              pos:false },
     ],
     recommendedAction,
+    missingInputs,   // KRYL-1218 — separated from the Primary Signal; for ATTENTION/BASIS
     timeHorizon: 'TBD',
     impactLevel: 'Medium',
     bluf: `Open-lens query: "${shortQ}". Fidelity: ESTIMATED. Signal routed to general analysis. Specificity is the primary driver of output quality.`,

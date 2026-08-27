@@ -24,7 +24,7 @@ const check = (label, cond) => {
 // Query A — a decision + a horizon ("8 months"); no dollar figure.
 const QA = 'startup runway is 8 months and we must decide whether to raise a bridge round';
 // Query B — a decision only; no figure, no horizon.
-const QB = 'our seed-stage startup needs to cut burn rate ahead of the next board cycle';
+const QB = 'our startup is deciding whether to pivot the product line or expand the current one';
 
 const A = synthesizeQuery({ id: 'qa_a', query: QA, lens: 'OPEN', tensor: {} });
 const B = synthesizeQuery({ id: 'qa_b', query: QB, lens: 'OPEN', tensor: {} });
@@ -45,19 +45,30 @@ check('recommendedAction differs between A and B', A.recommendedAction !== B.rec
 check('A quotes its own query', A.recommendedAction.includes(QA.slice(0, 45)));
 check('B quotes its own query', B.recommendedAction.includes(QB.slice(0, 45)));
 
-// 3. Each reflects its own detected context.
-check('A recognises the "8 months" horizon (does not ask for one)', !/decision date or horizon/.test(A.recommendedAction));
-check('B has no horizon → asks for one', /decision date or horizon/.test(B.recommendedAction));
-check('both flag the missing dollar figure', /dollar figure/.test(A.recommendedAction) && /dollar figure/.test(B.recommendedAction));
+// 3. Each reflects its own detected context (perception, from real inputs).
+check('A reads its "8 months" horizon into the signal', /a horizon/.test(A.recommendedAction));
+check('A reads its decision into the signal', /a decision/.test(A.recommendedAction));
+check('B (decision only) reads just the decision', /a decision/.test(B.recommendedAction) && !/a horizon/.test(B.recommendedAction));
 
-// 4. Grounded even though confidence is low / fidelity estimated.
+// 4. PERCEPTION ONLY — no query coaching in the Primary Signal.
+const both = A.recommendedAction + B.recommendedAction;
+check('no "Add …" coaching clause', !/\bAdd (a|the) /.test(both));
+check('no "move it … to a scored signal" coaching', !/move it .* to a scored signal/.test(both));
+check('no "Re-run it" coaching', !/Re-run it/.test(both));
+
+// 5. The missing-input list is separated into structured data, not lost.
+check('A exposes missingInputs as an array', Array.isArray(A.missingInputs));
+check('A.missingInputs names the missing dollar figure', A.missingInputs.some(m => /dollar figure/.test(m)));
+check('B.missingInputs also names the missing horizon', B.missingInputs.some(m => /horizon/.test(m)));
+
+// 6. Grounded and substantive even though confidence is low / fidelity estimated.
 check('A confidence is low (null or < 0.5)', A.confidence == null || A.confidence < 0.5);
 check('A signal still substantive at low confidence', A.recommendedAction.length > 40);
 check('B signal still substantive at low confidence', B.recommendedAction.length > 40);
 
-// 5. The old fixed constant is gone from the codepath entirely.
+// 7. The old fixed constant is gone from the codepath entirely.
 check('neither signal is the old fixed constant',
-      !/The more concrete the input, the more precise the output/.test(A.recommendedAction + B.recommendedAction));
+      !/The more concrete the input, the more precise the output/.test(both));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
