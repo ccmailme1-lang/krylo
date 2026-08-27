@@ -997,6 +997,29 @@ function synthGeneral(session, numbers, query) {
   const lens  = session?.lens ?? 'OPEN';
   const shortQ = query.length > 50 ? query.slice(0, 50) + '…' : query;
 
+  // KRYL-1218: recommendedAction is a per-query signal, not a Target Packet
+  // constant. Derive the next-observation direction from what THIS query carries
+  // vs. omits — the same three dimensions keyDrivers assesses below. Stays honest
+  // at low confidence: it names the query and the concrete gap, never asserts a
+  // formation the engine hasn't detected.
+  const gq = (query ?? '').toLowerCase();
+  const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|sell|invest|lease|hire|acquir|merg|refinanc|divest|exit|raise|expand|enter|relocat|consolidat)\b/.test(gq);
+  const hasTimeline = /\b(deadline|by \d{4}|within \d|\d+\s*(?:year|month|week|quarter|yr|mo)s?\b|q[1-4]\s*'?\d{2}|next (?:year|quarter|month)|this (?:year|quarter))\b/.test(gq);
+  const present = [
+    hasDecision && 'a decision',
+    floor && `a figure ($${fmtN(floor)})`,
+    hasTimeline && 'a horizon',
+    lens && lens !== 'OPEN' && lens !== 'GENERAL' && `the ${lens} lens`,
+  ].filter(Boolean);
+  const missing = [
+    !hasDecision && 'the specific decision on the table',
+    !floor && 'a dollar figure',
+    !hasTimeline && 'a decision date or horizon',
+  ].filter(Boolean);
+  const recommendedAction = missing.length === 0
+    ? `"${shortQ}" names a decision, a figure, and a horizon but did not anchor to a domain. Re-run it naming the asset class, instrument, or counterparty so the engine can score it.`
+    : `"${shortQ}" reads as ${present.length ? present.join(' + ') + ', otherwise directional' : 'directional only'}. Add ${missing.join(', ')} to move it from orientation to a scored signal.`;
+
   return {
     stateLabel: 'SIGNAL ACTIVE',
     primaryInsight: `Analysis active: "${shortQ}". Fidelity: ESTIMATED. Add dollar amounts, a specific decision, or a timeline to increase precision.`,
@@ -1016,7 +1039,7 @@ function synthGeneral(session, numbers, query) {
       { label:'Situation lens',               delta:lens,                   pos:true  },
       { label:'Time horizon',                 delta:'Not set',              pos:false },
     ],
-    recommendedAction: `Refine with a specific decision, dollar amount, or deadline. The more concrete the input, the more precise the output.`,
+    recommendedAction,
     timeHorizon: 'TBD',
     impactLevel: 'Medium',
     bluf: `Open-lens query: "${shortQ}". Fidelity: ESTIMATED. Signal routed to general analysis. Specificity is the primary driver of output quality.`,
