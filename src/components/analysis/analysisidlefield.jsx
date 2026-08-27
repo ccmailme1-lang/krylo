@@ -1617,7 +1617,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
             const petroMode = isPetroQuery(activeSession?.query ?? '');
             return (
             <>
-              <div style={{ position: 'absolute', top: 0, left: 0, right: petroMode ? 0 : '38%', bottom: 0, zIndex: 10, background: '#000' }}>
+              <div style={{ position: 'absolute', top: 64, left: 0, right: petroMode ? 0 : '38%', bottom: 0, zIndex: 10, background: '#000' }}>
                 <TargetPacket />
               </div>
               {!petroMode && (
