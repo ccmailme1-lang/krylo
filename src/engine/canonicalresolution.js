@@ -117,10 +117,14 @@ export function synthCanonical(query) {
 
   if (!p || p.signalCount === 0) {
     // Routed correctly, but the live field is empty for this domain right now.
+    const DOM = cls.primary.toUpperCase();
     return {
       withheld: true, reason: 'NO_LIVE_SIGNAL',
       primary: cls.primary, classification: cls,
       note: 'Domain resolved; no live signal in the current window.',
+      // KRYL-1218 (canonical boundary): satisfy the recommendedAction contract even
+      // when withholding — state the honest absence, never a fabricated signal.
+      recommendedAction: `Resolved to ${DOM}. The live ${DOM} field carries no signal in the current window — there is nothing being perceived here yet.`,
     };
   }
 
@@ -133,6 +137,18 @@ export function synthCanonical(query) {
   const confidence = parseFloat((p.magnitude / 100).toFixed(3));
   const direction  = p.polarity;                         // constructive | fracture
   const stateLabel = deriveState(p.magnitude, p.polarity);
+
+  // KRYL-1218 (canonical boundary): the canonical path must satisfy the same
+  // recommendedAction contract every SYNTH_MAP synthesizer does. Pure perception —
+  // what domain resolved and what the live field currently reads. No query coaching,
+  // no invented recommendation; every value here is live-derived (§20/§22).
+  const DOM = cls.primary.toUpperCase();
+  const recommendedAction =
+    `Resolved to ${DOM}. Live ${DOM} signal is ${stateLabel.toLowerCase()} — ` +
+    `${direction} polarity at magnitude ${Math.round(p.magnitude)}/100 across ` +
+    `${p.signalCount} signal${p.signalCount === 1 ? '' : 's'}` +
+    (cls.coActive.length ? `, co-active with ${cls.coActive.map(d => d.toUpperCase()).join(' and ')}` : '') +
+    '.';
 
   return {
     withheld: false,
@@ -148,6 +164,7 @@ export function synthCanonical(query) {
     classification: cls,
     grounded: true,
     provenance: 'LIVE_DOMAIN_FIELD',                     // never a template
+    recommendedAction,
   };
 }
 

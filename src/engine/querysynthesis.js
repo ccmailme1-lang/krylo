@@ -4360,10 +4360,15 @@ export function synthesizeQuery(session) {
     const canon = synthCanonical(query);
     if (canon.withheld) {
       // Domain may have resolved but the live field carries no signal — state it, don't fake it.
+      // KRYL-1218: NO_LIVE_SIGNAL carries a perception-grounded recommendedAction (honest
+      // absence); NO_DOMAIN_EVIDENCE does not — the packet's "did not resolve" fallback is
+      // correct for a genuinely unclassifiable query.
       return {
         queryDomain: (canon.primary ? canon.primary.toUpperCase() : 'AMBIGUOUS'),
         domainVector: vector, resolutionEligible: false,
-        canonical: canon, withheldReason: canon.reason, ses, provenanceState,
+        canonical: canon, withheldReason: canon.reason,
+        recommendedAction: canon.recommendedAction,
+        ses, provenanceState,
       };
     }
     const cw = {};
@@ -4402,6 +4407,7 @@ export function synthesizeQuery(session) {
       grounded:    true,
       canonical:   canon,
       assessment, threats, opportunities,
+      recommendedAction: canon.recommendedAction,   // KRYL-1218 — canonical satisfies the contract
       ses, provenanceState,
     };
   }
