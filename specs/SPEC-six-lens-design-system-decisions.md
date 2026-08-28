@@ -141,3 +141,72 @@ percentages in the meantime.
 
 No prototype percentage, band proportion, or epistemic aggregate may be presented as
 live/data-derived unless an implementation-grounded source exists.
+
+## SEE / INVESTIGATE built (KRYL-1213, KRYL-1213-followup, commits d924bfa/ce34141)
+
+`conemap.jsx` now has an explicit `perceptualStage` (`'see' | 'investigate'`), surfaced
+as `data-perceptual-stage` on the root container. `selectedCone` no longer auto-focuses
+(no `autoHighest` fallback) — SEE has no forced focal cone; a click enters INVESTIGATE
+via the existing `InspectionPanel`. RESOLVE is not yet a third value.
+
+## RESOLVE grounding (2026-08-25) — locked #6 placement has an unmet prerequisite
+
+Grounding found a material gap between the locked #6 ruling and what `ObserveStoryBanner`
+actually is:
+
+- Its render has no converged/divergent/insufficient branches — `adjudicate()`'s outcome
+  only changes text, not visual treatment. The "full read panel reflecting the selected
+  cone" promised in its own header comment was never implemented.
+- Its historical trigger was ambient (mounted when Hero→Surface expanded), not a
+  selection-driven reveal — restoring it is **not** restoring a prior RESOLVE, it's
+  building new RESOLVE behavior on an existing data capability.
+- It has zero spatial anchoring to any cone — a fixed-viewport overlay, no halo/ring
+  reference. The locked "r₁, node-grounded" placement genuinely requires halo geometry
+  to exist first; that geometry does not exist in `conemap.jsx` today (only unreachable
+  primitives in `signalmap.jsx`).
+
+**Ruling: preserve #6 as locked, do not weaken it to fit the old component.** Build the
+missing prerequisite instead.
+
+**Dependency chain:** Halo/r₁ construction (KRYL-1215) → RESOLVE spatial placement →
+RESOLVE experience (transition trigger + presentation, ruled after KRYL-1215 lands).
+
+**Do not invent a third `perceptualStage` value yet.** No existing UI affordance serves
+as an INVESTIGATE→RESOLVE trigger (`InspectionPanel`'s STATS/DOMAIN/NODE MAP toggle is
+internal tab-switching; "Full Analysis →" navigates to a different `navMode` entirely,
+not an in-place reveal). The transition mechanism is a Founder design decision, made
+after KRYL-1215's spatial prerequisite exists — not before.
+
+## Halo r₁–r₃ built (KRYL-1215)
+
+`Cone` (`conemap.jsx`) now renders three concentric ring outlines around the selected
+cone's base when `isSelected` — increasing radius (1.25×/1.55×/1.85× the cone's own
+footprint), decreasing opacity outward. r₁'s opacity is modulated by `activePressure`
+(real per-cone signal); r₂/r₃ are fixed-opacity geometry only, per the #5 ruling's
+scoping (their derived-presentation data bridges are separate, later work). White/
+neutral only, no new color — halo stays spatial per #3. Reuses the existing `Footprint`
+component (same wireframe circle-outline visual language as the rest of the map).
+
+## Cone-Surface Encoding grounding (2026-08-25) — SPEC I §6, tracked late
+
+This design contract (SPEC I §6: weighted, non-equal-height bands on the cone's own
+surface) was locked and detailed per-Lens in the design agent's worksheet but was never
+checked against live data or ticketed — a tracking gap, corrected here.
+
+Distinct visual mechanism from halo: halo spatially encodes relationship/depth *around*
+the selected object; Cone-Surface Encoding uses the cone's *own surface* to encode the
+composition/weight of what's being observed.
+
+Grounding found real data for **3 of the worksheet's ~5 per-domain condition slots**:
+`formationschema.js`'s `buildFormation()` computes real Magnitude/Cohesion/Velocity per
+domain, honestly null when not computable — but is explicitly sandboxed, not wired into
+`conemap.jsx` or any live rendering path (its only caller feeds the unmounted
+`ObserveStoryBanner`). `encodeCone()` is genuinely single-scalar in/out, no substructure
+to unpack. `fidelity_components` exists but belongs to the locked #3 epistemic axis —
+reusing it here would recreate the exact collision #3 was ruled to prevent, not extend
+real coverage.
+
+**Split, same discipline as #7:** KRYL-1216 (BUILD-READY) — wire the real
+Magnitude/Cohesion/Velocity bands. KRYL-1217 (DEFERRED) — the full 5-condition
+per-domain composition, blocked on data that doesn't exist yet; not to be built with
+fabricated values in the meantime.

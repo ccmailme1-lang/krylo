@@ -1,4 +1,7 @@
-# KRYLO — Kinetic Interrogation Standard
+# KRYLO — Kinetic 
+
+
+Interrogation Standard
 
 Session handoffs and evolving learnings live in auto memory
 (`~/.claude/projects/.../memory/MEMORY.md`), not here.
@@ -93,17 +96,33 @@ fallback," "only UI" is not an exemption.
 writers/consumers, runtime path verified (yes/no + how), the defect (A-F above), the minimal
 change, non-goals, and the acceptance test. Only then implement.
 
-## 3. Layer Order (LOCKED by Mr. XS — do not deviate)
+## 3. Layer Order (PENDING — do not deviate)
 
-Journey: Layer 1 (Hero) -> submit -> Layer 1N (Signal Map) -> node click -> Layer 2 (Oracle) ->
-ETR select -> Layer 3 (Ground Level). Page 1 is the universal entry point.
-
-Layer to file map (non-obvious names, not derivable by directory structure alone):
-- Layer 0/1 — `public/krylo2-feed.html`
-- Layer 2 (10K / Audit Desk) — `src/components/oracleview.jsx`
-- Layer 3 (Ground Level) — `src/components/tenkvault.jsx`
-- Layer 4 (Signal Map) — `src/components/spine/spinemap.jsx`
-Everything else — grep for it; the codebase is the source of truth for file layout.
+```
+public/krylo2-feed.html                          — entry sidebar, sends {type:'krylo-nav', mode}
+src/main.jsx                                     — mounts PrismProvider > SurfaceProvider > App
+src/app.jsx                                      — root shell, navMode switch, postMessage listeners
+src/context/PrismContext.jsx                     — viewportLens state
+src/context/SurfaceContext.jsx                   — surface hydration state
+src/components/spine/conemap.jsx                 — navMode='surface', always mounted (KRYL-1171)
+src/components/analysis/analysisfield.jsx        — mounts with ConeMap when surfaceActivated
+src/components/oracleview.jsx                    — navMode='oracle' (10K / Audit Desk)
+src/components/spine/spinemap.jsx                — SignalMap, rendered inside oracleview.jsx
+src/components/oracleview_v2.jsx                 — navMode='leverage'
+src/components/analysis/analysisdomainfield.jsx  — navMode='analysis', pressure view
+src/components/analysis/analysisidlefield.jsx    — navMode='analysis', search/idle view
+src/components/bays/workstation.jsx              — navMode='workstation'
+src/components/feeds/feedsbay.jsx                — navMode='feeds'
+public/structure-field.html                      — navMode='structure' (iframe, not React)
+src/components/history/historybay.jsx            — navMode='history'
+src/components/community/communityview.jsx       — navMode='community'
+src/components/artifacts/artifactsbay.jsx        — navMode='news'
+src/components/settings/settingspanel.jsx        — navMode='settings'
+src/components/analysis/coachwell.jsx            — navMode='console'
+src/components/spine/campaignfunnel.jsx          — always mounted, iframes krylo2-feed.html
+src/engine/surfacerouter.js                      — dispatchBatch() event bus
+src/engine/convergenceclassifier.js              — kappa classification (KRYL-1207)
+```
 
 ## 4. Forensic Guardrails (Anti-Drift)
 

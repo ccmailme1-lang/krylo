@@ -28,16 +28,22 @@ const bar = {
   boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
   backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
 };
-export default function FloatingToolbar() {
+export default function FloatingToolbar({ hideObserve = false }) {
   const { state, dispatch } = usePrism();
   const active = state?.activeLens ?? 'NAV_SURFACE'; // KRYL-1171 — safe landing default; no lens button lights up until one is explicitly clicked, including OBSERVE
 
+  // hideObserve — Structure page (2026-08-19, Founder directive): OBSERVE's job is "return to
+  // Home," which is meaningless on Structure (there's no report to leave — Structure is a single
+  // fixed view, not lens-driven). The other 6 buttons stay visible but are inert here today;
+  // Structure has no lens-driven views wired to respond to them yet.
+  const lenses = hideObserve ? LENSES.filter(l => l.id !== 'OBSERVE') : LENSES;
+
   return (
     <div style={bar}>
-      {LENSES.map(({ id, g }) => {
+      {lenses.map(({ id, g }) => {
         const isActive = id === active;
         return (
-          <button key={id} title={LABELS[id] ?? id} onClick={() => dispatch({ type: 'SET_LENS', payload: id })} aria-pressed={isActive}
+          <button key={id} title={LABELS[id] ?? id} onClick={() => { console.log('[TEMP-DEBUG] FloatingToolbar click:', id); dispatch({ type: 'SET_LENS', payload: id }); }} aria-pressed={isActive}
             style={{ position: 'relative', width: 26, height: 26, borderRadius: 6, border: 'none', cursor: 'pointer',
                      background: isActive ? 'rgba(102,255,0,0.12)' : 'rgba(255,255,255,0.05)',
                      display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background .12s' }}>

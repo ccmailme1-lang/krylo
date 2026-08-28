@@ -713,7 +713,13 @@ export default function App() {
   useEffect(() => {
     // KRYL-1171 — NAV_SURFACE (the new default landing state) must NOT trigger activation, same
     // as OBSERVE never did. Only a real, explicit report-lens choice does.
+    // 2026-08-19 (Founder directive) — OBSERVE doubles as the explicit "return to Home" action.
+    // Before this, surfaceActivated was a one-way switch: picking any of the 6 report lenses set
+    // it true and NOTHING set it back to false except a full krylo-reset (logo click, wipes the
+    // whole session) — so there was no way to leave a report and get back to the plain cone view.
+    // Picking OBSERVE now deactivates, same as krylo-reset does, without the rest of the reset.
     if (viewportLens !== 'OBSERVE' && viewportLens !== 'NAV_SURFACE') setSurfaceActivated(true);
+    else if (viewportLens === 'OBSERVE') setSurfaceActivated(false);
   }, [viewportLens]);
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
@@ -1084,13 +1090,18 @@ export default function App() {
           // surfaceActivated — that stays owned by krylo-submit/krylo-reset only, so
           // FloatingToolbar/visorReady/AnalysisField-vs-OrientationSurface component swap
           // are unaffected (avoids the WO-nav-force-activate regression).
-          console.log('[KRYL-1180 SURFACEEXPANDED] -> true, ev.data=', JSON.stringify(ev.data)); // TEMP
           setSurfaceExpanded(true);
           setSurfaceEntryCount(c => c + 1);
         } else {
-          console.log('[KRYL-1180 SURFACEEXPANDED] -> false, ev.data=', JSON.stringify(ev.data)); // TEMP
           setSurfaceExpanded(false);
         }
+        // Structure nav click (2026-08-19) — clicking "Structure" in the sidebar must return to
+        // the base Formation Map, dismissing any active report. Without this, surfaceActivated
+        // carries over globally (from Home, or from re-clicking Structure while a report is
+        // already showing) and the sidebar click does nothing visible — the exact symptom
+        // reported live. Scoped to 'structure' only; the 'surface' branch above keeps its
+        // explicit "does NOT touch surfaceActivated" contract untouched (WO-nav-force-activate).
+        if (ev.data.mode === 'structure') setSurfaceActivated(false);
       }
     }
     window.addEventListener('message', onNavMessage);
@@ -1341,6 +1352,7 @@ export default function App() {
           connectorTier={surfaceActivated ? 'surface' : 'hero'}
           surfaceActivated={surfaceActivated}
           surfaceVisible={isSurface}
+          panelVisible={isSurface}
         />
         {/* ObserveStoryBanner ("domain insights" / Quick Read) removed from surface render 2026-08-19 —
             final placement TBD, component left intact in observestoryview.jsx for later relocation. */}
@@ -1448,6 +1460,17 @@ export default function App() {
       {navMode === 'feeds' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
           <FeedsBay signals={liveSignals} />
+        </div>
+      )}
+
+      {/* ── Structure (Formation Map) ─────────────────────────── */}
+      {navMode === 'structure' && (
+        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
+          <iframe
+            src="/structure-field.html"
+            title="Structure"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none', background: '#000000' }}
+          />
         </div>
       )}
 

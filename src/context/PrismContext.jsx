@@ -27,6 +27,7 @@ const initialState = {
 function prismReducer(state, action) {
   switch (action.type) {
     case 'SET_LENS':
+      console.log('[TEMP-DEBUG] prismReducer SET_LENS:', action.payload);
       return { ...state, activeLens: action.payload };
     case 'START_INHALE':
       return {

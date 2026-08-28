@@ -36,6 +36,7 @@ const EDGAR_TTL_MS    = 900_000;
 const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
 const KALSHI_TTL_MS   = 300_000; // 5 min — prevents 429 on simultaneous polls
 const EIA_TTL_MS      = 3_600_000; // 1h — WPSR releases weekly, no need to re-fetch often
+const PATENTSVIEW_TTL_MS = 3_600_000; // 1h — PatentsView data is weekly/monthly, not live (connector's own comment)
 const FUEL_CACHE_TTL_MS = 24 * 3_600_000; // 24h — Gas Go regional/per-station prices, dedicated TTL
 // WO-2019 — Service API connector TTLs
 const GITHUB_TTL_MS   =   900_000; // 15 min
@@ -480,6 +481,56 @@ function handleFredProxy(req, res) {
     });
   });
   proxy.on('error', err => send(res, 502, { error: 'FRED upstream: ' + err.message }));
+  proxy.end();
+}
+
+// ── PatentsView proxy — Search API, key server-side only. M7 producer's evidence source. ──
+// The legacy api.patentsview.org (no auth, GET-shaped) was decommissioned — see
+// patentsviewconnector.js's own comment. This targets the replacement Search API's documented
+// convention (search.patentsview.org, POST, X-Api-Key header). Not verified against a live key
+// this session (none exists yet, per the Founder) — if the exact host/path differs once a real
+// key is available, this is the one place to correct it.
+async function handlePatentsViewProxy(req, res) {
+  const apiKey = process.env.PATENTSVIEW_API_KEY ?? process.env.VITE_PATENTSVIEW_API_KEY ?? '';
+  if (!apiKey) { send(res, 503, { error: 'PatentsView key not configured' }); return; }
+
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { error: 'Invalid JSON body' }); }
+
+  const endpoint = typeof body?.endpoint === 'string' ? body.endpoint : 'patent';
+  const query    = body?.query ?? {};
+  const payload  = JSON.stringify(query);
+
+  const key = 'patentsview:' + endpoint + ':' + payload;
+  const hit = getCached(key, PATENTSVIEW_TTL_MS);
+  if (hit) {
+    res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
+    res.end(hit.body);
+    return;
+  }
+
+  const options = {
+    hostname: 'search.patentsview.org',
+    path:     `/api/v1/${endpoint}/`,
+    method:   'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept':       'application/json',
+      'X-Api-Key':    apiKey,
+    },
+  };
+  const proxy = https.request(options, upstream => {
+    let responseBody = '';
+    upstream.on('data', chunk => { responseBody += chunk; });
+    upstream.on('end', () => {
+      setCached(key, upstream.statusCode, responseBody);
+      res.writeHead(upstream.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'MISS' });
+      res.end(responseBody);
+    });
+  });
+  proxy.on('error', err => send(res, 502, { error: 'PatentsView upstream: ' + err.message }));
+  proxy.write(payload);
   proxy.end();
 }
 
@@ -1423,6 +1474,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
+  if (req.method === 'POST' && url === '/api/patentsview')                   return handlePatentsViewProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   // WO-2019 — Service API connectors
   if (req.method === 'GET'  && url === '/api/github')                        return handleGithubProxy(req, res);

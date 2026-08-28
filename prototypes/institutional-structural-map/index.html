@@ -927,6 +927,15 @@
       canvas.style.cursor = next ? 'pointer' : 'default';
     }
     crosshairPx = { x: e.clientX, y: e.clientY };
+    // Founder override (2026-08-19): cursor X-position drives the time scrubber. While the
+    // pointer is over the plot area, its horizontal fraction across plot.width maps directly to
+    // the scrubber's t (0..1) via the same setT() the scrubber thumb itself uses — same effect as
+    // dragging the scrubber, just driven by hover instead. stopPlay() first so autoplay doesn't
+    // fight the cursor. Y-position stays purely spatial (φ̇ readout only), does not affect time.
+    if (e.clientX >= plot.x && e.clientX <= plot.x + plot.w) {
+      stopPlay();
+      setT((e.clientX - plot.x) / plot.w);
+    }
     draw(currentT);
   });
   canvas.addEventListener('pointerleave', () => {

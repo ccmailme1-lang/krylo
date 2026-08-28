@@ -16,6 +16,8 @@ import { makeRelationCore, RelationType } from '../relationontology.js';
 import { admitCandidate } from '../admissionengine.js';
 import { Vocabulary } from '../truthevent.js';
 import { resolveByIdentifier, createEntity } from '../entityresolution.js';
+import { admitAndDispatch } from '../evidenceadmissiongate.js';
+import { ProvenanceDAG } from '../causalos/provenance.js';
 
 const SEARCH_BASE = '/api/edgar';
 const MAX_HITS    = 100;
@@ -42,7 +44,13 @@ function admitIfUnknown(cik, name, accession) {
   });
 }
 
-async function searchOwnershipFilings(startdt, enddt) {
+// KRYL-1204 — `entityName` is an optional real narrowing attempt (SEC's own EDGAR full-text
+// search API accepts this param), passed through only when a targeted call supplies one.
+// Existing 2-arg untargeted callers (runSecOwnershipSync below) are byte-identical to before —
+// no `entityName` key is added to the query when omitted. Correctness of a targeted call never
+// depends on the backend proxy (/api/edgar -> localhost:4000, outside this repo) honoring this
+// param — runTargetedOwnershipObservation below always re-filters client-side regardless.
+async function searchOwnershipFilings(startdt, enddt, entityName) {
   const params = new URLSearchParams({
     forms:     'SC 13D,SC 13G',
     dateRange: 'custom',
@@ -50,6 +58,7 @@ async function searchOwnershipFilings(startdt, enddt) {
     enddt,
     hits:      String(MAX_HITS),
   });
+  if (entityName) params.set('entityName', entityName);
   const res = await fetch(`${SEARCH_BASE}?${params}`);
   if (!res.ok) throw new Error(`EDGAR ownership search HTTP ${res.status}`);
   const json = await res.json();
@@ -181,4 +190,97 @@ export async function runSecOwnershipSync({ from, to } = {}) {
       ? { sigmaId: sigmaProof.sigmaId, vertexCount: sigmaProof.vertices.length, edgeCount: sigmaProof.edges.length, traceable: sigmaProof.traceable }
       : null,
   };
+}
+
+// KRYL-1204 — targeted observation, entity/CIK-scoped. Additive only: does not alter
+// runSecOwnershipSync's existing untargeted behavior above, and does not touch its
+// dispatchBatch call. Returns entity-specific filing evidence (not the aggregate signal
+// only) and routes each admitted filing through KRYL-1203's admitAndDispatch() — this
+// function does not import surfaceRouter and cannot reach dispatchBatch() directly, per
+// the spec's structural no-bypass requirement.
+//
+// Real capability, not simulated: reuses the same EDGAR FTS call runSecOwnershipSync
+// already makes. Entity scoping is a real client-side filter over the date-windowed
+// results — correctness never depends on the backend (outside this repo) honoring the
+// optional server-side entityName param. No KRYLCF/Structural Integrity step anywhere
+// in this function, per the ratified v1 compatibility rule.
+export async function runTargetedOwnershipObservation({ entityCik, from, to } = {}) {
+  if (!entityCik) {
+    return { admitted: [], rejected: [], matched: 0, total: 0, error: 'entityCik is required for a targeted observation' };
+  }
+
+  const startdt = from ?? new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+  const enddt   = to   ?? new Date().toISOString().slice(0, 10);
+
+  let hits;
+  try {
+    hits = await searchOwnershipFilings(startdt, enddt, entityCik);
+  } catch (err) {
+    return { admitted: [], rejected: [], matched: 0, total: 0, error: err.message };
+  }
+
+  // Real client-side entity scoping. No-match is an explicit, real empty result — never
+  // a fabricated hit and never silently collapsed into an aggregate count.
+  const matches = [];
+  for (const hit of hits) {
+    const pair = extractOwnershipPair(hit);
+    if (!pair) continue;
+    if (pair.subjectCik === entityCik || pair.filerCik === entityCik) matches.push(pair);
+  }
+
+  const admitted = [];
+  const rejected = [];
+  for (const pair of matches) {
+    const dag = new ProvenanceDAG();
+    dag.add({
+      event_id: `edgar_13d13g_${pair.accession ?? Date.now()}_${pair.subjectCik}_${pair.filerCik}`,
+      kind: 'sec_ownership_filing',
+    });
+
+    // Hard loss-boundary requirement (specs/SPEC-closed-loop-observation-architecture.md
+    // §6): entity/CIK, filing identity, accession/reference, source, temporal scope, and
+    // provenance must all survive past this connector boundary — no reduction to a bare
+    // filing count. EAG's admitAndDispatch() now preserves every field on this candidate
+    // (fixed 2026-08-25 — it previously allow-listed only the base tagging fields).
+    // Evidence class, fixed 2026-08-26 (final Bottle Test gap: evidence magnitude semantics).
+    // A single Schedule 13D/13G filing hit only exposes ciks/names/date/accession from the
+    // EDGAR full-text search metadata — no share count, percentage, or dollar amount is
+    // extracted. There is no real per-filing magnitude available here to compute. Rather
+    // than pass an unlabeled numeric `signal` implying a measured strength that doesn't
+    // exist, this observation type is explicit: CATEGORICAL (a qualifying filing exists or
+    // it doesn't), not magnitude-bearing. Confirmed unused downstream in this pipeline
+    // regardless — domaingravity.js's pool only stores {confidence, polarity, ts} per
+    // entry, and buildPerceptionField()'s toParticle() only reads
+    // {domain, confidence, polarity, ts} — `signal` reaches neither. `signal: 100` is kept
+    // only because dispatchBatch()'s event shape elsewhere in the app expects the field to
+    // be present; evidence_class makes its true (non-)meaning explicit and auditable rather
+    // than silent.
+    const result = admitAndDispatch({
+      source:       'SEC_13D_13G_TARGETED',
+      domain:       'OWNERSHIP',
+      signal:       100,
+      evidence_class: 'CATEGORICAL_PRESENCE', // not a computed magnitude — see comment above
+      confidence:  0.9,       // runSecOwnershipSync's coarse whole-batch aggregate
+      // ts = dispatch time, matching runSecOwnershipSync's own convention above — NOT the
+      // historical filing date. domaingravity.js's pool prunes anything older than its
+      // 10-min retention window immediately on push (real, existing, bounded-memory
+      // behavior) — a real filing date would be evicted before getAllSignals() ever sees
+      // it. filingDate is preserved separately below, unmodified, as the actual evidence.
+      ts:          Date.now(),
+      polarity:    POLARITY.POSITIVE,
+      decay:       DECAY.DAILY,
+      provenance:  dag,
+      identityId:  entityCik,
+      evidence:    [pair.accession ?? `no_accession_${Date.now()}`],
+      subjectCik:  pair.subjectCik,  subjectName: pair.subjectName,
+      filerCik:    pair.filerCik,    filerName:   pair.filerName,
+      accession:   pair.accession,   filingDate:  pair.filingDate,
+      searchWindow: { startdt, enddt },
+    });
+
+    if (result.admitted) admitted.push(result.artifact);
+    else rejected.push(result.rejection);
+  }
+
+  return { admitted, rejected, matched: matches.length, total: hits.length };
 }

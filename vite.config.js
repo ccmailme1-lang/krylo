@@ -67,6 +67,7 @@ export default defineConfig({
       '/api/fred':            { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/finnhub':         { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/edgar':           { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/api/patentsview':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/github':          { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/arxiv':           { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/npm':             { target: 'http://localhost:4000', changeOrigin: true, secure: false },
