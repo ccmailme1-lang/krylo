@@ -653,8 +653,72 @@ export default function TargetPacket() {
           not filled with a proxy.
         </div>
 
-        {/* ── 01 ANALYSIS — the interpretive act between signal and structure ─── */}
-        <PacketSection ordinal="01" title="ANALYSIS" mt={80}>
+        {/* ── 01 FORMATION ───────────────────────────────────────────────────── */}
+        <PacketSection ordinal="01" title="FORMATION" mt={80}>
+          {/* Formation status lives in the PRIMARY SIGNAL summary line only — 01
+              opens on substance, not a restatement of stateLabel. */}
+          <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM }}>{projectionTag}</span>
+            {confDisplay != null && (
+              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: '#767d7a' }}>
+                CONF {confDisplay.toFixed(2)}{confIsEstimate ? ' EST' : ''}
+              </span>
+            )}
+          </div>
+          {envelope?.olp?.rationale && (
+            <p style={{ margin: '14px 0 0', maxWidth: 620, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: BODY_C }}>
+              {envelope.olp.rationale}
+            </p>
+          )}
+          {assemblanceBlock}
+        </PacketSection>
+
+        {/* ── 02 BASIS ───────────────────────────────────────────────────────── */}
+        <PacketSection ordinal="02" title="BASIS" mt={80}>
+          <p style={{ margin: '16px 0 0', fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, letterSpacing: '0.02em', color: BODY_C }}>
+            {arbitration?.total != null
+              ? `${arbitration.passed ?? 0} of ${arbitration.total} candidate path${arbitration.total !== 1 ? 's' : ''} admitted by arbitration.`
+              : 'No arbitration record for this session.'}
+            {observationCount > 0
+              ? ` ${observationCount} observation${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}.`
+              : ' No domain signal recorded.'}
+          </p>
+          {activeDomainPressures.length > 0 && (
+            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: '6px 22px' }}>
+              {activeDomainPressures.map(p => (
+                <span key={p.domain} style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: '#9aa09d' }}>
+                  {p.domain} <span style={{ color: '#6b7270' }}>{p.signalCount}</span>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Signal Momentum (moved from the old top-right pane; data unchanged) */}
+          <div style={{ marginTop: 24, borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
+                Signal Momentum
+              </div>
+              <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, letterSpacing: '0.05em' }}>{synthesis?.momentum?.value ?? '+—'}</span>
+            </div>
+            {TRAJ_POINTS
+              ? <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={55} />
+              : <div style={{ height: 55, display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.05em' }}>No trend data</div>}
+            <div style={{ display: 'flex', gap: 24 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 1H ago</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h1 ?? '+—'}</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 24H ago</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h24 ?? '+—'}</span>
+              </div>
+            </div>
+          </div>
+        </PacketSection>
+
+        {/* ── 03 INTERPRETATION ──────────────────────────────────────────────── */}
+        <PacketSection ordinal="03" title="INTERPRETATION">
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Decision frame (unchanged) */}
             <DecisionFrameCard lensProfiles={lensProfiles} hpScore={hpScore} collapsed />
@@ -895,74 +959,10 @@ export default function TargetPacket() {
 
             {!envelope && lensRfe?.state === 'UNCLASSIFIED' && (
               <div style={{ fontFamily: MONO, fontSize: 10, lineHeight: 1.6, color: ABSENCE, maxWidth: 620 }}>
-                Analysis layers are lens-gated. No lens brief is active for this session and no
+                Interpretation layers are lens-gated. No lens brief is active for this session and no
                 optimal-leverage envelope has been derived.
               </div>
             )}
-          </div>
-        </PacketSection>
-
-        {/* ── 02 FORMATION — the structural pattern that emerges from the analysis ─ */}
-        <PacketSection ordinal="02" title="FORMATION">
-          {/* Formation status lives in the PRIMARY SIGNAL summary line only —
-              this opens on substance, not a restatement of stateLabel. */}
-          <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM }}>{projectionTag}</span>
-            {confDisplay != null && (
-              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: '#767d7a' }}>
-                CONF {confDisplay.toFixed(2)}{confIsEstimate ? ' EST' : ''}
-              </span>
-            )}
-          </div>
-          {envelope?.olp?.rationale && (
-            <p style={{ margin: '14px 0 0', maxWidth: 620, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: BODY_C }}>
-              {envelope.olp.rationale}
-            </p>
-          )}
-          {assemblanceBlock}
-        </PacketSection>
-
-        {/* ── 03 BASIS ───────────────────────────────────────────────────────── */}
-        <PacketSection ordinal="03" title="BASIS">
-          <p style={{ margin: '16px 0 0', fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, letterSpacing: '0.02em', color: BODY_C }}>
-            {arbitration?.total != null
-              ? `${arbitration.passed ?? 0} of ${arbitration.total} candidate path${arbitration.total !== 1 ? 's' : ''} admitted by arbitration.`
-              : 'No arbitration record for this session.'}
-            {observationCount > 0
-              ? ` ${observationCount} observation${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}.`
-              : ' No domain signal recorded.'}
-          </p>
-          {activeDomainPressures.length > 0 && (
-            <div style={{ marginTop: 16, display: 'flex', flexWrap: 'wrap', gap: '6px 22px' }}>
-              {activeDomainPressures.map(p => (
-                <span key={p.domain} style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: '#9aa09d' }}>
-                  {p.domain} <span style={{ color: '#6b7270' }}>{p.signalCount}</span>
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Signal Momentum (moved from the old top-right pane; data unchanged) */}
-          <div style={{ marginTop: 24, borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
-                Signal Momentum
-              </div>
-              <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, letterSpacing: '0.05em' }}>{synthesis?.momentum?.value ?? '+—'}</span>
-            </div>
-            {TRAJ_POINTS
-              ? <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={55} />
-              : <div style={{ height: 55, display: 'flex', alignItems: 'center', fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.05em' }}>No trend data</div>}
-            <div style={{ display: 'flex', gap: 24 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 1H ago</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h1 ?? '+—'}</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 24H ago</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h24 ?? '+—'}</span>
-              </div>
-            </div>
           </div>
         </PacketSection>
 
