@@ -1006,15 +1006,22 @@ function synthGeneral(session, numbers, query) {
   const gq = (query ?? '').toLowerCase();
   const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|sell|invest|lease|hire|acquir|merg|refinanc|divest|exit|raise|expand|enter|relocat|consolidat)\b/.test(gq);
   const hasTimeline = /\b(deadline|by \d{4}|within \d|\d+\s*(?:year|month|week|quarter|yr|mo)s?\b|q[1-4]\s*'?\d{2}|next (?:year|quarter|month)|this (?:year|quarter))\b/.test(gq);
+  // Guards: the Primary Signal must not repeat upstream extraction garbage. Only
+  // report a figure that is a plausible capital amount, and only report a lens that
+  // is one real token (the lens detector can mint multi-word pseudo-lenses from
+  // query text — "DAVID MILLER BUDGET" — those are not signal).
+  const figureOK = typeof floor === 'number' && floor >= 1000;
+  const lensOK   = typeof lens === 'string' && lens !== 'OPEN' && lens !== 'GENERAL'
+                   && /^[A-Za-z0-9]+$/.test(lens) && lens.length <= 14;
   const present = [
     hasDecision && 'a decision',
-    floor && `a figure ($${fmtN(floor)})`,
+    figureOK && `a figure ($${fmtN(floor)})`,
     hasTimeline && 'a horizon',
-    lens && lens !== 'OPEN' && lens !== 'GENERAL' && `the ${lens} lens`,
+    lensOK && `the ${lens} lens`,
   ].filter(Boolean);
   const missingInputs = [
     !hasDecision && 'the specific decision on the table',
-    !floor && 'a dollar figure',
+    !figureOK && 'a dollar figure',
     !hasTimeline && 'a decision date or horizon',
   ].filter(Boolean);
   const recommendedAction = present.length
