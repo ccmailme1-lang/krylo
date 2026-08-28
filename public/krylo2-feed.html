@@ -2541,13 +2541,17 @@ function cycleABSlot() {
 
 <!-- Left Nav Rail -->
 <div class="left-nav">
-    <div class="lnav-item" onclick="setMode('surface')">
+    <div class="lnav-item" onclick="setMode('home')">
         <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="3"/><line x1="9" y1="2" x2="9" y2="0"/><line x1="9" y1="18" x2="9" y2="16"/><line x1="2" y1="9" x2="0" y2="9"/><line x1="18" y1="9" x2="16" y2="9"/></svg>
-        <span class="lnav-label">Surface</span>
+        <span class="lnav-label">Home</span>
     </div>
     <div class="lnav-item" onclick="setMode('analysis')">
         <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
         <span class="lnav-label">Analysis</span>
+    </div>
+    <div class="lnav-item" onclick="setMode('structure')">
+        <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="7"/><circle cx="9" cy="9" r="3"/><line x1="9" y1="2" x2="9" y2="0"/><line x1="9" y1="18" x2="9" y2="16"/><line x1="2" y1="9" x2="0" y2="9"/><line x1="18" y1="9" x2="16" y2="9"/></svg>
+        <span class="lnav-label">Formation</span>
     </div>
 <div class="lnav-item" onclick="setMode('feeds')">
         <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="2" width="14" height="14" rx="1"/><line x1="5" y1="6" x2="13" y2="6"/><line x1="5" y1="9" x2="13" y2="9"/><line x1="5" y1="12" x2="9" y2="12"/><rect x="5" y="4" width="4" height="3"/></svg>
@@ -2907,7 +2911,9 @@ function cycleABSlot() {
 
 /* ── Left Nav — Surface Mode Control ────────────────────── */
 const NAV_LABELS = {
+    home:      'HOME',
     surface:   'SURFACE',
+    structure: 'FORMATION',
     analysis:  'ANALYSIS',
     feeds:     'RESEARCH',
     news:      'NEWS',
@@ -2944,7 +2950,7 @@ document.addEventListener('click', function(e) {
 function setMode(name) {
     document.querySelectorAll('.lnav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.lnav-item');
-    const order = ['surface', 'analysis', 'feeds', 'community', 'history'];
+    const order = ['home', 'analysis', 'structure', 'feeds', 'community', 'history'];
     const idx = order.indexOf(name);
     if (idx !== -1) items[idx].classList.add('active');
     document.body.dataset.mode = name;
@@ -2955,7 +2961,7 @@ function setMode(name) {
 
     const stage      = document.querySelector('.stage');
     const rightPanel = document.querySelector('.right-panel');
-    if (name === 'surface') {
+    if (name === 'surface' || name === 'home') {
         if (stage)      { stage.style.opacity = '1'; stage.style.pointerEvents = 'auto'; }
         if (rightPanel) { rightPanel.style.opacity = '0'; rightPanel.style.pointerEvents = 'none'; }
         const heroCopy = document.querySelector('.hero-copy-wrap');
@@ -2966,6 +2972,8 @@ function setMode(name) {
             heroCopy.style.pointerEvents = 'none';
         }
         window.parent.postMessage({ type: 'krylo-nav', mode: 'surface' }, '*');
+    } else if (name === 'structure') {
+        window.parent.postMessage({ type: 'krylo-nav', mode: 'structure' }, '*');
     } else if (name === 'analysis') {
         window.parent.postMessage({ type: 'krylo-nav', mode: 'analysis' }, '*');
     } else if (name === 'feeds') {
