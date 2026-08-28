@@ -235,6 +235,21 @@ function Cone({ state, position, isSelected = true, isLocked = false, kalshiSign
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
 
+      {/* KRYL-1215 — halo r1/r2/r3, INVESTIGATE-only (isSelected). Spatial hierarchy
+          per specs/SPEC-six-lens-design-system-decisions.md #5: bounded, concentric,
+          decreasing opacity outward. No color axis (§3 ruling reserves chroma for
+          convergence state) — white, opacity carries the tier. r1 is node-grounded
+          (modulated by activePressure, the real per-cone signal); r2/r3 are geometry
+          only this ticket — their derived-presentation data (domain-level relationship/
+          formation) is separate, later work. No r-infinity geometry; UNRESOLVED uses
+          the locked achromatic epistemic treatment elsewhere, not spatial distance. */}
+      {isSelected && (
+        <>
+          <Footprint position={[0, 0, 0]} radius={radius * 1.5972 * 1.25} color="#ffffff" opacity={0.28 + 0.22 * (activePressure / 100)} />
+          <Footprint position={[0, 0, 0]} radius={radius * 1.5972 * 1.55} color="#ffffff" opacity={0.16} />
+          <Footprint position={[0, 0, 0]} radius={radius * 1.5972 * 1.85} color="#ffffff" opacity={0.08} />
+        </>
+      )}
 
       {/* KRYL-1169/1171 — these three floating HUD label blocks (domain/signal, formation,
           suspended lens read) are suppressed once a report is showing. Not data loss: the same
@@ -2377,7 +2392,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
 
   // SPEC I / KRYL-1213 (SEE state): only an explicit user click produces a selected
   // cone. No automatic fallback to the highest-pressure cone — absent a click, no
-  // domain is forced into focal prominence.
+  // domain is forced into focal prominence in the scene.
   const manualPick   = selectedDomain
     ? coneState.find(c => c.domain === selectedDomain)
     : null;
@@ -2388,6 +2403,15 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
   // per specs/SPEC-six-lens-design-system-decisions.md #6 — so this stays two-valued
   // until that surface gets a real mount point.
   const perceptualStage = selectedCone ? 'investigate' : 'see';
+
+  // Founder override (SPEC-six-lens #7, scoped): the InspectionPanel loads by default
+  // on Home. With nothing clicked it pre-populates with the highest-pressure cone as
+  // a read-only default — this does NOT set a focal cone in the scene, does not change
+  // perceptualStage, and does not report an active cone upward. SEE state (all six
+  // domains visible, none forced into scene prominence) is otherwise preserved.
+  const panelCone = selectedCone ?? (panelVisible
+    ? ([...coneState].filter(c => !c.suppressed).sort((a, b) => (b.pressure ?? 0) - (a.pressure ?? 0))[0] ?? coneState[0] ?? null)
+    : null);
 
   // Report the currently-active cone domain up (drives sticky-note attach/visibility).
   React.useEffect(() => { onActiveConeChange?.(activeDomain ?? null); }, [activeDomain]);
@@ -2565,7 +2589,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          {panelVisible && selectedCone && <InspectionPanel cone={selectedCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
+          {panelVisible && panelCone && <InspectionPanel cone={panelCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
         </>,
         document.getElementById('krylo-hud-root')
       )}
