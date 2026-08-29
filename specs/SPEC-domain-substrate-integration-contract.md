@@ -108,32 +108,49 @@ changing.
 **Fail:** packet-specific domain logic, duplicated lens definitions, altered
 observation rules, packet-specific analytical primitives.
 
-### AC — No subject-derived lens (RATIFIED 2026-08-29)
+### AC — Subject anchors analysis, not the question (RATIFIED 2026-08-29)
 
-Given a **resolvable subject** (an entity: a company, instrument, deal, person —
+**Question routing ≠ subject resolution.** The current packet uses the *question*
+to determine the analytical object; the architecture resolves the *subject* first,
+then analyzes the subject. The question is retained as context — it never
+redefines the primitives.
+
+Given a **resolvable subject** (an entity — company, instrument, deal, person;
 `SPEC-subject-scoping-contract.md` ENTITY path), the packet MUST invoke the six
-existing `I_d` primitives with that subject **bound as the subject**. It MUST NOT:
+existing `I_d` primitives with that subject **bound**. It MUST NOT:
 
-- mint a lens / anchor / domain from the subject string (e.g. "IS ANDURIL LENS",
-  "IS ANDURIL" anchor — the current pseudo-lens defect);
-- route to `GENERAL` because the *question* is broad.
+- mint a lens / anchor / domain from the subject string (e.g. `Lens: IS ANDURIL`,
+  `Anchor: IS ANDURIL`, `IS ANDURIL LENS` — the current pseudo-lens defect);
+- route to `GENERAL` because the *question* is broad;
+- discard existing subject-relevant signals into a generic analysis.
 
-**Load-bearing distinction:** a question that is *insufficient for a decision
-conclusion* is not *insufficient for observing the subject through the six
-domains*. "Is Anduril a good acquisition target?" → subject = **Anduril** (ERK-
-resolvable) → run `A(d, Anduril)` for all six d. The decision conclusion may
-remain unscored; the six domain observations are still owed.
+**Load-bearing distinction:** *having enough information to **observe** the
+subject* is not the same as *having enough to **answer** the question*. "Is
+Anduril a good acquisition target?" → the substrate holds 178–186 observations,
+all six domains populated (OWNERSHIP 29 sig, CAPITAL ~103, …) → it **can** observe
+Anduril. The acquisition verdict may stay unscored; the six domain observations
+are still owed. `"No domain anchor detected"` is architecturally misleading — the
+question isn't domain-specific, the subject is.
 
-**Validation target (for when integration opens):**
-> Query "Is Anduril a good acquisition target?" produces six domain scrolls —
-> `A(CAPITAL, Anduril)` … `A(MEDIA, Anduril)` — each showing `I_d` fields scoped to
-> Anduril, then Formation `F(π₁…π₆)`. **Zero** occurrences of: STAKE / MOVE /
-> WINDOW / LEVERAGE FIELD, a `GENERAL` domain, an "ANDURIL"-derived lens or anchor,
-> "select your situation type", "add a capital floor", generic specificity advice,
-> or CAC / ROAS / LTV.
+### End-to-end acceptance fixture — "Is Anduril a good acquisition target?"
 
-Sits beside AC — Lens Primitive Reuse (Q8): same primitive, subject bound, no
-invention.
+Run at the integration gate. Current vs. required:
+
+| current behaviour (live, 2026-08-29) | required behaviour |
+|---|---|
+| `Domain: GENERAL` | Subject = **Anduril** (ERK-resolved) |
+| `Lens: IS ANDURIL` | no subject-derived lens |
+| Stake / Move / Window / Leverage Field | six domain micro-analyses — `A(CAPITAL, Anduril)` … `A(MEDIA, Anduril)`, each an `I_d`-field scroll |
+| generic specificity warnings | domain observations + each domain's unresolved dimensions |
+| existing signals discarded into generic analysis | signals bound to Anduril |
+| `FORMATION SIGNAL ACTIVE` while `NODES 0` / `CONVERGENCE INSUFFICIENT` | Formation only after the six `A(d, Anduril)` sets exist, then `F(π₁…π₆)` |
+| question determines the analytical system | question = context; subject anchors analysis |
+
+**Zero** occurrences of: STAKE / MOVE / WINDOW / LEVERAGE FIELD, `GENERAL` domain,
+subject-derived lens/anchor, "select your situation type", "add a capital floor",
+generic specificity advice, CAC / ROAS / LTV.
+
+Sits beside AC — Lens Primitive Reuse (Q8): same primitive, subject bound, no invention.
 
 ### AC — Panel/field correspondence
 
@@ -145,6 +162,13 @@ classified `absenceClass` (§17).
 
 `F` executes only after all six `A(d, Subject)` projections exist. No packet
 surface above `02 FORMATION` performs cross-domain synthesis.
+
+**Having signals across six domains is not itself a Formation.** The current
+packet renders `FORMATION SIGNAL ACTIVE` while simultaneously reporting `NODES 0`
+and `CONVERGENCE INSUFFICIENT` — a premature Formation claim. Required: no
+Formation state (active / signal / integrity) is asserted until `F(π₁…π₆)` has
+run over six existing observation sets; before that the packet says
+`FORMATION — not yet established`.
 
 ---
 
