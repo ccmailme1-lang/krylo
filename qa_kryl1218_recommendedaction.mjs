@@ -70,5 +70,22 @@ check('B signal still substantive at low confidence', B.recommendedAction.length
 check('neither signal is the old fixed constant',
       !/The more concrete the input, the more precise the output/.test(both));
 
+// ── KRYL-1222 — a horizon set via the scrubber (tensor) counts like a query-text horizon ──
+// QC: a decision, no temporal word in the text, but the guest set the horizon control.
+const QC = 'our startup is deciding whether to pivot the product line or expand the current one';
+const C_noHz = synthesizeQuery({ id: 'qa_c0', query: QC, lens: 'OPEN', tensor: {} });
+const C_hz   = synthesizeQuery({ id: 'qa_c1', query: QC, lens: 'OPEN', tensor: { horizonSet: true, horizon: 'LONG' } });
+const C_hzDefault = synthesizeQuery({ id: 'qa_c2', query: QC, lens: 'OPEN', tensor: { horizon: 'MED' } }); // reset default, not touched
+
+console.log('\nQUERY C (no horizon)      →', JSON.stringify(C_noHz.recommendedAction));
+console.log('QUERY C (horizon set LONG) →', JSON.stringify(C_hz.recommendedAction));
+
+check('C without a horizon still reads decision-only', /a decision/.test(C_noHz.recommendedAction) && !/a horizon/.test(C_noHz.recommendedAction));
+check('C with an explicit horizon reads it into the signal', /a horizon \(LONG\)/.test(C_hz.recommendedAction));
+check('C with an explicit horizon drops it from missingInputs', !C_hz.missingInputs.some(m => /horizon/.test(m)));
+check('a tensor.horizon WITHOUT horizonSet is ignored (reset default is not a choice)',
+      !/a horizon/.test(C_hzDefault.recommendedAction) && C_hzDefault.missingInputs.some(m => /horizon/.test(m)));
+check('the query-text horizon path is unchanged (A still reads "a horizon")', /a horizon/.test(A.recommendedAction) && !/\(/.test(A.recommendedAction.match(/a horizon[^,]*/)[0]));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

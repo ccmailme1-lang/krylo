@@ -13,30 +13,30 @@ const ids = arr => arr.map(c => c.id);
 // ── 1. Sparse query — every dimension missing ──────────────────────────────
 {
   const qc = buildQueryContext('what is going on', { now: 1 });
-  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizon: null, activeLens: null });
+  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizonSet: false, activeLens: null });
   ok('1 sparse → decision,budget,timeline,lens candidates (no asset, class absent)',
      JSON.stringify(ids(chips)) === JSON.stringify(['decision', 'budget', 'timeline', 'lens']));
-  const active = activeCompletionChips({ queryContext: qc, selectedFloor: null, horizon: null, activeLens: null });
+  const active = activeCompletionChips({ queryContext: qc, selectedFloor: null, horizonSet: false, activeLens: null });
   ok('1 sparse → only timeline is active (others gated off)', JSON.stringify(ids(active)) === JSON.stringify(['timeline']));
 }
 
 // ── 2. Fully-formed query — nothing missing ────────────────────────────────
 {
   const qc = buildQueryContext('should we acquire the company for $2.5 million', { now: 1 });
-  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: 50000, horizon: 'MED', activeLens: 'CFO' });
+  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: 50000, horizonSet: true, activeLens: 'CFO' });
   ok('2 fully-formed → no candidates', chips.length === 0);
-  ok('2 fully-formed → no active chips', activeCompletionChips({ queryContext: qc, selectedFloor: 50000, horizon: 'MED', activeLens: 'CFO' }).length === 0);
+  ok('2 fully-formed → no active chips', activeCompletionChips({ queryContext: qc, selectedFloor: 50000, horizonSet: true, activeLens: 'CFO' }).length === 0);
 }
 
 // ── 3. Partial — has a figure, no timeline ─────────────────────────────────
 {
   const qc = buildQueryContext('lease the warehouse for $80,000 a month', { now: 1 });
-  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizon: null, activeLens: 'COO' });
+  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizonSet: false, activeLens: 'COO' });
   ok('3 partial → no budget candidate (figure present)', !ids(chips).includes('budget'));
   ok('3 partial → timeline candidate present', ids(chips).includes('timeline'));
   ok('3 partial → no decision candidate ("lease" is a cue)', !ids(chips).includes('decision'));
   ok('3 partial → asset candidate present (warehouse → CRE)', ids(chips).includes('asset'));
-  ok('3 partial → active = [timeline] only', JSON.stringify(ids(activeCompletionChips({ queryContext: qc, selectedFloor: null, horizon: null, activeLens: 'COO' }))) === JSON.stringify(['timeline']));
+  ok('3 partial → active = [timeline] only', JSON.stringify(ids(activeCompletionChips({ queryContext: qc, selectedFloor: null, horizonSet: false, activeLens: 'COO' }))) === JSON.stringify(['timeline']));
 }
 
 // ── 4. Mechanic copy — static, present, no numeric/threshold content ───────
@@ -53,7 +53,7 @@ const ids = arr => arr.map(c => c.id);
 // ── 5. Priority + cap ─────────────────────────────────────────────────────
 {
   const qc = buildQueryContext('office building', { now: 1 });   // asset resolves, all gaps open
-  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizon: null, activeLens: null });
+  const chips = deriveCompletionChips({ queryContext: qc, selectedFloor: null, horizonSet: false, activeLens: null });
   ok('5 priority order decision>budget>timeline>lens>asset',
      JSON.stringify(ids(chips)) === JSON.stringify(['decision', 'budget', 'timeline', 'lens', 'asset']));
   ok('5 active never exceeds VISIBLE_CAP', activeCompletionChips({ queryContext: qc }).length <= VISIBLE_CAP);
@@ -62,8 +62,8 @@ const ids = arr => arr.map(c => c.id);
 // ── 6. timeline disappears once horizon is set ────────────────────────────
 {
   const qc = buildQueryContext('what is going on', { now: 1 });
-  const before = activeCompletionChips({ queryContext: qc, horizon: null });
-  const after  = activeCompletionChips({ queryContext: qc, horizon: 'ACUTE' });
+  const before = activeCompletionChips({ queryContext: qc, horizonSet: false });
+  const after  = activeCompletionChips({ queryContext: qc, horizonSet: true });
   ok('6 timeline active before horizon set', ids(before).includes('timeline'));
   ok('6 timeline gone after horizon set', !ids(after).includes('timeline'));
 }

@@ -992,7 +992,16 @@ function synthGeneral(session, numbers, query) {
   // to carry — it never enters the Primary Signal string.
   const gq = (query ?? '').toLowerCase();
   const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|sell|invest|lease|hire|acquir|merg|refinanc|divest|exit|raise|expand|enter|relocat|consolidat)\b/.test(gq);
-  const hasTimeline = /\b(deadline|by \d{4}|within \d|\d+\s*(?:year|month|week|quarter|yr|mo)s?\b|q[1-4]\s*'?\d{2}|next (?:year|quarter|month)|this (?:year|quarter))\b/.test(gq);
+  // KRYL-1222: a horizon the guest set through the scrubber counts the same as a
+  // temporal word in the query text — symmetric with figureOK reading tensor.floor
+  // below. tensor.horizonSet is written only when the control was actually touched
+  // (not the New-Query reset default), so an untouched session behaves exactly as
+  // the regex-only check did.
+  const explicitHorizon = session?.tensor?.horizonSet === true && typeof session?.tensor?.horizon === 'string'
+    ? session.tensor.horizon
+    : null;
+  const hasTimeline = explicitHorizon != null
+    || /\b(deadline|by \d{4}|within \d|\d+\s*(?:year|month|week|quarter|yr|mo)s?\b|q[1-4]\s*'?\d{2}|next (?:year|quarter|month)|this (?:year|quarter))\b/.test(gq);
   // Guards: the Primary Signal must not repeat upstream extraction garbage. Only
   // report a figure that is a plausible capital amount, and only report a lens that
   // is one real token (the lens detector can mint multi-word pseudo-lenses from
@@ -1003,7 +1012,7 @@ function synthGeneral(session, numbers, query) {
   const present = [
     hasDecision && 'a decision',
     figureOK && `a figure ($${fmtN(floor)})`,
-    hasTimeline && 'a horizon',
+    hasTimeline && (explicitHorizon ? `a horizon (${explicitHorizon})` : 'a horizon'),
     lensOK && `the ${lens} lens`,
   ].filter(Boolean);
   const missingInputs = [

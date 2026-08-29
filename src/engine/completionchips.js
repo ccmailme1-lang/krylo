@@ -82,11 +82,12 @@ function isLensUnset(activeLens) {
  * @param {object} input
  * @param {object} input.queryContext  a KRYL-1221 QueryContext (buildQueryContext output)
  * @param {number|null} [input.selectedFloor]
- * @param {string|null} [input.horizon]
+ * @param {boolean} [input.horizonSet]  true only when the guest actually chose a
+ *   horizon through the scrubber — NOT the New-Query reset default.
  * @param {string|null} [input.activeLens]
  * @returns {Set<string>} chip ids whose dimension is currently missing
  */
-function shownDimensions({ queryContext, selectedFloor = null, horizon = null, activeLens = null }) {
+function shownDimensions({ queryContext, selectedFloor = null, horizonSet = false, activeLens = null }) {
   const qc = queryContext ?? {};
   const decisionCues = Array.isArray(qc.decisionCues) ? qc.decisionCues : [];
   const numbers      = Array.isArray(qc.numbers) ? qc.numbers : [];
@@ -95,7 +96,7 @@ function shownDimensions({ queryContext, selectedFloor = null, horizon = null, a
   const shown = new Set();
   if (decisionCues.length === 0)                              shown.add('decision');
   if (numbers.length === 0 && selectedFloor == null)          shown.add('budget');
-  if (!horizon)                                               shown.add('timeline');
+  if (!horizonSet)                                            shown.add('timeline');
   if (isLensUnset(activeLens))                                shown.add('lens');
   if (assetClass.state === 'resolved')                        shown.add('asset');
   return shown;

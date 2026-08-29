@@ -765,6 +765,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const [rules,           setRules]           = useState([]);
   // KRYL-1222 — completion chip routing: brief highlight on the control a chip opens.
   const [pulseHorizon,    setPulseHorizon]    = useState(false);
+  // KRYL-1222 — true only when the guest actually moved the horizon scrubber, so
+  // synthesis and the completion chip can tell a chosen horizon from the
+  // New-Query reset default (setHorizon(DEFAULT_HORIZON)).
+  const [horizonTouched,  setHorizonTouched]  = useState(false);
   const horizonSectionRef = useRef(null);
   const pulseHorizonTimer = useRef(null);
   const [signalVisible,   setSignalVisible]   = useState(false);
@@ -922,10 +926,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     () => activeCompletionChips({
       queryContext: liveQueryContext,
       selectedFloor,
-      horizon,
+      horizonSet: horizonTouched,
       activeLens,
     }),
-    [liveQueryContext, selectedFloor, horizon, activeLens],
+    [liveQueryContext, selectedFloor, horizonTouched, activeLens],
   );
 
   const lastLoggedCompletionRef = useRef(null);
@@ -1096,12 +1100,12 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   }
 
   function removeSituationToken() {
-    setActiveSituation(null); setSelectedFloor(null); setHorizon(null);
+    setActiveSituation(null); setSelectedFloor(null); setHorizon(null); setHorizonTouched(false);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
-    pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, seedQuery: '' });
+    pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, horizonTouched: false, seedQuery: '' });
   }
-  function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); pushHistory({ selectedFloor: null, horizon: null }); }
-  function removeHorizonToken() { setHorizon(null); pushHistory({ horizon: null }); }
+  function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); setHorizonTouched(false); pushHistory({ selectedFloor: null, horizon: null, horizonTouched: false }); }
+  function removeHorizonToken() { setHorizon(null); setHorizonTouched(false); pushHistory({ horizon: null, horizonTouched: false }); }
 
   function handleQueryBlur() {
     setFocused(false);
@@ -1164,6 +1168,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       parsed_intent:      parsed,
       temporal_horizon:   horizonRes,
       horizon:            horizonRes?.bucket ?? 'MED',
+      horizonSet:         horizonTouched,
       rules:              rules.filter(r => r.value.trim().length > 0),
       constraintStrength: geometry.constraintStrength,
       intentEntropy:      geometry.intentEntropy,
@@ -1232,6 +1237,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     if (centerTextareaRef.current) centerTextareaRef.current.value = '';
     setSelectedFloor(null);
     setHorizon(DEFAULT_HORIZON);
+    setHorizonTouched(false);
     setRules([]);
     setSignalVisible(false);
     signalShownRef.current = false;
@@ -1264,7 +1270,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   // ── Undo / redo ───────────────────────────────────────────────────────────
   function captureSnap(overrides = {}) {
-    return { activeSituation, selectedFloor, horizon, intentMagnitude, volatilityShock, rules, seedQuery, ...overrides };
+    return { activeSituation, selectedFloor, horizon, horizonTouched, intentMagnitude, volatilityShock, rules, seedQuery, ...overrides };
   }
 
   function applySnapshot(snap) {
@@ -1273,6 +1279,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setActiveSituation(snap.activeSituation ?? null);
     setSelectedFloor(snap.selectedFloor ?? null);
     setHorizon(snap.horizon ?? null);
+    setHorizonTouched(snap.horizonTouched ?? false);
     setIntentMagnitude(snap.intentMagnitude ?? 50);
     setVolatilityShock(snap.volatilityShock ?? false);
     setRules(snap.rules ?? []);
@@ -1492,7 +1499,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   <input
                     type="range" min="0" max={HORIZON_ORDER.length - 1} step="1"
                     value={hIdx >= 0 ? hIdx : 0}
-                    onChange={e => setHorizon(HORIZON_ORDER[Number(e.target.value)])}
+                    onChange={e => { setHorizon(HORIZON_ORDER[Number(e.target.value)]); setHorizonTouched(true); }}
                     className="hz-slider"
                     style={{ background: `linear-gradient(to right, #66FF00 ${pct}%, #14191c ${pct}%)` }}
                   />
