@@ -115,14 +115,12 @@ Distinct from §4.1: a highly concentrated field can still diffuse fast within i
 cluster; a diffuse field can diffuse slowly.
 Maturity: PARTIAL
 
-### 4.3 Transfer Friction
-Resistance to knowledge moving between a producer and a would-be carrier /
-institution.
-**Structuring note (flagged):** "friction" is **relational** — a property of a
-transfer edge (X → Y), like TECHNOLOGY's "dependency". May belong in
-`relationships` (§5) as a typed edge property rather than a domain scalar. Founder
-to rule: dimension, edge property, or both.
-Maturity: PARTIAL (concept) / UNAUTHORED (form)
+### 4.3 Transfer Friction — MOVED TO §5 (edge-property)
+**Ratified (CROSS-DOMAIN-CONSISTENCY §3, 2026-08-29):** "friction" has no
+field-level magnitude without naming the two parties of a transfer → it is a
+**relationship edge-property**, not a structural dimension. See §5
+(`Producers ↔ carriers ↔ institutional holders`). An aggregate "mean transfer
+friction across observed edges" MAY be a `signal`.
 
 ### 4.4 Expertise Scarcity / Surplus
 Whether a specific expertise is scarce or abundant relative to demand for it.
@@ -153,7 +151,11 @@ not intra-domain pairs (§7).
 SPEC II §7 Relationships + Cross-Domain Propagation:
 
 - **Producers ↔ carriers** — people, documents, code that carry the knowledge.
+  **Edge attribute:** `transferFriction` — resistance to the knowledge moving from
+  producer to carrier (moved here from §4.3).
 - **Carriers ↔ institutional holders** — where the knowledge is housed.
+  **Edge attribute:** `transferFriction` — resistance to the knowledge moving into
+  or between institutions.
 - **Knowledge ↔ Technology** — capability enabled by the knowledge (SPEC II §7: "technology that amplifies").
 - **Knowledge ↔ Capital** — research financing.
 - **Knowledge ↔ Labor** — labor markets that depend on the expertise; skill embodiment.
@@ -174,7 +176,7 @@ A KNOWLEDGE observation is relevant to a subject when:
 
 - the observed creation / transfer / concentration / expertise movement is attributable to the subject or its immediate structural environment;
 - there is sufficient evidence to establish the KNOWLEDGE attribution;
-- it materially concerns concentration, diffusion rate, transfer friction, expertise scarcity/surplus, or institutional capture (the §4 axes — not the UNAUTHORED `tacit vs explicit`);
+- it materially concerns concentration, diffusion rate, expertise scarcity/surplus, or institutional capture (the §4 dimensions — `transferFriction` is now an edge-property, §5; not the UNAUTHORED `tacit vs explicit`);
 - temporal scope is compatible;
 - it is not a generic macro research-sector condition mis-attributed to the subject.
 
@@ -304,7 +306,7 @@ matrix are UNAUTHORED.
 |---|---|---|
 | observes | PARTIAL | SPEC II §7 Observable Objects + Observation Classes (LOCKED) |
 | signals | **UNAUTHORED** | F3 — not split; publication signals exist but not authored as `I_d` signal defs; concentration + diffusion-rate measures undefined |
-| structuralDimensions | PARTIAL | SPEC II §7 Conditions (LOCKED). `tacit vs explicit` **UNAUTHORED** (§4.6); `transfer friction` form open (§4.3) |
+| structuralDimensions | PARTIAL | SPEC II §7 Conditions (LOCKED): concentration, diffusion rate, expertise scarcity/surplus, institutional capture. `tacit vs explicit` **UNAUTHORED** (§4.6). `transfer friction` moved to `relationships` as an edge-property (§4.3, ratified). |
 | relationships | PARTIAL | SPEC II §7 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §7; macro-vs-entity distinction authored |
 | tensionPatterns | PARTIAL | intra-KNOWLEDGE; inherits §4 maturity |
@@ -315,7 +317,7 @@ matrix are UNAUTHORED.
 
 **Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
 mapping, dimension `tacit vs explicit knowledge`, the expertise-concentration and
-diffusion-rate measures, the form of `transfer friction`, subject-specific application.
+diffusion-rate measures, subject-specific application.
 
 **Nothing is AUTHORED for content. Nothing renders. Integration gated.**
 
@@ -323,12 +325,13 @@ diffusion-rate measures, the form of `transfer friction`, subject-specific appli
 
 ## 13. Ratification Questions (Founder)
 
-1. Does KNOWLEDGE own **knowledge concentration, diffusion rate, transfer
-   friction, expertise scarcity/surplus, and institutional capture** as its
-   primary structural vocabulary (SPEC II §7 Conditions)?
+1. Does KNOWLEDGE own **knowledge concentration, diffusion rate, expertise
+   scarcity/surplus, and institutional capture** as its primary structural
+   vocabulary (SPEC II §7 Conditions)? (`transfer friction` is now an
+   edge-property, §5 — ratified.)
 2. Is **concentration/diffusion** one dimension with polarity, with **diffusion
    rate** a separate dimension (recommendation), or a different split?
-3. Is **transfer friction** a dimension, a relationship edge property, or both? (§4.3)
+3. *(resolved — `transfer friction` → edge-property, CROSS-DOMAIN-CONSISTENCY §3.)*
 4. Is **expertise scarcity/surplus** one dimension with polarity?
 5. Does **`tacit vs explicit knowledge`** stay UNAUTHORED (recommendation)?
 6. Is **"institutional capture"** an observation, a derived classification, or

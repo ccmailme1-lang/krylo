@@ -1,8 +1,10 @@
 # Cross-Domain Consistency Pass — the six `I_d`
 
-**Status:** DRAFT — findings for Founder ratification. One pass over all six drafts;
-not further per-domain refinement.
-**Version:** 0.1
+**Status:** **RATIFIED — Founder decision 2026-08-29.** Establishes the ontology
+and admission architecture. Does **not** establish the measurable signal layer —
+`UNAUTHORED signal → integration blocked` still holds; a connector's existing
+number does not become an implicitly authored structural signal.
+**Version:** 1.0
 **Inputs:** `CAPITAL.md` (RATIFIED), `OWNERSHIP.md`, `TECHNOLOGY.md`, `KNOWLEDGE.md`,
 `LABOR.md`, `MEDIA.md` (drafts) + SPEC II §§5–11 (LOCKED).
 **Governs:** `../SPEC-domain-intelligence-primitive-authoring.md` §6 (6×6 matrix),
@@ -171,21 +173,50 @@ an `I_d`.
 
 ---
 
-## 5. Summary of Founder decisions requested
+## 5. Founder decisions — RATIFIED 2026-08-29
 
-1. Ratify the **15-pair matrix** (§1) — all Separate + attribute-once; the three
-   ⚠ splits stand.
-2. Ratify the **concentration invariant** (§2) — one facet/source per axis; no
+1. **15-pair matrix (§1) — RATIFIED.** All Separate + attribute-once; the three
+   ⚠ splits stand. Not to be reopened because names sound close — every pair has
+   an owner, the split is explicit, the union has no orphans. The next question
+   is empirical (can integration produce the distinct observations), a different
+   gate.
+2. **Concentration invariant (§2) — RATIFIED.** Orthogonality demonstrated via
+   different measurement populations, not asserted. One facet/source per axis; no
    re-labelled figure.
-3. Ratify the **dimension-vs-edge rule** (§3) — and with it, move
-   `technological dependency`, `transfer friction`, `information asymmetry` out of
-   `structuralDimensions` into `relationships` as edge-properties. CAPITAL
-   unaffected.
-4. Ratify `⋃_d I_d.relationships` as the **closed 15-type cross-domain admission
-   set for `F`** (§4a), + the intra-domain structures (§4b), + regulatory boundary
-   as a condition not a node (§4c).
+3. **Dimension-vs-edge rule (§3) — RATIFIED as a GENERAL ONTOLOGY RULE**
+   (`../SPEC-domain-intelligence-primitive-authoring.md`, added to §2.1). Applied:
+   `technological dependency`, `transfer friction`, `information asymmetry` move
+   out of `structuralDimensions` into `relationships` as typed-edge attributes
+   (edits committed to TECHNOLOGY.md / KNOWLEDGE.md / MEDIA.md). CAPITAL
+   `Flow`/`Reallocation` unaffected.
+4. **`⋃_d I_d.relationships` — RATIFIED CLOSED** at the 15 cross-domain
+   relationship types (§4a). Intra-domain structure stays inside `A(d, Subject)`
+   (§4b); regulatory/jurisdictional context is a relationship *condition*, not a
+   seventh node (§4c). Constraint on `F`: **may infer from admitted relationships,
+   may not invent an unadmitted relationship type because the evidence looks
+   narratively compelling.**
 
-On ratification: apply the §3 edits to TECHNOLOGY / KNOWLEDGE / MEDIA, then all six
-`I_d` are consistent and the authoring-spec exit criteria (§8 of that doc) are met
-except the per-field `AUTHORED` promotions and the concentration *measures* (still
-`UNAUTHORED`, still blocking `signals`). Integration remains gated.
+### Scope architecture untouched
+
+```
+Six I_d → pairwise boundaries → orthogonal concentration vars → consistent
+dimension/edge rule → closed relationship vocabulary → F
+```
+runs alongside, unchanged:
+```
+I_d → A(d, Field) → A(d, Subject)
+```
+
+### State after ratification
+
+| item | state |
+|---|---|
+| Track #3 — ontology consistency | **CLOSED** |
+| six `I_d` — structural consistency | **CLOSED** (drafts consistent; per-field `AUTHORED` promotions still Founder-side) |
+| Formation admission vocabulary | **CLOSED** — 15 types |
+| signal authorship / measurement | **OPEN** — every `signals` field `UNAUTHORED`; concentration *measures* undefined |
+| shared-source facet verification | **OPEN** — PatentsView / Census / FEC, now an integration AC (`../SPEC-domain-substrate-integration-contract.md`) |
+| integration | **GATED** |
+
+Transition: from *"what are the six domains and how do they relate?"* → *"can the
+implementation faithfully instantiate what is now formally defined?"*

@@ -170,17 +170,42 @@ Formation state (active / signal / integrity) is asserted until `F(π₁…π₆
 run over six existing observation sets; before that the packet says
 `FORMATION — not yet established`.
 
+### AC — Shared-source distinct facet (RATIFIED 2026-08-29)
+
+Source: `domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` §1, §2.
+
+Three connectors dispatch one signal to multiple domains:
+
+| connector | domains | required distinct facet per domain |
+|---|---|---|
+| `patentsviewconnector.js` | TECHNOLOGY, OWNERSHIP, CAPITAL | capability-cluster velocity → TECH · assignee concentration → OWN · R&D-intensity proxy → CAP |
+| `censusconnector.js` | LABOR, OWNERSHIP | workforce / establishment counts → LAB · establishment ownership → OWN |
+| `fecconnector.js` | CAPITAL, MEDIA | actual capital flow → CAP · ad-spend-as-attention-pressure → MED |
+
+**Each domain must receive a demonstrably distinct facet** — not the same number
+re-labelled. A connector that dispatches an identical `signal` value to two
+domains fails this AC. Extends frozen spec §18 (a concentration reading from
+source S is attributed to exactly one axis).
+
+### AC — Closed relationship admission set
+
+`F` admits only the **15 cross-domain relationship types** in
+`domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` §4a. `F` may infer from admitted
+relationships; it may not create an unadmitted relationship type because the
+evidence looks narratively compelling.
+
 ---
 
 ## Open (not yet ratified)
 
-- Which `I_d` fields render in the packet scroll vs. inspection-only (the frozen
-  spec lists nine + two; the D1 scroll shows six — OBSERVES / SIGNALS /
-  RELATIONSHIPS / CONDITIONS / UNRESOLVED / SHARPEN. `tensionPatterns`,
-  `missingDimensions`, `evidenceAttribution`, `structuralVariableBoundary`
+- Which `I_d` fields render in the packet scroll vs. inspection-only (the D1
+  scroll shows six — OBSERVES / SIGNALS / RELATIONSHIPS / CONDITIONS / UNRESOLVED
+  / SHARPEN; `tensionPatterns`, `missingDimensions`, `evidenceAttribution`,
+  `structuralVariableBoundary`, the new `relationships` edge-attributes —
   placement TBD).
 - Subject-scoping: the entity vs. decision-frame split
   (`SPEC-subject-scoping-contract.md`) — decision-frame subjects route to
   classified absence until unit-of-analysis is settled.
-- `I_d.relationships` scope (cross-domain admission set only, or also
-  intra-domain) — CAPITAL F6, pending.
+- Per-field `AUTHORED` promotions on the five drafted `I_d` (Founder-side).
+- Every `signals` field is `UNAUTHORED` (concentration + edge-aggregate measures
+  undefined) — nothing renders until authored.

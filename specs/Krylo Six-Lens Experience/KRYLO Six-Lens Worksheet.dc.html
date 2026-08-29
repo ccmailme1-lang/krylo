@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;padding:0;background:#0A0B0D;color:#E9EAEC;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#4C8DFF;text-decoration:none}
+a:hover{color:#7FADFF}
+@keyframes kryHalo{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes kryRise{from{opacity:0}to{opacity:1}}
+</style>
+</helmet>
+
+<div style="max-width:1280px;margin:0 auto;padding:64px 40px 120px;font-family:'IBM Plex Sans',sans-serif">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:40px;padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.14)">
+<div style="max-width:760px">
+<div style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin-bottom:18px">SPEC I §19 · SIX-LENS DESIGN WORKSHEET · DRAFT FOR REVIEW</div>
+<h1 style="font:600 46px/1.06 Archivo,sans-serif;letter-spacing:-.024em;margin:0 0 16px;color:#F4F5F6;text-wrap:balance">The selected object generates the interface through which it is understood</h1>
+<p style="font:300 17px/1.6 'IBM Plex Sans',sans-serif;color:#A9ACB2;margin:0;max-width:640px;text-wrap:pretty">Six Lenses completed against the locked contracts. One document, one review cycle. Every field below is in SPEC I §19 order; every visual is a mockup of the perceptual state that field describes.</p>
+</div>
+<div style="flex:none;width:224px;font:400 12px/1.7 'IBM Plex Mono',monospace;color:#8A8D93">
+<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0"><span>REF</span><span style="color:#C8CBD0">KRYL-1209</span></div>
+<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0"><span>GOVERNS</span><span style="color:#C8CBD0">SPEC I · SPEC II</span></div>
+<div style="display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding:6px 0"><span>LENSES</span><span style="color:#C8CBD0">6 / 6</span></div>
+<div style="display:flex;justify-content:space-between;padding:6px 0"><span>STATUS</span><span style="color:#C7F04A">UNLOCKED</span></div>
+</div>
+</div>
+
+<div style="margin-top:26px;border:1px solid rgba(199,240,74,.28);background:rgba(199,240,74,.04);border-radius:4px;padding:22px 26px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#C7F04A;margin-bottom:16px">OPEN AGAINST THE DESIGN AGENT — RESOLVE BEFORE LOCK</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px">
+<div>
+<div style="font:500 13px/1.4 Archivo,sans-serif;color:#E9EAEC;margin-bottom:7px">Palette hexes are assumed</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">CLAUDE.md §6 was not supplied. The lime/purple/blue values used throughout are placeholders standing in for the locked system. Semantics are governed as specified below; only the hexes need swapping.</p>
+</div>
+<div>
+<div style="font:500 13px/1.4 Archivo,sans-serif;color:#E9EAEC;margin-bottom:7px">Cone geometry is assumed</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">ConeMap was not available to read. Cones are drawn as upright right cones, apex up, banded base→apex. If the live geometry differs, band ordering is the only field that changes.</p>
+</div>
+<div>
+<div style="font:500 13px/1.4 Archivo,sans-serif;color:#E9EAEC;margin-bottom:7px">A fourth signal is proposed</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">UNRESOLVED is rendered as chroma withdrawal, not a new hue — an achromatic band. This adds no hue to the locked palette and so needs no Founder approval, but it does need a ruling.</p>
+</div>
+</div>
+</div>
+
+<h2 style="font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin:76px 0 24px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)">01 · GOVERNED SEMANTICS</h2>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:44px">
+<div>
+<h3 style="font:600 22px/1.2 Archivo,sans-serif;color:#F4F5F6;margin:0 0 8px;letter-spacing:-.01em">Color is a claim about epistemic status</h3>
+<p style="font:300 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#A9ACB2;margin:0 0 20px;text-wrap:pretty">SPEC I §20.8 requires governed meaning. The three locked hues are assigned to the three positions a band can occupy in the SPEC II revelation flow — never to domain identity, never to severity, never to decoration.</p>
+<div style="display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)">
+<div style="display:grid;grid-template-columns:16px 128px 1fr;gap:16px;align-items:center;background:#101114;padding:14px 16px">
+<div style="width:16px;height:16px;background:#C7F04A"></div>
+<div style="font:500 12px/1 'IBM Plex Mono',monospace;color:#C7F04A">LIME</div>
+<div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Corroborated — the condition is supported by evidence that survives inspection.</div>
+</div>
+<div style="display:grid;grid-template-columns:16px 128px 1fr;gap:16px;align-items:center;background:#101114;padding:14px 16px">
+<div style="width:16px;height:16px;background:#4C8DFF"></div>
+<div style="font:500 12px/1 'IBM Plex Mono',monospace;color:#4C8DFF">BLUE</div>
+<div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Observed — present and measured, not yet established as meaning it.</div>
+</div>
+<div style="display:grid;grid-template-columns:16px 128px 1fr;gap:16px;align-items:center;background:#101114;padding:14px 16px">
+<div style="width:16px;height:16px;background:#A97BF7"></div>
+<div style="font:500 12px/1 'IBM Plex Mono',monospace;color:#A97BF7">PURPLE</div>
+<div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Formation-contributing — participates in a structural configuration. Never applied on one observation alone.</div>
+</div>
+<div style="display:grid;grid-template-columns:16px 128px 1fr;gap:16px;align-items:center;background:#101114;padding:14px 16px">
+<div style="width:16px;height:16px;background:#5C6169"></div>
+<div style="font:500 12px/1 'IBM Plex Mono',monospace;color:#8A8D93">ACHROMATIC</div>
+<div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Unresolved — colour is withdrawn. The band keeps its surface area, so what cannot be established still occupies the object.</div>
+</div>
+</div>
+<p style="font:400 12.5px/1.6 'IBM Plex Mono',monospace;color:#7C8087;margin:16px 0 0;text-wrap:pretty">Consequence: a cone that is mostly blue is a cone we are watching. A cone that is mostly lime is a cone we can defend. A cone with a tall grey band is a cone we should not yet speak about.</p>
+</div>
+<div>
+<h3 style="font:600 22px/1.2 Archivo,sans-serif;color:#F4F5F6;margin:0 0 8px;letter-spacing:-.01em">Radius is inferential distance</h3>
+<p style="font:300 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#A9ACB2;margin:0 0 20px;text-wrap:pretty">SPEC I §10 requires relational placement and evidentiary hierarchy. The rule that satisfies both: how far a halo element sits from the cone is how many inferential steps separate it from the observed object. Nothing is placed for balance.</p>
+<div style="display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08)">
+<div style="display:grid;grid-template-columns:52px 1fr;gap:16px;background:#101114;padding:13px 16px"><div style="font:500 12px/1.5 'IBM Plex Mono',monospace;color:#C7F04A">r₀</div><div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC"><b style="font-weight:500;color:#E9EAEC">Surface.</b> Condition. On the object itself — zero inference.</div></div>
+<div style="display:grid;grid-template-columns:52px 1fr;gap:16px;background:#101114;padding:13px 16px"><div style="font:500 12px/1.5 'IBM Plex Mono',monospace;color:#C7F04A">r₁</div><div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC"><b style="font-weight:500;color:#E9EAEC">Inner halo.</b> Observation and evidence — the provenance the surface rests on.</div></div>
+<div style="display:grid;grid-template-columns:52px 1fr;gap:16px;background:#101114;padding:13px 16px"><div style="font:500 12px/1.5 'IBM Plex Mono',monospace;color:#C7F04A">r₂</div><div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC"><b style="font-weight:500;color:#E9EAEC">Mid halo.</b> Relationship — bearing points toward the related cone's real position.</div></div>
+<div style="display:grid;grid-template-columns:52px 1fr;gap:16px;background:#101114;padding:13px 16px"><div style="font:500 12px/1.5 'IBM Plex Mono',monospace;color:#C7F04A">r₃</div><div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC"><b style="font-weight:500;color:#E9EAEC">Outer halo.</b> Formation — the most interpretive claim, therefore the furthest out.</div></div>
+<div style="display:grid;grid-template-columns:52px 1fr;gap:16px;background:#101114;padding:13px 16px"><div style="font:500 12px/1.5 'IBM Plex Mono',monospace;color:#8A8D93">r∞</div><div style="font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC"><b style="font-weight:500;color:#E9EAEC">Unbound.</b> Unresolved — no anchor line, because nothing yet connects it.</div></div>
+</div>
+<p style="font:400 12.5px/1.6 'IBM Plex Mono',monospace;color:#7C8087;margin:16px 0 0;text-wrap:pretty">Connector opacity falls with radius. A formation card is legibly the faintest claim on screen without being labelled as such.</p>
+</div>
+</div>
+
+<div style="margin-top:34px;border:1px solid rgba(255,255,255,.1);background:#101114;padding:22px 26px;display:grid;grid-template-columns:200px 1fr;gap:26px">
+<div style="font:500 12px/1.5 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#8A8D93">SURFACE AREA<br>IS INFORMATION</div>
+<div style="font:300 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#A9ACB2;text-wrap:pretty">Band height is the share of the domain's current state that the condition accounts for — magnitude where the substrate is countable (CAPITAL, LABOR), salience where it is not (MEDIA, KNOWLEDGE). Because the cone tapers, a condition placed near the apex gets less surface for the same weight: apex position is reserved for the acute and the few, base position for the broad and structural. Equal-height banding is a defect, not a fallback (§20.7).</div>
+</div>
+
+<h2 style="font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin:76px 0 24px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)">02 · THE COMMON INTERACTION MODEL — LIVE MOCKUP</h2>
+
+<p style="font:300 15.5px/1.62 'IBM Plex Sans',sans-serif;color:#A9ACB2;margin:0 0 26px;max-width:720px;text-wrap:pretty">Six Lenses, one choreography (SPEC I §4). Switch domain and perceptual state below — the transformation is identical each time; only the substrate under it changes. This is what the worksheet fields in section 03 are describing.</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:26px;align-items:flex-end;margin-bottom:20px">
+<div>
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#7C8087;margin-bottom:9px">DOMAIN</div>
+<div style="display:flex;gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1)">
+<sc-for list="{{ domains }}" as="d" hint-placeholder-count="6">
+<button onClick="{{ d.pick }}" style="{{ d.tabStyle }}">{{ d.name }}</button>
+</sc-for>
+</div>
+</div>
+<div>
+<div style="font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#7C8087;margin-bottom:9px">PERCEPTUAL STATE</div>
+<div style="display:flex;gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1)">
+<sc-for list="{{ stages }}" as="s" hint-placeholder-count="3">
+<button onClick="{{ s.pick }}" style="{{ s.tabStyle }}">{{ s.name }}</button>
+</sc-for>
+</div>
+</div>
+<div style="flex:1;min-width:220px;font:300 13px/1.55 'IBM Plex Sans',sans-serif;color:#8A8D93;padding-bottom:4px;text-wrap:pretty">{{ stageNote }}</div>
+</div>
+
+<div ref="{{ wrapRef }}" style="{{ stageWrapStyle }}">
+<div style="{{ stageInnerStyle }}">
+
+<div style="position:absolute;left:22px;top:20px;font:500 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#5C6169">{{ stageTag }}</div>
+
+<sc-if value="{{ isSee }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0;animation:kryRise .4s ease both">
+<div style="position:absolute;left:0;right:0;top:96px;text-align:center;font:300 15px/1.5 'IBM Plex Sans',sans-serif;color:#8A8D93">Six observational cuts through one world. No cone is focal; each carries coarse banding only.</div>
+<sc-for list="{{ envCones }}" as="c" hint-placeholder-count="6">
+<div style="{{ c.wrapStyle }}">
+<div style="{{ c.coneStyle }}">
+<sc-for list="{{ c.bands }}" as="b" hint-placeholder-count="2">
+<div style="{{ b.style }}"></div>
+</sc-for>
+</div>
+<div style="{{ c.baseStyle }}"></div>
+<div style="{{ c.labelStyle }}">{{ c.name }}</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFocus }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;inset:0">
+
+<sc-for list="{{ connectors }}" as="k" hint-placeholder-count="4">
+<div style="{{ k.style }}"></div>
+</sc-for>
+
+<div style="position:absolute;left:470px;top:112px;width:250px;height:392px;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%);animation:kryRise .45s ease both">
+<sc-for list="{{ focalBands }}" as="b" hint-placeholder-count="5">
+<div style="{{ b.style }}"></div>
+</sc-for>
+</div>
+<div style="position:absolute;left:470px;top:112px;width:250px;height:392px;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.42) 0%,rgba(255,255,255,.1) 42%,rgba(0,0,0,.34) 100%);pointer-events:none"></div>
+<div style="position:absolute;left:470px;top:492px;width:250px;height:26px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16)"></div>
+<div style="position:absolute;left:470px;top:530px;width:250px;text-align:center;font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.2em;color:#E9EAEC">{{ focalName }}</div>
+<div style="position:absolute;left:410px;top:556px;width:370px;text-align:center;font:300 13px/1.55 'IBM Plex Sans',sans-serif;color:#8A8D93;text-wrap:pretty">{{ focalQuestion }}</div>
+
+<div style="position:absolute;left:470px;top:112px;width:460px;height:392px;display:flex;flex-direction:column;animation:kryHalo .5s ease both;pointer-events:none">
+<sc-for list="{{ focalCaptions }}" as="c" hint-placeholder-count="5">
+<div style="{{ c.rowStyle }}">
+<div style="{{ c.tickStyle }}"></div>
+<div>
+<div style="{{ c.labelStyle }}">{{ c.label }}</div>
+<div style="font:400 10.5px/1.4 'IBM Plex Mono',monospace;color:#6C7078">{{ c.meta }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+
+<sc-for list="{{ haloCards }}" as="h" hint-placeholder-count="4">
+<div style="{{ h.style }}">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+<div style="{{ h.dotStyle }}"></div>
+<div style="{{ h.kindStyle }}">{{ h.kind }}</div>
+<div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div>
+<div style="font:400 9.5px/1 'IBM Plex Mono',monospace;color:#5C6169">{{ h.radius }}</div>
+</div>
+<div style="font:400 13.5px/1.45 'IBM Plex Sans',sans-serif;color:#DDDFE2;margin-bottom:8px;text-wrap:pretty">{{ h.title }}</div>
+<div style="display:flex;flex-wrap:wrap;gap:5px">
+<sc-for list="{{ h.chips }}" as="c" hint-placeholder-count="3">
+<div style="{{ c.style }}">{{ c.text }}</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+</div>
+</sc-if>
+
+<div style="position:absolute;left:0;right:0;bottom:0;height:56px;border-top:1px solid rgba(255,255,255,.08);background:rgba(10,11,13,.72);display:flex;align-items:center;gap:0;padding:0 22px">
+<div style="font:500 10px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#5C6169;width:150px">ENVIRONMENT RAIL</div>
+<div style="flex:1;display:flex;gap:26px;justify-content:center">
+<sc-for list="{{ railCones }}" as="r" hint-placeholder-count="6">
+<div onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.name }}</div>
+</sc-for>
+</div>
+<div style="width:150px;text-align:right;font:400 10px/1.4 'IBM Plex Mono',monospace;color:#5C6169">bearing preserved<br>§12 continuity</div>
+</div>
+
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:24px">
+<div style="border-top:2px solid #4C8DFF;padding-top:12px">
+<div style="font:600 12px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#4C8DFF;margin-bottom:8px">SEE</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">Environment read. Six cones, coarse two-band silhouettes, no captions. The only thing legible is which domains are currently under pressure and roughly how much.</p>
+</div>
+<div style="border-top:2px solid #C7F04A;padding-top:12px">
+<div style="font:600 12px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#C7F04A;margin-bottom:8px">INVESTIGATE</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">Focused read. The cone advances and its surface resolves into weighted, captioned condition bands. Halo forms at r₁–r₃. The other five recede to the rail but keep their bearing.</p>
+</div>
+<div style="border-top:2px solid #A97BF7;padding-top:12px">
+<div style="font:600 12px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#A97BF7;margin-bottom:8px">RESOLVE</div>
+<p style="font:300 13.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">Structural read. Evidence enters at r₁ and the convergence classifier mounts beneath it, showing where readings conflict. Nothing new is added at r₂–r₃ — the user moved closer, the screen did not fill up.</p>
+</div>
+</div>
+
+<h2 style="font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin:76px 0 24px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)">03 · CONVERGENCE CLASSIFIER — PROPOSED MOUNT</h2>
+
+<div style="display:grid;grid-template-columns:1.15fr 1fr;gap:44px;align-items:start">
+<div>
+<p style="font:300 15.5px/1.62 'IBM Plex Sans',sans-serif;color:#A9ACB2;margin:0 0 18px;text-wrap:pretty">KRYL-1207 is built and unmounted. It resolves conflicting narratives without silently choosing one, and it carries a full Data Tap trail. That capability has exactly one honest home in this model.</p>
+<div style="border-left:2px solid #A97BF7;padding:2px 0 2px 20px;margin-bottom:22px">
+<div style="font:500 15px/1.55 'IBM Plex Sans',sans-serif;color:#E9EAEC;text-wrap:pretty">Mount it at r₁, entering only on RESOLVE, as the element that arbitrates between the evidence card and the unresolved card.</div>
+</div>
+<p style="font:300 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0 0 14px;text-wrap:pretty">It cannot sit at SEE or INVESTIGATE: a classifier verdict shown before the user has seen the evidence would collapse OBSERVATION into EVIDENCE, which SPEC II §15 forbids implementation from doing. It cannot sit at r₃ with FORMATION: it is the thing that decides whether a formation may be claimed, so it must be nearer the object than the claim it licenses.</p>
+<p style="font:300 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">Its output has three display states, and the third is not a failure: <b style="font-weight:500;color:#C7F04A">converged</b> promotes a band to lime; <b style="font-weight:500;color:#4C8DFF">divergent</b> holds the band blue and lists both readings side by side; <b style="font-weight:500;color:#B4B7BC">insufficient</b> withdraws colour from the band and grows the unresolved card. The Data Tap trail is the drill-through from any of the three.</p>
+</div>
+<div>
+<div style="border:1px solid rgba(255,255,255,.12);background:#101114">
+<div style="padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center">
+<div style="font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#A97BF7">CONVERGENCE · r₁ · RESOLVE ONLY</div>
+<div style="font:400 10px/1 'IBM Plex Mono',monospace;color:#5C6169">KRYL-1207</div>
+</div>
+<div style="padding:18px">
+<div style="font:400 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#DDDFE2;margin-bottom:16px;text-wrap:pretty">Two readings of the same capital movement do not reconcile.</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+<div style="border:1px solid rgba(76,141,255,.35);background:rgba(76,141,255,.06);padding:12px">
+<div style="font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#4C8DFF;margin-bottom:7px">READING A</div>
+<div style="font:300 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Defensive liquidity positioning ahead of refinancing</div>
+</div>
+<div style="border:1px solid rgba(76,141,255,.35);background:rgba(76,141,255,.06);padding:12px">
+<div style="font:500 9.5px/1 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#4C8DFF;margin-bottom:7px">READING B</div>
+<div style="font:300 12.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">Strategic reallocation toward infrastructure capacity</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border:1px dashed rgba(255,255,255,.22);background:rgba(255,255,255,.02)">
+<div style="width:8px;height:8px;background:#5C6169;flex:none"></div>
+<div style="font:500 11px/1.4 'IBM Plex Mono',monospace;color:#B4B7BC">DIVERGENT — NO VERDICT ISSUED</div>
+</div>
+<div style="margin-top:14px;display:flex;justify-content:space-between;align-items:center;padding-top:13px;border-top:1px solid rgba(255,255,255,.08)">
+<div style="font:400 11px/1 'IBM Plex Mono',monospace;color:#6C7078">DATA TAP · 14 sources</div>
+<div style="font:500 11px/1 'IBM Plex Mono',monospace;color:#C7F04A">TRACE →</div>
+</div>
+</div>
+</div>
+<p style="font:400 12px/1.6 'IBM Plex Mono',monospace;color:#7C8087;margin:14px 0 0;text-wrap:pretty">HaloRing / HaloMesh become reachable here: HaloRing carries the r₁–r₃ anchor geometry, HaloMesh the connector field. Both are currently orphaned in code.</p>
+</div>
+</div>
+
+<h2 style="font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin:76px 0 12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)">04 · THE SIX LENSES — SPEC I §19 WORKSHEET</h2>
+<p style="font:300 14.5px/1.6 'IBM Plex Sans',sans-serif;color:#8A8D93;margin:0 0 44px;max-width:660px">Fields in locked order. Cone diagrams show each Lens at INVESTIGATE; band height is weight, band colour is epistemic status per section 01.</p>
+
+<div style="display:flex;flex-direction:column;gap:64px">
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 01</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">CAPITAL</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:14 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:26 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:22 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:12 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:26 0 0;background:rgba(199,240,74,.4)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>velocity · concentration ·<br>stress · liquidity? ·<br>reallocation</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives where capital is currently massing, at what velocity, and under what financing pressure — as one object whose proportions are the domain's state rather than a chart of it.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Where is capital moving, what is changing around that movement, and what does the movement make possible or constrain? (SPEC II §5)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the CAPITAL cone from the environment, or lateral arrival along a financing edge from OWNERSHIP or TECHNOLOGY — in which case the originating cone stays visible on the rail at its true bearing.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Two coarse bands resolve into five weighted conditions with captions; the other five cones recede to the rail without changing relative order; the halo forms outward from r₁.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That concentration and strategic reallocation dominate the surface and are corroborated, that mid-cap financing stress is observed but not yet established, and that liquidity pressure is being held open rather than answered.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting a band moves to RESOLVE for that condition. Selecting a relationship chip carries the user to the related Lens with the capital edge preserved as its input.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Flow observation and capital-structure classification become perceptible as proportion. The Data Tap trail behind flow data becomes reachable at RESOLVE rather than being a separate view.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = share of observed capital movement. Apex = deployment velocity (acute, few actors). Base = strategic reallocation (broad, structural). Markers on the concentration band denote individual vehicles above threshold.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the triggering flow event and, at RESOLVE, its filings; r₂ sources ↔ intermediaries ↔ recipients, bearing toward OWNERSHIP and TECHNOLOGY; r₃ funding-cluster formation, held provisional; unbound, stated purpose versus actual deployment.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone in ConeMap, AnalysisDomainField investigation. <b style="color:#A97BF7;font-weight:500">Designed:</b> weighted surface bands, captions, all four halo radii, classifier mount, band→RESOLVE transition.</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 02</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">TECHNOLOGY</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:12 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:30 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:20 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:16 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:22 0 0;background:rgba(199,240,74,.4)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>displacement cascade ·<br>adoption · infra lag ·<br>claimed capability? ·<br>concentration</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives which capability is being taken up, which is being displaced, and how much of the domain's motion is adoption versus infrastructure that has not caught up.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">What capability is being introduced, adopted, or displaced, what is changing around it, and what does the change make possible or obsolete? (SPEC II §6)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the TECHNOLOGY cone, or arrival from CAPITAL along a funded-capability edge, from OWNERSHIP along a platform-control edge, or from KNOWLEDGE along a transfer edge.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The same recomposition, with one addition unique to this Lens: displaced alternatives appear as a negative band — surface removed rather than added — so obsolescence reads as loss of area.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That adoption momentum is the largest corroborated condition, that infrastructure readiness lags it, and that the gap between claimed and actual capability is large enough to hold a sixth of the surface unresolved.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting the adoption band opens deployment evidence at RESOLVE. Selecting the displacement apex enters the cascade relationship, which is the one path in this Lens that crosses to LABOR.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Adoption and displacement signal detection becomes perceptible as competing surface area. The classifier is load-bearing here: claimed capability is the domain where sources most often diverge.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = share of observed technical activity. Apex = displacement cascade. Base = capability concentration. Markers denote infrastructure milestones; a hatched edge denotes proprietary opacity where the substrate cannot be observed at all.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the deployment or retirement event, with patent and disclosure records at RESOLVE; r₂ adopters ↔ displaced alternatives ↔ enabling infrastructure; r₃ platform consolidation; unbound, adoption durability.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone, AnalysisDomainField. <b style="color:#A97BF7;font-weight:500">Designed:</b> negative displacement band, opacity hatching, cascade traversal to LABOR, classifier on the claimed-capability band.</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 03</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">KNOWLEDGE</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:10 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:24 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:20 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:22 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:24 0 0;background:rgba(199,240,74,.4)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>institutional capture ·<br>expertise scarcity ·<br>diffusion · tacit transfer? ·<br>concentration</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives where expertise is pooling, where it is thinning, and how much of what appears to have moved is documented rather than assumed.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Where is knowledge being created, concentrated, or moved, what is changing around it, and what does the change make possible or constrain? (SPEC II §7)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the KNOWLEDGE cone, or arrival from OWNERSHIP along an IP-transfer edge, from LABOR along a talent-movement edge, or from CAPITAL along a research-financing edge.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Standard recomposition. This is the Lens where the achromatic band is largest at rest: tacit knowledge leaves few traces, and the surface is required to show that rather than round it away.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That expertise scarcity is the dominant observed condition, that concentration is corroborated by citation and collaboration records, and that roughly a fifth of the domain's state rests on transfers that cannot be verified.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting the achromatic band is a first-class action here, not a dead end — it opens the unresolved card at full size and lists what evidence would be required to colour it.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Citation, collaboration and talent-flow observation become perceptible as concentration geometry. UNRESOLVED as a legitimate output (SPEC II §2) is most visible in this Lens.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = salience rather than count, since publication volume is a poor proxy for significance. Apex = institutional capture. Base = knowledge concentration. Markers denote named carriers — people and repositories — not documents.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the publication, collaboration or dissolution event, with citation records at RESOLVE; r₂ producers ↔ carriers ↔ institutional holders; r₃ expertise cluster or bottleneck; unbound, tacit versus explicit transfer.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone, AnalysisIdleField. <b style="color:#A97BF7;font-weight:500">Designed:</b> salience-weighted banding, selectable unresolved band, evidence-required listing, carrier markers.</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 04</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">LABOR</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:11 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:28 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:21 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:18 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:22 0 0;background:rgba(199,240,74,.4)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>capacity bottleneck ·<br>contraction · geographic<br>shift · skill transfer? ·<br>scarcity</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives where human capacity is being built, released, or relocated, and at what scale — with headcount and skill mix visible as distinct properties rather than one number.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Where is human capacity moving, concentrating, or being released, what is changing around it, and what does the change make possible or constrain? (SPEC II §8)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the LABOR cone, or arrival from TECHNOLOGY along a displacement-cascade edge, from OWNERSHIP along a capacity-control edge, or from CAPITAL along a cost edge.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Standard recomposition, plus a geographic split: the redistribution band divides laterally rather than vertically, so origin and destination read as one condition rather than two.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That headcount contraction is corroborated and large, that it is accompanied by geographic redistribution rather than pure loss, and that whether the skills survive the move is not yet establishable.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting the contraction band opens filings and facility announcements at RESOLVE. The bottleneck apex is the entry to the formation claim, which requires corroboration from at least one other Lens before it may be drawn.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Headcount, facility and occupational observation becomes perceptible as capacity. The quantity/quality distinction the substrate cannot resolve is expressed as the achromatic band rather than suppressed.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = share of observed capacity change. Apex = capacity bottleneck. Base = skill scarcity, the persistent structural floor. Markers denote individual facility events; marker density stands in for geographic spread.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the hiring, layoff or facility event, with employment filings at RESOLVE; r₂ workers ↔ employers ↔ locations ↔ substituting capability; r₃ organizational restructuring pattern; unbound, quality versus quantity of capacity.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone, AnalysisDomainField. <b style="color:#A97BF7;font-weight:500">Designed:</b> laterally split band, marker density encoding, cross-Lens corroboration gate on the formation claim.</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 05</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">MEDIA</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:9 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:27 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:24 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:20 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:20 0 0;background:rgba(199,240,74,.4)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>attention monopoly ·<br>contestation · velocity ·<br>emergent or coordinated? ·<br>concentration</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives what is holding attention, whether the narrative around it is cohering or fracturing, and how fast it is propagating.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">What is receiving attention, how is the narrative forming or fracturing, what is changing around it, and what does the change make more or less possible? (SPEC II §9)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the MEDIA cone, or arrival from any of the other five along an attention edge. MEDIA is the only Lens reachable from all five others, and its halo says which one the user came through.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Standard recomposition, with one inversion: the r₂ relationship ring points at what the narrative is <i>about</i>, so the cone the user is looking at is partly a lens onto the other five. Those bearings brighten rather than recede.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That contestation, not consensus, is the dominant observed condition; that propagation velocity is corroborated; and that whether the pattern is coordinated or emergent is unresolved and should not be asserted.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting the contestation band opens the classifier directly, since this is where divergent readings are the normal case. Selecting a bearing crosses to the domain the narrative concerns.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">This is the Lens the convergence classifier was effectively built for: conflicting narratives resolved without silently choosing one. Its divergent state is the default display here, not an exception.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = share of measured attention. Apex = attention monopoly. Base = attention concentration. Markers denote narrative launch and collapse points; band edges are unstable rather than straight where propagation is still moving.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the attention shift, with metrics and timing at RESOLVE; r₂ sources ↔ amplifiers ↔ audiences, and the underlying event the narrative interprets; r₃ propagation pathway or attention monopoly; unbound, actual influence on other domains.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone, AnalysisDomainField. <b style="color:#A97BF7;font-weight:500">Designed:</b> brightened inverse bearings, unstable band edges, classifier as default display, five-way inbound provenance in the halo.</div></div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:236px 1fr;gap:44px;align-items:start">
+<div style="position:sticky;top:24px">
+<div style="font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#5C6169;margin-bottom:10px">LENS 06</div>
+<h3 style="font:600 30px/1 Archivo,sans-serif;letter-spacing:-.02em;color:#F4F5F6;margin:0 0 22px">OWNERSHIP</h3>
+<div style="position:relative;width:170px;height:250px;margin-bottom:14px">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%)">
+<div style="flex:15 0 0;background:rgba(169,123,247,.55);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:30 0 0;background:rgba(199,240,74,.52);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:17 0 0;background:rgba(76,141,255,.5);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:19 0 0;background:rgba(140,146,156,.3);border-bottom:1px solid rgba(10,11,13,.55)"></div>
+<div style="flex:19 0 0;background:rgba(76,141,255,.38)"></div>
+</div>
+<div style="position:absolute;inset:0;clip-path:polygon(50% 0%,100% 100%,0% 100%);background:linear-gradient(100deg,rgba(0,0,0,.4),rgba(255,255,255,.09) 44%,rgba(0,0,0,.32))"></div>
+</div>
+<div style="font:400 11px/1.7 'IBM Plex Mono',monospace;color:#7C8087">apex → base<br>horizontal consolidation ·<br>control concentration ·<br>re-bounding · beneficial<br>control? · repositioning</div>
+</div>
+<div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.09)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">PURPOSE</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">The user perceives what has changed hands, how concentrated control has become as a result, and where the chain of control stops being observable.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">QUESTION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">What changed hands or control, what is changing around that shift, and what does the change make possible or constrain? (SPEC II §10)</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">INPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selection of the OWNERSHIP cone. In practice this is the most common entry, because control changes originate observations in the other five (SPEC II §11) — so its halo most often shows outbound rather than inbound bearings.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSFORMATION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Standard recomposition. Uniquely, the five other cones do not fully recede: a control change propagates, so the rail keeps the affected cones at partial prominence with their edges drawn.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">OUTPUT</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">That control concentration dominates and is corroborated by filings, that horizontal consolidation is a live formation candidate at the apex, and that ultimate beneficial control remains unestablished for a fifth of the surface.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">TRANSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Selecting the concentration band opens the filing trail at RESOLVE. Selecting any outbound bearing runs the M&A cross-domain test live: the same event, re-entered from another cut.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">STRUCTURAL / PERCEPTUAL<br>RELATIONSHIP</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Entity resolution and beneficial-ownership tracing become perceptible as a chain that visibly terminates. Where the chain ends, the band goes achromatic — opacity is rendered, not omitted.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">SURFACE ENCODING</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">Height = share of controlled assets affected, not transaction count — one large acquisition outranks many small ones. Apex = consolidation formation. Base = strategic repositioning. Markers denote named entities and jurisdictional boundaries crossed.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">HALO COMPOSITION</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty">r₁ the control-change announcement, with SEC and beneficial-ownership filings at RESOLVE; r₂ acquirer ↔ target ↔ financing ↔ controlled assets, with a bearing per affected domain; r₃ consolidation formation; unbound, regulatory outcome and ultimate control.</div></div>
+<div style="display:grid;grid-template-columns:190px 1fr;gap:18px;padding:11px 0;border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)"><div style="font:500 10.5px/1.6 'IBM Plex Mono',monospace;letter-spacing:.1em;color:#7C8087">LIVE VS. DESIGNED</div><div style="font:400 14.5px/1.62 'IBM Plex Sans',sans-serif;color:#C8CBD0;text-wrap:pretty"><b style="color:#C7F04A;font-weight:500">Live:</b> cone, AnalysisDomainField. <b style="color:#A97BF7;font-weight:500">Designed:</b> asset-weighted banding, partial-prominence rail, outbound bearings, terminating-chain encoding, live cross-domain re-entry.</div></div>
+</div>
+</div>
+
+</div>
+
+<h2 style="font:600 13px/1 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#8A8D93;margin:76px 0 24px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.12)">05 · LIVE VS. DESIGNED — CONSOLIDATED</h2>
+
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1)">
+<div style="background:#101114;padding:20px 22px">
+<div style="font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#C7F04A;margin-bottom:14px">LIVE — REUSED AS IS</div>
+<div style="display:flex;flex-direction:column;gap:10px;font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">
+<div>ConeMap six-domain environment — becomes the SEE state unchanged.</div>
+<div>AnalysisDomainField — becomes the r₁ evidence card's content source.</div>
+<div>AnalysisIdleField — becomes the environment rail's resting state.</div>
+</div>
+</div>
+<div style="background:#101114;padding:20px 22px">
+<div style="font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#4C8DFF;margin-bottom:14px">BUILT — NEEDS MOUNTING</div>
+<div style="display:flex;flex-direction:column;gap:10px;font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">
+<div>convergenceclassifier.js — mounts at r₁, RESOLVE only, three display states.</div>
+<div>HaloRing — carries r₁–r₃ anchor geometry.</div>
+<div>HaloMesh — carries the connector field and its opacity falloff.</div>
+</div>
+</div>
+<div style="background:#101114;padding:20px 22px">
+<div style="font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#A97BF7;margin-bottom:14px">DESIGNED — NOT YET BUILT</div>
+<div style="display:flex;flex-direction:column;gap:10px;font:300 13.5px/1.5 'IBM Plex Sans',sans-serif;color:#B4B7BC">
+<div>Weighted cone-surface banding and captions, all six domains.</div>
+<div>Recomposition choreography and the environment rail.</div>
+<div>Achromatic unresolved encoding, pending Founder ruling.</div>
+<div>Band → RESOLVE and bearing → cross-Lens transitions.</div>
+</div>
+</div>
+</div>
+
+<div style="margin-top:76px;padding-top:26px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap">
+<div style="max-width:560px">
+<div style="font:500 11px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#7C8087;margin-bottom:12px">SUBMITTED FOR REVIEW → LOCK → GROUNDING AUDIT</div>
+<p style="font:300 14.5px/1.6 'IBM Plex Sans',sans-serif;color:#9DA0A6;margin:0;text-wrap:pretty">Three items block lock: the CLAUDE.md §6 hex values, a ruling on achromatic UNRESOLVED, and confirmation of the live cone geometry. None of them change the model; all three change the render.</p>
+</div>
+<div style="font:400 12px/1.8 'IBM Plex Mono',monospace;color:#6C7078;text-align:right">
+SPEC I — LOCKED<br>SPEC II — LOCKED<br>SIX-LENS WORKSHEET — DRAFT
+</div>
+</div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1360,&quot;height&quot;:900}}">
+const LIME='199,240,74', BLUE='76,141,255', PURP='169,123,247', GREY='140,146,156';
+const TONE={lime:LIME,blue:BLUE,purple:PURP,grey:GREY};
+const TXT={lime:'#C7F04A',blue:'#4C8DFF',purple:'#A97BF7',grey:'#9DA0A6'};
+
+const DOMAINS=[
+ {id:'CAPITAL',q:'Where is capital moving, and what does the movement make possible or constrain?',
+  bands:[
+   {w:14,t:'purple',label:'Deployment velocity rising',meta:'formation-contributing'},
+   {w:26,t:'lime',label:'Concentration in three vehicles',meta:'corroborated · 9 sources'},
+   {w:22,t:'blue',label:'Mid-cap financing stress',meta:'observed · not established'},
+   {w:12,t:'grey',label:'Liquidity pressure',meta:'unresolved'},
+   {w:26,t:'lime',label:'Strategic reallocation',meta:'corroborated · structural'}],
+  obs:{title:'$4.2B reallocated across three infrastructure vehicles in 11 weeks.',chips:['flow data','capital calls','fund filings']},
+  rel:{title:'Sources → intermediaries → recipients, bearing toward the domains this financed.',chips:['→ OWNERSHIP','→ TECHNOLOGY','→ LABOR']},
+  form:{title:'Funding cluster around a new infrastructure class. Provisional — one movement is not a formation.',chips:['3 of 5 criteria met']},
+  ev:{title:'Fund filings and transaction records support concentration; deployment velocity rests on two sources.',chips:['SEC 13F','fund filings','flow series']},
+  unr:{title:'Stated purpose versus actual deployment. Sustainability signals conflict.',chips:['no verdict issued']}},
+ {id:'TECHNOLOGY',q:'What capability is being adopted or displaced, and what does the change make obsolete?',
+  bands:[
+   {w:12,t:'purple',label:'Displacement cascade',meta:'formation-contributing'},
+   {w:30,t:'lime',label:'Adoption momentum',meta:'corroborated · 14 sources'},
+   {w:20,t:'blue',label:'Infrastructure readiness lag',meta:'observed'},
+   {w:16,t:'grey',label:'Claimed vs actual capability',meta:'unresolved'},
+   {w:22,t:'lime',label:'Capability concentration',meta:'corroborated · structural'}],
+  obs:{title:'Platform deployment footprint doubles while two alternatives are retired.',chips:['deployment data','retirements','patents']},
+  rel:{title:'Adopters ↔ displaced alternatives ↔ enabling infrastructure.',chips:['→ LABOR','→ CAPITAL','→ KNOWLEDGE']},
+  form:{title:'Platform consolidation. Held provisional pending infrastructure corroboration.',chips:['2 of 5 criteria met']},
+  ev:{title:'Adoption metrics and patent records corroborate; capability claims are vendor-sourced only.',chips:['patent records','adoption metrics','disclosures']},
+  unr:{title:'Adoption durability, and secondary displacement not yet visible.',chips:['proprietary opacity']}},
+ {id:'KNOWLEDGE',q:'Where is knowledge being created, concentrated, or moved?',
+  bands:[
+   {w:10,t:'purple',label:'Institutional capture',meta:'formation-contributing'},
+   {w:24,t:'blue',label:'Expertise scarcity',meta:'observed'},
+   {w:20,t:'lime',label:'Diffusion rate falling',meta:'corroborated'},
+   {w:22,t:'grey',label:'Tacit transfer unverified',meta:'unresolved · largest'},
+   {w:24,t:'lime',label:'Knowledge concentration',meta:'corroborated · structural'}],
+  obs:{title:'Two research groups dissolve; their named carriers appear at one institutional holder.',chips:['collaboration records','talent flow']},
+  rel:{title:'Producers ↔ carriers ↔ institutional holders ↔ amplifying capital.',chips:['→ TECHNOLOGY','→ LABOR','→ OWNERSHIP']},
+  form:{title:'Expertise cluster, possibly a bottleneck. Insufficient corroboration to claim either.',chips:['1 of 5 criteria met']},
+  ev:{title:'Citations and collaboration records establish concentration. Transfer success has no observable trace.',chips:['citations','patents','funding disclosures']},
+  unr:{title:'Tacit versus explicit knowledge. Whether the transfer actually succeeded.',chips:['evidence required: 3 classes']}},
+ {id:'LABOR',q:'Where is human capacity moving, concentrating, or being released?',
+  bands:[
+   {w:11,t:'purple',label:'Capacity bottleneck',meta:'formation-contributing'},
+   {w:28,t:'lime',label:'Headcount contraction',meta:'corroborated · 11 filings'},
+   {w:21,t:'blue',label:'Geographic redistribution',meta:'observed · split origin/dest'},
+   {w:18,t:'grey',label:'Skill-transfer outcome',meta:'unresolved'},
+   {w:22,t:'lime',label:'Skill scarcity',meta:'corroborated · structural'}],
+  obs:{title:'Four facilities close; two open at 60% of the combined prior headcount.',chips:['WARN filings','facility notices']},
+  rel:{title:'Workers ↔ employers ↔ locations ↔ the capability substituting for them.',chips:['→ TECHNOLOGY','→ CAPITAL','→ KNOWLEDGE']},
+  form:{title:'Organizational restructuring pattern. Requires corroboration from a second Lens before it may be drawn.',chips:['gate: 1 Lens short']},
+  ev:{title:'Employment filings and facility announcements corroborate contraction. Skill mix is inferred, not filed.',chips:['WARN','occupational data','wage series']},
+  unr:{title:'Quality versus quantity of capacity. Internal visibility is incomplete.',chips:['no verdict issued']}},
+ {id:'MEDIA',q:'What is receiving attention, and how is the narrative forming or fracturing?',
+  bands:[
+   {w:9,t:'purple',label:'Attention monopoly',meta:'formation-contributing'},
+   {w:27,t:'blue',label:'Narrative contestation',meta:'observed · dominant'},
+   {w:24,t:'lime',label:'Propagation velocity',meta:'corroborated'},
+   {w:20,t:'grey',label:'Emergent or coordinated',meta:'unresolved'},
+   {w:20,t:'lime',label:'Attention concentration',meta:'corroborated · structural'}],
+  obs:{title:'Attention to one control change triples in 48 hours across two incompatible framings.',chips:['attention metrics','timing','platforms']},
+  rel:{title:'Sources ↔ amplifiers ↔ audiences, and the event the narrative interprets or obscures.',chips:['↔ OWNERSHIP','↔ CAPITAL','↔ LABOR']},
+  form:{title:'Propagation pathway favouring one framing. Not yet an attention monopoly.',chips:['2 of 5 criteria met']},
+  ev:{title:'Metrics and timing are solid. The relationship between coverage and the underlying event is not.',chips:['attention series','platform changes']},
+  unr:{title:'Intentional versus emergent. Actual influence on the other five domains.',chips:['classifier: DIVERGENT']}},
+ {id:'OWNERSHIP',q:'What changed hands or control, and what does the change make possible or constrain?',
+  bands:[
+   {w:15,t:'purple',label:'Horizontal consolidation',meta:'formation-contributing'},
+   {w:30,t:'lime',label:'Control concentration',meta:'corroborated · filings'},
+   {w:17,t:'blue',label:'Institutional re-bounding',meta:'observed'},
+   {w:19,t:'grey',label:'Ultimate beneficial control',meta:'unresolved · chain ends'},
+   {w:19,t:'blue',label:'Strategic repositioning',meta:'observed · structural'}],
+  obs:{title:'Company A announces acquisition of Company B; control of a capability category concentrates.',chips:['merger filing','control notice']},
+  rel:{title:'Acquirer ↔ target ↔ financing ↔ controlled assets, one bearing per affected domain.',chips:['→ CAPITAL','→ TECHNOLOGY','→ KNOWLEDGE','→ LABOR','→ MEDIA']},
+  form:{title:'Horizontal consolidation across a capability category. The strongest formation candidate in the set.',chips:['4 of 5 criteria met']},
+  ev:{title:'SEC filings and beneficial-ownership disclosures corroborate. The chain terminates at two jurisdictions.',chips:['SEC filings','BO disclosures','transaction records']},
+  unr:{title:'Ultimate beneficial control. Regulatory outcome. Secondary effects not yet visible.',chips:['chain terminates ×2']}}
+];
+
+const CX=595, CY=308, SW=1200, SH=800;
+
+class Component extends DCLogic {
+  state={domain:'CAPITAL',stage:'investigate',scale:1};
+  d(){ return DOMAINS.find(x=>x.id===this.state.domain)||DOMAINS[0]; }
+
+  componentDidMount(){
+    this._fit=()=>{
+      const el=this._wrap; if(!el) return;
+      const s=Math.min(1, el.clientWidth/SW);
+      if(Math.abs(s-this.state.scale)>0.002) this.setState({scale:s});
+    };
+    this._fit();
+    window.addEventListener('resize',this._fit);
+  }
+  componentDidUpdate(){ if(this._fit) this._fit(); }
+  componentWillUnmount(){ if(this._fit) window.removeEventListener('resize',this._fit); }
+
+  tab(active){
+    return 'padding:9px 15px;border:none;cursor:pointer;font:500 11px/1 "IBM Plex Mono",monospace;letter-spacing:.09em;'+
+      (active?'background:#C7F04A;color:#0A0B0D':'background:#101114;color:#8A8D93');
+  }
+
+  card(kind,slot,tone,data,extra){
+    const c=TONE[tone];
+    return {kind:kind,radius:slot.r,title:data.title,
+      style:'position:absolute;left:'+slot.x+'px;top:'+slot.y+'px;width:'+slot.w+'px;padding:15px 17px;border:1px solid rgba('+c+',.3);background:rgba(16,17,20,.94);animation:kryHalo .5s ease both;'+(extra||''),
+      dotStyle:'width:7px;height:7px;background:'+TXT[tone]+';flex:none',
+      kindStyle:'font:600 9.5px/1 "IBM Plex Mono",monospace;letter-spacing:.13em;color:'+TXT[tone],
+      chips:(data.chips||[]).map(t=>({text:t,style:'font:400 10px/1 "IBM Plex Mono",monospace;color:#9DA0A6;padding:5px 8px;border:1px solid rgba('+c+',.28);background:rgba('+c+',.06)'})),
+      _anchor:[slot.x>CX?slot.x:(slot.x+slot.w>CX&&slot.x<CX?slot.x+slot.w/2:slot.x+slot.w), slot.y+34],
+      _tone:c, _fade:slot.fade};
+  }
+
+  renderVals(){
+    const d=this.d(), st=this.state.stage;
+    const isSee=st==='see', isResolve=st==='resolve', isFocus=!isSee;
+
+    const domains=DOMAINS.map(x=>({name:x.id,tabStyle:this.tab(x.id===this.state.domain),
+      pick:()=>this.setState({domain:x.id})}));
+    const stages=[['see','SEE'],['investigate','INVESTIGATE'],['resolve','RESOLVE']].map(([k,n])=>({
+      name:n,tabStyle:this.tab(k===st),pick:()=>this.setState({stage:k})}));
+
+    const envCones=DOMAINS.map((x,i)=>{
+      const col=i%3, row=Math.floor(i/3);
+      const left=295+col*230, top=180+row*230;
+      const top2=x.bands.slice(0,2).reduce((a,b)=>a+b.w,0);
+      const rest=x.bands.slice(2).reduce((a,b)=>a+b.w,0);
+      const sel=x.id===this.state.domain;
+      return {name:x.id,
+        wrapStyle:'position:absolute;left:'+left+'px;top:'+top+'px;width:150px;opacity:'+(sel?1:.62),
+        coneStyle:'position:relative;width:150px;height:150px;display:flex;flex-direction:column;clip-path:polygon(50% 0%,100% 100%,0% 100%);filter:'+(sel?'none':'saturate(.5)'),
+        baseStyle:'width:150px;height:16px;border-radius:50%;margin-top:-8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13)',
+        labelStyle:'text-align:center;margin-top:12px;font:500 10.5px/1 "IBM Plex Mono",monospace;letter-spacing:.14em;color:'+(sel?'#E9EAEC':'#7C8087'),
+        bands:[{style:'flex:'+top2+' 0 0;background:rgba(199,240,74,.3);border-bottom:1px solid rgba(10,11,13,.6)'},
+               {style:'flex:'+rest+' 0 0;background:rgba(76,141,255,.26)'}]};
+    });
+
+    const focalBands=d.bands.map(b=>({style:'flex:'+b.w+' 0 0;background:rgba('+TONE[b.t]+','+(b.t==='grey'?.26:.5)+');border-bottom:1px solid rgba(10,11,13,.6)'}));
+    const total=d.bands.reduce((a,b)=>a+b.w,0);
+    let cum=0;
+    const focalCaptions=d.bands.map(b=>{
+      const f=(cum+b.w/2)/total; cum+=b.w;
+      const edge=125*f;
+      return {
+      rowStyle:'flex:'+b.w+' 0 0;display:flex;align-items:center;gap:14px;margin-left:'+(125+edge)+'px',
+      labelStyle:'font:400 12.5px/1.35 "IBM Plex Sans",sans-serif;color:'+(b.t==='grey'?'#8A8D93':'#D4D6DA'),
+      label:b.label, meta:b.meta,
+      tickStyle:'width:'+(145-edge)+'px;height:1px;background:'+TXT[b.t]+';opacity:.5;flex:none'};
+    });
+
+    const S={
+      obs:{x:14,y:40,w:290,r:'r₁',fade:.34},
+      ev:{x:14,y:250,w:290,r:'r₁',fade:.34},
+      conv:{x:14,y:452,w:290,r:'r₁',fade:.34},
+      rel:{x:950,y:96,w:240,r:'r₂',fade:.24},
+      form:{x:950,y:400,w:240,r:'r₃',fade:.14},
+      unr:{x:410,y:612,w:370,r:'r∞',fade:0}
+    };
+
+    const cards=[this.card('OBSERVATION',S.obs,'blue',d.obs)];
+    if(isResolve){
+      cards.push(this.card('EVIDENCE',S.ev,'lime',d.ev));
+      cards.push(this.card('CONVERGENCE · KRYL-1207',S.conv,'purple',
+        {title:'Readings compared across '+(d.ev.chips.length+9)+' sources. No verdict is forced.',chips:['DIVERGENT','DATA TAP →']}));
+    }
+    cards.push(this.card('RELATIONSHIP',S.rel,'blue',d.rel));
+    cards.push(this.card('FORMATION',S.form,'purple',d.form,'opacity:.86'));
+    cards.push(this.card('UNRESOLVED',S.unr,'grey',d.unr,'border-style:dashed'));
+
+    const connectors=cards.filter(c=>c._fade>0).map(c=>{
+      const dx=c._anchor[0]-CX, dy=c._anchor[1]-CY;
+      const len=Math.sqrt(dx*dx+dy*dy), ang=Math.atan2(dy,dx)*180/Math.PI;
+      return {style:'position:absolute;left:'+CX+'px;top:'+CY+'px;width:'+len+'px;height:1px;transform-origin:0 50%;transform:rotate('+ang+'deg);background:linear-gradient(90deg,rgba('+c._tone+','+c._fade+'),rgba('+c._tone+',0));pointer-events:none'};
+    });
+
+    const railCones=DOMAINS.map(x=>({name:x.id,
+      pick:()=>this.setState({domain:x.id}),
+      style:'cursor:pointer;font:500 10px/1 "IBM Plex Mono",monospace;letter-spacing:.12em;padding:6px 10px;border:1px solid '+(x.id===d.id?'rgba(199,240,74,.5)':'rgba(255,255,255,.12)')+';color:'+(x.id===d.id?'#C7F04A':'#7C8087')}));
+
+    const notes={see:'Environment read. No cone is focal; coarse banding only.',
+      investigate:'Focused read. Surface resolves; halo forms at r₁–r₃.',
+      resolve:'Structural read. Evidence and the classifier enter at r₁ only.'};
+
+    const sc=this.state.scale;
+    return {domains,stages,isSee,isFocus,
+      wrapRef:(el)=>{this._wrap=el; if(el&&this._fit) this._fit();},
+      stageWrapStyle:'position:relative;width:100%;height:'+Math.round(SH*sc)+'px;overflow:hidden',
+      stageInnerStyle:'position:absolute;left:0;top:0;width:'+SW+'px;height:'+SH+'px;transform:scale('+sc+');transform-origin:top left;border:1px solid rgba(255,255,255,.12);background:radial-gradient(120% 90% at 50% 42%,#14161A 0%,#0A0B0D 68%);overflow:hidden',
+      stageTag:(isSee?'SEE':isResolve?'RESOLVE':'INVESTIGATE')+' · '+d.id,
+      stageNote:notes[st],
+      envCones,focalBands,focalCaptions,connectors,haloCards:cards,railCones,
+      focalName:d.id,focalQuestion:d.q};
+  }
+}
+</script>
+</body>
+</html>

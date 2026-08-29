@@ -134,14 +134,12 @@ Repo precedent: `redditconnector.js` (post velocity), `gdeltconnector.js` (artic
 timing).
 Maturity: PARTIAL
 
-### 4.4 Information Asymmetry
-The degree to which relevant information is unevenly distributed between parties —
-some know, some don't, yet.
-**Structuring note (flagged):** "asymmetry" is **relational** — a property of an
-edge (between whom), like TECHNOLOGY's "dependency" and KNOWLEDGE's "transfer
-friction". May belong in `relationships` (§5) as a typed edge property rather than
-a domain scalar. Founder to rule: dimension, edge property, or both.
-Maturity: PARTIAL (concept) / UNAUTHORED (form)
+### 4.4 Information Asymmetry — MOVED TO §5 (edge-property)
+**Ratified (CROSS-DOMAIN-CONSISTENCY §3, 2026-08-29):** "asymmetry" has no
+field-level magnitude without naming the two parties → it is a **relationship
+edge-property**, not a structural dimension. See §5 (`Attention sources ↔
+audiences`). An aggregate "mean information asymmetry across observed edges" MAY be
+a `signal`.
 
 ### 4.5 Intentional vs Emergent Narrative — HYPOTHESIS ONLY
 SPEC II §9 "Unresolved" names "intentional versus emergent narrative" as an *open*
@@ -159,6 +157,8 @@ intra-domain pairs (§7).
 SPEC II §9 Relationships + Cross-Domain Propagation:
 
 - **Attention sources ↔ amplifiers ↔ audiences** — the propagation structure.
+  **Edge attribute:** `informationAsymmetry` — how unevenly the relevant
+  information is held between the two ends of an edge (moved here from §4.4).
 - **Narrative ↔ contested narrative** — competing accounts of the same subject.
 - **MEDIA ↔ underlying events in other domains** — the narrative *interprets or
   obscures* an event that is itself observed by CAPITAL / OWNERSHIP / TECHNOLOGY /
@@ -182,7 +182,7 @@ A MEDIA observation is relevant to a subject when:
 
 - the observed attention / narrative / propagation concerns the subject or its immediate structural environment;
 - there is sufficient evidence to establish the MEDIA attribution;
-- it materially concerns attention concentration/diffusion, narrative coherence/contestation, propagation velocity, or information asymmetry (the §4 axes — not the UNAUTHORED `intentional vs emergent`);
+- it materially concerns attention concentration/diffusion, narrative coherence/contestation, or propagation velocity (the §4 dimensions — `informationAsymmetry` is now an edge-property, §5; not the UNAUTHORED `intentional vs emergent`);
 - temporal scope is compatible;
 - it is not generic macro attention-cycle noise mis-attributed to the subject.
 
@@ -214,7 +214,7 @@ SPEC II §9 "Unresolved" + repo state:
 - **actual influence on other domains** — whether a narrative actually moved capital / ownership / etc. is `F` / attribution territory, not a MEDIA observable;
 - **durability of attention** — whether an attention spike persists;
 - reconciliation of **conflicting signals across channels**;
-- **defined measures** for attention concentration (§4.1), narrative coherence (§4.2), information asymmetry (§4.4);
+- **defined measures** for attention concentration (§4.1), narrative coherence (§4.2), and aggregate information asymmetry across observed edges (§5);
 - **subject-specific** MEDIA observations when the subject cannot be resolved to an observable entity / event / topic (subject-scoping contract).
 
 **Maturity:** PARTIAL
@@ -323,7 +323,7 @@ the **cross-domain consistency pass**, now unblocked (all six `I_d` exist).
 |---|---|---|
 | observes | PARTIAL | SPEC II §9 Observable Objects + Observation Classes (LOCKED) |
 | signals | **UNAUTHORED** | F3 — not split; GDELT/Reddit/FEC signals exist but not authored as `I_d` signal defs; concentration + coherence + asymmetry measures undefined |
-| structuralDimensions | PARTIAL | SPEC II §9 Conditions (LOCKED). `intentional vs emergent` **UNAUTHORED** (§4.5); `information asymmetry` form open (§4.4) |
+| structuralDimensions | PARTIAL | SPEC II §9 Conditions (LOCKED): attention concentration/diffusion, narrative coherence/contestation, propagation velocity. `intentional vs emergent` **UNAUTHORED** (§4.5). `information asymmetry` moved to `relationships` as an edge-property (§4.4, ratified). |
 | relationships | PARTIAL | SPEC II §9 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); no truth claims about the events narrated |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §9; macro-vs-subject distinction authored |
 | tensionPatterns | PARTIAL | intra-MEDIA; inherits §4 maturity |
@@ -333,9 +333,8 @@ the **cross-domain consistency pass**, now unblocked (all six `I_d` exist).
 | structuralVariableBoundary | PARTIAL | 6-way concentration table complete + "attention to X" rule + DRIFT boundary authored; full 6×6 pairwise matrix = the consistency pass |
 
 **Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
-mapping, dimension `intentional vs emergent narrative`, the form of `information
-asymmetry`, the attention-concentration / narrative-coherence / asymmetry measures,
-subject-specific application.
+mapping, dimension `intentional vs emergent narrative`, the attention-concentration
+/ narrative-coherence / asymmetry measures, subject-specific application.
 
 **Nothing is AUTHORED for content. Nothing renders. Integration gated.**
 
@@ -344,13 +343,14 @@ subject-specific application.
 ## 13. Ratification Questions (Founder)
 
 1. Does MEDIA own **attention concentration/diffusion, narrative
-   coherence/contestation, propagation velocity, and information asymmetry** as
-   its primary structural vocabulary (SPEC II §9 Conditions)?
+   coherence/contestation, and propagation velocity** as its primary structural
+   vocabulary (SPEC II §9 Conditions)? (`information asymmetry` is now an
+   edge-property, §5 — ratified.)
 2. Are the polarised axes (concentration/diffusion, coherence/contestation) each
    **one dimension with polarity** (recommendation)?
 3. Is **narrative coherence** locked as a structural property only, **never** a
    truth signal (§4.2 doctrinal boundary)?
-4. Is **information asymmetry** a dimension, a relationship edge property, or both? (§4.4)
+4. *(resolved — `information asymmetry` → edge-property, CROSS-DOMAIN-CONSISTENCY §3.)*
 5. Does **`intentional vs emergent narrative`** stay UNAUTHORED (recommendation)?
 6. Is the **"attention to X" rule** in §11 correct — X to its own domain, the
    attention/narrative to MEDIA, each attributed once?
@@ -369,19 +369,14 @@ currently **none**.
 
 ---
 
-## 14. Next: cross-domain consistency pass
+## 14. Cross-domain consistency pass — DONE & RATIFIED
 
-All six `I_d` drafts now exist (CAPITAL ratified; OWNERSHIP / TECHNOLOGY /
-KNOWLEDGE / LABOR / MEDIA drafted). The next work is **one cross-domain pass**, not
-further individual refinement:
+`CROSS-DOMAIN-CONSISTENCY.md` v1.0 (RATIFIED 2026-08-29). Outcome: 15-pair matrix
+all Separate; six concentration variables demonstrated distinct; the
+dimension-vs-edge rule ratified as a general ontology rule (and applied here —
+`information asymmetry` moved to §5); `⋃_d I_d.relationships` closed at 15
+cross-domain types.
 
-- fill the **6×6 structural-variable boundary matrix**
-  (`../SPEC-domain-intelligence-primitive-authoring.md` §6) — every pair:
-  `shared variable — owner — dependency — action`;
-- confirm the **six concentration variables** (§11 table) are genuinely distinct
-  attributions, not one latent variable under six names (§18);
-- reconcile the flagged **dimension-vs-relationship-edge** items (TECHNOLOGY
-  dependency, KNOWLEDGE transfer friction, MEDIA information asymmetry) with one
-  consistent rule;
-- enumerate `⋃_d I_d.relationships` — the closed admission set for `F`
-  (`SPEC-domain-intelligence-primitive-authoring.md` §7).
+**State:** ontology consistency CLOSED · Formation admission vocabulary CLOSED ·
+signal authorship/measurement OPEN · shared-source facet verification OPEN
+(integration AC) · integration GATED.

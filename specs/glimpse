@@ -1,0 +1,1166 @@
+Yes, I can see the link, but I can't reliably retrieve the actual video's contents from that YouTube URL right now. The direct fetch is failing, and search isn't returning that specific video, so I don't want to pretend I've watched it.
+
+But your description of the relationship is clear now:
+
+Glimpse is the step-sister that actually shipped the model.
+
+Same broad territory, similar customer universe, similar instinct:
+
+signals → discovery → investigation → insight
+
+And I agree with your direction: we should study their product flow and let it inform where KRYLO goes, rather than continuing to invent every interaction from scratch.
+
+If you can give me the video's transcript (YouTube's Show transcript → paste it here), I can analyze it closely. Even better, screenshots at the key transitions would let me dissect the actual UX.
+
+I would specifically extract:
+
+Their flow → their primitives → their visual language → their information hierarchy → their customer promise → what KRYLO should adopt → what KRYLO should deliberately remain different on.
+
+That's a much better exercise than trying to beat them by inventing a completely different interface.
+
+Inside the YC Startup That Raised $52M
+
+0:00
+/Krylo/docs/glimpse
+
+
+Today I'm in New York to meet the
+
+0:03
+
+founder [music] of an AI startup that
+
+0:05
+
+just got backed by Andre Horowitz Y
+
+0:08
+
+Combinator and [music] 8 VC. But that's
+
+0:11
+
+not the interesting part. Before raising
+
+0:13
+
+from some of the most prestigious VCs in
+
+0:16
+
+Silicon [music] Valley, they already had
+
+0:18
+
+real revenue, major customers, and a
+
+0:20
+
+working business backed by YC. Then they
+
+0:23
+
+killed it. This is Akash, CEO and
+
+0:26
+
+co-founder of Glimpse, a startup that
+
+0:28
+
+helps CPG brands recover millions of
+
+0:31
+
+dollars using AI. He started the company
+
+0:33
+
+while studying at Purdue University with
+
+0:36
+
+co-founders Anuj and Kush. Before going
+
+0:38
+
+full-time as a founder, he interned at
+
+0:40
+
+Tesla and Microsoft. Then co hit. So
+
+0:43
+
+Akash and his co-founders moved into his
+
+0:45
+
+parents' basement for 3 months while
+
+0:47
+
+they kept [music] building. Early in the
+
+0:48
+
+journey, they got into Y Combinator
+
+0:51
+
+while still building the first version
+
+0:53
+
+of Glimpse.
+
+From Tesla and Microsoft to Y Combinator
+
+0:54
+
+So yeah, I started Glimpse my senior
+
+0:56
+
+year of college and I did internships at
+
+0:58
+
+Tesla and Microsoft. Tesla was a really
+
+1:01
+
+formative experience for me because I
+
+1:04
+
+actually was on the factory software
+
+1:05
+
+team right when they were ramping up the
+
+1:07
+
+Model 3. So it's cool cuz even as an
+
+1:09
+
+intern, it was all hands on deck. Like I
+
+1:12
+
+had a couple of like overnights.
+
+1:14
+
+[laughter] Yeah. being on the factory
+
+1:15
+
+floor, seeing Elon and actually have
+
+1:18
+
+software that directly impacted the
+
+1:20
+
+supply chain. So just impactful software
+
+1:23
+
+crazy hours. I think it was one of those
+
+1:25
+
+experiences that made me realize like
+
+1:26
+
+one like oh wow if you can build
+
+1:29
+
+something useful you can be very
+
+1:30
+
+productive to a team but then two if I'm
+
+1:33
+
+working this hard I want to start my own
+
+1:35
+
+company. So we we got into Y cominator
+
+1:37
+
+pretty early in the journey. Uh that was
+
+1:39
+
+a big stamp of approval and then just
+
+1:41
+
+seeing the business starting to like
+
+1:42
+
+raise money, do well, but it was always
+
+1:44
+
+kind of a battle in the beginning.
+
+Why Glimpse Made a Hard Pivot
+
+1:50
+
+I read a little bit about your story and
+
+1:52
+
+I heard that you did a hard pivot.
+
+1:54
+
+Tell me more about that and why that
+
+1:56
+
+happened.
+
+The First Version of Glimpse
+
+1:57
+
+So the business that I started college
+
+1:59
+
+with my co-founders, we were helping
+
+2:01
+
+brands sample their products in Airbnbs,
+
+2:04
+
+boutique hotels. Imagine staying in a
+
+2:06
+
+luxury Airbnb and your coffee sponsored
+
+2:08
+
+by the coolest new coffee brand or your
+
+2:10
+
+bet sheet sponsored by a bet like
+
+2:12
+
+Brooklyn in or something like that.
+
+2:14
+
+And we grew that business uh during co
+
+2:16
+
+quite quickly and I think we kind of
+
+2:18
+
+realized that the business would plateau
+
+2:20
+
+at some point. So it was a hard decision
+
+2:22
+
+but it was going it was going okay but
+
+2:24
+
+not great. And um we were at this
+
+2:27
+
+crossroads of do we just keep trying to
+
+2:29
+
+push through? Do we pivot? And at the
+
+2:31
+
+end of 2022, my co-founders and I made a
+
+2:33
+
+decision to like hard pivot and kind of
+
+2:34
+
+start over. We were really excited about
+
+2:36
+
+AI. We loved working with consumer
+
+2:38
+
+brands. We actually spent a full 15
+
+2:41
+
+months in pivot hell or pivot land as
+
+15 Months in Pivot Hell
+
+2:44
+
+you call it.
+
+2:44
+
+What is pivot hell?
+
+2:46
+
+Yeah. I mean, no idea, no business, just
+
+2:48
+
+talking to customers every day trying to
+
+2:50
+
+learn about pain points.
+
+2:52
+
+And that iterative process for that
+
+2:54
+
+period of time ultimately helped us land
+
+2:56
+
+at Clint as it is today. And what was
+
+2:58
+
+the toughest moment for you and your
+
+3:01
+
+co-founders?
+
+3:03
+
+Like one was definitely making that
+
+3:04
+
+decision to pivot and then two was
+
+3:07
+
+honestly that period of like no
+
+3:09
+
+direction.
+
+3:10
+
+It's really hard to just show up every
+
+3:11
+
+single day and just keep kind of trying
+
+3:13
+
+to work and do your own thing like do
+
+3:15
+
+our thing. But I think it taught us a
+
+3:16
+
+lot about resilience and just like if
+
+3:18
+
+you just keep pushing through
+
+3:20
+
+um it'll kind of come together.
+
+Why They Killed a Working Business
+
+3:27
+
+So you had a business that was working,
+
+3:29
+
+you had real clients and you were making
+
+3:32
+
+money for them. Yes.
+
+3:33
+
+And then you decided to throw that away
+
+3:36
+
+to pivot to this new idea.
+
+3:39
+
+Yes.
+
+3:39
+
+When was that moment when you realized
+
+3:41
+
+that that idea wouldn't scale?
+
+3:44
+
+I think as a founder it's always kind of
+
+3:45
+
+like a subjective feeling like it's
+
+3:48
+
+always in like the back of the mind of
+
+3:49
+
+like oh is this actually growing as fast
+
+3:51
+
+as we want to? I think it's one of the
+
+3:53
+
+pressures of taking venture dollars as
+
+3:55
+
+well, which is just like are you growing
+
+3:57
+
+fast enough, not are you growing, but
+
+3:58
+
+are you growing fast enough for the like
+
+4:00
+
+industry benchmarks in a way
+
+4:02
+
+and I think I mean I kind of probably
+
+4:04
+
+knew like 6 months before there's like
+
+4:05
+
+an intuitive feeling that this will
+
+4:07
+
+probably plateau at some point.
+
+4:09
+
+Yeah. Because of course you already had
+
+4:11
+
+investment in that original idea.
+
+4:13
+
+Yeah. YC and a couple of other
+
+4:15
+
+investors.
+
+4:15
+
+And how did they take it when you you
+
+4:17
+
+told them look we've decided that we
+
+4:19
+
+need to pivot? Honestly, everyone was
+
+4:21
+
+super supportive. It was one of those
+
+4:23
+
+things where us being like thoughtful
+
+4:26
+
+about the decision and doing it
+
+4:28
+
+proactively and having those
+
+4:29
+
+conversations with everyone helped us
+
+4:31
+
+kind of gain that vote of confidence
+
+4:33
+
+that if they think this is what's best,
+
+4:35
+
+this is what's best. But in that moment,
+
+4:37
+
+I think it was just being like honest
+
+4:39
+
+and direct about the decision.
+
+Finding the AI Opportunity in CPG Deductions
+
+4:40
+
+What made this new version finally
+
+4:42
+
+click? When did you know this is this is
+
+4:45
+
+the idea we're going with? So, we spent
+
+4:48
+
+a year working with these CPG brands,
+
+4:50
+
+going really deep into how they run
+
+4:52
+
+their operations and the whole process
+
+4:54
+
+of selling in retail. This world of
+
+4:57
+
+deductions is what it's called. Um, it's
+
+5:00
+
+crazy. I mean, these brands just losing
+
+5:01
+
+dollars that's rightfully theirs. And
+
+5:03
+
+there's no really good way to solve
+
+5:04
+
+this. So AI I think is fundamentally
+
+5:08
+
+useful in this era because it not only
+
+5:11
+
+helps like do a little part of the
+
+5:14
+
+process, it can automate the full N10
+
+5:16
+
+process. So I [clears throat] think when
+
+5:17
+
+we realized that we could actually
+
+5:18
+
+deliver the value of not just another
+
+5:20
+
+dashboard or helping them do things
+
+5:22
+
+better, but instead actually owning the
+
+5:25
+
+full N10 workflow of filing claims,
+
+5:28
+
+recovering dollars. We kind of knew that
+
+5:29
+
+that was a gold mine.
+
+Inside Glimpse’s New York Office
+
+5:35
+
+So, our full team is in New York. Um,
+
+5:37
+
+honestly, it's a lot of meetings most of
+
+5:39
+
+the day, but a lot of meeting candidates
+
+5:41
+
+that we can hire, meeting customers that
+
+5:43
+
+we're trying to bring on, traveling all
+
+5:44
+
+across the country, meeting our
+
+5:46
+
+customers at conferences and trade
+
+5:47
+
+shows. So, this space here in the
+
+5:49
+
+kitchen, [music]
+
+5:50
+
+perfect event space for bringing brands
+
+5:52
+
+together. So, it's a full full grade
+
+5:54
+
+commercial [music] kitchen and our
+
+5:56
+
+fridge is always stocked with our
+
+5:58
+
+favorite beverage brands. It's a lot of,
+
+5:59
+
+you know, that's the brand right there.
+
+6:01
+
+We do sampling events in the office
+
+6:03
+
+[music] and yeah, full grade commercial
+
+Martha Stewart’s Former Test Kitchen
+
+6:06
+
+kitchen.
+
+6:06
+
+I heard that it was Martha Stewart's
+
+6:08
+
+office before.
+
+6:09
+
+Yes.
+
+6:09
+
+Is that true?
+
+6:10
+
+Yes. So before this was the Glimpse HQ,
+
+6:13
+
+this was Martha Stewart's uh dinner
+
+6:15
+
+service brand. So Dinnerly, this was
+
+6:17
+
+their test kitchen. [music]
+
+Raising $35M From a16z, YC, and 8VC
+
+6:23
+
+So we just announced a $35 million
+
+6:25
+
+series A [music] uh led by Andre and
+
+6:27
+
+Horowitz and uh we continued
+
+6:30
+
+participation from our early investors.
+
+6:32
+
+So 8VC and Y cominator.
+
+6:34
+
+So what did the pro process look like
+
+6:35
+
+from pitch to closing?
+
+6:38
+
+I think fundraising is one of those
+
+6:39
+
+things that's a big black box in the
+
+6:41
+
+industry and completely different for
+
+6:44
+
+every single founder. Mhm.
+
+6:46
+
+Um for me being in the industry for a
+
+6:48
+
+while, it's been a lot of like nurturing
+
+6:50
+
+relationships for months and years. Um
+
+6:52
+
+but this time around, we came off of
+
+6:55
+
+really strong um traction and we had
+
+6:57
+
+just signed our first like large
+
+6:59
+
+enterprise deal like our first seven
+
+7:00
+
+figure deal um really big logos that
+
+7:03
+
+were compounding and our growth rate was
+
+7:05
+
+quite exceptional. Um so this time a lot
+
+7:08
+
+of the pitch was like look we're doing
+
+7:10
+
+the thing we
+
+7:12
+
+Yeah. I told you that we were going to
+
+7:14
+
+go really fast. We're going really fast,
+
+7:16
+
+but a lot of I think the pitch for us is
+
+7:18
+
+evangelizing why this is the right
+
+7:20
+
+market to invest into.
+
+What It Takes to Get Backed by a16z
+
+7:22
+
+In your opinion, [music]
+
+7:23
+
+having raised from Andre and Harowitz,
+
+7:26
+
+what does it take to get investment from
+
+7:28
+
+Andre and Harowitz?
+
+7:29
+
+They're an incredible firm. Um, our
+
+7:31
+
+partner there is incredible a lot of
+
+7:33
+
+value ad. I just my overall, you know,
+
+7:37
+
+jaded take at this point on fundraising
+
+7:39
+
+is the right partner sets you up for
+
+7:42
+
+success. To raise from a firm like A16Z
+
+7:45
+
+or any other tier one investor,
+
+7:47
+
+it's a bet on the market and a bet on
+
+7:50
+
+the founder. So,
+
+7:51
+
+um, I'd built a relationship with our
+
+7:53
+
+partner for over a year.
+
+7:54
+
+He saw us continuing to deliver.
+
+7:56
+
+Okay.
+
+7:57
+
+And they made a bet on the market at the
+
+7:59
+
+end of the day. So, you know, our
+
+8:00
+
+business, we're growing really fast.
+
+8:02
+
+We're hitting these milestones. we're
+
+8:04
+
+making a dent in an industry that hasn't
+
+8:06
+
+been there. But I think a lot of it is
+
+8:08
+
+like okay in this axis of 2026 like AI
+
+8:14
+
+is what you should be working on.
+
+8:16
+
+Is this the right industry? Is this the
+
+8:17
+
+right market? Is this the right founder?
+
+8:19
+
+[music] And I think we checked off those
+
+8:20
+
+boxes in their eyes and that's why they
+
+8:22
+
+made the bet on us.
+
+Why the Pivot Made Glimpse Fundable
+
+8:23
+
+From spending the morning with Akash,
+
+8:25
+
+one thing [music] became clear. The
+
+8:26
+
+pivot was not separate from the fund
+
+8:28
+
+raise. It was a clear reason glimpse
+
+8:30
+
+became fundable. Investors were not just
+
+8:31
+
+betting on an AI product. They were
+
+8:33
+
+betting on a team that had walked away
+
+8:35
+
+from something that worked, survived
+
+8:37
+
+uncertainty, [music] and developed real
+
+8:39
+
+expertise inside a market most people
+
+8:42
+
+overlook. I can't wait to see what's
+
+8:44
+
+next for the team.
+
+Yes. And now that I have the transcript, I think the important lesson is not their UI.
+
+It's their trajectory.
+
+Glimpse didn't start by saying, “We're going to build a market intelligence platform.” They spent 15 months inside a customer problem, abandoned a working business when they saw its ceiling, and eventually found a narrow workflow where AI could own the entire process.
+
+That is very relevant to KRYLO.
+
+The thing I would borrow
+
+Their eventual product is basically:
+
+messy external reality → identify something economically relevant → investigate it → resolve it → execute
+
+And their UI reflects that. It feels like a search/investigation instrument, not an academic visualization system.
+
+That's exactly where I think your recent thinking is taking KRYLO:
+
+Macro
+→ What is the ecosystem telling me?
+
+Meso
+→ Where should I look?
+
+Micro
+→ What is actually forming?
+
+Action
+→ What can I do with this?
+
+The cones become incredibly important in that model because they aren't the answer. They're the first read of the environment.
+
+Six cones. Three seconds. “Something is wrong in Capital.”
+
+That's a legitimate executive interface.
+
+Then click.
+
+Inspection panel.
+
+Then search.
+
+Evidence.
+
+Then:
+
+Relationships → Formation → Action.
+
+And this is where Glimpse validates you
+
+Look at their language:
+
+“Discover trends before they're trending.”
+
+“tap directly into the minds of consumers”
+
+“See what consumers are searching”
+
+“Identify emerging trends”
+
+They're selling visibility into an environment.
+
+KRYLO is doing something considerably more ambitious:
+
+visibility into structural conditions and formations across an ecosystem.
+
+So I would not chase Glimpse feature-for-feature.
+
+I'd steal their product discipline:
+
+Make the entry point immediately understandable.
+Make search/investigation extremely good.
+Make the system feel useful before the user understands the machinery.
+Keep the visualization subordinate to the investigation.
+Get the user from signal → understanding → action rapidly.
+Speak corporate language, not research-lab language.
+
+And your instinct about the corporate grey/white interface is consistent with that. Glimpse feels like a serious research/work tool. KRYLO can move in that direction without becoming visually boring.
+
+The big distinction remains:
+
+Glimpse tells you what people are looking at.
+
+KRYLO tells you what the things people/organizations are doing are structurally becoming.
+
+That's the lane I'd protect.
+
+And honestly, I think “step sister” is a very good mental model. We don't need to pretend they're irrelevant competition. They're evidence that there's a buyer for this kind of instrument.
+
+"That's a legitimate executive interface." ... That's why we should rename it to "Stakeholder" 
+
+Yes. Stakeholder is better.
+
+“Executive interface” describes the audience. Stakeholder describes the actual role of the surface.
+
+It becomes:
+
+Stakeholder View
+
+→ immediate macro assessment
+→ ecosystem/domain condition
+→ identify what warrants attention
+→ drill into Inspection
+→ investigate → interrogate → act
+
+And it avoids implying that KRYLO is only for executives. A stakeholder could be an investor, strategist, operator, researcher, or decision-maker.
+
+Stakeholder = the person looking at the system and deciding where attention goes.

@@ -87,8 +87,20 @@ I_d = {
 - **dimension** — a structural property along which the domain resolves (e.g. a
   concentration axis, a commitment axis). Ordered only if the domain genuinely has
   a progression.
-- **relationshipType** — a relation this domain can contribute to Formation
-  (`F` admits only relationships some `I_d` declares).
+  **Dimension-vs-edge rule (RATIFIED 2026-08-29, `domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` §3):**
+  a candidate is a `structuralDimension` **only if it has a field/subject-level
+  magnitude — and, where applicable, polarity — that is meaningful without naming
+  a counterparty.** Otherwise it is a **relationship edge-property**: it lives in
+  `relationships` as a typed-edge attribute, not in `structuralDimensions`. The
+  domain MAY carry an *aggregate* of that edge-property as a `signal`. Net
+  directional readings (flow, reallocation, diffusion rate, net migration) with
+  polarity pass as dimensions; comparative-only quantities (dependency, transfer
+  friction, information asymmetry) do not.
+- **relationshipType** — a relation this domain can contribute to Formation.
+  `F` admits **only** relationship types some `I_d` declares — the ratified closed
+  set is the **15 cross-domain types** in `domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md`
+  §4a. `F` may infer from admitted relationships; it may not invent an unadmitted
+  type because the evidence looks narratively compelling.
 - **condition** — a predicate on the subject/queryContext that makes an
   observationClass in-scope. Failing it → the observation is `absenceClass:
   structural` (out of scope), not `filtered` or `null`.
@@ -237,43 +249,44 @@ architecture-spec triple `(signalIntensity, observationCount, polarity)`.
 
 ## 6. Cross-domain structural-variable boundary matrix (Q11, all six)
 
-To be filled during authoring. Each cell: the structural variable(s) both domains
-legitimately touch, and which domain **owns the attribution** for Formation.
-
-Format per pair (CLAUDE.md §18): `shared variable — owner — dependency
-(Independent / Partially / Fully) — action (Merge / Reweight / Separate / Retire)`.
-
-|            | CAPITAL | OWNERSHIP | TECHNOLOGY | KNOWLEDGE | LABOR | MEDIA |
-|------------|---------|-----------|------------|-----------|-------|-------|
-| CAPITAL    | —       | *TBD*     | *TBD*      | *TBD*     | *TBD* | *TBD* |
-| OWNERSHIP  |         | —         | *TBD*      | *TBD*     | *TBD* | *TBD* |
-| TECHNOLOGY |         |           | —          | *TBD*     | *TBD* | *TBD* |
-| KNOWLEDGE  |         |           |            | —         | *TBD* | *TBD* |
-| LABOR      |         |           |            |           | —     | *TBD* |
-| MEDIA      |         |           |            |           |       | —     |
-
-Rule: shared **evidence sources** are allowed; shared **structural-variable
-attribution as independent support** is not (architecture spec §18).
+**FILLED & RATIFIED** — `domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` v1.0
+(2026-08-29). All 15 pairs → **Separate + attribute-once**; zero Fully Dependent;
+all Partially Dependent (SPEC II §3: observational cuts through one world). Six
+concentration latent variables demonstrated distinct (measured over different
+populations, none a function of another). Rule: shared **evidence sources**
+allowed; shared **structural-variable attribution as independent support** not
+(architecture spec §18) — enforced at integration by the shared-source distinct-
+facet AC.
 
 ---
 
 ## 7. Relationship to `F`
 
-`F` (Formation) admits a relationship only if some `I_d.relationships` declares it.
-`F` never introduces a relationship type no domain defines. The union
-`⋃_d I_d.relationships` is the closed admission set for Formation.
+`F` admits a relationship only if some `I_d.relationships` declares it. The union
+`⋃_d I_d.relationships` is **CLOSED at the 15 cross-domain relationship types**
+in `domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` §4a (RATIFIED 2026-08-29).
+Intra-domain relationship structures stay inside `A(d, Subject)` (§4b);
+regulatory/jurisdictional context is a relationship *condition*, not a node (§4c).
+`F` may infer from admitted relationships; it may not invent an unadmitted type
+because the evidence looks narratively compelling.
 
 ---
 
 ## 8. Exit criteria
 
-1. All 11 questions answered for all 6 domains, at least to `PARTIAL` for the
-   Data-Substrate-read fields (§4).
-2. The §6 matrix filled; every `Partially`/`Fully Dependent` pair has a recorded
-   action.
-3. `⋃_d I_d.relationships` enumerated (§7).
-4. Each entry in every `AUTHORED`/`PARTIAL` field carries a cited precedent (§4.2).
-5. A ratification commit per domain, ratifier named.
+| # | criterion | state |
+|---|---|---|
+| 1 | All 11 questions answered for all 6 domains, ≥ `PARTIAL` for the Data-Substrate-read fields | **MET** — CAPITAL ratified; 5 drafted |
+| 2 | §6 boundary matrix filled; every dependent pair has a recorded action | **MET** — CROSS-DOMAIN-CONSISTENCY v1.0, RATIFIED |
+| 3 | `⋃_d I_d.relationships` enumerated + closed | **MET** — 15 types, RATIFIED |
+| 4 | The dimension-vs-edge rule applied consistently | **MET** — general rule (§2.1); TECH/KNOW/MEDIA edited |
+| 5 | Each `AUTHORED`/`PARTIAL` entry carries a cited precedent (§4.2) | **MET** — all trace to SPEC II §§5–10 (LOCKED) |
+| 6 | Per-field `AUTHORED` promotions on the 5 drafted `I_d` | **OPEN** — Founder-side |
+| 7 | Every `signals` field has a defined measure | **OPEN** — all `UNAUTHORED`; concentration + edge-aggregate measures undefined |
+| 8 | A ratification commit per domain, ratifier named | CAPITAL done; 5 pending |
+
+**Ontology & admission architecture: CLOSED.** **Signal measurement: OPEN.**
+Nothing renders until §7 (signals) is closed. Integration remains gated.
 
 On completion, the Data Substrate is a rendering problem: it reads `I_d` +
 `A(d, s, subject)` and displays; it invents nothing.

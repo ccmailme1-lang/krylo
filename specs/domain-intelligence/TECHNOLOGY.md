@@ -134,14 +134,12 @@ dimension with polarity** (`readiness` | `lag`), per CLAUDE.md §16 (analogous t
 OWNERSHIP concentration/diffusion). Founder to confirm.
 Maturity: PARTIAL
 
-### 4.5 Technological Dependency
-The degree to which an entity / sector / activity depends on a specific external
-capability, platform, or standard.
-**Structuring note (flagged):** "dependency" is inherently **relational** — it is a
-property of an edge (X depends on capability Y), not a scalar of the domain. It may
-belong in `relationships` (§5) as a *typed edge* rather than in `structuralDimensions`.
-Founder to rule: dimension, relationship property, or both.
-Maturity: PARTIAL (concept) / UNAUTHORED (form)
+### 4.5 Technological Dependency — MOVED TO §5 (edge-property)
+**Ratified (CROSS-DOMAIN-CONSISTENCY §3, 2026-08-29):** "dependency" has no
+field-level magnitude without naming a counterparty → it is a **relationship
+edge-property**, not a structural dimension. See §5 (`Technology ↔ adopters`,
+`Technology ↔ enabling infrastructure`). An aggregate "dependency density" across
+observed edges MAY be a `signal`.
 
 ### 4.6 Claimed vs Actual Capability — HYPOTHESIS ONLY
 SPEC II §6 "Unresolved" names "claimed versus actual capability" as an *open*
@@ -157,9 +155,13 @@ not intra-domain pairs (§7).
 
 SPEC II §6 Relationships + Cross-Domain Propagation:
 
-- **Technology ↔ adopters** — who is adopting the capability.
+- **Technology ↔ adopters** — who is adopting the capability. **Edge attribute:**
+  `dependency` — the degree the adopter depends on this specific capability /
+  platform / standard (moved here from §4.5).
 - **Technology ↔ displaced alternatives** — the incumbent(s) under pressure.
 - **Technology ↔ enabling infrastructure** — what the capability runs on.
+  **Edge attribute:** `dependency` — how tightly the capability is bound to that
+  infrastructure.
 - **Technology ↔ Capital** — funding of the capability (SPEC II §6: "capital required").
 - **Technology ↔ Labor** — skills required / skill-demand shifts.
 - **Technology ↔ Ownership** — control of the key assets or IP (SPEC II §6: "ownership of key assets or IP"; §11: "capability … changes hands").
@@ -181,7 +183,7 @@ A TECHNOLOGY observation is relevant to a subject when:
 
 - the observed capability / adoption / displacement / infrastructure is attributable to the subject or its immediate structural environment;
 - there is sufficient evidence to establish the TECHNOLOGY attribution;
-- it materially concerns adoption momentum, displacement pressure, capability concentration, infrastructure readiness/lag, or technological dependency (the §4 axes — not the UNAUTHORED `claimed vs actual capability`);
+- it materially concerns adoption momentum, displacement pressure, capability concentration, or infrastructure readiness/lag (the §4 dimensions — `dependency` is now an edge-property, §5; not the UNAUTHORED `claimed vs actual capability`);
 - temporal scope is compatible;
 - it is not a generic macro tech-sector condition mis-attributed to the subject.
 
@@ -213,7 +215,7 @@ SPEC II §6 "Unresolved" + repo state:
 - **adoption durability** — whether an observed adoption/displacement persists;
 - **secondary displacement effects** — cascade effects not yet observable;
 - **proprietary infrastructure opacity** — capability behind closed infrastructure;
-- **defined measures** for capability concentration (§4.3) and technological dependency (§4.5);
+- **defined measures** for capability concentration (§4.3) and for aggregate dependency density across observed edges (§5);
 - **subject-specific** TECHNOLOGY observations when the subject cannot be resolved to an observable entity/capability (subject-scoping contract).
 
 **Maturity:** PARTIAL
@@ -309,7 +311,7 @@ authored against the locked sources; the TECHNOLOGY↔KNOWLEDGE line and the ful
 |---|---|---|
 | observes | PARTIAL | SPEC II §6 Observable Objects + Observation Classes (LOCKED) |
 | signals | **UNAUTHORED** | F3 — not split; patent/repo signals exist but not authored as `I_d` signal definitions; concentration + dependency measures undefined |
-| structuralDimensions | PARTIAL | SPEC II §6 Conditions (LOCKED). `claimed vs actual capability` **UNAUTHORED** (§4.6); `dependency` form open (§4.5) |
+| structuralDimensions | PARTIAL | SPEC II §6 Conditions (LOCKED): adoption momentum, displacement pressure, capability concentration, infra readiness/lag. `claimed vs actual capability` **UNAUTHORED** (§4.6). `dependency` moved to `relationships` as an edge-property (§4.5, ratified). |
 | relationships | PARTIAL | SPEC II §6 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §6; macro-vs-entity distinction authored |
 | tensionPatterns | PARTIAL | intra-TECHNOLOGY; inherits §4 maturity |
@@ -320,8 +322,7 @@ authored against the locked sources; the TECHNOLOGY↔KNOWLEDGE line and the ful
 
 **Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
 mapping, dimension `claimed vs actual capability`, the capability-concentration
-measure, the form of `technological dependency` (dimension vs relationship),
-subject-specific application.
+measure, subject-specific application.
 
 **Nothing is AUTHORED for content. Nothing renders. Integration gated.**
 
@@ -332,13 +333,13 @@ subject-specific application.
 Mirrors CAPITAL / OWNERSHIP Q-pattern.
 
 1. Does TECHNOLOGY own **adoption momentum, displacement pressure, capability
-   concentration, infrastructure readiness/lag, and technological dependency** as
-   its primary structural vocabulary (SPEC II §6 Conditions)?
+   concentration, and infrastructure readiness/lag** as its primary structural
+   vocabulary (SPEC II §6 Conditions)? (`dependency` is now an edge-property, §5 —
+   ratified.)
 2. Are **adoption momentum** and **displacement pressure** two dimensions
    (recommendation) or two poles of one?
 3. Is **infrastructure readiness/lag** one dimension with polarity, or two?
-4. Is **technological dependency** a structural dimension, a relationship
-   property (typed edge), or both? (§4.5)
+4. *(resolved — `dependency` → edge-property, CROSS-DOMAIN-CONSISTENCY §3.)*
 5. Does **`claimed vs actual capability`** stay UNAUTHORED (recommendation)?
 6. Is **"displacement pressure"** an observation, a derived classification, or
    both kept distinct (F2 analog)?

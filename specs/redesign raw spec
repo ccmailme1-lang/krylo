@@ -1,0 +1,602 @@
+Yes. The key distinction is reuse vs. regeneration.
+
+The lens should be authored once as an analytical primitive. The packet should instantiate that primitive against a subject.
+
+The architecture
+
+LENS
+
+Defines how to look.
+
+Contains the durable intelligence:
+
+observes
+domains
+signals
+relationships
+relevance conditions
+divergence/tension patterns
+missing dimensions
+sharpening inputs
+
+↓
+
+SURFACE
+
+Lens applied to the field.
+
+It answers:
+
+What is this lens seeing across the current environment?
+
+↓
+
+SEARCH
+
+Introduces the subject/question.
+
+It establishes:
+
+What specifically are we asking the system to examine?
+
+↓
+
+TARGET PACKET → ANALYSIS
+
+Same lens intelligence, scoped to the subject.
+
+It answers:
+
+What does this lens see about this particular thing?
+
+That means the packet's panels are not merely visually similar to the Surface panels. They are the same analytical primitives operating at a narrower scope.
+
+So the scroll is important
+
+The scroll can literally become the lens sequence:
+
+01 ANALYSIS
+
+LENS 01
+Micro-read against subject
+
+LENS 02
+Micro-read against subject
+
+LENS 03
+Micro-read against subject
+
+…and so on.
+
+Each panel inherits the lens's established structure, but its values become subject-specific.
+
+For example:
+
+OWNERSHIP
+
+OBSERVES
+Ownership relationships relevant to the proposed second facility.
+
+SIGNAL
+Current ownership structure shows X relationship affecting expansion.
+
+TENSION
+Ownership alignment exists, but capital commitment is not yet evidenced.
+
+UNRESOLVED
+Decision horizon and commitment threshold.
+
+SHARPEN
+Add the intended expansion window and capital ceiling.
+
+The labels and analytical logic came from the lens.
+
+The observations came from applying that lens to the search subject.
+
+That is the distinction we were missing.
+
+And this gives us a very clean hierarchy
+LENS INTELLIGENCE
+       │
+       │ reusable
+       ▼
+┌─────────────────┐
+│     SURFACE     │
+│  broad field    │
+└────────┬────────┘
+         │
+         │ subject/query
+         ▼
+┌─────────────────┐
+│  TARGET PACKET  │
+│  scoped field   │
+└────────┬────────┘
+         │
+         │ cross-lens synthesis
+         ▼
+┌─────────────────┐
+│    FORMATION    │
+│ what coheres    │
+└─────────────────┘
+
+And I would make one further architectural rule explicit:
+
+A Target Packet must never manufacture a new lens vocabulary merely because the scope changed.
+
+If Surface OWNERSHIP has five meaningful analytical dimensions, Target Packet OWNERSHIP should inherit those dimensions. The packet supplies the micro evidence, interpretation, unresolved conditions, and sharpening inputs for the searched subject.
+
+That makes the packet genuinely feel like going deeper into the same intelligence, rather than navigating to an entirely different analytical product.
+
+And it explains why your instinct about the current STAKE / MOVE / WINDOW / LEVERAGE FIELD was correct: those aren't necessarily bad concepts, but they are not the reusable lens intelligence you already built. They are an intervening template.
+
+The cleaner architecture is:
+
+Capture once → scope repeatedly → synthesize afterward.
+
+i mean we are totally all in on structure signals now, so let that be the focus end-to-end... Why can't we have the lens metrics as the Data subtratre in the analysis or target pacakets. All Six..OR, we could add the tabs to that section 
+
+Yes. If KRYLO is now end-to-end structure-signal focused, I think we should stop treating the lens metrics as merely descriptive UI intelligence.
+
+They are the data substrate for the analysis.
+
+And I would strongly favor all six lenses/domains being present in the Target Packet, with tabs rather than six disconnected blocks.
+
+The cleaner model
+SEARCH SUBJECT
+      ↓
+STRUCTURE SIGNAL FIELD
+      ↓
+┌──────────────────────────────────────────┐
+│  TARGET PACKET                           │
+│                                          │
+│  DATA SUBSTRATE                          │
+│  [CAPITAL] [OWNERSHIP] [TECH] [KNOWLEDGE]│
+│  [LABOR]   [MEDIA]                       │
+│                                          │
+│  ──────────────────────────────────────  │
+│  Active Lens Metrics                     │
+│                                          │
+│  Signal                                  │
+│  Relationship                            │
+│  Strength / Salience                     │
+│  Direction / Change                       │
+│  Evidence                                │
+│  Tension                                 │
+│  Missing / Unresolved                    │
+└──────────────────────────────────────────┘
+      ↓
+STRUCTURAL SYNTHESIS
+      ↓
+FORMATION
+Why tabs make sense
+
+The six aren't six separate analyses.
+
+They are six views into the same structure-signal substrate.
+
+So:
+
+DATA SUBSTRATE
+
+CAPITAL | OWNERSHIP | TECHNOLOGY | KNOWLEDGE | LABOR | MEDIA
+
+Selecting a tab changes the lens through which the same subject is inspected.
+
+That gives you something much more powerful than the current generic Analysis cards.
+
+For example:
+
+Subject: Should we open a second facility?
+
+CAPITAL
+
+relevant signals
+observed relationships
+signal strength
+changes
+supporting evidence
+structural tension
+unresolved dimension
+
+Switch to:
+
+LABOR
+
+Same subject. Same analytical contract. Different domain substrate.
+
+Then:
+
+OWNERSHIP
+
+Same subject. Different structural signals.
+
+And so forth.
+
+The really important part
+
+The metrics should not be six arbitrary sets of numbers.
+
+They should come from the lens definition itself.
+
+So if the Capital lens already knows that its meaningful structural dimensions are:
+
+capital dependency → concentration → commitment → flow → constraint
+
+those become the Capital tab's data substrate.
+
+The Target Packet simply asks:
+
+What are those structural signals saying about THIS subject?
+
+That's the micro-lens.
+
+Then Formation has a fundamentally different job
+
+This is where I think the architecture becomes exceptionally clean:
+
+Analysis / Data Substrate
+
+What does each lens observe?
+
+Formation
+
+What relationships become structurally meaningful when those observations are considered together?
+
+So you don't jump from generic cards to a mysterious formation.
+
+You have:
+
+SUBJECT → SIX STRUCTURAL VIEWS → CROSS-DOMAIN RELATIONSHIPS → FORMATION
+
+That is much closer to the KRYLO proposition you've been establishing.
+
+And I would actually label that section DATA SUBSTRATE, not "Analysis Data" or something softer. It makes the architecture explicit:
+
+The six lenses are the observational substrate from which structural recognition occurs.
+
+The tabs then aren't a UI convenience. They are the six dimensions of the underlying analytical field.
+
+SIGNAL REPORT · 01 MACRO OVERVIEW
+
+Structural Signal Report
+
+Measures the observable intensity of structural activity across all six macro domains. SIGNAL represents observation, not interpretation — it does not answer why activity is occurring, where it is moving, or whether it converges into a formation.
+
+02
+
+COMPLETE STRUCTURAL ACTIVITY FIELD
+
+TECHNOLOGY
+
+0.67
+
+●●●○○
+
+CAPITAL
+
+0.75
+
+●●●●○
+
+KNOWLEDGE
+
+0.21
+
+●○○○○
+
+LABOR
+
+0.57
+
+●●●○○
+
+MEDIA
+
+0.30
+
+●○○○○
+
+OWNERSHIP
+
+0.51
+
+●●●○○
+
+03
+
+DOMAIN SIGNAL MATRIX
+
+TECHNOLOGY0.6712 observations
+
+CAPITAL0.7597 observations
+
+KNOWLEDGE0.214 observations
+
+LABOR0.5721 observations
+
+MEDIA0.304 observations
+
+OWNERSHIP0.5129 observations
+
+04
+
+ACTIVITY DISTRIBUTION
+
+HIGH ACTIVITY
+
+CAPITAL
+
+MODERATE ACTIVITY
+
+TECHNOLOGY
+
+LABOR
+
+OWNERSHIP
+
+LOW ACTIVITY
+
+KNOWLEDGE
+
+MEDIA
+
+05
+
+OBSERVATION BOUNDARY
+
+SUPPORTEDObservable activity intensity across all six macro domains.
+
+SUPPORTEDRelative signal magnitude and observation depth.
+
+WITHHELDMeaning, direction, future structural change, or outcome.
+
+◉↯⇢⧖⬡↝⟡
+
+C01CAPITALCAPITAL
+
+svg
+
+svg
+
+C01
+
+<HEADLINE>
+
+SYNCED
+
+C02OWNERSHIPOWNERSHIP
+
+svg
+
+svg
+
+C02
+
+<HEADLINE>
+
+SYNCED
+
+C03LABORLABOR
+
+svg
+
+svg
+
+C03
+
+<HEADLINE>
+
+SYNCED
+
+C04MEDIAMEDIA
+
+svg
+
+svg
+
+C04
+
+<HEADLINE>
+
+SYNCED
+
+C05TECHNOLOGYTECHNOLOGY
+
+svg
+
+svg
+
+C05
+
+<HEADLINE>
+
+SYNCED
+
+C06KNOWLEDGEKNOWLEDGE
+
+svg
+
+svg
+
+C06
+
+<HEADLINE>
+
+SYNCED
+
+LIVET-24H
+
+KRYLO Campaign
+
+Yes. This makes the distinction much clearer.
+
+What you pasted is already the macro structural-signal substrate. I would not replace it. I would make the Target Packet consume the same substrate at a different scope.
+
+The existing report already establishes the contract
+
+The Macro Overview says:
+
+SIGNAL = observable intensity of structural activity
+
+and explicitly withholds:
+
+meaning, direction, future structural change, outcome.
+
+That is exactly the right boundary for the substrate.
+
+So the Target Packet should not turn those metrics into interpretation prematurely.
+
+Instead:
+
+MACRO
+
+Structural Signal Report
+
+What is the observable structural activity across the field?
+
+You have:
+
+Domain	Signal	Observations
+Technology	0.67	12
+Capital	0.75	97
+Knowledge	0.21	4
+Labor	0.57	21
+Media	0.30	4
+Ownership	0.51	29
+
+That is the macro substrate.
+
+TARGET PACKET
+
+Then the exact same six-domain substrate gets bound to the searched subject.
+
+For example:
+
+TARGET: Should we open a second facility?
+
+DATA SUBSTRATE
+
+CAPITAL · OWNERSHIP · LABOR · MEDIA · TECHNOLOGY · KNOWLEDGE
+
+Select CAPITAL:
+
+CAPITAL · STRUCTURAL SIGNAL
+
+Signal intensity
+0.78
+
+Observations
+14
+
+Structural activity
+
+●●●●○
+
+Then whatever additional lens metrics already exist for Capital appear underneath.
+
+The important distinction is:
+
+0.78 does not mean "opening the facility is financially attractive."
+
+It means:
+
+Observable structural activity relevant to this subject is elevated within Capital.
+
+Then the actual structural analysis can operate on those observations.
+
+This is where your tabs idea becomes stronger
+
+I would absolutely use the tabs.
+
+Not:
+
+Six analysis cards
+
+but:
+
+ONE DATA SUBSTRATE / SIX STRUCTURAL DOMAINS
+
+DATA SUBSTRATE
+
+[ CAPITAL ] [ OWNERSHIP ] [ LABOR ]
+[ MEDIA ]   [ TECHNOLOGY ] [ KNOWLEDGE ]
+
+──────────────────────────────────
+
+CAPITAL
+
+STRUCTURAL SIGNAL
+0.78   ●●●●○
+
+OBSERVATIONS
+14
+
+SIGNAL DISTRIBUTION
+...
+
+STRUCTURAL RELATIONSHIPS
+...
+
+OBSERVATION DEPTH
+...
+
+BOUNDARY
+...
+
+──────────────────────────────────
+
+Then click LABOR and the substrate changes to the Labor-specific metrics.
+
+And this preserves the most important KRYLO boundary
+
+There are really three levels, not two:
+
+01 · SIGNAL
+
+What activity is observable?
+
+02 · STRUCTURE
+
+What relationships exist among those observations?
+
+03 · FORMATION
+
+Do those relationships constitute a coherent structural formation?
+
+So:
+
+MACRO SIGNAL REPORT
+        │
+        │ field-wide
+        ▼
+SIX-DOMAIN SIGNAL SUBSTRATE
+        │
+        │ subject-scoped
+        ▼
+TARGET PACKET DATA SUBSTRATE
+        │
+        ▼
+STRUCTURAL RELATIONSHIPS
+        │
+        ▼
+FORMATION
+
+That is materially better than the current:
+
+Stake → Move → Window → Leverage Field
+
+because those concepts force interpretation into 01 ANALYSIS before the system has established the structural substrate.
+
+Your pasted report already gives us the answer to what the Target Packet should inherit:
+
+The six domains, signal intensity, observation count/depth, activity distribution, and observation boundary are reusable infrastructure.
+
+The Target Packet should simply ask:
+
+What does this same structural-signal machinery look like when scoped to this particular searched subject?
+
+That is the micro structural signal report.
+
+And then the Formation section can legitimately be downstream of it rather than pretending to be the first place where structure appears.
+
+its a spacing 
