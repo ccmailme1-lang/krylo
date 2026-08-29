@@ -1,13 +1,19 @@
 # KRYLO Structural Signal Surface Architecture
 ## Domain Substrate, Viewport Replacement & Domain Intelligence Primitive
 
-**Status:** DRAFT — Founder review
-**Version:** 0.2.1 (mathematical corrections applied)
+**Status:** FROZEN — architecture baseline
+**Version:** 0.2.2
 **Scope:** Surface → Target Packet → Formation
 **Primary Principle:** Capture once → scope repeatedly → synthesize afterward
-**Supersedes:** the earlier three-track capture note; `specs/redesign raw spec` (raw discussion this distills)
-**Related:** `SPEC-signal-resolution-mechanic.md` (absorbed into Track #3), KRYL-1221, KRYL-1222, KRYL-1225
-**Build authorization:** NONE. #1 needs its audit; #2 needs its decision; #3 needs authoring before any UI is designed against it.
+**Supersedes:** the three-track capture note; `specs/redesign raw spec` (raw discussion this distills)
+**Related:** `SPEC-domain-intelligence-primitive-authoring.md` (the successor, UI-free),
+`SPEC-signal-resolution-mechanic.md` (absorbed into Track #3), KRYL-1221, KRYL-1222, KRYL-1225
+**Build authorization:** NONE. #1 needs its audit; #2 needs its decision; #3 needs authoring
+before any UI is designed against it.
+
+> **Freeze note.** v0.2.2 is the architecture baseline. Further work proceeds in the
+> successor spec, not by expanding this one. Changes here require an explicit
+> version bump and a stated reason.
 
 ---
 
@@ -19,17 +25,19 @@ shared across KRYLO surfaces.
 
 The change establishes:
 
-1. Six structural domains as the primary user-facing analytical substrate.
+1. Six structural domains as the primary user-facing analytical substrate
+   (**coordinate axes, not lenses**).
 2. A reusable domain intelligence primitive authored once per domain.
 3. Subject-scoped reuse of that primitive in Target Packets.
-4. Formation as downstream synthesis of observations and admitted relationships
-   across all six domains.
+4. Formation as a downstream, **total** synthesis operator over the six
+   subject-scoped observation sets — **never a scope of the application function**.
 5. Replacement of the existing perceptual viewport-lens controls with
    structural-domain controls, subject to a truth-first behavioral audit.
 6. Independent governance of the existing role-lens abstraction, including its
-   explicit relationship to Role-Play Protocol §13.
-7. Inspection of every internal primitive exposed through the Data Substrate before
-   feature completion.
+   explicit relationship to Role-Play Protocol §13, **under the constraint that
+   role never becomes a parameter of domain intelligence or application**.
+7. Inspection of every internal primitive exposed through the Data Substrate
+   before feature completion.
 
 This specification does not assume that all required domain intelligence currently
 exists in code. Where intelligence does not yet exist, the system must expose only
@@ -40,8 +48,6 @@ explicit provisional placeholders.
 
 ## 2. Architectural Principle
 
-KRYLO shall implement:
-
 > **Capture once → scope repeatedly → synthesize afterward.**
 
 Let `𝒟` be the finite, LOCKED set of structural domains:
@@ -50,55 +56,83 @@ Let `𝒟` be the finite, LOCKED set of structural domains:
 𝒟 = { CAPITAL, OWNERSHIP, TECHNOLOGY, KNOWLEDGE, LABOR, MEDIA }
 ```
 
+These are **coordinate axes of the substrate, not lenses.** Coordinate-axis
+integrity requires **distinct structural attribution**, not statistical independence:
+
+```
+d_i ≠ d_j  ⇒  distinct structural attribution
+```
+
+This does NOT imply `d_i ⊥ d_j` in the statistical sense unless that independence
+is separately demonstrated. Observed signals across domains may (and frequently
+will) be correlated; cross-domain correlation is a **necessary input** to structure
+detection and to Formation. (See §9, §18.)
+
 A domain's analytical intelligence is a fixed authored object `I_d` for each `d ∈ 𝒟`.
 
-### 2.1 Scope is two-dimensional
+### 2.1 Scope
 
-Scope is a pair `s = (spatial, temporal)`:
+Application scopes are restricted to:
 
 ```
-spatial  ∈  { Field, Subject }          strict order:  Field ≺ Subject
-temporal ∈  { Live, Historical, Forecast }   (the existing SIGNAL SCOPE control)
+S_A = { Field, Subject }        strict order:  Field ≺ Subject
 ```
 
-`𝒮_A = { Field, Subject } × { Live, Historical, Forecast }`
+**Formation is NOT an element of `S_A`.** It is a separate total operator `F` (§15).
+This is load-bearing: it structurally prevents Formation from being implemented as
+"just another scope," which is the path by which it would come to manufacture
+observations.
 
-**Cross-domain is NOT a scope of `A`.** Formation is a separate operator (§14),
-not `A` at a third scope. This is load-bearing: it structurally prevents Formation
-from being implemented as "just another scope," which is the path by which it
-would come to manufacture observations.
+Scope is multi-dimensional. The spatial component is drawn from `S_A`. A **known
+orthogonal temporal axis** already exists in the codebase — the SIGNAL SCOPE
+control (`LIVE / HISTORICAL / FORECAST WINDOW`, `signalScope` state in
+`analysisidlefield.jsx`). A full scope tuple is:
 
-`Forecast` overlaps `SPEC-KRYL-1225` (Formation Forecast Boundary) — the
-observed/extrapolated split defined there governs any `temporal = Forecast`
-application. `A(d, (·, Forecast), ·)` never renders an extrapolated region unless
-KRYL-1225's trajectory conditions hold.
+```
+s = (spatial, temporal)
+spatial  ∈ S_A
+temporal ∈ { Live, Historical, Forecast }
+```
+
+`FORECAST` overlaps `SPEC-KRYL-1225` (Formation Forecast Boundary) — its
+observed/extrapolated split governs any `temporal = Forecast` application. The
+temporal dimension is a **known axis of `s`** to be fully resolved in a subsequent
+revision; `s` is not treated as silently scalar.
 
 ### 2.2 Application function
 
 ```
-A : 𝒟 × 𝒮_A × Subject  →  ObservationSet          (partial)
+A : 𝒟 × S_A × Subject  →  ObservationSet          (partial)
 ```
 
-Changing `s` changes the observed values. It never changes the vocabulary or the
-analytical contract of `I_d`.
+**Role is never a parameter of `A` or of `I_d`:**
+
+```
+role ∉ A       role ∉ I_d
+```
+
+Role may shape the subject/query that enters `A`, or the narrative that exits
+Formation. It may not modify the observation contract.
+
+Changing spatial or temporal scope changes observed values; it never changes the
+vocabulary or the analytical contract of `I_d`.
 
 ### 2.3 Scope model
 
-| Surface       | spatial | Function `A(d, s, ·)`                                         |
-|---------------|---------|--------------------------------------------------------------|
-| Surface       | Field   | Observe structural activity across `𝒟`                       |
-| Target Packet | Subject | Apply the same `I_d` to a concrete subject/question           |
-| Formation     | —       | Separate operator `F` over the six Subject-scoped results (§14) |
+| Surface       | Spatial | Function                                                    |
+|---------------|---------|------------------------------------------------------------|
+| Surface       | Field   | Observe structural activity across `𝒟`                     |
+| Target Packet | Subject | Apply the same `I_d` to a concrete subject/question         |
+| Formation     | —       | Total synthesis `F` over the six subject-scoped observation sets |
 
 ---
 
 ## 3. Three Existing "Lens" Concepts — Strict Separation
 
-The implementation currently contains three distinct concepts. They are three
-pairwise-disjoint families:
+The three families are **pairwise disjoint**:
 
 ```
-L_V ∩ L_R ∩ L_D = ∅      (pairwise)
+L_V ∩ L_R = ∅        L_V ∩ L_D = ∅        L_R ∩ L_D = ∅
 ```
 
 - `L_V` = perceptual viewport lenses
@@ -129,8 +163,7 @@ any replacement, Track #1's truth-first audit must produce a total function
 δ : L_V → { preserve, replace, retire, relocate }
 ```
 
-plus the complete behavioural matrix (§19). No element of `L_V` may be silently
-discarded.
+plus the §19 behavioural matrix. No element of `L_V` may be silently discarded.
 
 **Known inconsistency (document, do not treat as progress):** `floatingtoolbar.jsx`
 displays `OPPORTUNITY` as `OWNERSHIP` (`LABELS` override) while every `viewportLens`
@@ -151,14 +184,15 @@ CEO, Investor, Realtor.
 ρ : L_R → { remain, demote-to-session/query, internal-only, remove }
 ```
 
-If `ρ` yields removal or material alteration, **Role-Play Protocol §13 must receive
-an explicit CLAUDE.md amendment before any code change is merged.**
+**Constrained decision space (makes Tracks 1–3 genuinely parallel):**
 
-**Hard constraint (makes #2 ∥ #3 genuine):** whatever `ρ` decides, **role must
-never become a parameter of `A` or `I_d`.** Role may shape the subject/query going
-in, or the narrative coming out — it may not modify the observation contract. If
-role were allowed to modify what a domain observes, `A(d,s,subject)` would become
-`A(d,s,subject,role)` and Track #2 would block Track #3. It does not.
+- Role must never become a parameter of `A` or of any `I_d`.
+- Role may shape inbound subject/query context or outbound narrative presentation.
+- Role may not modify what a domain observes.
+
+If `ρ` yields removal or material alteration, **Role-Play Protocol §13 must receive
+an explicit CLAUDE.md amendment before any code change is merged.** Parallelism of
+Tracks 1–3 holds only under this constraint.
 
 Semantic distinction (non-negotiable):
 
@@ -190,10 +224,16 @@ I_d = (
 )
 ```
 
-The analytical *content* of these fields is authored and ratified separately — the
-**Domain Intelligence Primitive — Authoring & Ratification Specification** (§23).
-That document is UI-free. This spec defines only the architectural role of the
-fields. Content is Founder-authored, never model-generated.
+The **successor spec** (`SPEC-domain-intelligence-primitive-authoring.md`) extends
+each `I_d` with:
+
+- **evidence attribution** and a **structural-variable boundary statement** for the
+  domain (required for axis integrity, §18), and
+- a **maturity mark per field** ∈ `{ AUTHORED, PARTIAL, UNAUTHORED }` so the Data
+  Substrate knows what it may surface versus what remains a provisional placeholder.
+
+Content is Founder-authored / ratified, never model-generated. This spec defines
+only the architectural role of the fields.
 
 ---
 
@@ -211,14 +251,9 @@ A subject-scoped application:
 ```
 A(d, (Subject, t), subject) = (
   d, subject, scope,
-  signalIntensity,
-  observationCount,
-  polarity,
-  observations,
-  relationships,
-  tensions,
-  unresolvedDimensions,
-  sharpeningInputs
+  signalIntensity, observationCount, polarity,
+  observations, relationships, tensions,
+  unresolvedDimensions, sharpeningInputs
 )
 ```
 
@@ -263,40 +298,41 @@ Selecting a domain changes only the projection:
 π_d : A(·, (Subject, t), Subject) → DomainView
 ```
 
-never the subject, and never any other application input.
-
-**Tab invariance (full input frozen):**
+**Tab projection invariant (full input frozen):**
 
 ```
 ∀ d₁, d₂ ∈ 𝒟 :
-   ( subject, scope, queryContext, [role if it survives §3.2] )
-   is identical across π_{d₁} and π_{d₂};  only d differs.
+   ( subject, scope, queryContext )  identical across π_{d₁} and π_{d₂};
+   only the domain projection selector differs.
 ```
 
-The tab is a pure projection selector. Nothing upstream of `π_d` moves when the
-tab changes.
+The tab is a pure projection selector; nothing upstream of `π_d` moves when the
+tab changes. **Role is outside this tuple and outside `A`** (§3.2).
 
 Initial exposure may be limited to supported fields (§6). Unsupported dimensions
-remain explicitly absent (§18) — never faked.
+remain explicitly absent (§17) — never faked.
 
 ---
 
-## 9. Coordinate-Axis Framing & §18 Orthogonality
+## 9. Coordinate-Axis Framing
 
 The six domains are the **coordinate axes of the observable structural substrate**,
 not six "lenses." `I_d` defines what can legitimately be observed along axis `d`.
 
-This invokes **§18 Orthogonal Axis Integrity.** If the domains are the substrate's
-axes, their observations must span without overlapping: two domains' signal must
-not be driven by the same underlying evidence double-counted, or Formation's
-coherence detection inflates (two axes moving together that are one latent
-variable under different names).
+Axis integrity = **distinct structural attribution**, NOT statistical independence:
 
-**Requirement on Track #3:** each `I_d` carries an explicit **evidence-partition
-statement** — which sources feed this axis — and the authoring spec includes a
-pairwise orthogonality audit (`Independent / Partially / Fully Dependent — Risk —
-Action`, §18 format). This is what makes `F` trustworthy rather than
-self-confirming.
+- Observed signals across domains **may be correlated**, and such correlation is a
+  necessary input to structure detection and to Formation. It is not a defect.
+- Evidence **may be shared across domains** where it is legitimately relevant to
+  more than one axis.
+- **Forbidden:** counting the same *structural variable* (or the same observation
+  contribution) as **independent** support for multiple axes. That would inflate
+  `F`'s coherence detection — two axes moving together that are one latent variable
+  under different names.
+
+Orthogonality is therefore defined over **attributed structural variables**, not
+over raw sources and not over signal correlation. Track #3's per-domain
+structural-variable boundary statement (§18) is what enforces this.
 
 ---
 
@@ -365,14 +401,14 @@ Each field of each `I_d` carries a maturity mark:
 ```
 AUTHORED    ratified content exists; the Data Substrate may surface it
 PARTIAL     some content exists; surface only the ratified portion, mark the rest absent
-UNAUTHORED  no content; the field renders as classified absence (§18), never faked
+UNAUTHORED  no content; the field renders as classified absence (§17), never faked
 ```
 
 The Data Substrate reads maturity to decide what it may render.
 
 ---
 
-## 14. Analytical Sequence & Formation
+## 14. Analytical Sequence
 
 Mandatory sequence (strict partial order):
 
@@ -392,7 +428,11 @@ CROSS-DOMAIN SYNTHESIS
 FORMATION
 ```
 
-Formation is the terminal synthesis operator:
+Formation is reached only after the six subject-scoped observation sets exist.
+
+---
+
+## 15. Formation Boundary
 
 ```
 F : ∏_{d∈𝒟} A(d, (Subject, t), Subject)  →  CoherenceSet          (TOTAL)
@@ -401,69 +441,66 @@ F : ∏_{d∈𝒟} A(d, (Subject, t), Subject)  →  CoherenceSet          (TOTA
 - `F` is **total.** It always returns a `CoherenceSet` element.
 - `CoherenceSet` contains an explicit **`NO_COHERENCE_ESTABLISHED`** element,
   distinct from `⊥` ("not computed"). Formation never returns `⊥`; it returns
-  established-absence or established-coherence. (§16 Direction Honesty, KRYL-1225 §13.)
-- `F` may never manufacture observations, entities, or relationships absent from
-  its inputs.
+  established coherence or established absence of coherence. (§16 Direction
+  Honesty, KRYL-1225 §13.)
+- `F` consumes structural evidence generated upstream and may never manufacture
+  observations, entities, or relationships.
 
 ---
 
-## 15. Surface ↔ Target Packet Relationship
+## 16. Surface ↔ Target Packet Relationship
 
-Surface and Target Packet are the **same component at two scopes**:
+Surface and Target Packet are the **same component at two spatial scopes**:
 
 ```
 <StructuralSignalSubstrate scope={ (Field,   t) } />      // Macro Signal Report
 <StructuralSignalSubstrate scope={ (Subject, t) } />      // Target Packet 01
 ```
 
-They differ ONLY by `A(d, (Field, t), ·)` vs `A(d, (Subject, t), Subject)`. If
-they are separate components that merely look alike, they drift apart within two
-tickets. One component, `scope` prop, forces the reuse.
+For **equivalent temporal scope**, they differ by **spatial scope only**. Temporal
+scope is an **independent axis** and must NOT be implicitly changed by navigation
+between surfaces. If they are separate components that merely look alike, they
+drift apart within two tickets — one component, `scope` prop, forces the reuse.
 
 ---
 
-## 16. Inspectability (Data Taps)
+## 17. Inspectability & Absence-Is-Signal
 
-Every **emitted** metric `m` admits a total provenance function:
+Provenance is **total only over emitted metrics**:
 
 ```
 prov : M_emitted → P
 prov(m) = ( domain, source data, calculation, observation count, subject scope )
 ```
 
-An **absent** metric does not carry `prov` (it is not a fabricated metric) — but it
-is not free either: it carries a classified-absence value (§18). Neither emitted
-nor classified-absent = fabrication, prohibited.
+An **absent** metric is not free: §1 Absence-Is-Signal requires it to carry a class
+
+```
+absenceClass ∈ { structural, temporal, anomalous, filtered }
+```
+
+Emitted metrics receive provenance; absent metrics receive classified absence;
+anything that is neither is fabrication and is prohibited.
 
 Every internal primitive the Data Substrate computes must be an inspectable Data
 Tap before the feature is "done."
 
 ---
 
-## 17. Absence-Is-Signal
+## 18. Axis Integrity (Track #3 authoring requirement)
 
-If `observationCount = 0` or evidence is insufficient, the interface emits a
-**classified absence**, never a null/zero/undefined default:
+Because the six domains are coordinate axes, the authoring of each `I_d` must include:
 
-```
-absenceClass ∈ { structural, temporal, anomalous, filtered }
-```
+- an **evidence-attribution statement** (which sources contribute to this axis), and
+- a **structural-variable boundary**: which structural variables belong **uniquely**
+  to this domain versus which **legitimately overlap** another domain, and
+- a check that the same latent structural variable / observation contribution is
+  **not counted as independent support for multiple axes**.
 
-(CLAUDE.md §1.) Fabrication of a value or a false-neutral zero is prohibited.
-
----
-
-## 18. Tracks (dependency-ordered)
-
-- **Track #1** — Truth-first audit of `L_V`. Produces `δ : L_V → {preserve, replace,
-  retire, relocate}` and the §19 behavioural matrix. Covers: each current member's
-  rendering/gating effect, the §8 HUD contract, ConeMap `<Html>` portal boundary,
-  and the `OPPORTUNITY`/`OWNERSHIP` defect.
-- **Track #2** — Role-lens decision. Produces `ρ : L_R → {remain, demote, internal-only,
-  remove}` + any §13 amendment. Bound by §3.2's hard constraint (role ∉ params of `A`/`I_d`).
-- **Track #3** — Authoring of each `I_d` (§4 fields) in the separate UI-free spec
-  (§23), including the §9 evidence-partition statement and pairwise orthogonality
-  audit, and §13 maturity marks.
+Orthogonality is defined over attributed structural variables, not raw sources.
+Shared evidence is permitted where legitimately relevant to more than one axis;
+double-counting the same structural variable as independent evidence is forbidden
+— it would inflate `F`'s coherence detection.
 
 ---
 
@@ -481,25 +518,36 @@ For each `v ∈ L_V \ {NAV_SURFACE}`:
 | DRIFT | … | … | … | … |
 | OPPORTUNITY | … | … | … | … |
 
-Plus: does a six-domain selection imply a viewport treatment (option **c** from
-discussion — the field re-renders emphasising the selected domain's cones)? If so,
-each `d ∈ 𝒟` needs a defined viewport treatment — Founder design work.
+Plus: does a six-domain selection imply a viewport treatment (the 3D field
+re-renders emphasising the selected domain's cones)? If so, each `d ∈ 𝒟` needs a
+defined viewport treatment — Founder design work.
 
 ---
 
-## 20. Implementation Dependency Order (formal)
+## 20. Tracks (dependency-ordered)
 
-Investigation/authoring may run in parallel:
+- **Track #1** — Truth-first audit of `L_V`. Produces `δ` + §19 matrix. Covers each
+  member's rendering/gating effect, the §8 HUD contract, the ConeMap `<Html>` portal
+  boundary, and the `OPPORTUNITY`/`OWNERSHIP` defect.
+- **Track #2** — Role-lens disposition `ρ` under the §3.2 constraint (role ∉ params
+  of `A` / `I_d`) + any §13 amendment.
+- **Track #3** — Authoring of each `I_d` (§4 fields + §18 evidence attribution,
+  structural-variable boundaries, maturity marks) in the successor UI-free spec.
+
+---
+
+## 21. Implementation Dependency Order
+
+Authoring may run in parallel:
 
 ```
-T1  ∥  T2  ∥  T3
+T1  ∥  T2  ∥  T3          (parallelism holds only while §3.2's role constraint is observed)
 ```
 
-Implementation is a strict linear extension:
+Integration is strictly sequential after the authoring set:
 
 ```
 { T1, T2, T3 }
-   ≺ integration
    ≺ existing substrate (§6) mapped to I_d
    ≺ Target Packet Data Substrate
    ≺ six-domain navigation / tabs
@@ -509,57 +557,90 @@ Implementation is a strict linear extension:
 
 ---
 
-## 21. Non-Goals
+## 22. Non-Goals
 
 - Not a prediction, recommendation, or scoring change.
 - Not a redesign of the Inspection surface.
-- Does not author `I_d` content (that is §23).
+- Does not author `I_d` content (that is the successor spec).
 - Does not remove `L_R` (that is Track #2).
 - Does not alter the locked six-domain ontology.
 - Does not collapse the three lens families.
 
 ---
 
-## 22. Acceptance Criteria
+## 23. Acceptance Criteria
 
 - **AC-1** `L_V`, `L_R`, `L_D` remain pairwise disjoint in code; no state substitution across families.
-- **AC-2** `A` has signature `𝒟 × 𝒮_A × Subject → ObservationSet`; no `role` parameter.
-- **AC-3** `S_A` is `{Field, Subject} × {Live, Historical, Forecast}`; Formation is `F`, not `A` at a third scope.
+- **AC-2** `A` has signature `𝒟 × S_A × Subject → ObservationSet`; **no `role` parameter**, no `I_d` role parameter.
+- **AC-3** `S_A = {Field, Subject}`; Formation is the total operator `F`, not `A` at a third scope.
 - **AC-4** `01 ANALYSIS` contains no `STAKE / MOVE / WINDOW / LEVERAGE FIELD`.
-- **AC-5** Surface and Target Packet render the same `<StructuralSignalSubstrate>` component, differing only by `scope`.
-- **AC-6** Tab change moves only `π_d`; `(subject, scope, queryContext, [role])` provably unchanged.
+- **AC-5** Surface and Target Packet render the same `<StructuralSignalSubstrate>` component, differing only by spatial scope; temporal scope never changes implicitly on navigation.
+- **AC-6** Tab change moves only `π_d`; `(subject, scope, queryContext)` provably unchanged.
 - **AC-7** Every emitted metric has `prov(m)`; every absent metric has an `absenceClass`; nothing is faked.
 - **AC-8** `F` is total; `NO_COHERENCE_ESTABLISHED` is a distinct returnable value from `⊥`.
 - **AC-9** Each `I_d` field carries a maturity mark; the Substrate surfaces only `AUTHORED` / ratified-`PARTIAL` content.
 - **AC-10** Track #1's `δ` is total over `L_V`; no member silently discarded. `OPPORTUNITY`/`OWNERSHIP` defect resolved, not inherited.
 - **AC-11** If Track #2 alters `L_R`, a CLAUDE.md §13 amendment is merged in the same change.
-- **AC-12** Each `I_d` carries an evidence-partition statement; the §23 spec contains the pairwise orthogonality audit.
-
----
-
-## 23. Successor Spec
-
-**KRYLO Domain Intelligence Primitive — Authoring & Ratification Specification** —
-a separate, UI-free artifact. For each `d ∈ 𝒟` it answers:
-
-> What does this domain observe, measure, relate, distinguish, and mark unresolved?
-
-Per domain it defines: the nine `I_d` fields (§4), **evidence sources per
-observation**, a **maturity mark per field** (§13), and participates in the
-**pairwise orthogonality audit** (§9 / §18). It does not discuss UI.
+- **AC-12** Each `I_d` carries an evidence-attribution statement and a structural-variable boundary; domain observations satisfy **distinct structural attribution** (not statistical independence). Cross-domain signal correlation is permitted.
 
 ---
 
 ## 24. Governing Invariant
 
 ```
-∀ d ∈ 𝒟, ∀ s, s' ∈ 𝒮_A :
-   the analytical contract of I_d is independent of s.
+∀ d ∈ 𝒟, ∀ s ∈ S_A :
+   the analytical contract of I_d is independent of s and of role.
 ```
 
 Changing scope changes observed values; it never changes what constitutes an
 observation. The Surface observes the field; the Target Packet observes the
-searched subject; Formation determines coherence. The six domains are the unique
-user-facing substrate. Intelligence is authored once and reused.
+searched subject; Formation determines (or establishes the absence of) coherence.
+The six domains are the unique user-facing substrate and are treated as coordinate
+axes with **distinct structural attribution**. Intelligence is authored once and
+reused.
 
 > **Capture once → scope repeatedly → synthesize afterward.**
+
+---
+
+## Core chain (locked)
+
+```
+                 SIX DOMAINS
+             coordinate substrate
+                     │
+                     ▼
+              Domain Intelligence
+                    I_d
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+       FIELD                 SUBJECT
+       scope                  scope
+          │                     │
+          ▼                     ▼
+   Macro Signal          Target Packet
+                          Data Substrate
+                                  │
+                                  ▼
+                         Six subject-scoped
+                          observation sets
+                                  │
+                                  ▼
+                            STRUCTURE
+                          relationships
+                                  │
+                                  ▼
+                            FORMATION
+                               F(·)
+```
+
+## Lens boundaries (locked)
+
+- `L_V` — legacy/current viewport state machinery being audited and potentially replaced (Track #1).
+- `L_R` — role/context machinery governed separately (Track #2); never a parameter of `A` or `I_d`.
+- `L_D` — internal domain intelligence definitions (Track #3).
+
+The user sees none of those as "lenses." The user sees:
+**CAPITAL · OWNERSHIP · TECHNOLOGY · KNOWLEDGE · LABOR · MEDIA** and the data those
+domains expose.
