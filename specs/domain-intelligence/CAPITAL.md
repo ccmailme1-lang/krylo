@@ -1,16 +1,64 @@
 # CAPITAL — Domain Intelligence Primitive (`I_CAPITAL`)
 
-**Status:** DRAFT FOR FOUNDER RATIFICATION
-**Version:** 0.1
+**Status:** RATIFIED — Founder decision 2026-08-29 (§0). `I_CAPITAL` authorized as a
+primitive. Field-content maturity corrected per F1 (§12). **Integration NOT authorized**
+(`{T1, T2, T3} ≺ integration`, frozen spec §21).
+**Version:** 0.2 (post-ratification)
 **Domain:** CAPITAL
-**Parent:** `../SPEC-domain-intelligence-primitive-authoring.md` · `../SPEC-structural-domain-substrate-architecture.md` v0.2.2
-**Derived from:** FROZEN Architecture v0.2.2 + Track #1 complete
-**Current maturity:** DRAFT — candidate structural vocabulary and several observation
-classes have explicit project precedent; no field is ratified until the §13 checklist passes.
+**Parent:** `../SPEC-domain-intelligence-primitive-authoring.md` · `../SPEC-structural-domain-substrate-architecture.md` v0.2.2 · `../SPEC-domain-substrate-integration-contract.md`
+**Authoritative reference (F7):** `../SPEC-observable-substrate-revelation-contract.md`
+= **"SPEC II"**, §5 CAPITAL — **LOCKED** (that doc, line 352).
 
-> Authoring content below was written by the Founder against the project record.
-> The **Ratification Record** at the end is Claude's pressure-test (not authoring).
+> Authoring content was written by the Founder against the project record.
+> The **Ratification Record** (§14) is Claude's pressure-test.
 > No conclusion, financial attractiveness, or forecast is implied by anything here.
+
+---
+
+## 0. Ratification Decision (Founder, 2026-08-29)
+
+CAPITAL is Founder-ratified with these dispositions:
+
+- **F1** — maturity corrected to honest `UNAUTHORED + cite` where precedent is not
+  yet ratified. (Applied in §12. See the note below: F1 was decided before F7
+  located SPEC II §5 as a **LOCKED** reference — fields that trace directly to
+  SPEC II §5 have *ratified* precedent and are marked `PARTIAL`, not `UNAUTHORED`;
+  Founder to confirm any promotion to `AUTHORED`.)
+- **F2** — raw financial observations remain distinct from derived
+  financing-pressure classifications. Derived "pressure" retains its
+  calculation/provenance and never replaces the underlying quantity.
+- **F3** — **dimension ≠ signal.** The current §3/§4 content conflates them; no
+  field may ratify past `PARTIAL` until the split is authored
+  (dimension = the axis; signal = a measurable quantity + unit + 0–100 normalization).
+- **F4** — the structural-variable boundary explicitly separates *capital
+  held/concentrated* from *ownership/control*. The **vehicle case** is named: a
+  fund/SPV is both a capital container and an ownership structure; one filing
+  carrying both facts must not let "concentration" count on both axes.
+- **F5** — `constraint` remains **UNAUTHORED**.
+- **F6** — `relationships` scope is separated from internal `tensionPatterns`;
+  `I_CAPITAL.relationships` is the cross-domain admission set for `F`. Formation
+  remains downstream.
+- **F7** — **SPEC II §5** is pinned as the authoritative reference:
+  `SPEC-observable-substrate-revelation-contract.md` §5 CAPITAL (LOCKED).
+- **Q8** — same immutable `I_CAPITAL` at Field and Subject scope. Ratified
+  (`../SPEC-domain-substrate-integration-contract.md` AC — Lens Primitive Reuse).
+
+### F7 — SPEC II §5 CAPITAL (LOCKED), verbatim schema map
+
+| SPEC II §5 field | content |
+|---|---|
+| Domain | Movement, allocation, financing, and deployment of capital. |
+| Observable Objects | funds; ETFs; institutional portfolios; corporate balance sheets; financing vehicles; capital commitments; debt instruments; equity issuances. |
+| Observation Classes | sector/fund/ETF flows; financing rounds; debt issuances; capital calls; buybacks; dividends; large-scale reallocations; measurable changes in capital intensity; deployment velocity changes. |
+| Question | Where is capital moving, what is changing around that movement, and what does the movement make possible or constrain? |
+| Conditions | concentration; scarcity; deployment velocity; liquidity pressure; financing stress; strategic reallocation. |
+| Relationships | Capital sources ↔ recipients ↔ intermediaries ↔ asset classes ↔ linked ownership, technology, labor, or knowledge shifts. |
+| Formation Contribution | capital structures; funding clusters; defensive liquidity positioning; cross-border capital realignment; capital formation around new capability/infrastructure. "A single capital movement does not automatically constitute a Formation." |
+| Evidence | flow data; transaction records; capital-structure disclosures; fund filings; contemporaneous observations from other domains. |
+| Unresolved | stated purpose versus actual deployment; secondary effects not yet visible; incomplete disclosure; conflicting signals regarding sustainability. |
+| Cross-Domain Propagation | Ownership (control financed), Technology (capability funded), Labor (capacity expanded/contracted), Knowledge (research financed), Media (attention to capital events). |
+
+The authoring below (§1–§11) is now reconciled against this locked source.
 
 ---
 
@@ -24,13 +72,14 @@ boundary is **structural, not evidentiary**: sources may be shared with other
 domains where legitimate, but the same latent structural variable may not be
 counted as independent support across axes.
 
-**Precedent.** The prior Capital design record defines the Capital purpose as
-perceiving where capital is massing, at what velocity, and under what financing
-pressure; the corresponding question asks where capital is moving, what changes
-around it, and what it enables or constrains.
-*(`specs/Krylo Six-Lens Experience/KRYLO Six-Lens Worksheet.dc.html:295-296`, "SPEC II §5".)*
+**Precedent (F7).** SPEC II §5 CAPITAL (LOCKED), "Domain": *"Movement, allocation,
+financing, and deployment of capital."* Question: *"Where is capital moving, what
+is changing around that movement, and what does the movement make possible or
+constrain?"* Corroborated by the Six-Lens Worksheet CAPITAL section
+(`specs/Krylo Six-Lens Experience/KRYLO Six-Lens Worksheet.dc.html:295-302`).
 
-**Maturity:** PARTIAL
+**Maturity:** AUTHORED — the axis identity and coordinate-axis claim are the
+Founder ratification (§0); content is verbatim from SPEC II §5 "Domain" (LOCKED).
 
 ---
 
@@ -54,30 +103,37 @@ pressure, capital movement, and liquidity as Capital concerns.
 
 ## 3. Signals
 
-| Signal | What it represents | Precedent | Maturity |
-|---|---|---|---|
-| Capital concentration | Relative concentration of observed capital activity | Explicit | PARTIAL |
-| Capital reallocation | Observable redistribution of capital | Explicit | PARTIAL |
-| Capital movement | Observable capital movement | Explicit | PARTIAL |
-| Deployment velocity | Rate/pace of observable capital deployment | Explicit design precedent (worksheet SURFACE ENCODING) | PARTIAL |
-| Financing pressure | Observable financing condition | Explicit | PARTIAL |
-| Liquidity pressure | Observable liquidity condition | Explicit but unresolved in prior output | PARTIAL |
-| Capital-flow alignment | Relationship between capital flows across observations | Prospectus precedent; currently only co-pressure is grounded | PARTIAL |
+> **F3 — UNAUTHORED.** This section conflates *signals* with *structural
+> dimensions* (§4). Per the ratified F3 disposition, a signal must be authored as
+> a **measurable quantity with a unit and 0–100 normalization** — none below have
+> that. The list is a candidate inventory, drawn from SPEC II §5 "Observation
+> Classes" (LOCKED): *sector/fund/ETF flows; financing rounds; debt issuances;
+> capital calls; buybacks; dividends; large-scale reallocations; measurable
+> changes in capital intensity; deployment velocity changes.*
+>
+> Each of those must be turned into a signal definition (`name`, what it measures,
+> unit, how it normalizes to 0–100) before this field can reach `PARTIAL`.
 
-Prior design output: concentration + reallocation **corroborated**, mid-cap
-financing stress **observed-not-established**, liquidity pressure **held open**.
-*(worksheet `:299` OUTPUT.)* Capital-flow alignment is PARTIAL because current
-domain pressure is not equivalent to actual flow evidence.
+Field-scope observation grades from prior output (not `I_d` ratification):
+concentration + reallocation **corroborated**; mid-cap financing stress
+**observed-not-established**; liquidity pressure **held open**
+*(worksheet `:299`)*. Capital-flow alignment stays weak because current domain
+pressure ≠ actual flow evidence.
 
-**Maturity:** PARTIAL
+**Maturity:** UNAUTHORED (blocked by F3)
 
 ---
 
 ## 4. Structural Dimensions
 
-The previously recorded chain — `dependency → concentration → commitment → flow →
-constraint` — is retained as a **candidate hypothesis, not adopted wholesale**.
-Current evidence supports this stronger candidate structure:
+**Ratified basis (F7):** SPEC II §5 "Conditions" (LOCKED) — *concentration;
+scarcity; deployment velocity; liquidity pressure; financing stress; strategic
+reallocation.* These are the candidate CAPITAL structural dimensions.
+
+The older `dependency → concentration → commitment → flow → constraint` chain is
+retained as a **candidate hypothesis only, not adopted** — it predates SPEC II §5
+and is not its equal. Per F3, each dimension below is the **axis**; its measurable
+`signal` (§3) is separate and still unauthored.
 
 ### 4.1 Concentration — ACCEPT AS CANDIDATE
 Observes where capital becomes concentrated or distributed.
@@ -117,12 +173,19 @@ Capital-specific structural-variable boundary for "constraint."
 
 ## 5. Relationships
 
-- **Concentration ↔ Reallocation** — capital may concentrate while exhibiting observable redistribution.
-- **Deployment ↔ Financing Pressure** — deployment activity observed alongside financing conditions.
-- **Capital Flow → Sources / Intermediaries / Recipients** — where actual flow evidence exists (worksheet's "halo" relationship). Current grounded set distinguishes actual flow evidence from mere domain co-pressure.
-- **Capital ↔ Other Domains** — cross-domain participation, but cross-domain admission belongs to the STRUCTURE layer, not a Capital conclusion. Precedent: financing edges CAPITAL↔OWNERSHIP, CAPITAL↔TECHNOLOGY *(worksheet `:297`)*.
+Per **F6**, `I_CAPITAL.relationships` is the **cross-domain admission set for `F`**
+— not intra-domain pairs (those moved to §7 `tensionPatterns`).
 
-**Maturity:** PARTIAL
+- **Capital sources ↔ recipients ↔ intermediaries ↔ asset classes** — where actual
+  flow evidence exists (SPEC II §5 Relationships). The grounded set distinguishes
+  actual flow evidence from mere domain co-pressure.
+- **Capital ↔ Ownership** (control financed), **Capital ↔ Technology** (capability
+  funded), **Capital ↔ Labor** (capacity expanded/contracted), **Capital ↔
+  Knowledge** (research financed), **Capital ↔ Media** (attention to capital
+  events) — SPEC II §5 Cross-Domain Propagation. Admission only; **synthesis of
+  these is deferred to `F`** (integration contract D2).
+
+**Maturity:** PARTIAL — traces to SPEC II §5 (LOCKED); pending orthogonality check (§11) + checklist.
 
 ---
 
@@ -150,6 +213,9 @@ entity-specific leverage and treats them as materially different observations.
 - **Deployment ↔ Liquidity** — deployment activity observed while liquidity conditions remain unresolved/constrained.
 - **Capital Activity ↔ Financing Conditions** — deployment/movement observed against financing conditions that may constrain it.
 - **Observed ↔ Unresolved** — capital activity is measurable while the evidence to establish the underlying financing/liquidity condition is insufficient (compatible with the absence discipline: unresolved stays unresolved).
+
+These are **intra-CAPITAL** patterns (per F6, distinct from §5 `relationships`,
+which is the cross-domain admission set).
 
 **Maturity:** PARTIAL
 
@@ -196,11 +262,18 @@ entity identity, CIK, calculated D/E ratio, as-of date, and SEC provenance
 *(`src/engine/chokepointedges.js`, `entitytopologyregistry.js`;
 `classifyLeverageTier` / `deRatio` in `src/engine/querysynthesis.js`)*.
 
-**Attribution rule.** Raw financial observations remain observations. Derived
-classifications ("pressure") must retain their calculation/provenance and may not
-replace the underlying quantity.
+**Attribution rule (F2, RATIFIED).** Raw financial observations remain
+observations. A derived classification ("financing pressure") retains its
+calculation and provenance and never replaces the underlying quantity. Grounding
+for this rule is CLAUDE.md §14 (no single-scalar costume) + the KRYL-1175
+hardcoded-`deRatio` incident (`querysynthesis.js:683`) — **not** an inherited
+"leverage ≠ pressure" precedent (F2 finding: `perceptionhydrator.js:12` actually
+conflates them).
 
-**Maturity:** PARTIAL
+SPEC II §5 Evidence: flow data; transaction records; capital-structure
+disclosures; fund filings; contemporaneous cross-domain observations.
+
+**Maturity:** PARTIAL — rule ratified; the source→structural-variable mapping is UNAUTHORED (pending §11 orthogonality check).
 
 ---
 
@@ -221,34 +294,73 @@ Shared **evidence** is permitted; shared **latent variables** are not.
 - *Allowed:* a corporate filing providing evidence relevant to both CAPITAL and OWNERSHIP.
 - *Forbidden:* counting one underlying "control concentration" variable once as CAPITAL concentration and again as OWNERSHIP concentration because the source contains both facts.
 
+**Vehicle case (F4, RATIFIED).** A fund / ETF / SPV / financing vehicle (SPEC II §5
+Observable Objects) is simultaneously a **capital container** and an **ownership
+structure**. The boundary:
+- *observing that a vehicle holds or has massed concentrated capital* → **CAPITAL**
+- *observing who controls / holds the vehicle* → **OWNERSHIP**
+- one fund filing carrying both facts contributes evidence to both axes but its
+  "concentration" latent variable is attributed **once**, to CAPITAL — OWNERSHIP
+  does not independently re-count it as control concentration.
+
 Cross-domain correlation remains legitimate and is necessary for STRUCTURE / FORMATION.
 
-**Maturity:** PARTIAL
+**Maturity:** PARTIAL — F4 clause ratified; the full six-domain boundary matrix (`../SPEC-domain-intelligence-primitive-authoring.md` §6) is UNAUTHORED until the other five `I_d` exist.
 
 ---
 
-## 12. Maturity Summary
+## 12. Maturity Summary (corrected per F1)
 
-| Field | Mark |
-|---|---|
-| observes | PARTIAL |
-| signals | PARTIAL |
-| structuralDimensions | PARTIAL (candidate chain recorded, unratified; `constraint` UNAUTHORED) |
-| relationships | PARTIAL |
-| relevanceConditions | PARTIAL |
-| tensionPatterns | PARTIAL |
-| missingDimensions | PARTIAL |
-| sharpeningInputs | PARTIAL |
-| evidenceAttribution | PARTIAL |
-| structuralVariableBoundary | PARTIAL |
+`PARTIAL` here means: **ratified precedent exists** (SPEC II §5, LOCKED) but the
+field is not yet `AUTHORED` — it still needs the F3 dimension/signal split, the
+§11 orthogonality check, and the §13.checklist. Nothing is `AUTHORED`. Nothing
+renders in the Data Substrate yet.
 
-**Explicitly UNAUTHORED:** `constraint` as a defined Capital structural variable;
-capital-flow semantics beyond the grounded subset; subject-specific application
-(depends on the separate subject-scoping contract).
+| Field | Mark | Basis / blocker |
+|---|---|---|
+| observes | PARTIAL | SPEC II §5 Observable Objects + Observation Classes (LOCKED) |
+| signals | **UNAUTHORED** | blocked by F3 — not yet split from structuralDimensions (no unit / 0–100 normalization authored) |
+| structuralDimensions | PARTIAL | SPEC II §5 Conditions (LOCKED): concentration, scarcity, deployment velocity, liquidity pressure, financing stress, strategic reallocation. `constraint` **UNAUTHORED** (F5). Old `dependency→…→constraint` chain = candidate hypothesis only. |
+| relationships | PARTIAL | SPEC II §5 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); synthesis deferred to `F` |
+| relevanceConditions | PARTIAL | partial trace to SPEC II §5; macro-vs-entity distinction authored |
+| tensionPatterns | PARTIAL | intra-CAPITAL (F6); derived from §4 dimensions, so inherits their maturity |
+| missingDimensions | PARTIAL | SPEC II §5 Unresolved (LOCKED) + the flow-evidence / temporal-history gaps |
+| sharpeningInputs | **UNAUTHORED** | candidate list only; no ratified precedent; depends on subject-scoping contract |
+| evidenceAttribution | **UNAUTHORED** | F2 *rule* ratified; the source→structural-variable *mapping* is not authored |
+| structuralVariableBoundary | PARTIAL | F4 vehicle clause ratified; full 6×6 matrix UNAUTHORED until other five `I_d` exist |
+
+**Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
+mapping, `constraint` (F5), capital-flow semantics beyond the grounded subset,
+subject-specific application (subject-scoping contract).
+
+**Founder confirm:** F1 was decided before F7 located SPEC II §5 as **LOCKED**.
+The `PARTIAL` fields above trace to that locked source and are candidates for
+promotion to `AUTHORED` once F3 (split) and the §11 orthogonality check are done —
+that promotion is a Founder call, not applied here.
 
 ---
 
-## 13. Ratification Questions (Founder)
+## 13. Ratification Questions — ANSWERED (Founder, 2026-08-29)
+
+| # | question | ruling |
+|---|---|---|
+| Q1 | CAPITAL owns concentration / reallocation / deployment / financing pressure / liquidity as primary vocabulary? | **YES** — per SPEC II §5 "Conditions" (LOCKED, F7). |
+| Q2 | "flow" and "reallocation" — one dimension or two? | **NOT RULED.** Recommendation: one — SPEC II §5 says "strategic reallocation" and flow is its observable expression. Resolve during the F3 signal split. |
+| Q3 | retain "commitment" or ratify "deployment"? | **NOT RULED.** Recommendation: "deployment" — SPEC II §5 uses "deployment velocity" / "deployment". Pending Founder. |
+| Q4 | is "constraint" a Capital dimension? | **NO — stays UNAUTHORED** (F5). Not in SPEC II §5 Conditions; the Question's "constrain" is not a defined variable. |
+| Q5 | financing pressure — observation, or separate derivation layer? | **Both, kept distinct (F2).** The raw financial observation is an observation; "financing pressure" as a classification is derived and retains its provenance — it never replaces the quantity. |
+| Q6 | does the Capital/Ownership boundary hold? | **YES, with the F4 vehicle clause** (§11): vehicle-holds-capital = CAPITAL; who-controls-vehicle = OWNERSHIP; "concentration" attributed once. |
+| Q7 | does evidence attribution satisfy orthogonality? | **Rule ratified (F2); mapping UNAUTHORED.** The source→structural-variable map is done during the 6×6 boundary matrix, once the other five `I_d` exist. |
+| Q8 | same immutable `I_CAPITAL` at both scopes? | **YES** — ratified; `../SPEC-domain-substrate-integration-contract.md` AC. |
+
+**Net:** `I_CAPITAL` structure, axis identity, boundary (incl. vehicle), and the
+F2/F3/F6 authoring rules are **ratified**. Content maturity is §12. `constraint`
+and `signals` stay UNAUTHORED. **Still open for the Founder:** Q2 (flow/reallocation
+one or two) and Q3 (commitment vs deployment) — recommendations above, not rulings.
+Nothing renders until those resolve + the F3 split + §11 orthogonality check + Data
+Substrate integration (still gated).
+
+### Original open questions (kept for record)
 
 1. Does CAPITAL own concentration, movement/reallocation, deployment/commitment, financing pressure, and liquidity as its primary structural vocabulary?
 2. Should "flow" and "reallocation" be one dimension or two?
@@ -286,9 +398,13 @@ Until ratified, the Data Substrate may surface only ratified-PARTIAL portions.
 
 ---
 
-## Ratification Record — Pressure-Test (Claude, 2026-08-29)
+## 14. Ratification Record — Pressure-Test (Claude, 2026-08-29)
 
 Method: each precedent claim checked against the repo. Not authoring — findings only.
+**Founder dispositions on F1–F7 are in §0 and §13; this section is the original
+pre-ratification pressure-test, kept for the record.** F7 was resolved here:
+"SPEC II §5" = `../SPEC-observable-substrate-revelation-contract.md` §5 (LOCKED),
+which is materially stronger precedent than the worksheet fragments below.
 
 ### Precedent check — VERIFIED
 
