@@ -1,9 +1,9 @@
 # CAPITAL — Domain Intelligence Primitive (`I_CAPITAL`)
 
-**Status:** RATIFIED — Founder decision 2026-08-29 (§0). `I_CAPITAL` authorized as a
-primitive. Field-content maturity corrected per F1 (§12). **Integration NOT authorized**
-(`{T1, T2, T3} ≺ integration`, frozen spec §21).
-**Version:** 0.2 (post-ratification)
+**Status:** RATIFIED — Founder decision 2026-08-29 (§0), F1–F7 + Q1–Q8 all closed.
+`I_CAPITAL` authorized as a primitive. Field-content maturity per F1 (§12).
+**Integration NOT authorized** (`{T1, T2, T3} ≺ integration`, frozen spec §21).
+**Version:** 0.3 (Q2/Q3 ratified)
 **Domain:** CAPITAL
 **Parent:** `../SPEC-domain-intelligence-primitive-authoring.md` · `../SPEC-structural-domain-substrate-architecture.md` v0.2.2 · `../SPEC-domain-substrate-integration-contract.md`
 **Authoritative reference (F7):** `../SPEC-observable-substrate-revelation-contract.md`
@@ -42,6 +42,12 @@ CAPITAL is Founder-ratified with these dispositions:
   `SPEC-observable-substrate-revelation-contract.md` §5 CAPITAL (LOCKED).
 - **Q8** — same immutable `I_CAPITAL` at Field and Subject scope. Ratified
   (`../SPEC-domain-substrate-integration-contract.md` AC — Lens Primitive Reuse).
+- **Q2 (2026-08-29)** — **Flow and Reallocation are TWO dimensions** (§4.2, §4.3).
+- **Q3 (2026-08-29)** — **DEPLOYMENT is the dimension** (§4.4). `commitment` is not
+  a dimension; it is an *observable evidence attribute* (`COMMITTED CAPITAL`) where
+  explicitly documented. Rationale: KRYLO observes structural conditions from
+  evidence, it does not infer intent; "commitment" as a dimension risks pulling
+  the lens toward intent / plans / promised future action.
 
 ### F7 — SPEC II §5 CAPITAL (LOCKED), verbatim schema map
 
@@ -89,7 +95,7 @@ CAPITAL observes:
 
 - **Capital concentration** — where capital is accumulating or becoming concentrated.
 - **Capital movement / reallocation** — observable movement or redistribution of capital.
-- **Capital deployment** — observable commitment or deployment activity.
+- **Capital deployment** — observable deployment of capital into an identified use, and its observable pace (Q3; `commitment` recorded as an evidence attribute where documented, not inferred).
 - **Financing pressure** — observable conditions affecting the availability or cost of financing.
 - **Liquidity conditions** — observable evidence concerning liquidity availability or pressure.
 - **Capital-flow relationships** — observable relationships involving sources, intermediaries, and recipients of capital where evidence supports them.
@@ -128,46 +134,76 @@ pressure ≠ actual flow evidence.
 
 **Ratified basis (F7):** SPEC II §5 "Conditions" (LOCKED) — *concentration;
 scarcity; deployment velocity; liquidity pressure; financing stress; strategic
-reallocation.* These are the candidate CAPITAL structural dimensions.
+reallocation.*
 
-The older `dependency → concentration → commitment → flow → constraint` chain is
-retained as a **candidate hypothesis only, not adopted** — it predates SPEC II §5
-and is not its equal. Per F3, each dimension below is the **axis**; its measurable
-`signal` (§3) is separate and still unauthored.
+**Q2 RATIFIED — Flow and Reallocation are TWO dimensions**, not one.
+**Q3 RATIFIED — the dimension is DEPLOYMENT**; `commitment` is not a dimension, it
+remains an *observable evidence attribute* where explicitly documented (§4.4).
 
-### 4.1 Concentration — ACCEPT AS CANDIDATE
-Observes where capital becomes concentrated or distributed.
-Precedent: explicitly identified as corroborated.
-**Boundary:** concentration of capital/resources, *not* concentration of
-ownership/control (that is OWNERSHIP).
+Rationale (Founder, 2026-08-29): *KRYLO observes structural conditions from
+evidence; it does not infer intent.* "Commitment" as a primary dimension risks
+pulling the lens toward intent / plans / promised future action. "Deployment" is
+what KRYLO can actually observe — capital deployed, where, when, at what rate.
+
+The older `dependency → concentration → commitment → flow → constraint` chain is a
+**candidate hypothesis only, not adopted** — it predates SPEC II §5. Per F3, each
+dimension below is the **axis**; its measurable `signal` (§3) is separate and still
+unauthored.
+
+### 4.1 Concentration
+Where capital becomes concentrated or distributed.
+**Boundary:** concentration of capital/resources, *not* ownership/control (that is
+OWNERSHIP; vehicle case in §11).
 Maturity: PARTIAL
 
-### 4.2 Reallocation / Flow — ACCEPT AS CANDIDATE
-Observes movement or redistribution of capital.
-Precedent: Capital's explicit design question; reallocation is a named output.
-**Boundary:** movement of *capital*. Information flow, labor movement, capability
-transfer, ownership transfer remain distinct domain variables.
+### 4.2 Flow
+The routing / movement of capital between sources, intermediaries, and recipients
+(SPEC II §5 Relationships; Observation Classes: "sector/fund/ETF flows").
+**Distinct from Reallocation** (§4.3): Flow is the *movement itself*; Reallocation
+is a *change in the allocation pattern*.
+**Boundary:** movement of *capital*. Information flow → MEDIA, labor movement →
+LABOR, capability transfer → TECHNOLOGY, ownership transfer → OWNERSHIP.
 Maturity: PARTIAL
 
-### 4.3 Commitment / Deployment — ACCEPT AS CANDIDATE, terminology TBR
-Observes observable commitment/deployment of capital.
-Precedent: worksheet identifies deployment velocity and strategic reallocation as
-Capital surface properties.
+### 4.3 Reallocation
+Strategic redistribution of capital — a shift in where capital is allocated
+(SPEC II §5 Conditions: "strategic reallocation").
+**Distinct from Flow** (§4.2): a large flow that does not change the allocation
+pattern is not reallocation; a reallocation is observable through the flows that
+effect it.
 Maturity: PARTIAL
 
-### 4.4 Financing Pressure — ACCEPT AS CANDIDATE
-Observes financing conditions surrounding capital activity.
-Precedent: prior Capital definition explicitly includes financing pressure.
-**Boundary:** not synonymous with a generic macro "pressure" perceptual lens; raw
-financial quantities must stay distinguishable from derived pressure
-classifications. *(Founder note — see Ratification Record F2 on the precedent for this.)*
+### 4.4 Deployment  *(Q3 — ratified term)*
+**Definition (Founder):** *Observable commitment of capital into an identified use,
+asset, activity, or vehicle, including the observable pace of that deployment where
+evidence supports it.*
+SPEC II §5: "deployment velocity changes", "deployment".
+`COMMITTED CAPITAL` may be carried as an **evidence attribute** on a Deployment
+observation where a commitment is explicitly documented (capital call, filing,
+transaction) — it is not a separate dimension.
 Maturity: PARTIAL
 
-### 4.5 Constraint — RETAIN AS HYPOTHESIS
-Appears in the original chain and the Capital question ("what does it
-enable/constrain"), but the record does not yet establish a precise
-Capital-specific structural-variable boundary for "constraint."
-**Maturity: UNAUTHORED**
+### 4.5 Financing Pressure
+Financing conditions surrounding capital activity (SPEC II §5: "financing stress").
+**Boundary (F2):** the raw financial quantity is an observation; "financing
+pressure" as a classification is *derived* and retains its calculation/provenance
+— it never replaces the quantity. Not synonymous with a generic macro "pressure".
+Maturity: PARTIAL
+
+### 4.6 Liquidity
+Liquidity availability / pressure (SPEC II §5: "liquidity pressure"). Prior output
+held this *open* (not established) — it stays a candidate.
+Maturity: PARTIAL
+
+### 4.7 Scarcity
+SPEC II §5 Conditions lists "scarcity" — carried as a candidate dimension; not yet
+distinguished in the authoring from Financing Pressure / Liquidity.
+Maturity: UNAUTHORED (not yet differentiated)
+
+### 4.8 Constraint — HYPOTHESIS ONLY
+In the original chain and the Capital Question ("enable or constrain"), but not a
+SPEC II §5 Condition and no precise Capital-specific variable boundary exists.
+**Maturity: UNAUTHORED (F5).**
 
 ---
 
@@ -195,7 +231,7 @@ A CAPITAL observation becomes relevant to a subject when:
 
 - the observed capital activity is attributable to the subject or its immediate structural environment;
 - the observation has sufficient evidence to establish its Capital attribution;
-- it materially concerns concentration, movement, deployment, financing, liquidity, or constraint;
+- it materially concerns concentration, flow, reallocation, deployment, financing pressure, or liquidity (the §4 axes; not `constraint` / `scarcity` — UNAUTHORED);
 - the temporal scope is compatible with the requested observation;
 - it is not merely a generic macro condition mis-attributed to the subject.
 
@@ -320,7 +356,7 @@ renders in the Data Substrate yet.
 |---|---|---|
 | observes | PARTIAL | SPEC II §5 Observable Objects + Observation Classes (LOCKED) |
 | signals | **UNAUTHORED** | blocked by F3 — not yet split from structuralDimensions (no unit / 0–100 normalization authored) |
-| structuralDimensions | PARTIAL | SPEC II §5 Conditions (LOCKED): concentration, scarcity, deployment velocity, liquidity pressure, financing stress, strategic reallocation. `constraint` **UNAUTHORED** (F5). Old `dependency→…→constraint` chain = candidate hypothesis only. |
+| structuralDimensions | PARTIAL | 8 axes (§4): Concentration, Flow, Reallocation, Deployment, Financing Pressure, Liquidity — PARTIAL (SPEC II §5, LOCKED). Scarcity (§4.7) and Constraint (§4.8) — **UNAUTHORED**. Q2/Q3 ratified. Old chain = candidate hypothesis only. |
 | relationships | PARTIAL | SPEC II §5 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); synthesis deferred to `F` |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §5; macro-vs-entity distinction authored |
 | tensionPatterns | PARTIAL | intra-CAPITAL (F6); derived from §4 dimensions, so inherits their maturity |
@@ -330,8 +366,9 @@ renders in the Data Substrate yet.
 | structuralVariableBoundary | PARTIAL | F4 vehicle clause ratified; full 6×6 matrix UNAUTHORED until other five `I_d` exist |
 
 **Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
-mapping, `constraint` (F5), capital-flow semantics beyond the grounded subset,
-subject-specific application (subject-scoping contract).
+mapping, dimension `constraint` (F5, §4.8), dimension `scarcity` (§4.7, not yet
+differentiated), capital-flow semantics beyond the grounded subset, subject-specific
+application (subject-scoping contract).
 
 **Founder confirm:** F1 was decided before F7 located SPEC II §5 as **LOCKED**.
 The `PARTIAL` fields above trace to that locked source and are candidates for
@@ -345,20 +382,21 @@ that promotion is a Founder call, not applied here.
 | # | question | ruling |
 |---|---|---|
 | Q1 | CAPITAL owns concentration / reallocation / deployment / financing pressure / liquidity as primary vocabulary? | **YES** — per SPEC II §5 "Conditions" (LOCKED, F7). |
-| Q2 | "flow" and "reallocation" — one dimension or two? | **NOT RULED.** Recommendation: one — SPEC II §5 says "strategic reallocation" and flow is its observable expression. Resolve during the F3 signal split. |
-| Q3 | retain "commitment" or ratify "deployment"? | **NOT RULED.** Recommendation: "deployment" — SPEC II §5 uses "deployment velocity" / "deployment". Pending Founder. |
+| Q2 | "flow" and "reallocation" — one dimension or two? | **RATIFIED (2026-08-29): TWO.** Flow = the movement of capital (§4.2); Reallocation = a change in the allocation pattern (§4.3). A large flow that doesn't shift allocation is not reallocation. |
+| Q3 | retain "commitment" or ratify "deployment"? | **RATIFIED (2026-08-29): DEPLOYMENT** (§4.4). Def: observable commitment of capital into an identified use/asset/activity/vehicle, incl. observable pace where evidenced. `commitment` → `COMMITTED CAPITAL` evidence attribute only, not a dimension. Rationale: substrate observes evidence, does not infer intent. |
 | Q4 | is "constraint" a Capital dimension? | **NO — stays UNAUTHORED** (F5). Not in SPEC II §5 Conditions; the Question's "constrain" is not a defined variable. |
 | Q5 | financing pressure — observation, or separate derivation layer? | **Both, kept distinct (F2).** The raw financial observation is an observation; "financing pressure" as a classification is derived and retains its provenance — it never replaces the quantity. |
 | Q6 | does the Capital/Ownership boundary hold? | **YES, with the F4 vehicle clause** (§11): vehicle-holds-capital = CAPITAL; who-controls-vehicle = OWNERSHIP; "concentration" attributed once. |
 | Q7 | does evidence attribution satisfy orthogonality? | **Rule ratified (F2); mapping UNAUTHORED.** The source→structural-variable map is done during the 6×6 boundary matrix, once the other five `I_d` exist. |
 | Q8 | same immutable `I_CAPITAL` at both scopes? | **YES** — ratified; `../SPEC-domain-substrate-integration-contract.md` AC. |
 
-**Net:** `I_CAPITAL` structure, axis identity, boundary (incl. vehicle), and the
-F2/F3/F6 authoring rules are **ratified**. Content maturity is §12. `constraint`
-and `signals` stay UNAUTHORED. **Still open for the Founder:** Q2 (flow/reallocation
-one or two) and Q3 (commitment vs deployment) — recommendations above, not rulings.
-Nothing renders until those resolve + the F3 split + §11 orthogonality check + Data
+**Net:** `I_CAPITAL` structure, axis identity, boundary (incl. vehicle), the
+F2/F3/F6 authoring rules, and the Q2/Q3 vocabulary are **all ratified**. Content
+maturity is §12. `constraint`, `scarcity`, and `signals` stay UNAUTHORED. Nothing
+renders until the F3 dimension→signal authoring + §11 orthogonality check + Data
 Substrate integration (still gated).
+
+**No CAPITAL Founder decisions remain open.**
 
 ### Original open questions (kept for record)
 
