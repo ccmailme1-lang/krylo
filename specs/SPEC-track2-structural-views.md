@@ -1,10 +1,11 @@
 # Track #2 — Residual Structural Views: Disposition Analysis
 
-**Status:** DRAFT — analysis for Founder disposition
-**Version:** 0.1
+**Status:** 3 of 5 dispositioned (Founder, 2026-08-29). SIGNAL / FLOW / CONVERGENCE
+ruled; **PRESSURE and DRIFT open — need a Founder definition** (§8). No implementation
+authorized (`{T1, T2, T3} ≺ integration`).
+**Version:** 0.2
 **Parent:** `SPEC-structural-domain-substrate-architecture.md` v0.2.2 §14 (`02 STRUCTURE`) · `SPEC-track1-viewport-lens-audit.md`
-**Method:** read-only code analysis, 2026-08-29. No code changed. No disposition is
-ruled here — this document answers the six questions per candidate; the Founder rules.
+**Method:** read-only code analysis, 2026-08-29. No code changed.
 
 > **Track #2 reframed (Founder, 2026-08-29):** the live question is *"which residual
 > structural views (SIGNAL / FLOW / PRESSURE / CONVERGENCE / DRIFT) are legitimate
@@ -160,14 +161,57 @@ limited today. Cut the vestigial `Cone` wire when actioned. T1 δ
   four CFO/CEO/INVESTOR/REALTOR briefs + Role-Play Protocol §13). Not blocking;
   `role ∉ A`, `role ∉ I_d` already locked.
 
-### Founder decisions requested
+---
 
-1. SIGNAL — retire as a view (recommendation)? 
-2. FLOW — retain inert as an `02 STRUCTURE` operator?
-3. PRESSURE — is "constraint vs available capacity" a distinct latent variable
-   (retain) or per-domain pressure re-displayed (retire)?
-4. CONVERGENCE — retain as `02 STRUCTURE`? (thresholds flagged UNCALIBRATED)
-5. DRIFT — retain pending an input definition (MEDIA-vs-rest vs per-domain narrative)?
-6. Role (`L_R`) — separate thin ruling, when convenient.
+## 8. Founder dispositions (2026-08-29)
 
-No code moves on any of these until `{T1, T2, T3} ≺ integration` clears.
+| view | disposition | note |
+|---|---|---|
+| **SIGNAL** | **RETIRE** — RULED | the domain substrate already carries `signalIntensity`; no second SIGNAL layer. Becomes the `CURRENT FIELD SIGNAL` hint (integration contract D3). |
+| **FLOW** | **RETAIN INERT** — RULED | concept valid (`02 STRUCTURE` operator); KRYLO has no directed-edge evidence today and does not fabricate it. Renders nothing until a relationship-edge substrate exists. |
+| **CONVERGENCE** | **RETAIN** — RULED | survives as a cross-domain `02 STRUCTURE` projection. Thresholds UNCALIBRATED → a later evidence/calibration issue, **not permission to invent certainty**. |
+| **PRESSURE** | **OPEN — needs Founder definition** | see §8.1 |
+| **DRIFT** | **OPEN — near-locked framing, input contract pending** | see §8.2 |
+| Role (`L_R`) | thin follow-on ruling, when convenient | `role ∉ A`, `role ∉ I_d` locked; §13 amendment if the CFO/CEO briefs are removed/altered |
+
+### 8.1 PRESSURE — the open question
+
+> Is PRESSURE a **genuine cross-domain structural measure** — calculated from the
+> relationship between **accumulated activity and available capacity** — or is it
+> just another way of displaying pressure already observed by individual domains?
+
+- If a distinct latent variable (activity ÷ capacity ceiling, computed uniformly
+  across all six) → **RETAIN** as `02 STRUCTURE`. Founder to define the capacity
+  term and the uniform computation.
+- If per-domain pressure re-displayed → **RETIRE**; it duplicates e.g.
+  `CAPITAL.financingPressure` (§17 Route-Don't-Aggregate, §18).
+
+The Founder will protect the former **if it can be properly defined**. The current
+impl (`Pressure₀` from a single confidence number, T PARTIAL) does not qualify.
+
+### 8.2 DRIFT — near-locked framing
+
+Locked architectural distinction (Founder):
+
+> **MEDIA** observes the information / narrative substrate.
+> **DRIFT** compares that substrate against the **observed structural evidence**.
+> DRIFT is *not* a second MEDIA primitive.
+
+```
+observed structural evidence   ↔   available narrative representation
+        (from the other domains)         (from MEDIA)
+                        └──── DRIFT ────┘
+```
+
+Still needed: the **precise input contract** — exactly which structural-evidence
+signals DRIFT reads, how it aligns them in time with the MEDIA narrative signal,
+and its output classes. Until that contract exists DRIFT is RETAINED but inert.
+
+---
+
+## 9. Posture
+
+- SIGNAL / FLOW / CONVERGENCE dispositioned; PRESSURE / DRIFT pending Founder
+  definition — **not blocking** the remaining `I_d` authoring.
+- No code moves on any of these until `{T1, T2, T3} ≺ integration` clears.
+- Retained views (FLOW, CONVERGENCE, DRIFT) live in frozen §14 `02 STRUCTURE`.
