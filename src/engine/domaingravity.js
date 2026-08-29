@@ -75,7 +75,10 @@ const QUERY_TO_SIGNAL_DOMAIN = {
 
 // ── Signal pool ────────────────────────────────────────────────────────────────
 
-// _pool: signalDomain → Array<{ confidence, polarity, ts }>
+// _pool: signalDomain → Array<{ confidence, polarity, ts, source, signal }>
+// WO-1 (2026-08-29): `source` + `signal` retained so per-facet attribution and the
+// shared-source distinct-facet AC are possible. Additive — every existing consumer
+// reads only { confidence, polarity, ts }. See specs/SPEC-connector-event-contract.md.
 const _pool = new Map(SIGNAL_DOMAINS.map(d => [d, []]));
 
 // Passive observer — subscribes to all surfaces, never dispatches.
@@ -94,6 +97,11 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     confidence: typeof event.confidence === 'number' ? event.confidence : 50,
     polarity:   isFracture ? 'fracture' : 'constructive',
     ts:         event.ts ?? Date.now(),
+    source:     event.source ?? null,
+    // `signal` is the connector's named signal ('TECHNOLOGY_VELOCITY:<cluster>') or,
+    // for numeric-signal connectors, the raw 0–100 value. Overloaded — the
+    // connector-event contract (SPEC-connector-event-contract.md) formalises this.
+    signal:     event.signal ?? null,
   });
 
   // Prune entries beyond 2× window to bound memory
