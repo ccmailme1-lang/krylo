@@ -4,9 +4,35 @@
 **Type:** Feature (guest experience)
 **Labels:** NEEDS-SPEC, guest-experience
 **Assignee:** Mr. XS
-**Status:** Spec draft — no code started.
+**Status:** Delivered (narrowed) — commit `b6cbfd3`. `timeline` chip live; `budget` /
+`decision` / `lens` / `asset` defined-but-gated pending their controls (**KRYL-1227**).
 **Baseline for equivalence:** `15a1d5a` / `baseline_targetpacket_kryl1218_20260828`
 **Depends on:** KRYL-1221 (Query Context Contract) — with an interim fallback (§4).
+
+---
+
+## DELIVERED SCOPE (KRYL-1222, narrowed)
+
+Audit of `analysisidlefield.jsx` found only one of the five routing-target
+controls mounted in the guest Analysis view — the horizon scrubber. FloorHistogram
+(defined, unrendered), the `rules` editor (defined, unrendered), and a real lens
+selector (absent — `lens` is set implicitly by a TRENDING chip click) do not
+exist to route to.
+
+Shipped:
+
+- `src/engine/completionchips.js` — full derivation for all five dimensions,
+  each with static Formation-grounded mechanic copy. Only `timeline` carries
+  `enabled: true`.
+- `analysisidlefield.jsx` — `COMPLETE THE PICTURE` row above TRENDING; the
+  `timeline` chip scrolls to + pulses the horizon scrubber; disappears once a
+  horizon is set. `CHIP_INTERACTION_EVENT` telemetry with `kind: 'completion'`.
+- `qa_completionchips.mjs` — 17/17.
+
+Deferred to **KRYL-1227**: mount the capital-floor control, the `rules` editor,
+and a real lens selector, then flip `enabled` for `budget` / `decision` /
+`lens` / `asset`. No engine or `tensor`-shape change — the derivation module and
+chip row already exist.
 
 ---
 
