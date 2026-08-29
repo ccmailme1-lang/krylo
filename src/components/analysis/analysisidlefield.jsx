@@ -1167,7 +1167,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       intent:             parsed.normalized_verb,
       parsed_intent:      parsed,
       temporal_horizon:   horizonRes,
-      horizon:            horizonRes?.bucket ?? 'MED',
+      // LD-1 fix: resolveHorizon() returns `.horizon` (IMMEDIATE/SHORT/MEDIUM/LONG/
+      // STRUCTURAL), never `.bucket` — so this was always the 'MED' fallback
+      // regardless of the scrubber. Now carries the guest's actual choice.
+      horizon:            horizonRes?.horizon ?? 'MEDIUM',
       horizonSet:         horizonTouched,
       rules:              rules.filter(r => r.value.trim().length > 0),
       constraintStrength: geometry.constraintStrength,

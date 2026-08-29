@@ -991,7 +991,10 @@ function synthGeneral(session, numbers, query) {
   // assesses) but is exposed as structured data (missingInputs) for ATTENTION/BASIS
   // to carry — it never enters the Primary Signal string.
   const gq = (query ?? '').toLowerCase();
-  const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|sell|invest|lease|hire|acquir|merg|refinanc|divest|exit|raise|expand|enter|relocat|consolidat)\b/.test(gq);
+  // LD-2: the `\b(stem)\b` wrapper made every stem alternative dead (`\bacquir\b`
+  // never matches "acquire"). Fixed to complete-word forms — adds purchase /
+  // acquisition and revives merge/refinance/divest/relocate/consolidate.
+  const hasDecision = /\b(vs\.?|versus|whether|should (?:i|we|they)|buy|buying|sell|selling|purchase|purchased|purchasing|invest|investing|lease|leasing|hire|hiring|acquire|acquiring|acquired|acquisition|merge|merger|merging|refinance|refinancing|divest|divesting|exit|exiting|raise|expand|expanding|enter|entering|relocate|relocating|consolidate|consolidating)\b/.test(gq);
   // KRYL-1222: a horizon the guest set through the scrubber counts the same as a
   // temporal word in the query text — symmetric with figureOK reading tensor.floor
   // below. tensor.horizonSet is written only when the control was actually touched

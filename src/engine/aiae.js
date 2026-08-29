@@ -39,11 +39,17 @@ const DOMAIN_WEIGHTS = {
 };
 
 // ── TTV bucket multipliers ─────────────────────────────────────────────────────
+// LD-1: keys cover both the legacy short names (NOW/MED) and the HORIZON_ORDER
+// vocabulary (IMMEDIATE/SHORT/MEDIUM/LONG/STRUCTURAL) that resolveHorizon().horizon
+// actually emits — so tensor.horizon no longer falls through to the `?? 'MED'` default.
 const TTV_MULTIPLIER = {
-  NOW:   1.00,
-  SHORT: 0.65,
-  MED:   0.30,
-  LONG:  0.15,
+  NOW:        1.00,
+  IMMEDIATE:  1.00,
+  SHORT:      0.65,
+  MED:        0.30,
+  MEDIUM:     0.30,
+  LONG:       0.15,
+  STRUCTURAL: 0.08,
 };
 
 const DIMS = ['impact', 'confidence', 'novelty', 'actionability', 'timeToValue', 'evidenceStrength'];
