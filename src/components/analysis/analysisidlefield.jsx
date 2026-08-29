@@ -14,6 +14,8 @@ import { classifyConvergenceState, applyTransitionPolicy } from '../../engine/co
 import { emitTelemetry, getTelemetryLog, emitChipInteraction } from '../../engine/telemetry.js';
 import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '../../engine/temporalhorizon.js';
 import { parseIntent }                from '../../engine/intentparser.js';
+import { buildQueryContext }          from '../../engine/querycontext.js';
+import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
@@ -761,6 +763,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const [missingField,    setMissingField]    = useState(null);
   const [advancedOpen,    setAdvancedOpen]    = useState(false);
   const [rules,           setRules]           = useState([]);
+  // KRYL-1222 — completion chip routing: brief highlight on the control a chip opens.
+  const [pulseHorizon,    setPulseHorizon]    = useState(false);
+  const horizonSectionRef = useRef(null);
+  const pulseHorizonTimer = useRef(null);
   const [signalVisible,   setSignalVisible]   = useState(false);
   const [processing,      setProcessing]      = useState(false);
   const [rightPanel,      setRightPanel]      = useState('BRIEF');
@@ -901,6 +907,58 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       chips: chips.map(c => ({ label: c.label, source: trendingResult.chipSources?.get(c.label) ?? 'unknown' })),
     });
   }, [trendingResult, seedQuery, selectedDomains]);
+
+  // ── KRYL-1222 — Completion chips ────────────────────────────────────────────
+  // Prescriptive "what's missing" layer. Reads the KRYL-1221 QueryContext for the
+  // live query text (buildQueryContext is pure), never re-parses. Only the
+  // `timeline` chip is enabled today — its control (the horizon scrubber) is the
+  // only routing target currently mounted; the rest are defined-but-gated in
+  // completionchips.js pending their controls (separate ticket).
+  const liveQueryContext = useMemo(
+    () => buildQueryContext(seedQuery.trim()),
+    [seedQuery],
+  );
+  const completionChips = useMemo(
+    () => activeCompletionChips({
+      queryContext: liveQueryContext,
+      selectedFloor,
+      horizon,
+      activeLens,
+    }),
+    [liveQueryContext, selectedFloor, horizon, activeLens],
+  );
+
+  const lastLoggedCompletionRef = useRef(null);
+  useEffect(() => {
+    if (!completionChips.length) return;
+    const signature = completionChips.map(c => c.id).join('|');
+    if (signature === lastLoggedCompletionRef.current) return;
+    lastLoggedCompletionRef.current = signature;
+    emitChipInteraction({
+      kind: 'completion',
+      action: 'render',
+      query: seedQuery.trim(),
+      chips: completionChips.map(c => ({ id: c.id, target: c.target })),
+    });
+  }, [completionChips, seedQuery]);
+
+  useEffect(() => () => clearTimeout(pulseHorizonTimer.current), []);
+
+  function routeCompletionChip(chip) {
+    emitChipInteraction({
+      kind: 'completion',
+      action: 'click',
+      query: seedQuery.trim(),
+      chipId: chip.id,
+      target: chip.target,
+    });
+    if (chip.target === 'horizon') {
+      horizonSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setPulseHorizon(true);
+      clearTimeout(pulseHorizonTimer.current);
+      pulseHorizonTimer.current = setTimeout(() => setPulseHorizon(false), 1600);
+    }
+  }
 
   const frameId       = isLive ? `live-${stats?.received ?? 0}` : `hist-${currentIndex}`;
   const attractorActive = focused || seedQuery.trim().length > 0;
@@ -1408,7 +1466,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           </div>
 
           {/* ── SECTION 2: HORIZON DRIFT SCRUBBER ── */}
-          <div style={{ flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}` }}>
+          <div ref={horizonSectionRef} style={{
+            flexShrink: 0, padding: '12px 20px', borderBottom: `1px solid ${BORDER_FAINT}`,
+            boxShadow: pulseHorizon ? `inset 0 0 0 1px ${LIME}` : 'inset 0 0 0 1px transparent',
+            transition: 'box-shadow 300ms ease',
+          }}>
             {(() => {
               const hIdx = horizon ? HORIZON_ORDER.indexOf(horizon) : -1;
               const pct  = hIdx >= 0 ? (hIdx / (HORIZON_ORDER.length - 1)) * 100 : 0;
@@ -1802,6 +1864,35 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </label>
                   ))}
                 </div>
+
+                {/* ── COMPLETE THE PICTURE (KRYL-1222) ── */}
+                {/* Prescriptive layer: what the query is missing, not what it typed (that's
+                    TRENDING). Derivation is the activeCompletionChips memo above. A chip states
+                    its mechanic and, on click, opens the existing control — it never fills a
+                    value. Only `timeline` is enabled today (its control is the only one mounted). */}
+                {completionChips.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>COMPLETE THE PICTURE</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {completionChips.map(chip => (
+                        <div key={chip.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                          <button
+                            onClick={() => routeCompletionChip(chip)}
+                            style={{
+                              flexShrink: 0, fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
+                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                              color: LIME, transition: 'all 140ms', whiteSpace: 'nowrap',
+                            }}
+                          >{chip.label}</button>
+                          <span style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.5, color: 'rgba(255,255,255,0.32)', paddingTop: 4 }}>
+                            {chip.mechanic}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* ── TRENDING ── */}
                 {/* Founder directive 2026-08-11. Computation lives in the trendingResult useMemo
