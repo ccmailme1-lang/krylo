@@ -75,6 +75,38 @@ unit-of-analysis question has a working answer.
 
 ---
 
+## 3a. Worked failure — "Is Anduril a good acquisition target?" (live, 2026-08-29)
+
+A concrete case of the entity path failing today. Observed packet render:
+
+- **Subject not resolved.** "Anduril" is an ERK-resolvable entity (defense tech
+  company). The system instead grabbed `"Is Anduril"` as a 2-word chunk →
+  `Anchor: IS ANDURIL`, `Lens: IS ANDURIL`, `P4 … IS ANDURIL LENS`. Pseudo-lens
+  defect (same class as the "DAVID MILLER BUDGET" incident).
+- **Routed to `GENERAL`** because the *question* is broad — even though the
+  *subject* is fully resolvable.
+- **Real signal discarded.** The render carries `Live OWNERSHIP signal: 56/100,
+  29 active signals, fracture polarity` + `05 PROVENANCE: MEASURED` — yet PRIMARY
+  SIGNAL says "no anchoring inputs detected" and PROVENANCE says "No verified
+  record found … add a dollar amount". (Signal-resolution-mechanic territory.)
+- Legacy generic scaffold rendered: STAKE / MOVE / WINDOW / LEVERAGE FIELD,
+  "select your situation type", "add a capital floor", CAC/ROAS/LTV.
+
+**Load-bearing distinction (Founder, 2026-08-29):** a question insufficient for a
+*decision conclusion* is **not** insufficient for *observing the subject through
+the six domains*. `subjectScope("Is Anduril a good acquisition target?")` must
+yield `{ kind: 'ENTITY', canonicalId: <Anduril> }` and the packet must run
+`A(d, Anduril)` for all six `d`. The acquisition verdict stays unscored; the six
+domain observations are still owed.
+
+**Adjacent (non-blocking) bug found:** the KRYL-1218 `hasDecision` regex matches
+`acquir` (acquire/acquiring/acquired) but **not "acquisition"** — so "acquisition
+target" reads as a directional signal with no decision detected. One-line fix
+available (`acquir` → `acquir|acquisition`), but it patches the legacy layer this
+architecture retires; note it, don't prioritise it.
+
+---
+
 ## 4. A minimum working contract (for the entity case only)
 
 ```

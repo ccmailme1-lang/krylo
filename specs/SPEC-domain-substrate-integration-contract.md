@@ -108,6 +108,33 @@ changing.
 **Fail:** packet-specific domain logic, duplicated lens definitions, altered
 observation rules, packet-specific analytical primitives.
 
+### AC — No subject-derived lens (RATIFIED 2026-08-29)
+
+Given a **resolvable subject** (an entity: a company, instrument, deal, person —
+`SPEC-subject-scoping-contract.md` ENTITY path), the packet MUST invoke the six
+existing `I_d` primitives with that subject **bound as the subject**. It MUST NOT:
+
+- mint a lens / anchor / domain from the subject string (e.g. "IS ANDURIL LENS",
+  "IS ANDURIL" anchor — the current pseudo-lens defect);
+- route to `GENERAL` because the *question* is broad.
+
+**Load-bearing distinction:** a question that is *insufficient for a decision
+conclusion* is not *insufficient for observing the subject through the six
+domains*. "Is Anduril a good acquisition target?" → subject = **Anduril** (ERK-
+resolvable) → run `A(d, Anduril)` for all six d. The decision conclusion may
+remain unscored; the six domain observations are still owed.
+
+**Validation target (for when integration opens):**
+> Query "Is Anduril a good acquisition target?" produces six domain scrolls —
+> `A(CAPITAL, Anduril)` … `A(MEDIA, Anduril)` — each showing `I_d` fields scoped to
+> Anduril, then Formation `F(π₁…π₆)`. **Zero** occurrences of: STAKE / MOVE /
+> WINDOW / LEVERAGE FIELD, a `GENERAL` domain, an "ANDURIL"-derived lens or anchor,
+> "select your situation type", "add a capital floor", generic specificity advice,
+> or CAC / ROAS / LTV.
+
+Sits beside AC — Lens Primitive Reuse (Q8): same primitive, subject bound, no
+invention.
+
 ### AC — Panel/field correspondence
 
 Every packet domain-tab panel maps 1:1 to an `I_d` field. No panel without a
