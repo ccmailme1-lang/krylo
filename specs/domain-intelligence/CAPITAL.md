@@ -258,6 +258,30 @@ capital-flow semantics beyond the grounded subset; subject-specific application
 6. Does the stated Capital/Ownership boundary correctly distinguish capital concentration from ownership/control concentration?
 7. Does the evidence attribution satisfy the orthogonality requirement?
 
+### Q8 — Reusability Across Analytical Scope
+
+Does the CAPITAL implementation use the identical `I_CAPITAL` primitive for both
+field-scoped and subject-scoped analysis?
+
+**Required invariant:** `A(CAPITAL, Field)` and `A(CAPITAL, Subject)` MUST invoke
+the same `I_CAPITAL` definition unchanged. Scope is supplied through
+binding/context — not by modifying, duplicating, or re-teaching the primitive.
+
+The Target Packet is responsible for **subject binding, evidence resolution, and
+rendering**. It MUST NOT introduce a second definition of what CAPITAL observes,
+which signals it considers characteristic, which relationships it evaluates, or
+which relevance conditions apply.
+
+- **Pass:** identical `I_CAPITAL` produces both scopes with only
+  scope/evidence/context changing.
+- **Fail:** packet-specific CAPITAL logic, duplicated lens definitions, altered
+  observation rules, or packet-specific analytical primitives.
+
+Note: the packet's CAPITAL `RELATIONSHIPS` panel may expose relationships admitted
+by `I_CAPITAL` (Capital ↔ Ownership, Capital ↔ Technology) — a relationship
+*observed by the domain* is not Formation. Cross-domain **synthesis** of those
+observations remains deferred to `F` (`SPEC-domain-substrate-integration-contract.md`).
+
 Until ratified, the Data Substrate may surface only ratified-PARTIAL portions.
 
 ---
