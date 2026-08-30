@@ -17,7 +17,7 @@ export default function StructurePanel({ query }) {
 
   return (
     <div style={{
-      position: 'absolute', top: 0, left: '50%', right: 0, bottom: 0, zIndex: 10,
+      position: 'absolute', top: 64, left: '50%', right: 0, bottom: 0, zIndex: 10,
       background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)',
       display: 'flex', flexDirection: 'column',
     }}>
