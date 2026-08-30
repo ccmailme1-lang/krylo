@@ -112,6 +112,13 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 2026-08-29, CAPITAL.md §3.1). Once authored, a measure drops to Class D (needs a
 wired source) or C (data present).
 
+**Production-visible (KRYL-1229):** the Target Packet 01 ANALYSIS SIGNAL panel
+(`domainsubstratetabs.jsx`) reads `domainIntelligence(d).signalDefs`. An AUTHORED
+measure with `dataState: CLASS_D` renders as classified STRUCTURAL absence — measure
+name, `DATA UNAVAILABLE · SOURCE REQUIRED`, `absenceClass: STRUCTURAL`, plus the
+formula/boundary as reference. No fabricated value. Every authored measure now has a
+runtime state (value or explicit absence) from the moment it is authored.
+
 1–6. The six concentration measures — CAPITAL / OWNERSHIP / TECHNOLOGY / KNOWLEDGE
    (expertise) / LABOR (geographic) / MEDIA (attention).
 7. CAPITAL deployment velocity.

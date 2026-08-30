@@ -42,6 +42,53 @@ function Absent({ reason }) {
   );
 }
 
+// KRYL-1229 — the SIGNAL panel's authored-measure block. Renders a Founder-authored
+// I_d measure (domainIntelligence(d).signalDefs) by its state. It never fabricates,
+// defaults, or zero-fills a value: AUTHORED + no wired source renders as classified
+// structural absence, with the formula/boundary shown as reference only.
+function AuthoredMeasure({ name, def }) {
+  const label = name.replace(/_/g, ' ').toUpperCase();
+  const measured = def.value != null && Number.isFinite(Number(def.value));
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
+      <span style={{ fontFamily: MONO, fontSize: 9.5, color: BRT, letterSpacing: '0.12em' }}>{label}</span>
+      {def.measure && (
+        <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.04em' }}>{def.measure}</span>
+      )}
+
+      {measured ? (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+          <span style={{ fontFamily: MONO, fontSize: 18, color: LIME, fontVariantNumeric: 'tabular-nums' }}>
+            {Number(def.value).toFixed(0)}
+          </span>
+          {def.unit && <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{def.unit}</span>}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: ABSENCE, letterSpacing: '0.14em' }}>
+            DATA UNAVAILABLE · SOURCE REQUIRED
+          </span>
+          <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.1em' }}>
+            absenceClass: STRUCTURAL
+          </span>
+        </div>
+      )}
+
+      {def.formula && (
+        <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+          {def.formula}
+        </span>
+      )}
+      {def.boundary && (
+        <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+          {def.boundary}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ItemList({ items, color = BRT }) {
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 10px' }}>
@@ -60,6 +107,11 @@ function DomainScroll({ domain, pressure }) {
 
   const rels = relationshipsFor(domain);
   const hasSignal = pressure && pressure.signalCount > 0;
+
+  // KRYL-1229 — Founder-authored measures for this I_d. AUTHORED entries render as
+  // value or classified absence; anything still UNAUTHORED keeps the pending line.
+  const authoredMeasures = Object.entries(di.signalDefs || {}).filter(([, d]) => d?.maturity === 'AUTHORED');
+  const pendingMeasures = di.signals?.maturity === 'UNAUTHORED';
   const sourceTag = (di.axisSource || '').replace('specs/SPEC-observable-substrate-revelation-contract.md', 'SPEC II');
 
   return (
@@ -90,9 +142,19 @@ function DomainScroll({ domain, pressure }) {
         ) : (
           <Absent reason="No live signal in the current window. FIELD SCOPE — not scoped to a subject (WO-5B)." />
         )}
-        <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>
-          per-`I_d` signal definitions: UNAUTHORED (WO-1 Class E — measures pending Founder authorship)
-        </span>
+        {authoredMeasures.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: `1px solid ${RULE}`, paddingTop: 8, marginTop: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.16em' }}>AUTHORED MEASURE</span>
+            {authoredMeasures.map(([k, def]) => <AuthoredMeasure key={k} name={k} def={def} />)}
+          </div>
+        )}
+        {pendingMeasures && (
+          <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>
+            {authoredMeasures.length > 0
+              ? 'remaining per-`I_d` measures: UNAUTHORED (WO-1 Class E — pending Founder authorship)'
+              : 'per-`I_d` signal definitions: UNAUTHORED (WO-1 Class E — measures pending Founder authorship)'}
+          </span>
+        )}
       </Panel>
 
       <Panel ordinal="03" title="RELATIONSHIP">
