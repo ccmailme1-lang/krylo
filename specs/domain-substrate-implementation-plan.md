@@ -33,12 +33,22 @@ regardless of backend correctness.
    FEC → CAP) are the hard cases. KRYL-1228 (confidence normalization) is
    independent and runs alongside.
 
-2. **WO-5B subject binding** — the transition from **domain intelligence** to
-   **perceptual intelligence**. Today the panel proves *"MEDIA has an authored
-   narrative-coherence measure, but its source isn't wired."* WO-5B makes it
-   possible to say *"for this subject, MEDIA observes this."* `I_d` stays
-   reusable; `A(d, Subject)` supplies the binding; **no new domain primitive is
-   invented here.**
+2. **WO-5B subject binding** (KRYL-1234, `SPEC-WO5B-subject-binding.md`) — the
+   transition from **domain intelligence** to **perceptual intelligence**.
+   - **5B-1 DONE** (`0913c8f`) — `subjectscope.js` + `adsubject.js`. One canonical
+     subject before domain analysis; `A(d, Subject)` for ENTITY scope; classified
+     absence for GEO/DECISION_FRAME/UNRESOLVED. Packet 01 ANALYSIS is
+     subject-titled, each SIGNAL panel is `A(d, subject)`, field pressure demoted
+     to context. Anduril in the entity registry (WO-6 fixture).
+   - **5B-2 evidence binding** — `getDomainEvidenceFacets(domain,{subject})`
+     filters by structural containment (identifiers via `resolveByIdentifier`),
+     NOT mock affinity. `A(d,Subject).observations` populated.
+   - **5B-3 relationship UI** — admitted cross-domain edges between domains that
+     both carry a subject observation, shown explicitly (§20 becomes UI).
+   - **5B-4 formation candidate** — emerges from 5B-3 edges; `formationinference`
+     (already bound to the 15 types); `NO_FORMATION_ESTABLISHED` otherwise.
+   `I_d` stays reusable; `A(d, Subject)` supplies the binding; **no new domain
+   primitive is invented here.**
 
 3. **Relationships (UI)** — the six tabs stop behaving like six separate reports.
    The guest must not have to mentally perform *"CAPITAL says X, TECHNOLOGY says
