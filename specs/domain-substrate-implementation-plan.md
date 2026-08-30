@@ -131,9 +131,14 @@ Every OPEN row above carries the §0 acceptance question.
     in `readFacet` structurally bars any evidence facet from becoming a Class-E
     value. assignee-concentration + R&D-intensity = "not yet". All 12 measures
     unchanged (STRUCTURAL_ABSENCE).
-  - **WO-1C (KRYL-1232) / WO-1D (KRYL-1233) — OPEN.** Same pattern: distinct
-    evidence facets, no Class-E population unless the source supplies every
-    quantity the authored definition requires. **KRYL-1228** parallel.
+  - **WO-1C (KRYL-1232) — DONE.** `censusfacets.js` — LABOR national-employment
+    evidence + OWNERSHIP household-wealth evidence (national scope, `DOMAIN_EVIDENCE`).
+    No Class-E population (national ≠ subject concentration).
+  - **WO-1D (KRYL-1233) — DONE (partial).** `fecfacets.js` — CAPITAL
+    money-in-motion evidence. MEDIA facet **not built**: needs the FEC IE /
+    ad-spend endpoint (not wired) + a Founder saturation anchor; `mediaAdSpendFacet()`
+    returns null; no rescaled copy of the CAPITAL number. Open item on KRYL-1233.
+  - **KRYL-1228** parallel — infrastructure hygiene, does not hold the perceptual build.
 
 **Exit:** every authored measure either produces a subject-scoped 0–100 signal
 with provenance + single-axis attribution, or renders honest STRUCTURAL absence —
