@@ -87,6 +87,7 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
     // wired source yet -> renders classified absence. See CAPITAL.md §3.1.
     signalDefs: {
       capital_concentration: {
+        concept: 'capital concentration',
         measure: 'top-holder share',
         formula: 'max(holder_capital) / Σ(holder_capital) × 100',
         unit: 'percent (0–100, identity normalization)',
@@ -122,6 +123,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       items: ['control concentration / diffusion', 'ownership stress',
               'institutional re-bounding', 'strategic repositioning of control'],
       unauthored: ['ultimate beneficial control'],
+    },
+    // Authored measures (Founder). See OWNERSHIP.md §3.1.
+    signalDefs: {
+      ownership_concentration_top_holder_share: {
+        concept: 'ownership concentration',
+        measure: 'top-holder control share',
+        formula: 'max(holder_control) / Σ(holder_control) × 100',
+        unit: 'percent of control (0–100, identity normalization)',
+        polarity: 'higher = more concentrated control · lower = more distributed',
+        boundary: 'control-rights share — NOT economic capital concentration (CAPITAL)',
+        missingData: 'insufficient holder/control coverage → no measure (absenceClass: structural); never substitute capital share',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // compliant beneficial-ownership / voting-control source — not wired
+      },
     },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',

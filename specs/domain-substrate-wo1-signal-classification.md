@@ -56,7 +56,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | control-change event rate (M&A / divestiture / merger) | **B** | `edgar8k*` + `secownership` emit events; no windowed rate measure |
 | transaction value where disclosed | **C** | 8-K sometimes carries it; not extracted as a quantity |
 | new-entity / spin-out / consolidation count | **D** | no reliable wired source |
-| **ownership / control concentration measure** | **E** | Founder formula |
+| `ownership_concentration_top_holder_share` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-holder control share** = `max(holder_control) / Σ(holder_control) × 100`. Measure done; no wired source (beneficial-ownership / voting-control class). OWNERSHIP.md §3.1. Control-rights share, NOT capital (CAPITAL). |
 
 ### TECHNOLOGY — connectors: PatentsView(+OWN+CAP), GitHub, npm, Kalshi, FDA(partial), displacement engine
 
@@ -108,9 +108,11 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 
 ## The 12 Class-E measures (Founder authorship, WO-1 critical path)
 
-**Authored:** 1 of 12 — `capital_concentration` = **top-holder share** (Founder
-2026-08-29, CAPITAL.md §3.1). Once authored, a measure drops to Class D (needs a
-wired source) or C (data present).
+**Authored:** 2 of 12 —
+1. `capital_concentration` = **top-holder share** (Founder 2026-08-29, CAPITAL.md §3.1).
+2. `ownership_concentration_top_holder_share` = **top-holder control share** (Founder 2026-08-30, OWNERSHIP.md §3.1).
+
+Once authored, a measure drops to Class D (needs a wired source) or C (data present).
 
 **Production-visible (KRYL-1229):** the Target Packet 01 ANALYSIS SIGNAL panel
 (`domainsubstratetabs.jsx`) reads `domainIntelligence(d).signalDefs`. An AUTHORED

@@ -89,7 +89,45 @@ Candidate measurables to author (from Observation Classes):
 Each must become a signal definition (`name`, what it measures, unit, 0–100
 normalization) before this field reaches `PARTIAL`.
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **concentration** signal is now AUTHORED (§3.1);
+the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+
+### 3.1 Signal — `ownership_concentration_top_holder_share` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `ownership_concentration_top_holder_share` |
+| **measure** | OWNERSHIP concentration — top-holder control share |
+| **question** | How much control over the subject is held by the largest controlling holder? |
+| **definition** | Share of the subject's **control rights** attributable to the single largest holder, measured from voting, beneficial-ownership, or equivalent control instruments. |
+| **formula** | `ownership_concentration_top_holder_share = max(holder_control) / Σ(holder_control) × 100` |
+| **population** | identified holders of control over the relevant subject / entity / asset population. |
+| **unit** | % of control; normalization is identity → already `0–100`. |
+| **polarity** | higher = more concentrated control · lower = more distributed control. (A "concentrated vs distributed" *band* is a separate calibration, not part of this measure.) |
+| **provenance (required)** | holder identity · control instrument / type · control percentage or equivalent measure · as-of date · source filing / record · subject / entity identifier · calculation inputs sufficient to re-derive the result · `source_set_hash` / independence metadata (`signalfacet.js` contract). |
+| **missing-data rule** | insufficient holder / control coverage → **no measure** (`absenceClass: structural`). Never estimate, infer, zero-fill, or substitute capital share for control share. |
+
+**Boundary (six-way concentration invariant, ratified §11):** this measures
+**control concentration** — the largest holder's share of *control rights*. It is
+**not** economic capital concentration (CAPITAL). A holder may control an entity
+without holding the largest economic capital share, and vice versa. Where one
+filing reports both, OWNERSHIP reads the *control* share and CAPITAL reads the
+*economic capital* share — distinct facets of the same source (§2 invariant),
+neither relabelling the other's number.
+
+**Field-level magnitude:** this is a subject-level magnitude — it does not require
+naming a counterparty to have meaning — so it passes the dimension-vs-edge rule
+from the cross-domain consistency pass.
+
+**Precedent:** the top-N concentration ratio (CR-n; here CR-1) applied to control
+rights rather than economic capital — a standard concentration construct, cited
+convention.
+
+**Data state:** the *measure* is authored. **No current OWNERSHIP connector
+produces holder-level control shares** (SEC 13D/13G, EDGAR 8-K, Companies House,
+FEC, Census emit events/rates, not a control-share denominator) — the data source
+is WO-1 **Class D** (a compliant beneficial-ownership / voting-control source must
+be wired). Until then, this signal renders `absenceClass: structural`.
 
 ---
 
@@ -291,7 +329,7 @@ is UNAUTHORED until the other four `I_d` exist.
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §10 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | F3 — not split from dimensions; no unit / 0–100; concentration formula undefined |
+| signals | **PARTIAL** | `ownership_concentration_top_holder_share` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; the rest UNAUTHORED (F3) |
 | structuralDimensions | PARTIAL | SPEC II §10 Conditions (LOCKED): concentration/diffusion, ownership stress, institutional re-bounding, strategic repositioning. `ultimate beneficial control` **UNAUTHORED** (§4.5). |
 | relationships | PARTIAL | SPEC II §10 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §10; macro-vs-entity distinction authored |
@@ -301,9 +339,10 @@ is UNAUTHORED until the other four `I_d` exist.
 | evidenceAttribution | PARTIAL | source list repo-verified + F2 rule; mapping UNAUTHORED |
 | structuralVariableBoundary | PARTIAL | CAPITAL↔OWNERSHIP clause authored (both locked sources); full 6×6 UNAUTHORED |
 
-**Explicitly UNAUTHORED:** `signals` (F3), `sharpeningInputs`, `evidenceAttribution`
-mapping, dimension `ultimate beneficial control`, the ownership-concentration
-formula, subject-specific application.
+**Explicitly UNAUTHORED:** remaining `signals` beyond concentration (F3),
+`sharpeningInputs`, `evidenceAttribution` mapping, dimension
+`ultimate beneficial control`, subject-specific application.
+**Now AUTHORED:** `ownership_concentration_top_holder_share` (§3.1).
 
 **Nothing is AUTHORED for content. Nothing renders. Integration gated.**
 

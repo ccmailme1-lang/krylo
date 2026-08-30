@@ -47,7 +47,7 @@ function Absent({ reason }) {
 // defaults, or zero-fills a value: AUTHORED + no wired source renders as classified
 // structural absence, with the formula/boundary shown as reference only.
 function AuthoredMeasure({ name, def }) {
-  const label = name.replace(/_/g, ' ').toUpperCase();
+  const label = (def.concept || name.replace(/_/g, ' ')).toUpperCase();
   const measured = def.value != null && Number.isFinite(Number(def.value));
 
   return (

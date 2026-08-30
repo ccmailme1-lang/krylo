@@ -54,12 +54,15 @@ const cap = await tabDump('CAPITAL');
 console.log('01 ANALYSIS section present:', cap.has01);
 console.log('domain tabs present:', JSON.stringify(cap.tabsPresent));
 console.log('\n--- CAPITAL · SIGNAL panel ---\n' + cap.txt);
+const own = await tabDump('OWNERSHIP');
+console.log('\n--- OWNERSHIP · SIGNAL panel ---\n' + own.txt);
 const tech = await tabDump('TECHNOLOGY');
 console.log('\n--- TECHNOLOGY · SIGNAL panel ---\n' + tech.txt);
 
 await browser.close();
 
 const c = cap.txt.toUpperCase();
+const o = own.txt.toUpperCase();
 const t = tech.txt.toUpperCase();
 const checks = [
   ['01 ANALYSIS section rendered', cap.has01],
@@ -71,6 +74,14 @@ const checks = [
   ['CAPITAL: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(c)],
   ['CAPITAL: formula shown as reference', c.includes('HOLDER_CAPITAL')],
   ['CAPITAL: no fabricated numeric value on the measure line', !/TOP-HOLDER SHARE[^\n]*\n\s*\d/.test(c)],
+  ['OWNERSHIP: AUTHORED MEASURE label', o.includes('AUTHORED MEASURE')],
+  ['OWNERSHIP: OWNERSHIP CONCENTRATION', o.includes('OWNERSHIP CONCENTRATION')],
+  ['OWNERSHIP: measure name "top-holder control share"', o.includes('TOP-HOLDER CONTROL SHARE')],
+  ['OWNERSHIP: DATA UNAVAILABLE · SOURCE REQUIRED', o.includes('DATA UNAVAILABLE') && o.includes('SOURCE REQUIRED')],
+  ['OWNERSHIP: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(o)],
+  ['OWNERSHIP: formula shown as reference', o.includes('HOLDER_CONTROL')],
+  ['OWNERSHIP: boundary names capital exclusion', o.includes('NOT ECONOMIC CAPITAL')],
+  ['OWNERSHIP: no fabricated numeric value on the measure line', !/TOP-HOLDER CONTROL SHARE[^\n]*\n\s*\d/.test(o)],
   ['TECHNOLOGY: no AUTHORED MEASURE block', !t.includes('AUTHORED MEASURE')],
   ['TECHNOLOGY: pending line still shown', /PENDING FOUNDER AUTHORSHIP/.test(t)],
   ['no uncaught page errors', pageErrs.length === 0],
