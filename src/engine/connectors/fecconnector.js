@@ -12,6 +12,13 @@
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
+import { registerEvidenceFacetSource } from '../domainsignalresolution.js';
+import { fecEvidenceSource, setFecSignals } from '../facetproducers/fecfacets.js';
+
+// WO-1D (KRYL-1233): FEC feeds a distinct CAPITAL evidence facet (PAC-committee
+// money in motion). NOT a Class-E measure. The MEDIA facet must come independently
+// from the IE / ad-spend endpoint — no rescaled copy of the capital number.
+registerEvidenceFacetSource(fecEvidenceSource);
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -28,15 +35,18 @@ export async function runFecSync() {
     // One CAPITAL signal from the PAC committee count. (No MEDIA dispatch — see header.)
     const signal = clamp(Math.round(Math.min(100, (count / 5000) * 100)), 0, 100);
 
-    surfaceRouter.dispatchBatch([
+    const batch = [
       {
         source: 'FEC', domain: 'CAPITAL', signal,
         confidence: 0.70, ts, decay: DECAY.QUARTERLY,
         polarity: signal >= 30 ? POLARITY.POSITIVE : POLARITY.NEGATIVE,
       },
-    ]);
+    ];
+    surfaceRouter.dispatchBatch(batch);
+    setFecSignals(batch);   // WO-1D: same signal, re-derived as a CAPITAL evidence facet
     return { count, signal };
   } catch {
+    setFecSignals([]);
     surfaceRouter.dispatchBatch([
       { source: 'FEC', domain: 'CAPITAL', signal: 0, confidence: 0, ts },
     ]);

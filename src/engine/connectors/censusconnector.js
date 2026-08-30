@@ -12,6 +12,13 @@
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
+import { registerEvidenceFacetSource } from '../domainsignalresolution.js';
+import { censusEvidenceSource, setCensusSignals } from '../facetproducers/censusfacets.js';
+
+// WO-1C (KRYL-1232): Census also feeds distinct DOMAIN EVIDENCE facets
+// (LABOR employment, OWNERSHIP household wealth). NOT Class-E measures — evidence
+// is not a measure (Founder ruling, WO-1B precedent).
+registerEvidenceFacetSource(censusEvidenceSource);
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -63,8 +70,10 @@ export async function runCensusSync() {
     }
 
     if (signals.length > 0) surfaceRouter.dispatchBatch(signals);
+    setCensusSignals(signals);   // WO-1C: same signals, re-derived as distinct domain evidence facets
     return { income, laborForce, unemployed };
   } catch {
+    setCensusSignals([]);
     surfaceRouter.dispatchBatch([
       { source: 'CENSUS', domain: 'LABOR',     signal: 0, confidence: 0, ts },
       { source: 'CENSUS', domain: 'OWNERSHIP', signal: 0, confidence: 0, ts },
