@@ -201,19 +201,42 @@ observations`. A build guard / test asserts no such import path exists from
 
 ---
 
-## 5. Validation
+## 5. Validation — three layers, every stage (Founder, 2026-08-30)
 
-- `qa_subjectscope.mjs` — name extraction (Anduril from the question, not "IS
-  ANDURIL"), ENTITY / DECISION_FRAME / UNRESOLVED classification, San Francisco =
-  one subject.
-- `qa_adsubject.mjs` — `A(d, Subject)` for a resolved entity returns per-domain
-  `{measures resolvable, observations empty (5B-1), fieldContext present}`; for
-  DECISION_FRAME returns classified absence for all six; no field-pressure value
-  ever appears as a subject measure.
-- Live perceptual verification (Playwright) against the §0 acceptance test —
-  scripted per stage, the 5B-1 script asserts the packet is subject-titled and
-  every domain distinguishes the four states.
-- `vite build --mode development` clean; existing suites green.
+**A stage is CLOSED only when all three are green.** Not "implemented" — closed.
+
+1. **CONTRACT** — `qa_guest_acceptance_anduril.mjs` (the Guest Acceptance
+   Harness, contract layer) + the stage's own `qa_*.mjs`. Stage-gated: a stage
+   reads BLOCKED until its module exists. The harness's `5B-3`/`5B-4`/`LEGACY
+   PRIMARY SIGNAL` rows track forward and independent work.
+   - 5B-1: subject → canonical identity → `A(d,Subject)` for all six.
+   - 5B-2: only subject-contained evidence binds; unrelated evidence rejected
+     (`qa_subjectbinding.mjs` — the negative cases are the point).
+   - 5B-3: only observed endpoints create a relationship; only the 15 admitted
+     types appear.
+   - 5B-4: formation emerges only from admitted relationships; no narrative
+     invention.
+2. **GUEST (perceptual)** — `qa_guest_acceptance_anduril_live.mjs` drives the
+   deployed packet and records what the guest sees against the fixed Anduril
+   fixture (A subject · B six-domain observation · C evidence · D relationships ·
+   E formation · F truth boundary). Positive AND negative cases.
+3. **PRODUCTION (live)** — the same live run against the deployed build, 0
+   unexpected failures, baseline diff recorded (`qa/baselines/anduril_<stage>.json`).
+
+**The assembly test** (human, run at 5B-3): give someone who did not build it the
+subject and ask *"what is KRYLO observing about this subject, and what
+relationships do you see forming?"* — no pointers. If they must carry an
+observation from one tab to another to find the relationship, 5B-3 has failed §20
+regardless of contract correctness.
+
+Progression: 5B-1 *can KRYLO identify the subject?* → 5B-2 *can it correctly bind
+evidence?* → 5B-3 *can the guest perceive relationships without assembling them?*
+→ 5B-4 *can the guest perceive a formation emerging?* → WO-6 *can the whole
+experience survive the Anduril acceptance test?*
+
+Baseline: frozen at 5B-2 (`qa/baselines/anduril_5b2.json`); the 5B-1→5B-2 guest
+delta was OBSERVES wording only (identifier containment replaces the text-match
+stub) — no measure / absence change. Every later stage diffs against this.
 
 ## 6. Rollback
 
