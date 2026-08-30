@@ -1,0 +1,130 @@
+  ⏸ manual mode on · ? for shortcuts · ← 1 agent
+Last login: Tue Aug 11 18:41:40 on console
+concec@MacBookPro krylo % 
+concec@MacBookPro krylo % claude
+
+      → postMessage()                                                                                                                               
+      → app.jsx                                                                                                                                     
+      → setSurfaceExpanded(true)                                                                                                                    
+                                                                                                                                                    
+    This is the existing Surface-navigation contract, not an autonomous ConeMap event.                                                              
+                                                                                                                                                    
+    5. Apparent oscillation was not reproducible                                                                                                    
+                                                                                                                                                    
+    A subsequent clean test consisting of one Surface navigation followed by waiting produced:                                                      
+                                                                                                                                                    
+    maxCones: 3 → undefined                                                                                                                         
+                                                                                                                                                    
+    exactly once.                                                                                                                                   
+                                                                                                                                                    
+    No autonomous repetition or idle-state oscillation occurred.                                                                                    
+                                                                                                                                                    
+    The earlier apparent oscillation correlated with the contaminated test session involving refresh/resend activity.                               
+                                                                                                                                                    
+    Corrective Action                                                                                                                               
+                                                                                                                                                    
+    The corrective work focused on the visual transition behavior, preserving the underlying architectural state transitions.                       
+                                                                                                                                                    
+    The ConeMap suppression/interpolation mechanism was retained because the investigation confirmed it was functioning correctly.                  
+                                                                                                                                                    
+    No additional scale writer, suppression engine, or state synchronization mechanism was introduced.                                              
+                                                                                                                                                    
+    Final Status                                                                                                                                    
+                                                                                                                                                    
+    RESOLVED                                                                                                                                        
+                                                                                                                                                    
+    KRYL-1180 is not a ConeMap rendering defect.                                                                                                    
+                                                                                                                                                    
+    The incident resulted from two legitimate state transitions being visually perceived as one progressively worsening transition:                 
+                                                                                                                                                    
+    Live signal                                                                                                                                     
+        ↓                                                                                                                                           
+    suppression transition                                                                                                                          
+        ↓                                                                                                                                           
+Last login: Thu Aug 13 08:10:26 on console
+concec@MacBookPro krylo % claude
+
+     
+
+❯ LOCK IT. YOU DID IT. Finally!!!!                                                                                                                     
+  
+❯ finally                                                                                                                                              
+
+⏺ Locking it now.
+
+  Ran 1 shell command 
+
+❯ this is it                                                                                                                                           
+  
+⏺ Locked and tagged: baseline_conemap_final_20260814 at commit 8736eb5. This is it.
+
+  Localhost:5173 is running it now. Not deployed to prod (still at d57894d) — say the word when you want it pushed.
+
+✻ Sautéed for 1m 4s
+  
+❯ now we go to prod        
+  Ran 1 shell command 
+
+❯ deploy deploy deploy     
+⏺ Clean, everything committed at 8736eb5. Deploying to prod.
+
+  Ran 1 shell command 
+
+❯ down to the wire         
+⏺ Deployed. Build ✓, frontend + API deployed, krylo-api restarted clean, health check passed. krylo.org is live at 8736eb5 — the full map-drop fix,
+  right at the wire.
+
+✻ Sautéed for 59s 
+  
+※ recap: Fixed the choppy/dropping Hero-to-Surface cone map transition end to end and deployed it to krylo.org (commit 8736eb5). It's live and locked; 
+  next step is for you to verify it looks right on the real site.
+   
+❯ confirm live on krylo.org
+
+  ⏵⏵ accept edits on (shift+tab to cycle) · ← 1 agent
+  ⧉  KRYLO IP Overview - Standalone
+Last login: Fri Aug 14 19:45:40 on console
+concec@MacBookPro krylo % claude
+
+
+
+⏺ KRYL-1188 filed.
+
+⏺ Writing /private/tmp/claude-501/-Users-concec-Documents-web-apps-krylo/53b9b351-545c-4219-aac0-c984fe0bf6fa/scratchpad/retro4_handleexport.csv
+  ⎿  /private/tmp/claude-501/-Users-concec-Documents-web-apps-krylo/53b9b351-545c-4219-aac0-c984fe0bf6fa/scratchpad/retro4_handleexport.csv
+
+───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Create file
+ ../../../../../private/tmp/claude-501/-Users-concec-Documents-web-apps-krylo/53b9b351-545c-4219-aac0-c984fe0bf6fa/scratchpad/retro4_handleexport.csv
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+   1 Summary,Issue Type,Description,Labels
+   2 "[COMPLETED — retroactive record] handleExport() intelligence-eligibility gap closed",Bug,"STATUS: COMPLETED 2026-08-15. This ticket is a retro
+     active record of already-implemented, already-committed work — not an open work order.
+   3 
+   4 BEFORE: intelligencebrief.jsx computed isBriefWithheld (true for comparative/DIC-in-progress/DIC-ready states, where the brief should not be tr
+     eated as a resolved intelligence product) and used it correctly in the render-path ternary — but handleExport() had no equivalent guard. A user
+      could trigger export while the brief was in a withheld state, producing an exported document for content the UI itself was not presenting as r
+     esolved.
+   5 
+   6 IMPLEMENTED CHANGE (commit f7e4996 — fix: KRYL-1175 close handleExport() intelligence-eligibility gap, §26):
+   7 Extracted isBriefWithheld = isComparative || isDicPath || isDicReady as a single named const (previously the render path computed this inline, 
+     with no equivalent check on the export path) and added `if (isBriefWithheld) return;` as the first line of handleExport(). 
+   8 
+   9 NOW: export is blocked under the same conditions the render path already withholds the brief for — the two paths share one source of truth inst
+     ead of silently diverging.
+  10 
+  11 COMPONENTS: src/components/analysis/intelligencebrief.jsx — handleExport(), isBriefWithheld
+  12 
+  13 VALIDATION: build passed; found and fixed while validating the coas() fix (KRYL-1188) under §26 — testing that change surfaced this as a relate
+     d gap in the same file.
+  14 
+  15 ROLLBACK: git revert f7e4996.
+  16 
+  17 GUIDELINES: Governed by KRYL-1175 and CLAUDE.md §26 (export integrity — a field's provenance must be traced through its final consumer, not jus
+     t the screen). Filed to reflect actual project history, not to reopen the work.","completed retroactive krylo-1175"
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Do you want to create retro4_handleexport.csv?
+ ❯ 1. Yes                                                                                                                             
+   2. Yes, allow all edits in scratchpad/ during this session (shift+tab)
+   3. No
+

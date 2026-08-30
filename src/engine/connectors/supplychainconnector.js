@@ -116,7 +116,13 @@ async function buildSuppressionSignals() {
     signals.push({
       id:               `sc_suppression_${entityId}_${now}`,
       source:           'SUPPLY_CHAIN',
-      domain:           ['TECHNOLOGY', 'CAPITAL', 'LABOR'],
+      // WO-2: single domain. `suppressionFactor * 100` dispatched identically to
+      // TECHNOLOGY/CAPITAL/LABOR failed the distinct-facet AC. A facility disruption
+      // is a LABOR observation class (SPEC II §8 — "facility openings or closures");
+      // its TECHNOLOGY (infrastructure) and CAPITAL (cost) effects are second-order
+      // and belong to Formation, not to a relabeled dispatch. Founder to confirm the
+      // primary attribution. `suppressionFactor` (topology suppression) is unaffected.
+      domain:           'LABOR',
       signal:           `FACILITY_DISRUPTION:${entityId}`,
       confidence:       clamp(suppressionFactor * 100, 0, 100),
       ts:               now,

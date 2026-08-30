@@ -128,7 +128,11 @@ async function buildVelocitySignals(now) {
       signals.push({
         id:         `pv_velocity_${clusterLabel}_${now}`,
         source:     'PATENTSVIEW',
-        domain:     ['TECHNOLOGY', 'OWNERSHIP', 'CAPITAL'],
+        // WO-2: TECHNOLOGY only. The OWNERSHIP facet (assignee concentration) and the
+        // CAPITAL facet (R&D intensity) are distinct measures, not this number relabeled —
+        // both are WO-1 Class-E (pending Founder authorship). Dispatching `score` to all
+        // three failed the shared-source distinct-facet AC.
+        domain:     'TECHNOLOGY',
         signal:     `TECHNOLOGY_VELOCITY:${clusterLabel}`,
         confidence: score,
         ts:         now,
@@ -171,7 +175,7 @@ async function buildAssigneeSignals(now) {
         signals.push({
           id:         `pv_assignee_${clusterLabel}_${org.replace(/\s+/g, '_')}_${now}`,
           source:     'PATENTSVIEW',
-          domain:     ['TECHNOLOGY', 'OWNERSHIP', 'CAPITAL'],
+          domain:     'TECHNOLOGY',   // WO-2: see TECHNOLOGY_VELOCITY note above
           signal:     `ASSIGNEE_ACCELERATION:${clusterLabel}:${org}`,
           confidence: score,
           ts:         now,
@@ -236,7 +240,9 @@ async function buildMigrationSignals(now) {
     signals.push({
       id:         rc.id,
       source:     'PATENTSVIEW',
-      domain:     ['TECHNOLOGY', 'OWNERSHIP', 'CAPITAL'],
+      // WO-2: inventor migration is a KNOWLEDGE facet (embodied-expertise movement —
+      // KNOWLEDGE.md §11). The relation itself still flows through the M7 admission path above.
+      domain:     'KNOWLEDGE',
       signal:     `INVENTOR_MIGRATION:${rc.sourceId}→${rc.targetId}`,
       confidence,
       ts:         now,

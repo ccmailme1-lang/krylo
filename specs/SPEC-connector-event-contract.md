@@ -51,7 +51,7 @@ must handle both shapes.
 **Rule:** `confidence` is a probability in `[0, 1]`. A connector that computes a
 0–100 score MUST divide by 100 before dispatch.
 
-### DEFECT-WO1-CONF (ACTIVE — coordinated change required, not a drive-by)
+### DEFECT-WO1-CONF (ACTIVE — tracked as **KRYL-1228**; coordinated change, not a drive-by)
 
 `domaingravity._pool` currently stores `confidence` as emitted, mixing scales:
 
