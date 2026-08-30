@@ -14,6 +14,10 @@
 //   - never fabricate, estimate, zero-fill, or interpolate a value;
 //   - a producer's facet is REJECTED unless facet.domain_id === the asked domain
 //     (no cross-domain substitution — §17 / integration-contract);
+//   - a facet is REJECTED unless facet.ontology === CLASS_E_ONTOLOGY — an
+//     evidence facet (patent activity, coverage volume, …) is NOT a Class-E
+//     measure and cannot become one by being wired here (Founder ruling
+//     KRYL-1231: "facets yes; Class-E population no");
 //   - the facet must be a real signalfacet.js SignalFacet (provenance +
 //     source_set_hash + repro), or it does not count as resolved.
 
@@ -21,6 +25,11 @@ import { domainIntelligence } from './domainintelligence.js';
 import { makeSignalFacet } from './signalfacet.js';
 
 export const RESOLUTION_VERSION = 'wo-1a';
+
+// The one ontology a facet must carry to count as a Class-E measure value.
+// Evidence facets (DOMAIN_EVIDENCE, DOMAIN_ACTIVITY_INTENSITY, …) are structurally
+// barred from populating a Class-E measure — see the KRYL-1231 ruling.
+export const CLASS_E_ONTOLOGY = 'CLASS_E_MEASURE';
 
 // measureKey -> producer({ domain, measureKey, def, scope, subject? }) =>
 //   { facet }  — a makeSignalFacet result; facet.domain_id MUST === domain
@@ -53,6 +62,8 @@ function readFacet(facet, domain, measureKey, requiredSourceClass, requiredScope
   });
   if (!facet || facet.domain_id !== domain)
     return absent(`producer for ${measureKey} did not return a ${domain} facet`, { crossDomainRejected: true });
+  if (facet.ontology !== CLASS_E_ONTOLOGY)
+    return absent(`${measureKey}: facet ontology "${facet.ontology}" is evidence, not a Class-E measure`, { evidenceNotMeasure: true });
   if (!facet.source_set_hash || !facet.provenance)
     return absent(`${measureKey} facet is missing provenance / source_set_hash`);
   const raw = numericFromUnit(facet.signal_unit);
@@ -115,13 +126,41 @@ export function resolveDomainMeasures(domain, scope = 'field', subject = null) {
     .map(([measureKey]) => [measureKey, resolveClassEMeasure({ domain, measureKey, scope, subject })]);
 }
 
+// ── Domain evidence facets (WO-1B/C/D) ───────────────────────────────────────
+// A connector feeds DISTINCT evidence facets to one or more domains. Evidence is
+// NOT a measure — these never populate a Class-E signal (CLASS_E_ONTOLOGY guard
+// above). They are the inputs A(d, Subject) consumes later (WO-5B). Registered
+// sources return their facets (or [] when the source is unreachable / not yet
+// subject-scoped).
+export const EVIDENCE_FACET_SOURCES = [];   // WO-1B/C/D push { id, produce } here
+
+export function registerEvidenceFacetSource(source) {
+  if (source && typeof source.produce === 'function' && !EVIDENCE_FACET_SOURCES.some(s => s.id === source.id))
+    EVIDENCE_FACET_SOURCES.push(source);
+}
+
+// All available evidence facets for a domain, from every registered source.
+// `subject` is threaded for WO-5B; today sources ignore it or return [].
+export function getDomainEvidenceFacets(domain, { subject = null } = {}) {
+  const D = String(domain ?? '').toUpperCase();
+  const out = [];
+  for (const s of EVIDENCE_FACET_SOURCES) {
+    let facets = [];
+    try { facets = s.produce({ domain: D, subject }) ?? []; } catch { facets = []; }
+    for (const f of facets) {
+      if (f && f.domain_id === D && f.ontology !== CLASS_E_ONTOLOGY) out.push({ ...f, sourceId: s.id });
+    }
+  }
+  return out;
+}
+
 // Kept for symmetry with facetproducers.js — a producer helper that builds a
 // contract-compliant Class-E facet. WO-1B/C/D use this.
 export function makeClassEFacet({ domain, measureKey, value, provenance, source_set_hash, repro, ts = Date.now() }) {
   return makeSignalFacet({
     facet_id: `classe:${domain}:${measureKey}:${ts}`,
     domain_id: domain,
-    ontology: 'CLASS_E_MEASURE',
+    ontology: CLASS_E_ONTOLOGY,
     producer_id: provenance?.producer ?? 'class-e',
     source_set_hash,
     lineage_id: `classe:${domain}:${measureKey}`,

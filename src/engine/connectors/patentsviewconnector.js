@@ -10,6 +10,13 @@ import { extractMigrationCandidates } from '../producers/patentsviewmigrationpro
 import { admitCandidate } from '../admissionengine.js';
 import { Vocabulary } from '../truthevent.js';
 import { RelationType } from '../relationontology.js';
+import { registerEvidenceFacetSource } from '../domainsignalresolution.js';
+import { patentsViewEvidenceSource, setPatentsViewSignals } from '../facetproducers/patentsviewfacets.js';
+
+// WO-1B (KRYL-1231): PatentsView also feeds distinct DOMAIN EVIDENCE facets
+// (TECHNOLOGY / OWNERSHIP / KNOWLEDGE). These are NOT Class-E measures — evidence
+// is not a measure (Founder ruling). They become inputs to A(d, Subject) later.
+registerEvidenceFacetSource(patentsViewEvidenceSource);
 
 // Legacy api.patentsview.org (no auth, GET-shaped) was decommissioned — see the disabled-flag
 // comment below. Routed through the local server-side proxy (as-diff/engine.js
@@ -281,5 +288,6 @@ export async function runPatentsViewSync() {
   ];
 
   if (all.length > 0) surfaceRouter.dispatchBatch(all);
+  setPatentsViewSignals(all);   // WO-1B: same signals, re-derived as distinct domain evidence facets
   return all;
 }

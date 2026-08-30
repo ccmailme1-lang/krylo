@@ -71,12 +71,23 @@ const xr = resolveClassEMeasure({ domain: 'CAPITAL', measureKey: 'capital_concen
 ok('cross-domain facet REJECTED → absence', xr.status === 'STRUCTURAL_ABSENCE' && xr.crossDomainRejected === true);
 ok('rejected: no value leaked', xr.value === undefined);
 
-// 5. Facet without provenance / source_set_hash → not resolved.
+// 4b. Ontology guard — a facet that is not a CLASS_E_MEASURE cannot resolve.
+const evidenceOntology = {
+  capital_concentration: () => ({
+    facet: { domain_id: 'CAPITAL', ontology: 'DOMAIN_EVIDENCE',
+             provenance: { source: 'x' }, source_set_hash: 'h', signal_unit: classEValueUnit(55) },
+  }),
+};
+const er = resolveClassEMeasure({ domain: 'CAPITAL', measureKey: 'capital_concentration', producers: evidenceOntology });
+ok('non-CLASS_E ontology facet → STRUCTURAL_ABSENCE (evidenceNotMeasure)',
+   er.status === 'STRUCTURAL_ABSENCE' && er.evidenceNotMeasure === true && er.value === undefined);
+
+// 5. Class-E-ontology facet without provenance / source_set_hash → not resolved.
 const noProv = {
-  capital_concentration: () => ({ facet: { domain_id: 'CAPITAL', signal_unit: classEValueUnit(50) } }),
+  capital_concentration: () => ({ facet: { domain_id: 'CAPITAL', ontology: 'CLASS_E_MEASURE', signal_unit: classEValueUnit(50) } }),
 };
 const nr = resolveClassEMeasure({ domain: 'CAPITAL', measureKey: 'capital_concentration', producers: noProv });
-ok('facet missing provenance → STRUCTURAL_ABSENCE', nr.status === 'STRUCTURAL_ABSENCE');
+ok('CLASS_E facet missing provenance → STRUCTURAL_ABSENCE', nr.status === 'STRUCTURAL_ABSENCE' && nr.evidenceNotMeasure === undefined);
 
 // 6. Producer that withholds / errors → absence, never a throw.
 const withhold = { capital_concentration: () => ({ absent: { reason: 'coverage below threshold' } }) };

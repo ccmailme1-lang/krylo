@@ -10,7 +10,7 @@
 
 import React, { useState } from 'react';
 import { domainIntelligence, relationshipsFor } from '../../engine/domainintelligence.js';
-import { resolveClassEMeasure } from '../../engine/domainsignalresolution.js';
+import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -135,6 +135,10 @@ function DomainScroll({ domain, pressure }) {
   const pendingMeasures = di.signals?.maturity === 'UNAUTHORED';
   const sourceTag = (di.axisSource || '').replace('specs/SPEC-observable-substrate-revelation-contract.md', 'SPEC II');
 
+  // WO-1B — distinct domain evidence facets (e.g. PatentsView). Evidence, NOT a
+  // Class-E measure; inputs to A(d, Subject) later. Empty until a live source feeds them.
+  const evidenceFacets = getDomainEvidenceFacets(domain);
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -145,6 +149,18 @@ function DomainScroll({ domain, pressure }) {
       <Panel ordinal="01" title="OBSERVES">
         <ItemList items={di.observes.items} />
         <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{di.observes.maturity} · observation classes (not subject findings)</span>
+        {evidenceFacets.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
+            {evidenceFacets.map((f) => (
+              <span key={f.facet_id} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+                evidence facet · {f.provenance?.source ?? f.sourceId} · {f.provenance?.semantics ?? f.facet_id}
+              </span>
+            ))}
+            <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em' }}>
+              domain evidence — input to A(d, Subject), NOT a Class-E measure
+            </span>
+          </div>
+        )}
       </Panel>
 
       <Panel ordinal="02" title="SIGNAL">
