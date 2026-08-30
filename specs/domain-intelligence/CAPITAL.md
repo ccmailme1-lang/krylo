@@ -126,7 +126,40 @@ concentration + reallocation **corroborated**; mid-cap financing stress
 *(worksheet `:299`)*. Capital-flow alignment stays weak because current domain
 pressure ≠ actual flow evidence.
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **concentration** signal is now AUTHORED (§3.1);
+the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+
+### 3.1 Signal — `capital_concentration` (AUTHORED, Founder 2026-08-29)
+
+| field | value |
+|---|---|
+| **name** | `capital_concentration` |
+| **measure** | Top-holder share |
+| **question** | How much of the relevant capital population is held by its largest holder? |
+| **definition** | The proportion of total capital in the defined subject population attributable to the single largest holder, 0–100. |
+| **formula** | `top_holder_share = max(holder_capital) / Σ(holder_capital) × 100` |
+| **population** | explicitly scoped to the subject and the observation window. **No global denominator** unless the subject itself is global. |
+| **unit** | percentage; normalization is identity → already `0–100`. |
+| **polarity** | `0` = maximally diffuse · `100` = all observed capital in one holder. (A "concentrated vs diffuse" *band* is a separate calibration, not part of this measure.) |
+| **provenance (required)** | holder identity · capital amount per holder · population/subject definition · time window · source · calculation recipe · `source_set_hash` / independence metadata (`signalfacet.js` contract). |
+| **missing-data rule** | insufficient holder coverage → **no measure** (`absenceClass: structural`), never an estimated concentration. |
+
+**Boundary (six-way concentration invariant, ratified §11):** this measures
+**capital concentration** — the largest holder's share of *economic capital*. It
+is **not** ownership/control concentration (OWNERSHIP): a company can have highly
+concentrated capital while voting control is diffuse, and vice versa. Where one
+filing reports both, CAPITAL reads the *economic* share and OWNERSHIP reads the
+*voting/control* share — distinct facets of the same source (§2 invariant).
+
+**Precedent:** the top-N concentration ratio (CR-n; here CR-1) is a standard
+industrial-organization concentration metric — cited convention, not a novel
+construct.
+
+**Data state:** the *measure* is authored. **No current CAPITAL connector
+produces holder-level capital shares** (FRED / Treasury / WorldBank / USASpending
+/ FEC are macro/flow series) — the data source is WO-1 **Class D** (SEC 13F /
+Form D / fund-filing class). Until a source is wired, this signal renders
+`absenceClass: structural`.
 
 ---
 

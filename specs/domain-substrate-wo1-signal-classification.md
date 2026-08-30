@@ -46,7 +46,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | large-scale reallocations (Reallocation dim measure) | **E** | Founder formula |
 | capital-intensity change | **E** | Founder formula |
 | deployment velocity | **E** | Founder formula |
-| **capital concentration measure** | **E** | Founder formula (HHI-style / top-holder / defined) |
+| `capital_concentration` measure | **AUTHORED** (Founder 2026-08-29) → **D** for data | **top-holder share** = `max(holder_capital) / Σ(holder_capital) × 100`. Measure done; no wired source (SEC 13F / Form D / fund-filing class). CAPITAL.md §3.1. |
 
 ### OWNERSHIP — connectors: SEC 13D/13G, EDGAR 8-K, Companies House, FEC, Census(+LAB)
 
@@ -107,6 +107,10 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 ---
 
 ## The 12 Class-E measures (Founder authorship, WO-1 critical path)
+
+**Authored:** 1 of 12 — `capital_concentration` = **top-holder share** (Founder
+2026-08-29, CAPITAL.md §3.1). Once authored, a measure drops to Class D (needs a
+wired source) or C (data present).
 
 1–6. The six concentration measures — CAPITAL / OWNERSHIP / TECHNOLOGY / KNOWLEDGE
    (expertise) / LABOR (geographic) / MEDIA (attention).

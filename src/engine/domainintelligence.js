@@ -83,6 +83,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       items: ['concentration', 'flow', 'reallocation', 'deployment', 'financing pressure', 'liquidity'],
       unauthored: ['scarcity', 'constraint'],
     },
+    // Authored measures (Founder). `dataState: 'CLASS_D'` = measure defined, no
+    // wired source yet -> renders classified absence. See CAPITAL.md §3.1.
+    signalDefs: {
+      capital_concentration: {
+        measure: 'top-holder share',
+        formula: 'max(holder_capital) / Σ(holder_capital) × 100',
+        unit: 'percent (0–100, identity normalization)',
+        polarity: '0 = diffuse · 100 = one holder',
+        boundary: 'economic capital share — NOT voting/control concentration (OWNERSHIP)',
+        missingData: 'insufficient holder coverage → no measure (absenceClass: structural)',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // SEC 13F / Form D / fund-filing class — not wired
+      },
+    },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',
               'sufficient evidence to establish the CAPITAL attribution',
