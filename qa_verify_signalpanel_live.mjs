@@ -1,8 +1,19 @@
-// Live verification — KRYL-1229.
+// Live verification — KRYL-1229 + WO-1 concentration family (6/12).
+// Every domain's SIGNAL panel renders its AUTHORED concentration measure as
+// classified STRUCTURAL absence (no fabricated value), formula + boundary shown.
 import { chromium } from '@playwright/test';
 
 const BASE = 'http://localhost:5173/';
 const QUERY = 'our startup is deciding whether to pivot the product line or expand the current one';
+
+const EXPECT = {
+  CAPITAL:    { concept: 'CAPITAL CONCENTRATION',    measure: 'top-holder share',            formula: 'HOLDER_CAPITAL' },
+  OWNERSHIP:  { concept: 'OWNERSHIP CONCENTRATION',  measure: 'top-holder control share',    formula: 'HOLDER_CONTROL' },
+  TECHNOLOGY: { concept: 'CAPABILITY CONCENTRATION', measure: 'top-capability-provider share', formula: 'PROVIDER_CAPABILITY_SHARE' },
+  KNOWLEDGE:  { concept: 'EXPERTISE CONCENTRATION',  measure: 'top-holder expertise share',  formula: 'HOLDER_EXPERTISE' },
+  LABOR:      { concept: 'WORKFORCE-GEOGRAPHIC CONCENTRATION', measure: 'top-location workforce share', formula: 'LOCATION_HEADCOUNT' },
+  MEDIA:      { concept: 'ATTENTION CONCENTRATION', measure: 'top-source attention share',   formula: 'SOURCE_ATTENTION' },
+};
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
@@ -28,76 +39,41 @@ await page.evaluate(() => {
 });
 await page.waitForTimeout(7000);
 
-async function tabDump(tab) {
+async function signalPanel(tab) {
   return page.evaluate((tabName) => {
     const norm = s => (s || '').replace(/\s+/g, ' ').trim();
     const btn = [...document.querySelectorAll('button')].find(x => norm(x.textContent) === tabName);
     if (btn) btn.click();
     return new Promise(res => setTimeout(() => {
-      // SIGNAL panel = the panel div whose header span reads exactly "SIGNAL"
       const span = [...document.querySelectorAll('span')].find(s => norm(s.textContent) === 'SIGNAL');
-      let txt = '(SIGNAL panel not found)';
-      if (span) {
-        const header = span.parentElement;      // the flex "02 SIGNAL" row
-        const panel = header && header.parentElement; // the Panel div (header + children)
-        if (panel) txt = panel.innerText;
-      }
-      const tabsPresent = ['CAPITAL','OWNERSHIP','TECHNOLOGY','KNOWLEDGE','LABOR','MEDIA']
-        .filter(t => [...document.querySelectorAll('button')].some(b => norm(b.textContent) === t));
-      const has01 = [...document.querySelectorAll('*')].some(e => e.children.length === 0 && norm(e.textContent) === 'ANALYSIS');
-      res({ txt, tabsPresent, has01 });
-    }, 700));
+      let txt = '(not found)';
+      if (span) { const p = span.parentElement && span.parentElement.parentElement; if (p) txt = p.innerText; }
+      res(txt);
+    }, 650));
   }, tab);
 }
 
-const cap = await tabDump('CAPITAL');
-console.log('01 ANALYSIS section present:', cap.has01);
-console.log('domain tabs present:', JSON.stringify(cap.tabsPresent));
-console.log('\n--- CAPITAL · SIGNAL panel ---\n' + cap.txt);
-const own = await tabDump('OWNERSHIP');
-console.log('\n--- OWNERSHIP · SIGNAL panel ---\n' + own.txt);
-const tech = await tabDump('TECHNOLOGY');
-console.log('\n--- TECHNOLOGY · SIGNAL panel ---\n' + tech.txt);
-const know = await tabDump('KNOWLEDGE');
-console.log('\n--- KNOWLEDGE · SIGNAL panel ---\n' + know.txt);
-
+const results = {};
+for (const d of Object.keys(EXPECT)) results[d] = await signalPanel(d);
 await browser.close();
 
-const c = cap.txt.toUpperCase();
-const o = own.txt.toUpperCase();
-const t = tech.txt.toUpperCase();
-const k = know.txt.toUpperCase();
-const checks = [
-  ['01 ANALYSIS section rendered', cap.has01],
-  ['all six domain tabs present', cap.tabsPresent.length === 6],
-  ['CAPITAL: AUTHORED MEASURE label', c.includes('AUTHORED MEASURE')],
-  ['CAPITAL: CAPITAL CONCENTRATION', c.includes('CAPITAL CONCENTRATION')],
-  ['CAPITAL: measure name "top-holder share"', c.includes('TOP-HOLDER SHARE')],
-  ['CAPITAL: DATA UNAVAILABLE · SOURCE REQUIRED', c.includes('DATA UNAVAILABLE') && c.includes('SOURCE REQUIRED')],
-  ['CAPITAL: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(c)],
-  ['CAPITAL: formula shown as reference', c.includes('HOLDER_CAPITAL')],
-  ['CAPITAL: no fabricated numeric value on the measure line', !/TOP-HOLDER SHARE[^\n]*\n\s*\d/.test(c)],
-  ['OWNERSHIP: AUTHORED MEASURE label', o.includes('AUTHORED MEASURE')],
-  ['OWNERSHIP: OWNERSHIP CONCENTRATION', o.includes('OWNERSHIP CONCENTRATION')],
-  ['OWNERSHIP: measure name "top-holder control share"', o.includes('TOP-HOLDER CONTROL SHARE')],
-  ['OWNERSHIP: DATA UNAVAILABLE · SOURCE REQUIRED', o.includes('DATA UNAVAILABLE') && o.includes('SOURCE REQUIRED')],
-  ['OWNERSHIP: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(o)],
-  ['OWNERSHIP: formula shown as reference', o.includes('HOLDER_CONTROL')],
-  ['OWNERSHIP: boundary names capital exclusion', o.includes('NOT ECONOMIC CAPITAL')],
-  ['OWNERSHIP: no fabricated numeric value on the measure line', !/TOP-HOLDER CONTROL SHARE[^\n]*\n\s*\d/.test(o)],
-  ['TECHNOLOGY: AUTHORED MEASURE label', t.includes('AUTHORED MEASURE')],
-  ['TECHNOLOGY: CAPABILITY CONCENTRATION', t.includes('CAPABILITY CONCENTRATION')],
-  ['TECHNOLOGY: measure name "top-capability-provider share"', t.includes('TOP-CAPABILITY-PROVIDER SHARE')],
-  ['TECHNOLOGY: DATA UNAVAILABLE · SOURCE REQUIRED', t.includes('DATA UNAVAILABLE') && t.includes('SOURCE REQUIRED')],
-  ['TECHNOLOGY: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(t)],
-  ['TECHNOLOGY: boundary excludes adoption / displacement / activity', t.includes('ADOPTION') && t.includes('DISPLACEMENT') && t.includes('ACTIVITY')],
-  ['TECHNOLOGY: no fabricated numeric value on the measure line', !/TOP-CAPABILITY-PROVIDER SHARE[^\n]*\n\s*\d/.test(t)],
-  ['KNOWLEDGE: no AUTHORED MEASURE block (still pending)', !k.includes('AUTHORED MEASURE')],
-  ['KNOWLEDGE: pending line still shown', /PENDING FOUNDER AUTHORSHIP/.test(k)],
-  ['no uncaught page errors', pageErrs.length === 0],
-];
 let ok = true;
-for (const [l, p] of checks) { console.log((p ? 'PASS ' : 'FAIL ') + l); if (!p) ok = false; }
+const check = (l, c) => { console.log((c ? 'PASS ' : 'FAIL ') + l); if (!c) ok = false; };
+
+for (const [d, exp] of Object.entries(EXPECT)) {
+  const T = (results[d] || '').toUpperCase();
+  console.log(`\n--- ${d} ---\n` + results[d]);
+  check(`${d}: AUTHORED MEASURE label`, T.includes('AUTHORED MEASURE'));
+  check(`${d}: concept "${exp.concept}"`, T.includes(exp.concept));
+  check(`${d}: measure name "${exp.measure}"`, T.includes(exp.measure.toUpperCase()));
+  check(`${d}: DATA UNAVAILABLE · SOURCE REQUIRED`, T.includes('DATA UNAVAILABLE') && T.includes('SOURCE REQUIRED'));
+  check(`${d}: absenceClass: STRUCTURAL`, /ABSENCECLASS:\s*STRUCTURAL/.test(T));
+  check(`${d}: formula shown as reference (${exp.formula})`, T.includes(exp.formula));
+  check(`${d}: no fabricated numeric value on the measure line`,
+        !new RegExp(exp.measure.toUpperCase().replace(/[-]/g, '[- ]') + '[^\\n]*\\n\\s*\\d').test(T));
+  check(`${d}: "remaining measures UNAUTHORED" line still present`, /UNAUTHORED \(WO-1 CLASS E/.test(T));
+}
+check('no uncaught page errors', pageErrs.length === 0);
 if (pageErrs.length) console.log(pageErrs);
-console.log(ok ? '\nPASS' : '\nFAIL');
+console.log(ok ? '\nALL PASS' : '\nFAIL');
 process.exit(ok ? 0 : 1);

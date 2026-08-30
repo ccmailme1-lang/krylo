@@ -98,7 +98,41 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **attention concentration** signal is now AUTHORED
+(§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+
+### 3.1 Signal — `media_attention_concentration` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `media_attention_concentration` |
+| **concept** | attention concentration |
+| **measure** | top-source attention share (CR-1) |
+| **question** | How concentrated is the attention around the subject among its sources / channels? |
+| **definition** | Share of total measured attention on the subject attributable to the single largest source or channel. |
+| **formula** | `top_source_share = max(source_attention) / Σ(source_attention) × 100` |
+| **population** | identified sources / channels carrying measured attention on the subject within the observation window. |
+| **unit** | percent of measured attention; `0–100` (identity normalization). |
+| **polarity** | higher = attention driven by a single source (narrow, capturable) · lower = broad-based. |
+| **provenance (required)** | subject identity · source / channel identity · attention-share basis (volume-, reach-, or engagement-weighted, stated) · observation window · source · `source_set_hash` / independence metadata (`signalfacet.js`). |
+| **missing-data rule** | insufficient source coverage → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never proxied from **total** attention volume. |
+
+**Boundary (six-way concentration invariant, ratified §11):** concentration of the
+attention **source base** — **not** propagation velocity, narrative coherence (a
+separate Class-E measure), tone / sentiment, or total attention **magnitude**. It
+is the largest single source's share of the attention a subject receives, a
+source-structure magnitude, not a direction or intensity signal.
+
+**Field-level magnitude:** subject-level; meaningful without naming a counterparty
+→ passes the dimension-vs-edge rule.
+
+**Precedent:** top-N concentration ratio (CR-1) on an attention-source population —
+standard concentration construct.
+
+**Data state:** measure authored. **No current MEDIA connector produces
+per-source attention shares for a subject** (GDELT / Reddit emit aggregate tone /
+velocity, not an attributed source-share breakdown) — data source is WO-1
+**Class D**. Renders `absenceClass: structural` until wired.
 
 ---
 
@@ -322,7 +356,7 @@ the **cross-domain consistency pass**, now unblocked (all six `I_d` exist).
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §9 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | F3 — not split; GDELT/Reddit/FEC signals exist but not authored as `I_d` signal defs; concentration + coherence + asymmetry measures undefined |
+| signals | **PARTIAL** | `media_attention_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; GDELT/Reddit signals + coherence + asymmetry measures still UNAUTHORED (F3) |
 | structuralDimensions | PARTIAL | SPEC II §9 Conditions (LOCKED): attention concentration/diffusion, narrative coherence/contestation, propagation velocity. `intentional vs emergent` **UNAUTHORED** (§4.5). `information asymmetry` moved to `relationships` as an edge-property (§4.4, ratified). |
 | relationships | PARTIAL | SPEC II §9 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); no truth claims about the events narrated |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §9; macro-vs-subject distinction authored |

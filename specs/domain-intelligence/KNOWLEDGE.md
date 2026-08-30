@@ -88,7 +88,41 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **expertise concentration** signal is now AUTHORED
+(§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+
+### 3.1 Signal — `knowledge_expertise_concentration` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `knowledge_expertise_concentration` |
+| **concept** | expertise concentration |
+| **measure** | top-holder expertise share (CR-1) |
+| **question** | How much of the specialized expertise a knowledge formation depends on is held by its single largest holder? |
+| **definition** | Share of an identified body of specialized expertise attributable to the single largest holder (institution, team, or named individual set). |
+| **formula** | `top_expertise_share = max(holder_expertise) / Σ(holder_expertise) × 100` |
+| **population** | identified holders of the *same* specialized expertise the observed knowledge formation depends on. |
+| **unit** | percent of expertise stock; `0–100` (identity normalization). |
+| **polarity** | higher = expertise concentrated in few holders (fragility / capture exposure) · lower = diffuse. |
+| **provenance (required)** | expertise-domain identity · holder identity · expertise-share basis (e.g. citation-weighted authorship, named inventorship, credential registry) · as-of date · source · `source_set_hash` / independence metadata (`signalfacet.js`). |
+| **missing-data rule** | insufficient holder coverage → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never proxied from publication or citation **volume**. |
+
+**Boundary (six-way concentration invariant, ratified §11):** measures expertise
+**stock** concentration — **not** publication / preprint activity, citation flow,
+collaboration-network density, or diffusion **rate** (a separate Class-E measure).
+It is the largest holder's share of a specialized-expertise population, a
+dependency-structure magnitude, not a knowledge-**flow** signal.
+
+**Field-level magnitude:** subject-level; meaningful without naming a counterparty
+→ passes the dimension-vs-edge rule from the consistency pass.
+
+**Precedent:** top-N concentration ratio (CR-1) on an expertise-holder population —
+standard concentration construct.
+
+**Data state:** measure authored. **No current KNOWLEDGE connector produces
+holder-level expertise shares** (OpenAlex / arXiv / PubMed / PatentsView emit
+activity / migration / citation series, not an expertise-stock denominator) —
+data source is WO-1 **Class D**. Renders `absenceClass: structural` until wired.
 
 ---
 
@@ -305,7 +339,7 @@ matrix are UNAUTHORED.
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §7 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | F3 — not split; publication signals exist but not authored as `I_d` signal defs; concentration + diffusion-rate measures undefined |
+| signals | **PARTIAL** | `knowledge_expertise_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; publication signals + diffusion-rate measure still UNAUTHORED (F3) |
 | structuralDimensions | PARTIAL | SPEC II §7 Conditions (LOCKED): concentration, diffusion rate, expertise scarcity/surplus, institutional capture. `tacit vs explicit` **UNAUTHORED** (§4.6). `transfer friction` moved to `relationships` as an edge-property (§4.3, ratified). |
 | relationships | PARTIAL | SPEC II §7 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §7; macro-vs-entity distinction authored |

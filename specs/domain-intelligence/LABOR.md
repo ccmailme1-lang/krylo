@@ -90,7 +90,43 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **workforce-geographic concentration** signal is now
+AUTHORED (§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder
+authorship).
+
+### 3.1 Signal — `labor_geographic_concentration` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `labor_geographic_concentration` |
+| **concept** | workforce-geographic concentration |
+| **measure** | top-location workforce share (CR-1) |
+| **question** | How geographically concentrated is the workforce capacity a formation depends on? |
+| **definition** | Share of relevant workforce capacity located in the single largest geographic unit. |
+| **formula** | `top_location_share = max(location_headcount) / Σ(location_headcount) × 100` |
+| **population** | identified geographic units holding the relevant workforce capacity (defined at a stated granularity — metro / region / country). |
+| **unit** | percent of workforce capacity; `0–100` (identity normalization). |
+| **polarity** | higher = geographically concentrated (single-point exposure) · lower = distributed. |
+| **provenance (required)** | workforce-population identity · geographic unit identity + granularity · headcount / capacity basis per unit · as-of date · source · `source_set_hash` / independence metadata (`signalfacet.js`). |
+| **missing-data rule** | insufficient geographic coverage → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never proxied from job-posting or establishment **volume**. |
+
+**Boundary (six-way concentration invariant, ratified §11):** a **static**
+locational-concentration snapshot — **not** geographic **redistribution** (a
+change measure, separate Class E), skill-mix shift (separate Class E), or
+hiring / layoff event rate. CR-1 is used for consistency with the concentration
+family; an HHI-style dispersion index is explicitly **not** introduced here.
+
+**Field-level magnitude:** subject-level; meaningful without naming a counterparty
+→ passes the dimension-vs-edge rule.
+
+**Precedent:** top-N concentration ratio (CR-1) on a geographic-unit population —
+standard concentration construct.
+
+**Data state:** measure authored. **No current LABOR connector produces
+subject-scoped per-location headcount shares** (BLS / Census / USAJobs emit
+occupational series, establishment counts, and postings — not a subject workforce
+distributed by location) — data source is WO-1 **Class D**. Renders
+`absenceClass: structural` until wired.
 
 ---
 
@@ -311,7 +347,7 @@ full 6×6 matrix is UNAUTHORED (MEDIA row pending its draft).
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §8 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | F3 — not split; BLS/Census/USAJobs signals exist but not authored as `I_d` signal defs; redistribution + skill-mix measures undefined |
+| signals | **PARTIAL** | `labor_geographic_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; BLS/Census/USAJobs signals + redistribution + skill-mix measures still UNAUTHORED (F3) |
 | structuralDimensions | PARTIAL | SPEC II §8 Conditions (LOCKED). `quality vs quantity` **UNAUTHORED** (§4.5) |
 | relationships | PARTIAL | SPEC II §8 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §8; macro-vs-entity + internal-visibility distinction authored |

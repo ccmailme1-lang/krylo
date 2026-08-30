@@ -93,7 +93,7 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         unit: 'percent (0–100, identity normalization)',
         polarity: '0 = diffuse · 100 = one holder',
         boundary: 'economic capital share — NOT voting/control concentration (OWNERSHIP)',
-        missingData: 'insufficient holder coverage → no measure (absenceClass: structural)',
+        missingData: 'insufficient holder coverage → no measure (absenceClass: structural); never an estimated concentration, never proxied from flow volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // SEC 13F / Form D / fund-filing class — not wired
       },
@@ -133,7 +133,7 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         unit: 'percent of control (0–100, identity normalization)',
         polarity: 'higher = more concentrated control · lower = more distributed',
         boundary: 'control-rights share — NOT economic capital concentration (CAPITAL)',
-        missingData: 'insufficient holder/control coverage → no measure (absenceClass: structural); never substitute capital share',
+        missingData: 'insufficient holder/control coverage → no measure (absenceClass: structural); never estimate, infer, zero-fill, or substitute capital share for control share',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // compliant beneficial-ownership / voting-control source — not wired
       },
@@ -207,6 +207,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       unauthored: ['tacit vs explicit knowledge'],
       edgeProps: ['transferFriction (Producers ↔ carriers ↔ institutional holders)'],
     },
+    // Authored measures (Founder). See KNOWLEDGE.md §3.1.
+    signalDefs: {
+      knowledge_expertise_concentration: {
+        concept: 'expertise concentration',
+        measure: 'top-holder expertise share (CR-1)',
+        formula: 'top_expertise_share = max(holder_expertise) / Σ(holder_expertise) × 100',
+        unit: 'percent of expertise stock (0–100, identity normalization)',
+        polarity: 'higher = expertise concentrated in few holders (fragility / capture) · lower = diffuse',
+        boundary: 'expertise stock share — NOT publication activity, citation flow, or diffusion rate',
+        missingData: 'insufficient holder coverage → no measure (absenceClass: structural); never proxied from publication or citation volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // holder-level expertise-share source — not wired
+      },
+    },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',
               'sufficient evidence to establish the KNOWLEDGE attribution',
@@ -232,6 +246,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       items: ['skill scarcity / surplus', 'organizational capacity expansion / contraction',
               'labor-market pressure', 'geographic concentration / dispersion'],
       unauthored: ['quality vs quantity of capacity'],
+    },
+    // Authored measures (Founder). See LABOR.md §3.1.
+    signalDefs: {
+      labor_geographic_concentration: {
+        concept: 'workforce-geographic concentration',
+        measure: 'top-location workforce share (CR-1)',
+        formula: 'top_location_share = max(location_headcount) / Σ(location_headcount) × 100',
+        unit: 'percent of workforce capacity (0–100, identity normalization)',
+        polarity: 'higher = geographically concentrated (single-point exposure) · lower = distributed',
+        boundary: 'static locational concentration — NOT geographic redistribution (change), skill-mix shift, or hiring/layoff rate',
+        missingData: 'insufficient geographic coverage → no measure (absenceClass: structural); never proxied from posting or establishment volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // subject-scoped per-location headcount source — not wired
+      },
     },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',
@@ -261,6 +289,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       unauthored: ['intentional vs emergent narrative'],
       edgeProps: ['informationAsymmetry (Attention sources ↔ audiences)'],
       note: 'narrative coherence is a structural property only — never a truth signal.',
+    },
+    // Authored measures (Founder). See MEDIA.md §3.1.
+    signalDefs: {
+      media_attention_concentration: {
+        concept: 'attention concentration',
+        measure: 'top-source attention share (CR-1)',
+        formula: 'top_source_share = max(source_attention) / Σ(source_attention) × 100',
+        unit: 'percent of measured attention (0–100, identity normalization)',
+        polarity: 'higher = attention driven by a single source (narrow, capturable) · lower = broad-based',
+        boundary: 'attention source-base concentration — NOT propagation velocity, narrative coherence, tone, or total attention volume',
+        missingData: 'insufficient source coverage → no measure (absenceClass: structural); never proxied from total attention volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // per-source attention-share source — not wired
+      },
     },
     relevance: { maturity: 'PARTIAL',
       items: ['concerns the subject / its immediate structural environment',

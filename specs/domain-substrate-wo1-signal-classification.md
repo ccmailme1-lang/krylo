@@ -27,7 +27,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | B | 15 | connector-backed; blocked on the 3 substrate repairs + subject scope |
 | C | 4 | data present, measure not computed |
 | D | 10 | new source required |
-| E | 12 | Founder must author the measure (the 6 concentration measures + 6 others) |
+| E | 12 (6 authored 2026-08-30 — the full concentration family; 6 remain) | Founder must author the measure |
 | F | 0 | — |
 
 ---
@@ -79,7 +79,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | inventor / expertise migration | **B** | `INVENTOR_MIGRATION` relation exists; the KNOWLEDGE-facet (knowledge carried) not extracted |
 | collaboration-network density / churn | **D** | no wired source |
 | diffusion rate | **E** | Founder formula (time creation → broad adoption) |
-| **expertise concentration measure** | **E** | Founder formula |
+| `knowledge_expertise_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-holder expertise share (CR-1)** = `max(holder_expertise) / Σ(holder_expertise) × 100`. KNOWLEDGE.md §3.1. Expertise stock, NOT publication/citation flow or diffusion. |
 
 ### LABOR — connectors: BLS, USAJobs, Census(+OWN), SupplyChain(TECH/CAP/LAB)
 
@@ -90,7 +90,8 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | workforce / establishment counts per geography | **B** | `censusconnector`; **LAB/OWN facet-distinctness** (WO-2); `_pool` strips |
 | hiring / layoff event rate at scale | **D** | WARN-notice class not connected |
 | labor-action event count | **D** | no wired source |
-| **geographic redistribution measure** | **E** | Founder formula |
+| `labor_geographic_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-location workforce share (CR-1)** = `max(location_headcount) / Σ(location_headcount) × 100`. LABOR.md §3.1. Static locational concentration, NOT redistribution/skill-mix/hiring rate. |
+| **geographic redistribution measure** | **E** | Founder formula (distinct from the static concentration measure above) |
 | **skill-mix shift measure** | **E** | Founder formula |
 
 ### MEDIA — connectors: GDELT, Reddit, FEC(+CAP)
@@ -100,7 +101,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | news tone / attention | **B** | `gdeltconnector`; real tone-weighted 0–100; `_pool` strips; generic-not-per-subject |
 | social propagation velocity | **B** | `redditconnector`; real 24h velocity × upvote quality; `_pool` strips |
 | PAC / ad-spend velocity (attention pressure) | **B — DEFECTIVE** | `fecconnector` MEDIA signal `= CAP signal × 0.85` — a relabel, **fails the shared-source distinct-facet AC**. WO-2 fix #3. |
-| **attention concentration measure** | **E** | Founder formula |
+| `media_attention_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-source attention share (CR-1)** = `max(source_attention) / Σ(source_attention) × 100`. MEDIA.md §3.1. Source-base concentration, NOT velocity/coherence/tone/volume. |
 | **narrative coherence measure** | **E** | Founder formula |
 | information-asymmetry aggregate (edge-property, §5) | **D/E** | no source + no measure |
 
@@ -108,10 +109,19 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 
 ## The 12 Class-E measures (Founder authorship, WO-1 critical path)
 
-**Authored:** 3 of 12 —
+**Authored:** 6 of 12 — the full **concentration family**, all CR-1, all
+`% (0–100, identity)`, all rendering live as classified STRUCTURAL absence
+(Class D — no wired source):
 1. `capital_concentration` = **top-holder share** (Founder 2026-08-29, CAPITAL.md §3.1).
 2. `ownership_concentration_top_holder_share` = **top-holder control share** (Founder 2026-08-30, OWNERSHIP.md §3.1).
 3. `technology_capability_concentration` = **top-capability-provider share** (Founder 2026-08-30, TECHNOLOGY.md §3.1).
+4. `knowledge_expertise_concentration` = **top-holder expertise share** (Founder 2026-08-30, KNOWLEDGE.md §3.1).
+5. `labor_geographic_concentration` = **top-location workforce share** (Founder 2026-08-30, LABOR.md §3.1).
+6. `media_attention_concentration` = **top-source attention share** (Founder 2026-08-30, MEDIA.md §3.1).
+
+**Remaining 6 (Class E, pending Founder authorship):** CAPITAL deployment
+velocity · CAPITAL capital-intensity change · KNOWLEDGE diffusion rate · LABOR
+geographic-redistribution · LABOR skill-mix shift · MEDIA narrative-coherence.
 
 Once authored, a measure drops to Class D (needs a wired source) or C (data present).
 
