@@ -129,27 +129,54 @@ formationCandidate(Subject) →
   isn't observable about Anduril*, field pressure visibly subordinate, no
   STAKE/MOVE/WINDOW, no pseudo-lens, decision verdict absent but not blocking.
 
-### 5B-2 — Evidence binding
+### 5B-2 — Evidence binding  *(DONE — `subjectbinding.js`, KRYL-1234)*
 
-- `getDomainEvidenceFacets(domain, { subject })` actually filters to
-  subject-attributable facets. Requires a **non-fabricated** attribution rule:
-  structural containment (facet provenance names / contains the canonicalId or a
-  known identifier — EDGAR CIK, FEC id, UEI via `resolveByIdentifier`), **not**
-  mock affinity weighting. Facets that cannot be attributed to the subject are
-  not shown for it.
-- `A(d, Subject).observations` populated from those facets.
-- Acceptance: for a subject with a real identifier match, the domain shows the
-  observed facet + provenance; for one without, honest absence — never a
-  field-pressure fallback.
+Chain: **subject identity → identifier resolution → evidence facet.** Never
+subject name → semantic similarity → probably-related evidence.
 
-### 5B-3 — Relationship layer (UI)
+- `facetBelongsToSubject(facet, scope)` — a facet is a subject observation ONLY
+  when `facet.provenance.subject` is `{ canonicalId }` (exact) or
+  `{ identifier: { source, id } }` that `resolveByIdentifier` maps to this
+  subject's canonicalId. Deterministic, provenance-preserving. No fuzzy/mock
+  affinity. No field-level evidence promoted. No cross-domain substitution. No
+  Class-E measure fabricated from a facet (`CLASS_E_ONTOLOGY` guard). Failed
+  containment → STRUCTURAL ABSENCE with the required source still visible. Every
+  bound facet keeps its own `source_set_hash` / `lineage_id`.
+- `getDomainEvidenceFacets(domain, { subject: entityScope })` applies the filter;
+  a non-ENTITY scope returns `[]`. `A(d, Subject).observations` is the bound set.
+- **Proven by the negative cases** (`qa_subjectbinding.mjs`): Palantir evidence
+  does not bind to Anduril; a field-level PatentsView facet with "ANDURIL" in its
+  assignee list does not bind (no subject attribution block); an identifier
+  resolving to a different entity does not bind; an unresolvable identifier does
+  not bind; a name-string attribution does not bind.
 
-- A packet section (below the six tabs) renders admitted cross-domain edges
-  (`relationshipsFor` ∩ the 15-type set) **only** between domains that both carry
-  ≥1 subject observation from 5B-2. Each edge shows: the two domains, the admitted
-  type, and the two observations it connects.
-- Acceptance: the guest sees "TECHNOLOGY ↔ OWNERSHIP — control of IP or platform"
-  with both underlying observations, without opening both tabs.
+### 5B-3 — Relationship layer (UI)  *(perceptual crux)*
+
+- **Not** a generic "relationships" panel. The relationship is rendered **at the
+  point where the guest perceives the two observations as one structure** —
+  conceptually:
+
+  ```
+  TECHNOLOGY  ── Anduril capability observation
+      ↕  CONTROL OF IP / PLATFORM
+  OWNERSHIP   ── Anduril control observation
+  ```
+
+  Locked principle: **the relationship is an observable object in the guest
+  experience, not an instruction to compare two tabs.**
+- An edge renders **only** between two domains that each carry ≥1 subject
+  observation from 5B-2, and **only** for a type in the ratified 15-set
+  (`admitCrossDomainRelationship`). Each edge shows both underlying observations.
+- Acceptance: the guest sees the connected pair without opening both tabs.
+
+### 5B-3 / 5B-4 QUARANTINE (hard, from KRYL-1235)
+
+The 5B-3 and 5B-4 modules **MUST NOT** import or read `querysynthesis.js` /
+`synthGeneral` / `recommendedAction` / any `SYNTH_MAP` output. The chain is
+`observation → relationship → formation`, never `legacy narrative → confirmed by
+observations`. A build guard / test asserts no such import path exists from
+`adsubject.js` or the 5B-3/5B-4 modules. The legacy PRIMARY SIGNAL narrative
+(Thiel Protocol etc.) is KRYL-1235's problem and is quarantined from this path.
 
 ### 5B-4 — Formation candidate
 

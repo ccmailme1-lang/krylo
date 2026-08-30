@@ -23,6 +23,7 @@
 
 import { domainIntelligence } from './domainintelligence.js';
 import { makeSignalFacet } from './signalfacet.js';
+import { facetBelongsToSubject } from './subjectbinding.js';
 
 export const RESOLUTION_VERSION = 'wo-1a';
 
@@ -141,14 +142,28 @@ export function registerEvidenceFacetSource(source) {
 
 // All available evidence facets for a domain, from every registered source.
 // `subject` is threaded for WO-5B; today sources ignore it or return [].
+// `subject`: omit / null → field-scoped (all domain evidence facets).
+// An ENTITY subjectScope → only facets IDENTIFIER-bound to that subject (5B-2).
+// A non-ENTITY subjectScope → [] (there is a subject slot but nothing binds).
 export function getDomainEvidenceFacets(domain, { subject = null } = {}) {
   const D = String(domain ?? '').toUpperCase();
+  const entityScope = subject && typeof subject === 'object' && subject.kind === 'ENTITY' ? subject : null;
+  const nonEntityScope = subject && typeof subject === 'object' && subject.kind && subject.kind !== 'ENTITY';
+  if (nonEntityScope) return [];
+
   const out = [];
   for (const s of EVIDENCE_FACET_SOURCES) {
     let facets = [];
-    try { facets = s.produce({ domain: D, subject }) ?? []; } catch { facets = []; }
+    try { facets = s.produce({ domain: D, subject: entityScope }) ?? []; } catch { facets = []; }
     for (const f of facets) {
-      if (f && f.domain_id === D && f.ontology !== CLASS_E_ONTOLOGY) out.push({ ...f, sourceId: s.id });
+      if (!f || f.domain_id !== D || f.ontology === CLASS_E_ONTOLOGY) continue;
+      if (entityScope) {
+        const r = facetBelongsToSubject(f, entityScope);
+        if (!r.bound) continue;                       // identifier containment — no fuzzy fallback
+        out.push({ ...f, sourceId: s.id, boundVia: r.via });
+      } else {
+        out.push({ ...f, sourceId: s.id });
+      }
     }
   }
   return out;

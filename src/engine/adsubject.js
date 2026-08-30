@@ -5,7 +5,7 @@
 //       subject,                       canonicalId | null
 //       domain,
 //       scoped: boolean,               true only for ENTITY scope
-//       observations: SubjectObservation[],   subject-attributed evidence (empty until 5B-2)
+//       observations: SubjectObservation[],   evidence IDENTIFIER-bound to the subject (5B-2)
 //       measures: { [measureKey]: <resolveClassEMeasure(scope:'subject')> },
 //       fieldContext: <computeDomainPressure(domain)>,   CONTEXT ONLY — never the subject's answer
 //       absence: { absenceClass, reason } | null
@@ -24,7 +24,7 @@ import { resolveClassEMeasure, getDomainEvidenceFacets } from './domainsignalres
 import { computeDomainPressure } from './domaingravity.js';
 import { isScopable } from './subjectscope.js';
 
-export const AD_SUBJECT_VERSION = '5b-1';
+export const AD_SUBJECT_VERSION = '5b-2';
 
 export const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
 
@@ -71,17 +71,17 @@ export function A(domain, scope) {
   for (const key of authoredMeasureKeys(D))
     measures[key] = resolveClassEMeasure({ domain: D, measureKey: key, scope: 'subject', subject });
 
-  // Evidence facets attributable to this subject — 5B-2 supplies the containment
-  // filter; today getDomainEvidenceFacets ignores `subject`, so guard: only keep
-  // a facet whose provenance actually names the subject id. (Conservative — no
-  // false attribution before 5B-2.)
-  const observations = getDomainEvidenceFacets(D, { subject })
-    .filter(f => facetNamesSubject(f, subject))
+  // Evidence facets bound to this subject by IDENTIFIER CONTAINMENT (5B-2,
+  // subjectbinding.js). getDomainEvidenceFacets does the filtering — a facet with
+  // no subject attribution, or one attributed to a different entity, never
+  // appears here. No fuzzy match, no field-evidence promotion.
+  const observations = getDomainEvidenceFacets(D, { subject: scope })
     .map(f => ({
       kind: 'evidence',
       domain: D,
       source: f.provenance?.source ?? f.sourceId,
       semantics: f.provenance?.semantics ?? null,
+      boundVia: f.boundVia ?? null,
       facet_id: f.facet_id,
       source_set_hash: f.source_set_hash,
     }));
@@ -107,16 +107,4 @@ export function allDomains(scope) {
 
 function safePressure(domain) {
   try { return computeDomainPressure(domain); } catch { return null; }
-}
-
-// 5B-1 conservative attribution: a facet counts for a subject only if its
-// provenance / id text contains the canonicalId (or its de-slugged form). 5B-2
-// replaces this with the full structural-containment rule (identifiers via
-// resolveByIdentifier).
-function facetNamesSubject(facet, subjectId) {
-  if (!facet || !subjectId) return false;
-  const hay = JSON.stringify(facet.provenance ?? {}).toLowerCase() + ' ' + String(facet.facet_id ?? '').toLowerCase();
-  const slug = subjectId.toLowerCase();
-  const words = slug.split('-').filter(w => w.length > 2);
-  return hay.includes(slug) || (words.length > 0 && words.every(w => hay.includes(w)));
 }

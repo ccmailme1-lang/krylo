@@ -153,12 +153,12 @@ function DomainScroll({ domain, scope, pressure }) {
         <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{di.observes.maturity} · observation classes (not subject findings)</span>
         {scoped && ad.observations.length === 0 && (
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
-            no {domain} observation attributable to {ad.subject} yet · subject-scoped evidence binding is WO-5B stage 2
+            no {domain} evidence identifier-bound to {ad.subject} · a facet is only an observation of this subject if its own provenance resolves to it
           </span>
         )}
         {scoped && ad.observations.map((o) => (
           <span key={o.facet_id} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
-            observed · {o.source} · {o.semantics ?? o.facet_id}
+            observed · {o.source} · {o.semantics ?? o.facet_id}{o.boundVia ? ` · bound via ${o.boundVia}` : ''}
           </span>
         ))}
         {fieldFacets.length > 0 && (
