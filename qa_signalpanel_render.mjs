@@ -40,6 +40,8 @@ for (const [d, keys] of Object.entries(EXPECTED)) {
     ok(`${d}.${k}: no value -> classified-absence branch`, def.value == null);
     ok(`${d}.${k}: concept / measure / formula / unit / polarity / boundary / missingData all present`,
        !!def.concept && !!def.measure && !!def.formula && !!def.unit && !!def.polarity && !!def.boundary && !!def.missingData);
+    ok(`${d}.${k}: WO-1A sourceClass named + scope 'subject'`,
+       typeof def.sourceClass === 'string' && def.sourceClass.length > 8 && def.scope === 'subject');
     ok(`${d}.${k}: missing-data rule = structural absence + explicit anti-fabrication`,
        /absenceclass:\s*structural/i.test(def.missingData) &&
        /never|no measure/i.test(def.missingData) &&

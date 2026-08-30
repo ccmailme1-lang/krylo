@@ -86,6 +86,8 @@ for (const [d, measures] of Object.entries(EXPECT)) {
   const structuralCount = (T.match(/ABSENCECLASS:\s*STRUCTURAL/g) || []).length;
   check(`${d}: ${measures.length} STRUCTURAL-absence block(s) (got ${structuralCount})`, structuralCount === measures.length);
   check(`${d}: ${measures.length} DATA UNAVAILABLE line(s)`, (T.match(/DATA UNAVAILABLE/g) || []).length === measures.length);
+  check(`${d}: ${measures.length} "requires:" source-class line(s) (WO-1A)`, (T.match(/REQUIRES:/g) || []).length === measures.length);
+  check(`${d}: ${measures.length} "scope: subject (WO-5B)" line(s)`, (T.match(/SCOPE: SUBJECT \(WO-5B\)/g) || []).length === measures.length);
   for (const [concept, formulaTok] of measures) {
     check(`${d}: "${concept}" rendered`, T.includes(concept));
     check(`${d}: "${concept}" formula token ${formulaTok}`, T.includes(formulaTok));

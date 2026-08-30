@@ -10,6 +10,7 @@
 
 import React, { useState } from 'react';
 import { domainIntelligence, relationshipsFor } from '../../engine/domainintelligence.js';
+import { resolveClassEMeasure } from '../../engine/domainsignalresolution.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -42,13 +43,16 @@ function Absent({ reason }) {
   );
 }
 
-// KRYL-1229 — the SIGNAL panel's authored-measure block. Renders a Founder-authored
-// I_d measure (domainIntelligence(d).signalDefs) by its state. It never fabricates,
-// defaults, or zero-fills a value: AUTHORED + no wired source renders as classified
-// structural absence, with the formula/boundary shown as reference only.
-function AuthoredMeasure({ name, def }) {
+// KRYL-1229 + WO-1A (KRYL-1230) — the SIGNAL panel's authored-measure block.
+// Renders a Founder-authored I_d measure (domainIntelligence(d).signalDefs)
+// through the WO-1A resolution seam (domainsignalresolution.js). It never
+// fabricates, defaults, or zero-fills: FACET → the resolved value + provenance;
+// STRUCTURAL_ABSENCE → DATA UNAVAILABLE plus the specific source class and scope
+// the measure needs. Formula/boundary shown as reference either way.
+function AuthoredMeasure({ domain, name, def }) {
   const label = (def.concept || name.replace(/_/g, ' ')).toUpperCase();
-  const measured = def.value != null && Number.isFinite(Number(def.value));
+  const res = resolveClassEMeasure({ domain, measureKey: name, scope: 'field' });
+  const facet = res.status === 'FACET';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 3, paddingTop: 4 }}>
@@ -57,18 +61,35 @@ function AuthoredMeasure({ name, def }) {
         <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.04em' }}>{def.measure}</span>
       )}
 
-      {measured ? (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: MONO, fontSize: 18, color: LIME, fontVariantNumeric: 'tabular-nums' }}>
-            {Number(def.value).toFixed(0)}
-          </span>
-          {def.unit && <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{def.unit}</span>}
+      {facet ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: MONO, fontSize: 18, color: LIME, fontVariantNumeric: 'tabular-nums' }}>
+              {res.value.toFixed(0)}
+            </span>
+            {def.unit && <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{def.unit}</span>}
+          </div>
+          {res.provenance?.source && (
+            <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+              source: {res.provenance.source}
+            </span>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span style={{ fontFamily: MONO, fontSize: 9, color: ABSENCE, letterSpacing: '0.14em' }}>
             DATA UNAVAILABLE · SOURCE REQUIRED
           </span>
+          {res.requiredSourceClass && (
+            <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
+              requires: {res.requiredSourceClass}
+            </span>
+          )}
+          {res.requiredScope === 'subject' && (
+            <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em' }}>
+              scope: subject (WO-5B)
+            </span>
+          )}
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.1em' }}>
             absenceClass: STRUCTURAL
           </span>
@@ -149,7 +170,7 @@ function DomainScroll({ domain, pressure }) {
             </span>
             {authoredMeasures.map(([k, def], i) => (
               <div key={k} style={i > 0 ? { borderTop: `1px solid ${RULE}`, paddingTop: 12 } : undefined}>
-                <AuthoredMeasure name={k} def={def} />
+                <AuthoredMeasure domain={domain} name={k} def={def} />
               </div>
             ))}
           </div>

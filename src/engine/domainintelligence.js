@@ -10,12 +10,15 @@
 //
 // `signalDefs` holds the Founder-authored Class-E measures — all 12 authored
 // 2026-08-29/30, all `dataState: 'CLASS_D'` (measure defined, no wired source →
-// renders classified STRUCTURAL absence, never faked). The legacy `signals`
-// field stays UNAUTHORED per domain (its candidate inventory is not authored as
-// signal definitions); `sharpeningInputs` UNAUTHORED. Nothing here is
-// subject-scoped; subject binding is WO-5B.
+// renders classified STRUCTURAL absence, never faked). Each also carries
+// `sourceClass` (the evidence class that would satisfy it, transcribed from that
+// measure's spec §3.x "Data state" paragraph) and `scope: 'subject'` (every
+// authored measure is subject-scoped by construction). `domainsignalresolution.js`
+// (WO-1A) is the seam that turns these into a resolution result. The legacy
+// `signals` field stays UNAUTHORED per domain; `sharpeningInputs` UNAUTHORED.
+// Subject binding is WO-5B.
 
-export const DI_VERSION = '0.2';
+export const DI_VERSION = '0.3';
 
 const SPEC_II = 'specs/SPEC-observable-substrate-revelation-contract.md';
 
@@ -99,6 +102,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient holder coverage → no measure (absenceClass: structural); never an estimated concentration, never proxied from flow volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // SEC 13F / Form D / fund-filing class — not wired
+        sourceClass: 'SEC 13F / Form D / fund-filing holder-level capital holdings',
+        scope: 'subject',
       },
       capital_deployment_velocity: {
         concept: 'deployment velocity',
@@ -110,6 +115,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'no committed-base figure or no deployment-event series → no measure (absenceClass: structural); never estimated, never proxied from flow volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // committed-base + deployment-event series — not wired
+        sourceClass: 'committed-base figure + deployment-event series for the subject',
+        scope: 'subject',
       },
       capital_intensity_change: {
         concept: 'capital-intensity change',
@@ -121,6 +128,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'CI unavailable at either endpoint → no measure (absenceClass: structural); never estimated, never single-point-extrapolated',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // two-point capital-employed / output series — not wired
+        sourceClass: 'two-point capital-employed / output series for the subject',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -161,6 +170,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient holder/control coverage → no measure (absenceClass: structural); never estimate, infer, zero-fill, or substitute capital share for control share',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // compliant beneficial-ownership / voting-control source — not wired
+        sourceClass: 'compliant beneficial-ownership / voting-control holder-share source',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -203,6 +214,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient provider/capability-share coverage → no measure (absenceClass: structural); never proxied from activity',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // provider capability-share source — not wired
+        sourceClass: 'provider capability-supply share data',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -244,6 +257,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient holder coverage → no measure (absenceClass: structural); never proxied from publication or citation volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // holder-level expertise-share source — not wired
+        sourceClass: 'holder-level expertise-stock shares',
+        scope: 'subject',
       },
       knowledge_diffusion_rate: {
         concept: 'diffusion rate',
@@ -255,6 +270,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'no adopter series or no SOURCED reachable-population estimate → no measure (absenceClass: structural); the denominator is never assumed, rule-of-thumb, or proxied',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // no sourced reachable-population denominator — structural absence in nearly all real cases (accepted)
+        sourceClass: 'adopter series + a sourced reachable-population denominator',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -295,6 +312,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient geographic coverage → no measure (absenceClass: structural); never proxied from posting or establishment volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // subject-scoped per-location headcount source — not wired
+        sourceClass: 'subject-scoped per-location workforce headcount shares',
+        scope: 'subject',
       },
       labor_geographic_redistribution: {
         concept: 'geographic redistribution',
@@ -306,6 +325,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'location shares unavailable at either endpoint → no measure (absenceClass: structural); never single-point-extrapolated, never proxied from posting volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // two-point subject workforce-by-location series — not wired
+        sourceClass: 'two-point subject workforce-by-location series',
+        scope: 'subject',
       },
       labor_skill_mix_shift: {
         concept: 'skill-mix shift',
@@ -317,6 +338,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'skill-category shares unavailable at either endpoint → no measure (absenceClass: structural); never single-point-extrapolated, never proxied from posting volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // two-point subject workforce-by-skill series — not wired
+        sourceClass: 'two-point subject workforce-by-skill series (stated taxonomy)',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -360,6 +383,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient source coverage → no measure (absenceClass: structural); never proxied from total attention volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // per-source attention-share source — not wired
+        sourceClass: 'per-source attention shares for the subject',
+        scope: 'subject',
       },
       media_narrative_coherence: {
         concept: 'narrative coherence',
@@ -371,6 +396,8 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'no per-source frame classification from a SOURCED method → no measure (absenceClass: structural); frame assignment is never inferred ad hoc, hand-labelled without a stated method, or proxied from tone',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // sourced per-source frame classification — not wired
+        sourceClass: 'sourced per-source frame classification',
+        scope: 'subject',
       },
     },
     relevance: { maturity: 'PARTIAL',

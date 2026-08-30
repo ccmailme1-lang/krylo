@@ -112,6 +112,18 @@ Every OPEN row above carries the §0 acceptance question.
   `source → facet → provenance → normalized signal (§12 ingestion contract) →
   A(d, Subject)`. Acceptance (§0.1): *the measure is obtainable for a real
   subject without collapsing source identity, scope, or attribution.*
+  - **WO-1A (KRYL-1230) — DONE.** The ordinary path + seam:
+    `src/engine/domainsignalresolution.js` `resolveClassEMeasure()`;
+    `WIRED_PRODUCERS` (empty — WO-1B/C/D/WO-5B plug in here); each `signalDefs`
+    entry gains `sourceClass` + `scope:'subject'`. Every measure resolves to a
+    derived structural absence naming its missing source class; the panel shows
+    `requires: <sourceClass>` / `scope: subject (WO-5B)`. Cross-domain facet
+    substitution rejected; provenance-less facet not counted. All 12 subject-scoped
+    by construction → "wired path, absent pending subject+source" is the state
+    after WO-1A. `qa_domainsignalresolution.mjs` 87/87, live 12 absence blocks
+    with specific `requires:` lines.
+  - **WO-1B/C/D — OPEN.** Wire the three shared-source producers into
+    `WIRED_PRODUCERS` (PatentsView / Census / FEC). **KRYL-1228** parallel.
 
 **Exit:** every authored measure either produces a subject-scoped 0–100 signal
 with provenance + single-axis attribution, or renders honest STRUCTURAL absence —

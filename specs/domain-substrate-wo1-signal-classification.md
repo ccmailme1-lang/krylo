@@ -139,6 +139,18 @@ measure with `dataState: CLASS_D` renders as classified STRUCTURAL absence — m
 name, `DATA UNAVAILABLE · SOURCE REQUIRED`, `absenceClass: STRUCTURAL`, plus the
 formula/boundary as reference.
 
+**WO-1A (KRYL-1230) — the ordinary path + derived absence:**
+`src/engine/domainsignalresolution.js` `resolveClassEMeasure()` is the single seam
+between an authored measure and a real source observation. Each `signalDefs` entry
+now carries `sourceClass` (the evidence class that satisfies it) + `scope:
+'subject'`. No producer is wired yet (`WIRED_PRODUCERS` empty), so every measure
+resolves to a **derived** structural absence that names its specific missing source
+class and required scope — the panel shows `requires: <sourceClass>` and
+`scope: subject (WO-5B)`. A wired producer (WO-1B/C/D / WO-5B) returns a
+contract-compliant `SignalFacet`; a facet whose `domain_id` ≠ the asked domain is
+rejected (no cross-domain substitution); a facet without provenance /
+`source_set_hash` does not count as resolved.
+
 **Still Class E (not part of the 12):** displacement-margin calibration;
 information-asymmetry aggregate.
 
