@@ -1,36 +1,19 @@
 // structurepanel.jsx — the Analysis Surface right panel.
-//
-// KRYL-1235 collateral fix (Founder 2026-08-30). `0802ed7` removed the right
-// column to strip the legacy ORACLE KERNEL brief / ACTION MATRIX (correct). That
-// column also hosted RECON / IMPACT and the premium Happy Path / EQ Canvas, which
-// are legitimate KRYLO surfaces and went with it as collateral. This restores
-// them at the panel geometry the Founder specified.
-//
-// Founder rule (2026-08-30): the Surface is two panels of INVARIANT geometry —
-// same width, height, alignment, spacing, hierarchy. Only the right panel's
-// content / function changes by tier:
-//   Standard:  [ Analysis / Perception ]  [ Formation / Structure ]
-//   Premium:   [ Analysis / Perception ]  [ Action Plan ]
-//
-// Standard right panel does NOT render premium content (no EQ Canvas / Happy
-// Path). The legacy ORACLE KERNEL brief lives only in intelligencebrief.jsx,
-// which is no longer mounted anywhere in the guest surface.
+// Full BRIEF / RECON / IMPACT column, restored at 50/50 geometry with the left
+// Target Packet.
 
 import React, { useState } from 'react';
-import EQCanvas from './eqcanvas.jsx';
+import IntelligenceBrief from './intelligencebrief.jsx';
 import ReconDashboard from './recondashboard.jsx';
 import CausalImpactView from './causalimpactview.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
-const ABSENCE = '#4f5654';
-const BODY = '#b6bcb7';
 
-const TABS = ['STRUCTURE', 'RECON', 'IMPACT'];
+const TABS = ['BRIEF', 'RECON', 'IMPACT'];
 
-export default function StructurePanel({ query, isPremium = false }) {
-  const [tab, setTab] = useState('STRUCTURE');
-  const structureLabel = isPremium ? 'ACTION PLAN' : 'STRUCTURE';
+export default function StructurePanel({ query }) {
+  const [tab, setTab] = useState('BRIEF');
 
   return (
     <div style={{
@@ -53,28 +36,16 @@ export default function StructurePanel({ query, isPremium = false }) {
                 cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1,
               }}
             >
-              {t === 'STRUCTURE' ? structureLabel : t}
+              {t}
             </button>
           );
         })}
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative' }}>
-        {tab === 'STRUCTURE' && (
-          <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>
-              {isPremium ? 'ACTION PLAN · PREMIUM' : 'FORMATION / STRUCTURE'}
-            </div>
-
-            <EQCanvas isPremium />
-          </div>
-        )}
-        {tab === 'RECON' && <ReconDashboard />}
-        {tab === 'IMPACT' && (
-          <div style={{ height: '100%', overflowY: 'auto' }}>
-            <CausalImpactView subject={query} />
-          </div>
-        )}
+      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
+        {tab === 'BRIEF' ? <IntelligenceBrief />
+          : tab === 'RECON' ? <ReconDashboard />
+          : <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={query} /></div>}
       </div>
     </div>
   );
