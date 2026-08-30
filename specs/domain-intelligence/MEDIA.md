@@ -98,8 +98,8 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** PARTIAL — the **attention concentration** signal is now AUTHORED
-(§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+**Maturity:** PARTIAL — **attention concentration** (§3.1) and **narrative
+coherence** (§3.2) are AUTHORED; the remaining §3 candidates stay UNAUTHORED (F3).
 
 ### 3.1 Signal — `media_attention_concentration` (AUTHORED, Founder 2026-08-30)
 
@@ -133,6 +133,35 @@ standard concentration construct.
 per-source attention shares for a subject** (GDELT / Reddit emit aggregate tone /
 velocity, not an attributed source-share breakdown) — data source is WO-1
 **Class D**. Renders `absenceClass: structural` until wired.
+
+### 3.2 Signal — `media_narrative_coherence` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `media_narrative_coherence` |
+| **concept** | narrative coherence |
+| **measure** | dominant-frame share across attention sources (CR-1 on frames) |
+| **question** | Do the sources covering the subject converge on one narrative or diverge? |
+| **definition** | The extent to which distinct sources express a consistent framing / stance on the subject, measured as the share of sources (or source-weighted attention) carrying the single most common frame. **Structural property only — never a truth, accuracy, or quality signal.** |
+| **formula** | `narrative_coherence = max(frame_share) / Σ(frame_share) × 100` |
+| **population** | identified sources covering the subject in the window, each assigned a frame / stance by a **sourced classification method**. |
+| **unit** | percent; `0–100`. `100` = every source on one frame · `0` = maximal contestation. |
+| **polarity** | magnitude only. High coherence is **not** "good" and low is **not** "bad" — the measure is explicitly non-evaluative. |
+| **provenance (required)** | subject identity · source set · **frame taxonomy + the classification method and its source** · per-source frame assignment · window bounds · `source_set_hash` / independence metadata. |
+| **missing-data rule** | no per-source frame classification from a **sourced method** → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Frame assignment is **never** inferred ad hoc, hand-labelled without a stated method, or proxied from tone / sentiment. |
+
+**Boundary (ratified §11):** agreement of **framing** across sources — **not**
+§3.1 attention concentration (a source base can be concentrated while framing is
+contested, and vice versa), **not** tone / sentiment, **not** propagation
+velocity, and **not** a judgement of whether any narrative is correct.
+
+**Precedent:** frame / narrative concentration; entropy-based coherence measures
+in media-framing analysis. CR-1-on-frames is used for consistency with the
+concentration family.
+
+**Data state:** measure authored. **No current MEDIA connector produces a
+sourced per-source frame classification** — WO-1 **Class D**. Renders
+`absenceClass: structural` until a sourced frame-classification method is wired.
 
 ---
 
@@ -356,7 +385,7 @@ the **cross-domain consistency pass**, now unblocked (all six `I_d` exist).
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §9 Observable Objects + Observation Classes (LOCKED) |
-| signals | **PARTIAL** | `media_attention_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; GDELT/Reddit signals + coherence + asymmetry measures still UNAUTHORED (F3) |
+| signals | **PARTIAL** | AUTHORED (Founder 2026-08-30) → Class D for data: `media_attention_concentration` (§3.1), `media_narrative_coherence` (§3.2). GDELT/Reddit signals + information-asymmetry measure UNAUTHORED (F3). |
 | structuralDimensions | PARTIAL | SPEC II §9 Conditions (LOCKED): attention concentration/diffusion, narrative coherence/contestation, propagation velocity. `intentional vs emergent` **UNAUTHORED** (§4.5). `information asymmetry` moved to `relationships` as an edge-property (§4.4, ratified). |
 | relationships | PARTIAL | SPEC II §9 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); no truth claims about the events narrated |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §9; macro-vs-subject distinction authored |

@@ -27,7 +27,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | B | 15 | connector-backed; blocked on the 3 substrate repairs + subject scope |
 | C | 4 | data present, measure not computed |
 | D | 10 | new source required |
-| E | 12 (6 authored 2026-08-30 — the full concentration family; 6 remain) | Founder must author the measure |
+| E | 0 remaining (all 12 authored 2026-08-29/30 → Class D for data) | authorship blocker CLOSED |
 | F | 0 | — |
 
 ---
@@ -43,9 +43,9 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | financing rounds | **D** | no wired source |
 | capital calls | **D** | no wired source |
 | buybacks / dividends | **D** | SEC/XBRL "where available" — not wired |
-| large-scale reallocations (Reallocation dim measure) | **E** | Founder formula |
-| capital-intensity change | **E** | Founder formula |
-| deployment velocity | **E** | Founder formula |
+| large-scale reallocations (Reallocation dim measure) | **E** | Founder formula (not yet authored) |
+| `capital_intensity_change` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `(CI_end − CI_start)/CI_start × 100`, `CI = capital_employed/output`. CAPITAL.md §3.3. Signed; magnitude = min(100,\|v\|), polarity = sign. |
+| `capital_deployment_velocity` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `deployed_in_window / committed_at_window_start × 100` (cap 100). CAPITAL.md §3.2. Rate of state change, not amount. |
 | `capital_concentration` measure | **AUTHORED** (Founder 2026-08-29) → **D** for data | **top-holder share** = `max(holder_capital) / Σ(holder_capital) × 100`. Measure done; no wired source (SEC 13F / Form D / fund-filing class). CAPITAL.md §3.1. |
 
 ### OWNERSHIP — connectors: SEC 13D/13G, EDGAR 8-K, Companies House, FEC, Census(+LAB)
@@ -78,7 +78,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | citation flow / accumulation | **C** | OpenAlex citation data available; not computed as a signal |
 | inventor / expertise migration | **B** | `INVENTOR_MIGRATION` relation exists; the KNOWLEDGE-facet (knowledge carried) not extracted |
 | collaboration-network density / churn | **D** | no wired source |
-| diffusion rate | **E** | Founder formula (time creation → broad adoption) |
+| `knowledge_diffusion_rate` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `new_adopters_in_window / reachable_population × 100`. KNOWLEDGE.md §3.2. Reachable-population denominator must be SOURCED — structural absence in nearly all real cases (accepted). |
 | `knowledge_expertise_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-holder expertise share (CR-1)** = `max(holder_expertise) / Σ(holder_expertise) × 100`. KNOWLEDGE.md §3.1. Expertise stock, NOT publication/citation flow or diffusion. |
 
 ### LABOR — connectors: BLS, USAJobs, Census(+OWN), SupplyChain(TECH/CAP/LAB)
@@ -91,8 +91,8 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | hiring / layoff event rate at scale | **D** | WARN-notice class not connected |
 | labor-action event count | **D** | no wired source |
 | `labor_geographic_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-location workforce share (CR-1)** = `max(location_headcount) / Σ(location_headcount) × 100`. LABOR.md §3.1. Static locational concentration, NOT redistribution/skill-mix/hiring rate. |
-| **geographic redistribution measure** | **E** | Founder formula (distinct from the static concentration measure above) |
-| **skill-mix shift measure** | **E** | Founder formula |
+| `labor_geographic_redistribution` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `Σ\|share_end(loc) − share_start(loc)\| / 2 × 100` (dissimilarity-index). LABOR.md §3.2. The *change*, distinct from static concentration. |
+| `labor_skill_mix_shift` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `Σ\|share_end(skill) − share_start(skill)\| / 2 × 100` (dissimilarity-index over a stated taxonomy). LABOR.md §3.3. |
 
 ### MEDIA — connectors: GDELT, Reddit, FEC(+CAP)
 
@@ -102,48 +102,49 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | social propagation velocity | **B** | `redditconnector`; real 24h velocity × upvote quality; `_pool` strips |
 | PAC / ad-spend velocity (attention pressure) | **B — DEFECTIVE** | `fecconnector` MEDIA signal `= CAP signal × 0.85` — a relabel, **fails the shared-source distinct-facet AC**. WO-2 fix #3. |
 | `media_attention_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-source attention share (CR-1)** = `max(source_attention) / Σ(source_attention) × 100`. MEDIA.md §3.1. Source-base concentration, NOT velocity/coherence/tone/volume. |
-| **narrative coherence measure** | **E** | Founder formula |
+| `media_narrative_coherence` measure | **AUTHORED** (Founder 2026-08-30) → **D** | `max(frame_share) / Σ(frame_share) × 100` (CR-1 on frames). MEDIA.md §3.2. Structural property only, never a truth signal; requires SOURCED per-source frame classification. |
 | information-asymmetry aggregate (edge-property, §5) | **D/E** | no source + no measure |
 
 ---
 
 ## The 12 Class-E measures (Founder authorship, WO-1 critical path)
 
-**Authored:** 6 of 12 — the full **concentration family**, all CR-1, all
-`% (0–100, identity)`, all rendering live as classified STRUCTURAL absence
-(Class D — no wired source):
-1. `capital_concentration` = **top-holder share** (Founder 2026-08-29, CAPITAL.md §3.1).
-2. `ownership_concentration_top_holder_share` = **top-holder control share** (Founder 2026-08-30, OWNERSHIP.md §3.1).
-3. `technology_capability_concentration` = **top-capability-provider share** (Founder 2026-08-30, TECHNOLOGY.md §3.1).
-4. `knowledge_expertise_concentration` = **top-holder expertise share** (Founder 2026-08-30, KNOWLEDGE.md §3.1).
-5. `labor_geographic_concentration` = **top-location workforce share** (Founder 2026-08-30, LABOR.md §3.1).
-6. `media_attention_concentration` = **top-source attention share** (Founder 2026-08-30, MEDIA.md §3.1).
+**Authored: 12 of 12 — the Class-E authorship blocker is CLOSED (Founder
+2026-08-29/30).** All authored, all `dataState: CLASS_D` (measure defined, no
+wired source), all rendering live in the Target Packet SIGNAL panel as classified
+STRUCTURAL absence.
 
-**Remaining 6 (Class E, pending Founder authorship):** CAPITAL deployment
-velocity · CAPITAL capital-intensity change · KNOWLEDGE diffusion rate · LABOR
-geographic-redistribution · LABOR skill-mix shift · MEDIA narrative-coherence.
+*Concentration family (§3.1 each), all CR-1, all `% (0–100, identity)`:*
+1. `capital_concentration` — top-holder share (CAPITAL.md §3.1).
+2. `ownership_concentration_top_holder_share` — top-holder control share (OWNERSHIP.md §3.1).
+3. `technology_capability_concentration` — top-capability-provider share (TECHNOLOGY.md §3.1).
+4. `knowledge_expertise_concentration` — top-holder expertise share (KNOWLEDGE.md §3.1).
+5. `labor_geographic_concentration` — top-location workforce share (LABOR.md §3.1).
+6. `media_attention_concentration` — top-source attention share (MEDIA.md §3.1).
 
-Once authored, a measure drops to Class D (needs a wired source) or C (data present).
+*Rate / change / shift / coherence measures:*
+7. `capital_deployment_velocity` — `deployed_in_window / committed_at_window_start × 100` (CAPITAL.md §3.2).
+8. `capital_intensity_change` — signed `(CI_end − CI_start)/CI_start × 100` (CAPITAL.md §3.3).
+9. `knowledge_diffusion_rate` — `new_adopters / reachable_population × 100`, sourced denominator required (KNOWLEDGE.md §3.2).
+10. `labor_geographic_redistribution` — `Σ|Δ location share| / 2 × 100` (LABOR.md §3.2).
+11. `labor_skill_mix_shift` — `Σ|Δ skill share| / 2 × 100` (LABOR.md §3.3).
+12. `media_narrative_coherence` — `max(frame_share)/Σ(frame_share) × 100`, sourced frame classification required, structural property only (MEDIA.md §3.2).
+
+Every measure is Class D (needs a wired source). None fabricates, estimates,
+zero-fills, or volume-proxies a value.
 
 **Production-visible (KRYL-1229):** the Target Packet 01 ANALYSIS SIGNAL panel
 (`domainsubstratetabs.jsx`) reads `domainIntelligence(d).signalDefs`. An AUTHORED
 measure with `dataState: CLASS_D` renders as classified STRUCTURAL absence — measure
 name, `DATA UNAVAILABLE · SOURCE REQUIRED`, `absenceClass: STRUCTURAL`, plus the
-formula/boundary as reference. No fabricated value. Every authored measure now has a
-runtime state (value or explicit absence) from the moment it is authored.
+formula/boundary as reference.
 
-1–6. The six concentration measures — CAPITAL / OWNERSHIP / TECHNOLOGY / KNOWLEDGE
-   (expertise) / LABOR (geographic) / MEDIA (attention).
-7. CAPITAL deployment velocity.
-8. CAPITAL capital-intensity change.
-9. KNOWLEDGE diffusion rate.
-10. LABOR geographic-redistribution measure.
-11. LABOR skill-mix shift measure.
-12. MEDIA narrative-coherence measure.
-   *(+ displacement-margin calibration; + information-asymmetry.)*
+**Still Class E (not part of the 12):** displacement-margin calibration;
+information-asymmetry aggregate.
 
-**No code path can produce any of these until the measure is authored.** Mark the
-field blocked; implement everything around it.
+**Remaining path is implementation/integration, not ontology design:**
+WO-1 (source wiring) → WO-5B (subject binding, `A(d, Subject)`) → WO-6 (Anduril
+end-to-end acceptance).
 
 ---
 

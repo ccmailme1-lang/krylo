@@ -126,8 +126,9 @@ concentration + reallocation **corroborated**; mid-cap financing stress
 *(worksheet `:299`)*. Capital-flow alignment stays weak because current domain
 pressure ≠ actual flow evidence.
 
-**Maturity:** PARTIAL — the **concentration** signal is now AUTHORED (§3.1);
-the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+**Maturity:** PARTIAL — **concentration** (§3.1), **deployment velocity** (§3.2),
+and **capital-intensity change** (§3.3) are AUTHORED; the remaining §3 candidates
+stay UNAUTHORED (F3).
 
 ### 3.1 Signal — `capital_concentration` (AUTHORED, Founder 2026-08-29)
 
@@ -160,6 +161,61 @@ produces holder-level capital shares** (FRED / Treasury / WorldBank / USASpendin
 / FEC are macro/flow series) — the data source is WO-1 **Class D** (SEC 13F /
 Form D / fund-filing class). Until a source is wired, this signal renders
 `absenceClass: structural`.
+
+### 3.2 Signal — `capital_deployment_velocity` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `capital_deployment_velocity` |
+| **concept** | deployment velocity |
+| **measure** | committed→deployed conversion rate per window |
+| **question** | How fast is committed capital being put to work? |
+| **definition** | Share of the capital committed to / available to the subject at window start that transitioned to a deployed state within the observation window. |
+| **formula** | `deployment_velocity = deployed_in_window / committed_at_window_start × 100` |
+| **population** | capital committed to / available to the subject at window start. |
+| **unit** | percent of the committed base deployed per window; `0–100` (**capped at 100**; deployment exceeding the start commitment via new commitments sets an `overflow` flag, value held at 100). |
+| **polarity** | direction-explicit: higher = faster deployment · lower = capital idle / withheld. Fast deployment is **neither** inherently constructive nor fracture — direction is a context read, not baked in. |
+| **provenance (required)** | committed-base figure at window start · deployment events within window (amount + timestamp each) · window bounds · source · `source_set_hash` / independence metadata (`signalfacet.js`). |
+| **missing-data rule** | no committed-base figure **or** no deployment-event series → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never estimated, never proxied from flow volume. |
+
+**Boundary (ratified §11):** a **rate of state change** (commitment → deployment)
+— **not** capital concentration (§3.1), **not** flow / reallocation magnitude, and
+**not** the amount deployed. Two subjects deploying the same dollar amount can
+have very different velocity.
+
+**Precedent:** capital-deployment pace / "dry-powder deployment rate" — standard
+private-capital convention.
+
+**Data state:** measure authored. **No current CAPITAL connector produces a
+committed-base + deployment-event series for a subject** — WO-1 **Class D**.
+Renders `absenceClass: structural` until wired.
+
+### 3.3 Signal — `capital_intensity_change` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `capital_intensity_change` |
+| **concept** | capital-intensity change |
+| **measure** | signed % change in the capital-employed-to-output ratio over the window |
+| **question** | Is the subject becoming more or less capital-intensive? |
+| **definition** | Change in `CI = capital_employed / output` (basis stated — output as revenue, units, or assets) between window start and window end. |
+| **formula** | `capital_intensity_change = (CI_end − CI_start) / CI_start × 100` |
+| **population** | the subject, measured at two points; `CI` computed on the same basis at both. |
+| **unit** | signed percent change over window. **Magnitude channel** = `min(100, \|value\|)`; **polarity** = sign (rising intensity vs falling intensity). |
+| **polarity** | direction-explicit: rising vs falling capital intensity. Neither direction is inherently constructive or fracture. |
+| **provenance (required)** | `capital_employed` and `output` at window start · same at window end · basis definition · window bounds · source · `source_set_hash` / independence metadata. |
+| **missing-data rule** | `CI` unavailable at **either** endpoint → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never estimated, never single-point-extrapolated. |
+
+**Boundary (ratified §11):** the *change in a ratio* — **not** deployment velocity
+(§3.2 = pace of putting capital to work), **not** concentration (§3.1). A subject
+can deploy fast while its capital intensity falls, and vice versa.
+
+**Precedent:** capital-intensity ratio (`capital / output`) and its period-over-
+period change — standard financial-analysis construct.
+
+**Data state:** measure authored. **No current CAPITAL connector produces a
+two-point capital-employed / output series for a subject** — WO-1 **Class D**.
+Renders `absenceClass: structural` until wired.
 
 ---
 
@@ -388,7 +444,7 @@ renders in the Data Substrate yet.
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §5 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | blocked by F3 — not yet split from structuralDimensions (no unit / 0–100 normalization authored) |
+| signals | **PARTIAL** | AUTHORED (Founder 2026-08-30) → Class D for data: `capital_concentration` (§3.1), `capital_deployment_velocity` (§3.2), `capital_intensity_change` (§3.3). Remaining §3 candidates UNAUTHORED (F3). |
 | structuralDimensions | PARTIAL | 8 axes (§4): Concentration, Flow, Reallocation, Deployment, Financing Pressure, Liquidity — PARTIAL (SPEC II §5, LOCKED). Scarcity (§4.7) and Constraint (§4.8) — **UNAUTHORED**. Q2/Q3 ratified. Old chain = candidate hypothesis only. |
 | relationships | PARTIAL | SPEC II §5 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6); synthesis deferred to `F` |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §5; macro-vs-entity distinction authored |

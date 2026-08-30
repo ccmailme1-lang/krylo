@@ -90,9 +90,9 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** PARTIAL — the **workforce-geographic concentration** signal is now
-AUTHORED (§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder
-authorship).
+**Maturity:** PARTIAL — **workforce-geographic concentration** (§3.1),
+**geographic redistribution** (§3.2), and **skill-mix shift** (§3.3) are AUTHORED;
+the remaining §3 candidates stay UNAUTHORED (F3).
 
 ### 3.1 Signal — `labor_geographic_concentration` (AUTHORED, Founder 2026-08-30)
 
@@ -126,6 +126,60 @@ standard concentration construct.
 subject-scoped per-location headcount shares** (BLS / Census / USAJobs emit
 occupational series, establishment counts, and postings — not a subject workforce
 distributed by location) — data source is WO-1 **Class D**. Renders
+`absenceClass: structural` until wired.
+
+### 3.2 Signal — `labor_geographic_redistribution` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `labor_geographic_redistribution` |
+| **concept** | geographic redistribution |
+| **measure** | magnitude of shift in workforce location distribution over the window (dissimilarity-index form) |
+| **question** | How much has the workforce's geographic footprint moved? |
+| **definition** | Total absolute change in location shares between window start and window end, halved — the fraction of the workforce that would need to relocate to restore the start distribution. |
+| **formula** | `geographic_redistribution = Σ|share_end(loc) − share_start(loc)| / 2 × 100` over all locations |
+| **population** | the same geographic-unit set and granularity used for §3.1, measured at two points. |
+| **unit** | percent of the workforce; `0–100` (dissimilarity-index form — naturally bounded). |
+| **polarity** | magnitude only. Whether the move is *concentrating* or *dispersing* is a secondary read from the sign of Δ(§3.1); the redistribution measure itself is unsigned. |
+| **provenance (required)** | location shares at window start · location shares at window end · unit set + granularity · window bounds · source · `source_set_hash` / independence metadata. |
+| **missing-data rule** | location shares unavailable at **either** endpoint → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never single-point-extrapolated, never proxied from posting volume. |
+
+**Boundary (ratified §11):** the **change** in geographic distribution — **not**
+§3.1 static concentration, **not** skill-mix shift (§3.3 — different axis), **not**
+hiring / layoff event rate.
+
+**Precedent:** index of dissimilarity / Duncan segregation index applied
+temporally — standard construct.
+
+**Data state:** measure authored. **No current LABOR connector produces a
+two-point subject workforce-by-location series** — WO-1 **Class D**. Renders
+`absenceClass: structural` until wired.
+
+### 3.3 Signal — `labor_skill_mix_shift` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `labor_skill_mix_shift` |
+| **concept** | skill-mix shift |
+| **measure** | magnitude of change in the workforce's skill / occupational composition over the window (dissimilarity-index form) |
+| **question** | How much has the composition of skills changed? |
+| **definition** | Total absolute change in occupational / skill-category shares between window start and window end, halved. |
+| **formula** | `skill_mix_shift = Σ|share_end(skill) − share_start(skill)| / 2 × 100` over skill categories |
+| **population** | a stated skill taxonomy (e.g. SOC major groups), measured at two points on the same taxonomy. |
+| **unit** | percent of the workforce; `0–100` (dissimilarity-index form). |
+| **polarity** | magnitude only; no inherent direction. |
+| **provenance (required)** | skill-category shares at window start · same at window end · taxonomy identity · window bounds · source · `source_set_hash` / independence metadata. |
+| **missing-data rule** | skill-category shares unavailable at **either** endpoint → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never single-point-extrapolated, never proxied from posting volume. |
+
+**Boundary (ratified §11):** change in **composition** — **not** geographic
+(§3.1 / §3.2, a location axis), **not** headcount growth (share-based, so
+size-invariant), **not** hiring rate.
+
+**Precedent:** dissimilarity-index form over a skill taxonomy — same construct as
+§3.2 on a different partition.
+
+**Data state:** measure authored. **No current LABOR connector produces a
+two-point subject workforce-by-skill series** — WO-1 **Class D**. Renders
 `absenceClass: structural` until wired.
 
 ---
@@ -347,7 +401,7 @@ full 6×6 matrix is UNAUTHORED (MEDIA row pending its draft).
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §8 Observable Objects + Observation Classes (LOCKED) |
-| signals | **PARTIAL** | `labor_geographic_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; BLS/Census/USAJobs signals + redistribution + skill-mix measures still UNAUTHORED (F3) |
+| signals | **PARTIAL** | AUTHORED (Founder 2026-08-30) → Class D for data: `labor_geographic_concentration` (§3.1), `labor_geographic_redistribution` (§3.2), `labor_skill_mix_shift` (§3.3). BLS/Census/USAJobs signals + remaining §3 candidates UNAUTHORED (F3). |
 | structuralDimensions | PARTIAL | SPEC II §8 Conditions (LOCKED). `quality vs quantity` **UNAUTHORED** (§4.5) |
 | relationships | PARTIAL | SPEC II §8 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §8; macro-vs-entity + internal-visibility distinction authored |

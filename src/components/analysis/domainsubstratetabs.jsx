@@ -143,9 +143,15 @@ function DomainScroll({ domain, pressure }) {
           <Absent reason="No live signal in the current window. FIELD SCOPE — not scoped to a subject (WO-5B)." />
         )}
         {authoredMeasures.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, borderTop: `1px solid ${RULE}`, paddingTop: 8, marginTop: 2 }}>
-            <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.16em' }}>AUTHORED MEASURE</span>
-            {authoredMeasures.map(([k, def]) => <AuthoredMeasure key={k} name={k} def={def} />)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14, borderTop: `1px solid ${RULE}`, paddingTop: 8, marginTop: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.16em' }}>
+              AUTHORED MEASURE{authoredMeasures.length > 1 ? `S · ${authoredMeasures.length}` : ''}
+            </span>
+            {authoredMeasures.map(([k, def], i) => (
+              <div key={k} style={i > 0 ? { borderTop: `1px solid ${RULE}`, paddingTop: 12 } : undefined}>
+                <AuthoredMeasure name={k} def={def} />
+              </div>
+            ))}
           </div>
         )}
         {pendingMeasures && (

@@ -8,11 +8,14 @@
 // Maturity per field: AUTHORED (ratified) | LOCKED (verbatim SPEC II §LOCKED) |
 // UNAUTHORED (no ratified content — renders as classified absence, never faked).
 //
-// `signals` and `sharpeningInputs` are UNAUTHORED for every domain (WO-1 Class E —
-// the measures are pending Founder authorship). Nothing here is subject-scoped;
-// subject binding is WO-5B.
+// `signalDefs` holds the Founder-authored Class-E measures — all 12 authored
+// 2026-08-29/30, all `dataState: 'CLASS_D'` (measure defined, no wired source →
+// renders classified STRUCTURAL absence, never faked). The legacy `signals`
+// field stays UNAUTHORED per domain (its candidate inventory is not authored as
+// signal definitions); `sharpeningInputs` UNAUTHORED. Nothing here is
+// subject-scoped; subject binding is WO-5B.
 
-export const DI_VERSION = '0.1';
+export const DI_VERSION = '0.2';
 
 const SPEC_II = 'specs/SPEC-observable-substrate-revelation-contract.md';
 
@@ -96,6 +99,28 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient holder coverage → no measure (absenceClass: structural); never an estimated concentration, never proxied from flow volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // SEC 13F / Form D / fund-filing class — not wired
+      },
+      capital_deployment_velocity: {
+        concept: 'deployment velocity',
+        measure: 'committed→deployed conversion rate per window',
+        formula: 'deployed_in_window / committed_at_window_start × 100 (capped at 100, overflow flag)',
+        unit: 'percent of committed base deployed per window (0–100)',
+        polarity: 'direction-explicit: higher = faster deployment · lower = idle/withheld (not inherently constructive or fracture)',
+        boundary: 'rate of state change (commitment → deployment) — NOT concentration, flow/reallocation magnitude, or amount deployed',
+        missingData: 'no committed-base figure or no deployment-event series → no measure (absenceClass: structural); never estimated, never proxied from flow volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // committed-base + deployment-event series — not wired
+      },
+      capital_intensity_change: {
+        concept: 'capital-intensity change',
+        measure: 'signed % change in capital-employed / output ratio over the window',
+        formula: '(CI_end − CI_start) / CI_start × 100 ; CI = capital_employed / output',
+        unit: 'signed % change; magnitude = min(100, |value|), polarity = sign',
+        polarity: 'direction-explicit: rising vs falling capital intensity (neither inherently constructive or fracture)',
+        boundary: 'change in a ratio — NOT deployment velocity (§3.2) or concentration (§3.1)',
+        missingData: 'CI unavailable at either endpoint → no measure (absenceClass: structural); never estimated, never single-point-extrapolated',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // two-point capital-employed / output series — not wired
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -220,6 +245,17 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // holder-level expertise-share source — not wired
       },
+      knowledge_diffusion_rate: {
+        concept: 'diffusion rate',
+        measure: 'newly reached adopters / reachable population, per window',
+        formula: 'new_adopters_in_window / reachable_population × 100',
+        unit: 'percent of reachable population newly reached per window (0–100)',
+        polarity: 'direction-explicit: higher = fast diffusion (advantage erodes) · lower = contained',
+        boundary: 'spread rate — NOT expertise concentration (§3.1, stock), publication activity, or raw citation count',
+        missingData: 'no adopter series or no SOURCED reachable-population estimate → no measure (absenceClass: structural); the denominator is never assumed, rule-of-thumb, or proxied',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // no sourced reachable-population denominator — structural absence in nearly all real cases (accepted)
+      },
     },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',
@@ -259,6 +295,28 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient geographic coverage → no measure (absenceClass: structural); never proxied from posting or establishment volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // subject-scoped per-location headcount source — not wired
+      },
+      labor_geographic_redistribution: {
+        concept: 'geographic redistribution',
+        measure: 'shift in workforce location distribution over the window (dissimilarity-index form)',
+        formula: 'Σ|share_end(loc) − share_start(loc)| / 2 × 100',
+        unit: 'percent of the workforce (0–100, dissimilarity-index — naturally bounded)',
+        polarity: 'magnitude only; concentrating vs dispersing is a secondary read from sign of Δ(§3.1)',
+        boundary: 'the CHANGE in geographic distribution — NOT §3.1 static concentration, skill-mix shift, or hiring/layoff rate',
+        missingData: 'location shares unavailable at either endpoint → no measure (absenceClass: structural); never single-point-extrapolated, never proxied from posting volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // two-point subject workforce-by-location series — not wired
+      },
+      labor_skill_mix_shift: {
+        concept: 'skill-mix shift',
+        measure: 'change in workforce skill/occupational composition over the window (dissimilarity-index form)',
+        formula: 'Σ|share_end(skill) − share_start(skill)| / 2 × 100',
+        unit: 'percent of the workforce (0–100, dissimilarity-index form)',
+        polarity: 'magnitude only; no inherent direction',
+        boundary: 'change in COMPOSITION — NOT geographic (§3.1/§3.2, a location axis), headcount growth, or hiring rate',
+        missingData: 'skill-category shares unavailable at either endpoint → no measure (absenceClass: structural); never single-point-extrapolated, never proxied from posting volume',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // two-point subject workforce-by-skill series — not wired
       },
     },
     relevance: { maturity: 'PARTIAL',
@@ -302,6 +360,17 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
         missingData: 'insufficient source coverage → no measure (absenceClass: structural); never proxied from total attention volume',
         maturity: 'AUTHORED',
         dataState: 'CLASS_D',   // per-source attention-share source — not wired
+      },
+      media_narrative_coherence: {
+        concept: 'narrative coherence',
+        measure: 'dominant-frame share across attention sources (CR-1 on frames)',
+        formula: 'max(frame_share) / Σ(frame_share) × 100',
+        unit: 'percent (0–100); 100 = one frame · 0 = maximal contestation',
+        polarity: 'magnitude only — explicitly non-evaluative: high coherence is NOT "good", low is NOT "bad"',
+        boundary: 'agreement of FRAMING across sources — NOT §3.1 attention concentration, tone/sentiment, propagation velocity, or any judgement of narrative correctness. Structural property only, never a truth signal',
+        missingData: 'no per-source frame classification from a SOURCED method → no measure (absenceClass: structural); frame assignment is never inferred ad hoc, hand-labelled without a stated method, or proxied from tone',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // sourced per-source frame classification — not wired
       },
     },
     relevance: { maturity: 'PARTIAL',

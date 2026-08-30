@@ -88,8 +88,8 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 
 Each must become a signal definition before this field reaches `PARTIAL`.
 
-**Maturity:** PARTIAL — the **expertise concentration** signal is now AUTHORED
-(§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+**Maturity:** PARTIAL — **expertise concentration** (§3.1) and **diffusion rate**
+(§3.2) are AUTHORED; the remaining §3 candidates stay UNAUTHORED (F3).
 
 ### 3.1 Signal — `knowledge_expertise_concentration` (AUTHORED, Founder 2026-08-30)
 
@@ -123,6 +123,35 @@ standard concentration construct.
 holder-level expertise shares** (OpenAlex / arXiv / PubMed / PatentsView emit
 activity / migration / citation series, not an expertise-stock denominator) —
 data source is WO-1 **Class D**. Renders `absenceClass: structural` until wired.
+
+### 3.2 Signal — `knowledge_diffusion_rate` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `knowledge_diffusion_rate` |
+| **concept** | diffusion rate |
+| **measure** | newly reached adopters / reachable population, per window |
+| **question** | How fast is this knowledge spreading beyond its origin? |
+| **definition** | Rate of increase in the number of distinct holders / adopters / citers of an identified knowledge item over the observation window, as a fraction of the reachable population. |
+| **formula** | `diffusion_rate = new_adopters_in_window / reachable_population × 100` |
+| **population** | the **reachable / addressable** adopter population for that knowledge item — must be a **sourced** estimate, never assumed. |
+| **unit** | percent of the reachable population newly reached per window; `0–100` (identity). |
+| **polarity** | direction-explicit: higher = fast diffusion (knowledge becoming common → any positional advantage erodes) · lower = contained. Direction is a context read. |
+| **provenance (required)** | knowledge-item identity · adopter series (count + timestamp) · **reachable-population estimate + its source** · window bounds · source · `source_set_hash` / independence metadata. |
+| **missing-data rule** | no adopter series **or** no sourced reachable-population estimate → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. The reachable-population denominator is **never** assumed, estimated by rule of thumb, or set to a proxy — absent it, the measure does not compute. |
+
+**Boundary (ratified §11):** the **spread rate** of a knowledge item — **not**
+expertise concentration (§3.1 = stock), **not** publication / preprint activity
+(production volume ≠ adoption spread), **not** citation accumulation as a raw
+count.
+
+**Precedent:** diffusion-of-innovations adoption rate (Rogers); the newly-adopted
+fraction in a Bass-style diffusion model — standard construct.
+
+**Data state:** measure authored. Practically, **no current KNOWLEDGE connector
+provides a sourced reachable-population denominator** — so this measure renders
+`absenceClass: structural` in nearly all real cases (accepted, Founder
+2026-08-30). WO-1 **Class D**.
 
 ---
 
@@ -339,7 +368,7 @@ matrix are UNAUTHORED.
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §7 Observable Objects + Observation Classes (LOCKED) |
-| signals | **PARTIAL** | `knowledge_expertise_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; publication signals + diffusion-rate measure still UNAUTHORED (F3) |
+| signals | **PARTIAL** | AUTHORED (Founder 2026-08-30) → Class D for data: `knowledge_expertise_concentration` (§3.1), `knowledge_diffusion_rate` (§3.2). Publication signals + remaining §3 candidates UNAUTHORED (F3). |
 | structuralDimensions | PARTIAL | SPEC II §7 Conditions (LOCKED): concentration, diffusion rate, expertise scarcity/surplus, institutional capture. `tacit vs explicit` **UNAUTHORED** (§4.6). `transfer friction` moved to `relationships` as an edge-property (§4.3, ratified). |
 | relationships | PARTIAL | SPEC II §7 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §7; macro-vs-entity distinction authored |
