@@ -166,6 +166,20 @@ export const DOMAIN_INTELLIGENCE = Object.freeze({
       unauthored: ['claimed vs actual capability'],
       edgeProps: ['dependency (Technology ↔ adopters / ↔ enabling infrastructure)'],
     },
+    // Authored measures (Founder). See TECHNOLOGY.md §3.1.
+    signalDefs: {
+      technology_capability_concentration: {
+        concept: 'capability concentration',
+        measure: 'top-capability-provider share',
+        formula: 'top_capability_share = max(provider_capability_share)',
+        unit: 'percent of capability supply/control (0–100, identity normalization)',
+        polarity: 'higher concentration = greater structural dependency',
+        boundary: 'capability-supply share — NOT adoption momentum, displacement pressure, generic tech activity, or usage volume',
+        missingData: 'insufficient provider/capability-share coverage → no measure (absenceClass: structural); never proxied from activity',
+        maturity: 'AUTHORED',
+        dataState: 'CLASS_D',   // provider capability-share source — not wired
+      },
+    },
     relevance: { maturity: 'PARTIAL',
       items: ['attributable to the subject / its immediate structural environment',
               'sufficient evidence to establish the TECHNOLOGY attribution',

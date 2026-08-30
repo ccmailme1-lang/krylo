@@ -58,12 +58,15 @@ const own = await tabDump('OWNERSHIP');
 console.log('\n--- OWNERSHIP · SIGNAL panel ---\n' + own.txt);
 const tech = await tabDump('TECHNOLOGY');
 console.log('\n--- TECHNOLOGY · SIGNAL panel ---\n' + tech.txt);
+const know = await tabDump('KNOWLEDGE');
+console.log('\n--- KNOWLEDGE · SIGNAL panel ---\n' + know.txt);
 
 await browser.close();
 
 const c = cap.txt.toUpperCase();
 const o = own.txt.toUpperCase();
 const t = tech.txt.toUpperCase();
+const k = know.txt.toUpperCase();
 const checks = [
   ['01 ANALYSIS section rendered', cap.has01],
   ['all six domain tabs present', cap.tabsPresent.length === 6],
@@ -82,8 +85,15 @@ const checks = [
   ['OWNERSHIP: formula shown as reference', o.includes('HOLDER_CONTROL')],
   ['OWNERSHIP: boundary names capital exclusion', o.includes('NOT ECONOMIC CAPITAL')],
   ['OWNERSHIP: no fabricated numeric value on the measure line', !/TOP-HOLDER CONTROL SHARE[^\n]*\n\s*\d/.test(o)],
-  ['TECHNOLOGY: no AUTHORED MEASURE block', !t.includes('AUTHORED MEASURE')],
-  ['TECHNOLOGY: pending line still shown', /PENDING FOUNDER AUTHORSHIP/.test(t)],
+  ['TECHNOLOGY: AUTHORED MEASURE label', t.includes('AUTHORED MEASURE')],
+  ['TECHNOLOGY: CAPABILITY CONCENTRATION', t.includes('CAPABILITY CONCENTRATION')],
+  ['TECHNOLOGY: measure name "top-capability-provider share"', t.includes('TOP-CAPABILITY-PROVIDER SHARE')],
+  ['TECHNOLOGY: DATA UNAVAILABLE · SOURCE REQUIRED', t.includes('DATA UNAVAILABLE') && t.includes('SOURCE REQUIRED')],
+  ['TECHNOLOGY: absenceClass: STRUCTURAL', /ABSENCECLASS:\s*STRUCTURAL/.test(t)],
+  ['TECHNOLOGY: boundary excludes adoption / displacement / activity', t.includes('ADOPTION') && t.includes('DISPLACEMENT') && t.includes('ACTIVITY')],
+  ['TECHNOLOGY: no fabricated numeric value on the measure line', !/TOP-CAPABILITY-PROVIDER SHARE[^\n]*\n\s*\d/.test(t)],
+  ['KNOWLEDGE: no AUTHORED MEASURE block (still pending)', !k.includes('AUTHORED MEASURE')],
+  ['KNOWLEDGE: pending line still shown', /PENDING FOUNDER AUTHORSHIP/.test(k)],
   ['no uncaught page errors', pageErrs.length === 0],
 ];
 let ok = true;

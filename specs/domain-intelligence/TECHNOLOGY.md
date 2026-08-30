@@ -88,9 +88,58 @@ Candidate measurables (some already computed in-repo, normalized 0–100):
 - displacement margin — `happypathdisplacementengine.js` computes a challenger-vs-incumbent composite gap (`DISPLACEMENT_MARGIN = 8`, marked CALIBRATE).
 
 Each must become a signal definition before this field reaches `PARTIAL`. The
-concentration and dependency measures (§4.3, §4.5) have **no defined formula**.
+dependency measure (§4.5) still has **no defined formula**; the concentration
+measure (§4.3) is now authored (§3.1).
 
-**Maturity:** UNAUTHORED (blocked by F3)
+**Maturity:** PARTIAL — the **capability concentration** signal is now AUTHORED
+(§3.1); the rest remain UNAUTHORED (WO-1 Class E, pending Founder authorship).
+
+### 3.1 Signal — `technology_capability_concentration` (AUTHORED, Founder 2026-08-30)
+
+| field | value |
+|---|---|
+| **name** | `technology_capability_concentration` |
+| **concept** | capability concentration |
+| **measure** | top-capability-provider share |
+| **question** | Where is the capability required for this technology concentrated? |
+| **definition** | Concentration of a material technological capability among identifiable providers, platforms, standards, or enabling components. |
+| **formula** | `top_capability_share = max(provider_capability_share)` |
+| **population** | identifiable entities providing the *same material capability* required by the observed technology formation. |
+| **unit** | percent of capability supply / control; `0–100` (identity normalization). |
+| **polarity** | higher concentration = greater structural dependency · lower = more distributed capability substrate. |
+| **provenance (required)** | capability identity · provider / entity identity · capability-share basis · observation timestamp · source · `source_set_hash` / independence metadata (`signalfacet.js` contract). |
+| **missing-data rule** | insufficient provider / capability-share coverage → **no measure** (`absenceClass: structural`). `DATA UNAVAILABLE · SOURCE REQUIRED`. Never estimated, inferred, or proxied from activity. |
+
+**Interpretation:** high concentration indicates a material capability is
+dependent on a small number of providers or enabling components; low
+concentration indicates a more distributed capability substrate.
+
+**Boundary (six-way concentration invariant, ratified §11):** capability
+concentration is **not**:
+- technology **adoption momentum** (§4.1);
+- **displacement pressure** (§4.2);
+- **generic technology activity** (patent / repo / package volume — §3 candidates);
+- **usage volume**;
+- **market share** — unless market share directly represents the capability being
+  measured.
+
+It is the largest single provider's share of the *capability supply* an observed
+technology formation depends on — a dependency-structure magnitude, not a
+diffusion or contest signal.
+
+**Field-level magnitude:** a subject-level magnitude — meaningful without naming a
+counterparty — so it passes the dimension-vs-edge rule from the cross-domain
+consistency pass. (The Technology ↔ adopters / ↔ enabling-infrastructure
+*dependency edge* in §4 remains a separate edge-property, not this measure.)
+
+**Precedent:** the top-N concentration ratio (CR-n; here CR-1) applied to a
+capability-supply population — standard concentration construct, cited convention.
+
+**Data state:** the *measure* is authored. **No current TECHNOLOGY connector
+produces provider capability-share data** (PatentsView / GitHub / npm / Kalshi
+emit velocity / activity / event series, not a capability-supply denominator) —
+the data source is WO-1 **Class D**. Until a capability-concentration source is
+wired, this signal renders `absenceClass: structural`.
 
 ---
 
@@ -310,7 +359,7 @@ authored against the locked sources; the TECHNOLOGY↔KNOWLEDGE line and the ful
 | Field | Mark | Basis / blocker |
 |---|---|---|
 | observes | PARTIAL | SPEC II §6 Observable Objects + Observation Classes (LOCKED) |
-| signals | **UNAUTHORED** | F3 — not split; patent/repo signals exist but not authored as `I_d` signal definitions; concentration + dependency measures undefined |
+| signals | **PARTIAL** | `technology_capability_concentration` AUTHORED (§3.1, Founder 2026-08-30) → Class D for data; patent/repo signals + dependency measure still UNAUTHORED (F3) |
 | structuralDimensions | PARTIAL | SPEC II §6 Conditions (LOCKED): adoption momentum, displacement pressure, capability concentration, infra readiness/lag. `claimed vs actual capability` **UNAUTHORED** (§4.6). `dependency` moved to `relationships` as an edge-property (§4.5, ratified). |
 | relationships | PARTIAL | SPEC II §6 Relationships + Cross-Domain Propagation (LOCKED); cross-domain admission set only (F6) |
 | relevanceConditions | PARTIAL | partial trace to SPEC II §6; macro-vs-entity distinction authored |

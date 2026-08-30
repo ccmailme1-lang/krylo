@@ -68,7 +68,7 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 | displacement margin | **B/E** | `happypathdisplacementengine` computes it; `DISPLACEMENT_MARGIN=8` marked CALIBRATE → **E** for the calibration |
 | adoption-metric rate (deployment footprint) | **D** | no wired source |
 | infrastructure build / decommission count | **D** | no wired source |
-| **capability concentration measure** | **E** | Founder formula |
+| `technology_capability_concentration` measure | **AUTHORED** (Founder 2026-08-30) → **D** for data | **top-capability-provider share** = `max(provider_capability_share)`. Measure done; no wired provider capability-share source. TECHNOLOGY.md §3.1. NOT adoption / displacement / activity / usage. |
 
 ### KNOWLEDGE — connectors: OpenAlex, arXiv, PubMed, FDA(partial), PatentsView `INVENTOR_MIGRATION`
 
@@ -108,9 +108,10 @@ are the WO-1 substrate defects — frozen behaviour, buildable now.
 
 ## The 12 Class-E measures (Founder authorship, WO-1 critical path)
 
-**Authored:** 2 of 12 —
+**Authored:** 3 of 12 —
 1. `capital_concentration` = **top-holder share** (Founder 2026-08-29, CAPITAL.md §3.1).
 2. `ownership_concentration_top_holder_share` = **top-holder control share** (Founder 2026-08-30, OWNERSHIP.md §3.1).
+3. `technology_capability_concentration` = **top-capability-provider share** (Founder 2026-08-30, TECHNOLOGY.md §3.1).
 
 Once authored, a measure drops to Class D (needs a wired source) or C (data present).
 

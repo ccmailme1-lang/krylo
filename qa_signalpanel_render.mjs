@@ -18,8 +18,9 @@ const pendingOf  = (di) => di.signals?.maturity === 'UNAUTHORED';
 // 1. Domains with an AUTHORED concentration measure — classified absence (no value),
 //    reference fields present, dataState CLASS_D.
 const AUTHORED_DOMAINS = {
-  CAPITAL:   'capital_concentration',
-  OWNERSHIP: 'ownership_concentration_top_holder_share',
+  CAPITAL:    'capital_concentration',
+  OWNERSHIP:  'ownership_concentration_top_holder_share',
+  TECHNOLOGY: 'technology_capability_concentration',
 };
 for (const [d, expectedKey] of Object.entries(AUTHORED_DOMAINS)) {
   const di = domainIntelligence(d);
@@ -33,14 +34,20 @@ for (const [d, expectedKey] of Object.entries(AUTHORED_DOMAINS)) {
   ok(`${d}: signals still UNAUTHORED overall -> "remaining" line renders`, pendingOf(di) === true);
 }
 
-// 2. Boundary text keeps CAPITAL (economic) and OWNERSHIP (control) distinct.
-ok('CAPITAL boundary names economic capital, not control',
-   /economic capital/i.test(authoredOf(domainIntelligence('CAPITAL'))[0][1].boundary));
-ok('OWNERSHIP boundary names control-rights, not capital',
-   /control/i.test(authoredOf(domainIntelligence('OWNERSHIP'))[0][1].boundary));
+// 2. Each concentration measure's boundary keeps it distinct from the others'
+//    latent variable and from its domain's non-concentration dimensions.
+const capB = authoredOf(domainIntelligence('CAPITAL'))[0][1].boundary;
+const ownB = authoredOf(domainIntelligence('OWNERSHIP'))[0][1].boundary;
+const techB = authoredOf(domainIntelligence('TECHNOLOGY'))[0][1].boundary;
+ok('CAPITAL boundary names economic capital, excludes control', /economic capital/i.test(capB) && /control/i.test(capB));
+ok('OWNERSHIP boundary names control-rights, excludes capital', /control/i.test(ownB) && /capital/i.test(ownB));
+ok('TECHNOLOGY boundary excludes adoption / displacement / activity / usage',
+   /adoption/i.test(techB) && /displacement/i.test(techB) && /activity/i.test(techB) && /usage/i.test(techB));
+ok('TECHNOLOGY capability concentration cannot collapse to adoption/activity — it is a supply-share measure',
+   /capability[- ]supply/i.test(techB));
 
 // 3. A still-pending domain renders NO authored-measure block.
-for (const d of ['TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']) {
+for (const d of ['KNOWLEDGE', 'LABOR', 'MEDIA']) {
   const di = domainIntelligence(d);
   ok(`${d}: no AUTHORED measure block`, authoredOf(di).length === 0);
   ok(`${d}: pending line renders`, pendingOf(di) === true);
