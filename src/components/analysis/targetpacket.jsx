@@ -13,10 +13,12 @@ import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import DomainSubstrateTabs   from './domainsubstratetabs.jsx';
+import { subjectScope }       from '../../engine/subjectscope.js';
+import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
+import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
 import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
-import { buildRenderDirective }  from '../../engine/scprl.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
@@ -24,7 +26,6 @@ import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecon
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
-import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -284,33 +285,15 @@ export default function TargetPacket() {
   // could disagree, showing STRUCTURAL ABSENCE here while the export gate unlocked. Matching
   // intelligencebrief.jsx's exact derivation so this panel and the export gate can't diverge.
   const entity      = getDisplayEntity(session?.query ?? 'Unknown Signal');
-  // KRYL-1089: confidence is grounded only when the engine measured it. The old `?? 0.78`
-  // fabricated a number whenever the seam withheld — that was the "new 78% constant". When
-  // fidelity is UNGROUNDED / confidence is null, there is NO score to show.
-  const confGrounded = synthesis?.fidelity !== 'UNGROUNDED' && typeof synthesis?.confidence === 'number';
-  const confScore   = confGrounded ? synthesis.confidence : null;
-  // Option A — no empty windows. Always present a value: grounded measurement when available,
-  // else the classification estimate (always computed), labeled EST so it's never passed off as measured.
-  const confEstimate  = typeof synthesis?.classificationConfidence === 'number' ? synthesis.classificationConfidence : null;
-  const confDisplay   = confGrounded ? confScore : confEstimate;
-  const confIsEstimate = !confGrounded && confDisplay != null;
   const stateLabel  = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
-  // DEF-1863: nothing in this pipeline produces an observed/closed outcome yet — default PROJECTION.
-  const stateType   = synthesis?.stateType ?? STATE_TYPE.PROJECTION;
-  const KEY_DRIVERS = synthesis?.keyDrivers ?? [];
   // KRYL-1175: no real historical trend series exists anywhere in this system — the old fallback
   // was a fabricated climbing curve. null means "no data", not "assume an upward trend".
   const TRAJ_POINTS = synthesis?.trajPoints ?? null;
 
-  // LEV-02: ranked candidates from arbitration engine
+  // LEV-02 arbitration record — kept for the 03 BASIS admitted-paths count only.
+  // KRYL-1235: the ranked-candidate / ASSEMBLANCE path machinery it fed is removed
+  // from the guest packet (it was refinement prompts + action guidance).
   const arbitration  = session?.tensor?.arbitration ?? null;
-  const topCandidates = arbitration?.topK ?? [];
-  const paretoExtra   = arbitration?.paretoAdditions ?? [];
-  const happyPath     = topCandidates[0] ?? null;
-  const alternatives  = topCandidates.slice(1);
-  const scoreGap      = happyPath && alternatives.length > 0
-    ? ((happyPath.score - alternatives[0].score) * 100).toFixed(0)
-    : null;
 
   const revelationStep  = 3;
   const { engineState } = useHappyPathEngine();
@@ -334,6 +317,26 @@ export default function TargetPacket() {
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
+
+  // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
+  // DIC / synthesis routing / 5B are untouched (forensic recovery: those are
+  // legitimate to their own contracts). `INSUFFICIENT_INPUT` stays what it means
+  // — "the decision artifact can't be resolved" — and is not read as "the
+  // perceptual packet has nothing to show". Missing decision parameters constrain
+  // conclusions, not observation.
+  const subjScope = useMemo(
+    () => subjectScope(session?.queryContext ?? session?.query ?? ''),
+    [session?.queryContext, session?.query],
+  );
+  const recognizedFrame = (() => {
+    const d = synthesis?.queryDomain;
+    if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
+    return d === 'REAL_ESTATE' ? 'REAL ESTATE' : d.replace(/_/g, ' ');
+  })();
+  const wtResolved = useMemo(
+    () => resolveWhyTrace(entity, getCanonicalEvents()).state === WT_STATE.RESOLVED,
+    [entity],
+  );
 
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
   // field the rest of the packet already reads. No new data source.
@@ -380,8 +383,6 @@ export default function TargetPacket() {
   }
 
 
-  const [showAlts, setShowAlts] = useState(false);
-
   if (!session) {
     return (
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
@@ -396,112 +397,11 @@ export default function TargetPacket() {
   // bypassing the analysis frame (no INSUFFICIENT/NO PATHS/REFORMULATE noise).
   if (isPetroQuery(session?.query ?? '')) return <PetroTemplate petro={petro} stations={stations} />;
 
-  const projectionTag = stateType === STATE_TYPE.OBSERVED ? 'OBSERVED' : 'PROJECTION';
-
-  // ── ASSEMBLANCE / path-field fragment (unchanged logic — WO/LEV path rendering) ──
-  const assemblanceBlock = (
-    <div style={{ marginTop: 20, borderTop: `1px solid ${BORDER}`, paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      {alternatives.length === 0 && (() => {
-        const q = session?.query?.trim() ?? '';
-        // Reformulate cue only when the query itself is under-specified — i.e.
-        // refining it would yield richer results. A specific query that simply
-        // found no paths is not refinable, so no cue there.
-        const needsRefine = stateLabel === 'INSUFFICIENT_SIGNAL' || synthesis?.resolutionEligible === false;
-        const suggestions = [
-          `Add timeline or dollar context`,
-          `The structural signal for ${q}?`,
-          `${q} — decision risk and structural opportunity`,
-        ];
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
-              NO PATHS RESOLVED
-            </div>
-            <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7, letterSpacing: '0.04em', maxWidth: 340 }}>
-              {stateLabel === 'INSUFFICIENT_SIGNAL'
-                ? 'Add a decision, amount, or timeline.'
-                : 'No paths survived. Try a more specific query.'
-              }
-            </div>
-            {synthesis?.queryDomain && (
-              <div style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-                DOMAIN ATTEMPTED · {synthesis.queryDomain.replace(/_/g, ' ')}
-              </div>
-            )}
-            {needsRefine && (
-            <div style={{ marginTop: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#007FFF', flexShrink: 0, animation: 'reformulate-blink 1.1s ease-in-out infinite' }} />
-                <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em', color: DIM, textTransform: 'uppercase' }}>
-                  REFORMULATE →
-                </span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {suggestions.map((s, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em',
-                      padding: '3px 14px 3px 8px',
-                      background: 'rgba(102,255,0,0.10)',
-                      borderLeft: '2px solid rgba(102,255,0,0.45)',
-                      alignSelf: 'flex-start',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {`+ ${s}`}
-                  </div>
-                ))}
-              </div>
-            </div>
-            )}
-          </div>
-        );
-      })()}
-      {alternatives.length > 0 && (() => {
-        const rate        = arbitration?.total > 0 ? (arbitration.passed / arbitration.total) : 0;
-        const winLabel    = rate > 0.5 ? 'OPEN' : rate > 0.25 ? 'TIGHT' : 'CLOSING';
-        const winColor    = winLabel === 'OPEN' ? LIME : winLabel === 'TIGHT' ? 'rgba(255,255,255,0.4)' : 'rgba(255,80,80,0.5)';
-        const rd          = buildRenderDirective(alternatives, synthesis, metrics);
-        const toneColors  = { NEUTRAL: DIM, COMPRESSED: 'rgba(255,200,0,0.5)', CAUTIONARY: 'rgba(255,80,80,0.6)' };
-        const toneColor   = toneColors[rd.toneLabel] ?? DIM;
-        const sortedAlts  = rd.sortedPathIds.length
-          ? [...alternatives].sort((a, b) => rd.sortedPathIds.indexOf(a.id) - rd.sortedPathIds.indexOf(b.id))
-          : alternatives;
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
-                ASSEMBLANCE · {alternatives.length} PATHS
-              </span>
-              <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: toneColor }}>
-                {rd.toneLabel} · W: {winLabel}
-              </span>
-            </div>
-            {sortedAlts.map(c => {
-              const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
-              return (
-              <div key={c.id} data-test="hypothesis_item" data-id={c.id}
-                style={{ padding: '10px 14px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 2 }}>
-                  <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.18)' }}>
-                    G:{gProxy} PROXY_UNTIL_WO1848
-                  </span>
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: DIM, textTransform: 'uppercase', marginBottom: 5 }}>
-                  {(c.type ?? 'path').toUpperCase()} · W:{winLabel}
-                </div>
-                <div style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{typeof c.content === 'string' ? c.content : String(c.content ?? '')}</div>
-              </div>
-            ); })}
-            {paretoExtra.length > 0 && (
-              <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.18em', color: DIM, marginTop: 4 }}>+{paretoExtra.length} unattested paths</div>
-            )}
-          </div>
-        );
-      })()}
-    </div>
-  );
+  // KRYL-1235 — the ASSEMBLANCE proxy-path fragment (NO PATHS RESOLVED / REFORMULATE →
+  // / "add a decision, amount, or timeline" / PROXY_UNTIL_WO1848) and the HYPOTHESIS
+  // FIELD drawer are removed from the guest packet. They were refinement prompts and
+  // action guidance, not a perceived formation. 02 FORMATION now states
+  // NO_FORMATION_ESTABLISHED honestly.
 
   return (
     <div style={{
@@ -540,37 +440,6 @@ export default function TargetPacket() {
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 56px 96px', position: 'relative' }}>
 
-        {/* ── HYPOTHESIS FIELD drawer (unchanged; trigger is legacy/inert) ─────── */}
-        {showAlts && (
-          <div style={{
-            position: 'fixed', top: 0, right: 0, bottom: 0, width: '40%',
-            background: '#050505', borderLeft: `1px solid rgba(255,255,255,0.10)`,
-            zIndex: 30, display: 'flex', flexDirection: 'column', overflow: 'hidden',
-          }}>
-            <div style={{ padding: '10px 16px', borderBottom: `1px solid ${BORDER}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>HYPOTHESIS FIELD</span>
-              <span
-                onClick={() => { setShowAlts(false); emitTelemetry({ type: 'AltToggleEvent', action: 'close', requestId: arbitration?.requestId, timestamp: new Date().toISOString() }); }}
-                style={{ fontFamily: MONO, fontSize: 9, color: DIM, cursor: 'pointer', letterSpacing: '0.1em' }}
-              >✕</span>
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {alternatives.map(c => {
-                const gProxy = c.features ? Object.values(c.features).filter(v => v >= 0.5).length : 0;
-                return (
-                  <div key={c.id} data-test="hypothesis_item" style={{ padding: '10px 12px', borderLeft: `2px solid ${c.type === 'action' ? LIME : c.type === 'risk' ? 'rgba(255,80,80,0.6)' : c.type === 'opportunity' ? BLUE : 'rgba(255,255,255,0.2)'}`, background: 'rgba(255,255,255,0.02)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                      <span style={{ fontFamily: MONO, fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em' }}>G:{gProxy} <span style={{ fontSize: 8, letterSpacing: '0.06em' }}>PROXY_UNTIL_WO1848</span></span>
-                    </div>
-                    <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em', textTransform: 'uppercase', marginBottom: 4 }}>{(c.type ?? 'path').toUpperCase()}</div>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, letterSpacing: '0.04em' }}>{typeof c.content === 'string' ? c.content : String(c.content ?? '')}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* ── IDENTITY TOP BLOCK (approved composition) ───────────────────────── */}
         <header style={{
           display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
@@ -594,33 +463,33 @@ export default function TargetPacket() {
           </div>
         </header>
 
-        {/* ── PRIMARY SIGNAL — statement reduced to 19px; label + meta line at original scale ── */}
+        {/* ── PRIMARY SIGNAL — perceptual state only (KRYL-1235). No recommendation,
+             no action guidance, no legacy narrative. States what was recognized,
+             what is / isn't resolvable, and what the packet below represents. ─── */}
         <section style={{ padding: '30px 0 0' }}>
           <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.3em', color: LBL }}>PRIMARY SIGNAL</div>
           <p style={{
             margin: '10px 0 0', maxWidth: 950, fontFamily: HELV, fontSize: 19,
             lineHeight: 1.3, fontWeight: 300, letterSpacing: '-0.015em', color: BRIGHT,
           }}>
-            {synthesis?.recommendedAction ?? (
-              (stateLabel === 'INSUFFICIENT_SIGNAL' || synthesis?.resolutionEligible === false)
-                ? 'Query did not resolve. Add a decision, amount, or timeline.'
-                : stateLabel === 'LOW_SIGNAL_YIELD'
-                ? 'Signal below threshold. Narrow the query.'
-                : 'Generating.'
-            )}
+            {subjScope.kind === 'ENTITY'
+              ? `${subjScope.entity.name} resolved. The six domains below are what KRYLO can and cannot observe about it — evidence, derived measure, or classified absence. This packet does not produce a decision verdict.`
+              : recognizedFrame
+                ? `${recognizedFrame} frame recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
+                : subjScope.kind === 'DECISION_FRAME'
+                  ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
+                  : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
           <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 28, fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: '#767d7a' }}>
-            <span>CONFIDENCE <span style={{ color: '#eceee9' }}>
-              {confDisplay != null ? `${confDisplay.toFixed(2)}${confIsEstimate ? ' EST' : ''}` : 'UNCLASSIFIED'}
+            <span>SUBJECT <span style={{ color: '#eceee9' }}>
+              {subjScope.kind === 'ENTITY' ? subjScope.canonicalId : (recognizedFrame ? `${recognizedFrame} FRAME` : subjScope.kind)}
             </span></span>
             <span style={{ color: '#3a4140' }}>·</span>
-            <span>HORIZON <span style={{ color: '#eceee9' }}>{synthesis?.timeHorizon ?? '—'}</span></span>
-            <span style={{ color: '#3a4140' }}>·</span>
-            <span>EVIDENCE <span style={{ color: '#eceee9' }}>{arbitration?.total != null ? arbitration.total : '—'}</span></span>
-            <span style={{ color: '#3a4140' }}>·</span>
-            <span>FORMATION <span style={{ color: LIME }}>
-              {(synthesis?.resolutionEligible === false ? 'INSUFFICIENT SIGNAL' : stateLabel).replace(/_/g, ' ')}
+            <span>OBSERVATIONS <span style={{ color: '#eceee9' }}>
+              {observationCount > 0 ? `${observationCount} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}` : 'none in window'}
             </span></span>
+            <span style={{ color: '#3a4140' }}>·</span>
+            <span>DECISION VERDICT <span style={{ color: '#eceee9' }}>WITHHELD</span></span>
           </div>
         </section>
 
@@ -654,24 +523,19 @@ export default function TargetPacket() {
           <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
         </PacketSection>
 
-        {/* ── 02 FORMATION — the structural pattern that emerges from the analysis ─ */}
+        {/* ── 02 FORMATION — honest state only (KRYL-1235). The ASSEMBLANCE proxy
+             paths and the OLP rationale are removed. A formation is earned from
+             subject-scoped observations + an admitted relationship between them
+             (WO-5B 5B-3 / Formation Perception). ──────────────────────────────── */}
         <PacketSection ordinal="02" title="FORMATION">
-          {/* Formation status lives in the PRIMARY SIGNAL summary line only —
-              this opens on substance, not a restatement of stateLabel. */}
-          <div style={{ marginTop: 14, display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM }}>{projectionTag}</span>
-            {confDisplay != null && (
-              <span style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em', color: '#767d7a' }}>
-                CONF {confDisplay.toFixed(2)}{confIsEstimate ? ' EST' : ''}
-              </span>
-            )}
-          </div>
-          {envelope?.olp?.rationale && (
-            <p style={{ margin: '14px 0 0', maxWidth: 620, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: BODY_C }}>
-              {envelope.olp.rationale}
-            </p>
-          )}
-          {assemblanceBlock}
+          <p style={{ margin: '16px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
+            No formation established.
+          </p>
+          <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+            A formation is earned from subject-scoped observations in two or more domains and at
+            least one admitted cross-domain relationship connecting them. Neither is present for
+            this query. This is NO_FORMATION_ESTABLISHED — a stated absence, not a low score.
+          </p>
         </PacketSection>
 
         {/* ── 03 BASIS ───────────────────────────────────────────────────────── */}
@@ -731,22 +595,29 @@ export default function TargetPacket() {
           </p>
         </PacketSection>
 
-        {/* ── 05 PROVENANCE ──────────────────────────────────────────────────── */}
+        {/* ── 05 PROVENANCE — truthful evidence state only (KRYL-1235). WhyTracePanel
+             renders ONLY when it resolves a real structural trace (EDGAR events);
+             its non-resolved "no verified record found — add a specific decision,
+             dollar amount, or timeline" copy is removed (that is refinement
+             guidance, not provenance). ─────────────────────────────────────────── */}
         <PacketSection ordinal="05" title="PROVENANCE">
           <div style={{ marginTop: 12, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#9aa09d' }}>
-            <span style={{ color: confGrounded ? LIME : ABSENCE }}>
-              {confGrounded ? 'MEASURED' : 'UNGROUNDED'}
+            <span style={{ color: wtResolved ? LIME : ABSENCE }}>
+              {wtResolved ? 'STRUCTURAL TRACE RESOLVED' : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
             </span>
-            {confIsEstimate && (
-              <>
-                <span style={{ color: '#3a4140' }}> · </span>
-                <span style={{ color: '#767d7a' }}>CONFIDENCE IS CLASSIFICATION ESTIMATE</span>
-              </>
-            )}
           </div>
-          <div style={{ marginTop: 16 }}>
-            <WhyTracePanel entity={entity} />
-          </div>
+          {wtResolved ? (
+            <div style={{ marginTop: 16 }}>
+              <WhyTracePanel entity={entity} />
+            </div>
+          ) : (
+            <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+              No evidence is identifier-bound to a subject for this query (WO-5B 5B-2). Each domain
+              measure above names the source it would require; field pressure is shown as context
+              only. This is a stated absence — the packet does not fill it with a proxy or ask the
+              guest to supply decision parameters.
+            </p>
+          )}
         </PacketSection>
 
       </div>

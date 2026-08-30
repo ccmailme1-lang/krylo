@@ -107,7 +107,7 @@ async function formationPerception() {
   try { mod = await import('./src/engine/subjectformation.js'); } catch { /* not built */ }
   if (!mod) {
     notes.push('src/engine/subjectformation.js not built');
-    notes.push('02 FORMATION today renders legacy proxy paths ("select your situation type", "add a capital floor", G:5 PROXY_UNTIL_WO1848)');
+    notes.push('02 FORMATION renders NO_FORMATION_ESTABLISHED honestly (KRYL-1235); the earned-formation capability is not built');
     return { verdict: 'FAIL / NOT EARNED', notes };
   }
   const f = mod.formationCandidate(subjectScope(FIXTURES.entity));
@@ -118,23 +118,50 @@ async function formationPerception() {
 }
 
 // ── LEGACY NARRATIVE ISOLATION ─────────────────────────────────────────────
+// KRYL-1235 is a PACKET-AUTHORITY ruling, not a synthesis change (forensic
+// recovery: the DIC / Thiel synthesizer are legitimate to their own contracts;
+// the defect was the packet giving synthesis.mode / recommendedAction authority
+// over the perceptual surface). So this checks the packet SOURCE — the guest
+// packet must not render the legacy shell — and leaves the rendered-packet check
+// to the LIVE layer.
 async function legacyIsolation() {
   const notes = [];
-  const { synthesizeQuery } = await import('./src/engine/querysynthesis.js');
   let fail = false;
-  for (const [k, q] of Object.entries(FIXTURES)) {
-    const syn = synthesizeQuery({ query: q, queryContext: buildQueryContext(q), lens: 'GENERAL' });
-    const action = String(syn?.recommendedAction ?? '');
-    const predictive = /evaluate exit timing|premium evaporates|exit signal|becoming consensus|pre-crowd|the edge is|directional signals generated/i.test(action);
-    if (predictive) { fail = true; notes.push(`${k}: PRIMARY SIGNAL is a legacy narrative — "${action.slice(0, 70)}…"`); }
+
+  // strip comments so a KRYL-1235 comment that NAMES a removed pattern isn't a hit
+  const rawPkt = readFileSync(new URL('./src/components/analysis/targetpacket.jsx', import.meta.url), 'utf8');
+  const pkt = rawPkt.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+  const banned = [
+    ['recommendedAction rendered',  /synthesis\??\.?\s*recommendedAction/],
+    ['ASSEMBLANCE proxy paths',     /PROXY_UNTIL_WO1848/],
+    ['OLP rationale rendered',      /\{[\s\S]{0,40}olp[\s\S]{0,20}rationale[\s\S]{0,20}\}/],
+    ['synthesis.mode as headline',  /synthesis\??\.?\s*mode\s*===\s*['"]INSUFFICIENT_INPUT['"]/],
+    ['assemblanceBlock',            /\bassemblanceBlock\b/],
+  ];
+  for (const [label, re] of banned) {
+    if (re.test(pkt)) { fail = true; notes.push(`targetpacket.jsx still renders: ${label}`); }
   }
-  // static: does adsubject / subject* import querysynthesis?
-  for (const f of ['adsubject.js', 'subjectscope.js', 'subjectbinding.js']) {
+  // WhyTracePanel must be guarded by wtResolved
+  const wt = pkt.indexOf('<WhyTracePanel');
+  if (wt >= 0 && !/wtResolved\s*\?[\s\S]{0,300}<WhyTracePanel/.test(pkt)) {
+    fail = true; notes.push('targetpacket.jsx renders <WhyTracePanel> unguarded (not behind wtResolved)');
+  }
+  if (!fail) notes.push('targetpacket.jsx renders no legacy authority (recommendedAction / proxy paths / OLP / unguarded WhyTracePanel / INSUFFICIENT_INPUT headline)');
+
+  const aif = readFileSync(new URL('./src/components/analysis/analysisidlefield.jsx', import.meta.url), 'utf8');
+  if (/<IntelligenceBrief|<ReconDashboard|<CausalImpactView/.test(aif)) {
+    fail = true; notes.push('analysisidlefield.jsx still mounts the ORACLE BRIEF / RECON / IMPACT column in the guest packet');
+  }
+
+  // quarantine: adsubject / subject* / the 5B-3/5B-4 modules must not import the legacy synthesis layer
+  for (const f of ['adsubject.js', 'subjectscope.js', 'subjectbinding.js', 'domainsignalresolution.js']) {
     const src = readFileSync(new URL(`./src/engine/${f}`, import.meta.url), 'utf8');
-    if (/querysynthesis|synthGeneral|recommendedAction/.test(src)) { fail = true; notes.push(`${f} imports the legacy synthesis layer`); }
+    if (/from '\.\/querysynthesis|synthGeneral|\.recommendedAction/.test(src)) {
+      fail = true; notes.push(`${f} imports the legacy synthesis layer (quarantine breach)`);
+    }
   }
-  notes.push('FULL-PACKET check (FORMATION proxy paths, BRIEF/RECON/IMPACT column, ACTION MATRIX, PROVENANCE "refine your query", fabricated Signal/Convergence/Action) is the LIVE layer\'s job — see qa_guest_acceptance_live.mjs');
-  notes.push('KRYL-1235 tracks the ruling — currently the honest 01 ANALYSIS coexists with the full legacy advisory shell');
+
+  notes.push('rendered-packet scan (both fixtures) is the LIVE layer — qa_guest_acceptance_live.mjs');
   return { verdict: fail ? 'FAIL' : true, notes };
 }
 
