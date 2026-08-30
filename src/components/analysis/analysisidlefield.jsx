@@ -2,10 +2,6 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 're
 import HelpMark                       from '../shared/helpmark.jsx';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
-import IntelligenceBrief              from './intelligencebrief.jsx';
-import { isPetroQuery }               from '../../engine/petrolocator.js';
-import ReconDashboard                 from './recondashboard.jsx';
-import CausalImpactView               from './causalimpactview.jsx';
 // SESCard removed — replaced by world clocks
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
@@ -773,7 +769,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const pulseHorizonTimer = useRef(null);
   const [signalVisible,   setSignalVisible]   = useState(false);
   const [processing,      setProcessing]      = useState(false);
-  const [rightPanel,      setRightPanel]      = useState('BRIEF');
   const [optCapResetKey,  setOptCapResetKey]  = useState(0);
   const [intentMagnitude, setIntentMagnitude] = useState(50);
   // WO-1878 — Mission Builder state
@@ -1683,44 +1678,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           </div>
 
 
-          {/* Session results */}
-          {hasSession && (() => {
-            // Gas Go hidden perk — the fuel template owns the full pane; hide the Brief column.
-            const petroMode = isPetroQuery(activeSession?.query ?? '');
-            return (
-            <>
-              <div style={{ position: 'absolute', top: 64, left: 0, right: petroMode ? 0 : '38%', bottom: 0, zIndex: 10, background: '#000' }}>
-                <TargetPacket />
-              </div>
-              {!petroMode && (
-              <div style={{ position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10, background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.12)', flexShrink: 0, background: '#000' }}>
-                  {['BRIEF', 'RECON', 'IMPACT'].map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setRightPanel(tab)}
-                      style={{
-                        padding: '10px 20px', background: 'transparent', border: 'none',
-                        borderBottom: `2px solid ${rightPanel === tab ? '#66FF00' : 'transparent'}`,
-                        color: rightPanel === tab ? '#66FF00' : 'rgba(255,255,255,0.55)',
-                        fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, letterSpacing: '0.22em',
-                        cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1,
-                      }}
-                    >
-                      {tab}
-                    </button>
-                  ))}
-                </div>
-                <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
-                  {rightPanel === 'BRIEF' ? <IntelligenceBrief />
-                    : rightPanel === 'RECON' ? <ReconDashboard />
-                    : <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={activeSession?.query} /></div>}
-                </div>
-              </div>
-              )}
-            </>
-            );
-          })()}
+          {/* Session results — the guest packet is ONE perceptual surface (KRYL-1235).
+              The legacy right column (ORACLE KERNEL BRIEF / ACTION MATRIX / RECON /
+              IMPACT) is removed from the guest packet: it presented recommendation
+              and action guidance alongside the honest packet, so the guest could
+              not tell which layer was KRYLO's actual perception. The components and
+              their nav routes are untouched — they just have no authority here. */}
+          {hasSession && (
+            <div style={{ position: 'absolute', top: 64, left: 0, right: 0, bottom: 0, zIndex: 10, background: '#000' }}>
+              <TargetPacket />
+            </div>
+          )}
 
           {/* SIGNAL QUERY — idle only */}
           {!hasSession && (
