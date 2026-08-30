@@ -376,3 +376,30 @@ bury it.
 Incident (2026-07-31): three separate secret-exposure events in one session — an API key via grep,
 a full config dump via cat, and a targeted grep that still printed a database URL with password —
 the third happening after the first two were already flagged as the problem.
+
+## 20. Signal Latency & Fragmentation Principle (Founder, 2026-08-30)
+
+The problem is never a lack of signals — it is **signal latency and fragmentation**: the gap
+between something happening and it being recognized and acted on while still actionable. Eight
+lessons, load-bearing:
+
+1. **A signal is not an explanation.** A drop-off says *where*, not *why*. Never turn a measurable
+   pattern into an assumed cause (reinforces §1).
+2. **Context makes signals useful** — signals interpreted together, not as isolated checkpoints.
+3. **Recognition precedes confirmation.** Early signals justify investigation; later outcomes
+   validate whether the interpretation held. Don't wait for the final metric to start looking.
+4. **"Something changed" ≠ "we know why" ≠ "did it produce the outcome"** — three distinct states,
+   kept separate (maps to SEE / INVESTIGATE / VALIDATE and the Observation-Law closure chain).
+5. **Connected evidence shortens observation → interpretation → action.** The win is not *more*
+   data — it is related signals in context early enough to act while the situation is live.
+6. **Activity is not impact.** Engagement / usage / movement can look healthy while the outcome
+   deteriorates. Distinguish activity signals from meaningful outcomes (reinforces §14).
+7. **The faster the system changes, the more valuable early recognition becomes.** The bottleneck
+   is *understanding what is happening in time to act*, not building.
+8. **Expose the relationship — don't make the analyst assemble it.** KRYLO must make the
+   relationships between signals perceptually recognizable *before* the user manually reconciles
+   six evidence streams. "Signals present but disconnected" is the failure mode. KRYLO's question
+   is "can we see the **structural formation** sooner?" — one level deeper than "see the problem
+   sooner." Don't force manual reconciliation when the substrate already has what's needed to
+   expose the relationship. Consistent with **capture once → scope repeatedly → synthesize
+   afterward**, observation / interpretation / formation kept distinct.
