@@ -390,5 +390,12 @@
     "aliases": ["Akamai Technologies", "Akamai Technologies Inc", "AKAM"],
     "identifiers": { "edgar": "0001086222", "ticker": "AKAM", "fec": null, "uei": null },
     "domainTags": ["TECHNOLOGY"]
+  },
+  {
+    "canonicalId": "anduril-industries",
+    "canonicalName": "ANDURIL INDUSTRIES",
+    "aliases": ["Anduril", "Anduril Industries Inc"],
+    "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null },
+    "domainTags": ["TECHNOLOGY", "CAPITAL"]
   }
 ]

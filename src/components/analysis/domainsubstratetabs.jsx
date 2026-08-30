@@ -8,9 +8,11 @@
 // LOCKED / AUTHORED `I_d` content (domain-level, honest) or classified absence.
 // Subject binding — A(d, Subject) — is WO-5B; nothing here is subject-specific.
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { domainIntelligence, relationshipsFor } from '../../engine/domainintelligence.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
+import { subjectScope } from '../../engine/subjectscope.js';
+import { A as adSubject } from '../../engine/adsubject.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -49,9 +51,9 @@ function Absent({ reason }) {
 // fabricates, defaults, or zero-fills: FACET → the resolved value + provenance;
 // STRUCTURAL_ABSENCE → DATA UNAVAILABLE plus the specific source class and scope
 // the measure needs. Formula/boundary shown as reference either way.
-function AuthoredMeasure({ domain, name, def }) {
+function AuthoredMeasure({ domain, name, def, res: resProp }) {
   const label = (def.concept || name.replace(/_/g, ' ')).toUpperCase();
-  const res = resolveClassEMeasure({ domain, measureKey: name, scope: 'field' });
+  const res = resProp ?? resolveClassEMeasure({ domain, measureKey: name, scope: 'field' });
   const facet = res.status === 'FACET';
 
   return (
@@ -122,22 +124,22 @@ function ItemList({ items, color = BRT }) {
   );
 }
 
-function DomainScroll({ domain, pressure }) {
+function DomainScroll({ domain, scope, pressure }) {
   const di = domainIntelligence(domain);
+  const ad = useMemo(() => adSubject(domain, scope), [domain, scope]);
   if (!di) return <Absent reason={`No I_d primitive for ${domain}.`} />;
 
   const rels = relationshipsFor(domain);
-  const hasSignal = pressure && pressure.signalCount > 0;
+  const scoped = ad.scoped;
 
-  // KRYL-1229 — Founder-authored measures for this I_d. AUTHORED entries render as
-  // value or classified absence; anything still UNAUTHORED keeps the pending line.
   const authoredMeasures = Object.entries(di.signalDefs || {}).filter(([, d]) => d?.maturity === 'AUTHORED');
   const pendingMeasures = di.signals?.maturity === 'UNAUTHORED';
   const sourceTag = (di.axisSource || '').replace('specs/SPEC-observable-substrate-revelation-contract.md', 'SPEC II');
 
-  // WO-1B — distinct domain evidence facets (e.g. PatentsView). Evidence, NOT a
-  // Class-E measure; inputs to A(d, Subject) later. Empty until a live source feeds them.
-  const evidenceFacets = getDomainEvidenceFacets(domain);
+  // OBSERVES evidence: subject-attributed observations when scoped (5B-2 fills
+  // these; empty at 5B-1); otherwise the field-scoped evidence facets (WO-1B/C/D).
+  const fieldFacets = scoped ? [] : getDomainEvidenceFacets(domain);
+  const fc = ad.fieldContext;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -149,9 +151,19 @@ function DomainScroll({ domain, pressure }) {
       <Panel ordinal="01" title="OBSERVES">
         <ItemList items={di.observes.items} />
         <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{di.observes.maturity} · observation classes (not subject findings)</span>
-        {evidenceFacets.length > 0 && (
+        {scoped && ad.observations.length === 0 && (
+          <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
+            no {domain} observation attributable to {ad.subject} yet · subject-scoped evidence binding is WO-5B stage 2
+          </span>
+        )}
+        {scoped && ad.observations.map((o) => (
+          <span key={o.facet_id} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+            observed · {o.source} · {o.semantics ?? o.facet_id}
+          </span>
+        ))}
+        {fieldFacets.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginTop: 2 }}>
-            {evidenceFacets.map((f) => (
+            {fieldFacets.map((f) => (
               <span key={f.facet_id} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
                 evidence facet · {f.provenance?.source ?? f.sourceId} · {f.provenance?.semantics ?? f.facet_id}
               </span>
@@ -164,29 +176,20 @@ function DomainScroll({ domain, pressure }) {
       </Panel>
 
       <Panel ordinal="02" title="SIGNAL">
-        {hasSignal ? (
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: MONO, fontSize: 20, color: pressure.polarity === 'fracture' ? BLUE : LIME, fontVariantNumeric: 'tabular-nums' }}>
-              {Number(pressure.magnitude).toFixed(0)}
-            </span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: pressure.polarity === 'fracture' ? BLUE : LIME, letterSpacing: '0.16em' }}>
-              {pressure.polarity === 'fracture' ? 'FRACTURE' : 'CONSTRUCTIVE'}
-            </span>
-            <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.1em' }}>
-              {pressure.signalCount} signal{pressure.signalCount === 1 ? '' : 's'} · FIELD SCOPE
-            </span>
-          </div>
-        ) : (
-          <Absent reason="No live signal in the current window. FIELD SCOPE — not scoped to a subject (WO-5B)." />
+        <span style={{ fontFamily: MONO, fontSize: 8, color: scoped ? LIME : LBL, letterSpacing: '0.14em' }}>
+          {scoped ? `A(${domain}, ${ad.subject})` : `${domain} · NOT SCOPED TO A SUBJECT`}
+        </span>
+        {!scoped && ad.absence?.reason && (
+          <Absent reason={ad.absence.reason} />
         )}
         {authoredMeasures.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, borderTop: `1px solid ${RULE}`, paddingTop: 8, marginTop: 2 }}>
             <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.16em' }}>
-              AUTHORED MEASURE{authoredMeasures.length > 1 ? `S · ${authoredMeasures.length}` : ''}
+              {scoped ? 'SUBJECT MEASURE' : 'AUTHORED MEASURE'}{authoredMeasures.length > 1 ? `S · ${authoredMeasures.length}` : ''}
             </span>
             {authoredMeasures.map(([k, def], i) => (
               <div key={k} style={i > 0 ? { borderTop: `1px solid ${RULE}`, paddingTop: 12 } : undefined}>
-                <AuthoredMeasure domain={domain} name={k} def={def} />
+                <AuthoredMeasure domain={domain} name={k} def={def} res={ad.measures[k]} />
               </div>
             ))}
           </div>
@@ -196,6 +199,11 @@ function DomainScroll({ domain, pressure }) {
             {authoredMeasures.length > 0
               ? 'remaining per-`I_d` measures: UNAUTHORED (WO-1 Class E — pending Founder authorship)'
               : 'per-`I_d` signal definitions: UNAUTHORED (WO-1 Class E — measures pending Founder authorship)'}
+          </span>
+        )}
+        {fc && fc.signalCount > 0 && (
+          <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.06em', lineHeight: 1.6, marginTop: 4 }}>
+            field context — {domain} pressure {Number(fc.magnitude).toFixed(0)} ({fc.polarity === 'fracture' ? 'fracture' : 'constructive'}), {fc.signalCount} signal{fc.signalCount === 1 ? '' : 's'}. FIELD SCOPE — not {scoped ? `${ad.subject}'s` : 'the subject’s'} answer.
           </span>
         )}
       </Panel>
@@ -234,16 +242,28 @@ function DomainScroll({ domain, pressure }) {
   );
 }
 
-export default function DomainSubstrateTabs({ domainPressures = {} }) {
+export default function DomainSubstrateTabs({ subject = null, domainPressures = {} }) {
   const [active, setActive] = useState('CAPITAL');
   const pressure = domainPressures[active] ?? null;
 
+  // WO-5B — establish THE subject once, before any domain analysis.
+  const scope = useMemo(
+    () => (subject && typeof subject === 'object' && subject.kind) ? subject : subjectScope(subject),
+    [subject],
+  );
+
+  const header = scope.kind === 'ENTITY'
+    ? <>The subject <b style={{ color: BRT }}>{scope.entity.name}</b> through each domain. Each tab is <span style={{ color: BRT }}>A(domain, {scope.entity.name})</span> — what that domain observes about this subject, evidence vs derived measure vs structural absence. Field pressure is context, never the answer.</>
+    : scope.kind === 'GEO'
+      ? <>Subject: <b style={{ color: BRT }}>{String(scope.location)}</b> (geo). Domain sources are not geo-scoped yet — the six domains render classified absence; the observation is still owed.</>
+      : scope.kind === 'DECISION_FRAME'
+        ? <>This query is a <b style={{ color: BRT }}>decision frame</b>, not a resolvable subject. Subjecthood for decision frames is unsettled (unit-of-analysis). The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
+        : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
+
   return (
     <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em', lineHeight: 1.6, maxWidth: 620 }}>
-        The subject viewed through each domain. Panels are the domain primitive's own fields —
-        no separate analysis engine. SIGNAL is <b style={{ color: BRT }}>field scope</b> today;
-        subject binding is WO-5B.
+      <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.06em', lineHeight: 1.7, maxWidth: 640 }}>
+        {header}
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -271,7 +291,7 @@ export default function DomainSubstrateTabs({ domainPressures = {} }) {
         })}
       </div>
 
-      <DomainScroll domain={active} pressure={pressure} />
+      <DomainScroll domain={active} scope={scope} pressure={pressure} />
     </div>
   );
 }

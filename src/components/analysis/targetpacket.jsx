@@ -651,7 +651,7 @@ export default function TargetPacket() {
 
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A) ─── */}
         <PacketSection ordinal="01" title="ANALYSIS" mt={80}>
-          <DomainSubstrateTabs domainPressures={domainPressures} />
+          <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
         </PacketSection>
 
         {/* ── 02 FORMATION — the structural pattern that emerges from the analysis ─ */}
