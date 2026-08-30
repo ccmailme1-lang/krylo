@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 're
 import HelpMark                       from '../shared/helpmark.jsx';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
 import TargetPacket                   from './targetpacket.jsx';
+import StructurePanel                 from './structurepanel.jsx';
+import { isPetroQuery }               from '../../engine/petrolocator.js';
 // SESCard removed — replaced by world clocks
 import { usereplay }                  from '../../hooks/usereplay.js';
 import { useframestream }             from '../../hooks/useframestream.js';
@@ -1678,17 +1680,26 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           </div>
 
 
-          {/* Session results — the guest packet is ONE perceptual surface (KRYL-1235).
-              The legacy right column (ORACLE KERNEL BRIEF / ACTION MATRIX / RECON /
-              IMPACT) is removed from the guest packet: it presented recommendation
-              and action guidance alongside the honest packet, so the guest could
-              not tell which layer was KRYLO's actual perception. The components and
-              their nav routes are untouched — they just have no authority here. */}
-          {hasSession && (
-            <div style={{ position: 'absolute', top: 64, left: 0, right: 0, bottom: 0, zIndex: 10, background: '#000' }}>
-              <TargetPacket />
-            </div>
-          )}
+          {/* Session results — two panels of invariant geometry (Founder, 2026-08-30):
+              LEFT = Analysis / Perception (the KRYL-1235-cleaned Target Packet).
+              RIGHT = Formation / Structure (Standard) or Action Plan (Premium).
+              The legacy ORACLE KERNEL brief / BLUF / ACTION MATRIX stay removed
+              (they live only in intelligencebrief.jsx, unmounted). The right panel
+              re-mounts the legitimate collateral surfaces — Happy Path / EQ Canvas
+              (STRUCTURE·ACTION PLAN), RECON, IMPACT — at the same panel width. */}
+          {hasSession && (() => {
+            const petroMode = isPetroQuery(activeSession?.query ?? '');
+            return (
+              <>
+                <div style={{ position: 'absolute', top: 64, left: 0, right: petroMode ? 0 : '38%', bottom: 0, zIndex: 10, background: '#000' }}>
+                  <TargetPacket />
+                </div>
+                {!petroMode && (
+                  <StructurePanel query={activeSession?.query} isPremium={isPremium} />
+                )}
+              </>
+            );
+          })()}
 
           {/* SIGNAL QUERY — idle only */}
           {!hasSession && (

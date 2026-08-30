@@ -93,11 +93,20 @@ async function relationshipPerception() {
   const anduril = subjectScope(FIXTURES.entity);
   const edges = mod.subjectRelationships(anduril);
   const contractOK = edges.every(e =>
-    e.observedBoth === true && e.observationA && e.observationB);
+    e.observedBoth === true && e.observationA && e.observationB &&
+    admitCrossDomainRelationship(e.a, e.b).type === e.type);   // ratified 15 only
   const quarantined = mod.__quarantined === true;
-  notes.push(`edges: ${edges.length}; both-observed + both observations attached: ${contractOK ? 'yes' : 'NO'}`);
-  notes.push(`quarantined from synthGeneral: ${quarantined ? 'yes' : 'NO'}`);
-  return { verdict: (contractOK && quarantined) ? true : 'FAIL — contract not met', notes };
+
+  // is the module WIRED into the packet, or just drafted on disk?
+  const readsIt = ['src/components/analysis/domainsubstratetabs.jsx', 'src/components/analysis/targetpacket.jsx']
+    .some(f => { try { return /subjectrelationships/i.test(readFileSync(new URL(`./${f}`, import.meta.url), 'utf8')); } catch { return false; } });
+
+  notes.push(`module contract (15-type / both-observed / observations attached / quarantined): ${contractOK && quarantined ? 'holds' : 'BROKEN'}`);
+  notes.push(`edges for the entity fixture: ${edges.length} (0 is correct — no 5B-2 subject observations yet)`);
+  notes.push(readsIt ? 'wired into the packet' : 'NOT wired into the packet — no perceived relationship object renders (live layer confirms)');
+
+  if (!contractOK || !quarantined) return { verdict: 'FAIL — module contract broken', notes };
+  return { verdict: readsIt ? true : 'FAIL / MODULE BUILT, NOT WIRED', notes };
 }
 
 // ── FORMATION PERCEPTION ───────────────────────────────────────────────────
@@ -148,9 +157,16 @@ async function legacyIsolation() {
   }
   if (!fail) notes.push('targetpacket.jsx renders no legacy authority (recommendedAction / proxy paths / OLP / unguarded WhyTracePanel / INSUFFICIENT_INPUT headline)');
 
-  const aif = readFileSync(new URL('./src/components/analysis/analysisidlefield.jsx', import.meta.url), 'utf8');
-  if (/<IntelligenceBrief|<ReconDashboard|<CausalImpactView/.test(aif)) {
-    fail = true; notes.push('analysisidlefield.jsx still mounts the ORACLE BRIEF / RECON / IMPACT column in the guest packet');
+  // <IntelligenceBrief> is the ORACLE KERNEL brief container (BLUF / 00–04 / ACTION
+  // MATRIX) — it must not be mounted in the guest surface. RECON / IMPACT (Recon
+  // Dashboard, Causal Impact) and Happy Path / EQ Canvas ARE legitimate — the
+  // right STRUCTURE panel re-mounts them (KRYL-1235 collateral fix, Founder 2026-08-30).
+  for (const f of ['analysisidlefield.jsx', 'structurepanel.jsx']) {
+    let src = '';
+    try { src = readFileSync(new URL(`./src/components/analysis/${f}`, import.meta.url), 'utf8'); } catch { continue; }
+    if (/<IntelligenceBrief\b/.test(src)) {
+      fail = true; notes.push(`${f} mounts <IntelligenceBrief> (the ORACLE KERNEL brief) in the guest surface`);
+    }
   }
 
   // quarantine: adsubject / subject* / the 5B-3/5B-4 modules must not import the legacy synthesis layer
