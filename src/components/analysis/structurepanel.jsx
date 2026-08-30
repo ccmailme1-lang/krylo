@@ -34,7 +34,7 @@ export default function StructurePanel({ query, isPremium = false }) {
 
   return (
     <div style={{
-      position: 'absolute', top: 0, left: '62%', right: 0, bottom: 0, zIndex: 10,
+      position: 'absolute', top: 0, left: '50%', right: 0, bottom: 0, zIndex: 10,
       background: '#000', borderLeft: '1px solid rgba(255,255,255,0.06)',
       display: 'flex', flexDirection: 'column',
     }}>
@@ -66,21 +66,7 @@ export default function StructurePanel({ query, isPremium = false }) {
               {isPremium ? 'ACTION PLAN · PREMIUM' : 'FORMATION / STRUCTURE'}
             </div>
 
-            {isPremium ? (
-              <EQCanvas isPremium />
-            ) : (
-              <>
-                <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY, maxWidth: 520, margin: 0 }}>
-                  No formation established.
-                </p>
-                <p style={{ fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE, maxWidth: 520, margin: 0 }}>
-                  A formation is earned from subject-scoped observations in two or more domains and
-                  an admitted cross-domain relationship connecting them (WO-5B). This is the
-                  structural read alongside the perception panel — not a recommendation, and not a
-                  score. It populates as the relationship and formation layers are wired.
-                </p>
-              </>
-            )}
+            <EQCanvas isPremium />
           </div>
         )}
         {tab === 'RECON' && <ReconDashboard />}
