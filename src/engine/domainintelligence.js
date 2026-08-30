@@ -36,6 +36,25 @@ export const CROSS_DOMAIN_RELATIONSHIPS = Object.freeze({
   'LABOR|MEDIA':         'attention to a workforce event / labor conflict',
 });
 
+const CANON = new Set(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']);
+
+// WO-3 — the runtime closed-relationship-admission boundary.
+// `F` admits a cross-domain relationship ONLY between two canonical domains, and
+// its type-name is resolved from the ratified closed set — never invented,
+// coerced, or defaulted. All 15 domain pairs are named; a non-canonical endpoint,
+// a self-pair, or (defensively) an unlisted pair is REJECTED.
+export function admitCrossDomainRelationship(a, b) {
+  const A = String(a ?? '').toUpperCase();
+  const B = String(b ?? '').toUpperCase();
+  if (!CANON.has(A)) return { admitted: false, reason: `"${a}" is not a canonical domain` };
+  if (!CANON.has(B)) return { admitted: false, reason: `"${b}" is not a canonical domain` };
+  if (A === B)       return { admitted: false, reason: `self-pair ${A} is not a cross-domain relationship` };
+  const key = [A, B].sort().join('|');
+  const type = CROSS_DOMAIN_RELATIONSHIPS[key];
+  if (!type)         return { admitted: false, reason: `pair ${key} not in the closed admission set` };
+  return { admitted: true, pair: key, type };
+}
+
 export function relationshipsFor(domain) {
   const D = domain.toUpperCase();
   return Object.entries(CROSS_DOMAIN_RELATIONSHIPS)

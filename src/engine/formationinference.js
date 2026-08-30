@@ -27,6 +27,7 @@
 // properties come online (the absence-first lattice, §6.5). This is the model behaving correctly.
 
 import { CANONICAL_DOMAINS } from './ontology.js';
+import { admitCrossDomainRelationship } from './domainintelligence.js';
 
 // ── Constants ────────────────────────────────────────────────────────────────────────────────────────
 export const FORMATION_EXISTENCE_FLOOR = 0.30; // LOCKED
@@ -96,8 +97,15 @@ function buildGraph(domainAgg, coFloor) {
   const strong = live.filter(d => domainAgg.get(d).meanMag >= coFloor);
   const edges = [];
   for (let i = 0; i < strong.length; i++)
-    for (let j = i + 1; j < strong.length; j++)
-      edges.push({ a: strong[i], b: strong[j], property: 'co_presence' });
+    for (let j = i + 1; j < strong.length; j++) {
+      // WO-3 — closed relationship admission. A cross-domain edge is admitted ONLY
+      // between two canonical domains, and its type comes from the ratified closed
+      // set (domainintelligence.CROSS_DOMAIN_RELATIONSHIPS). No invent / coerce /
+      // fallback: a non-admissible pair is dropped, not relabeled.
+      const adm = admitCrossDomainRelationship(strong[i], strong[j]);
+      if (!adm.admitted) continue;
+      edges.push({ a: strong[i], b: strong[j], property: 'co_presence', admittedType: adm.type });
+    }
   // participating vertices = domains carrying ≥1 edge
   const withEdge = new Set();
   for (const e of edges) { withEdge.add(e.a); withEdge.add(e.b); }
