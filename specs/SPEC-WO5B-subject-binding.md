@@ -205,7 +205,7 @@ observations`. A build guard / test asserts no such import path exists from
 
 **A stage is CLOSED only when all three are green.** Not "implemented" — closed.
 
-1. **CONTRACT** — `qa_guest_acceptance_anduril.mjs` (the Guest Acceptance
+1. **CONTRACT** — `qa_guest_acceptance.mjs` (the Guest Acceptance
    Harness, contract layer) + the stage's own `qa_*.mjs`. Stage-gated: a stage
    reads BLOCKED until its module exists. The harness's `5B-3`/`5B-4`/`LEGACY
    PRIMARY SIGNAL` rows track forward and independent work.
@@ -216,12 +216,12 @@ observations`. A build guard / test asserts no such import path exists from
      types appear.
    - 5B-4: formation emerges only from admitted relationships; no narrative
      invention.
-2. **GUEST (perceptual)** — `qa_guest_acceptance_anduril_live.mjs` drives the
+2. **GUEST (perceptual)** — `qa_guest_acceptance_live.mjs` drives the
    deployed packet and records what the guest sees against the fixed Anduril
    fixture (A subject · B six-domain observation · C evidence · D relationships ·
    E formation · F truth boundary). Positive AND negative cases.
 3. **PRODUCTION (live)** — the same live run against the deployed build, 0
-   unexpected failures, baseline diff recorded (`qa/baselines/anduril_<stage>.json`).
+   unexpected failures, baseline diff recorded (`qa/baselines/guest_<fixture>_<stage>.json`).
 
 **The assembly test** (human, run at 5B-3): give someone who did not build it the
 subject and ask *"what is KRYLO observing about this subject, and what
@@ -234,7 +234,7 @@ evidence?* → 5B-3 *can the guest perceive relationships without assembling the
 → 5B-4 *can the guest perceive a formation emerging?* → WO-6 *can the whole
 experience survive the Anduril acceptance test?*
 
-Baseline: frozen at 5B-2 (`qa/baselines/anduril_5b2.json`); the 5B-1→5B-2 guest
+Baseline: frozen at 5B-2 (`QA/baselines/guest_<fixture>_5b2.json`); the 5B-1→5B-2 guest
 delta was OBSERVES wording only (identifier containment replaces the text-match
 stub) — no measure / absence change. Every later stage diffs against this.
 
