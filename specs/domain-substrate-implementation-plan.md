@@ -122,8 +122,18 @@ Every OPEN row above carries the §0 acceptance question.
     by construction → "wired path, absent pending subject+source" is the state
     after WO-1A. `qa_domainsignalresolution.mjs` 87/87, live 12 absence blocks
     with specific `requires:` lines.
-  - **WO-1B/C/D — OPEN.** Wire the three shared-source producers into
-    `WIRED_PRODUCERS` (PatentsView / Census / FEC). **KRYL-1228** parallel.
+  - **WO-1B (KRYL-1231) — DONE.** Founder ruling: PatentsView populates **none**
+    of the 12 Class-E measures — evidence is not a measure. Built 3 distinct
+    `DOMAIN_EVIDENCE` facets (`facetproducers/patentsviewfacets.js`): TECH
+    patent/capability activity, OWNERSHIP assignee activity, KNOWLEDGE inventor
+    migration — provenance preserved, independent lineages, available via
+    `getDomainEvidenceFacets()` for `A(d,Subject)` later. `CLASS_E_ONTOLOGY` guard
+    in `readFacet` structurally bars any evidence facet from becoming a Class-E
+    value. assignee-concentration + R&D-intensity = "not yet". All 12 measures
+    unchanged (STRUCTURAL_ABSENCE).
+  - **WO-1C (KRYL-1232) / WO-1D (KRYL-1233) — OPEN.** Same pattern: distinct
+    evidence facets, no Class-E population unless the source supplies every
+    quantity the authored definition requires. **KRYL-1228** parallel.
 
 **Exit:** every authored measure either produces a subject-scoped 0–100 signal
 with provenance + single-axis attribution, or renders honest STRUCTURAL absence —
