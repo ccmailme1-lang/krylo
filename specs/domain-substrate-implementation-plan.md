@@ -1,11 +1,64 @@
 # Domain Substrate — Implementation-Fidelity Plan
 
-**Status:** FROZEN — Founder plan (2026-08-29). Recorded, not originated.
-The **governing posture from here**: *we are no longer designing the ontology; we
-are testing whether the system can faithfully instantiate it.*
-**Precondition met:** Track #3 ontology consistency **CLOSED** (`6c3498b`,
-`domain-intelligence/CROSS-DOMAIN-CONSISTENCY.md` v1.0).
+**Status:** FROZEN — Founder plan (2026-08-29), amended 2026-08-30 (§0 below).
+Recorded, not originated. The **governing posture from here**: *we are no longer
+designing the ontology; we are testing whether the system can faithfully
+instantiate it.*
+**Precondition met:** Track #3 ontology consistency **CLOSED** (`6c3498b`) +
+**all 12 WO-1 Class-E measures AUTHORED** (2026-08-30, `a0f4167`) rendering live
+as honest STRUCTURAL absence (KRYL-1229, `f193e5c`).
 **Gate:** nothing here is build-authorized. Sequencing + exit criteria only.
+
+---
+
+## 0. Governing acceptance criterion (Founder, 2026-08-30)
+
+**WO-1 is no longer a backend-only workstream.** The 12 measures are authored and
+the guest can already perceive their *absence honestly* — the first complete
+vertical slice: **authored truth → runtime definition → guest-facing SIGNAL
+state**. Every remaining implementation WO extends that slice toward structural
+perception, and each carries one acceptance question:
+
+> **What does the guest see now that they could not see before?**
+
+An implementation WO that does not change what the guest can perceive is not done,
+regardless of backend correctness.
+
+**The critical sequence (each stage is guest-perceptible, not just wired):**
+
+1. **WO-1 source wiring** — per measure: `source → facet → provenance →
+   normalized signal → A(d, Subject)`. Acceptance: *can KRYLO obtain the measure
+   for a real subject without collapsing source identity, scope, or attribution?*
+   The three shared-source cases (PatentsView → TECH/OWN/CAP; Census → LAB/OWN;
+   FEC → CAP) are the hard cases. KRYL-1228 (confidence normalization) is
+   independent and runs alongside.
+
+2. **WO-5B subject binding** — the transition from **domain intelligence** to
+   **perceptual intelligence**. Today the panel proves *"MEDIA has an authored
+   narrative-coherence measure, but its source isn't wired."* WO-5B makes it
+   possible to say *"for this subject, MEDIA observes this."* `I_d` stays
+   reusable; `A(d, Subject)` supplies the binding; **no new domain primitive is
+   invented here.**
+
+3. **Relationships (UI)** — the six tabs stop behaving like six separate reports.
+   The guest must not have to mentally perform *"CAPITAL says X, TECHNOLOGY says
+   Y … therefore related."* The closed 15-type vocabulary gives the system
+   permission to expose the relationship explicitly. This is §20 becoming UI:
+   **don't make the analyst assemble the relationship.**
+
+4. **Formation** — only after observations *and* relationships are honestly
+   subject-scoped. The guest encounters a formation as something **emerging from
+   the observed structure**, never as an interpretation pasted over six panels.
+   Preserves the chain **Subject → Observable Substrate → Relationships →
+   Formation**.
+
+**WO-6 is redefined** — the Anduril fixture is the **guest-experience acceptance
+test for the architecture**, not just an engineering integration test. A passing
+run demonstrates: Anduril → six-domain substrate → subject-scoped observations →
+distinct facets → admitted relationships → formation → Target Packet perception →
+unresolved elements preserved — with **no invented relationship, no fabricated
+measure, and no requirement for the analyst to reconstruct the structure
+manually.** That is the first genuinely meaningful definition of "done."
 
 ---
 
@@ -35,30 +88,34 @@ TRACK #3 — Domain ontology consistency ......... CLOSED
   cross-domain attribution .............. CLOSED
 
 IMPLEMENTATION FIDELITY
-  signal authorship ..................... OPEN
-  signal measurement ................... OPEN
-  shared-source facets ................ OPEN
-  relationship admission ............ OPEN
-  integration ..................... GATED
+  signal authorship ..................... CLOSED  (12/12 Class-E authored 2026-08-30)
+  guest-facing absence state ........... CLOSED  (KRYL-1229 — honest STRUCTURAL absence live)
+  signal measurement / source wiring .. OPEN    (WO-1 — §0.1)
+  shared-source facets ............... OPEN    (WO-2 — the 3 hard cases)
+  relationship admission ........... CLOSED  (WO-3, runtime guard `441cfa6`)
+  subject binding A(d,Subject) .... OPEN    (WO-5B — §0.2)
+  relationship exposure (UI) .... OPEN    (§0.3)
+  integration ................. GATED   (WO-5 needs WO-1 source + WO-2 + WO-5B)
 ```
+
+Every OPEN row above carries the §0 acceptance question.
 
 ---
 
 ## WO-1 — Signal Authorship & Measurement
 
-Resolve every `UNAUTHORED` `signals` field across the six `I_d`, plus the
-remaining per-field `AUTHORED` promotions.
+- **Authorship half (Founder-side): DONE 2026-08-30.** All 12 Class-E measures
+  authored (`domain-substrate-wo1-signal-classification.md`; `domain-intelligence/
+  <D>.md` §3.1–§3.3; `domainintelligence.js` `signalDefs`). 4 normalization
+  decisions LOCKED. Guest-facing absence state DONE (KRYL-1229).
+- **Measurement / source-wiring half (engineering): OPEN.** Per measure:
+  `source → facet → provenance → normalized signal (§12 ingestion contract) →
+  A(d, Subject)`. Acceptance (§0.1): *the measure is obtainable for a real
+  subject without collapsing source identity, scope, or attribution.*
 
-- **Authorship half (Founder-side):** for each signal — its definition, the
-  structural variable it measures, and — for the six concentration variables —
-  the measure itself (top-holder share / HHI-style / defined). This is analytical
-  content; engineering cannot start it cold.
-- **Measurement half (engineering):** measurement method, unit/scale, 0–100
-  normalization (§12 ingestion contract), provenance, attribution.
-
-**Exit:** every signal the substrate uses has an authored definition, measurement
-method, normalization, provenance, and single-axis attribution. Until then the
-Data Substrate renders classified absence for that field.
+**Exit:** every authored measure either produces a subject-scoped 0–100 signal
+with provenance + single-axis attribution, or renders honest STRUCTURAL absence —
+and the guest can tell which, and why. No fabricated value, no volume proxy.
 
 ## WO-2 — Shared-Source Facet Integrity
 
@@ -100,38 +157,46 @@ domain tab, then `F`.
 (STAKE/MOVE/WINDOW/LEVERAGE FIELD) replacing lens intelligence; panel↔field 1:1
 (integration-contract AC); `I_d` identical at Field and Subject scope (Q8).
 
-## WO-6 — End-to-End Closure Gate
+## WO-6 — End-to-End Closure Gate (= guest-experience acceptance test, §0)
 
-One real investigation demonstrates the full chain with the frozen contracts
-enforced throughout:
+One real investigation (**Anduril fixture**,
+`SPEC-domain-substrate-integration-contract.md`) demonstrates the full chain with
+frozen contracts enforced throughout:
 
 ```
-Buyer Question → Subject → I_d → A(d, Subject) → Evidence
-→ Admitted Relationships → F → Formation → Inspection
+Buyer Question → Subject → six-domain substrate → A(d, Subject) subject-scoped
+observations → distinct facets → admitted relationships → F → Formation
+→ Target Packet perception → unresolved elements preserved
 ```
 
-The **Anduril fixture** (`SPEC-domain-substrate-integration-contract.md`) is the
-concrete test.
-
-**Exit = the meaningful definition of "done."**
+**Exit:** the chain renders for the guest with **no invented relationship, no
+fabricated measure, and no requirement for the analyst to reconstruct the
+structure manually.** The passing artefact answers §0: *what does the guest see,
+for Anduril, that they could not see before?* This is the first genuinely
+meaningful definition of "done."
 
 ---
 
 ## Sequencing
 
 ```
-WO-1 (authorship half)  ─┐
-WO-1 (measurement) ──────┼─→ WO-2 ─┐
-WO-3 ───────────────────┘          ├─→ WO-5 ─→ WO-6
-WO-4 ─────────────────────────────┘
+DONE:  WO-1 authorship · KRYL-1229 absence state · WO-2 (partial, `ea50655`) · WO-3 (`441cfa6`) · WO-5A (`4a79a8a`)
+
+WO-1 source-wiring ──┐
+WO-2 (3 hard cases) ─┼─→ WO-5B (subject binding) ─→ Relationships UI ─→ Formation ─→ WO-6
+KRYL-1228 ───────────┘
+WO-4 (entry funnel) ───────────────────────────────────────────────────→ (feeds WO-6)
 ```
 
-- WO-1 authorship (Founder) and WO-2 / WO-3 (engineering, once WO-1 authored) can
-  run in parallel.
-- WO-4 (entry funnel) is independent until WO-5.
-- WO-5 requires WO-1 + WO-2 + WO-3.
-- WO-6 is the gate; it requires all of WO-1…WO-5.
-- Integration stays gated until WO-1 authorship + WO-2 + WO-3 are done.
+- WO-1 source-wiring, WO-2's three shared-source cases, and KRYL-1228 run in
+  parallel; each is guest-perceptible per §0.
+- WO-5B needs WO-1 source-wiring + WO-2 for at least one domain to show real data;
+  it renders honest absence for the rest.
+- Relationship exposure (§0.3) follows WO-5B — needs subject-scoped observations
+  on both ends of an edge.
+- Formation (§0.4) follows relationships.
+- WO-4 (entry funnel) is independent until WO-6.
+- WO-6 is the gate; it requires the whole chain.
 
 Jira numbering is the sole authority — these are the plan, not tickets. File in
 KRYL when work is authorized.
