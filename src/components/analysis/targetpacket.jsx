@@ -472,7 +472,9 @@ export default function TargetPacket() {
             margin: '10px 0 0', maxWidth: 950, fontFamily: HELV, fontSize: 19,
             lineHeight: 1.3, fontWeight: 300, letterSpacing: '-0.015em', color: BRIGHT,
           }}>
-            {subjScope.kind === 'ENTITY'
+            {subjScope.kind === 'ENTITY' && subjScope.verification === 'NAMED_UNVERIFIED'
+              ? `${subjScope.entity.name} is named as the subject of this submission — not independently verified. The submission is the source; its claims are not evidence. The six domains below are stated absence until a source binds to ${subjScope.entity.name}. This packet does not produce a decision verdict.`
+              : subjScope.kind === 'ENTITY'
               ? `${subjScope.entity.name} resolved. The six domains below are what KRYLO can and cannot observe about it — evidence, derived measure, or classified absence. This packet does not produce a decision verdict.`
               : recognizedFrame
                 ? `${recognizedFrame} frame recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
@@ -482,9 +484,22 @@ export default function TargetPacket() {
           </p>
           <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 28, fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: '#767d7a' }}>
             <span>SUBJECT <span style={{ color: '#eceee9' }}>
-              {subjScope.kind === 'ENTITY' ? subjScope.canonicalId : (recognizedFrame ? `${recognizedFrame} FRAME` : subjScope.kind)}
+              {subjScope.kind === 'ENTITY'
+                ? (subjScope.verification === 'NAMED_UNVERIFIED' ? `${subjScope.canonicalId} · NAMED, UNVERIFIED` : subjScope.canonicalId)
+                : (recognizedFrame ? `${recognizedFrame} FRAME` : subjScope.kind)}
             </span></span>
             <span style={{ color: '#3a4140' }}>·</span>
+            {subjScope.dealFrame && (subjScope.dealFrame.stage || subjScope.dealFrame.round) && (
+              <>
+                <span>DEAL FRAME <span style={{ color: '#eceee9' }}>
+                  {[subjScope.dealFrame.stage,
+                    subjScope.dealFrame.round != null ? `$${(subjScope.dealFrame.round / 1e6).toFixed(subjScope.dealFrame.round % 1e6 ? 1 : 0)}M` : null,
+                    subjScope.dealFrame.preMoney != null ? `${(subjScope.dealFrame.preMoney / 1e6).toFixed(subjScope.dealFrame.preMoney % 1e6 ? 1 : 0)}M pre` : null,
+                  ].filter(Boolean).join(' · ')}
+                </span></span>
+                <span style={{ color: '#3a4140' }}>·</span>
+              </>
+            )}
             <span>OBSERVATIONS <span style={{ color: '#eceee9' }}>
               {observationCount > 0 ? `${observationCount} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}` : 'none in window'}
             </span></span>

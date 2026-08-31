@@ -55,6 +55,119 @@ function queryText(input) {
   return input?.rawQuery ?? input?.query ?? '';
 }
 
+// ── KRYL-1237 — Named-Unverified Subject ──────────────────────────────────────
+// A submission that EXPLICITLY names its subject company resolves to that company
+// even when it is not in the curated registry — but only when the name sits in an
+// explicit-subject position and NOT an investor/context position, and only when
+// exactly one such name survives. Contextual clues never silently establish
+// identity (that is KRYL-1238); an explicitly named subject may.
+
+const NU_STOPWORDS = new Set([
+  'deal', 'submission', 'pitch', 'memo', 'why', 'invest', 'investment', 'the', 'our',
+  'key', 'risks', 'risk', 'summary', 'overview', 'thesis', 'ask', 'round', 'series',
+  'appendix', 'team', 'market', 'product', 'traction', 'financials', 'use', 'funds',
+]);
+
+// Multi-word Title-Case spans + quoted spans — a single capitalized token is too
+// weak a signal to promote an unverified subject.
+function namedCandidates(text) {
+  const quoted = [...text.matchAll(/"([^"]+)"/g)].map(m => m[1].trim());
+  // inter-word separator is a real space/tab only — never a newline, so a name at
+  // the end of one line does not fuse with a name at the start of the next.
+  const spans  = [...text.matchAll(/\b([A-Z][A-Za-z][A-Za-z.&'-]*(?:[ \t]+[A-Z][A-Za-z][A-Za-z.&'-]*)+)\b/g)]
+    .map(m => m[1].trim());
+  return [...new Set([...quoted, ...spans])]
+    .filter(s => s.length >= 3)
+    .filter(s => !s.split(/\s+/).every(w => NU_STOPWORDS.has(w.toLowerCase())));
+}
+
+const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Faithful slug of the named string — NOT entityresolution's match-normalized form
+// (which strips corporate suffixes), so "Oriole Networks" and "Oriole Capital" get
+// distinct ids.
+const namedSlug = s => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+function inExplicitSubjectPosition(name, text) {
+  const N = esc(name);
+  return [
+    new RegExp(`${N}\\s+(?:is|are)\\s+(?:raising|seeking|closing|opening)\\b`, 'i'),
+    new RegExp(`${N}\\s+(?:is|are)\\s+(?:a|an)\\s+(?:[a-z-]+\\s+){0,3}(?:compan|startup|start-up|business|firm|platform|team|venture|maker|developer|provider|lab|studio|company)`, 'i'),
+    new RegExp(`${N}['’]?s?\\s+(?:series\\s+[a-j]|seed|pre-seed|round|raise|deal|financing|cap\\s+table|valuation)`, 'i'),
+    new RegExp(`(?:deal\\s+submission|investment\\s+memo|pitch\\s+deck|company)\\s*[—–:\\-]+\\s*${N}`, 'i'),
+    new RegExp(`(?:investing|invest|investment)\\s+in\\s+${N}\\b`, 'i'),
+    new RegExp(`${N}\\s*[—–-]\\s*(?:a|an)?\\s*(?:compan|startup|platform|business|venture)`, 'i'),
+  ].some(re => re.test(text));
+}
+
+function inContextPosition(name, text) {
+  const N = esc(name);
+  // direct attribution phrases
+  const direct = [
+    new RegExp(`\\bex[- ]${N}\\b`, 'i'),
+    new RegExp(`former\\s+[\\w-]+\\s+(?:at|of)\\s+${N}\\b`, 'i'),
+    new RegExp(`${N}\\s+(?:alum|alumni|veteran)\\b`, 'i'),
+  ].some(re => re.test(text));
+  if (direct) return true;
+  // investor/attribution clauses — the name anywhere between the lead phrase and the
+  // next sentence break ("led by A and B, with participation from C.")
+  for (const lead of [/led\s+by/i, /backed\s+by/i, /participation\s+from/i, /investors?\s*(?:include|are|:)/i, /alongside/i, /advis(?:ed|or)/i]) {
+    const m = lead.exec(text);
+    if (!m) continue;
+    const clause = text.slice(m.index, text.indexOf('.', m.index) + 1 || undefined);
+    if (new RegExp(`\\b${N}\\b`, 'i').test(clause)) return true;
+  }
+  return false;
+}
+
+// → { name, namedVia } | { multiple: true } | null
+function promoteNamedSubject(text) {
+  const survivors = namedCandidates(text)
+    .filter(n => inExplicitSubjectPosition(n, text) && !inContextPosition(n, text));
+  // collapse a candidate that is a prefix/suffix of a longer survivor ("Oriole" vs
+  // "Oriole Networks") — keep the longest
+  const trimmed = survivors.filter(a => !survivors.some(b => b !== a && b.toLowerCase().includes(a.toLowerCase())));
+  if (trimmed.length === 1) return { name: trimmed[0], namedVia: 'explicit-subject position' };
+  if (trimmed.length > 1) return { multiple: true };
+  return null;
+}
+
+const SCALE = { k: 1e3, m: 1e6, mm: 1e6, b: 1e9, bn: 1e9, billion: 1e9, million: 1e6, thousand: 1e3 };
+function scaleMoney(digits, suffix) {
+  const n = parseFloat(String(digits).replace(/,/g, ''));
+  if (isNaN(n)) return null;
+  return suffix ? n * (SCALE[suffix.toLowerCase()] ?? 1) : n;
+}
+function titleStage(s) {
+  return s.replace(/\bpre[- ]?seed\b/i, 'Pre-Seed')
+          .replace(/\bseed\b/i, 'Seed')
+          .replace(/series\s+([a-j])\d?/i, (_, l) => `Series ${l.toUpperCase()}`);
+}
+
+// Deal frame — labelled CONTEXT only, never a conclusion input.
+export function extractDealFrame(text) {
+  const t = text ?? '';
+  const stageM = t.match(/\b(pre[- ]?seed|seed|series\s+[a-j]\d?)\b/i);
+  const stage = stageM ? titleStage(stageM[1]) : null;
+  let round = null, preMoney = null;
+  for (const m of t.matchAll(/\$\s?(\d[\d.,]*)\s*(mm|bn|k|m|b|billion|million|thousand)?/gi)) {
+    const val = scaleMoney(m[1], m[2]);
+    if (val == null) continue;
+    const end    = m.index + m[0].length;
+    const after  = t.slice(end, end + 24).toLowerCase();
+    const before = t.slice(Math.max(0, m.index - 30), m.index).toLowerCase();
+    if (/^[\s,]*(?:pre[- ]?money|post[- ]?money|valuation)/.test(after)
+        || /(?:pre[- ]?money|valuation)\s+(?:of\s+)?$/.test(before)) {
+      if (preMoney == null) preMoney = val;
+    } else if (/^\s*(?:series\s+[a-j]\b|seed\b|round\b|financing\b)/.test(after)
+        || /(?:rais(?:e|ing)|round\s+of|invest(?:ing)?|deploy(?:ing)?)\s+(?:a\s+|an\s+|~|up\s+to\s+)?$/.test(before)) {
+      if (round == null) round = val;
+    }
+  }
+  if (!stage && round == null && preMoney == null) return null;
+  return { stage, round, preMoney, source: 'submission' };
+}
+
 export function subjectScope(input) {
   const text = queryText(input).trim();
   const qc   = (input && typeof input === 'object') ? input : null;
@@ -74,6 +187,7 @@ export function subjectScope(input) {
     const e = best.entity;
     return {
       kind: 'ENTITY',
+      verification: 'REGISTRY',
       canonicalId: e.canonicalId,
       entity: {
         canonicalId: e.canonicalId,
@@ -83,6 +197,33 @@ export function subjectScope(input) {
       },
       matchedOn: best.matchedOn,
       confidence: best.confidence,
+    };
+  }
+
+  // 1b. NAMED_UNVERIFIED — the registry missed, but the text explicitly names its
+  // subject company. Resolve to it as an ENTITY carrying NO identifiers and NO
+  // domain tags: A(d, Subject) then runs and every domain is stated absence, because
+  // subjectbinding needs an identifier to attach a facet (KRYL-1237). The submission
+  // is the source; its claims never become evidence.
+  const named = promoteNamedSubject(text);
+  if (named?.multiple) {
+    return {
+      kind: 'DECISION_FRAME',
+      frame: text.slice(0, 140),
+      dealFrame: extractDealFrame(text),
+      reason: 'multiple named subjects — ambiguous; no silent pick',
+    };
+  }
+  if (named) {
+    const cid = namedSlug(named.name);
+    return {
+      kind: 'ENTITY',
+      verification: 'NAMED_UNVERIFIED',
+      canonicalId: cid,
+      entity: { canonicalId: cid, name: named.name, identifiers: {}, domainTags: [] },
+      matchedOn: named.name,
+      namedVia: named.namedVia,
+      dealFrame: extractDealFrame(text),
     };
   }
 
@@ -100,6 +241,7 @@ export function subjectScope(input) {
     return {
       kind: 'DECISION_FRAME',
       frame: text.slice(0, 140),
+      dealFrame: extractDealFrame(text),
       reason: 'decision cues present, no entity resolved — unit-of-analysis unsettled',
     };
   }

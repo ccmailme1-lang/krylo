@@ -50,13 +50,16 @@ for (const [name, s, expect] of [
      brief.label !== s.query && !brief.label.startsWith('VECTOR') && !brief.label.startsWith('Elevator'));
 }
 
-// ── 2. Oriole — unresolved, but consistent (not a fabricated subject) ────────
+// ── 2. Oriole — now resolved as NAMED_UNVERIFIED (KRYL-1237); brief must agree ─
 {
   const brief  = canonicalBriefSubject(ORIOLE);
   const packet = subjectScope(ORIOLE.queryContext);
-  ok('Oriole: brief subject NOT resolved (KRYL-1237 boundary, not KRYL-1239)', brief.resolved === false);
-  ok('Oriole: brief + packet agree it is unresolved (consistent, not divergent)',
-     packet.kind !== 'ENTITY');
+  ok('Oriole: packet resolves it NAMED_UNVERIFIED (KRYL-1237)',
+     packet.kind === 'ENTITY' && packet.verification === 'NAMED_UNVERIFIED');
+  ok('Oriole: brief subject === packet subject (no divergence)',
+     brief.label === packet.entity.name && brief.label === 'Oriole Networks');
+  ok('Oriole: brief subject is NOT the raw submission text',
+     !brief.label.startsWith('Deal Submission') && brief.label.length < 40);
 }
 
 // ── 3. cleanLens rejects raw-query pseudo-lenses, keeps real tokens ──────────
