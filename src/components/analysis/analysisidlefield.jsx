@@ -17,7 +17,6 @@ import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
-import { matchConceptRewrites } from '../../engine/conceptrewrite.js';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
@@ -86,25 +85,9 @@ const DOMAIN_CHIPS = [
   { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> },
 ];
 
-// CARL (Concept Alias Retrieval Layer, specs/SPEC-carl-concept-alias-retrieval-layer.md) was
-// built 2026-08-11 as a replacement for this flat list, then rejected the same session — see
-// the spec's own status header. DOMAIN_PRECURSORS is restored as the real candidate pool for
-// the TRENDING block below. The original 2026-08-04 "always populate" filler directive is
-// still superseded: chips require typed text and a zero-score candidate is dropped, never
-// padded in — that part of the 2026-08-11 fix stands.
-const DOMAIN_PRECURSORS = {
-  // Sourced 2026-08-04 from real, cited 2026 finance search-trend data (Trintech/WEF/BCG/
-  // Accenture/Deloitte/Morgan Stanley reporting) provided by Founder — not invented, not the
-  // prior generic macro-jargon list.
-  FINANCIAL:  ['AGENTIC AI', 'AI ACCOUNTABILITY', 'AFFORDABILITY PRESSURE', 'LOUD BUDGETING', 'YIELD HUNTING', 'STABLECOIN ADOPTION', 'PRIVATE CREDIT', 'CYBERSECURITY'],
-  MARKET:     ['EQUITY FLOW', 'VOLATILITY IDX', 'SECTOR ROTATION', 'MOMENTUM SHIFT', 'VALUATION SPREAD', 'EARNINGS REVISION', 'SHORT INTEREST', 'OPTIONS SKEW'],
-  LEGAL:      ['REGULATORY SHIFT', 'CASE VELOCITY', 'COMPLIANCE FLUX', 'LITIGATION VOLUME', 'ENFORCEMENT ACTIVITY', 'POLICY DRIFT', 'PRECEDENT SHIFT', 'FILING VELOCITY'],
-  HEALTH:     ['COVERAGE GAP', 'COST TRAJECTORY', 'ACCESS SIGNAL', 'UTILIZATION RATE', 'PREMIUM DRIFT', 'PROVIDER SUPPLY', 'CLAIMS VELOCITY', 'POLICY EXPOSURE'],
-  CAREER:     ['LABOR PRESSURE', 'HIRE VELOCITY', 'WAGE FLUX', 'ATTRITION RATE', 'SKILL DEMAND', 'POSTING VELOCITY', 'REMOTE SHIFT', 'LAYOFF SIGNAL'],
-  TECHNOLOGY: ['ADOPTION RATE', 'PATENT FLUX', 'DEPLOY SIGNAL', 'R&D VELOCITY', 'PLATFORM SHIFT', 'COMPUTE DEMAND', 'INTEGRATION RATE', 'STACK MIGRATION'],
-  MEDIA:      ['NEWS VELOCITY', 'NARRATIVE SHIFT', 'MESSAGE SPEND', 'SENTIMENT DRIFT', 'COVERAGE DENSITY', 'AUDIENCE SHIFT', 'ENGAGEMENT VELOCITY', 'CHANNEL ROTATION'],
-  OWNERSHIP:  ['SUPPLY CONSTRAINT', 'CONTROL SHIFT', 'ASSET CONCENTRATION', 'TRANSFER VELOCITY', 'STAKE ROTATION', 'ACQUISITION FLOW', 'DILUTION SIGNAL', 'HOLDING PERIOD SHIFT'],
-};
+// The locked six — the TRENDING pool iterates these when the guest has not narrowed
+// to a pill.
+const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
 // taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked
@@ -120,36 +103,6 @@ const ANALYSIS_PILL_TO_DOMAIN = {
   MEDIA:      'MEDIA',
   OWNERSHIP:  'OWNERSHIP',
 };
-
-// Deterministic lexical relevance — no LLM, same discipline as intentparser.js. Splits
-// typed text into meaningful tokens (3+ chars) for scoring TRENDING chip candidates against.
-function tokenizeForRelevance(text) {
-  return Array.from(new Set(
-    text.toLowerCase().split(/[^a-z0-9]+/).filter(w => w.length > 2)
-  ));
-}
-
-// Scores a candidate chip term (domain ontology entry or real signal label) against the
-// typed text's tokens. Exact token match scores highest; a shared 4+ char prefix (stem-ish,
-// e.g. "asset"/"assets") scores lower. Zero means no lexical connection to what was typed —
-// callers must drop zero-score candidates rather than padding them in as filler.
-function scoreTermRelevance(term, queryTokens) {
-  if (!queryTokens.length) return 0;
-  const termTokens = term.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
-  let score = 0;
-  for (const tt of termTokens) {
-    for (const qt of queryTokens) {
-      if (tt === qt) { score += 3; continue; }
-      if (tt.length >= 4 && qt.length >= 4 && tt.slice(0, 4) === qt.slice(0, 4)) score += 1;
-    }
-  }
-  return score;
-}
-
-// CICE surface-form rewrite matches (matchConceptRewrites) are a whole-phrase match, not a
-// per-token score — fixed above the highest realistic literal/stem score so a known paraphrase
-// always sorts first within its domain.
-const REWRITE_MATCH_SCORE = 1000;
 
 const SIGNAL_SCOPE_OPTIONS = [
   { key: 'live',       label: 'LIVE'            },
@@ -835,61 +788,29 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const bayResult      = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
   const frictionResult = useMemo(() => computeStructuralFriction(bayDomain, bayResult), [bayDomain, bayResult]);
 
-  // TRENDING chips — Founder directive 2026-08-11. Chips require typed subject matter: no text
-  // -> no chips, domain selected with an empty box -> no chips. Real literal token/stem
-  // matching (scoreTermRelevance) against DOMAIN_PRECURSORS + live signals (deriveTrendingTerms),
-  // plus CICE surface-form rewrite matches (matchConceptRewrites, KRYL — SPEC-cice-...) for
-  // known paraphrases that share no literal token with the typed text — a zero-score candidate
-  // is still dropped, never padded in as filler. Pure computation lives in this memo, never in
-  // render-phase JSX.
+  // TRENDING — another view into the SAME dispatched-signal substrate the Structural
+  // Field / packet observation-count reads (routedSignals via deriveTrendingTerms,
+  // KRYL-1143b: §16 shared pool, {source, domain, signal, confidence, ts}; §22
+  // zero-confidence excluded). NOT an NLP layer: no query entities, no static
+  // precursor list, no concept rewrites, no query-token gating. A chip exists ONLY
+  // because a live connector dispatched a real signal in that domain. Query wording
+  // never changes this set — only the observations do. No qualifying signal -> no
+  // chips (never padded). (DEF: TRENDING provenance — query-fragment extraction.)
   const trendingResult = useMemo(() => {
-    const trimmedQuery = seedQuery.trim();
-    if (!trimmedQuery) return { chips: [], chipSources: new Map() };
+    if (!seedQuery.trim()) return { chips: [], chipSources: new Map() };
+    const selectedCanon = [...new Set(selectedDomains.map(p => ANALYSIS_PILL_TO_DOMAIN[p]).filter(Boolean))];
+    const domains = selectedCanon.length ? selectedCanon : CANON_DOMAINS;
+    const perDomain = Math.max(1, Math.floor(8 / domains.length));
 
-    // Per-chip source attribution — SPEC-cice-phase2-behavioral-presentation-layer.md step 1
-    // (event capture). Read-only bookkeeping for telemetry; does not affect which chips surface
-    // or their order below.
     const chipSources = new Map();
-
-    const parsed = parseIntent(trimmedQuery);
-    const entityChips = Array.from(new Set((parsed?.entities ?? []).map(e => e.toUpperCase())));
-    entityChips.forEach(t => chipSources.set(t, 'entity'));
-
-    const queryDomainResult = detectDomain(trimmedQuery, activeLens);
-    const queryPill = queryDomainResult?.resolutionEligible ? queryDomainResult.primary : null;
-    const pills = Array.from(new Set([...selectedDomains, queryPill].filter(Boolean)));
-
-    const queryTokens = tokenizeForRelevance(trimmedQuery);
-
-    const remaining = Math.max(0, 8 - entityChips.length);
-    const perDomain = pills.length > 0 ? Math.max(1, Math.floor(remaining / pills.length)) : 0;
-    const domainChips = (remaining === 0 || pills.length === 0) ? [] : pills.flatMap(pill => {
-      const canonicalDomain = ANALYSIS_PILL_TO_DOMAIN[pill];
-      const real      = canonicalDomain ? deriveTrendingTerms(rawSignals, canonicalDomain, 24) : [];
-      const ontology  = DOMAIN_PRECURSORS[pill] ?? [];
-      const rewrites  = matchConceptRewrites(trimmedQuery, pill);
-
-      const scored = new Map();
-      for (const term of [...real, ...ontology]) {
-        const s = scoreTermRelevance(term, queryTokens);
-        if (s > 0) { scored.set(term, Math.max(scored.get(term) ?? 0, s)); if (!chipSources.has(term)) chipSources.set(term, 'literal'); }
+    const labels = [];
+    for (const d of domains) {
+      for (const label of deriveTrendingTerms(rawSignals, d, perDomain)) {
+        if (!labels.includes(label)) { labels.push(label); chipSources.set(label, 'signal'); }
       }
-      // Rewrite matches are a deliberate phrase-level hit, not a token score — they outrank
-      // any literal/stem match so a known paraphrase surfaces first, not buried by coincidence.
-      for (const term of rewrites) { scored.set(term, Math.max(scored.get(term) ?? 0, REWRITE_MATCH_SCORE)); chipSources.set(term, 'rewrite'); }
-
-      return [...scored.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, perDomain)
-        .map(([term]) => term);
-    });
-
-    const chips = Array.from(new Set([...entityChips, ...domainChips]))
-      .slice(0, 8)
-      .map(t => ({ lens: t, label: t }));
-
-    return { chips, chipSources };
-  }, [seedQuery, activeLens, selectedDomains, rawSignals]);
+    }
+    return { chips: labels.slice(0, 8).map(t => ({ lens: t, label: t })), chipSources };
+  }, [seedQuery, selectedDomains, rawSignals]);
 
   // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
   // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
@@ -1884,14 +1805,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 )}
 
                 {/* ── TRENDING ── */}
-                {/* Founder directive 2026-08-11. Computation lives in the trendingResult useMemo
-                    above; this block is a pure render of that already-computed result. Chips
-                    require typed subject matter: no text -> no chips, domain selected with an
-                    empty box -> no chips. Real literal token/stem matching only against
-                    DOMAIN_PRECURSORS + live signals (deriveTrendingTerms) — a zero-score
-                    candidate is dropped, never padded in as filler. CARL (concept/alias
-                    retrieval) was built and rejected this same session — see
-                    specs/SPEC-carl-concept-alias-retrieval-layer.md for the record. */}
+                {/* Pure render of trendingResult (computed above). Every chip is a real
+                    dispatched connector signal for a domain in scope — the same substrate
+                    the Structural Field reads. No query-derived content. No qualifying
+                    signal -> the block does not render. */}
                 {trendingResult.chips.length > 0 && (
                   <div style={{ marginTop: 20 }}>
                     <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
