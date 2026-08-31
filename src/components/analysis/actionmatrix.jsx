@@ -5,7 +5,8 @@ import React, { useState, useMemo } from 'react';
 import { useAnalysisStore }        from '../../store/useanalysisstore.js';
 import { synthesizeQuery }         from '../../engine/querysynthesis.js';
 import { getVisibleCards }         from '../../engine/editorialgate.js';
-import { canonicalBriefSubject, cleanLens } from '../../engine/briefcontext.js';
+import { canonicalBriefSubject, cleanLens, synthesisIsDomainAnchored } from '../../engine/briefcontext.js';
+import { classifyFrame, frameHeadline } from '../../engine/frameclassify.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
 import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
@@ -192,6 +193,25 @@ export default function ActionMatrix() {
 
   if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
     return <AmbiguousState variant="compact" />;
+  }
+
+  // KRYL-1236 stage 2 — for a recognised frame with no domain-anchored synthesis,
+  // the generic "REFINE YOUR QUERY" matrix is not the right remediation. Point at
+  // the class-native FRAME ANCHORING surface in the packet instead.
+  const frame = classifyFrame(session?.queryContext ?? session?.query ?? '');
+  if (subj.kind !== 'ENTITY' && frame.class !== 'NO_FRAME' && !synthesisIsDomainAnchored(synthesis)) {
+    return (
+      <div style={{ width: '100%', height: '100%', background: '#000', fontFamily: MONO, padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em' }}>P4 — FRAME ANCHORING</div>
+        <div style={{ fontSize: 11, color: LIME, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{frameHeadline(frame) ?? frame.class.replace(/_/g, ' ')}</div>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 520 }}>
+          {frame.unresolved.length} of {frame.anchors.length} anchors open. The class-native anchor checklist — the specific inputs that would resolve this {frame.class.replace(/_/g, ' ').toLowerCase()} — is in the FRAME ANCHORING section of the packet. Anchors scope observation; they do not produce a verdict.
+        </div>
+        {frame.subjectResolution?.state !== 'NONE' && (
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{frame.subjectResolution.prompt}</div>
+        )}
+      </div>
+    );
   }
 
   return (

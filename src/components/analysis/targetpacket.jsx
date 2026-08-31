@@ -26,6 +26,7 @@ import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecon
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
 import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
+import FrameAnchoring from './frameanchoring.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -507,6 +508,14 @@ export default function TargetPacket() {
             <span>DECISION VERDICT <span style={{ color: '#eceee9' }}>WITHHELD</span></span>
           </div>
         </section>
+
+        {/* ── FRAME ANCHORING (KRYL-1236) — class-native remediation for a
+             non-ENTITY subject. Replaces the generic "refine your query". ─── */}
+        <FrameAnchoring
+          queryContext={session?.queryContext}
+          query={session?.query}
+          subjectKind={subjScope.kind}
+        />
 
         {/* ── FIVE-METRIC STRIP — honest absence (KRYL-1220 capability gap) ────── */}
         <section style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>

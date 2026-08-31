@@ -76,5 +76,16 @@ ok('frameclassify.js does not import querysynthesis / synthGeneral', !/querysynt
 // 8. Contract note present (anchors ≠ conclusion inputs).
 ok('contract stated in the module header', /never .*conclusion inputs|never generate a verdict/i.test(src));
 
+// 9. KRYL-1236 wiring — the anchoring surface is mounted, generic remediation retired.
+const tp = readFileSync(new URL('./src/components/analysis/targetpacket.jsx', import.meta.url), 'utf8');
+const am = readFileSync(new URL('./src/components/analysis/actionmatrix.jsx', import.meta.url), 'utf8');
+const fa = readFileSync(new URL('./src/components/analysis/frameanchoring.jsx', import.meta.url), 'utf8');
+ok('targetpacket.jsx mounts <FrameAnchoring> under PRIMARY SIGNAL', /<FrameAnchoring/.test(tp) && /import FrameAnchoring/.test(tp));
+ok('actionmatrix.jsx defers a framed input to FRAME ANCHORING', /P4 — FRAME ANCHORING/.test(am) && /classifyFrame/.test(am));
+const faBody = fa.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
+ok('frameanchoring.jsx is a READ surface — no input fields, no buttons, no onClick', !/<input\b|<button\b|onClick|onChange|onSubmit/.test(faBody));
+ok('frameanchoring.jsx renders no numeric score (X / 100)', !/\d\s*\/\s*100|scoreValue|\bconvergence\s*[:=]/i.test(faBody));
+ok('frameanchoring.jsx does not import synthesis', !/querysynthesis|synthGeneral/.test(fa));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
