@@ -19,12 +19,12 @@ const LIME = '#66FF00';
 // the top; relative ordering and spacing are invariant.
 const ROT = -Math.PI / 2;
 const DOMAINS = [
-  { key: 'capital',    label: 'CAPITAL',    theta: 0 },
-  { key: 'technology', label: 'TECHNOLOGY', theta: Math.PI / 3 },
-  { key: 'knowledge',  label: 'KNOWLEDGE',  theta: (2 * Math.PI) / 3 },
-  { key: 'ownership',  label: 'OWNERSHIP',  theta: Math.PI },
-  { key: 'media',      label: 'MEDIA',      theta: (4 * Math.PI) / 3 },
-  { key: 'labor',      label: 'LABOR',      theta: (5 * Math.PI) / 3 },
+  { key: 'capital',    label: 'CAPITAL',    short: 'CAP',   theta: 0 },
+  { key: 'technology', label: 'TECHNOLOGY', short: 'TECH',  theta: Math.PI / 3 },
+  { key: 'knowledge',  label: 'KNOWLEDGE',  short: 'KNOW',  theta: (2 * Math.PI) / 3 },
+  { key: 'ownership',  label: 'OWNERSHIP',  short: 'OWN',   theta: Math.PI },
+  { key: 'media',      label: 'MEDIA',      short: 'MEDIA', theta: (4 * Math.PI) / 3 },
+  { key: 'labor',      label: 'LABOR',      short: 'LAB',   theta: (5 * Math.PI) / 3 },
 ]; // canonical cyclic order — the ONLY permitted polygon order (SPEC §3, AC-15)
 
 const C = 100;          // SVG centre (viewBox 0 0 200 200)
@@ -48,8 +48,16 @@ export default function StructuralField({ cones = {} }) {
     const absent = value === null;
     const r = absent ? R_ABSENT : radius(value);
     const [x, y] = pt(r, angle);
-    const [lx, ly] = pt(R_MAX + 12, angle);
-    return { ...d, angle, absent, value, r, x, y, lx, ly, pct: absent ? null : Math.round(value * 100) };
+    // Label placement — presentation only, no geometry constants involved. The y
+    // comes from the domain's angle so the label still reads at the right clock
+    // position; x is pinned to the panel edge so the text always fits the real
+    // 242px container (KRYL-1243 live-acceptance fix).
+    const cos = Math.cos(angle);
+    const lAnchor = Math.abs(cos) < 0.35 ? 'middle' : (cos > 0 ? 'end' : 'start');
+    const lx = lAnchor === 'middle' ? C : (cos > 0 ? 197 : 3);
+    const ly = lAnchor === 'middle' ? (Math.sin(angle) < 0 ? 13 : 185)
+                                    : C + (R_MAX + 5) * Math.sin(angle);
+    return { ...d, angle, absent, value, r, x, y, lx, ly, lAnchor, pct: absent ? null : Math.round(value * 100) };
   });
 
   // Fill only spans consecutive PRESENT vertices (a run). An absent vertex breaks
@@ -104,24 +112,18 @@ export default function StructuralField({ cones = {} }) {
         </g>
       ))}
 
-      {/* domain labels + secondary numeric annotation */}
-      {nodes.map(n => {
-        const anchor = Math.abs(Math.cos(n.angle)) < 0.35 ? 'middle' : (Math.cos(n.angle) > 0 ? 'start' : 'end');
-        return (
-          <text key={n.key} x={n.lx.toFixed(1)} y={n.ly.toFixed(1)} textAnchor={anchor}
-                dominantBaseline="middle" fontFamily={MONO} fontSize="6.5"
-                letterSpacing="0.08em" fill="rgba(255,255,255,0.4)">
-            {n.label}
-            <tspan fontSize="6" fill={n.absent ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.55)'}>
-              {'  '}{n.absent ? '—' : n.pct}
-            </tspan>
-          </text>
-        );
-      })}
-
-      <text x="6" y="194" fill="#1c2128" fontFamily={MONO} fontSize="6" letterSpacing="0.06em">
-        SIX-DOMAIN OBSERVABLE FIELD · CONTEXT ONLY
-      </text>
+      {/* domain labels — short name, value stacked beneath. Edge-pinned so nothing
+          clips the real container. */}
+      {nodes.map(n => (
+        <text key={n.key} x={n.lx.toFixed(1)} y={n.ly.toFixed(1)} textAnchor={n.lAnchor}
+              fontFamily={MONO} fontSize="7" letterSpacing="0.06em" fill="rgba(255,255,255,0.44)">
+          {n.short}
+          <tspan x={n.lx.toFixed(1)} dy="8" fontSize="6.5"
+                 fill={n.absent ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.6)'}>
+            {n.absent ? '—' : n.pct}
+          </tspan>
+        </text>
+      ))}
     </svg>
   );
 }

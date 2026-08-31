@@ -80,5 +80,16 @@ ok('StructuralField is mounted with cones only', /<StructuralField cones=\{activ
 // ── 8. semantic language (SPEC §6) ────────────────────────────────────────
 ok('no forbidden decision language in the component', !/\b(risk|opportunity|probability|confidence|recommend|attractive|predicted|higher is better)\b/i.test(src.replace(/context only/gi, '')));
 
+// ── 9. container-fit correction (KRYL-1243 live acceptance) ────────────────
+ok('short domain labels wired: CAP / TECH / KNOW / OWN / MEDIA / LAB',
+   /short: 'CAP'[\s\S]*'TECH'[\s\S]*'KNOW'[\s\S]*'OWN'[\s\S]*'MEDIA'[\s\S]*'LAB'/.test(src));
+ok('value is stacked beneath the label (tspan dy)', /<tspan x=\{n\.lx[^}]*\} dy="8"/.test(src));
+ok('side labels are edge-pinned to the container (x = 3 / 197)', /cos > 0 \? 197 : 3/.test(src));
+ok('redundant bottom caption removed', !/SIX-DOMAIN OBSERVABLE FIELD · CONTEXT ONLY/.test(src));
+ok('geometry constants unchanged (R_MIN 14 / R_MAX 82 / R_ABSENT 46)',
+   /R_MIN = 14/.test(src) && /R_MAX = 82/.test(src) && /R_ABSENT = 46/.test(src));
+ok('label placement uses no geometry constant beyond R_MAX for the y-offset only',
+   !/const R_MIN = 1[0-3]|const R_MAX = (7[0-9]|8[0-1]|83)/.test(src));
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
