@@ -27,7 +27,8 @@ const initialState = {
 function prismReducer(state, action) {
   switch (action.type) {
     case 'SET_LENS':
-      console.log('[TEMP-DEBUG] prismReducer SET_LENS:', action.payload);
+      // KRYL-1247 — no live dispatcher after the FloatingToolbar removal; reducer
+      // kept (vestigial, harmless) so usePrism consumers keep a stable shape.
       return { ...state, activeLens: action.payload };
     case 'START_INHALE':
       return {

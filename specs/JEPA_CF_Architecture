@@ -1,0 +1,1843 @@
+# SPEC — Cognitive Fabric & Formation Frontier
+
+**Status:** DRAFT — NEEDS-SPEC
+**Version:** v0.2
+**Date:** 2026-08-31
+**Domain:** Cognitive Fabric / Formation Discovery / Remote Processing
+**Supersedes:** v0.1
+
+---
+
+# 1. Purpose
+
+Define the **Cognitive Fabric (CF)** as KRYLO's persistent computational substrate for capturing, traversing, recording, revising, and reusing structural formations across heterogeneous observational domains.
+
+The specification establishes five architectural facts:
+
+1. **Observations** enter through canonical evidence mechanisms.
+2. **Heterogeneous capabilities** process observations and produce attributed pathways.
+3. **Pathways** are persistent computational lineage rather than transient execution traces.
+4. **Admitted relationships** and **governed formations** remain the authoritative analytical objects.
+5. **Formation Frontiers** identify observation conditions at which additional processing may be justified.
+
+The Cognitive Fabric therefore does not replace KRYLO's existing evidence, relationship, Formation, SIL, or Path Memory mechanisms.
+
+It provides the persistent substrate through which those mechanisms can operate as a distributed computational system.
+
+The central architectural loop is:
+
+```text
+OBSERVATION
+    ↓
+CAPABILITY
+    ↓
+ATTRIBUTED PATHWAY
+    ↓
+PATHWAY STATE νt
+    ↓
+RELATIONSHIP ADMISSION
+    ↓
+FORMATION
+    ↓
+FORMATION RECORD
+    ↓
+FORMATION FRONTIER
+    ↓
+FRONTIER TASK
+    ↓
+REMOTE CAPABILITY
+    ↓
+NEW OBSERVATION
+    ↓
+νt+Δt
+    ↓
+RELATIONSHIP ADMISSION
+    ↓
+FORMATION REVISION
+```
+
+The objective is not prediction.
+
+The objective is:
+
+> **More complete, more persistent, and more efficiently discoverable evidence-grounded structural formations.**
+
+---
+
+# 2. Canonical Architectural Statement
+
+> **The Cognitive Fabric is a persistent computational substrate represented by attributed processing pathways and their evolving measure. Heterogeneous capabilities operate through the substrate; canonical relationship admission and Formation governance determine which structures become KRYLO state. A qualifying Formation may expose an observational Frontier. Where that Frontier is actionable, remote processing may be directed toward it. Returned observations re-enter the canonical evidence and admission machinery, potentially extending or revising the recorded Formation.**
+
+Short form:
+
+> **The Fabric preserves pathways. Pathways support relationships. Relationships constitute formations. Formations expose frontiers. Frontiers direct cognition.**
+
+---
+
+# 3. Architectural Invariants
+
+The following are normative.
+
+## CF-I1 — Formation remains the analytical object
+
+The Cognitive Fabric MUST NOT become a replacement analytical ontology.
+
+The principal analytical object remains:
+
+```text
+FORMATION
+```
+
+The Fabric preserves the computational history and state necessary to discover, explain, revisit, and revise that Formation.
+
+---
+
+## CF-I2 — Pathway is not Relationship
+
+A pathway records computational traversal.
+
+A Relationship is an admitted structural connection.
+
+Therefore:
+
+```text
+pathway ≠ relationship
+```
+
+Pathway existence MUST NOT imply Relationship admission.
+
+---
+
+## CF-I3 — Relationship is not Formation
+
+A set of Relationships becomes a Formation only through the existing Formation contract.
+
+Therefore:
+
+```text
+relationship ≠ formation
+```
+
+---
+
+## CF-I4 — Frontier is not hidden structure
+
+A Frontier represents insufficient observation associated with an existing Formation.
+
+It MUST NOT assert that unobserved structure exists.
+
+Therefore:
+
+```text
+Frontier ≠ predicted continuation
+```
+
+---
+
+## CF-I5 — Absence is typed
+
+The system MUST distinguish:
+
+```text
+OBSERVED ABSENCE
+```
+
+from:
+
+```text
+INSUFFICIENT OBSERVATION
+```
+
+and:
+
+```text
+SOURCE UNAVAILABLE
+```
+
+These states MUST NOT collapse into a generic negative relationship.
+
+---
+
+## CF-I6 — Provenance is invariant
+
+Every pathway, admitted Relationship, Formation, Frontier, remote-processing task, and Formation revision MUST retain reconstructable lineage to its originating observations.
+
+No Formation may exist without reconstructable provenance.
+
+---
+
+## CF-I7 — Canonical governance remains authoritative
+
+The Cognitive Fabric MUST NOT create parallel authoritative state for:
+
+* Evidence;
+* Relationship admission;
+* Formation governance;
+* SIL;
+* Path Memory;
+* provenance.
+
+Where an existing KRYLO mechanism governs one of these objects, the Fabric integrates with that mechanism rather than replacing it.
+
+---
+
+# 4. Mathematical State Model
+
+## 4.1 Observation Space
+
+Let:
+
+$$
+\mathcal O_t
+=
+\left\{
+o=(x,d,s,\tau,p,a,\ldots)
+\right\}
+$$
+
+where:
+
+* \(x\) = observed object/event;
+* \(d\) = domain;
+* \(s\) = source;
+* \(\tau\) = timestamp;
+* \(p\) = provenance chain;
+* \(a\) = admissibility metadata.
+
+The current principal domain set is:
+
+$$
+D=
+\{
+Capital,
+Ownership,
+Technology,
+Knowledge,
+Labor,
+Media
+\}.
+$$
+
+The observable substrate is the currently available subset of observations and their associated source and temporal coverage.
+
+It MUST NOT be treated as equivalent to reality.
+
+---
+
+# 5. Processing Capability
+
+A capability is represented as:
+
+$$
+C_i:
+\mathcal X_i
+\rightarrow
+\mathcal R_i
+$$
+
+where:
+
+* \(\mathcal X_i\) = capability-specific input space;
+* \(\mathcal R_i\) = resulting representation or processing output.
+
+Capabilities may be:
+
+* local;
+* remote;
+* domain-specific;
+* cross-domain;
+* temporal;
+* relational;
+* structural;
+* retrieval-based;
+* learned;
+* deterministic;
+* probabilistic.
+
+The Cognitive Fabric imposes no requirement that all capabilities share the same computational paradigm.
+
+JEPA, GNNs, reservoir systems, neural fields, retrieval systems, specialized agents, statistical processors, and other mechanisms MAY therefore be implemented as capabilities.
+
+They are implementations of:
+
+$$
+C_i
+$$
+
+not definitions of the Fabric itself.
+
+---
+
+# 6. Attributed Pathway
+
+An attributed pathway is the fundamental computational lineage object.
+
+A pathway is represented as:
+
+$$
+\gamma=
+(o_0,c_1,r_1,t_1,
+c_2,r_2,t_2,
+\ldots,
+c_n,r_n,t_n)
+$$
+
+with each transition retaining:
+
+* originating observation;
+* capability identifier;
+* capability version;
+* intermediate representation;
+* timestamp;
+* provenance;
+* input references;
+* output references;
+* admission state where applicable.
+
+Therefore:
+
+$$
+\gamma \in \Gamma
+$$
+
+where \(\Gamma\) is the set of pathways satisfying Fabric transition rules.
+
+A pathway MUST be reconstructable.
+
+A pathway MUST NOT be represented solely as an opaque execution log if doing so prevents reconstruction of its computational lineage.
+
+---
+
+# 7. Pathway Measure
+
+The persistent computational state of the Cognitive Fabric is:
+
+$$
+\nu_t\in\mathcal M_+(\Gamma)
+$$
+
+where \(\mathcal M_+(\Gamma)\) is the space of positive measures over admissible pathways.
+
+The measure may encode, subject to implementation:
+
+* pathway existence;
+* pathway recurrence;
+* pathway confidence;
+* temporal persistence;
+* computational activation;
+* pathway relevance;
+* provenance weight;
+* cross-capability traversal;
+* cross-domain traversal.
+
+The concrete representation of \(\nu_t\) remains an implementation decision.
+
+Possible realizations include:
+
+* sparse indexed pathway stores;
+* weighted temporal hypergraphs;
+* event-sourced pathway state;
+* vector-plus-lineage representations;
+* graph/path measures;
+* distributed state stores.
+
+No representation is normative until experimentally validated.
+
+The architectural requirement is that the representation preserve the semantics of:
+
+$$
+\nu_t
+$$
+
+rather than reducing the Fabric to endpoint embeddings alone.
+
+---
+
+# 8. Fabric Transition
+
+The Fabric evolves according to:
+
+$$
+\nu_{t+\Delta t}
+=
+\Phi
+\left(
+\nu_t,
+\mathcal O_t,
+\mathcal C_t,
+\mathcal E_t
+\right)
+$$
+
+where:
+
+* \(\nu_t\) = current pathway state;
+* \(\mathcal O_t\) = newly available observations;
+* \(\mathcal C_t\) = available capabilities;
+* \(\mathcal E_t\) = governed execution events.
+
+A transition MAY:
+
+* add pathways;
+* extend pathways;
+* merge equivalent pathway state;
+* decay or archive active pathway state;
+* attach new provenance;
+* connect pathways through additional capabilities;
+* generate candidate relationship evidence.
+
+A transition MUST NOT bypass canonical Relationship or Formation admission.
+
+---
+
+# 9. Relationship Admission
+
+The Relationship layer is:
+
+$$
+\mathcal R_t
+=
+\mathcal A_R(\nu_t)
+$$
+
+where:
+
+$$
+\mathcal A_R
+$$
+
+is the existing governing relationship-admission operator.
+
+The pathway measure supplies candidate evidence.
+
+It does not itself instantiate a Relationship.
+
+Therefore:
+
+$$
+\gamma\in\Gamma
+\not\Rightarrow
+R(x,y)
+$$
+
+and:
+
+$$
+\nu_t(x,y)>0
+\not\Rightarrow
+R(x,y)\text{ is admitted}.
+$$
+
+This preserves the existing KRYLO Relationship contract.
+
+---
+
+# 10. Formation Admission
+
+Formation is:
+
+$$
+F_t
+=
+\mathcal A_F(\mathcal R_t,\nu_t)
+$$
+
+where:
+
+$$
+\mathcal A_F
+$$
+
+is the governing Formation contract.
+
+A Formation MUST satisfy the applicable constraints, including:
+
+$$
+P(F)\ge\theta_P
+$$
+
+provenance coherence;
+
+$$
+T(F)\ge\theta_T
+$$
+
+temporal persistence;
+
+$$
+D(F)\ge\theta_D
+$$
+
+domain diversity where applicable;
+
+$$
+I(F)\le\theta_I
+$$
+
+independence/non-redundancy;
+
+$$
+K(F)\ge\theta_K
+$$
+
+structural coherence.
+
+The exact Formation contract parameters remain governed by the existing Formation specification.
+
+The Cognitive Fabric MUST NOT replace them with an unconstrained coherence maximization function.
+
+---
+
+# 11. Formation Record
+
+A qualifying Formation is persistently recorded:
+
+$$
+Rec(F_t,\nu_t)
+$$
+
+The Formation Record MUST preserve:
+
+```text
+Formation identity
+Formation state
+Relationship references
+Pathway references
+Observation references
+Provenance
+Temporal state
+Domain structure
+Formation history
+Revision history
+Frontier history
+```
+
+A Formation Record is historical state.
+
+Therefore:
+
+$$
+F_{t_1}\neq F_{t_2}
+$$
+
+does not imply that the earlier Formation ceased to exist as historical state.
+
+The Fabric therefore maintains two distinct concepts:
+
+```text
+LIVE PATHWAY STATE
+        νt
+
+PERSISTENT FORMATION RECORD
+        Rec(F)
+```
+
+This distinction is normative.
+
+---
+
+# 12. Formation Revision
+
+When new evidence enters the system, Formation evaluation occurs again through canonical governance.
+
+Possible outcomes include:
+
+```text
+UNCHANGED
+EXTENDED
+REVISED
+WEAKENED
+SPLIT
+MERGED
+TERMINATED
+```
+
+A revision MUST preserve lineage between:
+
+$$
+F_{old}
+\rightarrow
+Frontier
+\rightarrow
+Remote\ Task
+\rightarrow
+Evidence
+\rightarrow
+Relationship
+\rightarrow
+F_{new}.
+$$
+
+The previous Formation Record MUST remain reconstructable.
+
+---
+
+# 13. Formation Frontier
+
+A Formation Frontier is an actionable observational boundary associated with an existing Formation.
+
+Let:
+
+$$
+B(F,t)
+$$
+
+represent the observed boundary state of Formation \(F\).
+
+A Frontier exists only where:
+
+$$
+FF(F,t)
+=
+S
+\land
+G
+\land
+R
+\land
+T
+\land
+P
+$$
+
+where:
+
+* \(S\) = structural relevance;
+* \(G\) = identified observational gap;
+* \(R\) = evidence resolvability;
+* \(T\) = targetability;
+* \(P\) = provenance continuity.
+
+Thus:
+
+$$
+FF(F,t)=1
+$$
+
+only when all governing Frontier conditions are satisfied.
+
+---
+
+# 14. Frontier Conditions
+
+## FF1 — Existing Formation
+
+The Frontier MUST originate from a qualifying Formation.
+
+## FF2 — Observational Insufficiency
+
+There MUST be an identifiable observation limitation.
+
+## FF3 — Structural Relevance
+
+The limitation MUST affect an existing structural question.
+
+## FF4 — Potential Resolution
+
+Additional observation MUST have a plausible ability to resolve the identified question.
+
+## FF5 — Targetability
+
+The system MUST be able to express the requested additional observation in executable terms.
+
+## FF6 — Provenance
+
+The Frontier MUST retain lineage to the Formation and evidence that produced it.
+
+If any required condition fails:
+
+$$
+FF(F,t)=0.
+$$
+
+The system MUST NOT issue frontier-directed cognition.
+
+---
+
+# 15. Frontier State
+
+The Frontier MUST carry an explicit reason code.
+
+Examples:
+
+```text
+SOURCE_COVERAGE_GAP
+DOMAIN_COVERAGE_GAP
+TEMPORAL_COVERAGE_GAP
+UNRESOLVED_RELATIONSHIP
+CONFLICTING_EVIDENCE
+INSUFFICIENT_EVIDENCE_DENSITY
+ENTITY_LINKAGE_GAP
+STRUCTURAL_BOUNDARY_UNRESOLVED
+```
+
+This prevents all forms of uncertainty from collapsing into one generic "fringe" state.
+
+---
+
+# 16. Fringe
+
+The Fringe is not an ontological region of presumed hidden structure.
+
+It is an observation condition associated with a Frontier.
+
+Formally:
+
+$$
+Q_t
+=
+Adj(\partial F_t)
+\cap
+InsufficientCoverage_t
+$$
+
+where:
+
+* \(\partial F_t\) = operational Formation boundary;
+* \(Adj\) = adjacency operator;
+* \(InsufficientCoverage_t\) = known insufficient observation condition.
+
+Therefore:
+
+$$
+z\in Q_t
+$$
+
+means:
+
+> additional observation is warranted or potentially useful here.
+
+It does NOT mean:
+
+> a relationship exists here.
+
+---
+
+# 17. Frontier Task
+
+A Frontier produces a bounded processing request:
+
+$$
+Task_F
+=
+\Psi(F,\partial F,Q,K)
+$$
+
+where \(K\) contains relevant constraints and context.
+
+The task MUST specify:
+
+```text
+target
+structural question
+required evidence
+relevant domains
+temporal interval
+source constraints
+capability requirements
+resource budget
+termination condition
+provenance requirements
+```
+
+The task is an observation request, not a prediction request.
+
+---
+
+# 18. Remote Processing Operator
+
+Remote processing is modeled as:
+
+$$
+C_r:
+Task_F
+\rightarrow
+\Delta\Gamma
+$$
+
+where:
+
+$$
+\Delta\Gamma
+$$
+
+is a set of newly generated attributed pathways.
+
+The remote capability MUST NOT directly produce:
+
+$$
+Formation
+$$
+
+or bypass:
+
+$$
+Evidence
+\rightarrow
+Relationship\ Admission
+\rightarrow
+Formation\ Governance.
+$$
+
+Its output is limited to additional attributed observations/pathways.
+
+---
+
+# 19. Closed Fabric Loop
+
+The complete system becomes:
+
+```text
+OBSERVATIONS
+     ↓
+CAPABILITIES
+     ↓
+ATTRIBUTED PATHWAYS
+     ↓
+PATHWAY STATE νt
+     ↓
+RELATION ADMISSION
+     ↓
+FORMATION
+     ↓
+FORMATION RECORD
+     ↓
+FRONTIER DETECTION
+     ↓
+FRONTIER TASK
+     ↓
+REMOTE CAPABILITY
+     ↓
+NEW OBSERVATIONS / PATHWAYS
+     ↓
+νt+Δt
+     ↓
+RELATION ADMISSION
+     ↓
+FORMATION REVISION
+     ↓
+FORMATION RECORD
+```
+
+The loop is closed through **state**, not through prediction.
+
+---
+
+# 20. Memory
+
+Pathway persistence constitutes the computational memory substrate of the Fabric.
+
+The system MUST support:
+
+$$
+Scope(\nu_T,q)
+$$
+
+where a subsequent query scopes against previously captured pathway and Formation state.
+
+This enables:
+
+> **Capture once → scope repeatedly → synthesize afterward.**
+
+A query MUST NOT require recomputation of the original observation pathway solely because the query scope changed.
+
+The original Formation Record remains authoritative.
+
+---
+
+# 21. Provenance Invariant
+
+Every pathway has:
+
+$$
+p(\gamma)
+$$
+
+Every Relationship has:
+
+$$
+p(R)
+=
+Prov(\{\gamma_i\})
+$$
+
+Every Formation has:
+
+$$
+p(F)
+=
+Prov(\{R_j\})
+$$
+
+Therefore:
+
+$$
+F
+\rightarrow
+R
+\rightarrow
+\gamma
+\rightarrow
+o
+\rightarrow
+source
+$$
+
+MUST be reconstructable.
+
+This is a hard invariant.
+
+A Formation lacking reconstructable provenance is invalid CF state.
+
+---
+
+# 22. Formation Frontier → Remote Processing
+
+The only authorized expansion mechanism introduced by this specification is:
+
+$$
+F
+\rightarrow
+Frontier
+\rightarrow
+Task
+\rightarrow
+Remote\ Capability
+\rightarrow
+Observation
+\rightarrow
+Pathway
+$$
+
+The Fabric MUST NOT autonomously invent:
+
+* hidden entities;
+* hidden relationships;
+* hidden formations;
+* predicted continuation;
+* future events.
+
+---
+
+# 23. Frontier Outcomes
+
+Remote processing has exactly three analytically meaningful outcomes.
+
+## FO1 — Formation Extension
+
+New admitted Relationships extend the existing Formation.
+
+$$
+F_t
+\rightarrow
+F_{t+\Delta t}^{extended}
+$$
+
+## FO2 — Formation Revision
+
+New evidence changes the Formation's structure or interpretation.
+
+$$
+F_t
+\rightarrow
+F_{t+\Delta t}^{revised}
+$$
+
+## FO3 — Supported Termination
+
+Additional observation establishes that no qualifying continuation is present under the governing criteria.
+
+Critically:
+
+$$
+NoObservation
+\neq
+SupportedTermination.
+$$
+
+---
+
+# 24. No-Result Semantics
+
+A remote task returning no qualifying evidence MUST preserve the reason.
+
+Possible states:
+
+```text
+NO_DATA
+SOURCE_UNAVAILABLE
+INSUFFICIENT_COVERAGE
+OBSERVED_ABSENCE
+CONFLICTING_EVIDENCE
+NO_ADMISSIBLE_RELATIONSHIP
+NO_FORMATION_CONTINUATION
+```
+
+These states MUST remain distinguishable.
+
+This is required for KRYLO's surface honesty.
+
+---
+
+# 25. Architectural Separation
+
+The Cognitive Fabric MUST preserve this hierarchy:
+
+```text
+OBSERVATION
+     ↓
+CAPABILITY
+     ↓
+PATHWAY
+     ↓
+RELATIONSHIP
+     ↓
+FORMATION
+     ↓
+FORMATION RECORD
+```
+
+The frontier mechanism is orthogonal:
+
+```text
+FORMATION
+     ↓
+FRONTIER
+     ↓
+TASK
+     ↓
+REMOTE CAPABILITY
+     ↓
+OBSERVATION
+```
+
+Therefore the Frontier is not another analytical layer competing with Formation.
+
+It is a **control condition over observation**.
+
+---
+
+# 26. Existing KRYLO Integration
+
+This specification does not authorize replacement of:
+
+```text
+Evidence
+SIL
+RelationCore
+Relationship Admission
+Formation Governance
+Path Memory
+Provenance
+```
+
+The intended integration is:
+
+```text
+                COGNITIVE FABRIC
+                       │
+              Pathway substrate
+                       │
+       ┌───────────────┴───────────────┐
+       ↓                               ↓
+Canonical Evidence              Existing Path Memory
+       ↓
+RelationCore / Admission
+       ↓
+Formation Governance
+       ↓
+Formation Record
+       ↓
+Frontier
+       ↓
+SIL / Remote Observation
+```
+
+The Fabric is therefore an architectural substrate, not a parallel application state machine.
+
+---
+
+# 27. Dynamic State Model
+
+The provisional computational state is:
+
+$$
+CF_t
+=
+(
+\nu_t,
+R_t,
+F_t,
+X_t
+)
+$$
+
+where:
+
+* \(\nu_t\) = pathway measure;
+* \(R_t\) = admitted Relationships;
+* \(F_t\) = live Formation state;
+* \(X_t\) = active Frontier state.
+
+Persistent Formation history is maintained separately as:
+
+$$
+\mathcal H_F
+=
+\{Rec(F_1),Rec(F_2),\ldots\}.
+$$
+
+Thus:
+
+$$
+CF_t
+\neq
+\mathcal H_F.
+$$
+
+The Fabric contains the living computational substrate.
+
+Formation Records contain durable historical analytical state.
+
+---
+
+# 28. Transition Rules
+
+The implementation MUST eventually specify explicit transition functions for:
+
+### TR-1 — Observation Admission
+
+$$
+O_t
+\rightarrow
+\nu_t
+$$
+
+### TR-2 — Capability Execution
+
+$$
+(\nu_t,C_i)
+\rightarrow
+\Delta\Gamma
+$$
+
+### TR-3 — Pathway Update
+
+$$
+(\nu_t,\Delta\Gamma)
+\rightarrow
+\nu_{t+\Delta t}
+$$
+
+### TR-4 — Relationship Evaluation
+
+$$
+\nu_t
+\rightarrow
+\mathcal A_R
+\rightarrow
+R_t
+$$
+
+### TR-5 — Formation Evaluation
+
+$$
+(R_t,\nu_t)
+\rightarrow
+\mathcal A_F
+\rightarrow
+F_t
+$$
+
+### TR-6 — Formation Recording
+
+$$
+F_t
+\rightarrow
+Rec(F_t,\nu_t)
+$$
+
+### TR-7 — Frontier Detection
+
+$$
+F_t
+\rightarrow
+X_t
+$$
+
+### TR-8 — Frontier Task Generation
+
+$$
+X_t
+\rightarrow
+Task_F
+$$
+
+### TR-9 — Remote Execution
+
+$$
+Task_F
+\rightarrow
+\Delta\Gamma
+$$
+
+### TR-10 — Re-entry
+
+$$
+\Delta\Gamma
+\rightarrow
+\nu_{t+\Delta t}
+$$
+
+No transition may bypass the canonical admission layers.
+
+---
+
+# 29. What Must Be Proven
+
+The architecture makes four substantive claims.
+
+## H1 — Pathway persistence is useful
+
+Persistent pathway lineage provides analytical capability beyond storing only final Relationships or Formation state.
+
+## H2 — Formation boundaries contain actionable information
+
+Some Formation boundaries can be classified sufficiently to direct additional observation.
+
+## H3 — Heterogeneous remote processing can resolve those boundaries
+
+Different capabilities can produce useful evidence when directed at specific Frontier conditions.
+
+## H4 — The combination creates material advantage
+
+The complete loop produces superior structural discovery under equivalent resource constraints.
+
+The first three claims do not establish the fourth.
+
+Only H4 establishes architectural value.
+
+---
+
+# 30. Material Advantage Experiment
+
+Compare:
+
+### Baseline
+
+$$
+B_{fixed}
+=
+FixedMonitoring
++
+ConventionalProcessing
+$$
+
+against:
+
+### Cognitive Fabric
+
+$$
+CF
+=
+FixedMonitoring
++
+DistributedProcessing
++
+PathwayPersistence
++
+FrontierDetection
++
+RemoteProcessing
+$$
+
+under equivalent:
+
+* compute;
+* source budget;
+* observation budget;
+* temporal window;
+* evaluation criteria.
+
+---
+
+# 31. Experimental Cases
+
+## Case 1 — No Continuation
+
+No true continuation exists.
+
+Required:
+
+$$
+FP_{CF}=0
+$$
+
+The Fabric MUST NOT manufacture continuation.
+
+---
+
+## Case 2 — Observable Continuation
+
+A true continuation exists and is observable by fixed monitoring.
+
+Required:
+
+> No special CF superiority claim.
+
+The purpose is to establish that the Fabric does not degrade ordinary discovery.
+
+---
+
+## Case 3A — Reachable Frontier
+
+A true continuation exists only within an observational frontier that remote processing can reach.
+
+Required:
+
+$$
+Recall_{CF}>Recall_B
+$$
+
+while:
+
+$$
+FP_{CF}\le FP_B
+$$
+
+and under equivalent resource constraints.
+
+This is the decisive positive regime.
+
+---
+
+## Case 3B — Inaccessible Frontier
+
+The true continuation exists outside every reachable observation capability.
+
+Required:
+
+$$
+Recall_{CF}=Recall_B=0
+$$
+
+and:
+
+$$
+FP_{CF}=0.
+$$
+
+The Fabric MUST recognize the boundary rather than hallucinate across it.
+
+---
+
+# 32. Secondary Evaluation
+
+The experiment SHOULD additionally measure:
+
+$$
+PathReconstruction
+$$
+
+$$
+FrontierResolution
+$$
+
+$$
+FormationReuse
+$$
+
+$$
+CrossDomainDiscovery
+$$
+
+$$
+UnsupportedAdmissionRate
+$$
+
+$$
+ComputePerRecoveredFormation
+$$
+
+$$
+ObservationCostPerResolvedFrontier
+$$
+
+$$
+TimeToFormationRevision.
+$$
+
+These metrics determine whether the Fabric produces advantages beyond raw recall.
+
+---
+
+# 33. Kill Criteria
+
+The Cognitive Fabric extension SHOULD be rejected if controlled experiments demonstrate that:
+
+1. persistent pathways provide no measurable advantage over existing lineage;
+2. Frontiers cannot be identified reliably;
+3. Frontier-directed processing does not outperform equivalent fixed monitoring;
+4. remote processing increases unsupported Relationships;
+5. the system cannot preserve complete provenance;
+6. the computational cost exceeds the discovery benefit;
+7. Formation reuse does not materially reduce recomputation;
+8. the mechanism is merely an alternate implementation of existing KRYLO components without architectural benefit.
+
+The architecture is not retained because the metaphor is compelling.
+
+It is retained only if the experiment demonstrates material capability.
+
+---
+
+# 34. Non-Goals
+
+This specification does NOT authorize:
+
+* prediction;
+* forecasting;
+* speculative hidden-node generation;
+* autonomous external action;
+* automatic Relationship admission;
+* automatic Formation admission;
+* replacement of SIL;
+* replacement of RelationCore;
+* replacement of Formation governance;
+* replacement of Path Memory;
+* a new evidence ontology;
+* a new connector architecture;
+* a new database solely for the Fabric;
+* implementation of JEPA;
+* implementation of reservoir computing;
+* biological equivalence to cephalopod cognition;
+* claims of novelty over prior distributed/dynamical architectures.
+
+---
+
+# 35. Prior-Art Research Gate
+
+Before implementation is declared architecturally differentiated, the following must be evaluated:
+
+1. distributed cognition;
+2. parallel distributed processing;
+3. dynamic graph systems;
+4. message-passing architectures;
+5. neural fields;
+6. reservoir computing;
+7. predictive representation learning / JEPA;
+8. trajectory-based memory;
+9. distributed neural architectures;
+10. active inference;
+11. predictive processing;
+12. biological distributed nervous systems.
+
+The research question is not:
+
+> "Did KRYLO invent distributed cognition?"
+
+The question is:
+
+> **Does the specific combination of persistent attributed pathway state, governed Formation capture, Formation Frontier detection, and frontier-directed heterogeneous processing provide a materially useful capability not supplied by the constituent prior-art primitives alone?**
+
+---
+
+# 36. Implementation Boundary
+
+This specification does not yet prescribe implementation.
+
+The following remain NEEDS-SPEC:
+
+### IS-1 — Concrete pathway representation
+
+Define the actual storage/indexing representation of:
+
+$$
+\gamma
+$$
+
+and:
+
+$$
+\nu_t.
+$$
+
+### IS-2 — Transition semantics
+
+Define the permitted transitions between pathway states.
+
+### IS-3 — Pathway identity
+
+Define when two pathway instances are:
+
+```text
+identical
+equivalent
+related
+derived
+independent
+```
+
+### IS-4 — Pathway persistence
+
+Define what remains active, what is archived, and what constitutes sufficient historical retention.
+
+### IS-5 — Relationship interface
+
+Define the exact interface between \(\nu_t\) and RelationCore.
+
+### IS-6 — Formation interface
+
+Define the exact interface between pathway state, admitted Relationships, and Formation governance.
+
+### IS-7 — Frontier calculation
+
+Define:
+
+$$
+\partial F
+$$
+
+and:
+
+$$
+Q
+$$
+
+operationally.
+
+### IS-8 — Frontier task contract
+
+Define the executable representation of:
+
+$$
+Task_F.
+$$
+
+### IS-9 — Remote capability contract
+
+Define inputs, outputs, budgets, provenance, and termination conditions.
+
+### IS-10 — Formation revision semantics
+
+Define how new evidence modifies an existing Formation Record.
+
+### IS-11 — Scope semantics
+
+Define how:
+
+$$
+Scope(\nu_T,q)
+$$
+
+selects existing Formation/pathway state without reconstructing the original computation.
+
+### IS-12 — Experimental harness
+
+Implement the controlled material-advantage experiment before claiming architectural validation.
+
+---
+
+# 37. Canonical Data Flow
+
+The canonical system flow is:
+
+```text
+                    REALITY
+                       │
+                       ▼
+             OBSERVABLE SUBSTRATE
+                       │
+                       ▼
+                 OBSERVATIONS
+                       │
+                       ▼
+          ┌────────────────────────┐
+          │ HETEROGENEOUS           │
+          │ CAPABILITIES             │
+          └────────────┬────────────┘
+                       │
+                       ▼
+              ATTRIBUTED PATHWAYS
+                       │
+                       ▼
+                    ν(t)
+             COGNITIVE FABRIC
+                       │
+                       ▼
+              RELATION ADMISSION
+                       │
+                       ▼
+                  FORMATION
+                       │
+             ┌─────────┴─────────┐
+             ▼                   ▼
+      FORMATION RECORD       FRONTIER
+                                 │
+                                 ▼
+                           FRONTIER TASK
+                                 │
+                                 ▼
+                         REMOTE CAPABILITY
+                                 │
+                                 ▼
+                       NEW OBSERVATIONS
+                                 │
+                                 ▼
+                     NEW ATTRIBUTED PATHWAYS
+                                 │
+                                 ▼
+                             ν(t+Δt)
+                                 │
+                                 ▼
+                       RELATION ADMISSION
+                                 │
+                                 ▼
+                       FORMATION REVISION
+                                 │
+                                 ▼
+                       UPDATED FORMATION RECORD
+```
+
+---
+
+# 38. Architectural Interpretation
+
+The Cognitive Fabric is not:
+
+```text
+a smarter graph
+a larger embedding
+a message bus
+an agent swarm
+a neural network
+a prediction engine
+```
+
+It is:
+
+```text
+PERSISTENT PATHWAY STATE
+        +
+HETEROGENEOUS PROCESSING
+        +
+CANONICAL ADMISSION
+        +
+FORMATION PERSISTENCE
+        +
+FRONTIER-DIRECTED OBSERVATION
+```
+
+The architectural novelty, if any, lies in the **composition and closed-loop behavior**, not in claiming that any individual primitive is novel.
+
+---
+
+# 39. Core Hypothesis
+
+> **A persistent distributed computational substrate can materially improve structural Formation discovery when it preserves the attributed pathways through which heterogeneous capabilities interact and uses governed Formation boundaries to direct additional observation toward resolvable observational frontiers.**
+
+This hypothesis is falsifiable.
+
+It MUST NOT be accepted on conceptual elegance, biological analogy, or resemblance to existing distributed computation.
+
+---
+
+# 40. Final Proposition
+
+```text
+THE FABRIC
+    preserves pathways
+
+THE PATHWAYS
+    preserve computational lineage
+
+THE RELATIONSHIPS
+    are admitted from evidence
+
+THE FORMATIONS
+    organize admitted relationships
+
+THE FORMATION RECORD
+    preserves discovered structure
+
+THE FRONTIER
+    identifies insufficient observation
+
+REMOTE PROCESSING
+    extends observation into that frontier
+
+NEW EVIDENCE
+    re-enters canonical admission
+
+FORMATION REVISION
+    records what changed
+```
+
+Therefore:
+
+> **The Cognitive Fabric is the substrate.**
+
+> **The pathway is the persistent computational trace.**
+
+> **The Relationship is the admitted structural connection.**
+
+> **The Formation is the analytical object.**
+
+> **The Formation Record is the durable captured structure.**
+
+> **The Frontier is the boundary condition on observation.**
+
+> **Remote processing is the controlled mechanism for resolving that boundary.**
+
+> **The material-advantage experiment determines whether the Fabric deserves to exist.**
+
+Yes — **but JEPA is no longer the Cognitive Fabric itself.** That distinction is important.
+
+In the current spec, JEPA belongs **inside the Fabric as a candidate Processing Capability \(C_i\)**, exactly as your Section 22 says. That is the correct architecture.
+
+JEPA is fundamentally a representation-learning/prediction mechanism: it predicts an abstract representation of a target from contextual representation rather than reconstructing the raw input. ([CVPR][1])
+
+### Where JEPA fits
+
+Your architecture becomes:
+
+```text
+OBSERVATIONS
+      ↓
+┌─────────────────────────────────────────────┐
+│              COGNITIVE FABRIC               │
+│                                             │
+│  JEPA ────────┐                             │
+│  GNN ─────────┤                             │
+│  Reservoir ───┤                             │
+│  Retrieval ───┤→ ATTRIBUTED PATHWAYS → νt  │
+│  Temporal ────┤                             │
+│  Domain ──────┤                             │
+│  Agent ───────┘                             │
+│                                             │
+└─────────────────────────────────────────────┘
+                       ↓
+              RELATION ADMISSION
+                       ↓
+                  FORMATION
+                       ↓
+             FORMATION FRONTIER
+                       ↓
+              FRONTIER TASK
+                       ↓
+          appropriate capability
+          (potentially JEPA)
+                       ↓
+                NEW PATHWAYS
+                       ↓
+                      νt+1
+```
+
+So:
+
+$$
+C_{\text{JEPA}}:\mathcal{X}_{JEPA}\rightarrow\mathcal{R}_{JEPA}
+$$
+
+is **one capability node/type in the fabric**.
+
+The Fabric determines **where and why that capability participates**.
+
+JEPA determines **how that capability represents/predicts within its assigned task**.
+
+### And this is actually stronger than making CF "a JEPA architecture"
+
+If we made CF itself a JEPA, we would be constraining the fundamental architecture around one particular learning mechanism.
+
+Instead:
+
+$$
+\boxed{\text{CF} \supset \{C_{JEPA}, C_{GNN}, C_{reservoir}, C_{retrieval}, ...\}}
+$$
+
+The important innovation hypothesis is therefore not:
+
+> "KRYLO uses JEPA."
+
+It is:
+
+> **KRYLO can orchestrate heterogeneous cognitive capabilities through persistent, attributed pathways and use Formation Frontiers to determine where additional capability should be applied.**
+
+That is materially different.
+
+### Where JEPA could become particularly valuable
+
+There is one place where I think we should explicitly investigate JEPA rather than merely list it as prior art:
+
+**Frontier representation.**
+
+Suppose KRYLO has:
+
+```text
+Formation
+   ↓
+known context
+   ↓
+observational gap
+   ↓
+Frontier
+```
+
+A JEPA-like capability could operate on the **known context surrounding the gap** and produce a latent representation of what is structurally compatible with that context.
+
+But critically:
+
+```text
+JEPA output
+     ↓
+candidate representation
+     ↓
+NEW OBSERVATION / EVIDENCE REQUIRED
+     ↓
+canonical admission
+     ↓
+Relationship
+     ↓
+Formation evaluation
+```
+
+It does **not** become:
+
+```text
+JEPA output → relationship
+```
+
+That preserves your evidence doctrine.
+
+I-JEPA itself demonstrates the core idea of predicting representations of unseen regions from contextual regions, rather than reconstructing raw pixels. ([GitHub][2]) That makes the conceptual correspondence to a **Formation Frontier** interesting—but it remains a capability-level correspondence, not an architectural equivalence.
+
+### The key distinction
+
+| Layer                     | KRYLO CF                  | JEPA                     |
+| ------------------------- | ------------------------- | ------------------------ |
+| System substrate          | **Cognitive Fabric**      | No                       |
+| Persistent pathways       | **Yes**                   | No                       |
+| Formation governance      | **Yes**                   | No                       |
+| Relationship admission    | **Yes**                   | No                       |
+| Frontier detection        | **Yes**                   | Not inherently           |
+| Remote capability routing | **Yes**                   | No                       |
+| Representation learning   | Via capabilities          | **Yes**                  |
+| Latent prediction         | Via capabilities          | **Yes**                  |
+| Evidence provenance       | **Canonical KRYLO layer** | Not its defining purpose |
+| Formation record          | **Yes**                   | No                       |
+
+So I would **keep JEPA in the specification**, but demote it from "architectural foundation" to:
+
+> **Candidate capability primitive for latent contextual representation and frontier-state characterization.**
+
+And that actually makes the research question sharper:
+
+**Does a JEPA-like capability inside the Cognitive Fabric materially improve Formation Frontier resolution compared with the same Fabric without it?**
+
+If yes, JEPA earns its place.
+
+If no, we remove it.
+
+The **Fabric survives independently of JEPA**. That is exactly where we want the architecture to be.
+
+[1]: https://openaccess.thecvf.com/content/CVPR2023/papers/Assran_Self-Supervised_Learning_From_Images_With_a_Joint-Embedding_Predictive_Architecture_CVPR_2023_paper.pdf?utm_source=chatgpt.com "Self-Supervised Learning From Images With a Joint-Embedding Predictive Architecture"
+[2]: https://github.com/facebookresearch/ijepa?utm_source=chatgpt.com "GitHub - facebookresearch/ijepa: Official codebase for I-JEPA, the Image-based Joint-Embedding Predictive Architecture. First outlined in the CVPR paper, \"Self-supervised learning from images with a joint-embedding predictive architecture.\" · GitHub"

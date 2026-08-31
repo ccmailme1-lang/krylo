@@ -93,7 +93,6 @@ import { useBayStore }        from './store/usebaystore.js';
 import { useOracleMapper }    from './hooks/useOracleMapper.js';
 import { emitTelemetry, emitDomainProvenance, nextTraceId } from './engine/telemetry.js';
 import SurfacePanel           from './components/surface/surfacepanel.jsx';
-import FloatingToolbar        from './components/surface/floatingtoolbar.jsx';
 import StickyTape             from './components/surface/stickytape.jsx';
 import { useStickyStore }     from './store/usestickystore.js';
 import ProfilePicker          from './components/surface/profilepicker.jsx';
@@ -710,17 +709,11 @@ export default function App() {
   // count position lerp + overlay-desync suppression, conemap.jsx). Restoring here; validating
   // live via Playwright before treating this as done, since the remount itself is unchanged and
   // a real crash was observed earlier tonight testing this same code.
-  useEffect(() => {
-    // KRYL-1171 — NAV_SURFACE (the new default landing state) must NOT trigger activation, same
-    // as OBSERVE never did. Only a real, explicit report-lens choice does.
-    // 2026-08-19 (Founder directive) — OBSERVE doubles as the explicit "return to Home" action.
-    // Before this, surfaceActivated was a one-way switch: picking any of the 6 report lenses set
-    // it true and NOTHING set it back to false except a full krylo-reset (logo click, wipes the
-    // whole session) — so there was no way to leave a report and get back to the plain cone view.
-    // Picking OBSERVE now deactivates, same as krylo-reset does, without the rest of the reset.
-    if (viewportLens !== 'OBSERVE' && viewportLens !== 'NAV_SURFACE') setSurfaceActivated(true);
-    else if (viewportLens === 'OBSERVE') setSurfaceActivated(false);
-  }, [viewportLens]);
+  // KRYL-1247 — the viewportLens→surfaceActivated coupling is removed with the
+  // FloatingToolbar (the only setter of viewportLens). surfaceActivated is now owned
+  // purely by krylo-submit / krylo-reset / krylo-nav, matching the contract noted at
+  // the krylo-nav handler. viewportLens stays at its NAV_SURFACE default (the safe
+  // landing state) for the conemap HUD gates that still read it.
   const [surfaceEntryCount, setSurfaceEntryCount] = useState(0);
   const [selectedSurfaceDomain, setSelectedSurfaceDomain] = useState(null);
   const [visorReady, setVisorReady] = useState(false);
@@ -1371,7 +1364,8 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
-          {surfaceExpanded && <FloatingToolbar />}
+          {/* KRYL-1247 — FloatingToolbar (viewport-lens ribbon) removed. The lens-driven
+              report views it selected are all retired/relocated (Track 1 audit). */}
 
           {/* Bottom panel — Console Dashboard, slides above scrubber.
               KRYL-1163: pointerEvents moved onto THIS outer div (zIndex:100, higher than
