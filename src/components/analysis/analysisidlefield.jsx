@@ -64,12 +64,15 @@ const PACKET_COOLDOWN_MS = 4000;
 const MAX_PACKETS        = 6;
 const domains            = ['FINANCIAL', 'MARKET', 'LEGAL', 'HEALTH', 'CAREER', 'TECHNOLOGY', 'MEDIA', 'OWNERSHIP'];
 
+// Display labels for the HORIZON SCRUBBER (Founder, 2026-08-31). The five buckets
+// and their spans (temporalhorizon.js HORIZON_META: minutes→hours … months→years)
+// are unchanged — this is the on-screen marker text only.
 const HORIZON_LABELS = {
-  IMMEDIATE:  'NOW',
-  SHORT:      'SHORT',
-  MEDIUM:     'MED',
-  LONG:       'LONG',
-  STRUCTURAL: 'YEARS',
+  IMMEDIATE:  '12hr',
+  SHORT:      '24hr',
+  MEDIUM:     'wk',
+  LONG:       'm',
+  STRUCTURAL: 'y',
 };
 
 // WO-1878 — Mission Builder constants
