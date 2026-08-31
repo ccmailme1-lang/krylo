@@ -17,6 +17,7 @@ import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
+import StructuralField from './structuralfield.jsx';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
@@ -1454,67 +1455,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
             })()}
           </div>
 
-          {/* ── SECTION 3: FORENSIC MATRIX FIELDS ── */}
+          {/* ── SECTION 3: STRUCTURAL FIELD (KRYL-1243) ──
+               The six existing activeCones values as ONE geometric object — a radial
+               polygon. Deterministic: same six-value vector -> same polygon. Intent
+               Strength / Horizon / query wording never distort it (SPEC AC-16); the
+               old ±14px intent shift + ±8px shock jitter are removed. Absence
+               (value === null) keeps its angular position + gets an absence glyph,
+               never r = 0. */}
           <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8, display: 'flex', alignItems: 'center' }}>3. FORENSIC MATRIX FIELDS (SLAB INTERSECT)<HelpMark text="A map showing which topic areas (Tech, Money, Knowledge, Labor, Media, Ownership) have the most activity right now. Bigger circle = more activity." /></div>
-            <div style={{ height: 180, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden' }}>
-              {(() => {
-                // 6 domain anchors — fixed positions on 320×160 SVG
-                // value (0–1) from activeCones drives r and opacity directly
-                // KRYL-1064 — canonical §17 keys + labels (was pillar keys with scrambled labels:
-                // operating mislabeled TECH, market mislabeled OWNERSHIP). Positions preserved.
-                const DOMAIN_ANCHORS = [
-                  { key: 'capital',    label: 'CAPITAL',    cx: 100, cy: 58  },
-                  { key: 'ownership',  label: 'OWNERSHIP',  cx: 160, cy: 32  },
-                  { key: 'knowledge',  label: 'KNOWLEDGE',  cx: 220, cy: 58  },
-                  { key: 'labor',      label: 'LABOR',      cx: 100, cy: 118 },
-                  { key: 'media',      label: 'MEDIA',      cx: 160, cy: 132 },
-                  { key: 'technology', label: 'TECHNOLOGY', cx: 220, cy: 118 },
-                ];
-                const cones = activeCones ?? {};
-                const intentShift = ((intentMagnitude - 50) / 50) * 14; // ±14px at extremes
-                const shockShift  = volatilityShock ? 8 : 0;
-
-                return (
-                  <svg viewBox="0 0 320 160" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0 }}>
-                    {/* Mesh edges between adjacent domain pairs */}
-                    <g stroke="rgba(255,255,255,0.05)" strokeWidth="0.75" fill="none">
-                      {[[0,1],[1,2],[3,4],[4,5],[0,3],[1,4],[2,5],[0,4],[1,5],[1,3]].map(([a,b],i) => {
-                        const A = DOMAIN_ANCHORS[a], B = DOMAIN_ANCHORS[b];
-                        const va = cones[A.key]?.value ?? 0, vb = cones[B.key]?.value ?? 0;
-                        const combined = (va + vb) / 2;
-                        return <line key={i} x1={A.cx} y1={A.cy} x2={B.cx} y2={B.cy} opacity={0.04 + combined * 0.18} />;
-                      })}
-                    </g>
-                    {/* Domain nodes — r and opacity are direct functions of cone.value */}
-                    {DOMAIN_ANCHORS.map(({ key, label, cx, cy }) => {
-                      const cone  = cones[key] ?? { value: 0, color: 'rgba(255,255,255,0.2)' };
-                      const v     = Math.max(0, Math.min(1, cone.value));       // clamp 0–1
-                      const r     = 2 + v * 8;                                  // 2px–10px
-                      const op    = 0.3 + v * 0.7;                             // 0.30–1.00
-                      const color = cone.color ?? '#66FF00';
-                      // intent magnitude shifts X; volatility shock adds Y jitter keyed to node index
-                      const nx = Math.round(cx + intentShift * (cx < 160 ? -0.5 : cx > 160 ? 0.5 : 0));
-                      const ny = Math.round(cy + (volatilityShock ? shockShift * ((cy > 80 ? 1 : -1)) : 0));
-                      return (
-                        <g key={key}>
-                          <circle cx={nx} cy={ny} r={Math.round(r * 10) / 10} fill={color} opacity={op} />
-                          <text x={nx} y={ny + Math.round(r) + 8} textAnchor="middle"
-                            fill={color} fontSize="5.5" fontFamily="monospace"
-                            opacity={Math.round(op * 10) / 10} letterSpacing="0.08em">
-                            {label}
-                          </text>
-                          <text x={nx + Math.round(r) + 3} y={ny + 2} textAnchor="start"
-                            fill="rgba(255,255,255,0.35)" fontSize="5" fontFamily="monospace">
-                            {Math.round(v * 100)}
-                          </text>
-                        </g>
-                      );
-                    })}
-                    <text x="6" y="155" fill="#1c2128" fontSize="6.5" fontFamily="monospace" letterSpacing="0.06em">SLAB // 6-DOMAIN FIELD</text>
-                  </svg>
-                );
-              })()}
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8, display: 'flex', alignItems: 'center' }}>3. STRUCTURAL FIELD<HelpMark text="The shape of current activity across the six domains (Money, Ownership, Tech, Knowledge, Labor, Media). A point further out means more activity in that domain right now. A dashed open marker means no data. This is background context, not an answer about your subject." /></div>
+            <div style={{ height: 220, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden', padding: 4 }}>
+              <StructuralField cones={activeCones ?? {}} />
             </div>
           </div>
 
