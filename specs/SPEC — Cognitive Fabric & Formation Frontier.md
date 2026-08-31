@@ -204,7 +204,32 @@ KRYLO:  Reality → 𝒪 → Γ → ν_t → ℛ → ℱ → Rec(F)
 Guest:  D_g = f( Rec(F), question, preferences/constraints, objectives )   ── the Fabric never computes D_g
 ```
 
-The boundary is **conversion, not presentation**. It is NOT an information-withholding boundary: substantiated structure is not softened, suppressed, qualified, or withheld *solely* because a reasonable guest could draw a consequential interpretation from it. `NO FORMATION ESTABLISHED` is valid only when the Formation contract actually returns empty — never as a stand-in for "the guest supplied no decision." Decision parameters may be required to answer a decision-specific derivative; they are never a precondition for exposing the underlying structure. Any path implementing `KRYLO: F → D` is contaminated and MUST be removed.
+The boundary is **conversion, not presentation**. It is NOT an information-withholding boundary: substantiated structure is not softened, suppressed, qualified, or withheld *solely* because a reasonable guest could draw a consequential interpretation from it. `NO FORMATION ESTABLISHED` is valid only when the Formation contract actually returns empty — never as a stand-in for "the guest supplied no decision." Any path implementing `KRYLO: F → D` is contaminated and MUST be removed.
+
+## CF-I8.1 — Structural presentation is unconditional w.r.t. guest decision inputs (machine-checkable)
+
+> **Structural presentation is unconditional with respect to guest decision inputs. Decision inputs may constrain only a derivative computation whose output depends on those inputs. They MUST NOT gate presentation of already-admitted observations, relationships, formations, or formation frontiers.**
+
+The decision boundary is **physically separated** from the structural-information boundary. These are two products:
+
+```text
+STRUCTURAL PATH (unconditional):
+  OBSERVATION → RELATIONSHIP → FORMATION → PRESENT THE STRUCTURE
+                                              → guest interpretation / prediction / decision
+
+DECISION-SPECIFIC DERIVATIVE PATH (conditional on guest inputs):
+  FORMATION + GUEST DECISION INPUTS → DECISION-SPECIFIC DERIVATIVE
+                                        → financing / economic / operational calculation
+```
+
+An input form that says *"you have not supplied the parameters required to calculate this particular derivative"* is legitimate. An input form (or flag, mode, score, or branch) whose effect is *"you have not supplied enough information for us to show you what we can observe"* is a violation.
+
+**Acceptance test — apply to every KRYLO path:**
+
+> **If a qualifying structural formation exists, can the guest see it without supplying a decision?**
+> Yes → the architecture is clean. No → something is still acting as an illicit decision gate.
+
+**Operational Google-Maps invariant:** KRYLO presents the map it can substantiate. It does not censor the map because of what the guest might infer from it. The guest owns the derivative; KRYLO owns the map.
 
 ---
 

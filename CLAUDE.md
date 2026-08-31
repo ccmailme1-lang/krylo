@@ -446,6 +446,18 @@ Conflating them is constitutionally invalid and is a **defect** wherever it appe
 name — "decision safety", "insufficient input", "advisory synthesis", "perception risk",
 "verdict withholding".
 
+**Machine-checkable invariant (Founder, 2026-08-31):** *Structural presentation is unconditional
+with respect to guest decision inputs. Decision inputs may constrain only a derivative computation
+whose output depends on those inputs. They MUST NOT gate presentation of already-admitted
+observations, relationships, formations, or formation frontiers.* The decision boundary is
+physically separated from the structural-information boundary — two products: the **structural
+path** (OBSERVATION → RELATIONSHIP → FORMATION → PRESENT, unconditional) and the
+**decision-specific derivative path** (FORMATION + guest decision inputs → derivative, conditional).
+A form saying "you haven't supplied the parameters for *this derivative*" is legitimate; a form,
+flag, mode, score, or branch whose effect is "you haven't supplied enough for us to show what we
+observe" is a violation. **Acceptance test for every path:** *if a qualifying structural formation
+exists, can the guest see it without supplying a decision?* Yes → clean. No → illicit decision gate.
+
 **Google-Maps invariant:** Maps does not erase East Oakland because someone might infer something
 from its location, boundaries, roads, businesses, or crime statistics — it represents the observed
 world accurately. What someone concludes or does with that representation is downstream of the map.
