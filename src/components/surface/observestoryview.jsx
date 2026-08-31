@@ -57,13 +57,16 @@ function buildNarrative(domains, relationships) {
     const result = adjudicate(candidates);
     setLastAdjudication(result);
 
+    // DEF-1240 — the outcome is carried through to the render so a non-converged
+    // adjudication is drawn as a DISTINCT analytical state, not a quieter resolved one.
     if (result.outcome === 'SINGLE') {
       const picked = result.selected;
-      return { headlinePre: picked.headlinePre, emphasis: picked.emphasis, headlinePost: picked.headlinePost, paragraph: picked.paragraph, next: null };
+      return { outcome: 'SINGLE', headlinePre: picked.headlinePre, emphasis: picked.emphasis, headlinePost: picked.headlinePost, paragraph: picked.paragraph, next: null };
     }
     if (result.outcome === 'CONFLICT') {
       const { a, b } = result.conflict;
       return {
+        outcome: 'CONFLICT',
         headlinePre: 'The signal is', emphasis: 'conflicting',
         headlinePost: ' this cycle — two real readings don\'t agree.',
         paragraph: `One read says "${a.headlinePre} ${a.emphasis}${a.headlinePost}" — another says "${b.headlinePre} ${b.emphasis}${b.headlinePost}" Both are grounded in real data; they don't reconcile, so nothing is picked over the other.`,
@@ -72,6 +75,7 @@ function buildNarrative(domains, relationships) {
     }
     // UNRESOLVED_NO_RANKING
     return {
+      outcome: 'UNRESOLVED_NO_RANKING',
       headlinePre: 'Multiple real readings are', emphasis: 'available',
       headlinePost: ' this cycle — none outranks the others.',
       paragraph: `${candidates.length} distinct, non-conflicting signals are active right now. There's no grounded way to say one matters more than another yet, so none is shown as the lead.`,
@@ -88,7 +92,25 @@ function buildNarrative(domains, relationships) {
   const paragraph = emerging.length > 0
     ? `${listWithAnd(emerging.map(d => d.label))} ${emerging.length === 1 ? 'is' : 'are'} moving together, just at a smaller scale — not yet confirmed.`
     : '';
-  return { headlinePre, emphasis, headlinePost, paragraph, next: null };
+  return { outcome: 'NONE', headlinePre, emphasis, headlinePost, paragraph, next: null };
+}
+
+// DEF-1240 — visual vocabulary per adjudication outcome. converged ≠ non-converged:
+// only a resolved SINGLE lead gets the lime lead treatment. §6 colours only.
+const BLUE = '#007FFF';   // "real signal, not yet coherent"
+const MUTED = 'rgba(255,255,255,0.42)';   // neutral, recessive — no signal colour
+function outcomeStyle(outcome) {
+  switch (outcome) {
+    case 'CONFLICT':
+      return { accent: BLUE,  eyebrow: 'Conflicting readings', rule: true,  underline: false };
+    case 'UNRESOLVED_NO_RANKING':
+      return { accent: MUTED, eyebrow: 'No lead established',   rule: false, underline: false };
+    case 'NONE':
+      return { accent: MUTED, eyebrow: 'Field forming',        rule: false, underline: false };
+    case 'SINGLE':
+    default:
+      return { accent: LIME,  eyebrow: 'Quick read',           rule: false, underline: true };
+  }
 }
 
 // KRYL-1174 Symptom 2 — this component mounts as soon as surfaceExpanded flips true and reads
@@ -141,9 +163,10 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
     return filterForSurface(deriveRelationships(formations)).filter(r => r.state !== RELATIONSHIP_STATE.UNKNOWN);
   }, [domains]);
 
-  const { headlinePre, emphasis, headlinePost, paragraph, next } = useMemo(
+  const { outcome, headlinePre, emphasis, headlinePost, paragraph, next } = useMemo(
     () => buildNarrative(domains, relationships), [domains, relationships]
   );
+  const os = outcomeStyle(outcome);
 
   const activeInfo = activeDomain ? domains.find(d => d.domain === activeDomain?.toUpperCase?.() || d.domain === activeDomain) : null;
 
@@ -157,15 +180,16 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
         position: 'absolute', top: 78, left: '1%', width: 401, zIndex: 15,
         display: 'flex', flexDirection: 'column', alignItems: 'flex-start',
         textAlign: 'left', pointerEvents: 'none',
+        ...(os.rule ? { borderLeft: `2px solid ${os.accent}`, paddingLeft: 12 } : null),
       }}>
-        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: LIME, marginBottom: 9 }}>
+        <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.32em', textTransform: 'uppercase', color: os.accent, marginBottom: 9 }}>
           <span style={{ position: 'relative', display: 'inline-block' }}>
-            Quick read
-            <span style={{ position: 'absolute', left: 0, right: 0, bottom: -6, height: 1, background: LIME }} />
+            {os.eyebrow}
+            {os.underline && <span style={{ position: 'absolute', left: 0, right: 0, bottom: -6, height: 1, background: os.accent }} />}
           </span>
         </div>
         <p style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 26, lineHeight: 1.15, fontWeight: 400, color: '#edefe8', maxWidth: 401, margin: '0 0 10px', textWrap: 'balance' }}>
-          {headlinePre} <span style={{ color: LIME }}>{emphasis}</span>{headlinePost}
+          {headlinePre} <span style={{ color: os.accent }}>{emphasis}</span>{headlinePost}
         </p>
         <p style={{ fontFamily: MONO, fontSize: 11.5, lineHeight: 1.6, color: 'rgba(255,255,255,0.5)', maxWidth: 284, margin: 0 }}>
           {paragraph}
