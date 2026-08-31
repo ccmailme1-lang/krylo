@@ -67,5 +67,13 @@ ok('clean Rigetti decision → brief subject not fabricated', canonicalBriefSubj
 const anduril = mk('Is Anduril a good acquisition target?');
 ok('control: a real registry subject still resolves + propagates', canonicalBriefSubject(anduril).label === subjectScope(anduril.queryContext).entity.name);
 
+// ── Blackbox: an explicitly-named non-registry subject is not displaced by a
+// registry name mentioned only as context/comparator ("team came from Anthropic").
+const bb = subjectScope(buildQueryContext('Why Invest in Blackbox AI??? Exceptional growth on minimal funding. The founding team came from Anthropic.'));
+ok('Blackbox: subject resolves to Blackbox AI, NOT Anthropic', bb.kind === 'ENTITY' && bb.entity.name === 'Blackbox AI' && bb.verification === 'NAMED_UNVERIFIED');
+ok('Blackbox: Anthropic recorded as comparator/context, not the subject', bb.comparator === 'ANTHROPIC');
+const pv = subjectScope(buildQueryContext('Should I invest in Palantir, way better than Anthropic right now?'));
+ok('explicit registry subject still wins over a comparator ("invest in Palantir ... than Anthropic")', pv.kind === 'ENTITY' && pv.canonicalId === 'palantir-technologies');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

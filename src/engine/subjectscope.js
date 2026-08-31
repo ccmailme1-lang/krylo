@@ -72,13 +72,15 @@ const NU_STOPWORDS = new Set([
 // weak a signal to promote an unverified subject.
 function namedCandidates(text) {
   const quoted = [...text.matchAll(/"([^"]+)"/g)].map(m => m[1].trim());
-  // inter-word separator is a real space/tab only — never a newline, so a name at
-  // the end of one line does not fuse with a name at the start of the next.
-  const spans  = [...text.matchAll(/\b([A-Z][A-Za-z][A-Za-z.&'-]*(?:[ \t]+[A-Z][A-Za-z][A-Za-z.&'-]*)+)\b/g)]
+  // inter-word separator is a real space/tab only — never a newline. 1+ Title-Case
+  // words: single-word names are allowed because promoteNamedSubject gates every
+  // candidate on an explicit-subject position + a context-position exclusion +
+  // exactly-one-survivor.
+  const spans  = [...text.matchAll(/\b([A-Z][A-Za-z][A-Za-z.&'-]*(?:[ \t]+[A-Z][A-Za-z][A-Za-z.&'-]*)*)\b/g)]
     .map(m => m[1].trim());
   return [...new Set([...quoted, ...spans])]
     .filter(s => s.length >= 3)
-    .filter(s => !s.split(/\s+/).every(w => NU_STOPWORDS.has(w.toLowerCase())));
+    .filter(s => !s.split(/\s+/).every(w => NU_STOPWORDS.has(w.toLowerCase()) || TRIM_WORDS.has(w.toLowerCase())));
 }
 
 const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -221,13 +223,29 @@ export function subjectScope(input) {
       (e.confidence === best.confidence && cand.length > best.matchedOn.length);
     if (better) best = { entity: e, matchedOn: cand, confidence: e.confidence };
   }
-  // KRYL-1238 — do not resolve to a registry name that only ever appears as a
-  // comparator / example. It is not the subject; substituting it for an ambiguous
-  // query is the Rigetti/NVIDIA defect.
+  // The explicitly-named subject, if the text has one ("invest in Blackbox AI",
+  // "Oriole Networks is raising"). Computed here so the registry guard can use it.
+  const named = promoteNamedSubject(text);
+  const explicitName = named && !named.multiple ? named.name : null;
+
+  // KRYL-1238 — do not resolve to a registry name that is not the subject:
+  //  (a) it only ever appears as a comparator / example ("Rigetti vs NVIDIA"), or
+  //  (b) the text explicitly names a DIFFERENT subject ("Why invest in Blackbox AI"
+  //      … "the team came from Anthropic" → Blackbox AI is the subject, not Anthropic).
+  // Substituting a registry name for the real subject is the Rigetti/Blackbox defect.
   let comparator = null;
-  if (best && isComparisonOnly(best.matchedOn, text)) {
-    comparator = best.entity.canonicalName;
-    best = null;
+  if (best && !inExplicitSubjectPosition(best.matchedOn, text)) {
+    if (isComparisonOnly(best.matchedOn, text)
+        || (explicitName && explicitName.toLowerCase() !== best.matchedOn.toLowerCase())) {
+      comparator = best.entity.canonicalName;
+      best = null;
+    }
+  }
+  // If we discarded the match but the explicitly-named subject IS a registry entity,
+  // resolve to it (the registry still wins for the RIGHT name).
+  if (!best && explicitName) {
+    const e = resolve(explicitName);
+    if (e) best = { entity: e, matchedOn: explicitName, confidence: e.confidence };
   }
   if (best) {
     const e = best.entity;
@@ -257,7 +275,6 @@ export function subjectScope(input) {
   // subjectbinding needs an identifier to attach a facet (KRYL-1237). The submission
   // is the source; its claims never become evidence.
   const extra = { candidates, ...(comparator ? { comparator } : {}) };
-  const named = promoteNamedSubject(text);
   if (named?.multiple) {
     return {
       kind: 'DECISION_FRAME',
