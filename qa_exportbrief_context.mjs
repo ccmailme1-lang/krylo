@@ -23,9 +23,9 @@ const mkSession = (query, lens = 'GENERAL') => ({
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 const LOCKHEED = mkSession(
-  'VECTOR: 3X revenue growth. Serial founder investing again. We are building the ' +
-  'next-generation supply chain platform for aerospace primes like Lockheed Martin ' +
-  'and Boeing. Series A, $12M raise at $60M pre-money.');
+  'Is it worth adding to my Lockheed Martin position now? The defense prime has run ' +
+  '3x the sector on revenue growth and the FY budget outlook looks strong, but the ' +
+  'valuation is stretched at 18x forward earnings.');
 const MICROSOFT = mkSession(
   'Elevator Pitch: AI chips have grown far more powerful. Our platform runs on top ' +
   'of Microsoft Azure and delivers low-latency inference at the edge for enterprise ' +
@@ -68,9 +68,10 @@ ok('cleanLens rejects GENERAL / OPEN', cleanLens('GENERAL') === null && cleanLen
 ok('cleanLens keeps a real single-token lens', cleanLens('EA') === 'EA' && cleanLens('INVESTOR') === 'INVESTOR');
 
 // ── 4. synthesisIsDomainAnchored: open-lens fallback vs real domain ─────────
+const genSynth = synthesizeQuery(mkSession('3X revenue growth, serial founder investing again, building a supply chain platform, raising a Series A'));
+ok('an open-lens query → synthGeneral emits openLensFallback:true (disclosure label)', genSynth?.openLensFallback === true);
 const lkSynth = synthesizeQuery(LOCKHEED);
-ok('Lockheed synthesis is the open-lens fallback (openLensFallback:true)', lkSynth?.openLensFallback === true);
-ok('synthesisIsDomainAnchored(Lockheed) === false → brief guard fires', synthesisIsDomainAnchored(lkSynth) === false);
+ok('synthesisIsDomainAnchored(Lockheed pitch) === false → brief guard fires', synthesisIsDomainAnchored(lkSynth) === false);
 
 const anSynth = synthesizeQuery(ANDURIL);
 ok('Anduril synthesis resolves a real domain', typeof anSynth?.queryDomain === 'string' && !['GENERAL', 'AMBIGUOUS'].includes(anSynth.queryDomain));

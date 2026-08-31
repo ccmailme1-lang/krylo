@@ -66,7 +66,7 @@ ok('"ex-Neuralink" is context, not a subject (stays DECISION_FRAME)',
 // ── Registry regression — verified entities unchanged ───────────────────────
 for (const [q, expect] of [
   ['Is Anduril a good acquisition target?', 'anduril-industries'],
-  ['VECTOR: supply chain for primes like Lockheed Martin and Boeing. Series A, $12M raise.', 'lockheed-martin'],
+  ['Should I add to my Lockheed Martin position given the FY defense budget and 3x sector revenue growth?', 'lockheed-martin'],
 ]) {
   const r = scope(q);
   ok(`registry hit "${expect}" → verification REGISTRY`, r.kind === 'ENTITY' && r.verification === 'REGISTRY' && r.canonicalId === expect);

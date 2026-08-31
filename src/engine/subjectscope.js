@@ -132,6 +132,44 @@ function promoteNamedSubject(text) {
   return null;
 }
 
+// ── KRYL-1238 — comparison / reference position ──────────────────────────────
+// A registry name that appears ONLY as a comparator or example ("Rigetti vs NVIDIA",
+// "primes like Lockheed Martin") is NOT the subject. Resolving it silently — because
+// it happens to be the one name in the 57-entry registry while the actual subject is
+// not — is the Rigetti/NVIDIA defect. When the best match is comparison-only, discard
+// it rather than substitute an unrelated entity for an ambiguous query.
+const CMP_BEFORE = /(?:vs\.?|versus|compared\s+(?:to|with)|relative\s+to|against|(?:rather|better|worse|more|less|safer|cheaper)\s+than|\bthan|instead\s+of|unlike|not|like|such\s+as|e\.g\.,?|similar\s+to|the\s+likes\s+of|pick(?:ing)?\s+\w+\s+over|choose\s+\w+\s+over)\s+(?:the\s+)?$/i;
+const CMP_AFTER  = /^\s*(?:vs\.?|versus)\b/i;
+
+function isComparisonOnly(name, text) {
+  const re = new RegExp(`\\b${esc(name)}\\b`, 'gi');
+  let m, seen = 0;
+  while ((m = re.exec(text))) {
+    seen++;
+    const before = text.slice(Math.max(0, m.index - 24), m.index);
+    const after  = text.slice(m.index + name.length, m.index + name.length + 12);
+    if (!CMP_BEFORE.test(before) && !CMP_AFTER.test(after)) return false; // a non-comparison occurrence → it may be the subject
+  }
+  return seen > 0;
+}
+
+// Unresolved multi/single-word proper-noun candidates, first-occurrence order — the
+// "there is a named thing here even though we could not resolve it" signal (Founder
+// KRYL-1238 acceptance #1).
+function unresolvedNamedCandidates(text) {
+  const spans = [...text.matchAll(/\b([A-Z][A-Za-z][A-Za-z.&'-]*(?:[ \t]+[A-Z][A-Za-z][A-Za-z.&'-]*)*)\b/g)]
+    .map(m => ({ name: m[1].trim(), index: m.index }))
+    .filter(c => c.name.length >= 3)
+    .filter(c => !c.name.split(/\s+/).every(w => NU_STOPWORDS.has(w.toLowerCase()) || TRIM_WORDS.has(w.toLowerCase())));
+  const out = [];
+  for (const c of spans) {
+    if (out.some(o => o.name.toLowerCase() === c.name.toLowerCase())) continue;
+    if (resolve(c.name)) continue;  // resolved names are handled by the ENTITY path
+    out.push(c);
+  }
+  return out.sort((a, b) => a.index - b.index).map(c => c.name);
+}
+
 const SCALE = { k: 1e3, m: 1e6, mm: 1e6, b: 1e9, bn: 1e9, billion: 1e9, million: 1e6, thousand: 1e3 };
 function scaleMoney(digits, suffix) {
   const n = parseFloat(String(digits).replace(/,/g, ''));
@@ -183,6 +221,14 @@ export function subjectScope(input) {
       (e.confidence === best.confidence && cand.length > best.matchedOn.length);
     if (better) best = { entity: e, matchedOn: cand, confidence: e.confidence };
   }
+  // KRYL-1238 — do not resolve to a registry name that only ever appears as a
+  // comparator / example. It is not the subject; substituting it for an ambiguous
+  // query is the Rigetti/NVIDIA defect.
+  let comparator = null;
+  if (best && isComparisonOnly(best.matchedOn, text)) {
+    comparator = best.entity.canonicalName;
+    best = null;
+  }
   if (best) {
     const e = best.entity;
     return {
@@ -200,11 +246,17 @@ export function subjectScope(input) {
     };
   }
 
+  // KRYL-1238 — the named thing(s) we could not resolve. Carried on every non-ENTITY
+  // result so the packet / frame surface can say "candidate: Rigetti" instead of
+  // silently dropping it or substituting a registry name.
+  const candidates = unresolvedNamedCandidates(text);
+
   // 1b. NAMED_UNVERIFIED — the registry missed, but the text explicitly names its
   // subject company. Resolve to it as an ENTITY carrying NO identifiers and NO
   // domain tags: A(d, Subject) then runs and every domain is stated absence, because
   // subjectbinding needs an identifier to attach a facet (KRYL-1237). The submission
   // is the source; its claims never become evidence.
+  const extra = { candidates, ...(comparator ? { comparator } : {}) };
   const named = promoteNamedSubject(text);
   if (named?.multiple) {
     return {
@@ -212,6 +264,7 @@ export function subjectScope(input) {
       frame: text.slice(0, 140),
       dealFrame: extractDealFrame(text),
       reason: 'multiple named subjects — ambiguous; no silent pick',
+      ...extra,
     };
   }
   if (named) {
@@ -224,6 +277,8 @@ export function subjectScope(input) {
       matchedOn: named.name,
       namedVia: named.namedVia,
       dealFrame: extractDealFrame(text),
+      candidates: candidates.filter(c => c.toLowerCase() !== named.name.toLowerCase()),
+      ...(comparator ? { comparator } : {}),
     };
   }
 
@@ -231,7 +286,7 @@ export function subjectScope(input) {
   // extraction is a querycontext.js follow-on; an unresolved place name is not
   // invented into a subject here.
   if (qc?.geo?.state === 'resolved') {
-    return { kind: 'GEO', location: qc.geo.value?.location ?? qc.geo.value, source: 'queryContext.geo' };
+    return { kind: 'GEO', location: qc.geo.value?.location ?? qc.geo.value, source: 'queryContext.geo', ...extra };
   }
 
   // 3. DECISION_FRAME — decision cues but no entity. Subjecthood for decision
@@ -243,10 +298,19 @@ export function subjectScope(input) {
       frame: text.slice(0, 140),
       dealFrame: extractDealFrame(text),
       reason: 'decision cues present, no entity resolved — unit-of-analysis unsettled',
+      ...extra,
     };
   }
 
-  return { kind: 'UNRESOLVED', reason: 'no entity resolved; no decision cues; no resolved geo' };
+  return {
+    kind: 'UNRESOLVED',
+    reason: comparator
+      ? `named subject unresolved; "${comparator}" appears only as a comparator, not the subject`
+      : candidates.length
+        ? 'named candidate(s) present but unresolved; no decision cues; no resolved geo'
+        : 'no entity resolved; no decision cues; no resolved geo',
+    ...extra,
+  };
 }
 
 export function isScopable(scope) {

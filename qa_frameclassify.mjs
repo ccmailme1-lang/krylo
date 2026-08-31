@@ -17,8 +17,9 @@ ok('decision: sector filled (AI infrastructure)', /ai/i.test(dec.evidence.sector
 ok('decision: stage filled (Series B)', /series b/i.test(dec.evidence.stage || ''));
 ok('decision: anchor set is the 7 decision anchors', dec.anchors.map(a => a.key).join() ===
    'decision_type,target_sector,stage,ticket_size,geography,decision_horizon,candidate');
-ok('decision: decision_type + stage + target_sector are FILLED', dec.anchors.filter(a => a.value != null).map(a => a.key).sort().join() === 'decision_type,stage,target_sector');
-ok('decision: ticket/geo/horizon/candidate are OPEN', dec.unresolved.sort().join() === 'candidate,decision_horizon,geography,ticket_size');
+ok('decision: decision_type + stage + target_sector are FILLED', [...dec.anchors.filter(a => a.value != null).map(a => a.key)].sort().join() === 'decision_type,stage,target_sector');
+ok('decision: ticket/geo/horizon/candidate are OPEN', [...dec.unresolved].sort().join() === 'candidate,decision_horizon,geography,ticket_size');
+ok('decision: candidate anchor did NOT fill from a bare title-case span (KRYL-1238)', dec.anchors.find(a => a.key === 'candidate')?.value == null);
 ok('headline reads the frame', /DECISION FRAME · invest · ai/i.test(frameHeadline(dec)));
 
 const port = classifyFrame('Target Portfolio ~20–30 companies. Minimum Investment $5K. AI-First thesis. Seed through late-stage venture. Single Commitment · Diversified Portfolio');
@@ -43,6 +44,23 @@ ok('NO_FRAME headline is null (no dressed-up prompt)', frameHeadline(none) === n
 // 4. Priority — portfolio beats decision when both present.
 const both = classifyFrame('Should I invest in a portfolio of 25 seed companies with a $5K minimum ticket');
 ok('portfolio + decision language → PORTFOLIO_FRAME (portfolio wins)', both.class === 'PORTFOLIO_FRAME');
+
+// 4b. KRYL-1238 — candidate entity resolution: clues propose, never establish.
+const health = classifyFrame('Should I invest in a healthtech company, Series D, founded by an ex-Neuralink engineer');
+ok('healthtech/ex-Neuralink → DECISION_FRAME', health.class === 'DECISION_FRAME');
+ok('healthtech: subject NOT resolved (state NONE)', health.subjectResolution.state === 'NONE');
+ok('healthtech: sector clue preserved (healthtech)', /healthtech/i.test(health.evidence.candidateClues.sector || ''));
+ok('healthtech: stage clue preserved (Series D-ish)', /series\s+d|seed/i.test(health.evidence.candidateClues.stage || health.evidence.stage || ''));
+ok('healthtech: ex-Neuralink surfaced as an association, not a subject', health.evidence.candidateClues.associations.some(a => /neuralink/i.test(a)));
+ok('healthtech: NONE prompt names the honest next step', /no subject resolved/i.test(health.subjectResolution.prompt));
+
+const oneReal = classifyFrame('Should I invest in Palantir this year?');
+// (subjectScope would already resolve this to ENTITY upstream; classifyFrame is only
+// reached for non-ENTITY inputs — but the resolver logic must still behave.)
+ok('single resolvable name → RESOLVED_CANDIDATE', oneReal.subjectResolution.state === 'RESOLVED_CANDIDATE');
+ok('RESOLVED_CANDIDATE → candidate anchor fills with the canonical name',
+   oneReal.anchors.find(a => a.key === 'candidate')?.value === oneReal.subjectResolution.candidate.name);
+ok('RESOLVED_CANDIDATE prompt says "confirm"', /confirm/i.test(oneReal.subjectResolution.prompt));
 
 // 5. Closed set — never anything outside the 4.
 for (const q of ['x', 'buy a house', 'the market', 'invest', 'fund', 'nothing here'])
