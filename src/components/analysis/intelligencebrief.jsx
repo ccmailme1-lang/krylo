@@ -70,11 +70,13 @@ function mapActionsToCoas(actions) {
   }));
 }
 
-function buildBrief(session, synthesis, hp = null) {
+function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // KRYL-1239 — consume the SAME canonical subject the Target Packet resolved
   // (subjectScope over the query context), never getDisplayEntity() over the raw
   // query string. buildBrief does not resolve, extract, or infer a subject of its own.
-  const subj       = canonicalBriefSubject(session);
+  // PERF: subjectScope is not cheap for a long pasted query — the caller passes a
+  // memoized result (keyed on session); only handleExport falls back to computing it.
+  const subj       = subjArg ?? canonicalBriefSubject(session);
   const entity     = subj.label;
   const rawLens    = session?.lens ?? null;   // adapter resolution — unchanged
   const anchorLens = cleanLens(rawLens);      // displayed anchor — raw-query pseudo-lenses rejected
@@ -266,6 +268,10 @@ export default function IntelligenceBrief() {
   // had already moved on — a cross-session subject/lens mismatch. No stale carry.
   if (liveSession) staleSessionRef.current = liveSession;
   const session    = liveSession;
+  // PERF (regression fix) — subjectScope over the query context is expensive for a
+  // long pasted query; memoize it per session so the 1s sysTime clock (and every
+  // other re-render) doesn't re-run it.
+  const briefSubject = useMemo(() => canonicalBriefSubject(session), [session]);
   const isExpired  = false;
 
   const fs = pendingAcquisition?.fidelityScore
@@ -482,7 +488,7 @@ export default function IntelligenceBrief() {
   // Referenced by both the render path below and handleExport() so there is exactly one
   // definition of "withheld," not a duplicated condition that can drift out of sync.
   const isBriefWithheld = isComparative || isDicPath || isDicReady;
-  const brief = isBriefWithheld ? null : buildBrief(session, synthesis, hp);
+  const brief = isBriefWithheld ? null : buildBrief(session, synthesis, hp, briefSubject);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   if (isComparative) {

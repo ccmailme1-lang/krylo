@@ -164,8 +164,9 @@ export default function ActionMatrix() {
   const activeSessionId = useAnalysisStore((s) => s.activeSessionId);
   const session         = activeSessionId ? sessions[activeSessionId] : null;
   // KRYL-1239 — same canonical subject the Target Packet / Export Brief resolve, never
-  // a fresh parse of the raw query string.
-  const subj            = canonicalBriefSubject(session);
+  // a fresh parse of the raw query string. Memoized per session — subjectScope is not
+  // cheap for a long pasted query (perf regression fix).
+  const subj            = useMemo(() => canonicalBriefSubject(session), [session]);
   const targetLabel     = (subj.label || 'TARGET').toUpperCase();
   const lensLabel       = cleanLens(session?.lens)?.toUpperCase()
                           ?? (subj.kind === 'ENTITY' ? 'SUBJECT-SCOPED' : 'OPEN');
