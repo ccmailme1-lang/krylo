@@ -259,9 +259,14 @@ export default function IntelligenceBrief() {
   // WO-1852 — hypothesis binding state (index-free, explicit only)
   const [pendingHypothesisId, setPendingHypothesisId] = useState('');
 
+  // KRYL-1239 residual — the brief must resolve to the SAME session the Target
+  // Packet renders (activeId only). The old `?? staleSessionRef.current` fallback
+  // kept rendering the PREVIOUS session's subject/lens whenever activeId was
+  // momentarily null (New Query, reset, the 900ms create delay) while the packet
+  // had already moved on — a cross-session subject/lens mismatch. No stale carry.
   if (liveSession) staleSessionRef.current = liveSession;
-  const session    = liveSession ?? staleSessionRef.current ?? null;
-  const isExpired  = !liveSession && staleSessionRef.current != null;
+  const session    = liveSession;
+  const isExpired  = false;
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore

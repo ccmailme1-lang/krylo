@@ -33,9 +33,15 @@ export function canonicalBriefSubject(session) {
       kind: 'GEO', domainTags: [], scope,
     };
   }
-  // Unresolved — fall back to the display label, exactly as the surfaces did before.
+  // Unresolved — DEF-1239 residual: do NOT paste the raw query string into the
+  // Subject / Anchor fields. State the honest absence, matching the packet.
+  const UNRESOLVED_LABEL = {
+    DECISION_FRAME: 'DECISION FRAME — NO SUBJECT',
+    GEO:            'GEO — NO SUBJECT',
+    UNRESOLVED:     'NO SUBJECT RESOLVED',
+  };
   return {
-    label:       getDisplayEntity(session?.query ?? 'Unknown Signal'),
+    label:       UNRESOLVED_LABEL[scope.kind] ?? 'NO SUBJECT RESOLVED',
     canonicalId: null,
     resolved:    false,
     kind:        scope.kind,
