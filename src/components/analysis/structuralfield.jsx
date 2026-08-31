@@ -102,7 +102,7 @@ export default function StructuralField({ cones = {} }) {
       {/* vertices + absence glyphs */}
       {nodes.map(n => (
         <g key={n.key}>
-          <title>{`${n.label} — ${n.absent ? 'DATA UNAVAILABLE (temporal absence)' : `field intensity ${n.pct}`} · field scope, context only`}</title>
+          <title>{`${n.label} — ${n.absent ? 'data unavailable' : `field intensity ${n.pct}`} · field scope, context only`}</title>
           {n.absent ? (
             <circle cx={n.x.toFixed(1)} cy={n.y.toFixed(1)} r="3"
                     fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeDasharray="1.5 1.5" />

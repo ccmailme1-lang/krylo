@@ -1463,7 +1463,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                (value === null) keeps its angular position + gets an absence glyph,
                never r = 0. */}
           <div style={{ flexShrink: 0, padding: '10px 20px', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${BORDER_FAINT}` }}>
-            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8, display: 'flex', alignItems: 'center' }}>3. STRUCTURAL FIELD<HelpMark text="The shape of current activity across the six domains (Money, Ownership, Tech, Knowledge, Labor, Media). A point further out means more activity in that domain right now. A dashed open marker means no data. This is background context, not an answer about your subject." /></div>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)', marginBottom: 8, display: 'flex', alignItems: 'center' }}>3. STRUCTURAL FIELD<HelpMark text="The shape of the current observable field across six domains (Capital, Ownership, Technology, Knowledge, Labor, Media). A point farther out represents greater field intensity in that domain. A dashed open marker means data is unavailable. This is background context, not an answer about your subject." /></div>
             <div style={{ height: 220, position: 'relative', background: '#07090b', border: `1px solid ${BORDER_FAINT}`, borderRadius: 2, overflow: 'hidden', padding: 4 }}>
               <StructuralField cones={activeCones ?? {}} />
             </div>
