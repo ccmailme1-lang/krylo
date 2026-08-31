@@ -47,10 +47,13 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   const firstNum = synthesis?.inputNumbers?.[0] ?? 0;
 
   // ── Signal ────────────────────────────────────────────────────────────────
-  // HP peakScore (0–100): ambient convergence engine output. Observed.
-  // Observed weight 0.75 (live signals) | Assumed 0.25 (floor/smoothing)
-  const signalVal = ambiguous ? 0 : (hpState?.happyPath?.peakScore ?? 0) / 100;
-  const signalGnd = ambiguous ? 0 : g(0.75, 1.0);
+  // HP peakScore (0–100): the AMBIENT convergence engine over the global domain
+  // field — not scoped to the subject or this query's evidence. KRYL-1242: when the
+  // query's provenance is unresolved it is not the subject's Signal (the comment
+  // above already says "ambient domain signal is not query evidence" — that applies
+  // here, not just to Validity). Zero it, same as Validity.
+  const signalVal = (ambiguous || unprovenanced) ? 0 : (hpState?.happyPath?.peakScore ?? 0) / 100;
+  const signalGnd = (ambiguous || unprovenanced) ? 0 : g(0.75, 1.0);
 
   // ── Validity ──────────────────────────────────────────────────────────────
   // Internal soundness of query resolution. Maps to synthesis.confidence.
