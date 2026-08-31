@@ -116,6 +116,25 @@ export const useAnalysisStore = create((set) => ({
   // (`session.tensor?.synthesis ?? synthesizeQuery(session)`) falls through to a fresh
   // synthesizeQuery(session) call that sees the new fields, instead of serving the old cached
   // result computed before the fields existed.
+  // KRYL-1244 — live render-gate for the brief's OUTPUT filters. Updates
+  // tensor.outputFilters in place and PRESERVES tensor.synthesis (unlike
+  // setTensorFields, which clears the synthesis cache). Pure visibility state —
+  // never triggers re-synthesis.
+  setOutputFilters: (sessionId, outputFilters) => set((state) => {
+    const session = state.sessions[sessionId];
+    if (!session) return {};
+    return {
+      sessions: {
+        ...state.sessions,
+        [sessionId]: {
+          ...session,
+          tensor: { ...(session.tensor ?? {}), outputFilters: { ...outputFilters } },
+          metadata: { ...session.metadata, updated: Date.now() },
+        },
+      },
+    };
+  }),
+
   setTensorFields: (sessionId, fields) => set((state) => {
     const session = state.sessions[sessionId];
     if (!session) return {};

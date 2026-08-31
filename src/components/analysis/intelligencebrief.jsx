@@ -1100,7 +1100,8 @@ export default function IntelligenceBrief() {
           {outputFilters.precursors && (
             <>
               <Divider />
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Evidence / Facts</div>
+              {/* KRYL-1244 — heading matches the OUTPUT filter checkbox (PRECURSORS) */}
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Precursors</div>
               {brief.evidence.map((e, i) => (
                 <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 7, alignItems: 'flex-start' }}>
                   <span style={{ fontFamily: MONO, fontSize: 13, color: LIME, flexShrink: 0, marginTop: 1 }}>▸</span>
@@ -1123,21 +1124,23 @@ export default function IntelligenceBrief() {
         {/* 03 · DISCUSSION & ANALYSIS */}
         <Panel seq="03" label="Discussion & Analysis">
           <div style={{ fontFamily: SERIF, fontSize: 12, color: MID, lineHeight: 1.85, marginBottom: 14 }}>{brief.assessment}</div>
-          <Divider />
+          {/* KRYL-1244 — each gated section owns its LEADING divider, so hiding all of
+              them leaves no orphan rule. Headings match the OUTPUT filter checkboxes. */}
           {outputFilters.risks && (
             <>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Threats</div>
+              <Divider />
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Risks</div>
               {brief.threats.map(({ label, level, color }, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid rgba(255,255,255,0.04)` }}>
                   <span style={{ fontFamily: MONO, fontSize: 9, color: MID, letterSpacing: '0.04em' }}>{label}</span>
                   <span style={{ fontFamily: MONO, fontSize: 9, color, letterSpacing: '0.2em', textTransform: 'uppercase' }}>{level}</span>
                 </div>
               ))}
-              <Divider />
             </>
           )}
           {outputFilters.opportunities && (
             <>
+              <Divider />
               <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Opportunities</div>
               {brief.opportunities.map(({ label }, i) => (
                 <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
@@ -1145,14 +1148,16 @@ export default function IntelligenceBrief() {
                   <span style={{ fontFamily: MONO, fontSize: 9, color: MID, lineHeight: 1.5 }}>{label}</span>
                 </div>
               ))}
-              <Divider />
             </>
           )}
           {outputFilters.contradictions && (
-            <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 6 }}>Alternative Viewpoint</div>
-              <div style={{ fontFamily: SERIF, fontSize: 11, color: DIM, lineHeight: 1.6, fontStyle: 'italic' }}>{brief.alternativeView}</div>
-            </div>
+            <>
+              <Divider />
+              <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
+                <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 6 }}>Contradictions</div>
+                <div style={{ fontFamily: SERIF, fontSize: 11, color: DIM, lineHeight: 1.6, fontStyle: 'italic' }}>{brief.alternativeView}</div>
+              </div>
+            </>
           )}
         </Panel>
 

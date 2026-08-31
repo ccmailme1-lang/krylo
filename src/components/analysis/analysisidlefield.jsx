@@ -524,6 +524,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const sessions      = useAnalysisStore(s => s.sessions);
   const activeSessionId       = useAnalysisStore(s => s.activeSessionId);
   const setActiveSession      = useAnalysisStore(s => s.setActiveSession);
+  const storeSetOutputFilters = useAnalysisStore(s => s.setOutputFilters);
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const hasSession    = !!activeSession;
   const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession]);
@@ -1720,7 +1721,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', flexShrink: 0 }}>OUTPUT</span>
                   {OUTPUT_FILTERS_DEF.map(({ key, label }) => (
                     <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
-                      <input type="checkbox" checked={outputFilters[key]} onChange={e => setOutputFilters(p => ({ ...p, [key]: e.target.checked }))} style={{ accentColor: LIME, width: 10, height: 10, cursor: 'pointer' }} />
+                      <input type="checkbox" checked={outputFilters[key]} onChange={e => {
+                        // KRYL-1244 — apply live to the active session so the brief re-gates
+                        // immediately; no re-execute, no re-synthesis.
+                        const next = { ...outputFilters, [key]: e.target.checked };
+                        setOutputFilters(next);
+                        if (activeSessionId) storeSetOutputFilters(activeSessionId, next);
+                      }} style={{ accentColor: LIME, width: 10, height: 10, cursor: 'pointer' }} />
                       <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.1em', color: outputFilters[key] ? 'rgba(102,255,0,0.65)' : 'rgba(255,255,255,0.22)', transition: 'color 120ms' }}>{label}</span>
                     </label>
                   ))}
