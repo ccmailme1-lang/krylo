@@ -1028,6 +1028,12 @@ function synthGeneral(session, numbers, query) {
     : `"${shortQ}" reads as a directional signal with no anchoring inputs detected — resolution is directional, not yet scored.`;
 
   return {
+    // KRYL-1239 — disclosure label (not a gate): this is the open-lens template,
+    // reached when the domain ladder abstained. Downstream surfaces (Export Brief,
+    // Action Matrix) read this to avoid presenting the raw-query boilerplate below
+    // as if it were a subject-anchored analysis when the packet has already
+    // resolved a subject. Same disclosure pattern as narrativeFidelity:'TEMPLATE'.
+    openLensFallback: true,
     stateLabel: 'SIGNAL ACTIVE',
     primaryInsight: `Analysis active: "${shortQ}". Fidelity: ESTIMATED. Add dollar amounts, a specific decision, or a timeline to increase precision.`,
     // KRYL-1181/KRYL-1175: confidence/momentum/trajPoints removed -- hardcoded
