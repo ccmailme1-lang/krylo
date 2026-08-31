@@ -48,12 +48,13 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
 
   // ── Signal ────────────────────────────────────────────────────────────────
   // HP peakScore (0–100): the AMBIENT convergence engine over the global domain
-  // field — not scoped to the subject or this query's evidence. KRYL-1242: when the
-  // query's provenance is unresolved it is not the subject's Signal (the comment
-  // above already says "ambient domain signal is not query evidence" — that applies
-  // here, not just to Validity). Zero it, same as Validity.
-  const signalVal = (ambiguous || unprovenanced) ? 0 : (hpState?.happyPath?.peakScore ?? 0) / 100;
-  const signalGnd = (ambiguous || unprovenanced) ? 0 : g(0.75, 1.0);
+  // field — NOT scoped to the subject or this query's evidence. KRYL-1242: an export
+  // metric must never acquire subject authority merely because it is available in
+  // ambient engine state. When provenance is unresolved (no subject-scoped evidence),
+  // Signal / Validity / Convergence are WITHHELD — not zeroed (a 0 is still a claim).
+  const subjectMetricsWithheld = ambiguous || unprovenanced;
+  const signalVal = ambiguous ? 0 : (hpState?.happyPath?.peakScore ?? 0) / 100;
+  const signalGnd = ambiguous ? 0 : g(0.75, 1.0);
 
   // ── Validity ──────────────────────────────────────────────────────────────
   // Internal soundness of query resolution. Maps to synthesis.confidence.
@@ -145,9 +146,9 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   const ltvWithheld  = ltvGnd  < ECONOMICS_GROUNDEDNESS_FLOOR;
 
   return {
-    signal:      { value: signalVal,      groundedness: signalGnd },
-    validity:    { value: validityVal,    groundedness: validityGnd },
-    convergence: { value: convergenceVal, groundedness: convergenceGnd, queryRelevant, state: convLabel },
+    signal:      { value: subjectMetricsWithheld ? null : signalVal,      groundedness: subjectMetricsWithheld ? 0 : signalGnd,      withheld: subjectMetricsWithheld, withheldReason: 'no subject-scoped evidence — ambient field state is not a subject Signal' },
+    validity:    { value: subjectMetricsWithheld ? null : validityVal,    groundedness: subjectMetricsWithheld ? 0 : validityGnd,    withheld: subjectMetricsWithheld },
+    convergence: { value: subjectMetricsWithheld ? null : convergenceVal, groundedness: subjectMetricsWithheld ? 0 : convergenceGnd, withheld: subjectMetricsWithheld, queryRelevant, state: convLabel },
     cac:  { value: cacWithheld  ? null : cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: constructTag(hasNums), withheld: cacWithheld },
     roas: { value: roasWithheld ? null : roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: constructTag(hasNums), withheld: roasWithheld },
     ltv:  { value: ltvWithheld  ? null : ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: constructTag(false),   withheld: ltvWithheld },

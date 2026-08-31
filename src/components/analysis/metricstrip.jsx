@@ -148,25 +148,27 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
   const tiles = [
     {
       label:        'Signal',
-      display:      signal ? String(Math.round((signal.value ?? 0) * 100)) : '—',
-      groundedness: signal?.groundedness ?? 0,
-      tag:          null,
+      // KRYL-1242 — WITHHELD when there is no subject-scoped evidence: the ambient
+      // field reading is not this subject's Signal, and it is not shown as one.
+      display:      (signal && !signal.withheld) ? String(Math.round((signal.value ?? 0) * 100)) : '—',
+      groundedness: signal?.withheld ? 0 : (signal?.groundedness ?? 0),
+      tag:          signal?.withheld ? 'WITHHELD' : null,
       tileMode:     'active',
       title:        defTitle('signal'),
     },
     {
       label:        'Validity',
-      display:      validity ? `${Math.round((validity.value ?? 0) * 100)}%` : '—',
-      groundedness: validity?.groundedness ?? 0,
-      tag:          null,
+      display:      (validity && !validity.withheld) ? `${Math.round((validity.value ?? 0) * 100)}%` : '—',
+      groundedness: validity?.withheld ? 0 : (validity?.groundedness ?? 0),
+      tag:          validity?.withheld ? 'WITHHELD' : null,
       tileMode:     'active',
       title:        defTitle('validity'),
     },
     {
       label:        'Convergence',
-      display:      convergence ? `${Math.round((convergence.value ?? 0) * 100)}%` : '—',
-      groundedness: convergence?.groundedness ?? 0,
-      tag:          convergence?.queryRelevant === false ? 'AMB' : null,
+      display:      (convergence && !convergence.withheld) ? `${Math.round((convergence.value ?? 0) * 100)}%` : '—',
+      groundedness: convergence?.withheld ? 0 : (convergence?.groundedness ?? 0),
+      tag:          convergence?.withheld ? 'WITHHELD' : (convergence?.queryRelevant === false ? 'AMB' : null),
       tileMode:     'active',
       title:        defTitle('convergence'),
     },
