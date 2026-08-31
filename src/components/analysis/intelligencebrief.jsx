@@ -134,7 +134,7 @@ function buildBrief(session, synthesis, hp = null) {
       date:          dateStr,
       asOf:          timeStr,
       originator:    'ORACLE KERNEL v3.7.2',
-      domain:        subj.domainTags?.length ? subj.domainTags.join(' · ') : 'SUBJECT-SCOPED',
+      domain:        'SUBJECT-SCOPED',   // not a domain verdict — observation lives in the packet
       cac:           '—',
       roas:          '—',
       subjectScoped: true,
