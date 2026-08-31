@@ -148,7 +148,11 @@ export function computeMetrics(synthesis, hpState = null, persona = null, lrPrio
   return {
     signal:      { value: subjectMetricsWithheld ? null : signalVal,      groundedness: subjectMetricsWithheld ? 0 : signalGnd,      withheld: subjectMetricsWithheld, withheldReason: 'no subject-scoped evidence — ambient field state is not a subject Signal' },
     validity:    { value: subjectMetricsWithheld ? null : validityVal,    groundedness: subjectMetricsWithheld ? 0 : validityGnd,    withheld: subjectMetricsWithheld },
-    convergence: { value: subjectMetricsWithheld ? null : convergenceVal, groundedness: subjectMetricsWithheld ? 0 : convergenceGnd, withheld: subjectMetricsWithheld, queryRelevant, state: convLabel },
+    // §21 — Convergence derives from the live signal-FIELD state, not a subject claim. When the
+    // subject metric is withheld (no subject-scoped evidence), the field state is still
+    // substantiated structure and is carried through as FIELD context (fieldValue/state), not
+    // suppressed. The strip renders it labelled FIELD, never as a subject reading.
+    convergence: { value: subjectMetricsWithheld ? null : convergenceVal, fieldValue: convergenceVal, groundedness: subjectMetricsWithheld ? 0 : convergenceGnd, fieldGroundedness: convergenceGnd, withheld: subjectMetricsWithheld, queryRelevant, state: convLabel },
     cac:  { value: cacWithheld  ? null : cacValue,  realized: cacRealized, projected: cacModeled,    groundedness: cacGnd,  label: constructTag(hasNums), withheld: cacWithheld },
     roas: { value: roasWithheld ? null : roasValue, realized: 0,           projected: roasProjected, groundedness: roasGnd, label: constructTag(hasNums), withheld: roasWithheld },
     ltv:  { value: ltvWithheld  ? null : ltvValue,  realized: 0,           projected: ltvProjected,  groundedness: ltvGnd,  label: constructTag(false),   withheld: ltvWithheld },

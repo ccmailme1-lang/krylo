@@ -81,7 +81,7 @@ const tp = readFileSync(new URL('./src/components/analysis/targetpacket.jsx', im
 const am = readFileSync(new URL('./src/components/analysis/actionmatrix.jsx', import.meta.url), 'utf8');
 const fa = readFileSync(new URL('./src/components/analysis/frameanchoring.jsx', import.meta.url), 'utf8');
 ok('targetpacket.jsx mounts <FrameAnchoring> under PRIMARY SIGNAL', /<FrameAnchoring/.test(tp) && /import FrameAnchoring/.test(tp));
-ok('actionmatrix.jsx defers a framed input to FRAME ANCHORING', /P4 — FRAME ANCHORING/.test(am) && /classifyFrame/.test(am));
+ok('actionmatrix.jsx defers a framed input to FRAME ANCHORING', /FRAME ANCHORING/.test(am) && /classifyFrame/.test(am));
 const faBody = fa.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
 ok('frameanchoring.jsx is a READ surface — no input fields, no buttons, no onClick', !/<input\b|<button\b|onClick|onChange|onSubmit/.test(faBody));
 ok('frameanchoring.jsx renders no numeric score (X / 100)', !/\d\s*\/\s*100|scoreValue|\bconvergence\s*[:=]/i.test(faBody));

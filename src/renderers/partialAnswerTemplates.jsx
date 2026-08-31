@@ -114,10 +114,14 @@ export function InsufficientInput({ missingRequiredInputs, dic, onSubmit }) {
   return (
     <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.28em', color: DIM, textTransform: 'uppercase' }}>
-        {dic.decisionType} · Insufficient Input
+        {dic.decisionType} · Decision-Specific Inputs
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: FAINT }}>
-        Add the following to get a real, evidence-based partial answer:
+      {/* §21 — the structural read is in the Target Packet regardless of these
+          inputs. They are not a precondition for observation; they enable the
+          decision-specific derivative (the financing math) for this decision. */}
+      <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: FAINT, lineHeight: 1.6 }}>
+        The structural read is in the Target Packet. Add these to also compute the
+        evidence-based financing math for this decision:
       </div>
       {missingRequiredInputs.map(f => (
         <div key={f.key} style={{ display: 'flex', flexDirection: 'column', gap: 3, padding: '3px 0' }}>

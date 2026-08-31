@@ -72,6 +72,20 @@ Short form:
 
 > **The Fabric preserves pathways. Pathways support relationships. Relationships constitute formations. Formations expose frontiers. Frontiers direct cognition.**
 
+## 2.1 Scope boundary (Founder, 2026-08-31)
+
+> **The Cognitive Fabric is not a universal replacement for KRYLO's synchronous analytical path. It is the persistent substrate for structural formations that benefit from pathway continuity, multi-event accumulation, revision, and frontier-directed observation.**
+
+The Fabric runs **beside** the canonical synchronous synthesis path, not in front of it. It does not route or gate single-shot analytical queries.
+
+**Invocation-justification test.** Fabric invocation is justified for a class of workload iff
+
+$$
+\Delta V_{\text{structural}} \;>\; \Delta C_{\text{compute}+\text{latency}}
+$$
+
+— the structural value the persistent pathway state adds exceeds the compute and latency it costs, for that class. Which classes qualify (multi-event formations, frontier resolution, longitudinal revision, or something not yet discovered) is settled by the §30 kill experiment, **never by intuition about traffic distribution**. This keeps the Fabric from becoming an ideology rather than a measured capability.
+
 ---
 
 # 3. Architectural Invariants
@@ -181,6 +195,19 @@ Where an existing KRYLO mechanism governs one of these objects, the Fabric integ
 
 ---
 
+## CF-I8 — Formation is presented, not adjudicated (Constitutional, CLAUDE.md §21)
+
+A Formation that satisfies relationship admission and Formation governance is **presented**. The Fabric MUST NOT convert a recorded Formation `Rec(F_t, ν_t)` into a guest conclusion, prediction, recommendation, risk judgment, prioritization, or prescribed action.
+
+```text
+KRYLO:  Reality → 𝒪 → Γ → ν_t → ℛ → ℱ → Rec(F)
+Guest:  D_g = f( Rec(F), question, preferences/constraints, objectives )   ── the Fabric never computes D_g
+```
+
+The boundary is **conversion, not presentation**. It is NOT an information-withholding boundary: substantiated structure is not softened, suppressed, qualified, or withheld *solely* because a reasonable guest could draw a consequential interpretation from it. `NO FORMATION ESTABLISHED` is valid only when the Formation contract actually returns empty — never as a stand-in for "the guest supplied no decision." Decision parameters may be required to answer a decision-specific derivative; they are never a precondition for exposing the underlying structure. Any path implementing `KRYLO: F → D` is contaminated and MUST be removed.
+
+---
+
 # 4. Mathematical State Model
 
 ## 4.1 Observation Space
@@ -265,6 +292,47 @@ C_i
 $$
 
 not definitions of the Fabric itself.
+
+## 5.1 JEPA is a capability, not the Fabric (Founder, 2026-08-31)
+
+```text
+                    COGNITIVE FABRIC
+                persistent pathway substrate  ν_t
+                          │
+        ┌─────────────────┼─────────────────┐
+        │                 │                 │
+      JEPA             GNN / RG            RCM
+  representation      relational       specialized
+    capability        capability        capability
+        │                 │                 │
+        └─────────── attributed pathways ────┘
+                          │
+                   RELATION ADMISSION
+                          │
+                       FORMATION
+                          │
+                    FRONTIER / GAP
+                          │
+                   REMOTE CAPABILITY
+                          │
+                     new pathways  →  ν_{t+1}
+```
+
+A capability such as JEPA answers a **local computational question**:
+
+> Given the observed state / context, what representation of the relevant structure should this capability produce?
+
+A capability — JEPA included — does **NOT** own any of:
+
+* the pathway;
+* the relationship;
+* the Formation;
+* the Frontier;
+* the provenance;
+* the admission decision;
+* the guest's conclusion.
+
+The architectural proposition is `C_i → γ → ν_t`, of which JEPA is one possible `C_i`. This separation exists specifically to prevent the Fabric from collapsing into "JEPA plus a graph."
 
 ---
 
@@ -1217,6 +1285,16 @@ The first three claims do not establish the fourth.
 
 Only H4 establishes architectural value.
 
+## H5 — Fabric cost is justified per workload class (Founder, 2026-08-31)
+
+For each class of workload the Fabric is proposed to serve, the invocation-justification test from §2.1 must hold:
+
+$$
+\Delta V_{\text{structural}} \;>\; \Delta C_{\text{compute}+\text{latency}}
+$$
+
+A class where persistent pathway state does not measurably beat the synchronous path (e.g. single-shot queries) is **out of scope for the Fabric**, not a target for optimization. The §30 kill experiment, run per candidate class, is what admits or rejects a class — not projected traffic share.
+
 ---
 
 # 30. Material Advantage Experiment
@@ -1410,7 +1488,9 @@ This specification does NOT authorize:
 * implementation of JEPA;
 * implementation of reservoir computing;
 * biological equivalence to cephalopod cognition;
-* claims of novelty over prior distributed/dynamical architectures.
+* claims of novelty over prior distributed/dynamical architectures;
+* conversion of a recorded Formation into a guest conclusion, prediction, recommendation, prioritization, or decision (CF-I8);
+* withholding substantiated structure because a guest might draw a conclusion from it (CF-I8).
 
 ---
 

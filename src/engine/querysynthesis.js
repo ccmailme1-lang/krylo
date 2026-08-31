@@ -1035,7 +1035,10 @@ function synthGeneral(session, numbers, query) {
     // resolved a subject. Same disclosure pattern as narrativeFidelity:'TEMPLATE'.
     openLensFallback: true,
     stateLabel: 'SIGNAL ACTIVE',
-    primaryInsight: `Analysis active: "${shortQ}". Fidelity: ESTIMATED. Add dollar amounts, a specific decision, or a timeline to increase precision.`,
+    // §21 — this is an open-lens read of the field, not a deficient query to be
+    // corrected. State what is observed; do not instruct the guest to supply a
+    // decision. The six-domain Structural Field is the substantiated structure here.
+    primaryInsight: `Open-lens read: "${shortQ}". No single domain resolved — the observable field across the six domains is shown in the Structural Field.`,
     // KRYL-1181/KRYL-1175: confidence/momentum/trajPoints removed -- hardcoded
     // (0.71 / "+9%" / a hand-typed climbing curve), not derived from anything. The single
     // grounding seam in synthesizeQuery() already supplies the real values (or honest null)
@@ -1056,7 +1059,7 @@ function synthGeneral(session, numbers, query) {
     missingInputs,   // KRYL-1218 — separated from the Primary Signal; for ATTENTION/BASIS
     timeHorizon: 'TBD',
     impactLevel: 'Medium',
-    bluf: `Open-lens query: "${shortQ}". Fidelity: ESTIMATED. Signal routed to general analysis. Specificity is the primary driver of output quality.`,
+    bluf: `Open-lens query: "${shortQ}". No single domain resolved; signal routed to general analysis. The six-domain Structural Field below is the observable structure.`,
     purpose: `Open-lens analysis for: "${shortQ}". No domain anchor detected — directional signals generated.`,
     fiveWs: [
       { w:'WHO',   answer:`Decision-maker with open-lens query. No specific counterparty or market detected.` },
@@ -1075,37 +1078,22 @@ function synthGeneral(session, numbers, query) {
       `Query represents an active decision point requiring analysis.`,
       `No prior session context carried — fresh analysis.`,
     ],
-    assessment: `"${shortQ}" provides insufficient specificity for high-precision output. The system has generated directional signals from available context. For precise action scoring, add: a specific decision (buy vs lease, invest vs pay off), a dollar amount, and a timeline.`,
-    threats: [
-      { label:'Low specificity → low precision',    level:'HIGH',   color:LIME },
-      { label:'No time horizon → no urgency frame', level:'MEDIUM', color:BLUE },
-      { label:'Open lens → broad recommendations', level:'MEDIUM', color:BLUE },
-    ],
-    opportunities: [
-      { label:`Refine with a specific decision, amount, or deadline for higher-precision output.` },
-      { label:`Select your situation type (Buying a Home, Career Move, etc.) to anchor analysis.` },
-      { label:`Add a capital floor to enable affordability and leverage calculations.` },
-    ],
-    alternativeView: `Open-lens queries are appropriate for orientation and exploration. If the decision is not yet defined, broad signal framing is a valid first step.`,
+    assessment: `"${shortQ}" did not resolve to a single domain. The read is a directional scan of the live cross-domain field — the Structural Field shows each domain's intensity and its honest absence. This is the observable structure, not a scored recommendation.`,
+    // §21 — "threats" here are structural fracture signals, not commentary on the
+    // query. With no domain anchor there is no subject-scoped fracture to report.
+    threats: [],
+    opportunities: [],
+    alternativeView: `Open-lens queries are appropriate for orientation and exploration — the field read stands on its own.`,
     // KRYL-1181/KRYL-1175: outlook was 3 hardcoded probabilities (60/30/10) with no basis --
     // an open-lens/no-domain-match query has no live signal to derive an outlook distribution
     // from. Empty, same treatment as synthRetirement's fix (63885c3), rather than fabricating
     // percentages for a query this function admits it can't yet analyze precisely.
     outlook: [],
-    actions: {
-      IMMEDIATE: [
-        { id:'a1', label:'REFINE YOUR QUERY',       impact:0.85, rationale:`Add specifics: "I'm considering X vs Y, budget is $Z, I need to decide by [date]." Specificity is the primary driver of output quality.`, tag:'FIDELITY'  },
-        { id:'a2', label:'SELECT A SITUATION TYPE', impact:0.75, rationale:`Choosing your situation routes your query to the right analytical lens and unlocks domain-specific signals.`,                             tag:'ROUTING'   },
-      ],
-      SHORT_TERM: [
-        { id:'b1', label:'SET A CAPITAL FLOOR',     impact:0.65, rationale:`A dollar amount enables affordability math, leverage calculations, and risk scoring — the core of any financial analysis.`,              tag:'CONTEXT'   },
-        { id:'b2', label:'DEFINE YOUR TIMELINE',    impact:0.60, rationale:`A time horizon determines whether the analysis is acute (action required now) or strategic (planning window available).`,               tag:'PLANNING'  },
-      ],
-      STRUCTURAL: [
-        { id:'c1', label:'MAP YOUR CONSTRAINTS',    impact:0.55, rationale:`Every decision has a binding constraint — usually time, capital, or information. Identifying yours first prevents solving the wrong problem.`, tag:'CLARITY' },
-        { id:'c2', label:'IDENTIFY YOUR UNKNOWNS',  impact:0.50, rationale:`A gap in information is more dangerous than a gap in capital. List what you don't know before deciding.`,                                 tag:'AWARENESS' },
-      ],
-    },
+    // §21 — no domain anchor → no substantiated basis for a derived action set.
+    // The old list here ("REFINE YOUR QUERY", "SET A CAPITAL FLOOR", …) was query
+    // coaching presented as scored actions. Empty is the honest state; the surface
+    // shows the Structural Field instead.
+    actions: { IMMEDIATE: [], SHORT_TERM: [], STRUCTURAL: [] },
     leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(0.5), deRatio: 0.5, permissionless: false, industryNorm: 1.0 },
   };
 }

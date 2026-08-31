@@ -198,19 +198,36 @@ export default function ActionMatrix() {
     return <AmbiguousState variant="compact" />;
   }
 
-  // KRYL-1236 stage 2 — for a recognised frame with no domain-anchored synthesis,
-  // the generic "REFINE YOUR QUERY" matrix is not the right remediation. Point at
-  // the class-native FRAME ANCHORING surface in the packet instead.
-  if (subj.kind !== 'ENTITY' && frame.class !== 'NO_FRAME' && !synthesisIsDomainAnchored(synthesis)) {
+  // §21 (FORMATION IS NOT A VERDICT) — with no ENTITY subject and no domain-anchored
+  // synthesis there is no substantiated basis for a derived action set. Do NOT
+  // fabricate one: the old fall-through rendered synthGeneral's "REFINE YOUR QUERY"
+  // coaching actions plus a 50/100 score and a "LEVERAGE WINDOW — OPEN" badge, none
+  // of it derived from anything. Show the frame's own anchor checklist when a frame
+  // was recognised; otherwise state the honest absence and point at the Structural
+  // Field. Missing decision inputs constrain a derivative, never the structural read.
+  if (subj.kind !== 'ENTITY' && !synthesisIsDomainAnchored(synthesis)) {
+    const hasFrame = frame.class !== 'NO_FRAME';
     return (
       <div style={{ width: '100%', height: '100%', background: '#000', fontFamily: MONO, padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em' }}>P4 — FRAME ANCHORING</div>
-        <div style={{ fontSize: 11, color: LIME, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{frameHeadline(frame) ?? frame.class.replace(/_/g, ' ')}</div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 520 }}>
-          {frame.unresolved.length} of {frame.anchors.length} anchors open. The class-native anchor checklist — the specific inputs that would resolve this {frame.class.replace(/_/g, ' ').toLowerCase()} — is in the FRAME ANCHORING section of the packet. Anchors scope observation; they do not produce a verdict.
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em' }}>
+          P4 — {hasFrame ? 'FRAME ANCHORING' : 'NO DOMAIN-ANCHORED STRUCTURE'}
         </div>
-        {frame.subjectResolution?.state !== 'NONE' && (
-          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{frame.subjectResolution.prompt}</div>
+        {hasFrame ? (
+          <>
+            <div style={{ fontSize: 11, color: LIME, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{frameHeadline(frame) ?? frame.class.replace(/_/g, ' ')}</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 520 }}>
+              {frame.unresolved.length} of {frame.anchors.length} anchors open. The class-native anchor checklist — the specific inputs that would resolve this {frame.class.replace(/_/g, ' ').toLowerCase()} — is in the FRAME ANCHORING section of the packet. Anchors scope observation; they do not produce a verdict.
+            </div>
+            {frame.subjectResolution?.state !== 'NONE' && (
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{frame.subjectResolution.prompt}</div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, maxWidth: 520 }}>
+            No subject resolved and no domain anchor detected. The observable field across the six
+            domains is in the Structural Field section of the packet. No action set is derived
+            without a subject or domain anchor — that is a stated absence, not a low score.
+          </div>
         )}
       </div>
     );
@@ -326,14 +343,9 @@ export default function ActionMatrix() {
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.16em' }}>
           ACTIONS DERIVED FROM ORACLE FRACTURES + {lensLabel} LENS VECTORS
         </div>
-        <div style={{
-          fontSize: 9, color: LIME, letterSpacing: '0.16em',
-          background: 'rgba(102,255,0,0.08)',
-          border: `1px solid rgba(102,255,0,0.2)`,
-          padding: '3px 10px',
-        }}>
-          LEVERAGE WINDOW — OPEN
-        </div>
+        {/* §21 — "LEVERAGE WINDOW — OPEN" was a hardcoded verdict badge with no
+            derivation (always "OPEN"). Removed: KRYLO does not assert a leverage
+            window state it has not measured. */}
       </div>
 
     </div>

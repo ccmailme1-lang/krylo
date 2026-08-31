@@ -403,3 +403,63 @@ lessons, load-bearing:
    sooner." Don't force manual reconciliation when the substrate already has what's needed to
    expose the relationship. Consistent with **capture once → scope repeatedly → synthesize
    afterward**, observation / interpretation / formation kept distinct.
+
+## 21. FORMATION IS NOT A VERDICT — Constitutional (Founder, 2026-08-31, LOCKED)
+
+Same status as the Cognitive Fabric mathematical specification. CF defines *how* structure is
+captured and recorded; this defines *what* may be shown once it has been substantiated.
+
+> **KRYLO presents the substantiated structure it observes. It does not withhold that structure
+> because a guest may draw a conclusion from it. Prediction, judgment, and decision are
+> derivatives of the guest — not responsibilities of the presenter.**
+>
+> **KRYLO presents the map. KRYLO does not decide what the map means to the guest.**
+
+**The boundary:**
+```
+REALITY → OBSERVATION → RELATIONSHIPS → FORMATION → PRESENTATION
+                                                        │  ← KRYLO's responsibility ends here
+                                                        ↓
+                                    GUEST INTERPRETATION → DECISION / PREDICTION / ACTION
+```
+The contamination being eradicated: `FORMATION → "could the guest conclude X?" → WITHHOLD FORMATION`.
+
+Formal: `KRYLO: Reality → 𝒪 → Γ → ν_t → ℛ → ℱ → Rec(F)`. The guest's derivative
+`D_g = f(Rec(F), question, preferences/constraints, objectives)` — **KRYLO never computes D_g.**
+Any architecture implementing `KRYLO: F → D` is contaminated and must be removed.
+
+**Three binding rules:**
+1. **Information Presentation** — a relationship/formation that satisfies the admission and
+   Formation contracts (governed + provenance-reconstructable) is presented. No softening,
+   suppression, qualification, or withholding *solely* because a reasonable guest could draw a
+   consequential interpretation.
+2. **Non-Inference Boundary** — KRYLO does not *convert* observed structure into an unsupported
+   conclusion, prediction, recommendation, risk judgment, prioritization, or prescribed action.
+   The boundary is about **conversion, not presentation**.
+3. **Decision Boundary** — KRYLO does not make, recommend, or complete the guest's decision.
+   Decision parameters (dollar amounts, timelines, risk tolerances) may be *required to answer a
+   decision-specific derivative*; they are **never** a precondition for exposing the underlying
+   substantiated structure.
+
+**Critical invariant:** the Non-Inference Boundary is **NOT** an Information-Withholding Boundary.
+Conflating them is constitutionally invalid and is a **defect** wherever it appears under any
+name — "decision safety", "insufficient input", "advisory synthesis", "perception risk",
+"verdict withholding".
+
+**Google-Maps invariant:** Maps does not erase East Oakland because someone might infer something
+from its location, boundaries, roads, businesses, or crime statistics — it represents the observed
+world accurately. What someone concludes or does with that representation is downstream of the map.
+
+**Implementation rule — do not merely replace visible copy.** Trace the gating logic backward.
+Any boolean, status, score, fallback, or render condition whose *semantic purpose* is "don't show
+this because the guest lacks a decision" is part of the contamination, even if its UI wording no
+longer says `WITHHELD`. Canonical acceptance test for every affected path:
+
+> **If KRYLO has substantiated structural information, does the guest receive that information
+> regardless of whether they supplied a decision?**  Yes → compliant.  No → contaminated.
+
+`WITHHELD` remains legitimate **only at the evidence/claim level** where something genuinely is
+unsupported — never as a euphemism for "we decided the guest shouldn't see the structure."
+"No formation established" is valid **only** when the Formation contract actually returns empty.
+Reinforces §16 (Direction Honesty) and §1 (Absence-Is-Signal). See memory
+`feedback_formation_is_not_a_verdict.md`.

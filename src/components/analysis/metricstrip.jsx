@@ -166,9 +166,18 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
     },
     {
       label:        'Convergence',
-      display:      (convergence && !convergence.withheld) ? `${Math.round((convergence.value ?? 0) * 100)}%` : '—',
-      groundedness: convergence?.withheld ? 0 : (convergence?.groundedness ?? 0),
-      tag:          convergence?.withheld ? 'WITHHELD' : (convergence?.queryRelevant === false ? 'AMB' : null),
+      // §21 — Convergence reads the live signal-FIELD state. When the subject metric is
+      // withheld, the field value is still shown (labelled FIELD), not blanked — it is
+      // substantiated field structure, not a subject claim.
+      display:      convergence?.withheld
+                      ? (convergence?.fieldValue != null ? `${Math.round(convergence.fieldValue * 100)}%` : '—')
+                      : `${Math.round((convergence?.value ?? 0) * 100)}%`,
+      groundedness: convergence?.withheld
+                      ? (convergence?.fieldValue != null ? (convergence?.fieldGroundedness ?? 0) : 0)
+                      : (convergence?.groundedness ?? 0),
+      tag:          convergence?.withheld
+                      ? (convergence?.fieldValue != null ? 'FIELD' : 'WITHHELD')
+                      : (convergence?.queryRelevant === false ? 'AMB' : null),
       tileMode:     'active',
       title:        defTitle('convergence'),
     },

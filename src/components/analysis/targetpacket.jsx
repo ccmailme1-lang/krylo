@@ -19,6 +19,8 @@ import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }        from '../../engine/metricsengine.js';
 import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
+import { inferFormation }        from '../../engine/formationinference.js';
+import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
@@ -319,6 +321,19 @@ export default function TargetPacket() {
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 
+  // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
+  // NO_FORMATION_ESTABLISHED only when the Formation contract actually returns
+  // empty, never as a constant. Run the contract against the live field pool.
+  // A found formation is substantiated structure and IS shown — labelled FIELD
+  // SCOPE, because subject-scoped observation binding is still the KRYL-1220
+  // bridge gap. This is not a subject verdict; it is the observable field.
+  const fieldFormation = useMemo(() => {
+    try {
+      const field = buildPerceptionField({ now: Date.now() });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures]);
+
   // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
   // DIC / synthesis routing / 5B are untouched (forensic recovery: those are
   // legitimate to their own contracts). `INSUFFICIENT_INPUT` stays what it means
@@ -505,7 +520,7 @@ export default function TargetPacket() {
               {observationCount > 0 ? `${observationCount} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}` : 'none in window'}
             </span></span>
             <span style={{ color: '#3a4140' }}>·</span>
-            <span>DECISION VERDICT <span style={{ color: '#eceee9' }}>WITHHELD</span></span>
+            <span>DECISION VERDICT <span style={{ color: '#eceee9' }}>NOT PRODUCED</span></span>
           </div>
         </section>
 
@@ -552,14 +567,35 @@ export default function TargetPacket() {
              subject-scoped observations + an admitted relationship between them
              (WO-5B 5B-3 / Formation Perception). ──────────────────────────────── */}
         <PacketSection ordinal="02" title="FORMATION">
-          <p style={{ margin: '16px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
-            No formation established.
-          </p>
-          <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-            A formation is earned from subject-scoped observations in two or more domains and at
-            least one admitted cross-domain relationship connecting them. Neither is present for
-            this query. This is NO_FORMATION_ESTABLISHED — a stated absence, not a low score.
-          </p>
+          {fieldFormation ? (
+            <>
+              <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LBL }}>FIELD SCOPE — LIVE OBSERVABLE FIELD, NOT SUBJECT-BOUND</div>
+              <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
+                A cross-domain formation is present in the live field:{' '}
+                {fieldFormation.participatingDomains.join(' · ')} —{' '}
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''},
+                existence {fieldFormation.existence.toFixed(2)}.
+              </p>
+              <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+                This is the structure of the observable field, not a reading bound to a resolved
+                subject — subject-scoped observation binding is the KRYL-1220 analytical bridge, not
+                yet delivered to this packet. KRYLO presents this structure; what it means for a
+                decision is the reader's to draw.
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '16px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
+                No formation established.
+              </p>
+              <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+                A formation is earned from observations in two or more domains and at least one
+                admitted cross-domain relationship connecting them. The Formation contract returned
+                empty against the live field for this query. This is NO_FORMATION_ESTABLISHED — a
+                stated absence, not a low score.
+              </p>
+            </>
+          )}
         </PacketSection>
 
         {/* ── 03 BASIS ───────────────────────────────────────────────────────── */}
