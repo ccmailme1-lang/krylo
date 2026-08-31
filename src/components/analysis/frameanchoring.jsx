@@ -10,7 +10,7 @@
 // score. Anchors establish the object and scope of observation — never a conclusion
 // input (SPEC-frame-anchoring.md CONTRACT).
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { classifyFrame, frameHeadline } from '../../engine/frameclassify.js';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -46,10 +46,15 @@ function AnchorRow({ a }) {
 }
 
 export default function FrameAnchoring({ queryContext, query, subjectKind }) {
+  // classifyFrame is not cheap (regex scans + resolve() per name clue) — memoize per
+  // query so it doesn't run on every packet re-render. Hook must be unconditional.
+  const result = useMemo(
+    () => (subjectKind === 'ENTITY' ? null : classifyFrame(queryContext ?? query ?? '')),
+    [subjectKind, queryContext, query],
+  );
+
   // Only for a non-ENTITY subject — an ENTITY has its own resolved packet.
   if (subjectKind === 'ENTITY') return null;
-
-  const result = classifyFrame(queryContext ?? query ?? '');
   if (!result || result.class === 'NO_FRAME') return null;
 
   const sr = result.subjectResolution;

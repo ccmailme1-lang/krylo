@@ -191,6 +191,8 @@ export default function ActionMatrix() {
   const highImpact         = visibleCards.filter(c => c.impact >= 0.8).length;
   const structuralFriction = session?.tensor?.structuralFriction ?? null;
   const showFriction       = structuralFriction?.state === 'HIGH_FRICTION';
+  // KRYL-1236 stage 2 — memoized per session; classifyFrame is not cheap.
+  const frame = useMemo(() => classifyFrame(session?.queryContext ?? session?.query ?? ''), [session]);
 
   if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
     return <AmbiguousState variant="compact" />;
@@ -199,7 +201,6 @@ export default function ActionMatrix() {
   // KRYL-1236 stage 2 — for a recognised frame with no domain-anchored synthesis,
   // the generic "REFINE YOUR QUERY" matrix is not the right remediation. Point at
   // the class-native FRAME ANCHORING surface in the packet instead.
-  const frame = classifyFrame(session?.queryContext ?? session?.query ?? '');
   if (subj.kind !== 'ENTITY' && frame.class !== 'NO_FRAME' && !synthesisIsDomainAnchored(synthesis)) {
     return (
       <div style={{ width: '100%', height: '100%', background: '#000', fontFamily: MONO, padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>

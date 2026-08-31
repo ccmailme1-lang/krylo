@@ -50,16 +50,16 @@ for (const [name, s, expect] of [
      brief.label !== s.query && !brief.label.startsWith('VECTOR') && !brief.label.startsWith('Elevator'));
 }
 
-// ── 2. Oriole — now resolved as NAMED_UNVERIFIED (KRYL-1237); brief must agree ─
+// ── 2. Oriole — unresolved (KRYL-1237/1238 reverted); brief must NOT paste the blob ─
+// (NAMED_UNVERIFIED promotion reverted to 0913c8f after it produced wrong subjects
+//  on the live surface — "Apparel" for a "Warner Bros. offer" query. Re-do offline.)
 {
   const brief  = canonicalBriefSubject(ORIOLE);
   const packet = subjectScope(ORIOLE.queryContext);
-  ok('Oriole: packet resolves it NAMED_UNVERIFIED (KRYL-1237)',
-     packet.kind === 'ENTITY' && packet.verification === 'NAMED_UNVERIFIED');
-  ok('Oriole: brief subject === packet subject (no divergence)',
-     brief.label === packet.entity.name && brief.label === 'Oriole Networks');
-  ok('Oriole: brief subject is NOT the raw submission text',
-     !brief.label.startsWith('Deal Submission') && brief.label.length < 40);
+  ok('Oriole: packet does NOT resolve it to an ENTITY (no false subject)',
+     packet.kind !== 'ENTITY');
+  ok('Oriole: brief subject is an honest-absence label, not the raw submission text',
+     brief.resolved === false && !brief.label.startsWith('Deal Submission') && !brief.label.startsWith('Oriole Networks\n'));
 }
 
 // ── 3. cleanLens rejects raw-query pseudo-lenses, keeps real tokens ──────────
