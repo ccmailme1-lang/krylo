@@ -40,14 +40,26 @@ ok('adding a new CAPITAL signal changes the chip set',
 
 // ── 3. The analysisidlefield trendingResult memo is query-fragment-free ──────
 const src = readFileSync(new URL('./src/components/analysis/analysisidlefield.jsx', import.meta.url), 'utf8');
-const memo = src.slice(src.indexOf('const trendingResult = useMemo'), src.indexOf('const trendingResult = useMemo') + 900);
+const memo = src.slice(src.indexOf('const trendingResult = useMemo'), src.indexOf('const trendingResult = useMemo') + 1600);
 ok('trendingResult memo does NOT call parseIntent (no query entities)', !/parseIntent/.test(memo));
 ok('trendingResult memo does NOT use DOMAIN_PRECURSORS (no static list)', !/DOMAIN_PRECURSORS/.test(memo));
 ok('trendingResult memo does NOT use matchConceptRewrites (no rewrites)', !/matchConceptRewrites/.test(memo));
 ok('trendingResult memo does NOT score against query tokens', !/scoreTermRelevance|tokenizeForRelevance/.test(memo));
-ok('trendingResult memo derives only from deriveTrendingTerms + rawSignals', /deriveTrendingTerms\(rawSignals/.test(memo));
-ok('trendingResult memo deps: seedQuery is only a boolean gate, no query text in the pool', /\}, \[seedQuery, selectedDomains, rawSignals\]\)/.test(memo));
 ok('static DOMAIN_PRECURSORS list is deleted from the module', !/const DOMAIN_PRECURSORS = \{/.test(src));
+
+// ── 3b. KRYL-1246 — two scopes: SUBJECT (identifier-bound facets) then FIELD ──
+ok('FIELD-scope chips come from deriveTrendingTerms over rawSignals', /deriveTrendingTerms\(rawSignals/.test(memo));
+ok('SUBJECT-scope chips come from getDomainEvidenceFacets bound to the resolved subject',
+   /subjectScope\(liveQueryContext\)/.test(memo) && /getDomainEvidenceFacets\(d, \{ subject: scope \}\)/.test(memo));
+ok('SUBJECT chip labels come from the facet provenance, never the query (trendingFacetLabel)',
+   /trendingFacetLabel\(f\)/.test(memo) && /provenance\?\.semantics \?\? f\?\.semantics \?\? f\?\.sourceId/.test(src));
+ok('liveQueryContext is used ONLY as subjectScope(liveQueryContext) — never a chip source',
+   /subjectScope\(liveQueryContext\)/.test(memo) &&
+   !/deriveTrendingTerms\([^)]*liveQueryContext|Label\([^)]*liveQueryContext|chips?.*liveQueryContext/.test(memo));
+ok('subject branch is gated on a resolved ENTITY', /if \(scope\.kind === 'ENTITY'\)/.test(memo));
+ok('scope marker returned on every path (SUBJECT | FIELD)', (memo.match(/scope: '(SUBJECT|FIELD)'/g) || []).length >= 3);
+ok('render shows the scope provenance (SUBJECT SCOPE / FIELD SCOPE), never mixed silently',
+   /SUBJECT SCOPE.*FIELD SCOPE|trendingResult\.scope === 'SUBJECT'/.test(src));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

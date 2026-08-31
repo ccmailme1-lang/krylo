@@ -17,6 +17,8 @@ import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
+import { subjectScope } from '../../engine/subjectscope.js';
+import { getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import StructuralField from './structuralfield.jsx';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
@@ -92,6 +94,14 @@ const DOMAIN_CHIPS = [
 // The locked six — the TRENDING pool iterates these when the guest has not narrowed
 // to a pill.
 const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+
+// KRYL-1246 — human label for a subject-bound evidence facet (getDomainEvidenceFacets).
+// Uses the facet's own provenance semantics / source id — never query text.
+function trendingFacetLabel(f) {
+  const raw = f?.provenance?.semantics ?? f?.semantics ?? f?.sourceId ?? f?.source ?? null;
+  if (typeof raw !== 'string' || !raw) return null;
+  return raw.split(':')[0].replace(/_/g, ' ').trim().toUpperCase();
+}
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
 // taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked
@@ -793,29 +803,51 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const bayResult      = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
   const frictionResult = useMemo(() => computeStructuralFriction(bayDomain, bayResult), [bayDomain, bayResult]);
 
-  // TRENDING — another view into the SAME dispatched-signal substrate the Structural
-  // Field / packet observation-count reads (routedSignals via deriveTrendingTerms,
-  // KRYL-1143b: §16 shared pool, {source, domain, signal, confidence, ts}; §22
-  // zero-confidence excluded). NOT an NLP layer: no query entities, no static
-  // precursor list, no concept rewrites, no query-token gating. A chip exists ONLY
-  // because a live connector dispatched a real signal in that domain. Query wording
-  // never changes this set — only the observations do. No qualifying signal -> no
-  // chips (never padded). (DEF: TRENDING provenance — query-fragment extraction.)
+  // TRENDING — a view into the SAME observation state the Structural Field / packet
+  // SIGNAL read. NOT an NLP layer: no query entities, no static list, no concept
+  // rewrites, no query-token gating. Never synthetic subject attribution.
+  //
+  // KRYL-1246 — two scopes, provenance always visible:
+  //  · SUBJECT SCOPE — chips derived from A(d, Subject) evidence facets that are
+  //    IDENTIFIER-bound to the resolved subject (subjectbinding.js). Same set the
+  //    packet SIGNAL panel shows. Empty until a WO-5B 5B-2 producer binds facets.
+  //  · FIELD SCOPE   — fallback: field-level dispatched connector signals
+  //    (deriveTrendingTerms over routedSignals; §16 shared pool; §22 zero-confidence
+  //    excluded). Labelled FIELD SCOPE so it never masquerades as subject evidence.
+  // Query wording never changes either set — only the observations do.
+  const liveQueryContext = useMemo(() => buildQueryContext(seedQuery.trim()), [seedQuery]);
+
   const trendingResult = useMemo(() => {
-    if (!seedQuery.trim()) return { chips: [], chipSources: new Map() };
+    if (!seedQuery.trim()) return { chips: [], chipSources: new Map(), scope: 'FIELD' };
     const selectedCanon = [...new Set(selectedDomains.map(p => ANALYSIS_PILL_TO_DOMAIN[p]).filter(Boolean))];
     const domains = selectedCanon.length ? selectedCanon : CANON_DOMAINS;
     const perDomain = Math.max(1, Math.floor(8 / domains.length));
-
     const chipSources = new Map();
+
+    // ── SUBJECT SCOPE — identifier-bound evidence facets only ────────────────
+    const scope = subjectScope(liveQueryContext);
+    if (scope.kind === 'ENTITY') {
+      const subj = [];
+      for (const d of domains) {
+        for (const f of getDomainEvidenceFacets(d, { subject: scope })) {
+          const label = trendingFacetLabel(f);
+          if (label && !subj.includes(label)) { subj.push(label); chipSources.set(label, 'subject-observation'); }
+        }
+      }
+      if (subj.length > 0) {
+        return { chips: subj.slice(0, 8).map(t => ({ lens: t, label: t })), chipSources, scope: 'SUBJECT' };
+      }
+    }
+
+    // ── FIELD SCOPE — fallback ──────────────────────────────────────────────
     const labels = [];
     for (const d of domains) {
       for (const label of deriveTrendingTerms(rawSignals, d, perDomain)) {
         if (!labels.includes(label)) { labels.push(label); chipSources.set(label, 'signal'); }
       }
     }
-    return { chips: labels.slice(0, 8).map(t => ({ lens: t, label: t })), chipSources };
-  }, [seedQuery, selectedDomains, rawSignals]);
+    return { chips: labels.slice(0, 8).map(t => ({ lens: t, label: t })), chipSources, scope: 'FIELD' };
+  }, [seedQuery, liveQueryContext, selectedDomains, rawSignals]);
 
   // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
   // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
@@ -836,15 +868,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   }, [trendingResult, seedQuery, selectedDomains]);
 
   // ── KRYL-1222 — Completion chips ────────────────────────────────────────────
-  // Prescriptive "what's missing" layer. Reads the KRYL-1221 QueryContext for the
-  // live query text (buildQueryContext is pure), never re-parses. Only the
-  // `timeline` chip is enabled today — its control (the horizon scrubber) is the
-  // only routing target currently mounted; the rest are defined-but-gated in
+  // Prescriptive "what's missing" layer. Reads the KRYL-1221 QueryContext
+  // (liveQueryContext, defined above) for the live query text — never re-parses.
+  // Only the `timeline` chip is enabled today — its control (the horizon scrubber)
+  // is the only routing target currently mounted; the rest are defined-but-gated in
   // completionchips.js pending their controls (separate ticket).
-  const liveQueryContext = useMemo(
-    () => buildQueryContext(seedQuery.trim()),
-    [seedQuery],
-  );
   const completionChips = useMemo(
     () => activeCompletionChips({
       queryContext: liveQueryContext,
@@ -1767,12 +1795,18 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
                 {/* ── TRENDING ── */}
                 {/* Pure render of trendingResult (computed above). Every chip is a real
-                    dispatched connector signal for a domain in scope — the same substrate
-                    the Structural Field reads. No query-derived content. No qualifying
-                    signal -> the block does not render. */}
+                    dispatched connector signal — the same substrate the Structural Field
+                    reads. No query-derived content. No qualifying signal -> the block does
+                    not render. KRYL-1246: chips are FIELD-scoped and labelled so; the
+                    SUBJECT-scoped branch waits on WO-5B 5B-2 identifier-bound facets. */}
                 {trendingResult.chips.length > 0 && (
                   <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>
+                      TRENDING
+                      <span style={{ color: trendingResult.scope === 'SUBJECT' ? 'rgba(102,255,0,0.5)' : 'rgba(255,255,255,0.11)' }}>
+                        {' '}· {trendingResult.scope === 'SUBJECT' ? 'SUBJECT SCOPE' : 'FIELD SCOPE'}
+                      </span>
+                    </div>
                     <StaggeredChips
                       chips={trendingResult.chips}
                       selected={activeSituation?.lens}
