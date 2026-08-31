@@ -12,6 +12,7 @@ import { useHappyPathEngine, useUnicornAlerts } from '../../engine/happypathdisp
 import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../engine/convictionstore.js';
 import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
+import { canonicalBriefSubject, cleanLens, synthesisIsDomainAnchored } from '../../engine/briefcontext.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
@@ -70,8 +71,13 @@ function mapActionsToCoas(actions) {
 }
 
 function buildBrief(session, synthesis, hp = null) {
-  const entity     = getDisplayEntity(session?.query ?? 'Unknown Signal');
-  const lens       = session?.lens  ?? null;
+  // KRYL-1239 — consume the SAME canonical subject the Target Packet resolved
+  // (subjectScope over the query context), never getDisplayEntity() over the raw
+  // query string. buildBrief does not resolve, extract, or infer a subject of its own.
+  const subj       = canonicalBriefSubject(session);
+  const entity     = subj.label;
+  const rawLens    = session?.lens ?? null;   // adapter resolution — unchanged
+  const anchorLens = cleanLens(rawLens);      // displayed anchor — raw-query pseudo-lenses rejected
   const hpDomains  = hp?.qualified ? hp.domains : null;
   // Domain field = query's classified subject domain. The HP macro-convergence
   // domains (the 6 locked: TECHNOLOGY/CAPITAL/...) describe WHERE convergence was
@@ -92,7 +98,7 @@ function buildBrief(session, synthesis, hp = null) {
     return {
       classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
       subject:    entity.toUpperCase(),
-      lens:       lens ?? 'UNANCHORED',
+      lens:       anchorLens ?? 'UNANCHORED',
       date:       dateStr,
       asOf:       timeStr,
       originator: 'ORACLE KERNEL v3.7.2',
@@ -114,13 +120,45 @@ function buildBrief(session, synthesis, hp = null) {
     };
   }
 
-  const adapter = LensRegistry.resolve(lens);
-  const payload   = { entity, domain, lens };
+  // KRYL-1239 — the packet resolved a subject but the advisory synthesis did not get
+  // past its open-lens fallback for this input (typical for pasted pitch / deal-blob
+  // text). That path's synth* narrative is built from the raw query and asserts "no
+  // counterparty detected" — a direct contradiction of the resolved subject. Do not
+  // present it as subject-scoped analysis: mirror the Target Packet — name the
+  // resolved subject, defer observation to the packet, withhold the verdict.
+  if (subj.kind === 'ENTITY' && !synthesisIsDomainAnchored(synthesis)) {
+    return {
+      classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
+      subject:       entity.toUpperCase(),
+      lens:          anchorLens ?? 'SUBJECT-SCOPED',
+      date:          dateStr,
+      asOf:          timeStr,
+      originator:    'ORACLE KERNEL v3.7.2',
+      domain:        subj.domainTags?.length ? subj.domainTags.join(' · ') : 'SUBJECT-SCOPED',
+      cac:           '—',
+      roas:          '—',
+      subjectScoped: true,
+      bluf:          `${entity} resolved as the subject of record${subj.canonicalId ? ` (${subj.canonicalId})` : ''}. Subject-scoped observation — evidence, derived measure, or classified absence per domain — is in the Target Packet. The advisory synthesis pipeline did not return a domain-anchored analysis for this input; this brief does not fill that with a verdict.`,
+      purpose:       `To carry the Target Packet's resolved subject state into the export record without re-deriving it from the raw query.`,
+      fiveWs:        [],
+      evidence:      [],
+      assumptions:   [],
+      assessment:    'Analysis withheld at brief level: the subject is resolved but no subject-scoped synthesis is available. See the Target Packet for what KRYLO can and cannot observe about this subject.',
+      threats:       [],
+      opportunities: [],
+      coas:          [],
+      alternativeView: '',
+      outlook:       [],
+    };
+  }
+
+  const adapter = LensRegistry.resolve(rawLens);
+  const payload   = { entity, domain, lens: anchorLens };
 
   return {
     classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
     subject:        entity.toUpperCase(),
-    lens:           lens ?? 'UNANCHORED',
+    lens:           anchorLens ?? 'UNANCHORED',
     date:           dateStr,
     asOf:           timeStr,
     originator:     'ORACLE KERNEL v3.7.2',
@@ -129,7 +167,7 @@ function buildBrief(session, synthesis, hp = null) {
     bluf:           synthesis?.bluf    ?? (hpDomains
       ? `Happy Path qualified: HIGH convergence across ${hpDomains.join(' + ')} — score ${hp.peakScore?.toFixed(0) ?? '—'}/100. Structural asymmetry confirmed.`
       : `Structural convergence detected in the ${domain.toLowerCase()} domain.`),
-    purpose:        synthesis?.purpose ?? `To support ${lens ? lens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
+    purpose:        synthesis?.purpose ?? `To support ${anchorLens ? anchorLens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
     fiveWs:         synthesis?.fiveWs  ?? adapter.fiveWs?.(payload) ?? [],
     evidence:       synthesis?.evidence       ?? [],
     assumptions:    synthesis?.assumptions    ?? [],

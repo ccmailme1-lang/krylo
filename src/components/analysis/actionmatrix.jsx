@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { useAnalysisStore }        from '../../store/useanalysisstore.js';
 import { synthesizeQuery }         from '../../engine/querysynthesis.js';
 import { getVisibleCards }         from '../../engine/editorialgate.js';
-import { getDisplayEntity }        from '../../utils/formatters.js';
+import { canonicalBriefSubject, cleanLens } from '../../engine/briefcontext.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
 import { computeTruthDynamics }   from '../../engine/identitydynamics.js';
@@ -162,8 +162,12 @@ export default function ActionMatrix() {
   const sessions        = useAnalysisStore((s) => s.sessions);
   const activeSessionId = useAnalysisStore((s) => s.activeSessionId);
   const session         = activeSessionId ? sessions[activeSessionId] : null;
-  const targetLabel     = getDisplayEntity(session?.query ?? '').toUpperCase() || 'TARGET';
-  const lensLabel       = session?.lens?.toUpperCase() ?? 'OPEN';
+  // KRYL-1239 — same canonical subject the Target Packet / Export Brief resolve, never
+  // a fresh parse of the raw query string.
+  const subj            = canonicalBriefSubject(session);
+  const targetLabel     = (subj.label || 'TARGET').toUpperCase();
+  const lensLabel       = cleanLens(session?.lens)?.toUpperCase()
+                          ?? (subj.kind === 'ENTITY' ? 'SUBJECT-SCOPED' : 'OPEN');
 
   const synthesis    = useMemo(() => synthesizeQuery(session), [session]);
   const { engineState } = useHappyPathEngine();
