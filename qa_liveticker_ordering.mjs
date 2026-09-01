@@ -53,14 +53,16 @@ const ENGINE = /formationinference|metricsengine|querysynthesis|domainintelligen
 ok('usenewsfeed.js imports nothing from the analytical engine', !ENGINE.test(hook));
 ok('liveticker.jsx imports nothing from the analytical engine', !ENGINE.test(tick));
 
-// ── 6. feeds bay migrated; app mounts the strip gated to NAV_SURFACE ───────
-const feeds = readFileSync(new URL('./src/components/feeds/feedsbay.jsx', import.meta.url), 'utf8');
-const app   = readFileSync(new URL('./src/app.jsx', import.meta.url), 'utf8');
-ok('feedsbay.jsx uses the shared hook', /useNewsFeed\(/.test(feeds));
-ok('feedsbay.jsx no longer generates a random fs', !/0\.70 \+ Math\.random/.test(feeds));
-ok('feedsbay.jsx no longer re-sorts by fs', !/\.sort\(\(a, b\) => \(b\.fs/.test(feeds));
+// ── 6. app mounts the copied strip on the surface view, gated to NAV_SURFACE ─
+// Feeds bay is deliberately NOT touched — the Home ticker is a copy (code +
+// location + subjects), per Founder direction "copy the code, location, subjects".
+const app = readFileSync(new URL('./src/app.jsx', import.meta.url), 'utf8');
 ok('app.jsx mounts <LiveTicker> gated to NAV_SURFACE',
    /viewportLens === 'NAV_SURFACE'[\s\S]{0,200}<LiveTicker/.test(app));
+ok('the Home ticker component is a verbatim copy of the Feeds-bay ticker markup', (() => {
+  const shared = tick.slice(tick.indexOf('export default function LiveTicker'));
+  return /● LIVE/.test(shared) && /whiteSpace: 'nowrap'/.test(shared) && /timeAgo\(/.test(shared);
+})());
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

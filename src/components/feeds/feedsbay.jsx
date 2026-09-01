@@ -8,8 +8,6 @@
 // Skin locked per CLAUDE.md §6: #000000, #66FF00, IBM Plex Mono + Georgia.
 import React, { useState, useEffect, useMemo } from 'react';
 import HelpMark from '../shared/helpmark.jsx';
-import LiveTicker from '../shared/liveticker.jsx';
-import { useNewsFeed } from '../../hooks/usenewsfeed.js';
 
 const RAIL_HELP = {
   'FEATURED':         'A hand-picked story the system thinks is worth your attention right now.',
@@ -40,9 +38,22 @@ const SUBCATEGORIES = {
   TECHNOLOGY: ['AI', 'SEMICONDUCTORS', 'CYBERSECURITY', 'PLATFORMS'],
 };
 
-// News source + the live ticker now live in shared modules (KRYL-1251):
-//   src/hooks/usenewsfeed.js       — /api/news fetch + deterministic ordering
-//   src/components/shared/liveticker.jsx
+// Cone domain (server) → feeds domain (page)
+const CONE_TO_FEED = {
+  capital: 'FINANCIAL', ownership: 'MARKET', media: 'MARKET',
+  labor: 'CAREER', technology: 'TECHNOLOGY', knowledge: 'TECHNOLOGY',
+};
+
+const MOCK = [
+  { id:1, type:'FINANCIAL', title:'Rate compression signals detected across regional banking sector as Federal Reserve holds rates steady', description:'Central bank officials cited persistent inflationary pressure as justification for maintaining current policy stance through Q3.', source:'Signal Intelligence', time:'09:41Z', imageUrl:null, fs:0.89 },
+  { id:2, type:'MARKET',    title:'Equity overhang detected prior to Series B close — insider activity flagged across three portfolio firms', description:'Pattern analysis confirms pre-announcement positioning inconsistent with disclosed trading windows.', source:'Market Desk', time:'09:35Z', imageUrl:null, fs:0.81 },
+  { id:3, type:'LEGAL',     title:'Court filing contradicts public narrative on revenue recognition — restructuring mechanism confirmed', description:null, source:'Legal Wire', time:'09:28Z', imageUrl:null, fs:0.76 },
+  { id:4, type:'CAREER',    title:'Labor market tightening in high-skill verticals accelerates — talent exodus pattern matches P2 telemetry', description:null, source:'Career Signal', time:'09:20Z', imageUrl:null, fs:0.71 },
+  { id:5, type:'TECHNOLOGY',title:'Supply chain pressure building in semiconductor vertical — lead times extend to 28 weeks', description:null, source:'Tech Monitor', time:'09:14Z', imageUrl:null, fs:0.68 },
+  { id:6, type:'LEGAL',     title:'Debt instrument obscured via SPV — mechanism confirmed across four jurisdictions', description:null, source:'Legal Wire', time:'09:08Z', imageUrl:null, fs:0.65 },
+  { id:7, type:'FINANCIAL', title:'Board-level friction signal detected — COO departure imminent based on behavioral pattern analysis', description:null, source:'Signal Intelligence', time:'08:57Z', imageUrl:null, fs:0.62 },
+  { id:8, type:'MARKET',    title:'Commodity index divergence signals demand compression in three key industrial sectors', description:null, source:'Market Desk', time:'08:44Z', imageUrl:null, fs:0.59 },
+];
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 900);
@@ -145,8 +156,33 @@ function StoryAtom({ story, size = 17, showDeck = false, showFs = false, live = 
   );
 }
 
-// ── Filter ──────────────────────────────────────────────────────────────────
-// LiveTicker moved to src/components/shared/liveticker.jsx (KRYL-1251).
+// ── Ticker + Filter (unchanged surfaces) ─────────────────────────────────────
+
+function LiveTicker({ stories }) {
+  const items = stories.slice(0, 6);
+  if (!items.length) return null;
+  return (
+    <div style={{
+      borderBottom:`1px solid ${RULE}`, padding:'8px 32px',
+      display:'flex', alignItems:'center', overflowX:'auto', scrollbarWidth:'none',
+    }}>
+      <span style={{ fontFamily:MONO, fontSize:9, color:LIME, letterSpacing:'0.2em', marginRight:16, flexShrink:0 }}>● LIVE</span>
+      <div style={{ display:'flex', alignItems:'center', flexWrap:'nowrap' }}>
+        {items.map((s, i) => (
+          <React.Fragment key={s.id}>
+            {i > 0 && <span style={{ color:RULE2, margin:'0 12px', fontSize:10 }}>|</span>}
+            <span style={{ display:'flex', alignItems:'center', gap:8, whiteSpace:'nowrap' }}>
+              <span style={{ fontFamily:SERIF, fontSize:12, color:TEXT }}>{s.title}</span>
+              <span style={{ fontFamily:MONO, fontSize:9, color:LIME, letterSpacing:'0.12em' }}>
+                {s.publishedAt ? timeAgo(s.publishedAt) : s.time}
+              </span>
+            </span>
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function Chip({ label, active, onClick }) {
   return (
@@ -388,20 +424,43 @@ function RailWire({ stories }) {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 export default function FeedsBay() {
+  const [stories, setStories] = useState(MOCK);
+  const [loading, setLoading] = useState(false);
   const [domain,  setDomain]  = useState('ALL');
   const [sub,     setSub]     = useState('ALL');
   const mobile = useIsMobile();
-  // KRYL-1251 — one shared, deterministically-ordered news source. No local
-  // fetch, no `fs: Math.random()`. Real articles carry fs: null (FidelityBar
-  // renders nothing for null); MOCK keeps authored fs for offline dev.
-  const { stories, loading } = useNewsFeed(domain);
+
+  useEffect(() => {
+    setLoading(true);
+    const q = domain !== 'ALL' ? `?domain=${domain}` : '';
+    fetch(`/api/news${q}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.articles?.length > 0) {
+          const mapped = data.articles.map((a, i) => ({
+            id: i,
+            type: domain !== 'ALL' ? domain : (CONE_TO_FEED[a.domain] ?? 'SIGNAL'),
+            sub: null,
+            title: a.title ?? '',
+            description: a.description ?? null,
+            source: a.source ?? 'unknown',
+            publishedAt: a.publishedAt ?? null,
+            time: a.publishedAt ? new Date(a.publishedAt).toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit', timeZoneName:'short' }) : '',
+            imageUrl: a.imageUrl ?? null,
+            url: a.url ?? null,
+            fs: 0.70 + Math.random() * 0.25,
+          }));
+          setStories(mapped);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [domain]);
 
   // Page mandate: never render empty — empty sub-filter falls back to full set
   const subFiltered = sub === 'ALL' ? stories : stories.filter(s => s.sub === sub);
   const filtered = subFiltered.length > 0 ? subFiltered : stories;
-  // KRYL-1251 — `stories` arrives already ordered (published_at DESC, deterministic
-  // tie-break). No re-sort by a fabricated fs score.
-  const sorted = filtered;
+  const sorted = useMemo(() => [...filtered].sort((a, b) => (b.fs ?? 0) - (a.fs ?? 0)), [filtered]);
 
   // Allocation: top well → rail features → digest/wire → domain packages take the rest
   const alloc = useMemo(() => {
