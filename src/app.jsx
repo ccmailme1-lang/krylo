@@ -73,6 +73,7 @@ import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges, buildChokepointStructure } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import ConeMap            from './components/spine/conemap.jsx';
+import HomeTicker         from './components/surface/hometicker.jsx';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -1364,6 +1365,14 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
+
+          {/* KRYL-1251 — the NEWS FEED live ticker, copied to the Home view.
+              §8: surface orientation chrome gates at the lens level. */}
+          {viewportLens === 'NAV_SURFACE' && (
+            <div style={{ position: 'fixed', top: 56, left: 72, right: 0, zIndex: 6 }}>
+              <HomeTicker />
+            </div>
+          )}
           {/* KRYL-1247 — FloatingToolbar (viewport-lens ribbon) removed. The lens-driven
               report views it selected are all retired/relocated (Track 1 audit). */}
 
