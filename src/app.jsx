@@ -73,8 +73,6 @@ import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges, buildChokepointStructure } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
 import ConeMap            from './components/spine/conemap.jsx';
-import LiveTicker         from './components/shared/liveticker.jsx';
-import { useNewsFeed }    from './hooks/usenewsfeed.js';
 import FeedsBay              from './components/feeds/feedsbay.jsx';
 import CommunityChatboard    from './components/community/communitychatboard.jsx';
 import CommunityView        from './components/community/communityview.jsx';
@@ -698,10 +696,6 @@ export default function App() {
 
   const { state: prismState } = usePrism();
   const viewportLens = prismState?.activeLens ?? 'NAV_SURFACE'; // KRYL-1034/KRYL-1165/KRYL-1171 — lens must reach the cone map pre-activation too; NAV_SURFACE is the safe landing default, OBSERVE is now an explicit choice
-
-  // KRYL-1251 — live ticker on the surface/Home view. Shared, deterministically
-  // ordered news source (published_at DESC). The strip is orientation chrome.
-  const { stories: tickerStories } = useNewsFeed('ALL');
 
   const [navMode, setNavMode]           = useState('surface');
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
@@ -1370,17 +1364,6 @@ export default function App() {
       {isSurface && (
         <>
           <GridOverlay />
-
-          {/* KRYL-1251 — live ticker strip, pinned under the top bar. §8: surface
-              orientation chrome gates at the lens level (NAV_SURFACE), not z-index.
-              It yields to the active view — thin strip, canvas-adjacent z-index. */}
-          {viewportLens === 'NAV_SURFACE' && (
-            <div style={{ position: 'fixed', top: 56, left: 72, right: 0, zIndex: 6, pointerEvents: 'none' }}>
-              <div style={{ pointerEvents: 'auto' }}>
-                <LiveTicker stories={tickerStories} />
-              </div>
-            </div>
-          )}
           {/* KRYL-1247 — FloatingToolbar (viewport-lens ribbon) removed. The lens-driven
               report views it selected are all retired/relocated (Track 1 audit). */}
 
