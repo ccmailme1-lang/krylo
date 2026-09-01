@@ -241,9 +241,22 @@ function Divider() {
   );
 }
 
+// WO-1341 premium gate — default UNLOCKED (Founder 2026-09-01: the lock defaulting
+// on and re-locking on every refresh was live-QA friction). Still a real toggle:
+// an explicit lock/unlock persists in localStorage, so re-locking for a sales
+// demo survives a refresh the same way unlocking now does.
+const PREMIUM_LOCK_KEY = 'krylo_premium_locked';
+function readPremiumLocked() {
+  try { return localStorage.getItem(PREMIUM_LOCK_KEY) === 'true'; } catch { return false; }
+}
+function writePremiumLocked(v) {
+  try { localStorage.setItem(PREMIUM_LOCK_KEY, v ? 'true' : 'false'); } catch { /* private mode */ }
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function IntelligenceBrief() {
-  const [premiumLocked, setPremiumLocked] = useState(true);
+  const [premiumLocked, setPremiumLockedState] = useState(readPremiumLocked);
+  const setPremiumLocked = (v) => { writePremiumLocked(v); setPremiumLockedState(v); };
   const sessions               = useAnalysisStore(s => s.sessions);
   const activeId               = useAnalysisStore(s => s.activeSessionId);
   const pendingAcquisition     = useAnalysisStore(s => s.pendingAcquisition);
