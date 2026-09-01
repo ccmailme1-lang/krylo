@@ -32,10 +32,15 @@ const SIX = new Set(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR',
 /** @type {Map<string, { domain:string, nu:number, lineage:Array<{batch:number, particle:object}> }>} */
 let _pathways = new Map();
 let _batchIndex = -1;
+let _lambda = NU_LAMBDA;   // active decay rate; set per-run via resetFabric({ lambda })
 
-export function resetFabric() {
+// resetFabric — clears state for a deterministic run. `lambda` overrides the
+// decay rate for the ν_t-decay sensitivity sweep (spec §7 ruling #3); omitted →
+// the PROPOSED default.
+export function resetFabric({ lambda } = {}) {
   _pathways = new Map();
   _batchIndex = -1;
+  _lambda = (typeof lambda === 'number') ? lambda : NU_LAMBDA;
 }
 
 function magOf(p) {
@@ -65,7 +70,7 @@ export function ingest(particles = []) {
 
   // ν_t update for ALL pathways (decay always; corroboration where present)
   for (const pw of _pathways.values()) {
-    pw.nu = Math.max(0, pw.nu * (1 - NU_LAMBDA) + (corroboration.get(pw.domain) ?? 0));
+    pw.nu = Math.max(0, pw.nu * (1 - _lambda) + (corroboration.get(pw.domain) ?? 0));
   }
 
   return { batch: _batchIndex, updated: [...corroboration.keys()] };

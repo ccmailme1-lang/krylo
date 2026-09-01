@@ -68,14 +68,14 @@ export function runBaseline(workload) {
 }
 
 // ── Cognitive Fabric candidate ─────────────────────────────────────────────
-export function runCF(workload) {
+export function runCF(workload, opts = {}) {
   const { batches, heldBack = [], budget = {} } = workload;
   let releasesLeft = budget.releases ?? 0;
   const perBatch = [];
   const releases = [];
   let compute = 0;
 
-  resetFabric();
+  resetFabric({ lambda: opts.lambda });
 
   for (let i = 0; i < batches.length; i++) {
     ingest(batches[i]);
@@ -119,6 +119,6 @@ export function runCF(workload) {
   return { path: 'CF', perBatch, releases, compute, nu: nuByDomain() };
 }
 
-export function runWorkload(workload) {
-  return { name: workload.name, B: runBaseline(workload), CF: runCF(workload) };
+export function runWorkload(workload, opts = {}) {
+  return { name: workload.name, B: runBaseline(workload), CF: runCF(workload, opts) };
 }

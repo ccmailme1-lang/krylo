@@ -11,7 +11,7 @@
 // Run: node qa_cf_kill_experiment.mjs
 
 import { performance } from 'node:perf_hooks';
-import { WORKLOADS, WORKLOAD_BY_NAME } from './src/engine/cf/cfworkloads.js';
+import { WORKLOADS, PROBES } from './src/engine/cf/cfworkloads.js';
 import { runWorkload, runBaseline, runCF } from './src/engine/cf/cfrunner.js';
 import { scoreV, costDelta, verdict, COST_BUDGET_RATIO } from './src/engine/cf/cfmetrics.js';
 
@@ -74,6 +74,27 @@ for (const r of results) {
   console.log(pad(r.w.name, 22) + row.join(''));
 }
 
+// ── adversarial probe — persistent strong decoy, ν_t-decay sweep ────────────
+console.log('\nADVERSARIAL PROBE — persistent-strong-decoy (persistence must not manufacture coherence):\n');
+console.log('  strong LABOR observed batches 0-2 then STOPS; genuine CAPITAL+OWNERSHIP forms batches 3-5.');
+const LAMBDAS = [0.15, 0.35, 0.55, 0.75];
+const probeRows = [];
+for (const probe of PROBES) {
+  const B = runBaseline(probe);
+  const vProbeB = scoreV(B, probe);
+  console.log(`\n  ${probe.name}:  baseline FP_B = ${vProbeB.fp}  (clean [CAPITAL, OWNERSHIP])`);
+  console.log('  ' + pad('ν_t λ', 8) + padL('FP_CF', 7) + padL('CF final formation', 34) + '   contamination');
+  for (const lambda of LAMBDAS) {
+    const CF = runCF(probe, { lambda });
+    const v = scoreV({ ...CF }, probe);
+    const finalP = CF.perBatch[CF.perBatch.length - 1].participating.join('+') || '(none)';
+    const contaminated = v.fp > vProbeB.fp;
+    probeRows.push({ name: probe.name, lambda, fpB: vProbeB.fp, fpCF: v.fp, contaminated });
+    console.log('  ' + pad(lambda.toFixed(2), 8) + padL(v.fp, 7) + padL(finalP, 34) +
+                '   ' + (contaminated ? 'YES — stale decoy absorbed' : 'no'));
+  }
+}
+
 // ── harness invariants (NOT the verdicts) ───────────────────────────────────
 const fails = [];
 const ok = (cond, label) => { if (!cond) fails.push(label); };
@@ -121,6 +142,15 @@ for (const w of WORKLOADS) {
      `${w.name}: non-deterministic structural output across runs`);
   const vdOf = run => verdict({ vB: scoreV(run.B, w), vCF: scoreV(run.CF, w), dC: costDelta(run) }).decision;
   ok(vdOf(a) === vdOf(b), `${w.name}: non-deterministic verdict across runs`);
+}
+
+// 8. adversarial probe must actually demonstrate the failure mode at the default
+//    λ (otherwise the probe tests nothing), and its baseline must be clean
+{
+  const dflt = probeRows.find(p => p.name === 'persistent-strong-decoy' && p.lambda === 0.15);
+  ok(dflt && dflt.fpB === 0, 'persistent-strong-decoy: baseline is not clean — fixture is wrong');
+  ok(dflt && dflt.contaminated === true,
+     'persistent-strong-decoy: no contamination at default λ — the probe is not exercising the failure mode');
 }
 
 console.log('\n' + '─'.repeat(104));

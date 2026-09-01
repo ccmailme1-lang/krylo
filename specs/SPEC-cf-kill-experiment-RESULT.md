@@ -61,6 +61,38 @@ is **not merely an alternate implementation** (§33.8) — B scores `V = 0` wher
 provenance (§33.5 — every admitted formation reconstructable). It does not manufacture
 continuation (§33.4 / §31 Case 1 — `FP_CF = 0` everywhere, decoys never released).
 
+## Adversarial probe — persistent strong decoy (persistence must not manufacture coherence)
+
+Strong LABOR observed in batches 0–2, then **stops**. A genuine CAPITAL+OWNERSHIP formation
+appears in batches 3–5 with LABOR absent from the live signal. Baseline B (window = 1)
+sees a clean `[CAPITAL, OWNERSHIP]` — `FP_B = 0`.
+
+```
+  ν_t λ     FP_CF   CF final formation          contamination
+  0.15          3   CAPITAL+LABOR+OWNERSHIP     YES — stale decoy absorbed into all 3 later formations
+  0.35          3   CAPITAL+LABOR+OWNERSHIP     YES
+  0.55          1   CAPITAL+OWNERSHIP           YES — batch 3 still contaminated
+  0.75          0   CAPITAL+OWNERSHIP           no
+```
+
+**Finding — this is the Fabric's most dangerous failure mode and the current ν_t rule
+exhibits it.** At the PROPOSED `λ = 0.15`, a decoy observed 3× then gone contaminates every
+subsequent formation with a cross-domain leg that has **no live support** — exactly
+"persistence manufacturing coherence." Decay alone does not fix it: `λ = 0.75` is needed to
+clear it, and at `λ = 0.75` the multi-event advantage collapses (the OWNERSHIP pathway goes
+dormant before MEDIA arrives — `ν = 0.55·0.25 = 0.14 < NU_DORMANT`). **No single decay
+constant both preserves true staggered structure and rejects a stale decoy.**
+
+**Recommendation for ruling #3 — the ν_t rule needs more than a decay constant:**
+- a **recency gate**: a pathway contributes particles only if corroborated within the last
+  N batches, independent of its `ν_t` level; or
+- **multiplicative corroboration**: `ν ← ν · (1 + corroboration)` on observation, `ν ← ν · (1 − λ)`
+  when absent — a non-corroborated pathway collapses toward 0 fast while a corroborated one
+  holds; or
+- contribution weighted by `ν_t` **relative to the live-signal baseline**, not an absolute floor.
+
+This does not block the build — it defines what IS-4 (pathway persistence) must implement.
+
 ## Founder rulings required before a production verdict
 
 1. **`COST_BUDGET_RATIO`** — the compute↔structural-value exchange rate. The single most
@@ -84,6 +116,5 @@ continuation (§33.4 / §31 Case 1 — `FP_CF = 0` everywhere, decoys never rele
   (`observationaffordanceengine.deriveAffordancesFromResolve`) covers `RESOLVE_CONFLICT`
   only, not `FORMATION_BOUNDARY_UNCERTAINTY`. A real frontier detector for the boundary
   case is itself unbuilt.
-- `ν_t` decay is slow at `λ = 0.15` (~10 batches to fade a strong pathway). A persistent
-  *strong* decoy would be absorbed; only sub-threshold decoys were tested. An adversarial
-  "persistent strong decoy" case should be added before RETAIN is acted on.
+- The persistent-strong-decoy adversarial probe is now included (see above) and exposes a
+  real ν_t-rule defect that IS-4 must address.

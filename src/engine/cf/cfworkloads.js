@@ -141,6 +141,46 @@ const frontierInaccessible = {
   },
 };
 
+// ── ADVERSARIAL PROBE — persistent strong decoy ────────────────────────────
+// The most dangerous CF failure mode: persistence must never manufacture
+// coherence. A strong LABOR signal is observed repeatedly in early batches
+// (building ν_LABOR high), then STOPS. A genuine CAPITAL+OWNERSHIP formation
+// then appears in later batches, with LABOR absent from the live signal.
+//
+// Baseline B (window = 1 batch) sees a clean [CAPITAL, OWNERSHIP] — FP_B = 0.
+// The question: does CF's slow-decaying ν_LABOR keep the stale LABOR pathway
+// contributing particles long enough to be absorbed into the later formation
+// as an admitted cross-domain leg it has no live support for?
+//
+// This is `probe: true` — it is not a RETAIN/KILL candidate. It is the
+// adversarial counterpart to multi-event: multi-event proves persistence
+// recovers TRUE structure; this proves whether persistence fabricates FALSE
+// structure. Directly serves the ν_t update-rule ruling (spec §7 #3).
+const persistentStrongDecoy = {
+  name: 'persistent-strong-decoy',
+  probe: true,
+  windowBatches: 1,
+  budget: { releases: 0 },
+  batches: [
+    [ mk('LABOR', 0.50, 'constructive',    0) ],
+    [ mk('LABOR', 0.50, 'constructive',  500) ],
+    [ mk('LABOR', 0.50, 'constructive', 1000) ],
+    [ mk('CAPITAL',   0.50, 'constructive', 3000),
+      mk('OWNERSHIP', 0.50, 'constructive', 3000) ],
+    [ mk('CAPITAL',   0.50, 'constructive', 3500),
+      mk('OWNERSHIP', 0.50, 'constructive', 3500) ],
+    [ mk('CAPITAL',   0.50, 'constructive', 4000),
+      mk('OWNERSHIP', 0.50, 'constructive', 4000) ],
+  ],
+  heldBack: [],
+  truth: {
+    formations:    [ set(['CAPITAL', 'OWNERSHIP']) ],
+    continuations: [ set(['CAPITAL', 'OWNERSHIP']) ],
+    decoyDomains:  ['LABOR', 'MEDIA', 'TECHNOLOGY', 'KNOWLEDGE'],
+    revisionLeg:   null,
+  },
+};
+
 export const WORKLOADS = [
   singleShot,
   multiEvent,
@@ -149,4 +189,8 @@ export const WORKLOADS = [
   frontierInaccessible,
 ];
 
-export const WORKLOAD_BY_NAME = Object.fromEntries(WORKLOADS.map(w => [w.name, w]));
+export const PROBES = [
+  persistentStrongDecoy,
+];
+
+export const WORKLOAD_BY_NAME = Object.fromEntries([...WORKLOADS, ...PROBES].map(w => [w.name, w]));
