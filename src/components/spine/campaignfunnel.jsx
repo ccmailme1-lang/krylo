@@ -15,8 +15,11 @@
 
 import React, { useEffect, useRef } from 'react';
 
-// Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px }
-const CHROME_CLIP = 'polygon(0 0, 100% 0, 100% 48px, 80px 48px, 80px 100%, 0 100%)';
+// Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px }.
+// The full-width band extends to 100px so the WO-1815 Opportunity Ribbon
+// (.opportunity-ribbon, fixed top:49px, ~44px tall) stays visible and clickable
+// on the surface view after engage — not just the 48px nav.
+const CHROME_CLIP = 'polygon(0 0, 100% 0, 100% 100px, 80px 100px, 80px 100%, 0 100%)';
 
 export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, onCat, onProxy }) {
   const internalRef = useRef(null);
