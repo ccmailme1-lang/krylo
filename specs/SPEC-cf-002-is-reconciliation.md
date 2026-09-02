@@ -518,6 +518,16 @@ in WS6): `SPEC-cf-prodval-06-integration-gates.md`.
 WS6 passing is **not** deployment authorization — findings then go to the Founder
 production-integration ruling.
 
+**Checkpoint (Founder, 2026-09-02) — two denominators:**
+- *CF architecture proven & integration-ready* ≈ **90%.** Remaining ≈ 10–15% is authorization +
+  runtime wiring (Gate 1 → the `daemon.js`→`cfProducerTick()` line, then Gate 3), not conceptual
+  discovery. The 70%→now change: architectural uncertainty was eliminated, not just features added.
+- *Production-ready KRYLO product* ≈ **70–75%.** Relationship admission/governance, Formation
+  construction integrity, surface integrity, and broader runtime/production validation remain —
+  outside this CF milestone.
+- Gate 1 opens on the architecture review authorizing runtime wiring, **not** because the
+  percentage is high.
+
 Branch `2a6fb70 → 2bf2794 → ef0d97d → fda999b → 3a02d40`, isolated. **No merge, no deploy, no
 live-tree wiring until that ruling.**
 
