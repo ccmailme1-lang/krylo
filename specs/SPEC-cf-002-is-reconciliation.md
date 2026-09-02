@@ -486,7 +486,15 @@ a ruling.
 Full CF harness suite green: `qa_cf_kill_experiment` · `qa_cf_canonical` · `qa_cf_persistence` ·
 `qa_cf_telemetry` · `qa_cf_integration`.
 
-### Founder ruling (2026-09-02): WS2 PASS · WS3 PASS · WS4 PASS · WS5 PASS · WS6 CLOSED
+### Separate artifact (Founder, 2026-09-02): `SPEC-structural-form-emergence.md`
+
+Abstraction across a *population* of preserved Formations — a distinct normative contract, **not**
+folded into CF-002, **not** part of WS6, **not** an interpretation of Closed-Loop Perception.
+Central invariant: *preserve instances; abstract invariants.* Load-bearing rule: a Structural
+Form is **derived from** recurring invariants across distinct Formations and is **never a
+prerequisite** for detecting/admitting/constructing them. NEEDS-SPEC.
+
+### Founder ruling (2026-09-02): WS2 PASS · WS3 PASS · WS4 PASS · WS5 PASS · WS6 CLOSED → then OPENED (integration validation only)
 
 > The results demonstrate: **the CF substrate can persist, survive sessions, enforce
 > re-corroboration, observe its own execution, and receive production signals without perturbing
@@ -494,15 +502,24 @@ Full CF harness suite green: `qa_cf_kill_experiment` · `qa_cf_canonical` · `qa
 > production-ready." No architecture change requested; the remaining questions are
 > integration-governance, not substrate design.
 
-**WS6 gate — three items, all behind the (not-yet-given) production-integration ruling:**
-1. Parent wiring for `cffield.jsx` (distinct section, not inside 02 FORMATION).
-2. Authoritative `tick()` scheduler selection.
-3. Telemetry rerun against real connector I/O — **amended acceptance criterion (Founder):** the
-   real-I/O run MUST demonstrate the measured telemetry corresponds to **actual connector
-   activity**, not merely the synthetic/harness execution path.
+### WS6 OPEN (Founder, 2026-09-02) — integration validation only
 
-Branch `2a6fb70 → 2bf2794 → ef0d97d → fda999b`, isolated. **No merge, no deploy, no live-tree
-wiring until the Founder production-integration ruling.**
+Constraints: WS2–WS5 contracts immutable · no change to the 3 synchronous `inferFormation` call
+sites · no admission-semantics change · no architectural refactor · no deployment. Order:
+**Gate 2 → Gate 1 → Gate 3.** Full detail + WS6 Scope Boundary (Structural Form Emergence is NOT
+in WS6): `SPEC-cf-prodval-06-integration-gates.md`.
+
+| gate | state |
+|---|---|
+| **2 scheduler authority** | **DECISION: ACCEPT / Option A (Founder, 2026-09-02).** `daemon.js` → `dispatchToSubstrate()` → `cfProducerTick()`. **CF cadence invariant (LOCKED):** CF cadence SHALL be derived from the authoritative ingestion cadence; CF SHALL NOT establish an independent execution clock. Rejected B/C/D/E. **Gate 2 is an architectural decision, NOT authorization to modify runtime wiring** — the `daemon.js` edit is applied only when Gate 1 is authorized. SF-001 SHALL NOT enter the Gate-2 implementation. |
+| **1 render wiring** | BLOCKED on Gate 2. Wire `cffield.jsx` as a distinct section (not inside 02 FORMATION); the 3 synchronous call sites stay byte-identical. |
+| **3 real-I/O telemetry** | BLOCKED on Gate 1. Amended criterion: measured telemetry MUST correspond to **actual connector activity** (real `dispatchBatch` volume, real pool sizes, pathway `source` ≠ `'fixture'`), not the harness path. |
+
+WS6 passing is **not** deployment authorization — findings then go to the Founder
+production-integration ruling.
+
+Branch `2a6fb70 → 2bf2794 → ef0d97d → fda999b → 3a02d40`, isolated. **No merge, no deploy, no
+live-tree wiring until that ruling.**
 
 ### Still open (parallel / later)
 
