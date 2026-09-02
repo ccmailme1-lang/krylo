@@ -102,14 +102,31 @@ reconstruction; it does not feed admission.
 beyond that with `νₜ ≥ memoryFloor`; `TOMBSTONED` when `νₜ < memoryFloor` and uncorroborated, or
 explicitly terminated. **Never deleted.** Tier governs footprint, not admission (§3).
 
-## 6. Parameter surface (Founder values required before an experiment commit)
+## 6. Parameter surface — FOUNDER-GATED (ratified 2026-09-02)
 
-| param | proposed | basis | effect if wrong |
-|---|---|---|---|
-| `λ` (memory decay/batch) | `0.15` | uncommitted IS-4 prototype | retention footprint only (benign) |
-| `archiveGap` (batches → ARCHIVED) | `3` | proposed | how long an idle connected pathway stays ACTIVE-tier |
-| `memoryFloor` (tombstone threshold) | `0.05` | uncommitted IS-4 prototype | how long tombstoned lineage stays queryable |
-| `ε` (ΔS deadband) | `0.02` | proposed | label noise only (labels optional) |
+### FG-CORE — Founder-Gated Parameters (governance clause, applies to every CF spec)
+
+The parameters `λ`, `r`, `ε`, `COST_BUDGET_RATIO`, `RELEASE_COST` are **CLASSIFIED
+"FOUNDER-GATED"**. Their numeric values may be created, modified, or revoked only by explicit
+governance action of the KRYLO founding authority. Implementations SHALL surface them as
+**read-only** runtime configuration and MUST record any change in a durable, auditable
+`PolicyChangeEvent` (`policy_version`, `effective_from`). No guest-facing path SHALL depend on
+synchronous updates of these parameters.
+
+**Ratified: the governance and semantics — NOT arbitrary numeric values.** The values below are
+PROPOSED; only the Founder sets them.
+
+| param | scope | type | semantics | proposed | effect if wrong |
+|---|---|---|---|---|---|
+| `λ` (lambda) | significance decay/accumulation | REAL (0,1] or PolicyEnum | per-batch νₜ memory multiplier | `0.15` | retention footprint only (benign) |
+| `r` (reference-continuity) | corroboration recurrence | REAL ≥ 0 | weight on repeated evidence of the *same* pathway in the νₜ update (`νₜ += r·Σmag`); `r=1` = each corroboration adds its magnitude | `1.0` | νₜ scale only — does not affect admission (§3.2 is structural) |
+| `ε` (epsilon) | significance-change tolerance | REAL ≥ 0 | min \|Δνₜ\| for two successive νₜ to be "materially different" (ΔS labelling, notification throttling) | `0.02` | label noise only (labels optional) |
+| `archiveGap` | retention tier | INT ≥ 1 | batches idle → ARCHIVED (NOT Founder-gated — pure footprint) | `3` | ACTIVE-tier footprint only |
+| `memoryFloor` | tombstone threshold | REAL ≥ 0 | νₜ below this + uncorroborated → TOMBSTONE (NOT Founder-gated) | `0.05` | how long tombstoned lineage stays queryable |
+
+`COST_BUDGET_RATIO` and `RELEASE_COST` are Founder-gated but belong to CF-004 §7.1 (runtime cost
+governance), not this policy — see the name-collision note in `SPEC-cf-002-is-reconciliation.md`
+§0a.
 
 **No `W` / support-window parameter** — v0.2 removed it. Support is structural (§3.2), not tuned.
 

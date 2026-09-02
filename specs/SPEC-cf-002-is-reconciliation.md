@@ -418,15 +418,43 @@ not domain matching):
 The decoy result validates the X5 separation directly: `ν_LABOR = 0.79` persists in memory while
 producing no formation — *memory can persist without becoming current structure.*
 
+### Parameter-ratification gate — CLOSED (Founder, 2026-09-02)
+
+**FG-CORE governance clause ratified.** `λ`, `r`, `ε`, `COST_BUDGET_RATIO`, `RELEASE_COST` are
+**Founder-Gated**: values set only by explicit founding-authority governance action; surfaced
+read-only at runtime; every change logged as a `PolicyChangeEvent` (`policy_version` +
+`effective_from`). Ratified = the **governance + semantics**, not numeric values (still PROPOSED;
+none load-bearing for the RETAIN/decoy result). Full text: `SPEC-cf-significance-policy.md` §6.
+
+**Name collision to resolve — `COST_BUDGET_RATIO`:**
+- `src/engine/cf/cfmetrics.js` uses it as the **compute↔value exchange rate** for the kill-experiment
+  verdict (`4` = "CF may cost up to 4× B"). REAL ≥ 1.
+- The FG addendum defines it as a **runtime resource cap** — proportion of total compute the Fabric
+  may allocate to analytical (non-guest) workloads over a rolling window. REAL in (0,1].
+These are two different knobs sharing a name. Disposition: **rename the experiment one**
+(`VERDICT_COST_RATIO`) so `COST_BUDGET_RATIO` is unambiguously the CF-004 §7.1 runtime cap. Not
+yet applied — flagged for the next code pass.
+
+### IS-5 capability taxonomy — AUTHORED + RATIFIED (Founder, 2026-09-02)
+
+`SPEC-cf-is5-capability-taxonomy.md`. **Homogeneous node · nine capabilities · registry entries
+not processor types.** `DOMAIN_INTERPRETATION` = **one** class (domain is a parameter, per X3 —
+no hidden 6+3). Eligibility mechanism left open (invariant = capability-based eligibility, not a
+specific hash/lookup). 10 constitutional constraints §0.
+
+The nine: `C1 OBSERVATION_CHARACTERIZATION · C2 DOMAIN_INTERPRETATION · C3 RELATIONSHIP_CANDIDACY ·
+C4 RELATIONSHIP_ADMISSION_ADJUDICATION · C5 PATHWAY_TRAVERSAL · C6 CONVERGENCE_RECOGNITION ·
+C7 FORMATION_SYNTHESIS · C8 CONTRADICTION_RESOLUTION · C9 BOUNDARY_FRONTIER_DETECTION`. Only C4
+produces an admission decision; only C7/C8 produce Formation-level candidates; all nine are
+`mutates_fabric_state = NO`, `async_class = NON_BLOCKING`. Kill experiment exercised C5→C6→C7 + C8;
+C1–C4 and C9 unexercised (enter scope with real connector provenance).
+
 ### Still open (parallel / later)
 
-- Nine-class enumeration (Founder) — before IS-5.
-- **Parameters** (`λ`, `archiveGap`, `memoryFloor`, `ε`, `COST_BUDGET_RATIO`, `RELEASE_COST`) —
-  Founder values. None load-bearing for the RETAIN/decoy result above; `COST_BUDGET_RATIO` moves
-  the KILL/RETAIN line for the marginal classes only.
 - Frontier (IS-7…IS-12) — deferred, out of the authorized build.
 - Production: real connector provenance for `dependsOn` (fixtures stand in), INV-006 latency
-  measurement against real connector I/O, cross-session persistence, storage engine.
+  measurement against real connector I/O, cross-session persistence, storage engine, the
+  `COST_BUDGET_RATIO` rename.
 - Wire into a live path — **not done.** Production integration is a separate gate from
   "CF development authorized" and requires its own Founder ruling.
 
