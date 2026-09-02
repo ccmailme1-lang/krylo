@@ -33,8 +33,12 @@ without touching the CF contract, IS-1 identity, or the pathway lifecycle.
   structure and reject a stale decoy — so decay was demoted out of the admission path entirely.)
 - **DEF-05-04 provenance (REQUIRED for any persisted νₜ):** `{ value, policy_version,
   input_reference: [event_ids], logical_time }`.
-- **ΔS classification (optional label, CF-005 §5):** `Δνₜ < −ε → DECAY`, `|Δνₜ| ≤ ε →
-  PERSISTENCE`, `Δνₜ > +ε → AMPLIFICATION`; cites `policy_version`; absence never blocks anything.
+- **ΔS classification (optional label, CF-005 §5):** over a single step `Δνₜ < −ε → DECAY`,
+  `|Δνₜ| ≤ ε → PERSISTENCE`, `Δνₜ > +ε → AMPLIFICATION`. Over a **window** of steps two more
+  observed states are recognised (Founder 2026-09-02): **REVERSAL** (sign of Δνₜ flips and the
+  post-flip magnitude persists) and **OSCILLATION** (Δνₜ sign alternates ≥ 2× within the window
+  without a persistent trend). All five are *observed states of the trajectory*, never
+  assumptions built into the engine; each cites `policy_version`; absence never blocks anything.
 
 ## 3. Admission support — reference continuity, not a time window
 

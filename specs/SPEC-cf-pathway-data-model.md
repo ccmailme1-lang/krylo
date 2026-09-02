@@ -43,6 +43,11 @@ Event {
   logical_time        monotone sequence marker (not wall-clock)
   object_refs[]       ids of the objects this event concerns / produces
                         (observation_ids, relationship_ids, subject_reference, …)
+  edges[]             typed directed edges this event asserts, each { to, type }
+                        where type ∈ { OBSERVES · EMITS · ROUTES_TO · PROCESSES ·
+                        DERIVES · EXPANDS · CONTRIBUTES_TO }  (Founder 2026-09-02).
+                        These describe the RUNTIME/analytical genealogy — never the
+                        processor topology (P-A, SPEC-cf-artifact-taxonomy.md).
   provenance {
     derives_from[]    event_ids and/or object_ids this event is a structural
                        consequence of — supplied by the producer, never inferred

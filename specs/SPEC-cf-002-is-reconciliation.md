@@ -486,6 +486,32 @@ a ruling.
 Full CF harness suite green: `qa_cf_kill_experiment` · `qa_cf_canonical` · `qa_cf_persistence` ·
 `qa_cf_telemetry` · `qa_cf_integration`.
 
+### CF-001…CF-010 refinement pass (Founder, 2026-09-02) — record-only, no gate movement
+
+From a newer consolidated `specs/CF-001 through CF-010` candidate file (provenance/untracked).
+**Adopted as record-level additions to the existing `SPEC-cf-*` set:**
+- **P-A Three-layer topology separation** (`SPEC-cf-artifact-taxonomy.md`) — Processor / Runtime /
+  Analytical topologies are distinct, none reducible to another, correlated only through events.
+  The primary architectural addition; the processor graph SHALL NOT become the analytical graph.
+- **P-E** — event history ≠ analytical topology; it reconstructs both without being mistaken for
+  either (P-A's persistence consequence; cf. CF-010 §9 / X4).
+- **P-C** — `ΔN ⇏ Δ|K_core|` as the precise scalability statement (formal AI-4; not the
+  too-strong "Remote can never affect routing").
+- **D** — CF-010 reference interface: `admitFormation()` → `createFormationCandidate()` /
+  `submitFormationCandidate()` / `receiveFormationAdmission()` (+ relationship equivalents),
+  `SPEC-cf-is5-capability-taxonomy.md` §4a.
+- **F** — ν_t trajectory states add REVERSAL, OSCILLATION (`SPEC-cf-significance-policy.md` §2.2).
+- **G** — typed edge vocabulary `OBSERVES/EMITS/ROUTES_TO/PROCESSES/DERIVES/EXPANDS/CONTRIBUTES_TO`
+  on the Event object (`SPEC-cf-pathway-data-model.md` §1.1) — runtime/analytical genealogy only.
+
+**Architecture-review inputs (NOT adopted):**
+- **B — three quantities `|K_core|=9` / `|P_core(t)|` / `|R(t)|`.** The elastic-Core-*instances*
+  term conflicts with IS-5 §0 (one homogeneous node type). Review must decide whether a "Core
+  processor instance" is a node carrying that capability (IS-5) or a distinct machine type.
+- **`CF-001-INV-001…007`** — not imported as a new invariant namespace. `CF-001-INV-006`
+  collides with the locked `CF-004-INV-006`. Only its INV-004/INV-007 content is new (→ P-A/P-E).
+- The `CF-001 through CF-010` source file itself stays untracked / provenance only.
+
 ### Separate artifact (Founder, 2026-09-02): `SPEC-structural-form-emergence.md`
 
 Abstraction across a *population* of preserved Formations — a distinct normative contract, **not**

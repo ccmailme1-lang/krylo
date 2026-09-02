@@ -166,9 +166,24 @@ The canonical experiment (`qa_cf_canonical.mjs`) exercised **C5 → C6 → C7** 
 unexercised** — they enter scope with real connector provenance and the IS-5 ν_t↔RelationCore
 interface.
 
+## 4a. CF-010 reference-interface correction (Founder, 2026-09-02)
+
+The September CF-010 §4 interface list literally contains `admitFormation()` and implies
+`CF → admitFormation()`. That contradicts C4/C7 here and CF-006/CF-009 (KRYLO governance owns
+authoritative admission). The reference interface SHALL instead expose:
+
+```
+createFormationCandidate()      discoverRelationshipCandidate()
+submitFormationCandidate()      submitRelationshipCandidate()
+receiveFormationAdmission()     receiveRelationshipAdmission()
+```
+
+The Fabric creates and submits the *candidate*; KRYLO governance decides admission and the Fabric
+*receives* the result. The constitutional boundary is preserved down to the interface signature.
+
 ## 5. Once this and the FG parameters are ratified
 
-- CF-010 §2 slot list = C1…C9.
+- CF-010 §2 slot list = C1…C9; CF-010 §4 interface per §4a above.
 - The ν_t↔RelationCore interface (IS-5 per `SPEC — Cognitive Fabric & Formation Frontier.md` §36)
   types its capability field as `capability_id ∈ {C1…C9}`.
 - KRYL-CF-004 Node Capability Registry declarations reference C1…C9.
