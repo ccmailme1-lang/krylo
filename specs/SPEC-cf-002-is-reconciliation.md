@@ -449,9 +449,37 @@ produces an admission decision; only C7/C8 produce Formation-level candidates; a
 `mutates_fabric_state = NO`, `async_class = NON_BLOCKING`. Kill experiment exercised C5→C6→C7 + C8;
 C1–C4 and C9 unexercised (enter scope with real connector provenance).
 
+### Next gate — production-readiness validation (Founder framing, 2026-09-02)
+
+The question has changed from *"does CF deserve to exist?"* to:
+
+> **Can the validated CF capability be introduced into KRYLO without violating the guest-path,
+> provenance, admission, lifecycle, and cost invariants?**
+
+**Do NOT jump to IS-7…IS-12** — still deferred.
+
+### Production-readiness validation — DONE (Founder GO 2026-09-02; validation only, no merge/deploy)
+
+Findings: `SPEC-cf-prodval-summary.md` (+ `SPEC-cf-prodval-01-connector-provenance.md`).
+**Consolidated verdict: the substrate can survive production conditions without weakening any
+locked invariant.** All gaps are additive engineering, none an architectural change, none reopens
+a ruling.
+
+| WS | verdict |
+|---|---|
+| 1 real connector provenance | feeds IS-1 clean; advantage is **Tier-A/A' reference continuity only** (fanout siblings + structured citations); Tier-B (shared entity) = C3/C6 only, no staggered advantage under ratified rules — separate Founder decision |
+| 2 persistence/storage | KRYLO is client-`localStorage` only, no server DB; CF fits the existing pattern, no new DB (CF §34 ok), KRYL-CF-004 memory boundary ok; **needs** a compaction-of-reconstructible-history policy + a reload-determinism test; `localStorage` size ceiling → IndexedDB/shared-server is an infra decision |
+| 3 cross-session continuity | per-browser only (same limit as Path Memory); acceptable for the validated advantage; X5 firewall keeps stale reloaded pathways out of admission — **needs** a test; cross-device = deferred |
+| 4 CF-004-MET-01 | INV-006 currently asserted structurally (offline module, zero guest-path imports); **needs** a CF telemetry module (4 series) + a flat-guest-latency-under-load harness, in place **before** any WS5 wiring |
+| 5 integration boundary | clean — `inferFormation` has 3 live callers, all synchronous `field.particles`; CF plugs in as a **parallel async producer** (read-only pool tap → persistent pathways → own FormationCandidate → distinct labelled render slot), **never** replacing the synchronous path (CF §2.1); all additive, no change to the 3 call sites |
+| 6 production integration gate | **Founder decision.** Recommended language: authorize only after WS2/3/4/5 "required before production" items are built on-branch and validated, and only as a distinct non-gating labelled parallel CF read. |
+
+**No merge, no deploy, no build of the WS items until the Founder production-integration ruling.**
+
 ### Still open (parallel / later)
 
 - Frontier (IS-7…IS-12) — deferred, out of the authorized build.
+- `COST_BUDGET_RATIO` → `VERDICT_COST_RATIO` rename (next code pass).
 - Production: real connector provenance for `dependsOn` (fixtures stand in), INV-006 latency
   measurement against real connector I/O, cross-session persistence, storage engine, the
   `COST_BUDGET_RATIO` rename.
