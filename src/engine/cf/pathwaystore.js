@@ -33,6 +33,10 @@ let _batchIndex = -1;
 let _eventSeq = 0;
 let _params = PARAMS;
 let _corroboratedThisBatch = new Set();
+let _io = { examined: 0, written: 0 };   // WS4 — MET-01 "state objects examined/written"
+
+/** ioCounters — WS4 telemetry: state objects examined / written since resetFabric. */
+export function ioCounters() { return { ..._io }; }
 
 export function resetFabric({ lambda, archiveGap, memoryFloor } = {}) {
   _pathways = new Map();
@@ -41,6 +45,7 @@ export function resetFabric({ lambda, archiveGap, memoryFloor } = {}) {
   _batchIndex = -1;
   _eventSeq = 0;
   _corroboratedThisBatch = new Set();
+  _io = { examined: 0, written: 0 };
   _params = {
     ...PARAMS,
     ...(typeof lambda === 'number'      ? { lambda } : {}),
@@ -140,6 +145,7 @@ export function ingest(particles = []) {
       _particle: { ...particle, domain },
     };
     p.lineage.push(ev);
+    _io.written += 1;
     _obsIndex.set(obsId, p.pathway_id);
     p.lastCorroboratedBatch = _batchIndex;
     _corroboratedThisBatch.add(p.pathway_id);
@@ -217,13 +223,16 @@ export function recordConvergence(participatingDomains = []) {
 export function admissibleParticles() {
   const out = [];
   for (const p of _pathways.values()) {
+    _io.examined += 1;
     const live = admissibleForFormation(
       _corroboratedThisBatch.has(p.pathway_id),
       clusterLiveThisBatch(p.pathway_id),
     );
     if (!live) continue;
     for (const ev of p.lineage) {
-      if (ev.event_type === 'OBSERVATION_CREATED') out.push(ev._particle);
+      // compacted observations have no _particle (payload dropped, recoverable
+      // from the connector log) — they are historical and never feed admission.
+      if (ev.event_type === 'OBSERVATION_CREATED' && ev._particle) out.push(ev._particle);
     }
   }
   return out;
@@ -270,3 +279,107 @@ export function tierByPathway() {
 }
 export function pathwayCount() { return _pathways.size; }
 export function clusterCount() { return _clusters.length; }
+
+// ══ WS2 — persistence + compaction ═══════════════════════════════════════════
+// Storage-agnostic: serialize()/hydrate() move a plain snapshot; the caller
+// (localStorage / IndexedDB / a shared server store — decision deferred) owns
+// the medium. Append-only + logical_time ordering ⇒ hydrate→replay is
+// deterministic (IS-1). CF §34: no CF-only database — this is the existing
+// pathstore.js client pattern. KRYL-CF-004 memory boundary: the snapshot is
+// lineage + provenance (history), not a reasoning substrate (X5 firewall stands).
+
+export const SNAPSHOT_VERSION = 'cf-pathwaystore/1';
+export const COMPACT_AFTER = 8;   // batches idle before an ARCHIVED/TOMBSTONED pathway is
+                                  // eligible for payload compaction. Footprint knob, NOT
+                                  // Founder-gated (not in FG-CORE).
+
+export function serialize() {
+  return {
+    version: SNAPSHOT_VERSION,
+    batchIndex: _batchIndex,
+    eventSeq: _eventSeq,
+    params: _params,
+    pathways: [..._pathways.values()].map(p => ({ ...p, domains: [...p.domains] })),
+    obsIndex: [..._obsIndex.entries()],
+    clusters: _clusters.map(c => [...c]),
+    // _corroboratedThisBatch is transient — deliberately NOT serialized. On
+    // hydrate it starts empty, so a stale reloaded pathway cannot be
+    // "corroborated this batch" until it genuinely is (X5 — see WS3).
+  };
+}
+
+export function hydrate(snapshot) {
+  if (!snapshot || snapshot.version !== SNAPSHOT_VERSION) {
+    throw new Error(`cf-pathwaystore: cannot hydrate snapshot version ${snapshot?.version}`);
+  }
+  _pathways = new Map(snapshot.pathways.map(p => [p.pathway_id, { ...p, domains: new Set(p.domains) }]));
+  _obsIndex = new Map(snapshot.obsIndex);
+  _clusters = snapshot.clusters.map(c => new Set(c));
+  _batchIndex = snapshot.batchIndex;
+  _eventSeq = snapshot.eventSeq;
+  _params = { ...PARAMS, ...snapshot.params };
+  _corroboratedThisBatch = new Set();
+}
+
+// compact — X4: storage compaction of *reconstructible* history, NEVER pathway
+// deletion. Applies only to stale (> COMPACT_AFTER idle) ARCHIVED/TOMBSTONED
+// pathways. Preserves: pathway_id, lineageKey, subject, domains, origin event,
+// termination event, every CONVERGENCE event, and the full derives_from edge
+// list (topology). Drops: OBSERVATION_CREATED `_particle` payloads (recoverable
+// from the connector log via provenance.source), interior PROCESSING_* events
+// (→ a COMPACTED_SPAN marker), interior nuHistory records (keeps head + tail).
+// After compaction reconstruct(domains) still returns complete for those domains.
+export function compact({ compactAfter = COMPACT_AFTER } = {}) {
+  let compactedCount = 0, eventsDropped = 0;
+  for (const p of _pathways.values()) {
+    if (p.compacted) continue;
+    const idle = _batchIndex - (p.lastCorroboratedBatch ?? -Infinity);
+    const tier = tierOf(p, _batchIndex, _params);
+    if (idle <= compactAfter || (tier !== 'ARCHIVED' && tier !== 'TOMBSTONED')) continue;
+
+    const kept = [];
+    let spanFrom = null, spanTo = null, spanN = 0;
+    const flushSpan = () => {
+      if (spanN > 0) {
+        kept.push({ event_type: 'COMPACTED_SPAN', count: spanN, from_t: spanFrom, to_t: spanTo });
+        spanN = 0; spanFrom = spanTo = null;
+      }
+    };
+    for (let i = 0; i < p.lineage.length; i++) {
+      const ev = p.lineage[i];
+      const isOrigin = i === 0;
+      const structural = isOrigin
+        || ev.event_type === 'CONVERGENCE'
+        || ev.event_type === 'EXPLORATION_TERMINATED'
+        || ev.event_type === 'REVISIT'
+        || ev.event_type === 'FORMATION_CANDIDATE_CREATED';
+      if (structural) {
+        flushSpan();
+        // strip recoverable payload from observations, keep the structural frame
+        if (ev.event_type === 'OBSERVATION_CREATED' || ev._particle) {
+          const { _particle, ...frame } = ev;
+          kept.push(frame);
+        } else {
+          kept.push(ev);
+        }
+      } else if (ev.event_type === 'OBSERVATION_CREATED') {
+        // keep the observation frame (topology-bearing: obs_id + derives_from) but drop payload
+        flushSpan();
+        const { _particle, ...frame } = ev;
+        kept.push(frame);
+        eventsDropped += _particle ? 0 : 0;   // frame retained; only payload dropped
+      } else {
+        // interior PROCESSING_* etc. → collapse
+        if (spanN === 0) spanFrom = ev.logical_time;
+        spanTo = ev.logical_time; spanN += 1; eventsDropped += 1;
+      }
+    }
+    flushSpan();
+
+    p.lineage = kept;
+    if (p.nuHistory.length > 2) p.nuHistory = [p.nuHistory[0], p.nuHistory[p.nuHistory.length - 1]];
+    p.compacted = { at: _batchIndex, droppedPayload: true, eventsCollapsed: eventsDropped };
+    compactedCount += 1;
+  }
+  return { compacted: compactedCount, eventsDropped };
+}

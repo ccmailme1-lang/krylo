@@ -474,7 +474,23 @@ a ruling.
 | 5 integration boundary | clean — `inferFormation` has 3 live callers, all synchronous `field.particles`; CF plugs in as a **parallel async producer** (read-only pool tap → persistent pathways → own FormationCandidate → distinct labelled render slot), **never** replacing the synchronous path (CF §2.1); all additive, no change to the 3 call sites |
 | 6 production integration gate | **Founder decision.** Recommended language: authorize only after WS2/3/4/5 "required before production" items are built on-branch and validated, and only as a distinct non-gating labelled parallel CF read. |
 
-**No merge, no deploy, no build of the WS items until the Founder production-integration ruling.**
+### Production-readiness BUILD — WS2/WS3/WS4/WS5 DONE + VALIDATED (Founder GO 2026-09-02; branch only, no merge/deploy)
+
+| WS | built | validated by | key result |
+|---|---|---|---|
+| **2** persistence | `pathwaystore.js` `serialize`/`hydrate`/`compact`; `SPEC-cf-prodval-02-persistence.md` | `qa_cf_persistence.mjs` | serialize→hydrate→replay **byte-identical** (IS-1 determinism); `compact()` = 0 deletions, `reconstruct()` still complete (X4); storage-agnostic snapshot, no CF-only DB (CF §34) |
+| **3** cross-session | (same) | `qa_cf_persistence.mjs` | a **stale reloaded pathway is NOT admission-eligible** until re-corroborated (X5 firewall survives a reload); re-corroboration lets it back in (not sealed) |
+| **4** MET-01 | `src/engine/cf/telemetry.js`; `_io` counters; `SPEC-cf-prodval-04-telemetry.md` | `qa_cf_telemetry.mjs` | analytical processing **176×** / objects examined **500×** while **guest p95 latency flat** (0.004 → 0.003 ms); structural isolation (no `.jsx` imports an analytical CF module) |
+| **5** integration boundary | `src/engine/cf/producer.js` (parallel async, read-only `subsignalbuffer` tap, enqueue-only callback), `src/engine/cf/read.js` (sole render import surface), `src/components/analysis/cffield.jsx` (distinct labelled slot, **not wired**); `SPEC-cf-prodval-05-integration.md` | `qa_cf_integration.mjs` | append latency unaffected by the CF subscriber; CF candidate is a **distinct object** (`CF_FORMATION_CANDIDATE` / "COGNITIVE FABRIC READ"); `getCFFormation()` O(1); the 3 synchronous call sites untouched |
+
+Full CF harness suite green: `qa_cf_kill_experiment` · `qa_cf_canonical` · `qa_cf_persistence` ·
+`qa_cf_telemetry` · `qa_cf_integration`.
+
+**WS6 remaining before the gate:** wire `cffield.jsx` into a parent (distinct section, not inside
+02 FORMATION) — gated on the Founder ruling; choose the `tick()` scheduler (infra); re-run
+telemetry against real connector I/O.
+
+**No merge, no deploy, no live-tree wiring until the Founder production-integration ruling.**
 
 ### Still open (parallel / later)
 
