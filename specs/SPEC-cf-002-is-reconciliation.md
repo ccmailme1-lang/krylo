@@ -505,12 +505,26 @@ From a newer consolidated `specs/CF-001 through CF-010` candidate file (provenan
   on the Event object (`SPEC-cf-pathway-data-model.md` §1.1) — runtime/analytical genealogy only.
 
 **Architecture-review inputs (NOT adopted):**
-- **B — three quantities `|K_core|=9` / `|P_core(t)|` / `|R(t)|`.** The elastic-Core-*instances*
-  term conflicts with IS-5 §0 (one homogeneous node type). Review must decide whether a "Core
-  processor instance" is a node carrying that capability (IS-5) or a distinct machine type.
-- **`CF-001-INV-001…007`** — not imported as a new invariant namespace. `CF-001-INV-006`
-  collides with the locked `CF-004-INV-006`. Only its INV-004/INV-007 content is new (→ P-A/P-E).
-- The `CF-001 through CF-010` source file itself stays untracked / provenance only.
+- **B — three quantities `|K_core|=9` / `|P_core(t)|` / `|R(t)|`.** Orthogonal to P-A (P-A is
+  *layers*; B is *quantities inside the processor layer*). Its one genuinely new claim — an
+  elastic Core-*instance* population distinct from Remote — conflicts with IS-5 §0 (one
+  homogeneous node type). The rest restates X6 (class vs instance). Review must decide whether a
+  "Core processor instance" is a node carrying that capability (IS-5) or a distinct machine type.
+- **`CF-001-INV-001…007`** — not imported as a new invariant namespace. INV-004 **is** P-A,
+  INV-007 **is** P-E (both adopted); the other five restate AI-1/AI-2/AI-3/CF-003 §25/C4;
+  `CF-001-INV-006` collides with the locked `CF-004-INV-006`. Introduces nothing beyond P-A/P-E.
+
+**Source-file dispositions (Founder, 2026-09-02):**
+- `CF-001 through CF-010`, `Cognitive Fabric Scalability.txt` — **leave untracked**, provenance
+  duplicates of already-reconciled material. Nothing new.
+- `New Simulator Graphic.md` — the CF placeholder had been overwritten with an unrelated
+  Structural Field Map viz spec (KRYL-1243). **Placeholder RESTORED**; the viz content preserved
+  separately as `SPEC-structural-field-map-PROPOSED-math-enhanced.md` (NOT a CF artifact, NOT
+  adopted; owes an evaluation against the shipped `structuralfield.jsx`).
+
+**`05c4edb` is the current CF architectural-review boundary.** Stop mining the September source
+material unless a genuinely contradictory artifact appears. The review is converging, not
+expanding.
 
 ### Separate artifact (Founder, 2026-09-02): `SPEC-structural-form-emergence.md`
 
