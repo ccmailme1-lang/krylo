@@ -486,11 +486,23 @@ a ruling.
 Full CF harness suite green: `qa_cf_kill_experiment` · `qa_cf_canonical` · `qa_cf_persistence` ·
 `qa_cf_telemetry` · `qa_cf_integration`.
 
-**WS6 remaining before the gate:** wire `cffield.jsx` into a parent (distinct section, not inside
-02 FORMATION) — gated on the Founder ruling; choose the `tick()` scheduler (infra); re-run
-telemetry against real connector I/O.
+### Founder ruling (2026-09-02): WS2 PASS · WS3 PASS · WS4 PASS · WS5 PASS · WS6 CLOSED
 
-**No merge, no deploy, no live-tree wiring until the Founder production-integration ruling.**
+> The results demonstrate: **the CF substrate can persist, survive sessions, enforce
+> re-corroboration, observe its own execution, and receive production signals without perturbing
+> the existing inference path.** A legitimate architectural milestone — **not** "CF is
+> production-ready." No architecture change requested; the remaining questions are
+> integration-governance, not substrate design.
+
+**WS6 gate — three items, all behind the (not-yet-given) production-integration ruling:**
+1. Parent wiring for `cffield.jsx` (distinct section, not inside 02 FORMATION).
+2. Authoritative `tick()` scheduler selection.
+3. Telemetry rerun against real connector I/O — **amended acceptance criterion (Founder):** the
+   real-I/O run MUST demonstrate the measured telemetry corresponds to **actual connector
+   activity**, not merely the synthetic/harness execution path.
+
+Branch `2a6fb70 → 2bf2794 → ef0d97d → fda999b`, isolated. **No merge, no deploy, no live-tree
+wiring until the Founder production-integration ruling.**
 
 ### Still open (parallel / later)
 
