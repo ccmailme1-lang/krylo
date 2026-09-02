@@ -43,19 +43,28 @@ Observation
    ↓
 Relationship
    ↓
-Formation                    ← retained as a distinct instance (X4: no hard delete)
+FORMATION                        ← distinct instances preserved (X4: no hard delete)
    ↓
-Cross-Formation Overlap      ← structural correspondence between ≥2 distinct Formations
+CROSS-FORMATION COMPARISON       ← partial structural overlap between ≥2 distinct Formations
    ↓
-Invariant                    ← the part of the overlap that recurs (not coincidence)
+PERSISTENT STRUCTURAL            ← the part of the overlap that recurs (not coincidence);
+CHARACTERISTIC                     established by recurrence / reconciliation
    ↓
-Structural Form              ← the named, derived abstraction over recurring invariants
+STRUCTURAL FORM                  ← the named, derived higher-order structural identity
    ↓
-Re-encounter                 ← a later Formation matches a known Structural Form
+Re-encounter                     ← a later Formation matches a known Structural Form
    ↓
-Form Reconciliation          ← record the match; the instance stays distinct; the Form may be
-                                 revised, never used to pre-admit the instance
+Form Reconciliation              ← record the match; the instance stays distinct; the Form may
+                                    be revised, never used to pre-admit the instance
 ```
+
+**The proposition to protect** (Founder, 2026-09-02):
+
+> The system can preserve the individual structural instances while deriving a higher-order
+> structural identity from **what persists across them**.
+
+SF-001's contribution is the **architecture of abstraction with instance preservation**, not the
+broad idea that "overlap creates abstraction."
 
 ## 3. The load-bearing rule (protects against a predefined classification system)
 
@@ -76,13 +85,40 @@ Corollaries:
 - **Instances survive.** The substrate retains every contributing Formation as a distinct
   instance. A Structural Form is an index over them, not a replacement.
 
+## 3a. Biological-parallel guardrail (Founder, 2026-09-02)
+
+An independent parallel exists in neuroscience — index neurons abstracting into concept neurons
+via partial overlap across distinct episodes, with "just enough overlap" to expose the common
+element while pattern separation preserves each episode
+(`reference — Kolibius, Josselyn & Hanslmayr 2025`, `Origin of Memory Neurons.pdf`). It is an
+**analogy that supports the architecture, not a mechanism to import.**
+
+> **Biological mechanisms that produce cross-context abstraction SHALL NOT be treated as
+> architectural mechanisms for Structural Form Emergence.**
+
+Specifically forbidden as a borrow: the biological `recall → increased excitability →
+preferential allocation` sequence. In KRYLO, **re-encountering something must not confer
+structural privilege merely because it was previously observed** — this is the same bar as
+SF-001 §3 (re-encounter does not shortcut) and CF's Form-blind admission. (It is also the
+"structural-participation support" idea deferred, and not authorized, in
+`SPEC-cf-significance-policy.md` §3.1.)
+
+The "~4% of concept neurons take a new association" finding is **not a parameter** — its value is
+the *shape*: abstraction can be selective/conservative, not every recurring feature becoming a
+Form (see the second research question below).
+
 ## 4. What this spec must define (open)
 
 - `Cross-Formation Overlap` — the formal structural-correspondence relation between two
   Formations (domain set? relationship-type multiset? pathway topology? boundary shape?).
+- **Research question (calibration):** *what degree/type of cross-Formation overlap permits an
+  invariant to emerge without collapsing the Formation instances being compared?* ("just enough
+  overlap" — a question, not yet a threshold.)
 - `Invariant` — the recurrence test that separates a real invariant from coincidence (minimum
   distinct-Formation count, provenance-disjointness requirement, an adversarial "coincidence
   decoy" probe analogous to `persistent-strong-decoy`).
+- **Research question (selectivity):** *under what conditions should a recurring structural
+  characteristic remain merely recurrent rather than become an admitted Structural Form?*
 - `Structural Form` object — id, contributing formation ids, the invariant description,
   provenance, revision history.
 - `Form Reconciliation` — the event vocabulary (FORM_CREATED / FORM_EXTENDED / FORM_CONTRADICTED
