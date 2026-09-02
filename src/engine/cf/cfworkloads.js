@@ -19,8 +19,9 @@
 // polarity 'constructive'|'fracture', ts }. CO_PRESENCE_FLOOR = 0.40 → a domain
 // needs mean magnitude ≥ 0.40 to participate; FORMATION_EXISTENCE_FLOOR = 0.30.
 
-const mk = (domain, mag, polarity, ts) => ({
+const mk = (domain, mag, polarity, ts, opts) => ({
   domain, confidence: Math.round(mag * 100), polarity, ts,
+  ...(opts ?? {}),   // { obsId, dependsOn, lineageKey, subject } — IS-1 reference continuity
 });
 const set = arr => [...new Set(arr)].sort();
 
@@ -48,15 +49,19 @@ const singleShot = {
 // Each batch is one domain — no formation from any single batch. B (window = 1
 // batch) never forms anything. CF accumulates the pathway and recovers the full
 // CAPITAL·MEDIA·OWNERSHIP triangle.
+// The three legs are ONE referentially-connected structure (the press release
+// cites the acquisition; the filing cites both) — modelled by dependsOn. Under
+// IS-1 they EXTEND one pathway spanning OWNERSHIP·MEDIA·CAPITAL. LABOR is an
+// unconnected sub-floor decoy.
 const multiEvent = {
   name: 'multi-event',
   windowBatches: 1,
   budget: { releases: 0 },
   batches: [
-    [ mk('OWNERSHIP', 0.55, 'constructive',    0) ],
-    [ mk('MEDIA',     0.55, 'constructive', 1000),
-      mk('LABOR',     0.30, 'constructive', 1000) ], // sub-floor decoy
-    [ mk('CAPITAL',   0.50, 'constructive', 2000) ],
+    [ mk('OWNERSHIP', 0.55, 'constructive',    0, { obsId: 'me-own', subject: 'acq-1' }) ],
+    [ mk('MEDIA',     0.55, 'constructive', 1000, { obsId: 'me-media', subject: 'acq-1', dependsOn: 'me-own' }),
+      mk('LABOR',     0.30, 'constructive', 1000) ], // sub-floor, unconnected decoy
+    [ mk('CAPITAL',   0.50, 'constructive', 2000, { obsId: 'me-cap', subject: 'acq-1', dependsOn: 'me-media' }) ],
   ],
   heldBack: [],
   truth: {
