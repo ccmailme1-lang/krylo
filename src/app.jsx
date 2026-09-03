@@ -271,6 +271,11 @@ function TemporalScrubber({ scrubPos, onChange, frameTs, hasFrames }) {
 // ── WO-1311: Ingestion Horizon ───────────────────────────────
 const SPARKLINE_LEN = 100;
 
+// KRYL-1253 — cap on the ambient /api/signals pool: top N by signal_score per
+// cone_domain. Bounds the per-render work on mergedRecords/liveSignals/
+// perceptionFrame/activeCones (and the CF tap) while keeping all six cones populated.
+const POOL_TOP_PER_DOMAIN = 120;
+
 function DomainCell({ domain, data }) {
   const W = 112, H = 36;
   const pts = Array.from(data).map((v, i) => {
@@ -837,12 +842,36 @@ export default function App() {
   // Live signal pool — every other ingest hook is query-gated, so with no
   // active search the GDELT rotation records (cone_domain + signal_score)
   // never reached the client and the cones starved. Poll the pool directly.
+  //
+  // KRYL-1253 (guest-path jank): /api/signals returns the FULL ~13k-record corpus
+  // with no limit param and no timestamp to window by. Ingesting all 13k made
+  // mergedRecords / liveSignals / perceptionFrame / activeCones rebuild — and
+  // surfaceRouter.dispatchBatch fire — over 13k rows on every dependency change,
+  // spiking guest frame latency (and flooding the CF tap). The ambient cone/
+  // surface pool only needs the current strongest signals per domain. Cap to the
+  // top POOL_TOP_PER_DOMAIN by signal_score within each cone_domain — bounded work,
+  // all six cones stay populated, strongest-signal semantics preserved.
   const [poolSignals, setPoolSignals] = useState([]);
   useEffect(() => {
     let dead = false;
     const pull = () => fetch('/api/signals')
       .then(r => r.json())
-      .then(arr => { if (!dead && Array.isArray(arr)) setPoolSignals(arr); })
+      .then(arr => {
+        if (dead || !Array.isArray(arr)) return;
+        if (arr.length <= POOL_TOP_PER_DOMAIN * 6) { setPoolSignals(arr); return; }
+        const byDomain = new Map();
+        for (const r of arr) {
+          const d = (r.cone_domain ?? r.domain ?? r.source_type ?? 'signal');
+          if (!byDomain.has(d)) byDomain.set(d, []);
+          byDomain.get(d).push(r);
+        }
+        const capped = [];
+        for (const rows of byDomain.values()) {
+          rows.sort((a, b) => (b.signal_score ?? 0) - (a.signal_score ?? 0));
+          for (let i = 0; i < Math.min(rows.length, POOL_TOP_PER_DOMAIN); i++) capped.push(rows[i]);
+        }
+        setPoolSignals(capped);
+      })
       .catch(() => {});
     pull();
     const id = setInterval(pull, 60000);
