@@ -23,8 +23,9 @@ import {
   magnitude, decayedNu, admissibleForFormation, tierOf,
   classifyDeltaS, nuRecord, PARAMS,
 } from './significance.js';
+import { CANONICAL_DOMAINS } from '../ontology.js';   // §17 single source (KRYL-1065)
 
-const SIX = new Set(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']);
+const SIX = new Set(CANONICAL_DOMAINS.map(d => d.toUpperCase()));
 
 let _pathways = new Map();   // pathway_id -> Pathway
 let _obsIndex = new Map();   // obsId -> pathway_id  (for reference-continuity lookup)

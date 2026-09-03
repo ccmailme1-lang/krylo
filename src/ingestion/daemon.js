@@ -2,6 +2,15 @@
 // Polls FRED (macro) + Finnhub (market) on interval.
 // Normalizes to ExternalSignalPayload, dispatches KRYLO_LIVE_INJECT.
 // lastKnownState cache guarantees UI never sees null on fetch failure.
+//
+// WS6 Gate 1 (KRYL-1259, Founder-authorized 2026-09-02): this daemon is also the
+// authoritative CADENCE source for the Cognitive Fabric producer. It does NOT
+// feed CF data — the CF producer taps subsignalbuffer independently. runCycle()
+// calls cfProducerTick() once per 30s cycle so CF analytical work runs on the
+// ingestion beat, never on a render path (CF-004-INV-006). CF cadence invariant:
+// derived from the ingestion cadence; CF establishes no independent clock.
+
+import { startCFProducer, stopCFProducer, tick as cfProducerTick } from '../engine/cf/producer.js';
 
 const FRED_KEY    = import.meta.env.VITE_FRED_API_KEY;
 const FINNHUB_KEY = import.meta.env.VITE_FINNHUB_API_KEY;
@@ -102,16 +111,22 @@ async function runCycle() {
     if (lastKnownState.length > 0) {
       dispatchToSubstrate(lastKnownState);
     }
+  } finally {
+    // WS6 Gate 1 — CF analytical pass on the ingestion beat. Guarded: a CF fault
+    // must never affect ingestion (same isolation contract as subsignalbuffer §9).
+    try { cfProducerTick(); } catch (e) { console.warn('[CF] producer tick fault (isolated):', e?.message); }
   }
 }
 
 export function startIngestionDaemon() {
   if (daemonHandle) return; // already running
   console.log('[WO-1390] KRYLO INGESTION DAEMON: ONLINE');
+  startCFProducer({ tickMs: null });   // WS6 Gate 1 — subscribe the CF pool tap; daemon drives the cadence
   runCycle(); // immediate first fetch
   daemonHandle = setInterval(runCycle, POLLING_INTERVAL_MS);
 }
 
 export function stopIngestionDaemon() {
   if (daemonHandle) { clearInterval(daemonHandle); daemonHandle = null; }
+  stopCFProducer();
 }

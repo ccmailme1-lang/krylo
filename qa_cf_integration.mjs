@@ -18,24 +18,43 @@ import {
 const fails = [];
 const ok = (c, m) => { if (!c) fails.push(m); else console.log('  ✓ ' + m); };
 
-// ── zero replacement — structural ────────────────────────────────────────
-console.log('\nWS5 — zero replacement of the synchronous path (structural)\n');
+// ── zero replacement + Gate 1 wiring — structural ───────────────────────
+console.log('\nWS5/Gate1 — zero replacement of the synchronous path (structural)\n');
 {
   const callSites = ['src/components/analysis/targetpacket.jsx',
                      'src/components/analysis/analysisfield.jsx',
                      'src/engine/formationprospectusproducer.js'];
+  // no call site imports an ANALYTICAL CF module (producer/pathwaystore/significance/
+  // runner/telemetry). Importing the cffield.jsx component or cf/read.js is fine.
   for (const f of callSites) {
-    const imports = execSync(`grep -n "engine/cf/\\|cffield" ${f} || true`, { encoding: 'utf8' }).trim();
-    ok(imports === '', `${f.split('/').pop()} does not import any CF module (${imports || 'clean'})`);
+    const bad = execSync(`grep -n "engine/cf/\\(producer\\|pathwaystore\\|significance\\|runner\\|telemetry\\|cfpathwaystore\\|cfrunner\\)" ${f} || true`, { encoding: 'utf8' }).trim();
+    ok(bad === '', `${f.split('/').pop()} imports no analytical CF module (${bad || 'clean'})`);
   }
-  const stillSync = execSync(`grep -c "inferFormation(field.particles" src/components/analysis/targetpacket.jsx || true`, { encoding: 'utf8' }).trim();
-  ok(stillSync === '1', 'targetpacket.jsx still calls the synchronous inferFormation(field.particles) — unchanged');
-  const cffieldWired = execSync(`grep -rln "cffield" src --include=*.jsx | grep -v "cffield.jsx" || true`, { encoding: 'utf8' }).trim();
-  ok(cffieldWired === '', `cffield.jsx is not wired into any parent yet (WS5 deliverable for WS6) (${cffieldWired || 'none'})`);
-  // cffield.jsx imports ONLY cf/read.js (import statements only)
+  // the 3 synchronous call sites still call the field-particle path, unchanged
+  for (const [f, pat] of [
+    ['src/components/analysis/targetpacket.jsx', 'field.particles.length ? inferFormation(field.particles) : null'],
+    ['src/components/analysis/analysisfield.jsx', 'inferFormation(field.particles, { now: 1 })'],
+    ['src/engine/formationprospectusproducer.js', 'inferFormation(field.particles, opts)'],
+  ]) {
+    const n = execSync(`grep -Fc "${pat}" ${f} || true`, { encoding: 'utf8' }).trim();
+    ok(n === '1', `${f.split('/').pop()} synchronous formation call byte-identical (${pat})`);
+  }
+  // Gate 1: cffield.jsx IS wired into targetpacket.jsx as a distinct section after 05 PROVENANCE
+  const tpImport = execSync(`grep -c "import CFField from './cffield.jsx'" src/components/analysis/targetpacket.jsx || true`, { encoding: 'utf8' }).trim();
+  const tpUse = execSync(`grep -c "<CFField />" src/components/analysis/targetpacket.jsx || true`, { encoding: 'utf8' }).trim();
+  const afterProv = execSync(`awk '/ordinal="05" title="PROVENANCE"/{p=1} p&&/<CFField \\/>/{print "yes"; exit}' src/components/analysis/targetpacket.jsx`, { encoding: 'utf8' }).trim();
+  ok(tpImport === '1' && tpUse === '1', 'cffield.jsx wired into targetpacket.jsx (import + one <CFField /> use)');
+  ok(afterProv === 'yes', 'CFField renders after the 05 PROVENANCE section (distinct section)');
+  // cffield.jsx imports ONLY cf/read.js
   const cffieldImports = execSync(`grep -n "^import .*engine/cf/" src/components/analysis/cffield.jsx || true`, { encoding: 'utf8' }).trim();
-  ok(/engine\/cf\/read\.js/.test(cffieldImports) && !/producer|pathwaystore|significance|runner/.test(cffieldImports),
+  ok(/engine\/cf\/read\.js/.test(cffieldImports) && !/producer|pathwaystore|significance|runner|telemetry/.test(cffieldImports),
      'cffield.jsx imports only cf/read.js (the pure read surface)');
+  // daemon owns the CF cadence (Gate 2 applied at Gate 1)
+  const daemonTick = execSync(`grep -c "cfProducerTick()" src/ingestion/daemon.js || true`, { encoding: 'utf8' }).trim();
+  const daemonStart = execSync(`grep -c "startCFProducer({ tickMs: null })" src/ingestion/daemon.js || true`, { encoding: 'utf8' }).trim();
+  ok(Number(daemonTick) >= 1 && daemonStart === '1', 'daemon.js owns the CF cadence (startCFProducer + cfProducerTick in runCycle)');
+  const producerSelfTimer = execSync(`grep -rn "startCFProducer({ tickMs:" src --include=*.jsx || true`, { encoding: 'utf8' }).trim();
+  ok(producerSelfTimer === '', 'no .jsx starts the CF producer with a self-timer (UI does not own cadence)');
 }
 
 // ── read-only pool tap — INV-006 ─────────────────────────────────────────

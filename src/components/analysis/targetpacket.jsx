@@ -29,6 +29,7 @@ import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, pe
 import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
 import FrameAnchoring from './frameanchoring.jsx';
+import CFField from './cffield.jsx';   // WS6 Gate 1 (KRYL-1259) — distinct parallel CF read, after 05 PROVENANCE
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -679,6 +680,13 @@ export default function TargetPacket() {
             </p>
           )}
         </PacketSection>
+
+        {/* ── WS6 Gate 1 (KRYL-1259) — Cognitive Fabric read. A DISTINCT section
+             (not a numbered 01–05 packet section), immediately after 05 PROVENANCE.
+             Reads the pre-computed getCFFormation() only (O(1), no analytical work
+             on render — CF-004-INV-006). Never overwrites or restyles 02 FORMATION;
+             the synchronous field-particle formation path is unchanged. ── */}
+        <CFField />
 
       </div>
 
