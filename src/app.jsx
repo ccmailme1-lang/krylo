@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { startIngestionDaemon } from './ingestion/daemon.js';
 import { initBrowserGate } from './engine/causalos/browsergate.js';
 import { buildActiveCones } from './engine/cones.js';
+import { recordGuest } from './engine/cf/telemetry.js'; // KRYL-1259 WS6 Gate 3 — times the guest ingest→render unit (CF-004-MET-01). Pure timing, no analytical call.
 import { usetruthlens }    from './hooks/usetruthlens.js';
 import { useingest }       from './hooks/useingest.js';
 import { useframeingest }  from './hooks/useframeingest.js';
@@ -939,10 +940,13 @@ export default function App() {
   // the raw signals aggregation path (legacy branch stays in ConeMap as dead code until
   // Phase 3 cutover removes it — this is the migration step, not the removal step).
   // Used for OrientationSurface (hero — no scrubber, always live).
-  const perceptionFrame = useMemo(() => hydrateSignalsToFrame(liveSignals), [liveSignals]);
+  // KRYL-1259 WS6 Gate 3 — recordGuest() times this guest-path unit of work (normalize
+  // live signals → PerceptionFrame, the ingest→render step). CF-004-MET-01 guestLatency
+  // series. hydrateSignalsToFrame is pure normalization — no CF analytical call (INV-006).
+  const perceptionFrame = useMemo(() => recordGuest(() => hydrateSignalsToFrame(liveSignals)), [liveSignals]);
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
-  const activeCones = useMemo(() => buildActiveCones(liveSignals, coneColorOverrides), [liveSignals, coneColorOverrides]);
+  const activeCones = useMemo(() => recordGuest(() => buildActiveCones(liveSignals, coneColorOverrides)), [liveSignals, coneColorOverrides]);
 
   // PERF (cone-rotation freeze): stable callbacks so React.memo(AnalysisField) can skip re-rendering
   // the cone Canvas on the frequent SSE-driven App re-renders (useframestream fires setState per frame).
