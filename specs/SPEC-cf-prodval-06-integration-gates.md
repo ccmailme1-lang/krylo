@@ -91,10 +91,16 @@ unbounded), E (UI owns cadence — rejected).
 
 ### Gate 2 acceptance
 
-- [ ] Founder confirms Option A (or names another).
-- [ ] The scheduler is a named infra module, documented here, not the UI and not `producer.js`'s
-      self-timer.
-- [ ] `producer.tick()` remains idempotent per drain and telemetered (`recordAnalytical`) — met.
+- [x] Founder confirms Option A (2026-09-02) — ingestion cadence is the authoritative CF clock;
+      no independent CF timer.
+- [x] The scheduler is a named infra module (`src/ingestion/daemon.js`), documented here — not
+      the UI, not `producer.js`'s self-timer. Applied in commit `96cc387`:
+      `startCFProducer({ tickMs: null })` at daemon start, `cfProducerTick()` in `runCycle()`'s
+      guarded `finally` block, `stopCFProducer()` in `stopIngestionDaemon()`.
+- [x] `producer.tick()` remains idempotent per drain and telemetered (`recordAnalytical`) — met.
+
+**Gate 2 — CLOSED (2026-09-02).** Architectural decision (Option A) confirmed and the wiring is
+on the branch. This is not merge/deploy authorization.
 
 ---
 
@@ -111,9 +117,32 @@ Wire `cffield.jsx` into a parent as a **distinct section, not inside 02 FORMATIO
 Parent candidate: a new section in the Target Packet **after** `05 PROVENANCE`, or a HUD slot —
 Founder's call on placement. Not decided here.
 
+### Gate 1 acceptance — DONE (2026-09-02, commit `96cc387`; recorded §0a, commit `321f303`)
+
+- [x] Placement: `<CFField />` rendered in `src/components/analysis/targetpacket.jsx` as a
+      DISTINCT section immediately **after** `05 PROVENANCE` — not a numbered 01–05 packet
+      section, not inside 02 FORMATION.
+- [x] `cffield.jsx` imports only `../../engine/cf/read.js` (the O(1) pure read surface).
+      `qa_cf_integration.mjs` enforces it.
+- [x] CF read surface is O(1) on render — no `tick()` on a render path (`getCFFormation()` only).
+- [x] The 3 synchronous `inferFormation(field.particles)` call sites grep-confirmed
+      BYTE-IDENTICAL: `targetpacket.jsx:334`, `analysisfield.jsx:546`,
+      `formationprospectusproducer.js:19`.
+- [x] No render path imports an analytical CF module (producer/pathwaystore/significance/
+      runner/telemetry) — `qa_cf_integration.mjs` WS5 checks pass.
+- [x] Section is visually + semantically distinct: label "COGNITIVE FABRIC READ",
+      `CF_FORMATION_CANDIDATE` kind, hairline divider / no fill (§6/§7).
+
+**Gate 1 — CLOSED (2026-09-02).** Branch only. Not merge/deploy authorization.
+
 ---
 
-## Gate 3 — real-I/O telemetry (BLOCKED on Gate 1)
+## Gate 3 — real-I/O telemetry — OPEN / PENDING (Gate 1 unblocked it 2026-09-02)
+
+**Status: not started, and cannot be completed on the branch alone.** Gate 3 requires a live
+connector-execution measurement window — the running app with real FRED/Finnhub/EDGAR/
+PatentsView traffic through `daemon.js` → `dispatchToSubstrate` → `cfProducerTick()`. It is
+explicitly **not** something to synthesise from the harness. Left open deliberately.
 
 Re-run `qa_cf_telemetry.mjs`-equivalent against **live connector activity**, and — amended
 acceptance criterion (Founder, 2026-09-02) — **demonstrate the measured telemetry corresponds to
@@ -131,3 +160,14 @@ actual connector activity, not merely the synthetic/harness execution path.** Co
 
 All three gates pass independently → the findings go to the Founder for the
 **production-integration ruling**. WS6 passing is **not** itself deployment authorization.
+
+### WS6 gate status (2026-09-02)
+
+| gate | state |
+|---|---|
+| Gate 2 — scheduler authority | **CLOSED** — Option A, wired in `96cc387` |
+| Gate 1 — render integration | **CLOSED** — `96cc387`, recorded §0a `321f303` |
+| Gate 3 — real-I/O telemetry | **OPEN / PENDING** — needs a live connector measurement window; branch work cannot close it |
+
+WS6 does not exit until Gate 3 passes. No merge, no deploy, no production-integration ruling
+before then. `cf-canonical-substrate-experiment` stays isolated.

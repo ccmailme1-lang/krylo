@@ -23,6 +23,12 @@ export function isCanonicalDomain(d) {
 // Lives here so no component owns its own domain-list literal (KRYL-1065).
 export const CONE_DISPLAY_ORDER = Object.freeze(['capital', 'ownership', 'labor', 'media', 'technology', 'knowledge']);
 
+// Analysis-surface display order — the "locked six" as the Target Packet 01 ANALYSIS substrate
+// tabs, the Analysis idle-field TRENDING pool, and the subject-scoped measure table (adsubject)
+// iterate them. A permutation of the canonical set, uppercased to match those surfaces' labels.
+// Lives here (not as a component literal) so §17 stays single-source (KRYL-1065).
+export const ANALYSIS_DOMAIN_ORDER = Object.freeze(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']);
+
 // ── Alias layer — canonical id → per-surface display label ────────────────────
 // A surface RENDERS the display label but RESOLVES to the canonical domain. Adding a surface
 // (or migrating one, Phase 2) means adding aliases here, not a new domain list in the component.

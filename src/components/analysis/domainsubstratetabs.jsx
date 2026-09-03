@@ -10,6 +10,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { domainIntelligence, relationshipsFor } from '../../engine/domainintelligence.js';
+import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import { subjectScope } from '../../engine/subjectscope.js';
 import { A as adSubject } from '../../engine/adsubject.js';
@@ -23,7 +24,7 @@ const BRT  = 'rgba(255,255,255,0.78)';
 const RULE = '#191d1e';
 const ABSENCE = 'rgba(255,255,255,0.28)';
 
-const TABS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+const TABS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function Panel({ ordinal, title, children }) {
   return (

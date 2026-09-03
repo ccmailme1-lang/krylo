@@ -19,6 +19,7 @@ import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
 import StructuralField from './structuralfield.jsx';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
+import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
 import { arbitrate }                  from '../../engine/aiae.js';
@@ -90,8 +91,8 @@ const DOMAIN_CHIPS = [
 ];
 
 // The locked six — the TRENDING pool iterates these when the guest has not narrowed
-// to a pill.
-const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+// to a pill. KRYL-1065 — order sourced from ontology, not redeclared here.
+const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER;
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
 // taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked

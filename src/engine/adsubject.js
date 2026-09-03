@@ -23,10 +23,11 @@ import { domainIntelligence } from './domainintelligence.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from './domainsignalresolution.js';
 import { computeDomainPressure } from './domaingravity.js';
 import { isScopable } from './subjectscope.js';
+import { ANALYSIS_DOMAIN_ORDER } from './ontology.js';
 
 export const AD_SUBJECT_VERSION = '5b-2';
 
-export const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+export const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function authoredMeasureKeys(domain) {
   const di = domainIntelligence(domain);
