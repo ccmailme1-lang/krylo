@@ -3,27 +3,44 @@
 // WO-256 — Marquee: sends live HN signal titles to iframe via postMessage
 // WO-259 — records prop: sends krylo-records to iframe for pill ranking
 // WO-294 — krylo-submit owned by PrismContext; CampaignFunnel is display-only
-// DEF — restrictToChrome: this iframe is full-viewport and always mounted, which
-// meant it sat on top of AnalysisField's cones (z:0 vs iframe's z:10) and captured
-// every click across the whole screen — cones never received a pointer event.
-// Fix: once the user is engaged with the cone/Surface view (restrictToChrome),
-// clip the iframe's hit-testable region down to just the header (48px) + left-nav
-// (80px) strip via clip-path (excluded regions are not hit-tested in modern
-// browsers) so clicks pass through to the cones everywhere else. The wrapper divs
-// (here and in app.jsx) are pointerEvents:none — they have no content of their
-// own; only the iframe itself should ever capture a click.
+//
+// KRYL-1253 — Rectangular-Chrome Cut-Over.
+// The old fix clipped the always-mounted full-viewport iframe to an L
+// (clip-path: polygon(...)) so clicks fell through to the cones. A *shaped*
+// (non-rectangular) clip-path forces the browser to repaint the whole iframe every
+// frame — that is what makes the Opportunity Ribbon's translateX animation jerky
+// and steals main-thread budget from the R3F cone loop.
+//
+// New model — no shaped clip anywhere. On the engaged cone/Surface view:
+//   - iframe #1 (the real one — search, marquee, records, ref) is clipped with a
+//     RECTANGULAR inset() to just the top strip (nav + Opportunity Ribbon). A
+//     rectangle composites cleanly; the ribbon animation is smooth again.
+//   - iframe #2 is the SAME page rendered scriptless (sandbox: allow-same-origin,
+//     no allow-scripts) as a rectangular left column — the left nav, statically.
+//     No second copy of the heavy page JS runs, so the search / message flow is
+//     untouched. A thin transparent overlay relays left-nav clicks as krylo-nav.
+//   - everything outside those two rectangles: the wrapper is pointer-events:none,
+//     so the cone canvas underneath receives the event directly.
+// Chrome markup / CSS / animation are untouched — only the compositing + hit-test
+// boundary changes.
 
 import React, { useEffect, useRef } from 'react';
 
-// Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px }.
-// The full-width band extends to 100px so the WO-1815 Opportunity Ribbon
-// (.opportunity-ribbon, fixed top:49px, ~44px tall) stays visible and clickable
-// on the surface view after engage — not just the 48px nav.
-const CHROME_CLIP = 'polygon(0 0, 100% 0, 100% 100px, 80px 100px, 80px 100%, 0 100%)';
+// Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px },
+// .opportunity-ribbon { top:49px }. 104px keeps nav + ribbon fully visible + clickable.
+const CHROME_TOP_PX  = 104;   // nav (48) + Opportunity Ribbon
+const CHROME_LEFT_PX = 80;     // .left-nav width
+const LEFT_NAV_TOP_PX = 48;    // .left-nav starts below the 48px nav bar (krylo2-feed.html)
+const TOP_CLIP  = `inset(0 0 calc(100% - ${CHROME_TOP_PX}px) 0)`;   // rectangular — top strip only
+const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 0 0)`;              // rectangular — hide iframe #2's nav bar
+
+// left-nav order in krylo2-feed.html → the mode each posts (see setMode there)
+const LNAV_MODES = ['surface', 'analysis', 'structure', 'feeds', 'community', 'history'];
 
 export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, onCat, onProxy }) {
   const internalRef = useRef(null);
   const iframeRef   = externalRef ?? internalRef;
+  const leftNavRef  = useRef(null);
   const iframeReady = useRef(false);
 
   useEffect(() => {
@@ -50,8 +67,28 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     if (records?.length) iframeRef.current.contentWindow.postMessage({ type: 'krylo-records', records }, '*');
   };
 
+  // Left-column overlay → krylo-nav. The scriptless iframe #2 renders the nav but can't
+  // run its own onclick; figure out which .lnav-item was hit and post the same message.
+  const relayLeftNav = (e) => {
+    try {
+      const doc = leftNavRef.current?.contentDocument;
+      if (!doc) return;
+      const item = doc.elementFromPoint(e.clientX, e.clientY)?.closest('.lnav-item, .lnav-settings');
+      if (!item) return;
+      if (item.classList.contains('lnav-settings')) {
+        window.postMessage({ type: 'toggle-signal-panel' }, '*');
+        return;
+      }
+      const items = [...doc.querySelectorAll('.lnav-item')];
+      const mode = LNAV_MODES[items.indexOf(item)];
+      if (mode) window.postMessage({ type: 'krylo-nav', mode }, '*');
+    } catch { /* iframe not ready — ignore */ }
+  };
+
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+      {/* iframe #1 — the real feed page. Full viewport normally; on the engaged surface
+          view, RECTANGULAR-clipped to the top strip (nav + ribbon). No shaped clip. */}
       <iframe
         ref={iframeRef}
         src={`${src}?v=20260615`}
@@ -62,9 +99,39 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           position: 'absolute', inset: 0, width: '100%', height: '100%', border: 'none',
           zIndex: 0, background: 'transparent', overflow: 'hidden',
           pointerEvents: 'auto',
-          clipPath: restrictToChrome ? CHROME_CLIP : 'none',
+          clipPath: restrictToChrome ? TOP_CLIP : 'none',
         }}
       />
+
+      {restrictToChrome && (
+        <>
+          {/* iframe #2 — same page, SCRIPTLESS, as a rectangular left column (left nav only). */}
+          <iframe
+            ref={leftNavRef}
+            src={`${src}?v=20260615`}
+            title="KRYLO left nav"
+            scrolling="no"
+            sandbox="allow-same-origin"
+            aria-hidden="true"
+            style={{
+              position: 'fixed', top: 0, left: 0, border: 'none',
+              width: CHROME_LEFT_PX, height: '100%',
+              zIndex: 1, background: 'transparent', overflow: 'hidden',
+              pointerEvents: 'none',
+              clipPath: LEFT_CLIP,   // rectangular — show only .left-nav (hide its nav bar)
+            }}
+          />
+          {/* transparent hit layer over the left nav → relays nav clicks */}
+          <div
+            onClick={relayLeftNav}
+            style={{
+              position: 'fixed', top: LEFT_NAV_TOP_PX, left: 0,
+              width: CHROME_LEFT_PX, height: `calc(100% - ${LEFT_NAV_TOP_PX}px)`,
+              zIndex: 2, pointerEvents: 'auto', background: 'transparent',
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
