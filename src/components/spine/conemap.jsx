@@ -568,7 +568,17 @@ function ComparePanel() {
   );
 }
 
-export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', log = [], coneState = [], rawDomains = [], manualClickDomain = null }) {
+export function InspectionPanel({ cone, timeOffset = 0, lens = 'INVESTOR', eventLogRef = null, coneState = [], rawDomains = [], manualClickDomain = null }) {
+  // DEF-1272 (2026-09-05): log used to arrive as a plain prop, re-rendered by ConeMap on every
+  // event-stream tick (the exact re-render source being isolated away from ConeScene). Self-poll
+  // eventLogRef instead -- same pattern as ResonanceArcs' hudList -- so this panel still reads
+  // fresh log entries without ConeMap needing to re-render to hand them down.
+  const [log, setLog] = React.useState(() => (eventLogRef ? eventLogRef.current : []));
+  React.useEffect(() => {
+    if (!eventLogRef) return;
+    const id = setInterval(() => setLog([...eventLogRef.current]), 500);
+    return () => clearInterval(id);
+  }, [eventLogRef]);
   const [tab, setTab]         = React.useState('stats');
   const [topTab, setTopTab]   = React.useState('domain');
   const emaRef                = React.useRef({});
@@ -1805,7 +1815,7 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events = [], flows = [], topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
+function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // KRYL-1174 (2026-08-14) — `total` (coneState.length) never actually changes anymore: all 6
@@ -2160,45 +2170,14 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
         });
         })()}
 
-        {/* Wave 2: live event pulses — particles rise from each firing cone.
-            layoutSettling is now permanently false (see its declaration above) since `total`
-            never actually changes anymore — kept as a gate rather than removed pending
-            confirmation it's safe to delete outright. */}
-        {!layoutSettling && events.map(ev => {
-          const data = coneData[ev.target];
-          if (!data) return null;
-          return (
-            <EventPulse
-              key={ev.id}
-              event={ev}
-              position={data.pos}
-              apexY={data.apexY}
-            />
-          );
-        })}
-
-        {/* Wave 2: flow arcs — bezier between cones that pulsed together. Same layoutSettling gate.
-            KRYL-1171 — same bleed-through class as ThresholdBands: FlowArc's Html label
-            ("X ↔ Y / WATCH: ...") had no lens gate at all, so it rendered underneath every
-            AnalysisField report (confirmed via live screenshot — FLOW lens "Movement Analysis"
-            showing a stray "KNOWLEDGE ↔ OWNERSHIP / WATCH: IP TRANSFER" label). Restricted to
-            NAV_SURFACE per the 3D-HUD/report-overlay boundary contract (CLAUDE.md §28). */}
-        {!layoutSettling && viewportLens === 'NAV_SURFACE' && !surfaceActivated && flows.map(f => {
-          const a = coneData[f.a];
-          const b = coneData[f.b];
-          if (!a || !b) return null;
-          return (
-            <FlowArc
-              key={f.id}
-              flow={f}
-              posA={a.pos} apexA={a.apexY}
-              posB={b.pos} apexB={b.apexY}
-              domainA={f.a}
-              domainB={f.b}
-              onArcClick={onArcClick}
-            />
-          );
-        })}
+        {/* DEF-1272 (2026-09-05): event pulses + flow arcs moved OUT of ConeScene into the
+            sibling <EventLayer> below (rendered inside the same Canvas). useEventStream's 1800ms
+            tick used to live in ConeMap itself, so every tick re-rendered ConeMap and cascaded
+            into this unmemoized component reconciling all cone geometry — same class of bug as
+            the 100ms HUD sampler ResonanceArcs already isolates. React.memo(ConeScene) was tried
+            twice for this (f498ea0/7352fc0 in July, 07e182d/6771943 today) and reverted both
+            times for stale/batched-reconciliation glitches — leaf-isolating the ticking state
+            itself, not memoizing the scene, is the established fix. See EventLayer below. */}
 
         {/* Formation Relationship Connector Layer — approved build scope, 2026-07-30.
             Undirected lines between formation centroids. Candidate pairs come from ARC_THESIS
@@ -2258,6 +2237,111 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, events
           });
         })()}
       </group>
+    </>
+  );
+}
+
+// PERF (DEF-1272): useEventStream's 1800ms tick + its flow-pairing derivation used to live in
+// ConeMap itself (setEvents/setFlows), so every tick re-rendered ConeMap and cascaded into
+// ConeScene (unmemoized -- ConeScene must stay unmemoized, see the comment where its old event/
+// flow render blocks used to be). Leaf-isolated here exactly like ResonanceArcs below: this
+// component owns the ticking state itself, so only EventLayer re-renders on the 1.8s cadence --
+// ConeMap and ConeScene never see it. Writes accumulated events into eventLogRef (a ref, not
+// state) rather than calling setLog in ConeMap, so InspectionPanel's "recent activity" list
+// keeps working via its own self-poll (mirrors ResonanceArcs' hudList pattern) without
+// reintroducing a second re-render source into ConeMap.
+function EventLayer({ coneState, viewportLens, surfaceActivated, onArcClick, eventLogRef }) {
+  const events = useEventStream(coneState);
+  const [flows, setFlows] = useState([]);
+  const lastEventRef = useRef(null);
+  const flowIdRef    = useRef(0);
+  const total = coneState.length;
+  const R     = Math.max(6, (total * SPACING) / (2 * Math.PI));
+
+  useEffect(() => {
+    if (!events.length) return;
+    const prevLog = eventLogRef.current;
+    const seen    = new Set(prevLog.map(e => e.id));
+    const fresh   = events.filter(e => !seen.has(e.id));
+    if (fresh.length) eventLogRef.current = [...fresh.reverse(), ...prevLog].slice(0, 8);
+    // Pair consecutive different-cone events within 2.2s into flow arcs
+    events.forEach(e => {
+      const prev = lastEventRef.current;
+      if (!prev || prev.id === e.id) { lastEventRef.current = prev ?? e; return; }
+      if (prev.target !== e.target && (e.born - prev.born) < 2200) {
+        const flowId = ++flowIdRef.current;
+        setFlows(curr => {
+          const now = Date.now();
+          const fresh = curr.filter(f => now - f.born < 3000);
+          return [...fresh, { id: flowId, a: prev.target, b: e.target, born: e.born }].slice(-2);
+        });
+      }
+      lastEventRef.current = e;
+    });
+  }, [events, eventLogRef]);
+
+  // Sweep-evict expired flow arcs
+  useEffect(() => {
+    const sweep = setInterval(() => {
+      setFlows(curr => {
+        const now = Date.now();
+        const fresh = curr.filter(f => now - f.born < 3000);
+        return fresh.length === curr.length ? curr : fresh;
+      });
+    }, 400);
+    return () => clearInterval(sweep);
+  }, []);
+
+  // Per-cone position + apex Y lookup for event/flow rendering -- same formula ConeScene's
+  // own coneData uses, recomputed independently here so EventLayer never needs a prop that
+  // changes on ConeScene's render cadence (there is none left to depend on).
+  const coneData = useMemo(() => {
+    const out = {};
+    coneState.forEach((state, i) => {
+      const angle = (i / total) * Math.PI * 2;
+      const pos   = [R * Math.cos(angle), 0, R * Math.sin(angle)];
+      const { height } = encodeCone(state, { focusId: null });
+      const apexY = Math.max(0.5, Math.pow(height, 1.4) * CONE_HEIGHT_SCALE);
+      out[state.domain] = { pos, apexY };
+    });
+    return out;
+  }, [coneState, total, R]);
+
+  return (
+    <>
+      {/* Wave 2: live event pulses — particles rise from each firing cone. */}
+      {events.map(ev => {
+        const data = coneData[ev.target];
+        if (!data) return null;
+        return (
+          <EventPulse
+            key={ev.id}
+            event={ev}
+            position={data.pos}
+            apexY={data.apexY}
+          />
+        );
+      })}
+
+      {/* Wave 2: flow arcs — bezier between cones that pulsed together.
+          KRYL-1171 — FlowArc's Html label restricted to NAV_SURFACE per the 3D-HUD/report-overlay
+          boundary contract (CLAUDE.md §28). */}
+      {viewportLens === 'NAV_SURFACE' && !surfaceActivated && flows.map(f => {
+        const a = coneData[f.a];
+        const b = coneData[f.b];
+        if (!a || !b) return null;
+        return (
+          <FlowArc
+            key={f.id}
+            flow={f}
+            posA={a.pos} apexA={a.apexY}
+            posB={b.pos} apexB={b.apexY}
+            domainA={f.a}
+            domainB={f.b}
+            onArcClick={onArcClick}
+          />
+        );
+      })}
     </>
   );
 }
@@ -2416,55 +2500,18 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
   // Report the currently-active cone domain up (drives sticky-note attach/visibility).
   React.useEffect(() => { onActiveConeChange?.(activeDomain ?? null); }, [activeDomain]);
 
-  // Wave 2 event stream + persistent log + paired flow arcs
-  const events = useEventStream(coneState);
-  const [log, setLog] = useState([]);
-  const [flows, setFlows] = useState([]);
+  // DEF-1272 (2026-09-05): event stream + flow-pairing ownership moved to the sibling
+  // <EventLayer> (rendered inside Canvas, below) so its 1800ms tick no longer re-renders
+  // ConeMap on every cycle -- eventLogRef is a plain ref EventLayer writes into; InspectionPanel
+  // self-polls it (see its own component) instead of ConeMap re-rendering to hand it a fresh log.
+  const eventLogRef     = useRef([]);
   const carouselRef    = useRef({ stopped: false, dragDelta: 0, stepRequest: 0 });
   const containerRef   = useRef(null);
   const pdLastRef      = useRef(0);
-  const lastEventRef = useRef(null);
-  const flowIdRef    = useRef(0);
   const isPointerDownRef = useRef(false);
   const dragStartXRef    = useRef(null);
   const [frozenUi, setFrozenUi] = useState(false); // mirrors _carouselStopped for arrow-button visibility
   const [hoverArrow, setHoverArrow] = useState(null); // -1 | 1 | null — which steer arrow is hovered
-
-  useEffect(() => {
-    if (!events.length) return;
-    setLog(prev => {
-      const seen = new Set(prev.map(e => e.id));
-      const fresh = events.filter(e => !seen.has(e.id));
-      if (!fresh.length) return prev;
-      return [...fresh.reverse(), ...prev].slice(0, 8);
-    });
-    // Pair consecutive different-cone events within 2.2s into flow arcs
-    events.forEach(e => {
-      const prev = lastEventRef.current;
-      if (!prev || prev.id === e.id) { lastEventRef.current = prev ?? e; return; }
-      if (prev.target !== e.target && (e.born - prev.born) < 2200) {
-        const flowId = ++flowIdRef.current;
-        setFlows(curr => {
-          const now = Date.now();
-          const fresh = curr.filter(f => now - f.born < 3000);
-          return [...fresh, { id: flowId, a: prev.target, b: e.target, born: e.born }].slice(-2);
-        });
-      }
-      lastEventRef.current = e;
-    });
-  }, [events]);
-
-  // Sweep-evict expired flow arcs
-  useEffect(() => {
-    const sweep = setInterval(() => {
-      setFlows(curr => {
-        const now = Date.now();
-        const fresh = curr.filter(f => now - f.born < 3000);
-        return fresh.length === curr.length ? curr : fresh;
-      });
-    }, 400);
-    return () => clearInterval(sweep);
-  }, []);
 
   // Native pointerdown capture — fires BEFORE R3F, guaranteed twice per double-click.
   // Also tracks drag-to-rotate: while frozen (_carouselStopped), horizontal drag
@@ -2544,8 +2591,6 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
           selectedDomain={activeDomain}
           clickEvent={activeClick}
           onSelectCone={onSelectCone}
-          events={events}
-          flows={flows}
           topoMode={topoMode}
           onArcClick={onArcClick}
           hudRef={hudRef}
@@ -2558,6 +2603,15 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
           surfaceActivated={surfaceActivated}
           surfaceVisible={surfaceVisible}
           maxCones={maxCones}
+        />
+        {/* DEF-1272 — leaf-isolated sibling of ConeScene; owns the 1800ms event-stream tick
+            itself so ConeScene never re-renders because of it (see EventLayer definition). */}
+        <EventLayer
+          coneState={coneState}
+          viewportLens={viewportLens}
+          surfaceActivated={surfaceActivated}
+          onArcClick={onArcClick}
+          eventLogRef={eventLogRef}
         />
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
@@ -2589,7 +2643,7 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
       {typeof document !== 'undefined' && document.getElementById('krylo-hud-root') && createPortal(
         <>
           <ComparePanel />
-          {panelVisible && panelCone && <InspectionPanel cone={panelCone} timeOffset={timeOffset} lens={lens} log={log} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
+          {panelVisible && panelCone && <InspectionPanel cone={panelCone} timeOffset={timeOffset} lens={lens} eventLogRef={eventLogRef} coneState={coneState} rawDomains={rawDomains} manualClickDomain={manualPick?.domain ?? null} />}
         </>,
         document.getElementById('krylo-hud-root')
       )}
