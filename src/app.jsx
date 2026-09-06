@@ -1565,6 +1565,7 @@ export default function App() {
           iframeRef={iframeRef}
           src="/krylo2-feed.html"
           restrictToChrome={isSurface && surfaceExpanded}
+          navMode={navMode}
         />
       </div>
 

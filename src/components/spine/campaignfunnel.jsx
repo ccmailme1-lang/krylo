@@ -44,7 +44,7 @@ const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 ${LEFT_NAV_BOTTOM_VH}vh 0)`; // 
 // left-nav order in krylo2-feed.html → the mode each posts (see setMode there)
 const LNAV_MODES = ['surface', 'analysis', 'structure', 'feeds', 'community', 'history'];
 
-export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, onCat, onProxy }) {
+export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, navMode, onCat, onProxy }) {
   const internalRef = useRef(null);
   const iframeRef   = externalRef ?? internalRef;
   const leftNavRef  = useRef(null);
@@ -64,6 +64,26 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     iframeRef.current.contentWindow.postMessage({ type: 'krylo-records', records }, '*');
   }, [records]);
 
+  // DEF-1275: krylo2-feed.html's own setMode() only sets .lnav-item.active when a nav icon is
+  // clicked INSIDE that iframe -- nothing pushes React's actual navMode back in, so navigating
+  // by any other path (e.g. via the cone/report UI) left the highlight showing whatever was
+  // last clicked. Applied to BOTH iframes' DOM directly from here, same access pattern
+  // relayLeftNav already uses (same-origin contentDocument) -- krylo2-feed.html untouched.
+  const applyActiveNav = (doc) => {
+    if (!doc) return;
+    try {
+      const items = doc.querySelectorAll('.lnav-item');
+      items.forEach(el => el.classList.remove('active'));
+      const idx = LNAV_MODES.indexOf(navMode);
+      if (idx !== -1 && items[idx]) items[idx].classList.add('active');
+    } catch { /* iframe not ready — ignore */ }
+  };
+
+  useEffect(() => {
+    applyActiveNav(iframeRef.current?.contentDocument);
+    applyActiveNav(leftNavRef.current?.contentDocument);
+  }, [navMode, restrictToChrome]);
+
   const handleLoad = () => {
     iframeReady.current = true;
     if (!iframeRef.current) return;
@@ -72,6 +92,11 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       if (titles.length) iframeRef.current.contentWindow.postMessage({ type: 'krylo-marquee', titles }, '*');
     }
     if (records?.length) iframeRef.current.contentWindow.postMessage({ type: 'krylo-records', records }, '*');
+    applyActiveNav(iframeRef.current.contentDocument);
+  };
+
+  const handleLeftNavLoad = () => {
+    applyActiveNav(leftNavRef.current?.contentDocument);
   };
 
   // Left-column overlay → krylo-nav. The scriptless iframe #2 renders the nav but can't
@@ -117,6 +142,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
             ref={leftNavRef}
             src={`${src}?v=20260615`}
             title="KRYLO left nav"
+            onLoad={handleLeftNavLoad}
             scrolling="no"
             sandbox="allow-same-origin"
             aria-hidden="true"
