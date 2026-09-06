@@ -31,8 +31,15 @@ import React, { useEffect, useRef } from 'react';
 const CHROME_TOP_PX  = 104;   // nav (48) + Opportunity Ribbon
 const CHROME_LEFT_PX = 80;     // .left-nav width
 const LEFT_NAV_TOP_PX = 48;    // .left-nav starts below the 48px nav bar (krylo2-feed.html)
+// krylo2-feed.html also has .bottom-surface (position:fixed; bottom:0; height:30vh) — a
+// full-width overlay whose cards are flex-end (right edge), invisible in the left 80px in
+// the normal full-screen iframe. In the narrow 80px chrome iframe a 300px card overflows
+// left and bleeds into the left-nav column. Clip iframe #2's bottom 30vh so it renders
+// ONLY the left-nav region. Recovered from commit 68b510c (2026-09-04), orphaned off this
+// branch by an earlier rollback -- reapplied 2026-09-05 in place of a wider width-based fix.
+const LEFT_NAV_BOTTOM_VH = 30;
 const TOP_CLIP  = `inset(0 0 calc(100% - ${CHROME_TOP_PX}px) 0)`;   // rectangular — top strip only
-const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 0 0)`;              // rectangular — hide iframe #2's nav bar
+const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 ${LEFT_NAV_BOTTOM_VH}vh 0)`; // rectangular — left-nav region only (no nav bar, no bottom-surface bleed)
 
 // left-nav order in krylo2-feed.html → the mode each posts (see setMode there)
 const LNAV_MODES = ['surface', 'analysis', 'structure', 'feeds', 'community', 'history'];
@@ -118,7 +125,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
               width: CHROME_LEFT_PX, height: '100%',
               zIndex: 1, background: 'transparent', overflow: 'hidden',
               pointerEvents: 'none',
-              clipPath: LEFT_CLIP,   // rectangular — show only .left-nav (hide its nav bar)
+              clipPath: LEFT_CLIP,   // rectangular — show only .left-nav (hide nav bar + bottom-surface)
             }}
           />
           {/* transparent hit layer over the left nav → relays nav clicks */}
