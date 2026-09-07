@@ -559,7 +559,7 @@ export default function TargetPacket() {
         </div>
 
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A) ─── */}
-        <PacketSection ordinal="01" title="ANALYSIS" mt={80}>
+        <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
           <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
         </PacketSection>
 
