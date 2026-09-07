@@ -212,8 +212,7 @@
     <span>Validated relationship graph — positioned on φ (strength) × φ̇ (momentum), not laid out by hand</span>
   </div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b><br />
-    RESOLVED <b id="integrity">—</b>
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
   </div>
 </div>
 
@@ -276,6 +275,7 @@
   const playBtn = document.getElementById('play-btn');
   const hintEl = document.querySelector('.hint');
   const scrubberWrapEl = document.querySelector('.scrubber-wrap');
+  const hudTopEl = document.querySelector('.hud-top');
 
   let W = 0, H = 0, DPR = 1;
   let plot = { x: 0, y: 0, w: 0, h: 0 };
@@ -292,6 +292,11 @@
     const marginL = Math.max(50, Math.min(90, W * 0.08));
     const marginR = Math.max(40, Math.min(60, W * 0.05));
     const marginT = Math.max(70, Math.min(120, H * 0.10));
+    // .hud-top was pinned at a fixed 32px CSS left/right, independent of marginL/marginR --
+    // the same class of fixed-vs-plot-derived mismatch already fixed for .hint/.scrubber-wrap
+    // below. Keep it locked to the plot's actual left/right edges instead.
+    hudTopEl.style.left = marginL + 'px';
+    hudTopEl.style.right = marginR + 'px';
     // Bottom margin fits 3 stacked blocks below the plot: axis label + hint/disclosure row +
     // scrubber row. Two prior attempts guessed this as a function of H (150px, then 200px) and
     // both measured short on a real screenshot — disclosure (3 lines) is taller than hint (1
