@@ -25,6 +25,11 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import ComparativeField from './comparativefield.jsx';
 import { PartialAnswer, InsufficientInput } from '../../renderers/partialAnswerTemplates.jsx';
+// AF-01 (KRYL-1281) / AC-07 — same canonical Formation Authority call targetpacket.jsx already
+// uses (formationinference.js:inferFormation, fed by perceptionread.js:buildPerceptionField).
+// Same function, same call pattern -- a second call site, not a second pipeline.
+import { inferFormation }       from '../../engine/formationinference.js';
+import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { resolveHomePurchaseEvidence } from '../../engine/homePurchaseEvidence.js';
 import WhyThisMatters from './whythismatters.jsx';
 import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
@@ -286,6 +291,17 @@ export default function IntelligenceBrief() {
   // other re-render) doesn't re-run it.
   const briefSubject = useMemo(() => canonicalBriefSubject(session), [session]);
   const isExpired  = false;
+
+  // AF-01 (KRYL-1281) / AC-07 / §21 FORMATION IS NOT A VERDICT — same contract as
+  // targetpacket.jsx:326-334: run the Formation contract against the live field pool, state
+  // NO_FORMATION_ESTABLISHED only when it actually returns empty, never as a constant. A found
+  // formation is substantiated structure and IS shown.
+  const fieldFormation = useMemo(() => {
+    try {
+      const field = buildPerceptionField({ now: Date.now() });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [session]);
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore
@@ -1102,6 +1118,43 @@ export default function IntelligenceBrief() {
           <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 5 }}>Purpose</div>
           <div style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em' }}>{brief.purpose}</div>
         </Panel>
+
+        {/* FORMATION MAP — AC-07 / §5.1: structural orientation layer, deliberately NOT a
+            conventional numbered section (no seq stamp, distinct bordered treatment) sitting
+            between BLUF and Body & Key Findings. AC-10 / §15: not a score, not a verdict —
+            same fieldFormation contract as targetpacket.jsx's 02 FORMATION section (same
+            canonical inferFormation() call, §21 FORMATION IS NOT A VERDICT discipline). */}
+        <div style={{ position: 'relative', marginBottom: 20, padding: '14px 14px 14px 14px', border: `1px solid rgba(102,255,0,0.22)` }}>
+          <div style={{
+            position: 'absolute', top: -7, left: 14,
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em',
+            color: LIME_MID, background: '#000', padding: '0 8px',
+            textTransform: 'uppercase',
+          }}>
+            Formation
+          </div>
+          {fieldFormation ? (
+            <>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Field Scope — live observable field, not subject-bound</div>
+              {/* AC-07 / KRYL-1278/1281 — the visual Formation Map moved to its own MAP tab
+                  (structurepanel.jsx) alongside BRIEF/RECON/IMPACT -- the actual FORMATION nav
+                  page, full-size, no embed scaling needed. This section stays text-only: the
+                  live canonical fieldFormation result, which is what AC-07 actually requires. */}
+              <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                A cross-domain formation is present in the live field:{' '}
+                {fieldFormation.participatingDomains.join(' · ')} —{' '}
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''},
+                existence {fieldFormation.existence.toFixed(2)}.
+              </div>
+            </>
+          ) : (
+            <div style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em' }}>
+              No formation established. A formation is earned from observations in two or more
+              domains and at least one admitted cross-domain relationship connecting them — a
+              stated absence, not a low score.
+            </div>
+          )}
+        </div>
 
         {/* 02 · BODY & KEY FINDINGS */}
         <Panel seq="02" label="Body & Key Findings">
