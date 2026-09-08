@@ -49,6 +49,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
   const iframeRef   = externalRef ?? internalRef;
   const leftNavRef  = useRef(null);
   const iframeReady = useRef(false);
+  const hoveredItemRef = useRef(null); // last .lnav-item hovered inside the scriptless iframe
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current || !signals?.length) return;
@@ -117,6 +118,33 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     } catch { /* iframe not ready — ignore */ }
   };
 
+  // Left-nav hover relay — the transparent hit-layer div above (pointerEvents:auto) is what
+  // the cursor actually touches; iframe #2 underneath is pointerEvents:none, so its own
+  // .lnav-item:hover CSS and native title tooltips never fire no matter what markup it has.
+  // Mirrors relayLeftNav's elementFromPoint lookup, but drives the visual/tooltip from here
+  // instead of relying on the iframe to receive the event it structurally can't receive.
+  // Direct style/attribute writes (a ref, not React state) — no re-render per mousemove.
+  const applyHoverOpacity = (item) => {
+    if (item) item.style.opacity = item.classList.contains('active') ? '1' : '0.3';
+  };
+  const relayLeftNavHover = (e) => {
+    try {
+      const doc = leftNavRef.current?.contentDocument;
+      if (!doc) return;
+      const item = doc.elementFromPoint(e.clientX, e.clientY)?.closest('.lnav-item') ?? null;
+      if (item === hoveredItemRef.current) return;
+      applyHoverOpacity(hoveredItemRef.current);
+      hoveredItemRef.current = item;
+      if (item && !item.classList.contains('active')) item.style.opacity = '0.7';
+      e.currentTarget.title = item?.getAttribute('title') ?? '';
+    } catch { /* iframe not ready — ignore */ }
+  };
+  const relayLeftNavLeave = (e) => {
+    applyHoverOpacity(hoveredItemRef.current);
+    hoveredItemRef.current = null;
+    e.currentTarget.title = '';
+  };
+
   return (
     <div style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
       {/* iframe #1 — the real feed page. Full viewport normally; on the engaged surface
@@ -157,6 +185,8 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           {/* transparent hit layer over the left nav → relays nav clicks */}
           <div
             onClick={relayLeftNav}
+            onMouseMove={relayLeftNavHover}
+            onMouseLeave={relayLeftNavLeave}
             style={{
               position: 'fixed', top: LEFT_NAV_TOP_PX, left: 0,
               width: CHROME_LEFT_PX, height: `calc(100% - ${LEFT_NAV_TOP_PX}px)`,
