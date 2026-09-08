@@ -1570,7 +1570,12 @@ export default function App() {
           records={marqueeSignals}
           iframeRef={iframeRef}
           src="/krylo2-feed.html"
-          restrictToChrome={isSurface && surfaceExpanded}
+          // Was isSurface && surfaceExpanded -- any Surface state where surfaceExpanded is
+          // false left iframe #1 fully unclipped underneath, showing its own ticker/marquee
+          // content (e.g. the ETR-042/FEDERAL RESERVE card) bleeding through around
+          // InspectionPanel and other Surface chrome. Clip to the top-chrome-only strip
+          // whenever the Surface view is active at all, not only in the expanded/engaged state.
+          restrictToChrome={isSurface}
           navMode={navMode}
         />
       </div>
