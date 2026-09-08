@@ -1815,7 +1815,16 @@ const CONE_TO_KALSHI_DOMAIN = {
   ownership:  'HOME',
 };
 
-function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
+// React.memo (2026-09-08): the two prior memo attempts (f498ea0/7352fc0 July,
+// 07e182d/6771943 September) were both reverted because ConeScene used to receive `events`/
+// `flows` props recreated every 1800ms, which broke memo's shallow comparison and caused a
+// periodic full-reconciliation "reset" jank. DEF-1272 (d4f616a) removed those two props from
+// ConeScene entirely -- they're owned by the sibling <EventLayer> now -- so the specific reason
+// both prior attempts failed no longer applies to this component's prop list. Without a memo
+// boundary, ConeScene's render function re-executes on ANY ancestor re-render, including from
+// state that has nothing to do with the cones (e.g. IngestionHorizon's unrelated 800ms sparkline
+// tick in app.jsx) -- default shallow comparison only, no custom comparator.
+const ConeScene = React.memo(function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // KRYL-1174 (2026-08-14) — `total` (coneState.length) never actually changes anymore: all 6
@@ -2239,12 +2248,11 @@ function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMo
       </group>
     </>
   );
-}
+});
 
 // PERF (DEF-1272): useEventStream's 1800ms tick + its flow-pairing derivation used to live in
 // ConeMap itself (setEvents/setFlows), so every tick re-rendered ConeMap and cascaded into
-// ConeScene (unmemoized -- ConeScene must stay unmemoized, see the comment where its old event/
-// flow render blocks used to be). Leaf-isolated here exactly like ResonanceArcs below: this
+// ConeScene. Leaf-isolated here exactly like ResonanceArcs below: this
 // component owns the ticking state itself, so only EventLayer re-renders on the 1.8s cadence --
 // ConeMap and ConeScene never see it. Writes accumulated events into eventLogRef (a ref, not
 // state) rather than calling setLog in ConeMap, so InspectionPanel's "recent activity" list
