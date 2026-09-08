@@ -268,7 +268,10 @@ async function buildMigrationSignals(now) {
 // value has been provisioned yet — the proxy returns 503 until one is set server-side, and
 // getInventorPatents()'s existing try/catch (below) already handles that as a clean no-op with a
 // console.warn, same as any other transient fetch failure. Re-enabling does not risk a crash.
-const PATENTSVIEW_ENABLED = true;
+// TEMPORARILY disabled 2026-09-08 for live debugging (repeated 503s from missing
+// PATENTSVIEW_API_KEY flooding the console during a freeze/jerk investigation) -- re-enable
+// once the investigation is done, this is not a permanent decision.
+const PATENTSVIEW_ENABLED = false;
 
 // Main entry point — call once per sync cycle (PatentsView is weekly/monthly, not live)
 export async function runPatentsViewSync() {

@@ -771,7 +771,13 @@ export default function App() {
     [...xrayHn, ...xrayIngest].forEach(s => map.set(s.id, s));
     return Array.from(map.values());
   }, [xrayIngest, xrayHn]);
-  const { lagMs: streamLagMs, domainScores, stats: streamStats } = useframestream({ enabled: navMode === 'surface' });
+  // TEMPORARILY disabled 2026-09-08 for live debugging: /api/signals/stream proxies to
+  // krylo.org (vite.config.js) and the local dev server can't hold that SSE connection --
+  // continuous reconnect-fail cycling was cascading state updates through App on every retry,
+  // causing periodic re-renders throughout the tree (including ConeMap) at an uncontrolled
+  // cadence. Re-enable once the endpoint/proxy issue is actually fixed -- not a permanent
+  // decision.
+  const { lagMs: streamLagMs, domainScores, stats: streamStats } = useframestream({ enabled: false });
   const { history, currentIndex, current, seek, seekToTime } = usereplay(true);
 
   // WO-1390: Live ingestion daemon — FRED + Finnhub
