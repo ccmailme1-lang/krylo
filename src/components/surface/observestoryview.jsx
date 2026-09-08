@@ -145,7 +145,10 @@ export default function ObserveStoryBanner({ activeDomain = null, coneState = []
         : null;
       return {
         domain,
-        formationId: domain,
+        // KRYL-1280 — formationId's documented identity is uppercase (matches buildFormation()'s
+        // formation_id, formationschema.js). `domain` above stays lowercase — only this
+        // Formation-identity field is normalized.
+        formationId: domain.toUpperCase(),
         label: domainLabel(domain),
         magnitude: pressure ?? 0,
         volatility: volatility ?? 0,

@@ -1824,7 +1824,7 @@ const CONE_TO_KALSHI_DOMAIN = {
 // boundary, ConeScene's render function re-executes on ANY ancestor re-render, including from
 // state that has nothing to do with the cones (e.g. IngestionHorizon's unrelated 800ms sparkline
 // tick in app.jsx) -- default shallow comparison only, no custom comparator.
-const ConeScene = React.memo(function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null }) {
+const ConeScene = React.memo(function ConeScene({ coneState, selectedDomain, clickEvent, onSelectCone, topoMode = false, onArcClick, hudRef, kalshiSignals = [], carouselRef, dollyKey = 0, viewportLens = 'NAV_SURFACE', divergenceByDomain = {}, connectorTier = 'surface', surfaceActivated = false, surfaceVisible = true, maxCones = null, eventLogRef }) {
   const total      = coneState.length;
   const R          = Math.max(6, (total * SPACING) / (2 * Math.PI));
   // KRYL-1174 (2026-08-14) — `total` (coneState.length) never actually changes anymore: all 6
@@ -2215,8 +2215,12 @@ const ConeScene = React.memo(function ConeScene({ coneState, selectedDomain, cli
             ? filterForHero(allRelationships)
             : filterForSurface(allRelationships);
           return relationships.map((rel, i) => {
-            const a = coneData[rel.sourceFormationId];
-            const b = coneData[rel.targetFormationId];
+            // KRYL-1280 — sourceFormationId/targetFormationId are uppercase (buildFormation()'s
+            // documented identity); coneData stays lowercase-keyed by design (its other
+            // consumers use raw domain strings and are unaffected). Bridge the one place these
+            // two consistently-but-differently-cased identities meet.
+            const a = coneData[rel.sourceFormationId.toLowerCase()];
+            const b = coneData[rel.targetFormationId.toLowerCase()];
             if (!a || !b) return null;
             const color = RELATIONSHIP_STATE_COLOR[rel.state] ?? RELATIONSHIP_STATE_COLOR[RELATIONSHIP_STATE.UNKNOWN];
             const midX = (a.pos[0] + b.pos[0]) / 2, midZ = (a.pos[2] + b.pos[2]) / 2;
@@ -2245,6 +2249,21 @@ const ConeScene = React.memo(function ConeScene({ coneState, selectedDomain, cli
             );
           });
         })()}
+        {/* KRYL — EventLayer moved inside this group (was a Canvas-level sibling of ConeScene,
+            per DEF-1272 2026-09-05). This group rotates (spinRef) and is scaled (FORMATION_SCALE);
+            EventLayer's pulses/flow-arcs use the identical unscaled angle/R position formula as
+            this group's own cones, so they must share this transform or they visibly drift away
+            from the cones as the formation spins ("connectors missing the cones" regression).
+            EventLayer still owns its 1800ms tick internally -- nesting its JSX here does not
+            reintroduce the original cascade bug, since a child's own state update never re-renders
+            its parent (and ConeScene is memoized regardless). */}
+        <EventLayer
+          coneState={coneState}
+          viewportLens={viewportLens}
+          surfaceActivated={surfaceActivated}
+          onArcClick={onArcClick}
+          eventLogRef={eventLogRef}
+        />
       </group>
     </>
   );
@@ -2611,16 +2630,12 @@ export default function ConeMap({ signals = [], perceptionFrame = null, timeOffs
           surfaceActivated={surfaceActivated}
           surfaceVisible={surfaceVisible}
           maxCones={maxCones}
-        />
-        {/* DEF-1272 — leaf-isolated sibling of ConeScene; owns the 1800ms event-stream tick
-            itself so ConeScene never re-renders because of it (see EventLayer definition). */}
-        <EventLayer
-          coneState={coneState}
-          viewportLens={viewportLens}
-          surfaceActivated={surfaceActivated}
-          onArcClick={onArcClick}
           eventLogRef={eventLogRef}
         />
+        {/* EventLayer moved inside ConeScene's rotating/scaled group (see comment there) --
+            was a Canvas-level sibling here (DEF-1272, 2026-09-05), which left its pulses/flow-arcs
+            un-rotated and un-scaled relative to the actual cones. Still leaf-isolated (owns its
+            own 1800ms tick), just rendered in the transform space that matches the cones. */}
         <OrbitControls
           enableRotate={false} enablePan={false} enableZoom={false}
           target={[0, 1.25, 0]}

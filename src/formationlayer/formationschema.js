@@ -32,7 +32,10 @@ export function buildFormation({ domain, magnitude, state, cohesion, velocity, v
     throw new Error(`buildFormation: invalid state '${state}' — must be one of ${Object.values(FORMATION_STATE).join(', ')}`);
   }
   return Object.freeze({
-    formation_id: domain,
+    // KRYL-1280 — formation_id's documented identity is uppercase (see domainpairthesis.js's
+    // canonicalDomainPairs() comment and relationship.fixtures.js); domain arrives lowercase
+    // from CANONICAL_DOMAINS (ontology.js). Normalized once, here, at construction.
+    formation_id: domain.toUpperCase(),
     state,
     magnitude: parseFloat(magnitude.toFixed(1)),
     cohesion: parseFloat(cohesion.toFixed(3)),
