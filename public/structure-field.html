@@ -346,11 +346,41 @@
   function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
 
-  const DOMAIN = { min: -1, max: 1 };
-  function toPxX(v) { return plot.x + ((v - DOMAIN.min) / (DOMAIN.max - DOMAIN.min)) * plot.w; }
-  function toPxY(v) { return plot.y + plot.h - ((v - DOMAIN.min) / (DOMAIN.max - DOMAIN.min)) * plot.h; }
-  function fromPxX(px) { return DOMAIN.min + ((px - plot.x) / plot.w) * (DOMAIN.max - DOMAIN.min); }
-  function fromPxY(py) { return DOMAIN.min + ((plot.y + plot.h - py) / plot.h) * (DOMAIN.max - DOMAIN.min); }
+  const DOMAIN = { min: -1, max: 1 }; // nominal STRENGTH/MOMENTUM range -- unchanged, still the
+  // true meaning of every axis value. Ambient decorative particles are still generated across
+  // this full range (see buildAmbient below) -- untouched by the viewport fit.
+
+  // viewDomain -- KRYL-1287 composition fix (2026-09-09). Real STRENGTH values are unsigned
+  // meanMagnitude, always in [0,1] -- never populate the left half of the nominal [-1,1] domain
+  // at all, so real formations always rendered pinned to the right edge of the canvas with the
+  // left half structurally guaranteed empty. This does NOT rescale or move any node's real
+  // data (meanMagnitude/layoutY stay exactly what they are) -- it pans/zooms the VIEWPORT onto
+  // the region actually containing data, the same way a map camera frames content without
+  // altering the content's real coordinates. Axis gridlines/labels stay accurate (a "0.5"
+  // gridline is still really at STRENGTH=0.5) -- fewer of them are simply visible once zoomed
+  // into the populated region. Defaults to the full nominal domain until real data arrives.
+  let viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 };
+
+  function fitViewToNodes() {
+    if (!NODES.length) { viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 }; return; }
+    const xs = NODES.map(n => n.path[0].x), ys = NODES.map(n => n.path[0].y);
+    let xMin = Math.min(...xs), xMax = Math.max(...xs);
+    let yMin = Math.min(...ys), yMax = Math.max(...ys);
+    const PAD = 0.28; // domain-unit margin so node dots/labels aren't flush against the frame
+    xMin -= PAD; xMax += PAD; yMin -= PAD; yMax += PAD;
+    const MIN_SPAN = 0.7; // floor so a tightly-clustered (or single-node) formation doesn't zoom in absurdly tight
+    if (xMax - xMin < MIN_SPAN) { const c = (xMin + xMax) / 2; xMin = c - MIN_SPAN / 2; xMax = c + MIN_SPAN / 2; }
+    if (yMax - yMin < MIN_SPAN) { const c = (yMin + yMax) / 2; yMin = c - MIN_SPAN / 2; yMax = c + MIN_SPAN / 2; }
+    // Never show a viewport extending beyond what the axes actually mean ([-1,1]).
+    xMin = Math.max(-1, xMin); xMax = Math.min(1, xMax);
+    yMin = Math.max(-1, yMin); yMax = Math.min(1, yMax);
+    viewDomain = { xMin, xMax, yMin, yMax };
+  }
+
+  function toPxX(v) { return plot.x + ((v - viewDomain.xMin) / (viewDomain.xMax - viewDomain.xMin)) * plot.w; }
+  function toPxY(v) { return plot.y + plot.h - ((v - viewDomain.yMin) / (viewDomain.yMax - viewDomain.yMin)) * plot.h; }
+  function fromPxX(px) { return viewDomain.xMin + ((px - plot.x) / plot.w) * (viewDomain.xMax - viewDomain.xMin); }
+  function fromPxY(py) { return viewDomain.yMin + ((plot.y + plot.h - py) / plot.h) * (viewDomain.yMax - viewDomain.yMin); }
 
   // ---- graph model -----------------------------------------------------
   // KRYL-1287 — real, live formation data only. The previous hardcoded NODES/EDGES demo
@@ -410,6 +440,7 @@
       }));
       nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
     }
+    fitViewToNodes(); // composition fix -- pan/zoom the viewport onto the real data, see comment above viewDomain
 
     // Readout (FORMATIONS/RELATIONSHIPS/RESOLVED) is updated by draw() itself, from
     // realFormation directly -- single source of truth, see the end of draw() below.
@@ -561,17 +592,25 @@
 
   function drawAxes() {
     ctx.save();
+    // KRYL-1287 composition fix — viewDomain can now be a zoomed-in subrange of the nominal
+    // [-1,1] domain (see fitViewToNodes above). A gridline/tick for a v outside the CURRENT
+    // viewDomain would compute a pixel position outside the plot rect (canvas has no implicit
+    // clip) -- skipped rather than letting it spill onto surrounding UI. Every gridline/label
+    // that IS drawn still shows its true value (a visible "0.5" is still really STRENGTH=0.5);
+    // this only controls which of them are in view, never what they say.
+    const inViewX = (v) => v >= viewDomain.xMin && v <= viewDomain.xMax;
+    const inViewY = (v) => v >= viewDomain.yMin && v <= viewDomain.yMax;
     for (let v = -1; v <= 1.0001; v += 0.25) {
       ctx.strokeStyle = getVar('--hairline'); ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(toPxX(v), plot.y); ctx.lineTo(toPxX(v), plot.y + plot.h); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(plot.x, toPxY(v)); ctx.lineTo(plot.x + plot.w, toPxY(v)); ctx.stroke();
+      if (inViewX(v)) { ctx.beginPath(); ctx.moveTo(toPxX(v), plot.y); ctx.lineTo(toPxX(v), plot.y + plot.h); ctx.stroke(); }
+      if (inViewY(v)) { ctx.beginPath(); ctx.moveTo(plot.x, toPxY(v)); ctx.lineTo(plot.x + plot.w, toPxY(v)); ctx.stroke(); }
     }
     ctx.font = "10px 'IBM Plex Mono', monospace";
     ctx.fillStyle = getVar('--text-mono-dim');
     ctx.textAlign = 'center';
-    for (let v = -1; v <= 1.0001; v += 0.5) ctx.fillText(v.toFixed(1), toPxX(v), plot.y + plot.h + 18);
+    for (let v = -1; v <= 1.0001; v += 0.5) if (inViewX(v)) ctx.fillText(v.toFixed(1), toPxX(v), plot.y + plot.h + 18);
     ctx.textAlign = 'right';
-    for (let v = -1; v <= 1.0001; v += 0.5) ctx.fillText(v.toFixed(1), plot.x - 12, toPxY(v) + 3);
+    for (let v = -1; v <= 1.0001; v += 0.5) if (inViewY(v)) ctx.fillText(v.toFixed(1), plot.x - 12, toPxY(v) + 3);
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
     ctx.fillText('STRENGTH  ( φ )', plot.x + plot.w / 2, plot.y + plot.h + 40);
@@ -674,13 +713,18 @@
       const toRadius = (nodeById[e.to].resolved ? 5.5 : 3.2) * (hoverId === e.to || hoverId === e.from ? 1.15 : 1);
       const endX = b.px - Math.cos(angle) * (toRadius + 6);
       const endY = b.py - Math.sin(angle) * (toRadius + 6);
-      const weight = 0.6 + e.strength * 2.0;
+      // Thin, crisp line weight to match the STRUCTURAL FIELD radar chart's polygon
+      // (structuralfield.jsx:98-99, strokeWidth 1) -- the old 0.6+strength*2.0 formula was
+      // sized for the demo's varying 0.35-0.85 strength range; every real edge carries a flat
+      // strength:1 (admitted vs not is binary, see KRYL-1287), so that formula always produced
+      // the same oversized ~2.6px regardless. Flat, thin weight for real data instead.
+      const weight = 1.4;
       const related = hoverId && (hoverId === e.from || hoverId === e.to);
 
       ctx.save();
       ctx.globalAlpha = (0.22 + r * 0.58) * (related || !hoverId ? 1 : 0.28);
       ctx.strokeStyle = r > 0.85 ? getVar('--signal-lime') : 'rgba(255,255,255,0.5)';
-      ctx.lineWidth = weight * (related ? 1.25 : 1);
+      ctx.lineWidth = weight * (related ? 1.2 : 1);
       ctx.setLineDash(r > 0.85 ? [] : r > 0.4 ? [6, 4] : [1, 4]);
       ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(endX, endY); ctx.stroke();
 

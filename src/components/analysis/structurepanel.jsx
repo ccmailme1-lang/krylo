@@ -15,11 +15,12 @@ const LIME = '#66FF00';
 
 const TABS = ['BRIEF', 'MAP', 'RECON', 'IMPACT'];
 
-// MAP tab — scaled down 10% so structure-field.html's own margin math (which was landing labels
+// MAP tab — scaled down so structure-field.html's own margin math (which was landing labels
 // too close to the panel edges at 1:1) gets more native room to lay itself out, while the visible
-// result is 10% smaller. Dynamic (ResizeObserver-measured), not a hardcoded pixel size -- the
-// iframe's native rect is always container size / 0.9, so it stays correct if the panel resizes.
-const MAP_SCALE = 0.8;
+// result is smaller. Dynamic (ResizeObserver-measured), not a hardcoded pixel size -- the
+// iframe's native rect is always container size / MAP_SCALE, so it stays correct if the panel
+// resizes. Reduced an additional 10% (0.8 -> 0.72) per Founder request, 2026-09-09.
+const MAP_SCALE = 0.72;
 function FormationMapTab({ query }) {
   const wrapRef = useRef(null);
   const iframeRef = useRef(null);
