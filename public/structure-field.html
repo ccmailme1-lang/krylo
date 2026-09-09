@@ -366,6 +366,17 @@
   // colored, or treated as a real momentum reading anywhere in this file. See KRYL-1287's
   // explicit scope note: do not invent, infer, or substitute a momentum value here.
   const NEUTRAL_Y = 0;
+  // layoutY — a deterministic PLACEMENT function, not a data value. With every node otherwise
+  // pinned to NEUTRAL_Y (no real momentum exists to position them), real formations packed
+  // nodes onto a single horizontal line -- crowded labels, garbled edge text (confirmed live,
+  // 2026-09-09). This spreads nodes across a small vertical band purely so they have room to
+  // read clearly; it is a hash of the domain NAME (not of any measurement), reproducible run to
+  // run for the same domain, and still rendered/labeled as "MOMENTUM -- NOT AVAILABLE" -- this
+  // is layout, never a substitute for measured φ̇.
+  function layoutY(domain) {
+    const h = hashStr(domain) / 4294967295; // 0..1
+    return (h - 0.5) * 1.1; // spread across roughly [-0.55, 0.55]
+  }
   let NODES = [];
   let EDGES = [];
   let nodeById = {};
@@ -384,10 +395,11 @@
         // mapped onto the positive half of the STRENGTH domain only, not stretched across
         // the full [-1,1] bipolar range, which would imply a directionality it doesn't carry.
         const x = v.meanMagnitude;
+        const y = layoutY(v.domain); // layout spread, not momentum -- see layoutY comment above
         return {
           id: v.domain, label: v.domain.toUpperCase(), provenance: null,
           contribution: v.meanMagnitude,
-          path: [{ x, y: NEUTRAL_Y }, { x, y: NEUTRAL_Y }], // static -- see NEUTRAL_Y note above
+          path: [{ x, y }, { x, y }], // static
         };
       });
       // Every edge in formation.graph.edges is, by construction (formationinference.js's
@@ -482,7 +494,15 @@
     // whichever has the fewest remaining overlaps. In a genuinely over-crowded spot this accepts
     // a small residual overlap rather than an unbounded, disconnecting displacement -- same
     // determinism (no randomness, stable candidate order), just with a displacement ceiling.
-    const MAX_SHIFT = 60;
+    // KRYL-1287/1283 combination (2026-09-09) — real production relationship-type strings
+    // (e.g. "knowledge amplifies capability / capability embodies expertise", 64 chars) are far
+    // longer than the short synthetic labels ("increases"/"funds") this resolver was validated
+    // against. A single shared MAX_SHIFT undersized edge labels' escape room. Split: node labels
+    // stay tightly bounded (a node's identity label drifting far from its own dot is the worse
+    // defect already fixed once); edge labels -- which stay legible connected to their line
+    // regardless of exact label position -- get a much larger bounded search, not unbounded.
+    const NODE_MAX_SHIFT = 60;
+    const EDGE_MAX_SHIFT = 220;
     const STEP = 2;
 
     function countOverlaps(x, y, w, h) {
@@ -496,9 +516,10 @@
     }
 
     for (const c of candidates) {
+      const maxShift = c.node ? NODE_MAX_SHIFT : EDGE_MAX_SHIFT;
       let bestX = c.x, bestY = c.y;
       let bestOverlaps = countOverlaps(c.x, c.y, c.width, c.height);
-      for (let d = STEP; d <= MAX_SHIFT && bestOverlaps > 0; d += STEP) {
+      for (let d = STEP; d <= maxShift && bestOverlaps > 0; d += STEP) {
         const downOverlaps = countOverlaps(c.x, c.y + d, c.width, c.height);
         if (downOverlaps < bestOverlaps) { bestOverlaps = downOverlaps; bestX = c.x; bestY = c.y + d; }
         if (bestOverlaps === 0) break;
@@ -508,12 +529,10 @@
       // Edge labels only (never node labels -- a node's label must stay anchored under its own
       // dot, sideways drift would visually disconnect it from what it identifies) get a second,
       // horizontal escape route when vertical displacement alone can't clear a genuinely dense
-      // convergence point (multiple relationship lines meeting one node, e.g. every edge into
-      // PRODUCTION COST PRESSURE) -- an edge's line already carries its connection, so nudging
-      // its label sideways along that line doesn't lose the association the way a stranded node
-      // label would.
+      // convergence point -- an edge's line already carries its connection, so nudging its label
+      // sideways along that line doesn't lose the association the way a stranded node label would.
       if (!c.node && bestOverlaps > 0) {
-        for (let d = STEP; d <= MAX_SHIFT && bestOverlaps > 0; d += STEP) {
+        for (let d = STEP; d <= maxShift && bestOverlaps > 0; d += STEP) {
           const rightOverlaps = countOverlaps(c.x + d, c.y, c.width, c.height);
           if (rightOverlaps < bestOverlaps) { bestOverlaps = rightOverlaps; bestX = c.x + d; bestY = c.y; }
           if (bestOverlaps === 0) break;
@@ -699,10 +718,11 @@
       const s = nodeStateAt(n, t);
       n._px = s.px; n._py = s.py;
       n._pos = s.pos;
-      // KRYL-1287 — momentumColor(m01) is NOT used here: every real node sits at NEUTRAL_Y
-      // (see the graph-model comment above), so m01 would always be the same fixed value --
-      // running it through the blue<->lime momentum gradient would visually imply a real,
-      // measured momentum reading that doesn't exist. Neutral, undoctrine-coded color instead.
+      // KRYL-1287 — momentumColor(m01) is NOT used here: node Y is a deterministic layout
+      // spread (layoutY), not a momentum measurement (see comment above NODES). Running a
+      // per-node y through the blue<->lime momentum gradient would visually imply a real,
+      // measured momentum reading that doesn't exist, even though it now varies node to node.
+      // Neutral, undoctrine-coded color instead, for every real node regardless of position.
       const color = getVar('--text-mono');
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
