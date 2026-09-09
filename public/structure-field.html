@@ -700,8 +700,9 @@
     // itself) yield and get displaced instead when a node and an edge label compete for the
     // same space -- a node floating away from its own dot is a worse defect than an edge label
     // sitting a few px off its exact midpoint.
-    const edgeLabelCandidates = [];
+    const edgeLabelCandidates = []; // unused now -- edges use calloutStack instead, see below
     const nodeLabelCandidates = [];
+    const calloutStack = []; // hover-revealed relationship text, drawn as a side callout, not on-graph
     for (const e of EDGES) {
       const a = nodeStateAt(nodeById[e.from], t);
       const b = nodeStateAt(nodeById[e.to], t);
@@ -750,16 +751,15 @@
       // arrowheads) -- relationship text appears only when hovering that edge's node, same
       // hover/related mechanism the line-opacity treatment already used, just now also gating
       // label existence rather than only label opacity.
+      // KRYL-1287/1283 round 3 (2026-09-09) -- callout, not on-graph placement. Labels sitting
+      // at the edge midpoint (even hover-gated, even collision-resolved) still crossed the
+      // relationship lines themselves. Collected here; positioned and drawn as a side callout
+      // stack with a leader line back to (mx,my), after the edges loop -- see calloutStack below.
       if (r > 0.5 && related) {
         const mx = (a.px + b.px) / 2, my = (a.py + b.py) / 2;
-        const font = "9px 'IBM Plex Mono', monospace";
-        ctx.font = font;
-        const w = ctx.measureText(e.label).width;
-        edgeLabelCandidates.push({
-          text: e.label, x: mx - w / 2, y: my - 5 - 12, width: w, height: 18, baselineOffset: 12,
-          font, textAlign: 'center', drawX: mx,
-          fillStyle: related ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.55)',
-          globalAlpha: clamp01((r - 0.5) / 0.5) * (related || !hoverId ? 1 : 0.22),
+        calloutStack.push({
+          text: e.label, mx, my,
+          globalAlpha: clamp01((r - 0.5) / 0.5),
         });
       }
     }
@@ -910,6 +910,54 @@
         ctx.fillText(c.text, c.drawX + (c.resolvedX - c.x), c.resolvedY + c.baselineOffset);
       }
       ctx.restore();
+    }
+
+    // KRYL-1287/1283 round 3 -- callout stack for hover-revealed relationship text. Fixed
+    // right-side column (independent of where the formation itself sits post-centering, so it
+    // never competes with the graph for space), stacked top-to-bottom in EDGES array order
+    // (stable/deterministic -- same hovered node always produces the same stack order), each
+    // with a thin leader line back to its actual edge midpoint. Graph geometry/positions are
+    // completely untouched by this -- purely a label-placement layer drawn on top.
+    if (calloutStack.length) {
+      const CALLOUT_LINE_H = 22;
+      const CALLOUT_RIGHT_MARGIN = 18;
+      const calloutFont = "9px 'IBM Plex Mono', monospace";
+      ctx.font = calloutFont;
+      const baseY = plot.y + 28;
+      let maxWidth = 0;
+      calloutStack.forEach((c, i) => {
+        c.labelY = baseY + i * CALLOUT_LINE_H;
+        c.width = ctx.measureText(c.text).width;
+        if (c.width > maxWidth) maxWidth = c.width;
+      });
+      // Left-aligned, evenly -- every line starts at the same X (like the HUD title block:
+      // "STRUCTURAL RESOLUTION FIELD" / subtitle share one left margin), not right-justified
+      // per-line. That shared X is computed backward from the WIDEST current label so the
+      // longest one still ends inside the frame -- shorter labels don't get to sit further
+      // right just because they're shorter.
+      const calloutLeftX = W - CALLOUT_RIGHT_MARGIN - maxWidth;
+      for (const c of calloutStack) {
+        // Leader line: edge midpoint -> label's near (left) edge, thin and dim so the callout
+        // reads as an annotation pointer, not another relationship line.
+        ctx.save();
+        ctx.globalAlpha = c.globalAlpha * 0.55;
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+        ctx.beginPath();
+        ctx.moveTo(c.mx, c.my);
+        ctx.lineTo(calloutLeftX - 6, c.labelY - 3);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.save();
+        ctx.globalAlpha = c.globalAlpha;
+        ctx.font = calloutFont;
+        ctx.fillStyle = 'rgba(255,255,255,0.82)';
+        ctx.textAlign = 'left';
+        ctx.fillText(c.text, calloutLeftX, c.labelY);
+        ctx.restore();
+      }
     }
 
     // KRYL-1287 — single source of truth for the top readout: realFormation directly, not the
