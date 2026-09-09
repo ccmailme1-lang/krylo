@@ -209,7 +209,7 @@
 <div class="hud hud-top">
   <div class="mark">
     STRUCTURAL RESOLUTION FIELD
-    <span>Validated relationship graph — positioned on φ (strength) × φ̇ (momentum), not laid out by hand</span>
+    <span>Live formation field — positioned on φ (strength); φ̇ (momentum) not yet available. Ambient field state, not bound to the resolved subject.</span>
   </div>
   <div class="status">
     FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
@@ -217,7 +217,7 @@
 </div>
 
 <div class="hud hint">
-  Select <b>any formation</b> to inspect its evidentiary field
+  Waiting for live field state…
 </div>
 
 <div class="hud scrubber-wrap">
@@ -353,42 +353,76 @@
   function fromPxY(py) { return DOMAIN.min + ((plot.y + plot.h - py) / plot.h) * (DOMAIN.max - DOMAIN.min); }
 
   // ---- graph model -----------------------------------------------------
+  // KRYL-1287 — real, live formation data only. The previous hardcoded NODES/EDGES demo
+  // (Production Cost Pressure / Wage Pressure / etc.) is removed, not kept as a fallback --
+  // showing it even briefly before real data arrives would be exactly the "RESOLVED 1.00 on
+  // fabricated data" defect KRYL-1285 documented. Empty until the parent posts real data (or
+  // an explicit absence) via postMessage; see applyFieldFormation() below.
+  //
+  // Y (MOMENTUM, φ̇) is a KNOWN GAP, not fixed here: fieldFormation (the real source, same one
+  // BRIEF's own '02 FORMATION' section uses) has no per-vertex momentum/velocity value --
+  // its vertices carry only { domain, meanMagnitude }. NEUTRAL_Y below is a rendering
+  // placeholder ONLY so every node has a valid plot coordinate -- it is never labeled,
+  // colored, or treated as a real momentum reading anywhere in this file. See KRYL-1287's
+  // explicit scope note: do not invent, infer, or substitute a momentum value here.
+  const NEUTRAL_Y = 0;
+  let NODES = [];
+  let EDGES = [];
+  let nodeById = {};
+  let realFormation = null;        // the received Formation object, or null (genuine absence)
+  let hasReceivedFormation = false; // false until the first postMessage arrives (loading state)
 
-  const NODES = [
-    { id: 'wage',     label: 'WAGE PRESSURE',     provenance: 'labor',     contribution: 0.55,
-      path: [{x:-0.62,y:-0.18},{x:-0.48,y:-0.05},{x:-0.30,y:0.10},{x:-0.14,y:0.22}] },
-    { id: 'input',    label: 'INPUT COST',        provenance: 'capital',   contribution: 0.80,
-      path: [{x:-0.20,y:0.05},{x:-0.02,y:0.18},{x:0.16,y:0.30},{x:0.30,y:0.38}] },
-    { id: 'pricing',  label: 'PRICING PRESSURE',  provenance: 'media',     contribution: 0.45,
-      path: [{x:-0.70,y:0.55},{x:-0.55,y:0.42},{x:-0.40,y:0.30},{x:-0.28,y:0.22}] },
-    { id: 'process',  label: 'PROCESS EFFICIENCY',provenance: 'knowledge', contribution: 0.35,
-      path: [{x:0.30,y:-0.62},{x:0.38,y:-0.42},{x:0.44,y:-0.20},{x:0.48,y:-0.02}] },
-    { id: 'automation', label: 'AUTOMATION',      provenance: 'technology',contribution: 0.40,
-      path: [{x:0.55,y:-0.55},{x:0.62,y:-0.35},{x:0.66,y:-0.14},{x:0.68,y:0.05}] },
-    { id: 'labor_cap',label: 'LABOR CAPACITY',    provenance: 'labor',     contribution: 0.30,
-      path: [{x:0.72,y:-0.65},{x:0.74,y:-0.45},{x:0.75,y:-0.22},{x:0.74,y:-0.06} ] },
-    { id: 'market',   label: 'MARKET DEMAND',     provenance: 'capital',   contribution: 0.38,
-      path: [{x:-0.55,y:-0.62},{x:-0.48,y:-0.52},{x:-0.42,y:-0.42},{x:-0.38,y:-0.34}] },
-    { id: 'capconst', label: 'CAPITAL CONSTRAINT',provenance: 'capital',   contribution: 0.42,
-      path: [{x:-0.30,y:-0.72},{x:-0.26,y:-0.58},{x:-0.20,y:-0.44},{x:-0.16,y:-0.34}] },
-    { id: 'margin',   label: 'MARGIN CONTROL',    provenance: 'ownership',contribution: 0.50,
-      path: [{x:0.15,y:-0.78},{x:0.14,y:-0.60},{x:0.12,y:-0.40},{x:0.10,y:-0.28}] },
-    { id: 'formation',label: 'PRODUCTION COST PRESSURE', provenance: null, contribution: 1.0, resolved: true,
-      path: [{x:0.06,y:0.02},{x:0.28,y:0.22},{x:0.46,y:0.40},{x:0.62,y:0.58}] },
-  ];
+  function applyFieldFormation(formation) {
+    hasReceivedFormation = true;
+    realFormation = formation ?? null;
 
-  const EDGES = [
-    { from: 'wage',       to: 'input',     label: 'increases', stagger: 0.00, strength: 0.62 },
-    { from: 'input',      to: 'formation', label: 'increases', stagger: 0.10, strength: 0.85 },
-    { from: 'pricing',    to: 'formation', label: 'limits',    stagger: 0.22, strength: 0.40 },
-    { from: 'process',    to: 'automation',label: 'offsets',   stagger: 0.05, strength: 0.50 },
-    { from: 'automation', to: 'labor_cap', label: 'offsets',   stagger: 0.30, strength: 0.45 },
-    { from: 'market',     to: 'input',     label: 'constrains',stagger: 0.15, strength: 0.55 },
-    { from: 'capconst',   to: 'formation', label: 'constrains',stagger: 0.38, strength: 0.35 },
-    { from: 'margin',     to: 'formation', label: 'constrains',stagger: 0.45, strength: 0.48 },
-  ];
+    if (!formation) {
+      NODES = []; EDGES = []; nodeById = {};
+    } else {
+      NODES = formation.graph.vertices.map(v => {
+        // meanMagnitude is 0..1 and unsigned (no polarity at this aggregation level) --
+        // mapped onto the positive half of the STRENGTH domain only, not stretched across
+        // the full [-1,1] bipolar range, which would imply a directionality it doesn't carry.
+        const x = v.meanMagnitude;
+        return {
+          id: v.domain, label: v.domain.toUpperCase(), provenance: null,
+          contribution: v.meanMagnitude,
+          path: [{ x, y: NEUTRAL_Y }, { x, y: NEUTRAL_Y }], // static -- see NEUTRAL_Y note above
+        };
+      });
+      // Every edge in formation.graph.edges is, by construction (formationinference.js's
+      // buildGraph), an ADMITTED relationship -- not a candidate or a partial match. strength:1
+      // reflects that real binary fact (admitted vs not), not a fabricated intensity score.
+      EDGES = formation.graph.edges.map(e => ({
+        from: e.a, to: e.b, label: e.admittedType, stagger: 0, strength: 1,
+      }));
+      nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
+    }
 
-  const nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
+    // Readout (FORMATIONS/RELATIONSHIPS/RESOLVED) is updated by draw() itself, from
+    // realFormation directly -- single source of truth, see the end of draw() below.
+
+    // No real time-based trajectory exists for a single live snapshot -- the scrubber/play
+    // control implies scrubbing through an animation that isn't real data here, so it's
+    // hidden rather than left interactive-but-inert (dragging it would visibly do nothing,
+    // which reads as broken, not as "no data").
+    if (scrubberWrapEl) scrubberWrapEl.style.display = 'none';
+    if (hintEl) hintEl.textContent = formation
+      ? 'Live observable field — not bound to the resolved subject (KRYL-1220 pending). Select a formation to inspect.'
+      : 'No formation established in the live field — this is a stated absence, not a low score.';
+
+    // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
+    // calls draw(currentT) every frame regardless of play/pause -- a one-shot draw(1) call
+    // here gets immediately overwritten on the very next frame back to whatever currentT
+    // already was (0 by default), which silently re-hid every edge (edgeResolution depends
+    // on t genuinely progressing). currentT itself must be set, not just this one draw() call.
+    currentT = 1;
+    draw(currentT); // static real data — always fully shown, no resolve-in animation
+  }
+
+  window.addEventListener('message', (e) => {
+    if (e.data?.type === 'krylo-field-formation') applyFieldFormation(e.data.formation);
+  });
 
   function nodeStateAt(node, t) {
     const pos = lerpPath(node.path, t);
@@ -522,10 +556,15 @@
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
     ctx.fillText('STRENGTH  ( φ )', plot.x + plot.w / 2, plot.y + plot.h + 40);
+    // KRYL-1287 — φ̇ (momentum) has no real per-vertex value in fieldFormation (the live source
+    // this file now renders); every node sits at a fixed neutral Y (see NEUTRAL_Y). The axis
+    // label says so explicitly and renders dimmed, rather than silently showing an axis that
+    // looks measured but never carries real data.
     ctx.save();
     ctx.translate(plot.x - 54, plot.y + plot.h / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillText('MOMENTUM  ( φ̇ )', 0, 0);
+    ctx.fillStyle = getVar('--text-mono-dim');
+    ctx.fillText('MOMENTUM  ( φ̇ )  — NOT AVAILABLE', 0, 0);
     ctx.restore();
     ctx.restore();
   }
@@ -653,7 +692,6 @@
         });
       }
     }
-    nEdgesEl.textContent = `${resolvedCount}/${EDGES.length}`;
 
     // nodes
     let formationIntegrity = 0;
@@ -661,8 +699,11 @@
       const s = nodeStateAt(n, t);
       n._px = s.px; n._py = s.py;
       n._pos = s.pos;
-      const m01 = (s.pos.y - DOMAIN.min) / 2;
-      const color = n.resolved ? getVar('--unicorn-purple') : momentumColor(m01);
+      // KRYL-1287 — momentumColor(m01) is NOT used here: every real node sits at NEUTRAL_Y
+      // (see the graph-model comment above), so m01 would always be the same fixed value --
+      // running it through the blue<->lime momentum gradient would visually imply a real,
+      // measured momentum reading that doesn't exist. Neutral, undoctrine-coded color instead.
+      const color = getVar('--text-mono');
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
       const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1);
@@ -799,8 +840,14 @@
       ctx.restore();
     }
 
-    integrityEl.textContent = formationIntegrity.toFixed(2);
-    nNodesEl.textContent = NODES.length;
+    // KRYL-1287 — single source of truth for the top readout: realFormation directly, not the
+    // demo's animated formationIntegrity/NODES.length. Existence stays '—' on genuine absence
+    // (per BRIEF's own doctrine: NO_FORMATION_ESTABLISHED is a stated absence, not a low score,
+    // so '0.00' would misrepresent it) -- but node/edge COUNTS are real, meaningful zeros once
+    // a message has actually arrived, distinct from '—' meaning "no message received yet".
+    integrityEl.textContent = realFormation ? realFormation.existence.toFixed(2) : '—';
+    nEdgesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.graph.edges.length : 0) : '—';
+    nNodesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.participatingDomains.length : 0) : '—';
     tReadoutEl.textContent = String(Math.round(t * 47)).padStart(2, '0') + ':00';
 
     drawCrosshair();

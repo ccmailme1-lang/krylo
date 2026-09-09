@@ -2,10 +2,13 @@
 // Full BRIEF / RECON / IMPACT column, restored at 50/50 geometry with the left
 // Target Packet.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import IntelligenceBrief from './intelligencebrief.jsx';
 import ReconDashboard from './recondashboard.jsx';
 import CausalImpactView from './causalimpactview.jsx';
+import { inferFormation } from '../../engine/formationinference.js';
+import { buildPerceptionField } from '../../engine/perceptionread.js';
+import { getAllDomainPressures } from '../../engine/domaingravity.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -17,8 +20,10 @@ const TABS = ['BRIEF', 'MAP', 'RECON', 'IMPACT'];
 // result is 10% smaller. Dynamic (ResizeObserver-measured), not a hardcoded pixel size -- the
 // iframe's native rect is always container size / 0.9, so it stays correct if the panel resizes.
 const MAP_SCALE = 0.8;
-function FormationMapTab() {
+function FormationMapTab({ query }) {
   const wrapRef = useRef(null);
+  const iframeRef = useRef(null);
+  const iframeReady = useRef(false);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
@@ -32,6 +37,34 @@ function FormationMapTab() {
     return () => ro.disconnect();
   }, []);
 
+  // KRYL-1287 — real, live formation state (same source BRIEF's own '02 FORMATION' section
+  // already correctly uses: targetpacket.jsx's fieldFormation, buildPerceptionField() ->
+  // inferFormation(), reading the live domaingravity.js signal pool, not mocked). Two-step
+  // memo mirrors targetpacket.jsx exactly (domainPressures stable-ref'd on `query`, fieldFormation
+  // depends on that stable ref) -- NOT a continuous poll/timer, matching BRIEF's own freshness
+  // cadence (recomputed per query, not on every render).
+  // This is ambient/field-scoped, NOT subject-scoped -- KRYL-1220's undelivered analytical
+  // bridge is the only thing that would make this specific to `query`'s resolved subject.
+  const domainPressures = useMemo(() => getAllDomainPressures(), [query]);
+  const fieldFormation = useMemo(() => {
+    try {
+      const field = buildPerceptionField({ now: Date.now() });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures]);
+
+  useEffect(() => {
+    if (!iframeReady.current || !iframeRef.current) return;
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation }, '*');
+  }, [fieldFormation]);
+
+  const handleLoad = () => {
+    iframeReady.current = true;
+    if (iframeRef.current) {
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation }, '*');
+    }
+  };
+
   const nativeW = size.w / MAP_SCALE;
   const nativeH = size.h / MAP_SCALE;
 
@@ -39,8 +72,10 @@ function FormationMapTab() {
     <div ref={wrapRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
       {size.w > 0 && (
         <iframe
+          ref={iframeRef}
           src="/structure-field.html"
           title="Formation Map"
+          onLoad={handleLoad}
           style={{
             width: nativeW, height: nativeH, border: 'none', display: 'block',
             transform: `scale(${MAP_SCALE})`, transformOrigin: 'top left',
@@ -85,7 +120,7 @@ export default function StructurePanel({ query }) {
         {tab === 'BRIEF' ? <IntelligenceBrief />
           : tab === 'RECON' ? <ReconDashboard />
           : tab === 'IMPACT' ? <div style={{ height: '100%', overflowY: 'auto' }}><CausalImpactView subject={query} /></div>
-          : <FormationMapTab />}
+          : <FormationMapTab query={query} />}
       </div>
     </div>
   );
