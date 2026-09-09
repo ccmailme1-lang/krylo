@@ -42,7 +42,17 @@ const TOP_CLIP  = `inset(0 0 calc(100% - ${CHROME_TOP_PX}px) 0)`;   // rectangul
 const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 ${LEFT_NAV_BOTTOM_VH}vh 0)`; // rectangular — left-nav region only (no nav bar, no bottom-surface bleed)
 
 // left-nav order in krylo2-feed.html → the mode each posts (see setMode there)
-const LNAV_MODES = ['surface', 'analysis', 'structure', 'feeds', 'community', 'history'];
+// Stale until now: had 6 entries (incl. 'structure') from before the FORMATION nav icon was
+// removed from krylo2-feed.html's DOM, leaving only 5 .lnav-item elements (home/analysis/feeds/
+// community/history). Every index past 'analysis' was off by one against the live DOM --
+// clicking News Feed dispatched navMode 'structure' (a removed page), Community dispatched
+// 'feeds', History dispatched 'community'. Index 0 stays the literal string 'surface', not
+// 'home' -- that's the real navMode value app.jsx's krylo-nav handler and default state
+// (useState('surface')) actually use for the Home icon; krylo2-feed.html's own setMode()
+// already treats 'home' and 'surface' as the same case (`name === 'surface' || name === 'home'`)
+// and posts mode:'surface' either way, so this array must match that, not the DOM's own onclick
+// argument spelling.
+const LNAV_MODES = ['surface', 'analysis', 'feeds', 'community', 'history'];
 
 export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, navMode, onCat, onProxy }) {
   const internalRef = useRef(null);
