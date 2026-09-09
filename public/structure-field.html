@@ -420,7 +420,7 @@
     // which reads as broken, not as "no data").
     if (scrubberWrapEl) scrubberWrapEl.style.display = 'none';
     if (hintEl) hintEl.textContent = formation
-      ? 'Live observable field — not bound to the resolved subject (KRYL-1220 pending). Select a formation to inspect.'
+      ? 'Live observable field — not bound to the resolved subject (KRYL-1220 pending). Hover a node to see its relationships.'
       : 'No formation established in the live field — this is a stated absence, not a low score.';
 
     // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
@@ -698,7 +698,15 @@
       }
       ctx.restore();
 
-      if (r > 0.5) {
+      // KRYL-1287/1283 combination, round 2 (2026-09-09) -- structure first, relationship
+      // detail second. Showing all relationship descriptors simultaneously (the previous
+      // behavior) asked the viewer to decode the whole graph before understanding it, and
+      // pushing labels far enough to avoid collision (EDGE_MAX_SHIFT) left some visually
+      // disconnected from their own edge. Default state now shows topology only (nodes, edges,
+      // arrowheads) -- relationship text appears only when hovering that edge's node, same
+      // hover/related mechanism the line-opacity treatment already used, just now also gating
+      // label existence rather than only label opacity.
+      if (r > 0.5 && related) {
         const mx = (a.px + b.px) / 2, my = (a.py + b.py) / 2;
         const font = "9px 'IBM Plex Mono', monospace";
         ctx.font = font;
@@ -1154,7 +1162,13 @@
     // Re-coupled (2026-08-21): cursor X-position drives the time scrubber again, strictly bounded
     // to the plot rect — both X and Y must be inside plot.x/y/w/h, the same rect drawCrosshair()
     // checks, so the scrubber only moves while the crosshair itself is actually visible.
-    if (e.clientX >= plot.x && e.clientX <= plot.x + plot.w && e.clientY >= plot.y && e.clientY <= plot.y + plot.h) {
+    // KRYL-1287 (2026-09-09) -- this coupling is demo-era: it silently dragged currentT off 1
+    // on every hover, even with the scrubber UI hidden (real data mode hides it, see
+    // applyFieldFormation), which would have fought directly against the new hover-reveals-
+    // relationship-text interaction (edgeResolution depends on t; a dropped currentT could hide
+    // edges/labels a guest is actively trying to inspect). No real time-scrub applies to a
+    // single live snapshot, so skip it once real data has been received.
+    if (!hasReceivedFormation && e.clientX >= plot.x && e.clientX <= plot.x + plot.w && e.clientY >= plot.y && e.clientY <= plot.y + plot.h) {
       stopPlay();
       setT((e.clientX - plot.x) / plot.w);
     }
