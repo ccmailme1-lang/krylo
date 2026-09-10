@@ -682,6 +682,24 @@
     drawSurfaceBoundary();
     drawAxes();
 
+    // An empty plot with only small corner hint text reads as broken/stuck to a guest, not as
+    // an intentional, explained absence -- the same failure mode the BRIEF packet already
+    // avoids with its prominent "No formation established" paragraph. Mirror that treatment
+    // here, centered in the plot, once a real (non-loading) empty result has actually arrived.
+    if (hasReceivedFormation && NODES.length === 0) {
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const cx = plot.x + plot.w / 2, cy = plot.y + plot.h / 2;
+      ctx.fillStyle = getVar('--text-mono');
+      ctx.font = "600 13px 'IBM Plex Mono', monospace";
+      ctx.fillText('NO FORMATION ESTABLISHED', cx, cy - 12);
+      ctx.fillStyle = getVar('--text-mono-dim');
+      ctx.font = "400 10px 'IBM Plex Mono', monospace";
+      ctx.fillText('Stated absence in the live field — not a low score, not an error.', cx, cy + 10);
+      ctx.restore();
+    }
+
     // ambient — faint unresolved observations with subtle drift
     const drift = reduceMotion ? 0 : timeMs * 0.00012;
     for (const p of ambient) {
