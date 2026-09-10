@@ -183,9 +183,14 @@
   .op-undetermined { color: var(--text-mono-dim); border-color: var(--hairline-strong); }
   .op-conflict { color: var(--signal-blue); border-color: rgba(0,127,255,0.45); }
   .op-na { color: var(--text-mono-dim); border-color: var(--hairline); opacity: 0.6; }
+  .op-not-measured { color: var(--text-mono-dim); border-color: var(--hairline); opacity: 0.6; }
 
-  .panel-footer { margin-top: auto; font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.6; }
-  .panel-footer b { color: var(--signal-blue); }
+  /* Disclosure now precedes the pills it qualifies (see markup) and reads at op-row size, not
+     footnote size, so it isn't upstaged by the pills. Neutral/dim treatment, same tokens as
+     .op-na/.op-not-measured -- this states an absence, not a signal state, so it doesn't borrow
+     a reserved convergence color (CLAUDE.md Sec6: --signal-blue means TURBULENT CONVERGENCE). */
+  .panel-disclosure { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.6; padding: 7px 8px; margin-bottom: 8px; border: 1px solid var(--hairline-strong); border-radius: 2px; }
+  .panel-disclosure b { color: var(--text-mono); }
 
   .kbd {
     display: inline-block; padding: 1px 5px; margin: 0 1px;
@@ -255,10 +260,10 @@
   </div>
   <div>
     <div class="panel-section-title">Validation profile (Class A)</div>
+    <div class="panel-disclosure">
+      <b>NOT MEASURED</b> — the 8-operator validation contract exists; no status below has been computed yet. This is a stated gap (KRYL-1220), not a proxy.
+    </div>
     <div id="op-rows"></div>
-  </div>
-  <div class="panel-footer">
-    <b>SYNTHETIC</b> — profile shape matches the real 8-operator<br />contract; values are fixture data, not computed.
   </div>
 </div>
 
@@ -1090,15 +1095,14 @@
   let panelOpenFor = null;
 
   const OP_LIBRARY = ['TEMPORAL', 'STRUCTURAL', 'INDEPENDENCE', 'STABILITY'];
-  const OP_STATES = { PASS: 'op-pass', UNDETERMINED: 'op-undetermined', CONFLICT: 'op-conflict', 'N/A': 'op-na' };
+  const OP_STATES = { PASS: 'op-pass', UNDETERMINED: 'op-undetermined', CONFLICT: 'op-conflict', 'N/A': 'op-na', 'NOT MEASURED': 'op-not-measured' };
 
-  function syntheticOpsFor(nodeId) {
-    const rand = mulberry32(hashStr(nodeId));
-    return OP_LIBRARY.map(name => {
-      const r = rand();
-      const state = r < 0.55 ? 'PASS' : r < 0.75 ? 'UNDETERMINED' : r < 0.9 ? 'CONFLICT' : 'N/A';
-      return { name, state };
-    });
+  // Was syntheticOpsFor() -- a per-node RNG faking PASS/UNDETERMINED/CONFLICT/N-A. The 8-operator
+  // contract isn't wired to real computation yet (KRYL-1220 territory); showing fabricated
+  // statuses here is exactly the false-neutrality §1 forbids. Honest absence instead, same
+  // treatment as targetpacket.jsx's five-metric strip.
+  function opsFor(nodeId) {
+    return OP_LIBRARY.map(name => ({ name, state: 'NOT MEASURED' }));
   }
 
   function renderDetailScatter(nodeId) {
@@ -1173,7 +1177,7 @@
     panelPhidot.textContent = pos.y.toFixed(2);
 
     if (rebuildOps) {
-      opRows.innerHTML = syntheticOpsFor(nodeId).map(op => `
+      opRows.innerHTML = opsFor(nodeId).map(op => `
         <div class="op-row">
           <span class="op-name">${op.name}<span class="op-class">CLASS A</span></span>
           <span class="op-pill ${OP_STATES[op.state]}">${op.state}</span>
