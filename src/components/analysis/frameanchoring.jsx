@@ -90,9 +90,12 @@ export default function FrameAnchoring({ queryContext, query, subjectKind }) {
         </div>
       )}
 
-      {/* the class-native anchor checklist */}
+      {/* the class-native anchor checklist — populated anchors only. An unfilled anchor is a
+          real, already-computed absence (the "X of Y anchors open" line below still counts
+          it), but a page of "—" rows is noise, not signal — Founder design call: don't show
+          blanks, show what's real, and let the panel take only the space it needs. */}
       <div style={{ marginTop: 16 }}>
-        {result.anchors.map(a => <AnchorRow key={a.key} a={a} />)}
+        {result.anchors.filter(a => a.value != null && a.value !== '').map(a => <AnchorRow key={a.key} a={a} />)}
       </div>
 
       <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: DIM }}>
