@@ -309,7 +309,18 @@ export default function TargetPacket() {
     const dp = getQueryDomainPressure(synthesis.queryDomain);
     return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
   }, [synthesis?.queryDomain]);
-  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
+  // KRYL-1220 — real closed-loop structural output as computeMetrics()'s sciData input,
+  // replacing the hardcoded null every prior call passed. resolveWhyTrace() already matches
+  // `entity` against the real CanonicalEvents edgar8kevidence.js builds from EDGAR 8-K filings
+  // and calls computeSCI(event.evidenceGraph) internally (whytrace.js buildWhyTrace) — that
+  // result was being computed and then discarded (only its boolean RESOLVED/not state survived,
+  // via wtResolved below). No new EvidenceGraph construction needed; this was a genuinely
+  // computed value one line away from being used. sps is not computed by buildWhyTrace — left
+  // null rather than fabricated (§22 absence-is-signal); sci is null (not a fallback score)
+  // whenever no structural evidence event matches this entity.
+  const whyTrace         = useMemo(() => resolveWhyTrace(entity, getCanonicalEvents()), [entity]);
+  const sciData          = whyTrace.trace?.sci ? { sci: whyTrace.trace.sci, sps: null } : null;
+  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, sciData, domainSignal), [synthesis, engineState, lrPrior, domainSignal, sciData]);
   // Producer side of the domain metrics history store — records the real,
   // already-computed metrics object, tagged by domain. Never recomputes,
   // never fires speculatively — only when a real synthesis+domain exists.
@@ -350,10 +361,9 @@ export default function TargetPacket() {
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
     return d === 'REAL_ESTATE' ? 'REAL ESTATE' : d.replace(/_/g, ' ');
   })();
-  const wtResolved = useMemo(
-    () => resolveWhyTrace(entity, getCanonicalEvents()).state === WT_STATE.RESOLVED,
-    [entity],
-  );
+  // KRYL-1220 — reuses whyTrace (computed above, alongside sciData) instead of a second,
+  // duplicate resolveWhyTrace() call against the same entity.
+  const wtResolved = whyTrace.state === WT_STATE.RESOLVED;
 
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
   // field the rest of the packet already reads. No new data source.
