@@ -342,13 +342,23 @@ function synthAuto(session, numbers, query) {
   // Strip model-year integers (2010–2029) — "2026 Buick" contaminates price extraction
   // Range is 2010-2029 only; $2000 is NOT filtered (legitimate down payment amount)
   const moneyNums = numbers.filter(n => !(Number.isInteger(n) && n >= 2010 && n <= 2029) && n >= 1000);
-  // price: explicit dollar amount in query → named MSRP lookup → $35K default
+  // price: explicit dollar amount in query → named MSRP lookup → absent.
+  // KRYL-1292: the previous `|| 35000` fallback fabricated a purchase price out of
+  // nothing whenever neither real source was present — the exact class of defect
+  // KRYL-1175 already removed for `rate` below. moneyNums[0] (explicit query
+  // amount) and detectedMsrp (a named-vehicle MSRP lookup) are both real evidence;
+  // absent both, price stays null and every dependent field below renders an
+  // honest absence state instead of computing with an invented number.
   const detectedMsrp = detectVehiclePrice(query);
-  const price = moneyNums[0] || detectedMsrp || 35000;
-  // down:  explicit query amount takes priority over broad chip selection (more specific)
-  const rawDown = moneyNums[1] || null;
-  const down  = rawDown ? Math.min(rawDown, price * 0.50) : Math.round(price * 0.10);
-  const loan  = Math.max(price - down, 0);
+  const price = moneyNums[0] || detectedMsrp || null;
+  // down: explicit query amount takes priority over the 10%-of-price convention.
+  // The 10% figure is a named, common assumption (not invented from nothing like
+  // the old $35K default was) but was previously unlabeled as an assumption —
+  // downAssumed flags it so dependent text can say so instead of stating it as fact.
+  const rawDown     = moneyNums[1] || null;
+  const downAssumed = price != null && !rawDown;
+  const down = price == null ? null : (rawDown ? Math.min(rawDown, price * 0.50) : Math.round(price * 0.10));
+  const loan = price == null ? null : Math.max(price - down, 0);
   // KRYL-1175: rate/cuRate were hardcoded "current avg" loan rates driving the entire
   // financing recommendation — same fabrication class as synthCareer's removed 1.13x
   // multiplier, and worse in one way: loan rates move constantly, so a hardcoded snapshot
@@ -362,43 +372,57 @@ function synthAuto(session, numbers, query) {
   // synthesizeQuery()'s AUTO branch, not assumed.
   const rateMatch = query.match(/(\d+(?:\.\d+)?)\s*%/);
   const rate = rateMatch ? parseFloat(rateMatch[1]) : null;
-  const m48 = rate != null ? Math.round(calcMonthly(loan, rate, 48)) : null;
-  const m60 = rate != null ? Math.round(calcMonthly(loan, rate, 60)) : null;
-  const m72 = rate != null ? Math.round(calcMonthly(loan, rate, 72)) : null;
+  const m48 = (rate != null && loan != null) ? Math.round(calcMonthly(loan, rate, 48)) : null;
+  const m60 = (rate != null && loan != null) ? Math.round(calcMonthly(loan, rate, 60)) : null;
+  const m72 = (rate != null && loan != null) ? Math.round(calcMonthly(loan, rate, 72)) : null;
   const shortQ = query.length > 48 ? query.slice(0, 48) + '…' : query;
   const paymentLine = rate != null
     ? `At ${rate}%: $${fmtN(m48)}/mo (48mo) · $${fmtN(m60)}/mo (60mo) · $${fmtN(m72)}/mo (72mo).`
     : `No rate provided — get a real quote (dealer, bank, or credit union pre-approval) before payment figures mean anything. A guessed rate produces a fake payment number.`;
+  const downNote = downAssumed ? ` (10% assumed, not stated)` : '';
 
   return {
     stateLabel:  'ACTIVE MARKET',
-    primaryInsight: `Financing $${fmtN(loan)} on a $${fmtN(price)} purchase, $${fmtN(down)} down. ${paymentLine}`,
+    primaryInsight: price != null
+      ? `Financing $${fmtN(loan)} on a $${fmtN(price)} purchase, $${fmtN(down)} down${downNote}. ${paymentLine}`
+      : `No purchase price stated — add a price or a named vehicle to get financing math. Nothing here is invented.`,
     attentionStack: [
       { rank:1, signal:'Loan Amount',        category:'Auto / Finance',    trend:'→', momentum:'Known' },
       { rank:2, signal:'Down Payment',       category:'Auto / Finance',    trend:'→', momentum:'Known' },
     ],
-    keyDrivers: [
-      { label:'Loan amount', delta:`$${fmtN(loan)}`, pos: false },
-      { label:'Down payment', delta:`$${fmtN(down)}`, pos: true },
-    ],
+    keyDrivers: price != null
+      ? [
+          { label:'Loan amount', delta:`$${fmtN(loan)}`, pos: false },
+          { label:'Down payment', delta:`$${fmtN(down)}${downNote}`, pos: true },
+        ]
+      : [],
     recommendedAction: `Get pre-approved by your bank or credit union before the dealership names a rate — walking in with a real, written rate is the actual leverage, not a number KRYLO guesses for you.`,
     timeHorizon: '7–14 days',
     impactLevel:  'High',
-    bluf: rate != null
-      ? `A $${fmtN(loan)} loan at ${rate}% carries $${fmtN(m60 * 60 - loan)} in total interest over 60 months.`
-      : `$${fmtN(loan)} needs financing. No real rate is known yet — get a written pre-approval before comparing any numbers.`,
+    bluf: price == null
+      ? `No purchase price stated — get a written pre-approval and a real price before comparing any numbers. KRYLO does not invent a price to analyze.`
+      : rate != null
+        ? `A $${fmtN(loan)} loan at ${rate}% carries $${fmtN(m60 * 60 - loan)} in total interest over 60 months.`
+        : `$${fmtN(loan)} needs financing. No real rate is known yet — get a written pre-approval before comparing any numbers.`,
     purpose: `Purchase decision analysis for: ${shortQ}. Covers financing cost and negotiation sequence.`,
     fiveWs: [
       { w:'WHO',   answer:`${shortQ} — dealer and retail financing market.` },
-      { w:'WHAT',  answer:`$${fmtN(price)} purchase, $${fmtN(down)} down. Financed: $${fmtN(loan)}.` },
+      { w:'WHAT',  answer: price != null
+          ? `$${fmtN(price)} purchase, $${fmtN(down)} down${downNote}. Financed: $${fmtN(loan)}.`
+          : `No purchase price stated in the query — nothing here is invented.` },
       { w:'WHEN',  answer:`Best negotiating leverage comes from a written pre-approval in hand before you talk price.` },
       { w:'WHERE', answer:`Primary cost exposure: financing layer.` },
       { w:'WHY',   answer:`Dealer financing is a profit center for the dealer, not a service to you — a real competing rate is your leverage.` },
     ],
-    evidence: [
-      `$${fmtN(price)} price, $${fmtN(down)} down, $${fmtN(loan)} financed — the only numbers here that are real.`,
-      `No live rate connector exists for auto loan rates — any specific rate quoted here would be invented, not real.`,
-    ],
+    evidence: price != null
+      ? [
+          `$${fmtN(price)} price, $${fmtN(down)} down${downNote}, $${fmtN(loan)} financed — the only numbers here that are real.`,
+          `No live rate connector exists for auto loan rates — any specific rate quoted here would be invented, not real.`,
+        ]
+      : [
+          `No purchase price, named vehicle, or down payment was present in the query — no dollar figure is asserted.`,
+          `No live rate connector exists for auto loan rates — any specific rate quoted here would be invented, not real.`,
+        ],
     assumptions: [],
     assessment: `The negotiation sequence matters regardless of rate: pre-approval → out-the-door price → trade-in (if any) → ignore dealer financing pitch until you've compared it to your written pre-approval. Settling these in the wrong order costs money even if every rate involved is real.`,
     threats: [
@@ -422,7 +446,13 @@ function synthAuto(session, numbers, query) {
         { id:'c2', label:'SHOP FULL COVERAGE QUOTES',   impact:0.58, rationale:`Get real insurance quotes before signing — full coverage is typically required by the lender and is a locked cost for the loan term.`, tag:'COST'      },
       ],
     },
-    leverage: { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / (down || 1)).toFixed(1))), deRatio: parseFloat((loan / (down || 1)).toFixed(1)), permissionless: true, industryNorm: 1.8 },
+    // KRYL-1292: a deRatio computed from null loan/down (via the old `|| 1` fallback)
+    // read as a real, misleadingly-low leverage tier rather than absence. Both
+    // fields (unconsumed downstream today — grep-confirmed — but part of the
+    // public return contract) now stay explicitly null/labeled when price is absent.
+    leverage: price != null
+      ? { typeY: 3, typeLabel: 'CAPITAL', tierLabel: classifyLeverageTier(parseFloat((loan / (down || 1)).toFixed(1))), deRatio: parseFloat((loan / (down || 1)).toFixed(1)), permissionless: true, industryNorm: 1.8 }
+      : { typeY: 3, typeLabel: 'CAPITAL', tierLabel: 'NOT STATED', deRatio: null, permissionless: true, industryNorm: 1.8 },
   };
 }
 
