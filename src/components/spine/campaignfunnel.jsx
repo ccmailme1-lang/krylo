@@ -27,8 +27,16 @@
 import React, { useEffect, useRef } from 'react';
 
 // Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px },
-// .opportunity-ribbon { top:49px }. 104px keeps nav + ribbon fully visible + clickable.
-const CHROME_TOP_PX  = 104;   // nav (48) + Opportunity Ribbon
+// .opportunity-ribbon { top:49px }, .hero-copy-wrap (rotating headline/quotes -- 3 rotating
+// slides, SLIDES array in krylo2-feed.html's Hero Headline Rotation script). KRYL-1253's
+// rectangular-clip fix sized this for "nav + ribbon" only and never accounted for the hero
+// headline sitting just below the ribbon -- collateral clip, never an intended change to that
+// ticket's scope. Measured .hero-copy-wrap's bottom edge across all 3 rotating slides directly
+// (standalone page): shortest slide bottoms at 342px, the two longer slides both bottom at
+// 411px. 360px (the first fix) only covered the shortest slide -- the two longer ones were
+// still clipped. 440px covers all 3 with margin; nothing else occupies that band (confirmed
+// empty in the standalone page).
+const CHROME_TOP_PX  = 440;   // nav (48) + Opportunity Ribbon + hero headline/quotes (tallest of 3 rotating slides)
 const CHROME_LEFT_PX = 80;     // .left-nav width
 const LEFT_NAV_TOP_PX = 48;    // .left-nav starts below the 48px nav bar (krylo2-feed.html)
 // krylo2-feed.html used to also have .bottom-surface (position:fixed; bottom:0; height:30vh) --
@@ -128,7 +136,22 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       }
       const items = [...doc.querySelectorAll('.lnav-item')];
       const mode = LNAV_MODES[items.indexOf(item)];
-      if (mode) window.postMessage({ type: 'krylo-nav', mode }, '*');
+      if (mode) {
+        // Any left-nav item click (the whole clickable row, not just its icon/label) hides the
+        // hero headline/quotes. Real clicks go through this relay, not krylo2-feed.html's own
+        // setMode() (it posts krylo-nav straight to the parent) -- so setMode()'s
+        // heroCopy.style.opacity='0' branch never actually runs for a real click. Applied
+        // directly here, same-origin DOM access, same pattern applyActiveNav already uses below.
+        const realDoc = iframeRef.current?.contentDocument;
+        const heroCopy = realDoc?.querySelector('.hero-copy-wrap');
+        if (heroCopy) {
+          heroCopy.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+          heroCopy.style.opacity = '0';
+          heroCopy.style.transform = 'translateY(40px)';
+          heroCopy.style.pointerEvents = 'none';
+        }
+        window.postMessage({ type: 'krylo-nav', mode }, '*');
+      }
     } catch { /* iframe not ready — ignore */ }
   };
 
