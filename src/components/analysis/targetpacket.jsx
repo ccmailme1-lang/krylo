@@ -255,6 +255,10 @@ export default function TargetPacket() {
   const activeId       = useAnalysisStore(s => s.activeSessionId);
   const session        = activeId ? sessions[activeId] : null;
   const envelope       = session?.tensor?.envelope ?? null;
+  // KRYL-1290 subtask 7 — rendered as-is, never recomputed here. A session formed
+  // before this field existed simply won't have it; the READ section below gates
+  // on its presence and renders nothing for those (no fabricated empty box).
+  const analysisIntent = session?.tensor?.analysisIntent ?? null;
 
   const synthesis = useMemo(() => synthesizeQuery(session), [session]);
 
@@ -567,6 +571,36 @@ export default function TargetPacket() {
           not yet receive per-observation structure, so these positions are held as measured absence,
           not filled with a proxy.
         </div>
+
+        {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
+             question, rendered exactly as captured at handleExecute() time. Never
+             recomputed here; that boundary is deliberate (subtask 3/6). Absent
+             entirely for sessions formed before this field existed — no fabricated
+             empty box, matches the FIVE-METRIC STRIP honest-absence convention
+             immediately above. ─── */}
+        {analysisIntent && (
+          <PacketSection ordinal="00" title="READ" mt={20}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+              {[
+                ['ACTOR', analysisIntent.actor, () => null],
+                ['SUBJECT', analysisIntent.subject, v =>
+                  v.kind === 'ENTITY' ? v.entity.name :
+                  v.kind === 'GEO' ? v.location :
+                  v.kind === 'DECISION_FRAME' ? v.frame : null],
+                ['OBJECTIVE', analysisIntent.objective, v => v.cues.join(', ')],
+                ['QUESTION', analysisIntent.question, v => v.text],
+                ['OBSERVATIONAL SCOPE', analysisIntent.observationalScope, v => v.join(', ')],
+              ].map(([label, dim, format]) => (
+                <div key={label} style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6 }}>
+                  <span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>{label} </span>
+                  {dim.state === 'resolved'
+                    ? <span style={{ color: '#eceee9' }}>{format(dim.value)}</span>
+                    : <span style={{ color: ABSENCE }}>{dim.reason}</span>}
+                </div>
+              ))}
+            </div>
+          </PacketSection>
+        )}
 
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A) ─── */}
         <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
