@@ -15,6 +15,7 @@ import { parseIntent }                from '../../engine/intentparser.js';
 import { buildQueryContext }          from '../../engine/querycontext.js';
 import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { deriveInquiryPossibilities } from '../../engine/inquirygeneration.js';
+import { buildAnalysisIntent }        from '../../engine/analysisintent.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
@@ -1092,6 +1093,14 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     const geometry   = preset.scaffold.geometry;
     const domainList = LENS_DOMAIN_MAP[effectiveLens] ?? [];
     const parsed     = parseIntent(seedQuery.trim());
+    // KRYL-1290 subtask 6 — Analysis-field -> Analysis Intent integration. Computed
+    // at the same formed-question boundary as `parsed`, from the same flushed
+    // seedQuery text. Attached to tensor as inert additive data only: not passed
+    // to synthesizeQuery()/arbitrate()/createSession() as an argument, so it
+    // cannot change their behavior. buildEnvelope() (lineage.js) explicitly
+    // whitelists the tensor fields it reads (query/lens/domain/horizon/floor/
+    // domains) — analysisIntent is invisible to it. No KRYLO READ UI yet.
+    const analysisIntent = buildAnalysisIntent(seedQuery.trim());
     const horizonRes = resolveHorizon(horizon, 'OPERATOR');
 
     const domain = LENS_BROKER_DOMAIN_MAP[effectiveLens] ?? 'GENERAL';
@@ -1103,6 +1112,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       domain,
       intent:             parsed.normalized_verb,
       parsed_intent:      parsed,
+      analysisIntent,
       temporal_horizon:   horizonRes,
       // LD-1 fix: resolveHorizon() returns `.horizon` (IMMEDIATE/SHORT/MEDIUM/LONG/
       // STRUCTURAL), never `.bucket` — so this was always the 'MED' fallback
