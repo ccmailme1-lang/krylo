@@ -510,27 +510,26 @@ export default function IntelligenceBrief() {
   const isComparative = synthesis?.mode === 'COMPARATIVE';
   const isDicPath = synthesis?.mode === 'INSUFFICIENT_INPUT' && !!synthesis?.decisionInputContract;
   const isDicReady = synthesis?.mode === 'DIC_READY';
-  // §26 -- single source of truth for "the screen deliberately withholds intelligence for this
-  // mode". buildBrief() has no awareness of `mode` (only resolutionEligible/queryDomain), so
-  // these three modes are NOT self-defending inside buildBrief() the way AMBIGUOUS is -- any
-  // caller that invokes buildBrief() without checking this first will get a fabricated brief.
-  // Referenced by both the render path below and handleExport() so there is exactly one
-  // definition of "withheld," not a duplicated condition that can drift out of sync.
+  // KRYL-1294 -- isDicPath used to early-return InsufficientInput as a full-page
+  // replacement, so a DIC domain (Real Estate) got a different, isolated treatment
+  // than every other domain -- one Happy Path template, not two. Traced: buildBrief()
+  // guards on resolutionEligible/queryDomain, not `mode`, and the DIC branch in
+  // querysynthesis.js always sets resolutionEligible:true -- so buildBrief() was
+  // already safe to call here, it just never got the chance to. isDicPath no longer
+  // skips buildBrief(); the missing-inputs form renders INSIDE the normal template
+  // instead (see 00 · HEADER below), reusing InsufficientInput as-is, not duplicated.
+  //
+  // §26 -- export eligibility is a SEPARATE concern from "does the brief render":
+  // exporting while required decision-specific inputs are still missing would ship
+  // a brief without the financing math the DIC exists to gate -- isBriefWithheld
+  // (export-only gate, handleExport() below) still includes isDicPath deliberately.
+  const skipBuildBrief = isComparative || isDicReady;
   const isBriefWithheld = isComparative || isDicPath || isDicReady;
-  const brief = isBriefWithheld ? null : buildBrief(session, synthesis, hp, briefSubject);
+  const brief = skipBuildBrief ? null : buildBrief(session, synthesis, hp, briefSubject);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   if (isComparative) {
     return <ComparativeField diff={synthesis.diff} />;
-  }
-  if (isDicPath) {
-    return (
-      <InsufficientInput
-        missingRequiredInputs={synthesis.missingRequiredInputs}
-        dic={synthesis.decisionInputContract}
-        onSubmit={fields => activeId && setTensorFields(activeId, fields)}
-      />
-    );
   }
   if (isDicReady) {
     return dicEvidence
@@ -1105,6 +1104,21 @@ export default function IntelligenceBrief() {
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
+
+        {/* KRYL-1294 -- DIC missing-inputs, rendered inside the one Happy Path template
+            instead of replacing it. Same InsufficientInput component as before, same
+            required fields from the DIC, same disabled-until-filled submit -- only the
+            placement changed. */}
+        {isDicPath && (
+          <div style={{ borderTop: `1px solid rgba(255,255,255,0.08)`, borderBottom: `1px solid rgba(255,255,255,0.08)`, margin: '4px 0' }}>
+            <InsufficientInput
+              missingRequiredInputs={synthesis.missingRequiredInputs}
+              dic={synthesis.decisionInputContract}
+              onSubmit={fields => activeId && setTensorFields(activeId, fields)}
+            />
+          </div>
+        )}
+
         <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
         <WhyThisMatters metrics={metrics} />
         <PerceptionRisk metrics={metrics} dynamics={dynamics} />
