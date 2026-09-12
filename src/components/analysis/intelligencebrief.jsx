@@ -1143,8 +1143,28 @@ export default function IntelligenceBrief() {
               <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, lineHeight: 1.5, letterSpacing: '0.02em' }}>
                 A cross-domain formation is present in the live field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
-                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''},
-                existence {fieldFormation.existence.toFixed(2)}.
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
+              </div>
+              {/* FIELD STATE spec v1.0 — mirrors targetpacket.jsx's 02 FORMATION breakdown
+                  (commit ee0a206), same fieldFormation contract, same edges already counted
+                  above. existence dropped from display for the same reason: real/defined but
+                  reads as an unlabeled confidence score, not part of the required contract. */}
+              <div style={{ marginTop: 10 }}>
+                {fieldFormation.participatingDomains.map(d => {
+                  const edgesForD = fieldFormation.graph.edges.filter(e => e.a === d || e.b === d);
+                  if (!edgesForD.length) return null;
+                  return (
+                    <div key={d} style={{ marginTop: 6, fontFamily: MONO, fontSize: 9.5, lineHeight: 1.6 }}>
+                      <span style={{ color: LIME, letterSpacing: '0.08em' }}>{d}</span>
+                      <span style={{ color: DIM }}> connects to:</span>
+                      {edgesForD.map((e, i) => (
+                        <div key={i} style={{ marginLeft: 12, color: 'rgba(255,255,255,0.55)' }}>
+                          {e.a === d ? e.b : e.a} — {e.admittedType}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
               </div>
             </>
           ) : (
