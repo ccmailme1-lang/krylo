@@ -126,6 +126,11 @@ const INVESTMENT_CONTEXT = /investment policy|investment objective|asset allocat
 // Non-brand automotive terms — presence of any of these means the query is about a vehicle,
 // not a ticker, so AUTO suppression does NOT fire even in investment context.
 const AUTO_EXPLICIT_VEHICLE = /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\blease\b|\bdealer\b|\bdrive\b|\bmpg\b/;
+// KRYL-1292: a bare brand name (Tesla/Ford/Rivian etc.) in a business/company-analysis
+// query is not vehicle-purchase intent either — same shape as WO-1872's INVESTMENT_CONTEXT
+// suppression above, extended to cover company-analysis language. AUTO_EXPLICIT_VEHICLE
+// still overrides both (a real "business buying a fleet of cars" query keeps AUTO).
+const BUSINESS_CONTEXT = /\bbusiness\b|\bcompany\b|\benterprise\b|\borganization\b|\bcorporate\b/i;
 
 // Keyword patterns for co-activity scoring — parallel to routing rules but
 // produces hit counts per domain rather than a single winner.
@@ -172,7 +177,7 @@ function resolvePrimary(q, lens) {
     (
       /\bcar\b|\bsuv\b|\btruck\b|\bauto\b|\bbuick\b|\bford\b|\btoyota\b|\bhonda\b|\btesla\b|\bbmw\b|\bmercedes\b|\baudi\b|\bchevy\b|\bchevrolet\b|\bkia\b|\bhyundai\b|\bdodge\b|\bjeep\b|\brivian\b/.test(q)
       || autoVehicleWord || leaseIsVehicle
-    ) && !(INVESTMENT_CONTEXT.test(q) && autoBrandOnly)
+    ) && !((INVESTMENT_CONTEXT.test(q) || BUSINESS_CONTEXT.test(q)) && autoBrandOnly)
   ) return 'AUTO';
   // Property/homestead tax exemptions, freezes, deferrals, rebates are senior cost-relief
   // levers — NOT real-estate transactions. Must precede the REAL_ESTATE 'property' keyword.
