@@ -584,10 +584,37 @@ export default function TargetPacket() {
               <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
                 A cross-domain formation is present in the live field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
-                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''},
-                existence {fieldFormation.existence.toFixed(2)}.
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
               </p>
-              <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+              {/* FIELD STATE spec v1.0 §4C — existence is a real, defined value (cohesion ×
+                  pressureCoherence × avgGroundedness, formationinference.js) and IS the engine's
+                  own admission gate, not a fabricated add-on. Left out of display anyway: it
+                  reads as a confidence/probability score to a guest with no stated semantics on
+                  screen, and it's not part of the FIELD contract's required fields (domains,
+                  admitted relationships, per-domain types). Still on the object if ever needed. */}
+              {/* Per-domain breakdown of the SAME edges counted above — each edge already carries
+                  admittedType (domainintelligence.js's CROSS_DOMAIN_RELATIONSHIPS, WO-3 closed
+                  admission set), attached at formation-inference time. Not a second inference
+                  pass, not a new lookup — just surfacing what admitCrossDomainRelationship()
+                  already decided. */}
+              <div style={{ marginTop: 14 }}>
+                {fieldFormation.participatingDomains.map(d => {
+                  const edgesForD = fieldFormation.graph.edges.filter(e => e.a === d || e.b === d);
+                  if (!edgesForD.length) return null;
+                  return (
+                    <div key={d} style={{ marginTop: 8, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.7 }}>
+                      <span style={{ color: LIME, letterSpacing: '0.1em' }}>{d}</span>
+                      <span style={{ color: BODY_C }}> connects to:</span>
+                      {edgesForD.map((e, i) => (
+                        <div key={i} style={{ marginLeft: 14, color: '#9aa09d' }}>
+                          {e.a === d ? e.b : e.a} — {e.admittedType}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ margin: '14px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
                 This is the structure of the observable field, not a reading bound to a resolved
                 subject — subject-scoped observation binding is the KRYL-1220 analytical bridge, not
                 yet delivered to this packet. KRYLO presents this structure; what it means for a
