@@ -14,6 +14,7 @@ import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '..
 import { parseIntent }                from '../../engine/intentparser.js';
 import { buildQueryContext }          from '../../engine/querycontext.js';
 import { activeCompletionChips }      from '../../engine/completionchips.js';
+import { deriveInquiryPossibilities } from '../../engine/inquirygeneration.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { deriveTrendingTerms } from '../../engine/trendingterms.js';
@@ -835,6 +836,18 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       chips: chips.map(c => ({ label: c.label, source: trendingResult.chipSources?.get(c.label) ?? 'unknown' })),
     });
   }, [trendingResult, seedQuery, selectedDomains]);
+
+  // ── KRYL-1290 — Autonomous Inquiry chips ────────────────────────────────────
+  // Pre-question discovery layer: "what could I examine from what I just typed",
+  // not "what's missing from a query already forming" (that's completion, below).
+  // Pure derivation from the live seed text — never re-parses beyond what
+  // deriveInquiryPossibilities already does internally. Render-only this subtask:
+  // no click transition, no analysisintent.js wiring (spec:
+  // specs/SPEC-autonomous-inquiry-chips-v1.1.md).
+  const inquiryChips = useMemo(
+    () => deriveInquiryPossibilities(seedQuery.trim()),
+    [seedQuery],
+  );
 
   // ── KRYL-1222 — Completion chips ────────────────────────────────────────────
   // Prescriptive "what's missing" layer. Reads the KRYL-1221 QueryContext for the
@@ -1736,6 +1749,43 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </label>
                   ))}
                 </div>
+
+                {/* ── AUTONOMOUS INQUIRY (KRYL-1290) ── */}
+                {/* Pre-question discovery layer: "what could I examine from what I just
+                    typed" — visible only while raw interest exists and no situation has
+                    been selected yet. Labels are mechanical placeholders, not final copy —
+                    see inquirygeneration.js header. Styling reuses the existing COMPLETE
+                    THE PICTURE pill precedent below, unchanged.
+                    KRYL-1290 subtask 5 — click writes chip.question into the existing
+                    seedQuery/textarea state only (spec §6 Chip -> Question Transition).
+                    No new state, no submit, no activeSituation mutation — the textarea
+                    stays fully user-editable and nothing auto-executes. */}
+                {seedQuery.trim().length > 0 && activeSituation == null && inquiryChips.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>WHAT TO EXAMINE</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                      {inquiryChips.map(chip => (
+                        <button
+                          key={chip.id}
+                          onClick={() => {
+                            // The intake textarea is uncontrolled (ref-driven, not
+                            // value={seedQuery}) — setSeedQuery alone never touches
+                            // its DOM value. Mirrors the existing applySnapshot
+                            // precedent (line ~1226), which always pairs both.
+                            setSeedQuery(chip.question);
+                            if (centerTextareaRef.current) centerTextareaRef.current.value = chip.question;
+                          }}
+                          style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
+                            padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                            background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                            color: LIME, whiteSpace: 'nowrap', transition: 'all 140ms',
+                          }}
+                        >{chip.label}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* ── COMPLETE THE PICTURE (KRYL-1222) ── */}
                 {/* Prescriptive layer: what the query is missing, not what it typed (that's

@@ -2,7 +2,7 @@
 // No LLM. Constrained grammar + regex + finite ontology.
 // Determinism guarantee: same input + same PARSER_VERSION = same ParsedIntent always.
 
-export const PARSER_VERSION = '1.0.0-phase-a';
+export const PARSER_VERSION = '1.1.0-phase-a';
 
 const VERB_MAP = {
   TRACK:       ['track', 'follow', 'watch trend', 'observe over time'],
@@ -107,6 +107,7 @@ export function parseIntent(rawInput) {
     return {
       raw_input:        '',
       normalized_verb:  'INVESTIGATE',
+      verb_matched:     false,
       entities:         [],
       domains:          [],
       ambiguity_score:  1.0,
@@ -122,6 +123,14 @@ export function parseIntent(rawInput) {
   return {
     raw_input:       rawInput,
     normalized_verb: verb,
+    // KRYL-1290 — matchVerb() falls through to INVESTIGATE with score:0 when no
+    // VERB_MAP pattern actually matched. That fallthrough was previously discarded
+    // before return, so "explicit INVESTIGATE" and "no verb signal at all" were
+    // indistinguishable to every consumer — an Absence-Is-Signal violation (§1):
+    // real absence collapsed into a false-neutral default. Surfaced here, additive
+    // only, as evidence for the Autonomous Inquiry Chips layer (does not replace
+    // or reinterpret normalized_verb for existing consumers).
+    verb_matched:    score > 0,
     entities,
     domains,
     ambiguity_score: ambiguityScore(score, entities.length, domains.length),
