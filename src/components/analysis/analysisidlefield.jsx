@@ -1769,8 +1769,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     KRYL-1290 subtask 5 — click writes chip.question into the existing
                     seedQuery/textarea state only (spec §6 Chip -> Question Transition).
                     No new state, no submit, no activeSituation mutation — the textarea
-                    stays fully user-editable and nothing auto-executes. */}
-                {seedQuery.trim().length > 0 && activeSituation == null && inquiryChips.length > 0 && (
+                    stays fully user-editable and nothing auto-executes.
+                    DEF (KRYL-1290 follow-up) — gated on !processing: handleExecute()
+                    sets processing true as its first line, well before the 900ms
+                    session-creation delay. Without this gate, selecting a chip could
+                    still recompute a new candidate set in the moment right after
+                    execute was clicked but before results replaced the view — a race
+                    with no usable selection window. Standard practice (follow-up-chip
+                    UX patterns, researched) never shows a new set while a request is
+                    in flight; new chips belong attached to the next completed
+                    response, not competing with an in-progress submit. */}
+                {seedQuery.trim().length > 0 && activeSituation == null && !processing && inquiryChips.length > 0 && (
                   <div style={{ marginTop: 20 }}>
                     <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>WHAT TO EXAMINE</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
