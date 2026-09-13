@@ -204,7 +204,7 @@ export async function runSecOwnershipSync({ from, to } = {}) {
 // results — correctness never depends on the backend (outside this repo) honoring the
 // optional server-side entityName param. No KRYLCF/Structural Integrity step anywhere
 // in this function, per the ratified v1 compatibility rule.
-export async function runTargetedOwnershipObservation({ entityCik, from, to } = {}) {
+export async function runTargetedOwnershipObservation({ entityCik, canonicalId = null, from, to } = {}) {
   if (!entityCik) {
     return { admitted: [], rejected: [], matched: 0, total: 0, error: 'entityCik is required for a targeted observation' };
   }
@@ -248,13 +248,16 @@ export async function runTargetedOwnershipObservation({ entityCik, from, to } = 
     // extracted. There is no real per-filing magnitude available here to compute. Rather
     // than pass an unlabeled numeric `signal` implying a measured strength that doesn't
     // exist, this observation type is explicit: CATEGORICAL (a qualifying filing exists or
-    // it doesn't), not magnitude-bearing. Confirmed unused downstream in this pipeline
-    // regardless — domaingravity.js's pool only stores {confidence, polarity, ts} per
-    // entry, and buildPerceptionField()'s toParticle() only reads
-    // {domain, confidence, polarity, ts} — `signal` reaches neither. `signal: 100` is kept
-    // only because dispatchBatch()'s event shape elsewhere in the app expects the field to
-    // be present; evidence_class makes its true (non-)meaning explicit and auditable rather
-    // than silent.
+    // it doesn't), not magnitude-bearing. `signal: 100` is kept only because dispatchBatch()'s
+    // event shape elsewhere in the app expects the field to be present; evidence_class makes
+    // its true (non-)meaning explicit and auditable rather than silent.
+    //
+    // KRYL-1220 — meta.canonicalId added (2026-09-13): domaingravity.js's pool and
+    // perceptionread.js's toParticle() now DO carry canonicalId through to Formation (the
+    // comment this replaced was correct when written, stale after that fix — corrected here
+    // rather than left misleading). identityId stays, unchanged, for its own real consumers
+    // (rkmstore.js/whytrace.js/identitykernel.js's Path Memory + lineage tracking) — this is
+    // an additive second attribution, not a replacement of a field other real code depends on.
     const result = admitAndDispatch({
       source:       'SEC_13D_13G_TARGETED',
       domain:       'OWNERSHIP',
@@ -271,6 +274,7 @@ export async function runTargetedOwnershipObservation({ entityCik, from, to } = 
       decay:       DECAY.DAILY,
       provenance:  dag,
       identityId:  entityCik,
+      meta:        { canonicalId },
       evidence:    [pair.accession ?? `no_accession_${Date.now()}`],
       subjectCik:  pair.subjectCik,  subjectName: pair.subjectName,
       filerCik:    pair.filerCik,    filerName:   pair.filerName,
