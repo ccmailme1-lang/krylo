@@ -48,7 +48,12 @@ export default function ReconDashboard() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: `1px solid ${BORDER}`, paddingBottom: 10 }}>
-        <span style={{ color: BRT, fontSize: 10, letterSpacing: '0.22em' }}>SIGNAL RECON LAYER</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: BRT, fontSize: 10, letterSpacing: '0.22em' }}>SIGNAL RECON LAYER</span>
+          {/* KRYL-1089 — runRecon() consumes engineState.domainStates, currently a mock
+              oscillator (Math.random()), not a real signal source. */}
+          <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, border: `1px solid ${BORDER}`, padding: '1px 5px', borderRadius: 2 }}>SIMULATED / DEMO DATA</span>
+        </span>
         {stats && (
           <span style={{ color: DIM, fontSize: 8, letterSpacing: '0.10em' }}>
             {stats.total}/{stats.capacity} · {stats.byValidity.IDENTIFIABLE}I · {stats.byValidity.UNRESOLVED}U · {stats.byValidity.CONFOUNDED}C

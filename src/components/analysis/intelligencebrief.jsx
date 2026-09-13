@@ -710,6 +710,9 @@ export default function IntelligenceBrief() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
+              {/* KRYL-1089 — this engine is a mock oscillator (Math.random()), not a real
+                  signal source. Disclosed here rather than silently presented as a finding. */}
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em', color: MID, border: `1px solid ${DIM}`, padding: '1px 5px', borderRadius: 2 }}>SIMULATED / DEMO DATA</span>
             </span>
             {/* HP indicator — one icon, two states. Cone-trail SVG doubles as the trigger:
                 lime/static by default, purple/blinking when qualified. No separate unicorn asset. */}
