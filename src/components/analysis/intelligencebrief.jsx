@@ -36,7 +36,7 @@ import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engin
 import PerceptionRisk from './perceptionrisk.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
-import { arbitrateHP } from '../../engine/hptiergate.js';
+// KRYL-1293 — arbitrateHP() (hptiergate.js) retired here; see the real-pipeline note below.
 import { AMBIGUOUS_COPY } from './ambiguousstate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -416,14 +416,19 @@ export default function IntelligenceBrief() {
   const hpAnchorRef               = useRef(null);
   const scrollBodyRef             = useRef(null);
   const hpSnapshot                = useRef(null);
-  const { engineState }           = useHappyPathEngine();
+  // KRYL-1293 — real pipeline. engineState (old {happyPath, challengers, domainStates})
+  // and arbitrateHP() (hptiergate.js's HP-0..3 tiering) are retired: both were built on
+  // top of, and only ever validated against, the mock oscillator. The new engine's own
+  // status is already real (ESTABLISHED only when a real eligible route with real
+  // governed R/T/C evidence was selected) -- no separate arbitration layer needed.
+  const { status: hpStatus, route: hpRoute, tiedRoutes: hpTiedRoutes } = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
-  const hp                        = arbitrateHP(engineState, synthesis);
+  const hp                        = { qualified: hpStatus === 'ESTABLISHED', route: hpRoute, tiedRoutes: hpTiedRoutes };
   // KRYL-1113 — counter-evidence must never assert false absence (§20/§22). Engine decides the
-  // state; this render is a sink. evaluated = HP monitoring ran (engineState present);
+  // state; this render is a sink. evaluated = HP monitoring ran (hpStatus present);
   // counter-signals = surfaced unicorn alerts. Empty + evaluated => "none found" (honest);
   // never a hardcoded absence.
-  const hpCounter                 = computeCounterEvidenceState({ evaluated: !!engineState, contradictions: alerts });
+  const hpCounter                 = computeCounterEvidenceState({ evaluated: !!hpStatus, contradictions: alerts });
   const hpCounterValue            = hpCounter.state === COUNTER_EVIDENCE_STATE.FOUND
     ? `${hpCounter.contradictions.length} counter-signal${hpCounter.contradictions.length === 1 ? '' : 's'}`
     : hpCounter.label;
@@ -440,7 +445,7 @@ export default function IntelligenceBrief() {
     const dp = getQueryDomainPressure(synthesis.queryDomain);
     return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
   }, [synthesis?.queryDomain]);
-  const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
+  const metrics                   = useMemo(() => computeMetrics(synthesis, hp, null, lrPrior, null, domainSignal), [synthesis, hp, lrPrior, domainSignal]);
   const compositeMetrics          = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics                  = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility                = useMetricVisibility(metrics, dynamics);
@@ -482,7 +487,9 @@ export default function IntelligenceBrief() {
       return [...prev, { key, type: 'signal_event', ts: a?.ts ?? Date.now(), label: 'DOMAIN ALERT', detail: a?.label ?? '—' }].slice(-100); // bounded — no unbounded growth
     });
   }, [alerts.length]);
-  const monitorMap                = useThesisMonitor(convictions.active, engineState?.domainStates, hp);
+  // KRYL-1293 — no per-domain state exists in the real model (route-based, not
+  // domain-based); passing undefined honestly, not a fabricated domainStates shape.
+  const monitorMap                = useThesisMonitor(convictions.active, undefined, hp);
   const calibration               = useMemo(() => computeCalibration(convictions.resolved), [convictions.resolved]);
 
   if (!session) {
@@ -710,9 +717,13 @@ export default function IntelligenceBrief() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
-              {/* KRYL-1089 — this engine is a mock oscillator (Math.random()), not a real
-                  signal source. Disclosed here rather than silently presented as a finding. */}
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em', color: MID, border: `1px solid ${DIM}`, padding: '1px 5px', borderRadius: 2 }}>SIMULATED / DEMO DATA</span>
+              {/* KRYL-1293 — real pipeline (subject -> observed routes -> governed R/T/C ->
+                  lowest friction). No eligible route exists yet (no route substrate, no
+                  R/T/C substrate -- KRYL-1278 not implementation-authorized), so this is
+                  honestly NOT ESTABLISHED, not simulated. */}
+              {hpStatus !== 'ESTABLISHED' && (
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em', color: MID, border: `1px solid ${DIM}`, padding: '1px 5px', borderRadius: 2 }}>NOT ESTABLISHED</span>
+              )}
             </span>
             {/* HP indicator — one icon, two states. Cone-trail SVG doubles as the trigger:
                 lime/static by default, purple/blinking when qualified. No separate unicorn asset. */}

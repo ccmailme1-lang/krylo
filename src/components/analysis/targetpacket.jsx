@@ -304,7 +304,11 @@ export default function TargetPacket() {
   const arbitration  = session?.tensor?.arbitration ?? null;
 
   const revelationStep  = 3;
-  const { engineState } = useHappyPathEngine();
+  // KRYL-1293 — real pipeline. engineState variable name kept for computeMetrics()'s
+  // hpState param below; its shape is now {status, route, tiedRoutes} (no .happyPath) --
+  // computeMetrics() reads hpState?.happyPath?.x with optional chaining, so this
+  // correctly degrades to honest zero/empty, not a crash or a fabricated value.
+  const engineState      = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   // Real domain signal (0..1) — same accessor SIGNAL/PRESSURE/CONVERGENCE use. Factors real macro
   // signal into CAC/ROAS/LTV instead of pure formula; construct made visible via the metric label.
@@ -324,12 +328,11 @@ export default function TargetPacket() {
   // whenever no structural evidence event matches this entity.
   const whyTrace         = useMemo(() => resolveWhyTrace(entity, getCanonicalEvents()), [entity]);
   const sciData          = whyTrace.trace?.sci ? { sci: whyTrace.trace.sci, sps: null } : null;
-  // KRYL-1089 — engineState (useHappyPathEngine()) is currently a mock oscillator
-  // (Math.random()), not a real signal source. This file has no direct display surface
-  // for HP output -- metrics computed here are only persisted into the shared metrics
-  // history store below (recordMetricsSnapshot), consumed and disclosed elsewhere
-  // (intelligencebrief.jsx's HAPPY PATH badge). Documented here so the contamination
-  // path is traceable from its actual entry point, not just at the point it's displayed.
+  // KRYL-1293 — engineState (useHappyPathEngine()) is now the real pipeline; the mock
+  // oscillator is fully retired. This file has no direct display surface for HP output --
+  // metrics computed here are only persisted into the shared metrics history store below
+  // (recordMetricsSnapshot), consumed and disclosed elsewhere (intelligencebrief.jsx's
+  // HAPPY PATH badge).
   const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, sciData, domainSignal), [synthesis, engineState, lrPrior, domainSignal, sciData]);
   // Producer side of the domain metrics history store — records the real,
   // already-computed metrics object, tagged by domain. Never recomputes,

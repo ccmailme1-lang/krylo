@@ -172,7 +172,10 @@ export default function ActionMatrix() {
                           ?? (subj.kind === 'ENTITY' ? 'SUBJECT-SCOPED' : 'OPEN');
 
   const synthesis    = useMemo(() => synthesizeQuery(session), [session]);
-  const { engineState } = useHappyPathEngine();
+  // KRYL-1293 — real pipeline; mock oscillator retired. computeMetrics() reads
+  // hpState?.happyPath?.x with optional chaining, so the new {status, route, tiedRoutes}
+  // shape correctly degrades to honest zero/empty below, not a crash.
+  const engineState  = useHappyPathEngine();
   const stateLabel   = synthesis?.stateLabel ?? 'BUILDING CONVERGENCE';
   const lrPrior      = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   const domainSignal = useMemo(() => {
@@ -252,10 +255,12 @@ export default function ActionMatrix() {
             <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', letterSpacing: '0.28em' }}>
               P4 — ACTION MATRIX
             </div>
-            {/* KRYL-1089 — action visibility/gating here is influenced by computeMetrics()'s
-                engineState input, currently a mock oscillator (Math.random()), not a real
-                signal source. */}
-            <span style={{ fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.4)', border: `1px solid ${BORDER}`, padding: '1px 5px', borderRadius: 2 }}>SIMULATED / DEMO DATA</span>
+            {/* KRYL-1293 — real pipeline; no eligible route exists yet (no route/R-T-C
+                substrate), so Happy Path's contribution to metrics here is honestly zero,
+                not simulated. */}
+            {engineState.status !== 'ESTABLISHED' && (
+              <span style={{ fontSize: 8, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.4)', border: `1px solid ${BORDER}`, padding: '1px 5px', borderRadius: 2 }}>NOT ESTABLISHED</span>
+            )}
           </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', letterSpacing: '0.14em' }}>
             {targetLabel} — {lensLabel} LENS
