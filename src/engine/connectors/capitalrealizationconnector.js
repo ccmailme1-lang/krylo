@@ -3,7 +3,7 @@
 // No API key. No UEI required. Name-based lookup via USASpending spending_over_time.
 //
 // Flow:
-//   query string → ERK resolve() → canonical name → USASpending spending_over_time
+//   query string → subjectScope() → canonical entity → USASpending spending_over_time
 //   → FY award history → trend signal → CAPITAL dispatch
 //
 // Signal formula:
@@ -14,10 +14,18 @@
 //
 // Returns null and dispatches nothing when no entity resolves from the query.
 // WITHHOLD beats fabricate — no entity = no signal.
+//
+// KRYL-1220 defect found + fixed here: this used to call entityresolution.js's bare
+// resolve(query) directly on the full natural-language query string ("Lockheed Martin
+// structural analysis"). That resolver has no query-window extraction and returns null on
+// anything but a near-exact name, so it silently withheld on every real query -- confirmed:
+// resolve('Lockheed Martin') resolves, resolve('Lockheed Martin structural analysis') did
+// not. subjectScope() (subjectscope.js) already does the same resolution with the windowed
+// name-candidate extraction built exactly for this case -- reused here, not reimplemented.
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
-import { resolve } from '../entityresolution.js';
+import { subjectScope } from '../subjectscope.js';
 // KRYL-1295 — CF-ECO's first live production consumer. Additive only: called AFTER the
 // real dispatch below, never alters it, never throws into this function (the adapter
 // swallows its own errors). See cfecoproductionadapter.js header for the honest gap this
@@ -35,9 +43,12 @@ function mean(arr) {
 export async function runCapitalRealizationSync(query) {
   if (!query) return null;
 
-  // Resolve entity from query — any word or phrase may name an entity
-  const entity = resolve(query);
-  if (!entity) return null; // no known entity in query — withhold
+  // Resolve entity from the full natural-language query — subjectScope() does the same
+  // ERK resolution entityresolution.js's resolve() does, but through windowed name-candidate
+  // extraction that actually handles a query longer than a bare name (KRYL-1220 defect fix).
+  const scope = subjectScope(query);
+  if (scope.kind !== 'ENTITY') return null; // no known entity in query — withhold, correct behavior
+  const entity = { canonicalId: scope.canonicalId, canonicalName: scope.entity.name, domainTags: scope.entity.domainTags };
 
   const ts = Date.now();
 
@@ -99,9 +110,20 @@ export async function runCapitalRealizationSync(query) {
     });
 
     return { entity, signal, trendRatio, amounts };
-  } catch {
-    // Entity resolved but no award data — withhold, no zero dispatch
-    // (absence of federal awards is not a zero signal; entity may be private)
+  } catch (err) {
+    // Entity resolved but no award data, OR the fetch/API itself failed — these are NOT the
+    // same state (legitimate absence vs. operational failure), and collapsing them into an
+    // identical silent null is exactly the swallowed-exception pattern found during KRYL-1220
+    // verification: a connector failing on every query looked identical to honest absence
+    // until traced directly. Not building a formal failure-state taxonomy here (that's a
+    // separate, larger provenance/absence-model question) — the minimal fix is: don't let
+    // this be invisible. A real fetch/HTTP failure is logged distinguishably from the
+    // legitimate "no award history"/"zero amounts" cases; the caller still only sees
+    // withhold (null) either way, because WITHHOLD beats fabricate regardless of which case.
+    const legitimateAbsence = err?.message === 'no award history' || err?.message === 'zero amounts';
+    if (!legitimateAbsence) {
+      console.warn(`[capitalrealizationconnector] operational failure for "${entity.canonicalName}" (${entity.canonicalId}):`, err?.message ?? err);
+    }
     return null;
   }
 }
