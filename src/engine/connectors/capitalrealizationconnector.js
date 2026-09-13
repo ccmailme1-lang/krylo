@@ -18,6 +18,12 @@
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
 import { resolve } from '../entityresolution.js';
+// KRYL-1295 — CF-ECO's first live production consumer. Additive only: called AFTER the
+// real dispatch below, never alters it, never throws into this function (the adapter
+// swallows its own errors). See cfecoproductionadapter.js header for the honest gap this
+// creates today (no naicsCode/entityTags on any real entity yet -- every call here will
+// currently return { tagged: false, skipped: true }, which is correct, not broken).
+import { tagObservationForCfEco } from '../cf/cfecoproductionadapter.js';
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
@@ -77,6 +83,20 @@ export async function runCapitalRealizationSync(query) {
         domainTags: entity.domainTags,
       },
     }]);
+
+    // KRYL-1295 — CF-ECO consumption of this real, live-dispatched observation. Additive
+    // only: runs after the real dispatch above, its result is not used by anything here,
+    // and it cannot throw (the adapter catches its own errors). naicsCode/entityTags are
+    // genuinely absent from this entity's real data — not fabricated to force a match.
+    tagObservationForCfEco({
+      entityIds: [entity.canonicalId],
+      domain: 'CAPITAL',
+      observedAt: ts,
+      provenanceId: `usaspending_${entity.canonicalId}_${ts}`,
+      sourceId: 'USASPENDING_ENTITY',
+      naicsCode: null,
+      entityTags: null,
+    });
 
     return { entity, signal, trendRatio, amounts };
   } catch {
