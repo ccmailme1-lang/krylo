@@ -17,21 +17,38 @@ import { getAllSignals } from './domaingravity.js';
 
 // The particle contract the inference core consumes (formationinference.normalize):
 //   { domain, confidence(0..100) | magnitude(0..1), polarity('constructive'|'fracture'), ts }
-// The pool already emits { domain, confidence, polarity, ts } — pass-through, no reshape needed beyond a copy.
+// normalize() reads only named fields and ignores unknown ones (verified, formationinference.js:62-77),
+// so an additive canonicalId here is safe and requires no change to inferFormation() or its contract.
+// The pool already emits { domain, confidence, polarity, ts, canonicalId } — pass-through, no reshape
+// needed beyond a copy.
 function toParticle(s) {
-  return { domain: s.domain, confidence: s.confidence, polarity: s.polarity, ts: s.ts };
+  return { domain: s.domain, confidence: s.confidence, polarity: s.polarity, ts: s.ts, canonicalId: s.canonicalId ?? null };
+}
+
+// KRYL-1220 — fail-closed subject match: a particle with no canonicalId (the connector never
+// attributed it) NEVER matches a subject-scoped call. No fuzzy fallback, same discipline as
+// subjectbinding.js's facetBelongsToSubject (identifier containment only, no name matching).
+function belongsToSubject(particle, subject) {
+  return typeof particle.canonicalId === 'string' && particle.canonicalId === subject;
 }
 
 /**
  * buildPerceptionField — the perceived signal field feeding the inference core.
- * @param {{ windowMs?: number, now?: number, source?: (windowMs?:number)=>Array }} opts
+ * @param {{ windowMs?: number, now?: number, source?: (windowMs?:number)=>Array, subject?: string }} opts
  *   source — injectable signal provider (defaults to the live pool). Must return uncollapsed particles.
+ *   subject — KRYL-1220, optional. A resolved entity canonicalId (subjectScope()'s output). When
+ *     omitted, behavior is byte-identical to before this field existed — every existing caller
+ *     that doesn't pass it keeps seeing the full ambient field. When supplied, particles are
+ *     filtered to only those carrying that exact canonicalId — never invented, never widened.
  * @returns frozen perception field { particles, observedAt, windowMs, source, count }
  */
 export function buildPerceptionField(opts = {}) {
   const provider = opts.source ?? getAllSignals;
   const signals  = provider(opts.windowMs) ?? [];
-  const particles = signals.map(toParticle);          // uncollapsed pass-through (§21)
+  let particles = signals.map(toParticle);             // uncollapsed pass-through (§21)
+  if (opts.subject) {
+    particles = particles.filter(p => belongsToSubject(p, opts.subject));
+  }
   return Object.freeze({
     particles: Object.freeze(particles),
     count: particles.length,

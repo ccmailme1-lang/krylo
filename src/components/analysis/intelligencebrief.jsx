@@ -296,12 +296,17 @@ export default function IntelligenceBrief() {
   // targetpacket.jsx:326-334: run the Formation contract against the live field pool, state
   // NO_FORMATION_ESTABLISHED only when it actually returns empty, never as a constant. A found
   // formation is substantiated structure and IS shown.
+  // KRYL-1220 — subject-scoped via the already-computed briefSubject (canonicalBriefSubject(),
+  // same resolver targetpacket.jsx uses via subjectScope()). Only particles carrying that exact
+  // canonicalId are considered when it resolves an ENTITY; a non-ENTITY subject passes none,
+  // same ambient field as before this fix.
   const fieldFormation = useMemo(() => {
     try {
-      const field = buildPerceptionField({ now: Date.now() });
+      const subject = briefSubject?.kind === 'ENTITY' ? briefSubject.canonicalId : undefined;
+      const field = buildPerceptionField({ now: Date.now(), subject });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
-  }, [session]);
+  }, [session, briefSubject]);
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore

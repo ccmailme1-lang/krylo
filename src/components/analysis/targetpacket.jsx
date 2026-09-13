@@ -346,29 +346,35 @@ export default function TargetPacket() {
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 
-  // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
-  // NO_FORMATION_ESTABLISHED only when the Formation contract actually returns
-  // empty, never as a constant. Run the contract against the live field pool.
-  // A found formation is substantiated structure and IS shown — labelled FIELD
-  // SCOPE, because subject-scoped observation binding is still the KRYL-1220
-  // bridge gap. This is not a subject verdict; it is the observable field.
-  const fieldFormation = useMemo(() => {
-    try {
-      const field = buildPerceptionField({ now: Date.now() });
-      return field.particles.length ? inferFormation(field.particles) : null;
-    } catch { return null; }
-  }, [domainPressures]);
-
   // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
   // DIC / synthesis routing / 5B are untouched (forensic recovery: those are
   // legitimate to their own contracts). `INSUFFICIENT_INPUT` stays what it means
   // — "the decision artifact can't be resolved" — and is not read as "the
   // perceptual packet has nothing to show". Missing decision parameters constrain
   // conclusions, not observation.
+  // Moved above fieldFormation (KRYL-1220) so its already-computed canonicalId can be
+  // threaded into buildPerceptionField() below without a second, redundant subjectScope()
+  // call (subjectScope() is not cheap for a long pasted query — see PERF note elsewhere).
   const subjScope = useMemo(
     () => subjectScope(session?.queryContext ?? session?.query ?? ''),
     [session?.queryContext, session?.query],
   );
+
+  // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
+  // NO_FORMATION_ESTABLISHED only when the Formation contract actually returns
+  // empty, never as a constant. Run the contract against the live field pool.
+  // A found formation is substantiated structure and IS shown.
+  // KRYL-1220 — now subject-scoped when subjScope resolves an ENTITY: only particles
+  // carrying that exact canonicalId are considered (perceptionread.js fail-closed filter).
+  // A non-ENTITY scope (GEO/DECISION_FRAME/UNRESOLVED) passes no subject — ambient field,
+  // same as before this fix, not a fabricated per-subject result.
+  const fieldFormation = useMemo(() => {
+    try {
+      const subject = subjScope.kind === 'ENTITY' ? subjScope.canonicalId : undefined;
+      const field = buildPerceptionField({ now: Date.now(), subject });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures, subjScope]);
   const recognizedFrame = (() => {
     const d = synthesis?.queryDomain;
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
