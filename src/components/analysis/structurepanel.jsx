@@ -44,8 +44,10 @@ function FormationMapTab({ query }) {
   // memo mirrors targetpacket.jsx exactly (domainPressures stable-ref'd on `query`, fieldFormation
   // depends on that stable ref) -- NOT a continuous poll/timer, matching BRIEF's own freshness
   // cadence (recomputed per query, not on every render).
-  // This is ambient/field-scoped, NOT subject-scoped -- KRYL-1220's undelivered analytical
-  // bridge is the only thing that would make this specific to `query`'s resolved subject.
+  // This is ambient/field-scoped, NOT subject-scoped. DEF-1300: KRYL-1220's subject-binding
+  // bridge is delivered (BRIEF/Target Packet's own '02 FORMATION' uses it) -- this MAP view
+  // was an explicit non-goal of that ticket's scope, not an undelivered dependency. Wiring
+  // subject-scoping in here is a real, separate, not-yet-authorized follow-on, not a defect.
   const domainPressures = useMemo(() => getAllDomainPressures(), [query]);
   const fieldFormation = useMemo(() => {
     try {

@@ -179,7 +179,11 @@ function PacketSection({ ordinal, title, mt = 54, children }) {
 }
 
 // Honest-absence marker — used where the approved composition reserves a slot the
-// packet cannot populate from live engine state today (KRYL-1220 / KRYL-1202).
+// packet cannot populate from live engine state today. DEF-1300: KRYL-1220 (Formation
+// admission) landed and is no longer a reason to cite here — the remaining slots this
+// marker covers are the five-metric strip's per-observation layer (never scoped to
+// KRYL-1220, still genuinely absent) and 04 ATTENTION's targeted re-observation
+// (KRYL-1202, confirmed still Ready/not built).
 function NotMeasured() {
   return (
     <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: ABSENCE }}>
@@ -578,7 +582,10 @@ export default function TargetPacket() {
           subjectKind={subjScope.kind}
         />
 
-        {/* ── FIVE-METRIC STRIP — honest absence (KRYL-1220 capability gap) ────── */}
+        {/* ── FIVE-METRIC STRIP — honest absence (DEF-1300: not a KRYL-1220 gap —
+             KRYL-1220's Formation admission bridge is operational, see 02 FORMATION
+             below. These five metrics need a separate, deeper per-observation layer
+             KRYL-1220 was never scoped to compute — see the note under the strip. ── */}
         <section style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
           {[
             ['STRUCTURAL DENSITY',   'relationships per object'],
@@ -598,9 +605,11 @@ export default function TargetPacket() {
           ))}
         </section>
         <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 9, lineHeight: 1.7, color: ABSENCE, maxWidth: 720 }}>
-          Structural metrics require the closed-loop analytical bridge (KRYL-1220). The packet does
-          not yet receive per-observation structure, so these positions are held as measured absence,
-          not filled with a proxy.
+          KRYL-1220 (subject-bound Formation admission) is operational — see FORMATION below. These
+          five metrics need a separate, per-observation structural layer (individual relationship
+          counts, hop-distance to evidence, multi-source coverage, commitment duration, domain
+          concentration) that Formation admission does not itself compute. These positions are held
+          as honest absence, not filled with a proxy.
         </div>
 
         {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
