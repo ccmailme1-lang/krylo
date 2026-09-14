@@ -404,6 +404,21 @@ export default function TargetPacket() {
   // duplicate resolveWhyTrace() call against the same entity.
   const wtResolved = whyTrace.state === WT_STATE.RESOLVED;
 
+  // DEF-1301 — the count of real, subject-attributed observations actually feeding Formation
+  // (capitalrealizationconnector.js/secownershipconnector.js/edgar8ksignal.js -> the
+  // domaingravity.js pool -> the SAME buildPerceptionField({subject}) call fieldFormation uses
+  // above). This is a DIFFERENT evidence class from wtResolved (EDGAR-8K CanonicalEvents,
+  // whytrace.js) and from adsubject.js's getDomainEvidenceFacets() (WO-5B evidence facets,
+  // still genuinely empty — no registered facet source attributes to a subject yet). PROVENANCE
+  // below must not claim "no subject-scoped evidence bound" while this count is > 0; that was
+  // the exact contradiction DEF-1301 reports (Formation admitted from real subject-bound
+  // observations while PROVENANCE denied any existed).
+  const subjectObservationCount = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return 0;
+    try { return buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId }).particles.length; }
+    catch { return 0; }
+  }, [subjScope, refreshTick]);
+
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
   // field the rest of the packet already reads. No new data source.
   const packetDate = new Date().toISOString().slice(0, 10);
@@ -759,8 +774,11 @@ export default function TargetPacket() {
         <PacketSection ordinal="04" title="ATTENTION">
           <p style={{ margin: '18px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: '#8a918d' }}>
             Directed re-observation is not yet wired into the packet. This section will carry the
-            unresolved structural questions that warrant targeted re-observation once the closed-loop
-            bridge (KRYL-1202) lands.
+            unresolved structural questions that warrant targeted re-observation once KRYL-1202
+            (Formation-Driven Closed-Loop Perception — Formation as an automatic query generator
+            for targeted re-observation) lands. This is a separate capability from KRYL-1220
+            (subject-bound Formation admission, shown in 02 above, already operational) — confirmed
+            against Jira, not assumed: KRYL-1202 is still status Ready, not yet built (DEF-1301).
           </p>
           <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
             ASSEMBLANCE, the Fracture Surface, and the Leverage Field are shown elsewhere in this
@@ -768,27 +786,44 @@ export default function TargetPacket() {
           </p>
         </PacketSection>
 
-        {/* ── 05 PROVENANCE — truthful evidence state only (KRYL-1235). WhyTracePanel
-             renders ONLY when it resolves a real structural trace (EDGAR events);
-             its non-resolved "no verified record found — add a specific decision,
-             dollar amount, or timeline" copy is removed (that is refinement
-             guidance, not provenance). ─────────────────────────────────────────── */}
+        {/* ── 05 PROVENANCE — truthful evidence state only (KRYL-1235, DEF-1301).
+             THREE real, distinct evidence classes exist here, never collapsed into one
+             pass/fail bit: (1) wtResolved — a resolved EDGAR-8K CanonicalEvent structural
+             trace (whytrace.js). (2) subjectObservationCount — real subject-attributed
+             observations already admitted into Formation (domaingravity.js pool, the
+             capitalrealization/secownership/edgar8ksignal connectors). (3) WO-5B evidence
+             facets (adsubject.js/getDomainEvidenceFacets, surfaced per-domain above) --
+             still genuinely empty, no registered facet source attributes to a subject yet.
+             WhyTracePanel renders ONLY when (1) resolves; its non-resolved "no verified
+             record found" copy is removed (that was refinement guidance, not provenance). ── */}
         <PacketSection ordinal="05" title="PROVENANCE">
           <div style={{ marginTop: 12, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#9aa09d' }}>
-            <span style={{ color: wtResolved ? LIME : ABSENCE }}>
-              {wtResolved ? 'STRUCTURAL TRACE RESOLVED' : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
+            <span style={{ color: wtResolved || subjectObservationCount > 0 ? LIME : ABSENCE }}>
+              {wtResolved
+                ? 'STRUCTURAL TRACE RESOLVED'
+                : subjectObservationCount > 0
+                ? `SUBJECT-BOUND OBSERVATIONS PRESENT (${subjectObservationCount})`
+                : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
             </span>
           </div>
           {wtResolved ? (
             <div style={{ marginTop: 16 }}>
               <WhyTracePanel entity={entity} />
             </div>
+          ) : subjectObservationCount > 0 ? (
+            <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+              {subjectObservationCount} real observation{subjectObservationCount !== 1 ? 's' : ''}, each carrying{' '}
+              {subjScope.kind === 'ENTITY' ? subjScope.canonicalId : 'this subject'}'s real canonicalId, admitted
+              the Formation shown in 02 above (KRYL-1220). No EDGAR-8K structural trace resolved separately
+              (WhyTracePanel, a narrower evidence class) and no WO-5B evidence facet is bound for the individual
+              domain measures above — each is a genuinely distinct evidence class, not the same absence restated.
+            </p>
           ) : (
             <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-              No evidence is identifier-bound to a subject for this query (WO-5B 5B-2). Each domain
-              measure above names the source it would require; field pressure is shown as context
-              only. This is a stated absence — the packet does not fill it with a proxy or ask the
-              guest to supply decision parameters.
+              No evidence is identifier-bound to a subject for this query — no Formation-admitting observation,
+              no EDGAR-8K structural trace, and no WO-5B evidence facet (5B-2). Each domain measure above names
+              the source it would require; field pressure is shown as context only. This is a stated absence —
+              the packet does not fill it with a proxy or ask the guest to supply decision parameters.
             </p>
           )}
         </PacketSection>
