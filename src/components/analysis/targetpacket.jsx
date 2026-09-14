@@ -820,10 +820,13 @@ export default function TargetPacket() {
             </p>
           ) : (
             <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-              No evidence is identifier-bound to a subject for this query — no Formation-admitting observation,
-              no EDGAR-8K structural trace, and no WO-5B evidence facet (5B-2). Each domain measure above names
-              the source it would require; field pressure is shown as context only. This is a stated absence —
-              the packet does not fill it with a proxy or ask the guest to supply decision parameters.
+              No evidence is identifier-bound to a subject for this query — no subject-bound Formation-admitting
+              observation, no subject-bound EDGAR-8K structural trace, and no subject-bound WO-5B evidence facet
+              (5B-2). This does not claim no Formation-admitting evidence exists in the live field at all — see
+              02 FORMATION above, which is field-scoped, not subject-scoped, and may be populated independently
+              of this subject's own binding. Each domain measure above names the source it would require; field
+              pressure is shown as context only. This is a stated absence — the packet does not fill it with a
+              proxy or ask the guest to supply decision parameters.
             </p>
           )}
         </PacketSection>
