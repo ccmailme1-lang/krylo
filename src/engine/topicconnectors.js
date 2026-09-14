@@ -12,6 +12,7 @@ import { runUsajobsSync }            from './connectors/usajobsconnector.js';
 import { runGdeltSync }              from './connectors/gdeltconnector.js';
 import { runRedditSync }             from './connectors/redditconnector.js';
 import { runTargetedOwnershipObservation } from './connectors/secownershipconnector.js';
+import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
 import { subjectScope }              from './subjectscope.js';
 
 export function fireTopicConnectors(q) {
@@ -36,6 +37,17 @@ export function fireTopicConnectors(q) {
     runTargetedOwnershipObservation({
       entityCik:   scope.entity.identifiers.edgar,
       canonicalId: scope.canonicalId,
+      from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // real 365-day window (KRYL-1220)
+    }).catch(() => {});
+    // KRYL-1220 — second attempt at a real second domain: EDGAR 8-K, entity-scoped, 90-day
+    // real window (confirmed via direct API check: real EXECUTIVE_CHANGE/SHAREHOLDER_VOTE
+    // filings exist for at least one real subject in this range; 7-day ambient window missed
+    // them). Uses the entity's own real name for EDGAR's server-side narrowing.
+    runTargetedEdgar8KSignalSync({
+      entityCik:   scope.entity.identifiers.edgar,
+      canonicalId: scope.canonicalId,
+      entityName:  scope.entity.name,
+      from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // matches OWNERSHIP's real 365-day window
     }).catch(() => {});
   }
 }

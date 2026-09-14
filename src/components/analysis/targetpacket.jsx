@@ -368,13 +368,29 @@ export default function TargetPacket() {
   // carrying that exact canonicalId are considered (perceptionread.js fail-closed filter).
   // A non-ENTITY scope (GEO/DECISION_FRAME/UNRESOLVED) passes no subject — ambient field,
   // same as before this fix, not a fabricated per-subject result.
+  // KRYL-1220 — bounded refresh. The subject-attributed connectors (capitalrealization,
+  // secownership, edgar8ksignal targeted syncs) are fire-and-forget and land asynchronously,
+  // well after this component's first render — domainPressures/subjScope don't change when
+  // they do, so fieldFormation would otherwise stay stuck at its first (pre-arrival) read of
+  // the pool forever. This re-checks the same real buildPerceptionField()/inferFormation()
+  // call on a short, bounded timer (10 ticks, 2s apart = 20s, matching the real fetch latency
+  // observed for these connectors) so a Formation that becomes real after they land is shown —
+  // never a fabricated one, never an indefinite poll.
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    if (refreshTick >= 10) return;
+    const t = setTimeout(() => setRefreshTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [refreshTick, session]);
+  useEffect(() => { setRefreshTick(0); }, [session]);
+
   const fieldFormation = useMemo(() => {
     try {
       const subject = subjScope.kind === 'ENTITY' ? subjScope.canonicalId : undefined;
       const field = buildPerceptionField({ now: Date.now(), subject });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
-  }, [domainPressures, subjScope]);
+  }, [domainPressures, subjScope, refreshTick]);
   const recognizedFrame = (() => {
     const d = synthesis?.queryDomain;
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
@@ -629,9 +645,11 @@ export default function TargetPacket() {
         <PacketSection ordinal="02" title="FORMATION">
           {fieldFormation ? (
             <>
-              <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LBL }}>FIELD SCOPE — LIVE OBSERVABLE FIELD, NOT SUBJECT-BOUND</div>
+              <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LBL }}>
+                {subjScope.kind === 'ENTITY' ? `FIELD SCOPE — SUBJECT-BOUND (${subjScope.canonicalId})` : 'FIELD SCOPE — LIVE OBSERVABLE FIELD, NOT SUBJECT-BOUND'}
+              </div>
               <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
-                A cross-domain formation is present in the live field:{' '}
+                A cross-domain formation is present {subjScope.kind === 'ENTITY' ? `for ${subjScope.canonicalId} ` : ''}in the {subjScope.kind === 'ENTITY' ? 'subject-scoped' : 'live'} field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
                 {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
               </p>
@@ -664,10 +682,9 @@ export default function TargetPacket() {
                 })}
               </div>
               <p style={{ margin: '14px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-                This is the structure of the observable field, not a reading bound to a resolved
-                subject — subject-scoped observation binding is the KRYL-1220 analytical bridge, not
-                yet delivered to this packet. KRYLO presents this structure; what it means for a
-                decision is the reader's to draw.
+                {subjScope.kind === 'ENTITY'
+                  ? `This structure is bound to ${subjScope.canonicalId} — every particle above carries that subject's real canonicalId (KRYL-1220). KRYLO presents this structure; what it means for a decision is the reader's to draw.`
+                  : `This is the structure of the observable field, not a reading bound to a resolved subject — the query did not resolve to a single entity. KRYLO presents this structure; what it means for a decision is the reader's to draw.`}
               </p>
             </>
           ) : (

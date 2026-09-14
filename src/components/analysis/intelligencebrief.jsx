@@ -300,13 +300,24 @@ export default function IntelligenceBrief() {
   // same resolver targetpacket.jsx uses via subjectScope()). Only particles carrying that exact
   // canonicalId are considered when it resolves an ENTITY; a non-ENTITY subject passes none,
   // same ambient field as before this fix.
+  // KRYL-1220 — same bounded refresh as targetpacket.jsx: subject-attributed connectors land
+  // asynchronously, after this component's first render. 10 ticks x 2s = 20s, matching real
+  // observed fetch latency, never an indefinite poll, never fabricated data.
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    if (refreshTick >= 10) return;
+    const t = setTimeout(() => setRefreshTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [refreshTick, session]);
+  useEffect(() => { setRefreshTick(0); }, [session]);
+
   const fieldFormation = useMemo(() => {
     try {
       const subject = briefSubject?.kind === 'ENTITY' ? briefSubject.canonicalId : undefined;
       const field = buildPerceptionField({ now: Date.now(), subject });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
-  }, [session, briefSubject]);
+  }, [session, briefSubject, refreshTick]);
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore
@@ -1168,13 +1179,15 @@ export default function IntelligenceBrief() {
           </div>
           {fieldFormation ? (
             <>
-              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>Field Scope — live observable field, not subject-bound</div>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>
+                {briefSubject?.kind === 'ENTITY' ? `Field Scope — subject-bound (${briefSubject.canonicalId})` : 'Field Scope — live observable field, not subject-bound'}
+              </div>
               {/* AC-07 / KRYL-1278/1281 — the visual Formation Map moved to its own MAP tab
                   (structurepanel.jsx) alongside BRIEF/RECON/IMPACT -- the actual FORMATION nav
                   page, full-size, no embed scaling needed. This section stays text-only: the
                   live canonical fieldFormation result, which is what AC-07 actually requires. */}
               <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, lineHeight: 1.5, letterSpacing: '0.02em' }}>
-                A cross-domain formation is present in the live field:{' '}
+                A cross-domain formation is present {briefSubject?.kind === 'ENTITY' ? `for ${briefSubject.canonicalId} ` : ''}in the {briefSubject?.kind === 'ENTITY' ? 'subject-scoped' : 'live'} field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
                 {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
               </div>

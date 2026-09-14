@@ -102,14 +102,14 @@ function accessionKey(cik, accessionNo) {
 }
 
 // Extract item numbers from EDGAR items string ("1.01 5.02", "Item 2.01", etc.)
-function parseItems(rawItems) {
+export function parseItems(rawItems) {
   if (!rawItems) return [];
   const matches = String(rawItems).matchAll(/(\d+\.\d+)/g);
   return [...matches].map(m => m[1]);
 }
 
 // Primary event class = first non-exhibit item in the list
-function classifyEventClass(items) {
+export function classifyEventClass(items) {
   for (const item of items) {
     const cls = ITEM_EVENT_CLASS[item];
     if (cls === undefined) continue;  // unrecognized item number — keep scanning
@@ -132,12 +132,12 @@ function classifyAllEventClasses(items) {
 
 // Groundedness: 8-K = signed legal disclosure under Reg FD.
 // 0.98 if entity resolved (full provenance); 0.85 if entity unknown (filing still real).
-function computeGroundedness(entityResolved) {
+export function computeGroundedness(entityResolved) {
   return entityResolved ? 0.98 : 0.85;
 }
 
 // Materiality: 0–100. Deterministic item-based formula — no inference.
-function computeMateriality(items, eventClass) {
+export function computeMateriality(items, eventClass) {
   const base       = items.some(i => HIGH_MATERIALITY_ITEMS.has(i)) ? 70 : 40;
   const itemBonus  = Math.min(20, Math.max(0, (items.length - 1) * 5));
   const unknownPenalty = eventClass === 'UNKNOWN_MATERIAL_EVENT' ? -10 : 0;
@@ -176,6 +176,25 @@ async function fetch8KFilings() {
     }
   }
   throw lastErr;
+}
+
+// KRYL-1220 — targeted, entity-scoped fetch. The ambient fetch8KFilings() above returns only
+// the MAX_HITS=40 most recent filings across ALL filers in a LOOKBACK_DAYS=7 window — for a
+// company that doesn't file every week, that window rarely contains its filings at all (same
+// failure shape confirmed on capitalrealizationconnector.js/secownershipconnector.js before
+// their KRYL-1220 fixes: real data exists, the ambient/narrow query just never reaches it).
+// entityName narrows the same real EDGAR full-text search API server-side (best-effort, same
+// as secownershipconnector.js's searchOwnershipFilings) — correctness never depends on it,
+// since runTargetedEdgar8KFilings' only caller re-filters by CIK client-side regardless.
+export async function fetchTargeted8KFilings({ entityName, from, to }) {
+  const startdt = from ?? new Date(Date.now() - LOOKBACK_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const enddt   = to   ?? new Date().toISOString().slice(0, 10);
+  const params = new URLSearchParams({ forms: '8-K', dateRange: 'custom', startdt, enddt, hits: '20' });
+  if (entityName) params.set('entityName', entityName);
+  const res = await fetch(`${EDGAR_BASE}?${params}`);
+  if (!res.ok) throw new Error(`EDGAR 8-K fetch HTTP ${res.status}`);
+  const json = await res.json();
+  return json.hits?.hits ?? [];
 }
 
 // ── Process single filing ─────────────────────────────────────────────────────

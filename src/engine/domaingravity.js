@@ -110,6 +110,10 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     // else in this pool. dispatchBatch()/dispatch()/_route() spread the event unmodified, so
     // `event.meta` survives from the connector call site unchanged (verified: surfacerouter.js).
     canonicalId: event.meta?.canonicalId ?? null,
+    // eventDate — the real historical event/filing date, when the connector distinguishes it
+    // from ts (observation/ingestion time, e.g. edgar8ksignal.js's targeted sync). null for
+    // every connector that doesn't carry this distinction — not fabricated, not required.
+    eventDate: event.meta?.eventDate ?? null,
   });
 
   // Prune entries beyond 2× window to bound memory
