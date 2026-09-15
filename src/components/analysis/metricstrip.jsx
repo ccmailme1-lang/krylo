@@ -8,6 +8,7 @@ import React from 'react';
 import { getPhaseLock } from '../../engine/phaselock.js';
 import { getMetricDefinition } from '../../engine/metricdefinitions.js';
 import { guestWithholdCopy } from '../../engine/guestlanguage.js';
+import { resolveConvergenceDisplay } from '../../engine/convergencedisplay.js';
 import HelpMark from '../shared/helpmark.jsx';
 
 // Help text for a metric's label — click the "?" to see it. Render-only:
@@ -144,6 +145,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
   const lr          = leverageRealization;
   const phaseLock   = getPhaseLock(); // WO-2015: calendar-derived, no deps
   const phaseDotStyle = PHASE_DOT_STYLES[phaseLock.dotState] ?? PHASE_DOT_STYLES[0];
+  const convDisplay = resolveConvergenceDisplay(convergence); // DEF-1303
 
   const tiles = [
     {
@@ -168,16 +170,11 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       label:        'Convergence',
       // §21 — Convergence reads the live signal-FIELD state. When the subject metric is
       // withheld, the field value is still shown (labelled FIELD), not blanked — it is
-      // substantiated field structure, not a subject claim.
-      display:      convergence?.withheld
-                      ? (convergence?.fieldValue != null ? `${Math.round(convergence.fieldValue * 100)}%` : '—')
-                      : `${Math.round((convergence?.value ?? 0) * 100)}%`,
-      groundedness: convergence?.withheld
-                      ? (convergence?.fieldValue != null ? (convergence?.fieldGroundedness ?? 0) : 0)
-                      : (convergence?.groundedness ?? 0),
-      tag:          convergence?.withheld
-                      ? (convergence?.fieldValue != null ? 'FIELD' : 'WITHHELD')
-                      : (convergence?.queryRelevant === false ? 'AMB' : null),
+      // substantiated field structure, not a subject claim. DEF-1303 — resolution rule now
+      // lives in convergencedisplay.js, the one place every consumer of this shape reads it.
+      display:      convDisplay.hasValue ? `${convDisplay.pct}%` : '—',
+      groundedness: convDisplay.groundedness,
+      tag:          convDisplay.tag,
       tileMode:     'active',
       title:        defTitle('convergence'),
     },

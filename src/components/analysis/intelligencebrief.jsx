@@ -2,6 +2,7 @@
 // Houston Mission Control / Presidential Situation Room aesthetic
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
+import { resolveConvergenceDisplay } from '../../engine/convergencedisplay.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
@@ -1582,16 +1583,14 @@ export default function IntelligenceBrief() {
           // DEF-1875 — wire the badge ribbon to real per-query state (was hardcoded
           // LOCKED/HIGH regardless of the actual analysis). The convergence % lives
           // inside the badge so label and number can never diverge again. §18/§19.
-          const cv   = Math.round((metrics?.convergence?.value ?? 0) * 100);
-          const qRel = metrics?.convergence?.queryRelevant !== false;
-          const insufficient = !metrics?.convergence || synthesis?.resolutionEligible === false;
-          let convT, convC;
-          if (insufficient)  { convT = 'INSUFFICIENT'; convC = DIM;    }
-          else if (cv >= 66) { convT = 'HIGH';         convC = PURPLE; }
-          else if (cv >= 40) { convT = 'BUILDING';     convC = LIME;   }
-          else if (cv >= 20) { convT = 'LOW';          convC = DIM;    }
-          else               { convT = 'INSUFFICIENT'; convC = DIM;    }
-          const convValue = insufficient ? convT : `${convT} · ${cv}%${qRel ? '' : ' · FIELD'}`;
+          // DEF-1303 — was reading metrics.convergence.value directly, with no knowledge of
+          // the withheld/fieldValue shape DEF-1242 added six weeks after DEF-1875 landed (and
+          // only propagated to metricstrip.jsx). Now calls the one shared resolver instead of
+          // a second, independent copy of the same rule.
+          const conv = resolveConvergenceDisplay(metrics?.convergence);
+          const convT = conv.state;
+          const convC = convT === 'HIGH' ? PURPLE : convT === 'BUILDING' ? LIME : DIM;
+          const convValue = conv.hasValue ? `${convT} · ${conv.pct}%${conv.isField ? ' · FIELD' : ''}` : convT;
           const locked = hp?.qualified === true;
           // Real fracture polarity + active-signal count for the query domain
           // (domaingravity §20). Fracture window OPEN = domain in fracture polarity;
@@ -1600,7 +1599,7 @@ export default function IntelligenceBrief() {
           const fracturing = dp?.polarity === 'fracture' && dp.signalCount > 0;
           return [
             { label: 'SIGNAL',          value: locked ? 'LOCKED' : 'TRACKING', color: locked ? LIME : DIM },
-            { label: 'CONVERGENCE',     value: convValue,                      color: qRel ? convC : DIM },
+            { label: 'CONVERGENCE',     value: convValue,                      color: conv.queryRelevant ? convC : DIM },
             { label: 'FRACTURE WINDOW', value: dp ? (fracturing ? 'OPEN' : 'CLOSED') : '—', color: fracturing ? BRT : DIM },
             { label: 'NODES',           value: dp ? String(dp.signalCount) : '—',           color: (dp?.signalCount ?? 0) > 0 ? MID : DIM },
             { label: 'KERNEL',

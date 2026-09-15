@@ -563,11 +563,21 @@ export default function TargetPacket() {
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
                   : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
+          {/* DEF-1303 item 1 — the label itself must change with what's actually resolved: a
+              recognized query-domain FRAME is not a resolved SUBJECT, and rendering it under
+              the SUBJECT label implied an entity was resolved when none was. CAPITAL FRAME /
+              SUBJECT / NO SUBJECT RESOLVED are now visually and semantically distinct. */}
           <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 28, fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: '#767d7a' }}>
-            <span>SUBJECT <span style={{ color: '#eceee9' }}>
+            <span>{subjScope.kind === 'ENTITY' ? 'SUBJECT' : recognizedFrame ? 'FRAME' : 'SUBJECT'} <span style={{ color: '#eceee9' }}>
               {subjScope.kind === 'ENTITY'
                 ? (subjScope.verification === 'NAMED_UNVERIFIED' ? `${subjScope.canonicalId} · NAMED, UNVERIFIED` : subjScope.canonicalId)
-                : (recognizedFrame ? `${recognizedFrame} FRAME` : subjScope.kind)}
+                : recognizedFrame
+                ? recognizedFrame
+                : subjScope.kind === 'DECISION_FRAME'
+                ? 'NO SUBJECT RESOLVED — DECISION FRAME'
+                : subjScope.kind === 'GEO'
+                ? 'NO SUBJECT RESOLVED — GEO'
+                : 'NO SUBJECT RESOLVED'}
             </span></span>
             <span style={{ color: '#3a4140' }}>·</span>
             {subjScope.dealFrame && (subjScope.dealFrame.stage || subjScope.dealFrame.round) && (
