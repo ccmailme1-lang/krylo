@@ -4351,9 +4351,30 @@ export function synthesizeQuery(session) {
   const numbers = extractNumbers(query);
   // WO-1878: when user explicitly locked a domain via chip selection, bypass keyword detection.
   const domainLock = session.tensor?.domainLock ?? null;
-  const vector = domainLock
+  let vector = domainLock
     ? { primary: domainLock, resolutionEligible: true, weights: { [domainLock]: 1.0 }, secondary: null }
     : detectDomain(query, session.lens);
+  // KRYL-1306 — structural signal refinements enrich domain resolution additively, same
+  // rationale as WO-1878's domainLock ("user explicitly locked a domain via chip selection") --
+  // a selected refinement IS an explicit chip selection, just an additive one rather than an
+  // override. Only fires when domainLock hasn't already set an explicit single-domain override
+  // (domainLock stays authoritative). Only OBSERVATION-class refinements carry a domain field --
+  // inquiry-chip refinements (full derived questions, no domain/class shape) are excluded by
+  // this filter naturally, not by a special case: their raw question text is never injected
+  // into the query/vector here -- that would be the "second query" §13/§40 forbid. This still
+  // routes to exactly one SYNTH_MAP[vector.primary] synthesizer below -- the engine has no
+  // multi-domain synthesis capability, and building one is a real, separate gap, not invented
+  // here. This only changes which single domain wins primary when a refinement's domain
+  // outweighs what detectDomain() found in the raw text alone.
+  const refinementDomains = (session.tensor?.structuralRefinements ?? [])
+    .filter(r => r?.class === 'OBSERVATION' && r?.domain)
+    .map(r => r.domain);
+  if (!domainLock && refinementDomains.length) {
+    const boosted = { ...(vector.weights ?? {}) };
+    for (const d of refinementDomains) boosted[d] = Math.max(boosted[d] ?? 0, 0.75);
+    const newPrimary = Object.entries(boosted).sort((a, b) => b[1] - a[1])[0][0];
+    vector = { ...vector, weights: boosted, primary: newPrimary, resolutionEligible: true };
+  }
   // KRYL-1010: SES is a PRECONDITION — computed at intake and attached to EVERY return
   // path (incl. AMBIGUOUS / withheld), where knowing the environment is noisy matters most.
   // Annotation only; never mutates a grounded score.
