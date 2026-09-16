@@ -183,7 +183,11 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
     threats:        synthesis?.threats        ?? adapter.threatContext(payload),
     opportunities:  synthesis?.opportunities  ?? adapter.opportunities(payload),
     coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : adapter.coas(payload),
-    alternativeView: synthesis?.alternativeView ?? `A minority position holds that current signals reflect seasonal variance rather than structural shift.`,
+    // DEF-1303 item 3: the old fallback fabricated a generic "seasonal variance" contradiction
+    // whenever synthesis.alternativeView was absent, regardless of whether any real counter-read
+    // was ever observed. Honest empty state instead -- no observed contradiction, no contradiction
+    // line (same class as the KRYL-1175 outlook fix below).
+    alternativeView: synthesis?.alternativeView ?? '',
     // KRYL-1175: the old fallback fabricated specific outcome probabilities (0.78/0.15/0.07)
     // whenever synthesis.outlook was null/undefined -- same fabrication class found and removed
     // throughout querysynthesis.js. Honest empty state instead of an invented forecast.
@@ -1289,7 +1293,7 @@ export default function IntelligenceBrief() {
               ))}
             </>
           )}
-          {outputFilters.contradictions && (
+          {outputFilters.contradictions && brief.alternativeView && (
             <>
               <Divider />
               <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
