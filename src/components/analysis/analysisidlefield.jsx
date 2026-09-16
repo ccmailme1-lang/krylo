@@ -738,6 +738,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   // query rewrite). Multi-select, independent of activeSituation (a different, pre-existing
   // single-select concept this must not be confused with — see selectSituation below).
   const [selectedRefinementIds, setSelectedRefinementIds] = useState([]);
+  // KRYL-1306 — breadcrumb-row-only display state (Founder-directed pattern: separate
+  // additive row, never chips-inside-the-textarea). Collapses a long selection to "+N more";
+  // never affects selectedRefinementIds/the actual selection itself, purely visual.
+  const [refinementsRowExpanded, setRefinementsRowExpanded] = useState(false);
+  const REFINEMENTS_ROW_COLLAPSE_AT = 4;
   // Two distinct taxonomies exist by design (specs/analysis-domain-taxonomy-
   // unification.md): selectedDomains[0] is the raw 8-pill UI key the user
   // clicked (e.g. "FINANCIAL") — used for display, TRENDING chip derivation
@@ -826,22 +831,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     () => chipDisplayResult.chips.filter(c => c.eligible),
     [chipDisplayResult]
   );
-  // Selection is strictly additive user state, never derived from or written back into
-  // seedQuery (§4, §13). Pruned (not wiped) when the live substrate re-resolves and a
-  // previously-selected candidate is no longer present — e.g. the query text changed enough
-  // that a different scope/domain set is now in play. A still-eligible chip stays selected
-  // across unrelated re-renders (§11: selection persists until explicitly toggled off).
-  useEffect(() => {
-    setSelectedRefinementIds(prev => {
-      const stillEligible = new Set(eligibleRefinementChips.map(c => c.id));
-      const next = prev.filter(id => stillEligible.has(id));
-      return next.length === prev.length ? prev : next;
-    });
-  }, [eligibleRefinementChips]);
-  const selectedStructuralRefinements = useMemo(
-    () => eligibleRefinementChips.filter(c => selectedRefinementIds.includes(c.id)),
-    [eligibleRefinementChips, selectedRefinementIds]
-  );
 
   // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
   // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
@@ -871,6 +860,31 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const inquiryChips = useMemo(
     () => deriveInquiryPossibilities(seedQuery.trim()),
     [seedQuery],
+  );
+
+  // KRYL-1306 — one shared selection pool (selectedRefinementIds), not a second id set, across
+  // both chip sources: STRUCTURAL SIGNALS (chipsubstrate.js) and WHAT TO EXAMINE (KRYL-1290
+  // inquiry chips). Selecting either kind only ever adds a chip token to the same +ADDED box —
+  // an inquiry chip's question text is never merged into seedQuery (that was the earlier,
+  // reverted append behavior; this replaces it entirely per explicit correction).
+  const allSelectableChips = useMemo(
+    () => [...eligibleRefinementChips, ...inquiryChips],
+    [eligibleRefinementChips, inquiryChips]
+  );
+  // Selection is strictly additive user state, never derived from or written back into
+  // seedQuery (§4, §13). Pruned (not wiped) when the live candidate set changes and a
+  // previously-selected id is no longer present in either source. A still-eligible chip stays
+  // selected across unrelated re-renders (§11: selection persists until explicitly toggled off).
+  useEffect(() => {
+    setSelectedRefinementIds(prev => {
+      const stillPresent = new Set(allSelectableChips.map(c => c.id));
+      const next = prev.filter(id => stillPresent.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [allSelectableChips]);
+  const selectedStructuralRefinements = useMemo(
+    () => allSelectableChips.filter(c => selectedRefinementIds.includes(c.id)),
+    [allSelectableChips, selectedRefinementIds]
   );
 
   // ── KRYL-1222 — Completion chips ────────────────────────────────────────────
@@ -1075,7 +1089,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       query: seedQuery.trim(),
       domains: selectedDomains,
       chipLabel: chip.label,
-      source: chipDisplayResult.chipSources?.get(chip.label) ?? 'unknown',
+      source: chipDisplayResult.chipSources?.get(chip.label)
+        ?? (inquiryChips.some(c => c.id === chip.id) ? 'inquiry' : 'unknown'),
     });
   }
 
@@ -1785,27 +1800,65 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     display, not a second query. Each chip removable independently; removing one
                     only edits selectedRefinementIds, same as deselecting it in STRUCTURAL
                     SIGNALS below. */}
-                {selectedStructuralRefinements.length > 0 && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
-                    <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em' }}>+ ADDED</span>
-                    {selectedStructuralRefinements.map(chip => (
+                {selectedStructuralRefinements.length > 0 && (() => {
+                  const overflow = selectedStructuralRefinements.length > REFINEMENTS_ROW_COLLAPSE_AT;
+                  const visible = (overflow && !refinementsRowExpanded)
+                    ? selectedStructuralRefinements.slice(0, REFINEMENTS_ROW_COLLAPSE_AT)
+                    : selectedStructuralRefinements;
+                  const hiddenCount = selectedStructuralRefinements.length - visible.length;
+                  return (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                      <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em' }}>+ ADDED</span>
+                      {visible.map(chip => (
+                        <button
+                          key={chip.id}
+                          onClick={() => toggleRefinement(chip)}
+                          title="Remove this refinement"
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            borderRadius: 999, padding: '4px 10px',
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
+                            background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                            color: LIME, cursor: 'pointer',
+                          }}
+                        >
+                          <span style={{ color: LIME }}>+</span> {chip.label} <span style={{ opacity: 0.6 }}>×</span>
+                        </button>
+                      ))}
+                      {hiddenCount > 0 && (
+                        <button
+                          onClick={() => setRefinementsRowExpanded(true)}
+                          style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
+                            padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.18)',
+                            color: 'rgba(255,255,255,0.45)',
+                          }}
+                        >+{hiddenCount} more</button>
+                      )}
+                      {refinementsRowExpanded && overflow && (
+                        <button
+                          onClick={() => setRefinementsRowExpanded(false)}
+                          style={{
+                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
+                            padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                            background: 'transparent', border: '1px solid rgba(255,255,255,0.18)',
+                            color: 'rgba(255,255,255,0.45)',
+                          }}
+                        >show less</button>
+                      )}
                       <button
-                        key={chip.id}
-                        onClick={() => toggleRefinement(chip)}
-                        title="Remove this refinement"
+                        onClick={() => { setSelectedRefinementIds([]); setRefinementsRowExpanded(false); }}
                         style={{
-                          display: 'flex', alignItems: 'center', gap: 5,
-                          borderRadius: 999, padding: '4px 10px',
                           fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
-                          background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
-                          color: LIME, cursor: 'pointer',
+                          padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
+                          background: 'transparent', border: 'none',
+                          color: 'rgba(255,255,255,0.28)', textDecoration: 'underline',
                         }}
-                      >
-                        {chip.label} <span style={{ opacity: 0.6 }}>×</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
+                      >clear all</button>
+                    </div>
+                  );
+                })()}
 
                 {/* ── SIGNAL SCOPE ── */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
@@ -1843,10 +1896,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     been selected yet. Labels are mechanical placeholders, not final copy —
                     see inquirygeneration.js header. Styling reuses the existing COMPLETE
                     THE PICTURE pill precedent below, unchanged.
-                    KRYL-1290 subtask 5 — click writes chip.question into the existing
-                    seedQuery/textarea state only (spec §6 Chip -> Question Transition).
-                    No new state, no submit, no activeSituation mutation — the textarea
-                    stays fully user-editable and nothing auto-executes.
+                    KRYL-1306 correction (Founder-directed, supersedes the KRYL-1290 subtask 5
+                    comment this replaced): selecting an inquiry chip adds it as a chip token to
+                    the same +ADDED box structural refinements use — it never writes
+                    chip.question into seedQuery/the textarea. The earlier "append to the
+                    sentence" behavior was tried and explicitly reverted; the textarea stays
+                    untouched, no new state beyond the shared selectedRefinementIds, no submit,
+                    no activeSituation mutation.
                     DEF (KRYL-1290 follow-up) — gated on !processing: handleExecute()
                     sets processing true as its first line, well before the 900ms
                     session-creation delay. Without this gate, selecting a chip could
@@ -1860,25 +1916,21 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   <div style={{ marginTop: 20 }}>
                     <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>WHAT TO EXAMINE</div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {inquiryChips.map(chip => (
-                        <button
-                          key={chip.id}
-                          onClick={() => {
-                            // The intake textarea is uncontrolled (ref-driven, not
-                            // value={seedQuery}) — setSeedQuery alone never touches
-                            // its DOM value. Mirrors the existing applySnapshot
-                            // precedent (line ~1226), which always pairs both.
-                            setSeedQuery(chip.question);
-                            if (centerTextareaRef.current) centerTextareaRef.current.value = chip.question;
-                          }}
-                          style={{
-                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
-                            padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                            background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
-                            color: LIME, whiteSpace: 'nowrap', transition: 'all 140ms',
-                          }}
-                        >{chip.label}</button>
-                      ))}
+                      {inquiryChips.map(chip => {
+                        const active = selectedRefinementIds.includes(chip.id);
+                        return (
+                          <button
+                            key={chip.id}
+                            onClick={() => toggleRefinement(chip)}
+                            style={{
+                              fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
+                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                              color: LIME, whiteSpace: 'nowrap', transition: 'all 140ms',
+                            }}
+                          >{active ? '✓ ' : '+ '}{chip.label}</button>
+                        );
+                      })}
                     </div>
                   </div>
                 )}
