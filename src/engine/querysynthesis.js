@@ -5,6 +5,7 @@ import { computeBEV }   from './brandequity.js';
 import { processTick }  from './ewmaGate.js';
 import { resolveMCV }   from './mcvresolver.js';
 import { synthCanonical, groundSignalMetrics, classifyCanonicalDomain } from './canonicalresolution.js';
+import { isCanonicalDomain } from './ontology.js';
 import { resolveWhyTrace, WT_STATE } from './whytraceresolver.js';
 import { getCanonicalEvents } from './connectors/edgar8kevidence.js';
 import { getDisplayEntity } from '../utils/formatters.js';
@@ -250,7 +251,7 @@ function resolvePrimary(q, lens) {
 // entropy:             Shannon H over the distribution
 // coActive:            domains within SOFT_BAND of winner
 // resolutionEligible:  false on HOLD
-export function detectDomain(query, lens) {
+export function detectDomain(query, lens, canonicalDomainOverride = null) {
   const q = (query ?? '').toLowerCase().replace(PROPER_NOUN_EXCLUSIONS, '').replace(/\s*\+\s*/g, ' ');
 
   // Philanthropic capital gate fires before protected entity gate — capital deployment
@@ -281,7 +282,7 @@ export function detectDomain(query, lens) {
     // canonical domains -- reuse that existing contract instead of inventing a new threshold.
     // synthCanonical() still withholds (§22) downstream if the live signal field has nothing
     // for the resolved domain; this only restores reachability, it does not force an answer.
-    if (classifyCanonicalDomain(query).resolved) {
+    if (classifyCanonicalDomain(query, canonicalDomainOverride).resolved) {
       return { primary: 'GENERAL', weights: {}, state: 'SOFT', entropy: 0, coActive: [], resolutionEligible: true };
     }
     return { primary: 'AMBIGUOUS', weights: {}, state: 'HOLD', entropy: 0, coActive: [], resolutionEligible: false };
@@ -4349,32 +4350,28 @@ export function synthesizeQuery(session) {
 
   const mcv     = resolveMCV(query, session);
   const numbers = extractNumbers(query);
+  // KRYL-1306 — the six canonical domains (CAPITAL/TECHNOLOGY/KNOWLEDGE/LABOR/MEDIA/OWNERSHIP)
+  // that structural refinement chips carry are NOT SYNTH_MAP's taxonomy (that's the life-domain/
+  // vignette layer -- AUTO/REAL_ESTATE/INVESTOR/etc., a separate, pre-existing split). The
+  // authoritative route for the canonical six is canonicalresolution.js's classifyCanonicalDomain/
+  // synthCanonical/groundSignalMetrics, already wired below at the `vector.primary === 'GENERAL'`
+  // branch. A first attempt at this ticket moved vector.primary itself off 'GENERAL', which
+  // skipped past that branch entirely into the wrong (SYNTH_MAP) fallback -- reverted. The
+  // correct seam is a domain override threaded into classifyCanonicalDomain() itself, the exact
+  // same "explicit selection bypasses classification" pattern domainLock already uses for the
+  // life-domain layer, applied at this layer instead -- not a new taxonomy, not a CAPITAL-
+  // specific special case (works uniformly for any of the six). Only OBSERVATION-class
+  // refinements carry a domain field -- an inquiry-chip refinement (full derived question, no
+  // domain/class shape) never reaches this override, by shape alone, not a special case: its
+  // raw text is never injected as query content (§13/§40's "no second query").
+  const canonicalDomainOverride = (session.tensor?.structuralRefinements ?? [])
+    .find(r => r?.class === 'OBSERVATION' && isCanonicalDomain(r?.domain))
+    ?.domain ?? null;
   // WO-1878: when user explicitly locked a domain via chip selection, bypass keyword detection.
   const domainLock = session.tensor?.domainLock ?? null;
-  let vector = domainLock
+  const vector = domainLock
     ? { primary: domainLock, resolutionEligible: true, weights: { [domainLock]: 1.0 }, secondary: null }
-    : detectDomain(query, session.lens);
-  // KRYL-1306 — structural signal refinements enrich domain resolution additively, same
-  // rationale as WO-1878's domainLock ("user explicitly locked a domain via chip selection") --
-  // a selected refinement IS an explicit chip selection, just an additive one rather than an
-  // override. Only fires when domainLock hasn't already set an explicit single-domain override
-  // (domainLock stays authoritative). Only OBSERVATION-class refinements carry a domain field --
-  // inquiry-chip refinements (full derived questions, no domain/class shape) are excluded by
-  // this filter naturally, not by a special case: their raw question text is never injected
-  // into the query/vector here -- that would be the "second query" §13/§40 forbid. This still
-  // routes to exactly one SYNTH_MAP[vector.primary] synthesizer below -- the engine has no
-  // multi-domain synthesis capability, and building one is a real, separate gap, not invented
-  // here. This only changes which single domain wins primary when a refinement's domain
-  // outweighs what detectDomain() found in the raw text alone.
-  const refinementDomains = (session.tensor?.structuralRefinements ?? [])
-    .filter(r => r?.class === 'OBSERVATION' && r?.domain)
-    .map(r => r.domain);
-  if (!domainLock && refinementDomains.length) {
-    const boosted = { ...(vector.weights ?? {}) };
-    for (const d of refinementDomains) boosted[d] = Math.max(boosted[d] ?? 0, 0.75);
-    const newPrimary = Object.entries(boosted).sort((a, b) => b[1] - a[1])[0][0];
-    vector = { ...vector, weights: boosted, primary: newPrimary, resolutionEligible: true };
-  }
+    : detectDomain(query, session.lens, canonicalDomainOverride);
   // KRYL-1010: SES is a PRECONDITION — computed at intake and attached to EVERY return
   // path (incl. AMBIGUOUS / withheld), where knowing the environment is noisy matters most.
   // Annotation only; never mutates a grounded score.
@@ -4415,7 +4412,7 @@ export function synthesizeQuery(session) {
   // number. Life-domain queries (AUTO/RETIREMENT/etc.) never reach here — this fires only on
   // the exact GENERAL-abstain path that produced the fabrication.
   if (vector.primary === 'GENERAL' && !domainLock) {
-    const canon = synthCanonical(query);
+    const canon = synthCanonical(query, canonicalDomainOverride);
     if (canon.withheld) {
       // Domain may have resolved but the live field carries no signal — state it, don't fake it.
       // KRYL-1218: NO_LIVE_SIGNAL carries a perception-grounded recommendedAction (honest
@@ -4514,7 +4511,7 @@ export function synthesizeQuery(session) {
   // a static confidence + static momentum. Replace them here, at the one point they all pass
   // through, with values MEASURED from the live signal field — or mark UNGROUNDED and null them
   // out (§22). No template's fabricated number reaches the render. Prose/arithmetic untouched.
-  const grounded = groundSignalMetrics(query);
+  const grounded = groundSignalMetrics(query, canonicalDomainOverride);
   const groundedMetrics = grounded.grounded
     ? { confidence: grounded.confidence, momentum: grounded.momentum,
         fidelity: 'MEASURED', metricProvenance: grounded.provenance,
@@ -4542,7 +4539,7 @@ export function synthesizeQuery(session) {
            // Always-present estimate: classification confidence (0–1) is computed for every query,
            // so the UI never has to render an empty window — it shows this labeled EST when the
            // signal-grounded confidence is null. Real number, honestly labeled, never fabricated.
-           classificationConfidence: classifyCanonicalDomain(query).confidence,
+           classificationConfidence: classifyCanonicalDomain(query, canonicalDomainOverride).confidence,
            stateType: STATE_TYPE.PROJECTION,  // DEF-1863 — confidence never implies completion; no outcome capture exists
            narrativeFidelity: 'TEMPLATE',      // KRYL-1175 — evidence/bluf/etc. are static, not live-derived
            narrativeProvenance: 'Static template content selected by keyword/category match — not derived from live signal data. Distinct from the grounded confidence/momentum above.',

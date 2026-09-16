@@ -17,7 +17,7 @@
 //
 // No static confidence. No mock momentum. No Math.random. If it isn't measured, it withholds.
 
-import { CANONICAL_DOMAINS } from './ontology.js';
+import { CANONICAL_DOMAINS, isCanonicalDomain } from './ontology.js';
 import { getAllDomainPressures, getQueryDomainPressure } from './domaingravity.js';
 
 // ── Canonical domain vocabulary ───────────────────────────────────────────────
@@ -58,13 +58,33 @@ const DOMAIN_LEXICON = Object.freeze({
 });
 
 // ── Classifier ────────────────────────────────────────────────────────────────
-// classifyCanonicalDomain(query) → {
+// classifyCanonicalDomain(query, domainOverride?) → {
 //   primary, weights, confidence, evidenceHits, coActive, resolved | abstained
 // }
 // confidence here = CLASSIFICATION confidence (how clearly the text points at one domain),
 // derived from evidence concentration. It is NOT the synthesis confidence (that comes from
 // the live field). Kept separate on purpose — two different questions (§23).
-export function classifyCanonicalDomain(query) {
+// domainOverride (KRYL-1306) — when the caller already has an explicit, user-selected canonical
+// domain (a structural refinement chip is a real chip selection, not inferred text), bypass
+// lexicon classification entirely and resolve straight to it. Exact same rationale as
+// querysynthesis.js's own domainLock ("user explicitly locked a domain via chip selection,
+// bypass keyword detection") — applied at this layer instead of the life-domain layer, not a
+// new mechanism. Confidence 1.0 because there is no classification uncertainty when the domain
+// was never inferred in the first place.
+export function classifyCanonicalDomain(query, domainOverride = null) {
+  // KRYL-1306 — isCanonicalDomain() is this module's own casing-tolerant check (ontology.js's
+  // own comment names the exact failure this guards against: "the ownership vs OWNERSHIP
+  // casing regression"). Normalize to lowercase before using as `primary` -- every value this
+  // module produces/consumes internally (DOMAIN_LEXICON keys, cls.primary) is lowercase; only
+  // display sites uppercase it (see synthCanonical's `cls.primary.toUpperCase()` below).
+  if (domainOverride && isCanonicalDomain(domainOverride)) {
+    const normalized = String(domainOverride).toLowerCase();
+    return {
+      primary: normalized, weights: { [normalized]: 1.0 }, confidence: 1.0,
+      evidenceHits: 0, coActive: [], resolved: true, overridden: true,
+    };
+  }
+
   const q = String(query ?? '').toLowerCase();
 
   const hits = {};
@@ -97,7 +117,7 @@ export function classifyCanonicalDomain(query) {
 }
 
 // ── Synthesizer ───────────────────────────────────────────────────────────────
-// synthCanonical(query) → a synthesis object shaped like querysynthesis outputs, but every
+// synthCanonical(query, domainOverride?) → a synthesis object shaped like querysynthesis outputs, but every
 // number is derived from the LIVE field. Returns { withheld, reason } when the routed domain
 // has no live signal — absence is stated, never filled (§22).
 //
@@ -107,8 +127,8 @@ export function classifyCanonicalDomain(query) {
 //   momentum   = signed delta of this domain's pressure vs the field mean, as a %  (real,
 //                not a stored series — a cross-sectional read, labeled as such)
 //   state      = derived band on magnitude + polarity  (no classifier mock)
-export function synthCanonical(query) {
-  const cls = classifyCanonicalDomain(query);
+export function synthCanonical(query, domainOverride = null) {
+  const cls = classifyCanonicalDomain(query, domainOverride);
   if (!cls.resolved) return { withheld: true, reason: 'NO_DOMAIN_EVIDENCE' };
 
   const field = getAllDomainPressures();                 // live 6-domain pressure
@@ -180,8 +200,8 @@ export function synthCanonical(query) {
 //
 // The template's prose and any real arithmetic (loan math, etc.) are untouched — only the
 // signal-strength decoration is grounded or withheld.
-export function groundSignalMetrics(query) {
-  const cls = classifyCanonicalDomain(query);
+export function groundSignalMetrics(query, domainOverride = null) {
+  const cls = classifyCanonicalDomain(query, domainOverride);
   if (!cls.resolved) {
     return { grounded: false, fidelity: 'UNGROUNDED', confidence: null, momentum: null,
              reason: 'NO_DOMAIN_EVIDENCE' };
