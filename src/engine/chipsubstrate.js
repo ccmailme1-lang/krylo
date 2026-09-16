@@ -77,6 +77,7 @@ export function queryChipSubstrate({ scope, domains, temporalScope = 'live' } = 
       const res = ad.measures?.[key];
       if (res?.status !== 'FACET') continue;
       observationCandidates.push(Object.freeze({
+        id: `obs:${domain}:${key}`,
         domain,
         class: 'OBSERVATION',
         authoredClass: key,
@@ -84,6 +85,13 @@ export function queryChipSubstrate({ scope, domains, temporalScope = 'live' } = 
         value: res.value,
         unit,
         scope: scopeLabel,
+        // KRYL-1306 §15 ANALYZABLE gate: an OBSERVATION candidate is, by construction, a named
+        // AUTHORED measure with a grounded value + evidence + provenance already scope-bound to
+        // this query's own resolved scope (AUTHORED+GROUNDED+SCOPE-BOUND+PROVENANCE all satisfied
+        // above) -- it is exactly the kind of concrete, attachable analytical dimension §7.2
+        // describes. No separate score computed; this reuses the class distinction the module
+        // already makes, not an invented criterion.
+        eligible: true,
         evidence: Object.freeze([{ source: res.provenance?.source ?? null }]),
         provenance: Object.freeze({ subject: ad.subject, domain, source: res.provenance?.source ?? null }),
       }));
@@ -95,10 +103,15 @@ export function queryChipSubstrate({ scope, domains, temporalScope = 'live' } = 
     // "underlying observations" context (there are none — that is the absence itself).
     if (ad.absence) {
       structuralStateCandidates.push(Object.freeze({
+        id: `state:${domain}:ABSENCE`,
         domain,
         class: 'STRUCTURAL_STATE',
         state: 'ABSENCE',
         scope: scopeLabel,
+        // KRYL-1306 §7.1: a structural state characterizes a condition of the field (the module's
+        // own CONVERGENCE example) -- it is not itself an attachable analytical dimension the way
+        // a named OBSERVATION measure is. Display-only, never auto-selectable as a refinement.
+        eligible: false,
         underlyingObservations: Object.freeze([]),
         evidence: Object.freeze([]),
         provenance: Object.freeze({ subject: ad.subject, domain }),
@@ -156,12 +169,14 @@ export function toDisplayChips(result) {
     };
   }
   const chips = informative.map(c => ({
+    id: c.id,
     label: c.class === 'OBSERVATION'
       ? `${c.domain}: ${c.label}${c.value != null ? ` ${Math.round(c.value)}${c.unit ? c.unit : ''}` : ''}`
       : `${c.domain}: ${c.state}`,
     domain: c.domain,
     class: c.class,
     scope: c.scope,
+    eligible: c.eligible,
   }));
   return { chips, absence: null };
 }

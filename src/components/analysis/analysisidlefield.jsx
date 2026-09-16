@@ -733,6 +733,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const [intentMagnitude, setIntentMagnitude] = useState(50);
   // WO-1878 — Mission Builder state
   const [selectedDomains, setSelectedDomains] = useState([]);
+  // KRYL-1306 — Structural Signal Query Refinement v1.1. User-selected refinement chip ids,
+  // strictly additive to the query — never touches seedQuery (spec §4 immutability, §13 no
+  // query rewrite). Multi-select, independent of activeSituation (a different, pre-existing
+  // single-select concept this must not be confused with — see selectSituation below).
+  const [selectedRefinementIds, setSelectedRefinementIds] = useState([]);
   // Two distinct taxonomies exist by design (specs/analysis-domain-taxonomy-
   // unification.md): selectedDomains[0] is the raw 8-pill UI key the user
   // clicked (e.g. "FINANCIAL") — used for display, TRENDING chip derivation
@@ -812,8 +817,31 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const chipDisplayResult = useMemo(() => {
     const { chips, absence } = toDisplayChips(chipSubstrateResult);
     const chipSources = new Map(chips.map(c => [c.label, c.class === 'OBSERVATION' ? 'observation' : 'structural_state']));
-    return { chips: chips.map(c => ({ lens: c.label, label: c.label })), chipSources, absence };
+    return { chips, chipSources, absence };
   }, [chipSubstrateResult]);
+
+  // KRYL-1306 — only OBSERVATION-class chips pass the §15 ANALYZABLE gate (chipsubstrate.js);
+  // a STRUCTURAL_STATE chip (display-only, §7.1) may be shown but is never itself selectable.
+  const eligibleRefinementChips = useMemo(
+    () => chipDisplayResult.chips.filter(c => c.eligible),
+    [chipDisplayResult]
+  );
+  // Selection is strictly additive user state, never derived from or written back into
+  // seedQuery (§4, §13). Pruned (not wiped) when the live substrate re-resolves and a
+  // previously-selected candidate is no longer present — e.g. the query text changed enough
+  // that a different scope/domain set is now in play. A still-eligible chip stays selected
+  // across unrelated re-renders (§11: selection persists until explicitly toggled off).
+  useEffect(() => {
+    setSelectedRefinementIds(prev => {
+      const stillEligible = new Set(eligibleRefinementChips.map(c => c.id));
+      const next = prev.filter(id => stillEligible.has(id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [eligibleRefinementChips]);
+  const selectedStructuralRefinements = useMemo(
+    () => eligibleRefinementChips.filter(c => selectedRefinementIds.includes(c.id)),
+    [eligibleRefinementChips, selectedRefinementIds]
+  );
 
   // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
   // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
@@ -1032,9 +1060,29 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     );
   }
 
+  // KRYL-1306 — the actual refinement toggle. Deliberately NOT selectSituation: that function
+  // drives an unrelated single-select lens/preset cascade (trackLens, prefill rules,
+  // advancedOpen) that a structural-signal-chip click was wrongly wired to (confirmed live:
+  // caused submission errors). This only ever touches selectedRefinementIds — never seedQuery,
+  // never activeSituation.
+  function toggleRefinement(chip) {
+    const wasSelected = selectedRefinementIds.includes(chip.id);
+    setSelectedRefinementIds(prev =>
+      wasSelected ? prev.filter(id => id !== chip.id) : [...prev, chip.id]
+    );
+    emitChipInteraction({
+      action: wasSelected ? 'deselect' : 'select',
+      query: seedQuery.trim(),
+      domains: selectedDomains,
+      chipLabel: chip.label,
+      source: chipDisplayResult.chipSources?.get(chip.label) ?? 'unknown',
+    });
+  }
+
   function removeSituationToken() {
     setActiveSituation(null); setSelectedFloor(null); setHorizon(null); setHorizonTouched(false);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
+    setSelectedRefinementIds([]);
     pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, horizonTouched: false, seedQuery: '' });
   }
   function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); setHorizonTouched(false); pushHistory({ selectedFloor: null, horizon: null, horizonTouched: false }); }
@@ -1135,6 +1183,12 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     tensor.domainLock    = selectedLockedDomain ?? null;
     tensor.outputFilters = outputFilters;
     tensor.signalScope   = signalScope;
+    // KRYL-1306 — inert additive payload (same pattern as tensor.analysisIntent above): user-
+    // selected structural refinements ride alongside the tensor for the packet to render/export,
+    // but are deliberately NOT included in the object passed to synthesizeQuery() below, so they
+    // cannot alter routing/domain detection or any Truth-Engine behavior. querysynthesis.js is
+    // untouched per the ratified Phase 1 scope.
+    tensor.structuralRefinements = selectedStructuralRefinements;
     tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain, tensor: { domainLock: tensor.domainLock } });
     tensor.fidelityScore      = tensor.synthesis?.confidence ?? 0;
     tensor.arbitration        = arbitrate(tensor);
@@ -1725,6 +1779,34 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 </div>
 
+                {/* ── SELECTED STRUCTURAL REFINEMENTS (KRYL-1306 §6/§24-25) ── */}
+                {/* Visual-only breadcrumb: originalQuery + [refinement] + [refinement]. Never
+                    mutates seedQuery/the textarea (§4, §13, §9) — this is the additive-payload
+                    display, not a second query. Each chip removable independently; removing one
+                    only edits selectedRefinementIds, same as deselecting it in STRUCTURAL
+                    SIGNALS below. */}
+                {selectedStructuralRefinements.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
+                    <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em' }}>+ ADDED</span>
+                    {selectedStructuralRefinements.map(chip => (
+                      <button
+                        key={chip.id}
+                        onClick={() => toggleRefinement(chip)}
+                        title="Remove this refinement"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 5,
+                          borderRadius: 999, padding: '4px 10px',
+                          fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
+                          background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                          color: LIME, cursor: 'pointer',
+                        }}
+                      >
+                        {chip.label} <span style={{ opacity: 0.6 }}>×</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
                 {/* ── SIGNAL SCOPE ── */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
                   <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', marginRight: 4, flexShrink: 0 }}>SIGNAL SCOPE</span>
@@ -1830,30 +1912,25 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 )}
 
-                {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304) ── */}
-                {/* Pure render of chipDisplayResult (computed above via chipsubstrate.js —
-                    adsubject.js's grounded observations/structural states, not connector-name
-                    labels, not raw query text, no ranking). No eligible candidate -> the block
-                    does not render — honest absence, never padded with unrelated content. */}
-                {chipDisplayResult.chips.length > 0 && (
+                {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement
+                    selection) ── */}
+                {/* Pure render of eligibleRefinementChips (computed above via chipsubstrate.js —
+                    adsubject.js's grounded observations, AUTHORED+GROUNDED+SCOPE-BOUND+
+                    PROVENANCE+ANALYZABLE, KRYL-1306 §15). No eligible candidate -> the block
+                    does not render — honest absence, never padded with unrelated content.
+                    Clicking toggles selectedRefinementIds only (toggleRefinement) — it never
+                    calls selectSituation, never touches seedQuery/activeSituation. Selecting a
+                    chip is strictly additive to the query (§4 immutability, §13 no rewrite). */}
+                {eligibleRefinementChips.length > 0 && (
                   <div style={{ marginTop: 20 }}>
                     <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>STRUCTURAL SIGNALS</div>
                     <StaggeredChips
-                      chips={chipDisplayResult.chips}
-                      selected={activeSituation?.lens}
-                      onSelect={(chip) => {
-                        emitChipInteraction({
-                          action: 'click',
-                          query: seedQuery.trim(),
-                          domains: selectedDomains,
-                          chipLabel: chip.label,
-                          source: chipDisplayResult.chipSources?.get(chip.label) ?? 'unknown',
-                        });
-                        selectSituation(chip);
-                      }}
-                      getKey={s => s.lens}
-                      getLabel={s => s.label}
-                      isSelected={(s, sel) => s.lens === sel}
+                      chips={eligibleRefinementChips}
+                      selected={selectedRefinementIds}
+                      onSelect={toggleRefinement}
+                      getKey={c => c.id}
+                      getLabel={c => selectedRefinementIds.includes(c.id) ? c.label : `+ ${c.label}`}
+                      isSelected={(c, ids) => ids.includes(c.id)}
                     />
                   </div>
                 )}
