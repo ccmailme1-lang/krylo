@@ -18,10 +18,10 @@ import { deriveInquiryPossibilities } from '../../engine/inquirygeneration.js';
 import { buildAnalysisIntent }        from '../../engine/analysisintent.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
-import { deriveTrendingTerms } from '../../engine/trendingterms.js';
+import { queryChipSubstrate, toDisplayChips } from '../../engine/chipsubstrate.js';
+import { subjectScope } from '../../engine/subjectscope.js';
 import StructuralField from './structuralfield.jsx';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
-import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
 import { SITUATIONS, LENS_DOMAIN_MAP, LENS_BROKER_DOMAIN_MAP, FLOOR_RANGES, CALIBRATION_SIGNALS, CONFIDENCE_THRESHOLD, KEY_OPS, OP_OPS } from '../../engine/ingress.js';
 import { arbitrate }                  from '../../engine/aiae.js';
@@ -92,9 +92,6 @@ const DOMAIN_CHIPS = [
   { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> },
 ];
 
-// The locked six — the TRENDING pool iterates these when the guest has not narrowed
-// to a pill. KRYL-1065 — order sourced from ontology, not redeclared here.
-const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER;
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
 // taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked
@@ -796,36 +793,34 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const bayResult      = useMemo(() => transformIntentToConstraints(intentMagnitude, bayDomain), [intentMagnitude, bayDomain]);
   const frictionResult = useMemo(() => computeStructuralFriction(bayDomain, bayResult), [bayDomain, bayResult]);
 
-  // TRENDING — another view into the SAME dispatched-signal substrate the Structural
-  // Field / packet observation-count reads (routedSignals via deriveTrendingTerms,
-  // KRYL-1143b: §16 shared pool, {source, domain, signal, confidence, ts}; §22
-  // zero-confidence excluded). NOT an NLP layer: no query entities, no static
-  // precursor list, no concept rewrites, no query-token gating. A chip exists ONLY
-  // because a live connector dispatched a real signal in that domain. Query wording
-  // never changes this set — only the observations do. No qualifying signal -> no
-  // chips (never padded). (DEF: TRENDING provenance — query-fragment extraction.)
-  const trendingResult = useMemo(() => {
-    if (!seedQuery.trim()) return { chips: [], chipSources: new Map() };
+  // STRUCTURAL SIGNAL CHIPS — KRYL-1304. Replaces deriveTrendingTerms() (trendingterms.js:
+  // connector-source-name chips like GLOBAL ECONOMIC DATA / MACRO BASELINE / CAMPAIGN
+  // FINANCE, gated on raw seedQuery presence) with a read-only projection of adsubject.js's
+  // grounded observations/structural states via chipsubstrate.js. The substrate interface
+  // itself (queryChipSubstrate/toDisplayChips) never receives seedQuery — only the
+  // already-resolved subjectScope() result, exactly like targetpacket.jsx/intelligencebrief.jsx
+  // already do. No LLM, no ranking, no query-fragment extraction, no invented taxonomy.
+  const chipScope = useMemo(() => subjectScope(seedQuery.trim()), [seedQuery]);
+  const chipSubstrateResult = useMemo(() => {
     const selectedCanon = [...new Set(selectedDomains.map(p => ANALYSIS_PILL_TO_DOMAIN[p]).filter(Boolean))];
-    const domains = selectedCanon.length ? selectedCanon : CANON_DOMAINS;
-    const perDomain = Math.max(1, Math.floor(8 / domains.length));
-
-    const chipSources = new Map();
-    const labels = [];
-    for (const d of domains) {
-      for (const label of deriveTrendingTerms(rawSignals, d, perDomain)) {
-        if (!labels.includes(label)) { labels.push(label); chipSources.set(label, 'signal'); }
-      }
-    }
-    return { chips: labels.slice(0, 8).map(t => ({ lens: t, label: t })), chipSources };
-  }, [seedQuery, selectedDomains, rawSignals]);
+    return queryChipSubstrate({
+      scope: chipScope,
+      domains: selectedCanon.length ? selectedCanon : undefined,
+      temporalScope: signalScope,
+    });
+  }, [chipScope, selectedDomains, signalScope]);
+  const chipDisplayResult = useMemo(() => {
+    const { chips, absence } = toDisplayChips(chipSubstrateResult);
+    const chipSources = new Map(chips.map(c => [c.label, c.class === 'OBSERVATION' ? 'observation' : 'structural_state']));
+    return { chips: chips.map(c => ({ lens: c.label, label: c.label })), chipSources, absence };
+  }, [chipSubstrateResult]);
 
   // Event capture only — SPEC-cice-phase2-behavioral-presentation-layer.md step 1. Logs what
   // chips were shown for what query; does no aggregation, ranking, or learning. Signature-gated
-  // so it logs once per distinct chip set, not on every rawSignals-driven memo recompute.
+  // so it logs once per distinct chip set, not on every chipDisplayResult-driven memo recompute.
   const lastLoggedChipsRef = useRef(null);
   useEffect(() => {
-    const chips = trendingResult.chips;
+    const chips = chipDisplayResult.chips;
     if (!chips.length) return;
     const signature = chips.map(c => c.label).join('|');
     if (signature === lastLoggedChipsRef.current) return;
@@ -834,9 +829,9 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       action: 'render',
       query: seedQuery.trim(),
       domains: selectedDomains,
-      chips: chips.map(c => ({ label: c.label, source: trendingResult.chipSources?.get(c.label) ?? 'unknown' })),
+      chips: chips.map(c => ({ label: c.label, source: chipDisplayResult.chipSources?.get(c.label) ?? 'unknown' })),
     });
-  }, [trendingResult, seedQuery, selectedDomains]);
+  }, [chipDisplayResult, seedQuery, selectedDomains]);
 
   // ── KRYL-1290 — Autonomous Inquiry chips ────────────────────────────────────
   // Pre-question discovery layer: "what could I examine from what I just typed",
@@ -1835,16 +1830,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   </div>
                 )}
 
-                {/* ── TRENDING ── */}
-                {/* Pure render of trendingResult (computed above). Every chip is a real
-                    dispatched connector signal for a domain in scope — the same substrate
-                    the Structural Field reads. No query-derived content. No qualifying
-                    signal -> the block does not render. */}
-                {trendingResult.chips.length > 0 && (
+                {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304) ── */}
+                {/* Pure render of chipDisplayResult (computed above via chipsubstrate.js —
+                    adsubject.js's grounded observations/structural states, not connector-name
+                    labels, not raw query text, no ranking). No eligible candidate -> the block
+                    does not render — honest absence, never padded with unrelated content. */}
+                {chipDisplayResult.chips.length > 0 && (
                   <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>TRENDING</div>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>STRUCTURAL SIGNALS</div>
                     <StaggeredChips
-                      chips={trendingResult.chips}
+                      chips={chipDisplayResult.chips}
                       selected={activeSituation?.lens}
                       onSelect={(chip) => {
                         emitChipInteraction({
@@ -1852,7 +1847,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                           query: seedQuery.trim(),
                           domains: selectedDomains,
                           chipLabel: chip.label,
-                          source: trendingResult.chipSources?.get(chip.label) ?? 'unknown',
+                          source: chipDisplayResult.chipSources?.get(chip.label) ?? 'unknown',
                         });
                         selectSituation(chip);
                       }}
