@@ -475,3 +475,56 @@ unsupported — never as a euphemism for "we decided the guest shouldn't see the
 "No formation established" is valid **only** when the Formation contract actually returns empty.
 Reinforces §16 (Direction Honesty) and §1 (Absence-Is-Signal). See memory
 `feedback_formation_is_not_a_verdict.md`.
+
+## 22. Deployment Completion / No Intermediate Stopping (Founder, 2026-09-17)
+
+When the stated objective is to finish the work and get a deployment live, that objective stays
+controlling until production is actually deployed and verified — not until some earlier gate looks
+clean.
+
+**Hard Rule.** None of the following is Complete on its own: code implemented, tests passed, build
+passed, `dist/` generated, commit created, GitHub push completed, deployment initiated, deployment
+running. These are gates, not the objective.
+
+```
+IMPLEMENT -> VALIDATE -> BUILD -> PUSH -> DEPLOY -> VERIFY LIVE -> BAU/HARNESS ->
+VERIFY TARGET FUNCTIONALITY IN PRODUCTION -> COMPLETE
+```
+
+**Deployment Artifact Guardrail.** Before starting a production transfer, inspect the payload. If
+it's materially larger than expected, determine why before transferring it.
+
+- Never exclude a directory by name merely because it is large or "looks like" test material.
+- Do not blanket-exclude a directory like `/assets` — production assets can live there too.
+- Identify the specific files that are unreferenced, non-production, QA-only, or otherwise
+  documented as excluded from deployment, and exclude only those.
+- Preserve every asset the production application actually requires.
+- Use the existing deployment specification or documented exclusion mechanism when one exists,
+  rather than inventing a new one mid-deploy.
+
+```
+INSPECT PAYLOAD -> IDENTIFY UNNECESSARY NON-PRODUCTION CONTENT -> USE DOCUMENTED EXCLUSION ->
+VERIFY REQUIRED PRODUCTION ASSETS REMAIN -> VERIFY DEPLOYMENT PAYLOAD -> DEPLOY
+```
+
+Do not modify application code to solve a deployment-packaging problem. Do not bypass build or
+security guards merely to produce an artifact. Do not knowingly initiate a materially wasteful
+production transfer when the repo already has a documented mechanism for excluding unnecessary
+deployment content.
+
+**Runtime Deployment Rule.** If a deployment has started and the payload was already verified as
+appropriate, let it complete unless it errors, creates an integrity/data-loss risk, or the user
+explicitly stops it. If an obviously incorrect or materially unnecessary payload is discovered
+*before* transfer starts, stop and correct the packaging rather than asking the user to sit through
+an avoidable transfer.
+
+**No Intermediate Handoff.** When the user explicitly authorizes the overall objective (e.g.
+"finish the work and get the deployment live"), continue through the complete deployment chain.
+Do not repeatedly hand the next obvious operational step back to the user. At each gate, report
+PASS / FAIL / RUNNING, concrete evidence, and the next action.
+
+**Completion Definition.** For a deployment objective, Complete means: production deployment
+completed; deployed version/commit verified; live instance reachable and healthy; required
+BAU/harness validation completed against the live instance; target functionality verified in
+production. A successful build, commit, or push is never Complete when the stated objective is a
+live deployment.
