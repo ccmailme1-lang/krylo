@@ -98,7 +98,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       const items = doc.querySelectorAll('.lnav-item');
       items.forEach(el => el.classList.remove('active'));
       const idx = LNAV_MODES.indexOf(navMode);
-      if (idx !== -1 && items[idx]) items[idx].classList.add('active'); // lime on selection, all items including Home
+      if (idx > 0 && items[idx]) items[idx].classList.add('active'); // Home (idx 0 / 'surface') never highlights — Founder, 2026-09-17
     } catch { /* iframe not ready — ignore */ }
   };
 
@@ -205,7 +205,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           view, RECTANGULAR-clipped to the top strip (nav + ribbon). No shaped clip. */}
       <iframe
         ref={iframeRef}
-        src={`${src}?v=20260615`}
+        src={`${src}?v=20260917`}
         title="KRYLO Campaign"
         onLoad={handleLoad}
         scrolling="no"
@@ -222,7 +222,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           {/* iframe #2 — same page, SCRIPTLESS, as a rectangular left column (left nav only). */}
           <iframe
             ref={leftNavRef}
-            src={`${src}?v=20260615`}
+            src={`${src}?v=20260917`}
             title="KRYLO left nav"
             onLoad={handleLeftNavLoad}
             scrolling="no"
