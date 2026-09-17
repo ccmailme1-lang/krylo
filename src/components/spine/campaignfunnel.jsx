@@ -98,7 +98,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       const items = doc.querySelectorAll('.lnav-item');
       items.forEach(el => el.classList.remove('active'));
       const idx = LNAV_MODES.indexOf(navMode);
-      if (idx > 0 && items[idx]) items[idx].classList.add('active'); // Home (idx 0 / 'surface') never highlights — Founder, 2026-09-17
+      if (idx !== -1 && items[idx]) items[idx].classList.add('active'); // symmetric across all 5 items, Home included
     } catch { /* iframe not ready — ignore */ }
   };
 
