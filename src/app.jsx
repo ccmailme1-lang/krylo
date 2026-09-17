@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { startIngestionDaemon } from './ingestion/daemon.js';
 import { initBrowserGate } from './engine/causalos/browsergate.js';
 import { buildActiveCones } from './engine/cones.js';
+import { recordGuest } from './engine/cf/telemetry.js'; // KRYL-1259 WS6 Gate 3 — times the guest ingest→render unit (CF-004-MET-01). Pure timing, no analytical call.
 import { usetruthlens }    from './hooks/usetruthlens.js';
 import { useingest }       from './hooks/useingest.js';
 import { useframeingest }  from './hooks/useframeingest.js';
@@ -269,6 +270,11 @@ function TemporalScrubber({ scrubPos, onChange, frameTs, hasFrames }) {
 
 // ── WO-1311: Ingestion Horizon ───────────────────────────────
 const SPARKLINE_LEN = 100;
+
+// KRYL-1253 — cap on the ambient /api/signals pool: top N by signal_score per
+// cone_domain. Bounds the per-render work on mergedRecords/liveSignals/
+// perceptionFrame/activeCones (and the CF tap) while keeping all six cones populated.
+const POOL_TOP_PER_DOMAIN = 120;
 
 function DomainCell({ domain, data }) {
   const W = 112, H = 36;
@@ -765,7 +771,13 @@ export default function App() {
     [...xrayHn, ...xrayIngest].forEach(s => map.set(s.id, s));
     return Array.from(map.values());
   }, [xrayIngest, xrayHn]);
-  const { lagMs: streamLagMs, domainScores, stats: streamStats } = useframestream({ enabled: navMode === 'surface' });
+  // TEMPORARILY disabled 2026-09-08 for live debugging: /api/signals/stream proxies to
+  // krylo.org (vite.config.js) and the local dev server can't hold that SSE connection --
+  // continuous reconnect-fail cycling was cascading state updates through App on every retry,
+  // causing periodic re-renders throughout the tree (including ConeMap) at an uncontrolled
+  // cadence. Re-enable once the endpoint/proxy issue is actually fixed -- not a permanent
+  // decision.
+  const { lagMs: streamLagMs, domainScores, stats: streamStats } = useframestream({ enabled: false });
   const { history, currentIndex, current, seek, seekToTime } = usereplay(true);
 
   // WO-1390: Live ingestion daemon — FRED + Finnhub
@@ -836,12 +848,36 @@ export default function App() {
   // Live signal pool — every other ingest hook is query-gated, so with no
   // active search the GDELT rotation records (cone_domain + signal_score)
   // never reached the client and the cones starved. Poll the pool directly.
+  //
+  // KRYL-1253 (guest-path jank): /api/signals returns the FULL ~13k-record corpus
+  // with no limit param and no timestamp to window by. Ingesting all 13k made
+  // mergedRecords / liveSignals / perceptionFrame / activeCones rebuild — and
+  // surfaceRouter.dispatchBatch fire — over 13k rows on every dependency change,
+  // spiking guest frame latency (and flooding the CF tap). The ambient cone/
+  // surface pool only needs the current strongest signals per domain. Cap to the
+  // top POOL_TOP_PER_DOMAIN by signal_score within each cone_domain — bounded work,
+  // all six cones stay populated, strongest-signal semantics preserved.
   const [poolSignals, setPoolSignals] = useState([]);
   useEffect(() => {
     let dead = false;
     const pull = () => fetch('/api/signals')
       .then(r => r.json())
-      .then(arr => { if (!dead && Array.isArray(arr)) setPoolSignals(arr); })
+      .then(arr => {
+        if (dead || !Array.isArray(arr)) return;
+        if (arr.length <= POOL_TOP_PER_DOMAIN * 6) { setPoolSignals(arr); return; }
+        const byDomain = new Map();
+        for (const r of arr) {
+          const d = (r.cone_domain ?? r.domain ?? r.source_type ?? 'signal');
+          if (!byDomain.has(d)) byDomain.set(d, []);
+          byDomain.get(d).push(r);
+        }
+        const capped = [];
+        for (const rows of byDomain.values()) {
+          rows.sort((a, b) => (b.signal_score ?? 0) - (a.signal_score ?? 0));
+          for (let i = 0; i < Math.min(rows.length, POOL_TOP_PER_DOMAIN); i++) capped.push(rows[i]);
+        }
+        setPoolSignals(capped);
+      })
       .catch(() => {});
     pull();
     const id = setInterval(pull, 60000);
@@ -939,10 +975,13 @@ export default function App() {
   // the raw signals aggregation path (legacy branch stays in ConeMap as dead code until
   // Phase 3 cutover removes it — this is the migration step, not the removal step).
   // Used for OrientationSurface (hero — no scrubber, always live).
-  const perceptionFrame = useMemo(() => hydrateSignalsToFrame(liveSignals), [liveSignals]);
+  // KRYL-1259 WS6 Gate 3 — recordGuest() times this guest-path unit of work (normalize
+  // live signals → PerceptionFrame, the ingest→render step). CF-004-MET-01 guestLatency
+  // series. hydrateSignalsToFrame is pure normalization — no CF analytical call (INV-006).
+  const perceptionFrame = useMemo(() => recordGuest(() => hydrateSignalsToFrame(liveSignals)), [liveSignals]);
 
   const coneColorOverrides = useBayStore(s => s.coneColorOverrides ?? {});
-  const activeCones = useMemo(() => buildActiveCones(liveSignals, coneColorOverrides), [liveSignals, coneColorOverrides]);
+  const activeCones = useMemo(() => recordGuest(() => buildActiveCones(liveSignals, coneColorOverrides)), [liveSignals, coneColorOverrides]);
 
   // PERF (cone-rotation freeze): stable callbacks so React.memo(AnalysisField) can skip re-rendering
   // the cone Canvas on the frequent SSE-driven App re-renders (useframestream fires setState per frame).
@@ -1531,7 +1570,13 @@ export default function App() {
           records={marqueeSignals}
           iframeRef={iframeRef}
           src="/krylo2-feed.html"
-          restrictToChrome={isSurface && surfaceExpanded}
+          // Was isSurface && surfaceExpanded -- any Surface state where surfaceExpanded is
+          // false left iframe #1 fully unclipped underneath, showing its own ticker/marquee
+          // content (e.g. the ETR-042/FEDERAL RESERVE card) bleeding through around
+          // InspectionPanel and other Surface chrome. Clip to the top-chrome-only strip
+          // whenever the Surface view is active at all, not only in the expanded/engaged state.
+          restrictToChrome={isSurface}
+          navMode={navMode}
         />
       </div>
 

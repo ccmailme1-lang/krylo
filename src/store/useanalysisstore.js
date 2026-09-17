@@ -135,6 +135,27 @@ export const useAnalysisStore = create((set) => ({
     };
   }),
 
+  // KRYL-1306 — Structural Signal Query Refinement v1.1. Same pattern as setOutputFilters:
+  // additive tensor state only, never touches session.query or session.queryContext (the
+  // immutable originalQuery record). structuralRefinements is set at construction time inside
+  // the tensor object passed to createSession; this action exists for any later update to the
+  // set (e.g. deselecting a refinement after the packet has already rendered), mirroring how
+  // setOutputFilters supports post-creation edits to its own tensor field.
+  setStructuralRefinements: (sessionId, structuralRefinements) => set((state) => {
+    const session = state.sessions[sessionId];
+    if (!session) return {};
+    return {
+      sessions: {
+        ...state.sessions,
+        [sessionId]: {
+          ...session,
+          tensor: { ...(session.tensor ?? {}), structuralRefinements: [...structuralRefinements] },
+          metadata: { ...session.metadata, updated: Date.now() },
+        },
+      },
+    };
+  }),
+
   setTensorFields: (sessionId, fields) => set((state) => {
     const session = state.sessions[sessionId];
     if (!session) return {};

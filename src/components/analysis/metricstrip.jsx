@@ -7,7 +7,7 @@
 import React from 'react';
 import { getPhaseLock } from '../../engine/phaselock.js';
 import { getMetricDefinition } from '../../engine/metricdefinitions.js';
-import { guestWithholdCopy } from '../../engine/guestlanguage.js';
+import { resolveConvergenceDisplay } from '../../engine/convergencedisplay.js';
 import HelpMark from '../shared/helpmark.jsx';
 
 // Help text for a metric's label — click the "?" to see it. Render-only:
@@ -135,7 +135,7 @@ const PHASE_DOT_STYLES = [
 // compositeMetrics: from computeCompositeMetrics() — WO-2014; optional
 export default function MetricStrip({ metrics, visibility, compositeMetrics, style, hide }) {
   if (!metrics) return null;
-  const { signal, validity, convergence, cac, roas, ltv, leverageRealization, sci, sps } = metrics;
+  const { signal, validity, convergence, leverageRealization, sci, sps } = metrics;
 
   const sciMode = visibility?.sciTileMode ?? 'active';
   const spsMode = visibility?.spsTileMode ?? 'active';
@@ -144,6 +144,7 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
   const lr          = leverageRealization;
   const phaseLock   = getPhaseLock(); // WO-2015: calendar-derived, no deps
   const phaseDotStyle = PHASE_DOT_STYLES[phaseLock.dotState] ?? PHASE_DOT_STYLES[0];
+  const convDisplay = resolveConvergenceDisplay(convergence); // DEF-1303
 
   const tiles = [
     {
@@ -168,43 +169,25 @@ export default function MetricStrip({ metrics, visibility, compositeMetrics, sty
       label:        'Convergence',
       // §21 — Convergence reads the live signal-FIELD state. When the subject metric is
       // withheld, the field value is still shown (labelled FIELD), not blanked — it is
-      // substantiated field structure, not a subject claim.
-      display:      convergence?.withheld
-                      ? (convergence?.fieldValue != null ? `${Math.round(convergence.fieldValue * 100)}%` : '—')
-                      : `${Math.round((convergence?.value ?? 0) * 100)}%`,
-      groundedness: convergence?.withheld
-                      ? (convergence?.fieldValue != null ? (convergence?.fieldGroundedness ?? 0) : 0)
-                      : (convergence?.groundedness ?? 0),
-      tag:          convergence?.withheld
-                      ? (convergence?.fieldValue != null ? 'FIELD' : 'WITHHELD')
-                      : (convergence?.queryRelevant === false ? 'AMB' : null),
+      // substantiated field structure, not a subject claim. DEF-1303 — resolution rule now
+      // lives in convergencedisplay.js, the one place every consumer of this shape reads it.
+      display:      convDisplay.hasValue ? `${convDisplay.pct}%` : '—',
+      groundedness: convDisplay.groundedness,
+      tag:          convDisplay.tag,
       tileMode:     'active',
       title:        defTitle('convergence'),
     },
-    {
-      label:        'CAC',
-      display:      (cac && !cac.withheld) ? `$${(cac.value ?? 0).toLocaleString()}` : '—',
-      groundedness: cac?.groundedness ?? 0,
-      tag:          cac?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (cac?.label ?? 'MODELED'),
-      tileMode:     'active',
-      title:        defTitle('cac'),
-    },
-    {
-      label:        'ROAS',
-      display:      (roas && !roas.withheld) ? `${roas.value ?? 0}x` : '—',
-      groundedness: roas?.groundedness ?? 0,
-      tag:          roas?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (roas?.label ?? 'MODELED'),
-      tileMode:     'active',
-      title:        defTitle('roas'),
-    },
-    {
-      label:        'LTV',
-      display:      (ltv && !ltv.withheld) ? `$${(ltv.value ?? 0).toLocaleString()}` : '—',
-      groundedness: ltv?.groundedness ?? 0,
-      tag:          ltv?.withheld ? guestWithholdCopy('UNGROUNDED_TAG') : (ltv?.label ?? 'MODELED'),
-      tileMode:     'active',
-      title:        defTitle('ltv'),
-    },
+    // DEF-1303 item 4 (Founder, 2026-09-1x, ratified): CAC/ROAS/LTV removed from the global
+    // header. A primitive must earn its presence in the header through frame applicability —
+    // not render unconditionally as a fixed universal set on every lens/frame regardless of
+    // relevance. No frame-applicability declaration exists yet anywhere in the codebase
+    // (checked lensadapters.js, metricdefinitions.js, metricvisibility.js — none carry a
+    // per-lens/frame metric-applicability primitive), so the honest state is: no frame has
+    // currently earned these three, and they stay off the header rather than invent a mapping
+    // here. Reinstating any of the three for a given frame is a Class E gap (CLAUDE.md §2) —
+    // needs an explicit Founder-authored frame-applicability spec, not an invented list.
+    // The metrics still compute in metricsengine.js and remain in synthesis.metrics/exports —
+    // this trims render only, same discipline as the LR-Prior/S.DENSITY/SPS removal below.
     // Metrics after LTV removed per Founder directive 2026-07-12 (LR-Prior / S.DENSITY / SPS).
     // Strip ends at LTV. The metrics still compute in metricsengine; this trims render only.
   ];

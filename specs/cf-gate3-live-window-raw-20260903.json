@@ -1,0 +1,6853 @@
+{
+  "gate": "WS6 Gate 3 — live-I/O telemetry",
+  "ticket": "KRYL-1259",
+  "window": {
+    "start": "2026-09-03T16:43:34.298Z",
+    "end": "2026-09-03T16:55:50.803Z",
+    "minutes": 12,
+    "sample_ms": 20000,
+    "cycles": 36
+  },
+  "api_calls": [
+    {
+      "ts": "2026-09-03T16:43:35.369Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:43:35.372Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:43:35.725Z",
+      "url": "http://localhost:5173/api/signals/replay?limit=100",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:35.967Z",
+      "url": "https://hn.algolia.com/api/v1/search?query=workplace%20layoffs%20culture%20conflict&tags=story&hitsPerPage=10",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:36.127Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:36.161Z",
+      "url": "http://localhost:5173/api/signals/replay?limit=100",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:36.173Z",
+      "url": "https://hn.algolia.com/api/v1/search?query=workplace%20layoffs%20culture%20conflict&tags=story&hitsPerPage=10",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:36.574Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:43:36.636Z",
+      "url": "https://www.ihr.live/ihr/api/hegemony/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:36.637Z",
+      "url": "https://www.ihr.live/ihr/api/network_delay/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:36.637Z",
+      "url": "https://www.ihr.live/ihr/api/disco/events?limit=10&ordering=-avglevel",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:36.689Z",
+      "url": "https://www.ihr.live/ihr/api/hegemony/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:36.690Z",
+      "url": "https://www.ihr.live/ihr/api/network_delay/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:36.690Z",
+      "url": "https://www.ihr.live/ihr/api/disco/events?limit=10&ordering=-avglevel",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:43:39.544Z",
+      "url": "http://localhost:5173/api/signals/pressure",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:44:05.261Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:44:05.289Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:44:35.266Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:44:35.297Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:44:36.009Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:45:05.309Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:45:05.310Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:45:35.276Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:45:35.309Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:45:36.056Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:46:05.267Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:46:05.308Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:46:35.494Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:46:35.495Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:46:36.249Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:47:05.312Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:47:05.359Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:47:35.284Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:47:35.286Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:47:36.214Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:48:05.408Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:48:05.409Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:48:35.314Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:48:35.314Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:48:36.123Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:49:05.274Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:49:05.275Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:49:35.307Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:49:35.308Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:49:36.133Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:50:05.519Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:50:05.561Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:50:35.330Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:50:35.331Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:50:36.111Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:51:05.272Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:51:05.311Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:51:35.334Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:51:35.334Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:51:36.096Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:52:05.286Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:52:05.319Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:52:35.278Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:52:35.280Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:52:36.420Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:53:05.295Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:53:05.328Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:53:35.688Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:53:35.689Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:53:36.288Z",
+      "url": "https://www.ihr.live/ihr/api/disco/events?limit=10&ordering=-avglevel",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:53:36.288Z",
+      "url": "https://www.ihr.live/ihr/api/network_delay/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:53:36.289Z",
+      "url": "https://www.ihr.live/ihr/api/hegemony/alarms?limit=20&ordering=-magnitude",
+      "status": 400
+    },
+    {
+      "ts": "2026-09-03T16:53:36.596Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:54:05.341Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:54:05.344Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:54:35.443Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:54:35.456Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:54:37.141Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    },
+    {
+      "ts": "2026-09-03T16:55:05.388Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:55:05.389Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:55:35.396Z",
+      "url": "http://localhost:5173/api/fred?series_id=UNRATE&api_key=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:55:35.396Z",
+      "url": "http://localhost:5173/api/finnhub?symbol=SPY&token=***",
+      "status": 500
+    },
+    {
+      "ts": "2026-09-03T16:55:36.109Z",
+      "url": "http://localhost:5173/api/signals",
+      "status": 200
+    }
+  ],
+  "samples": [
+    {
+      "ts": "2026-09-03T16:43:43.178Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12871,
+        "lastTick": 1788453815278
+      },
+      "pathwayCount": 0,
+      "ioCounters": {
+        "examined": 0,
+        "written": 0
+      },
+      "pathways": [],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:44:03.207Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12871,
+        "lastTick": 1788453815278
+      },
+      "pathwayCount": 0,
+      "ioCounters": {
+        "examined": 0,
+        "written": 0
+      },
+      "pathways": [],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:44:23.230Z",
+      "getCFFormation": {
+        "participatingDomains": [
+          "KNOWLEDGE",
+          "MEDIA",
+          "TECHNOLOGY"
+        ],
+        "kind": "CF_FORMATION_CANDIDATE",
+        "reconstructable": true,
+        "pathways": 17,
+        "particleCount": null
+      },
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788453845259
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 17,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.259323640761038,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.2215705875577476,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.8151233126139931,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 1.116000772485728,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 1.1692173271525932,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 1.126117739368907,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:44:43.267Z",
+      "getCFFormation": {
+        "participatingDomains": [
+          "KNOWLEDGE",
+          "MEDIA",
+          "TECHNOLOGY"
+        ],
+        "kind": "CF_FORMATION_CANDIDATE",
+        "reconstructable": true,
+        "pathways": 17,
+        "particleCount": null
+      },
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12837,
+        "lastTick": 1788453875263
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 34,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.259323640761038,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.2215705875577476,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.8151233126139931,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 1.116000772485728,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 1.1692173271525932,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 1.126117739368907,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:45:03.329Z",
+      "getCFFormation": {
+        "participatingDomains": [
+          "KNOWLEDGE",
+          "MEDIA",
+          "TECHNOLOGY"
+        ],
+        "kind": "CF_FORMATION_CANDIDATE",
+        "reconstructable": true,
+        "pathways": 17,
+        "particleCount": null
+      },
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12837,
+        "lastTick": 1788453875263
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 34,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.259323640761038,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.2215705875577476,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.8151233126139931,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 1.116000772485728,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 1.1692173271525932,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 1.126117739368907,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:45:23.370Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788453905274
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 51,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.0704250946468823,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.0383349994240854,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.6928548157218941,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.9486006566128687,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.9938347280797042,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.9572000784635709,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:45:43.423Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12837,
+        "lastTick": 1788453935272
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 68,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.0704250946468823,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.0383349994240854,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.6928548157218941,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.9486006566128687,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.9938347280797042,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.9572000784635709,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:46:03.522Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12837,
+        "lastTick": 1788453935272
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 68,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 1.0704250946468823,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 1.0383349994240854,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.6928548157218941,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.9486006566128687,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.9938347280797042,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.9572000784635709,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:46:23.629Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788453965263
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 85,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.90986133044985,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.8825847495104725,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.58892659336361,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.8063105581209384,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.8447595188677486,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.8136200666940353,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:46:43.721Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788453995489
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 102,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.90986133044985,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.8825847495104725,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.58892659336361,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.8063105581209384,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.8447595188677486,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.8136200666940353,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:47:03.750Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788453995489
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 102,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.90986133044985,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.8825847495104725,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.58892659336361,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.8063105581209384,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.8447595188677486,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.8136200666940353,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:47:23.772Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454025307
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 119,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.7733821308823724,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.7501970370839016,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.5005876043590685,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.6853639744027976,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.7180455910375863,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.69157705668993,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:47:43.799Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454055281
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 136,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.7733821308823724,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.7501970370839016,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.5005876043590685,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.6853639744027976,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.7180455910375863,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.69157705668993,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:48:03.810Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454055281
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 136,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.7733821308823724,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.7501970370839016,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.5005876043590685,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.6853639744027976,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.7180455910375863,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.69157705668993,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:48:23.850Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454085403
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 153,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.6573748112500165,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.6376674815213164,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.4254994637052082,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.5825593782423779,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.6103387523819483,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.5878404981864405,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:48:44.010Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454115309
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 170,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.6573748112500165,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.6376674815213164,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.4254994637052082,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.5825593782423779,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.6103387523819483,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.5878404981864405,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:49:04.277Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454115309
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 170,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.6573748112500165,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.6376674815213164,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.4254994637052082,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.5825593782423779,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.6103387523819483,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.5878404981864405,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:49:24.370Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454145271
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 187,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.5587685895625141,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.5420173592931189,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.36167454414942696,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.4951754715060212,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.5187879395246561,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.4996644234584744,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:49:46.205Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454175301
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 204,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.5587685895625141,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.5420173592931189,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.36167454414942696,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.4951754715060212,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.5187879395246561,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.4996644234584744,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:50:07.969Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454205514
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 221,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.47495330112813694,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.460714755399151,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.3074233625270129,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.420899150780118,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.44096974859595767,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.4247147599397032,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:50:28.013Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454205514
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 221,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.47495330112813694,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.460714755399151,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.3074233625270129,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.420899150780118,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.44096974859595767,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.4247147599397032,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:50:48.062Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454235295
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 238,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.47495330112813694,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.460714755399151,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.3074233625270129,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.420899150780118,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.44096974859595767,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.4247147599397032,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:51:08.197Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454265270
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 255,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.4037103059589164,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.39160754208927834,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.261309858147961,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.3577642781631003,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.374824286306564,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.36100754594874773,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:51:28.384Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454265270
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 255,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.4037103059589164,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.39160754208927834,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.261309858147961,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.3577642781631003,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.374824286306564,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.36100754594874773,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:51:48.442Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12843,
+        "lastTick": 1788454295329
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 272,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.4037103059589164,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.39160754208927834,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.261309858147961,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.3577642781631003,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.374824286306564,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.36100754594874773,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:52:08.494Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454325284
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 289,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.3431537600650789,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.3328664107758866,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.22211337942576684,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.30409963643863525,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.3186006433605794,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.30685641405643554,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:52:28.543Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454325284
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 289,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.3431537600650789,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.3328664107758866,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.22211337942576684,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.30409963643863525,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.3186006433605794,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.30685641405643554,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:52:48.591Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12849,
+        "lastTick": 1788454355276
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 306,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.3431537600650789,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.3328664107758866,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.22211337942576684,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.30409963643863525,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.3186006433605794,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.30685641405643554,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:53:08.641Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454385293
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 323,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.29168069605531705,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.2829364491595036,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.18879637251190182,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.25848469097283994,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2708105468564925,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.2608279519479702,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:53:28.654Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454385293
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 323,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.29168069605531705,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.2829364491595036,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.18879637251190182,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.25848469097283994,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2708105468564925,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.2608279519479702,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:53:48.681Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12849,
+        "lastTick": 1788454415642
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 340,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.29168069605531705,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.2829364491595036,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.18879637251190182,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.25848469097283994,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2708105468564925,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.2608279519479702,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:54:09.403Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454445332
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 357,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.24792859164701947,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.24049598178557807,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.16047691663511654,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.21971198732691394,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2301889648280186,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.22170375915577467,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:54:30.021Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454445332
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 357,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.24792859164701947,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.24049598178557807,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.16047691663511654,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.21971198732691394,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2301889648280186,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.22170375915577467,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:54:50.141Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 12849,
+        "lastTick": 1788454475436
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 374,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.24792859164701947,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.24049598178557807,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.16047691663511654,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.21971198732691394,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.2301889648280186,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.22170375915577467,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:55:10.619Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454505386
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 391,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.21073930289996654,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.20442158451774137,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.13640537913984904,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.18675518922787684,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.1956606201038158,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.18844819528240847,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    },
+    {
+      "ts": "2026-09-03T16:55:30.792Z",
+      "getCFFormation": null,
+      "producerState": {
+        "subscribed": true,
+        "scheduled": false,
+        "pending": 0,
+        "lastTick": 1788454505386
+      },
+      "pathwayCount": 17,
+      "ioCounters": {
+        "examined": 391,
+        "written": 34
+      },
+      "pathways": [
+        {
+          "id": "p1_treasury:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p2_bls:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p3_worldbank:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p4_fred:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p5_fhfa:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p6_usgs:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p7_maersk:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p8_usaspending:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p9_fec:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p10_census:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p11_census:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0,
+          "events": 3,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p12_economic_flow:technology",
+          "domains": [
+            "TECHNOLOGY"
+          ],
+          "nu": 0.21073930289996654,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p13_economic_flow:capital",
+          "domains": [
+            "CAPITAL"
+          ],
+          "nu": 0.20442158451774137,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p14_economic_flow:knowledge",
+          "domains": [
+            "KNOWLEDGE"
+          ],
+          "nu": 0.13640537913984904,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p15_economic_flow:labor",
+          "domains": [
+            "LABOR"
+          ],
+          "nu": 0.18675518922787684,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p16_economic_flow:media",
+          "domains": [
+            "MEDIA"
+          ],
+          "nu": 0.1956606201038158,
+          "events": 4,
+          "lastCorroboratedBatch": 0
+        },
+        {
+          "id": "p17_economic_flow:ownership",
+          "domains": [
+            "OWNERSHIP"
+          ],
+          "nu": 0.18844819528240847,
+          "events": 2,
+          "lastCorroboratedBatch": 0
+        }
+      ],
+      "snapshotVersion": "cf-pathwaystore/1",
+      "syncFormationAvailable": true
+    }
+  ],
+  "console_tail": [
+    {
+      "ts": "2026-09-03T16:43:35.249Z",
+      "type": "log",
+      "text": "[WO-1390] KRYLO INGESTION DAEMON: ONLINE"
+    },
+    {
+      "ts": "2026-09-03T16:43:35.279Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:44:05.254Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:44:35.263Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:45:05.272Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:45:35.275Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:46:05.261Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:46:35.490Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:47:05.308Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:47:35.283Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:48:05.404Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.310Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:49:05.270Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:49:35.303Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:50:05.515Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:50:35.298Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:51:05.271Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:51:35.330Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:52:05.285Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:52:35.278Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:53:05.291Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.643Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:54:05.331Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:54:35.441Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:55:05.384Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    },
+    {
+      "ts": "2026-09-03T16:55:35.350Z",
+      "type": "warning",
+      "text": "[WO-1390] Ingestion drift — emitting lastKnownState: Failed to execute 'json' on 'Response': Unexpected end of JSON input"
+    }
+  ],
+  "console_errors": [
+    {
+      "ts": "2026-09-03T16:44:35.332Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:05.272Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:05.274Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:35.275Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:35.275Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:35.275Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:45:35.276Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:05.260Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:05.268Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:35.489Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:35.490Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:35.490Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:46:35.494Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:05.305Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:05.308Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:35.282Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:35.283Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:35.283Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:47:35.288Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:05.404Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:05.404Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.309Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.310Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.355Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.355Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.355Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.355Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.355Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:35.356Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:48:36.875Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:05.269Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:05.274Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:35.303Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:35.303Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:35.303Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:49:35.308Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:05.515Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:05.515Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:35.298Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:35.298Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:35.331Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:50:35.331Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:05.270Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:05.272Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:35.329Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:35.330Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:35.330Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:51:35.333Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:05.283Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:05.286Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:35.277Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:35.279Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:35.286Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:52:35.293Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:05.291Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:05.294Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.643Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.643Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.643Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.683Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.689Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.690Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.690Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:35.690Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:53:36.079Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "ts": "2026-09-03T16:53:36.079Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "ts": "2026-09-03T16:53:36.079Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 400 ()"
+    },
+    {
+      "ts": "2026-09-03T16:53:46.100Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:05.330Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:05.334Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:35.437Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:35.441Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:35.441Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:54:35.442Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:05.383Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:05.387Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:35.350Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:35.350Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:35.350Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    },
+    {
+      "ts": "2026-09-03T16:55:35.352Z",
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+    }
+  ]
+}

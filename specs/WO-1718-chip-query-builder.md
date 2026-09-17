@@ -1,6 +1,12 @@
 # WO-1718: Chip-Based Query Builder
 
-**Status:** SPEC  
+**Status:** SUPERSEDED — retired, do not implement. Superseded by
+`specs/SPEC-autonomous-inquiry-chips-v1.1.md`; see
+`specs/ASSET-DISPOSITION-autonomous-inquiry-chips.md` §3 for the ruling. This spec's
+sequential SLOT-chain model (SITUATION → FLOOR → HORIZON → CONTEXT, each slot required before
+the next reveals) violates v1.1's governing constraint that KRYLO must never require a fully
+formed query before helping formulate one. Never implemented — no SLOT-chain UI exists in
+`analysisidlefield.jsx` as of this supersession.
 **Replaces:** `analysisidlefield.jsx` textarea + stacked situation/floor/horizon sections  
 **Target file:** `src/components/analysis/analysisidlefield.jsx`
 

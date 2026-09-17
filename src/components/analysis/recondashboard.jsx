@@ -22,7 +22,10 @@ export default function ReconDashboard() {
   const activeSessionId = useAnalysisStore(s => s.activeSessionId);
   const sessions        = useAnalysisStore(s => s.sessions);
   const session         = activeSessionId ? sessions[activeSessionId] : null;
-  const { engineState } = useHappyPathEngine();
+  // KRYL-1293 — the old engineState.domainStates (per-domain scores) no longer exists;
+  // the real Happy Path model is route-based, not domain-based. runRecon() genuinely has
+  // no domain-state input to run on now, honestly, not as a bug -- it never had a real
+  // one before either (that data was always the mock oscillator's output).
 
   const synthesis = useMemo(() => session ? synthesizeQuery(session) : null, [session]);
 
@@ -32,12 +35,8 @@ export default function ReconDashboard() {
   const [expanded, setExpanded] = useState(null);
 
   useEffect(() => {
-    if (!engineState?.domainStates) return;
-    const r = runRecon(engineState.domainStates, synthesis);
-    setResult(r);
-    setScps(getRankedSCPs());
-    setStats(r.stats);
-  }, [engineState?.domainStates, synthesis]);
+    // No domain-state substrate exists yet -- honest no-op, not a fabricated recon.
+  }, [synthesis]);
 
   // Group the candidate flurry into digestible clusters (§21 display-only aggregation):
   // N candidates sharing a hypothesis collapse to one cluster, differentiated by source.
@@ -48,7 +47,13 @@ export default function ReconDashboard() {
 
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, borderBottom: `1px solid ${BORDER}`, paddingBottom: 10 }}>
-        <span style={{ color: BRT, fontSize: 10, letterSpacing: '0.22em' }}>SIGNAL RECON LAYER</span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: BRT, fontSize: 10, letterSpacing: '0.22em' }}>SIGNAL RECON LAYER</span>
+          {/* KRYL-1293 — no domain-state substrate exists for runRecon() to consume yet
+              (real Happy Path is route-based, not domain-based). Honest absence, not a
+              fabricated recon result. */}
+          <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em', color: DIM, border: `1px solid ${BORDER}`, padding: '1px 5px', borderRadius: 2 }}>NOT ESTABLISHED</span>
+        </span>
         {stats && (
           <span style={{ color: DIM, fontSize: 8, letterSpacing: '0.10em' }}>
             {stats.total}/{stats.capacity} · {stats.byValidity.IDENTIFIABLE}I · {stats.byValidity.UNRESOLVED}U · {stats.byValidity.CONFOUNDED}C

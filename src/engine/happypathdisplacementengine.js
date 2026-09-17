@@ -1,278 +1,122 @@
-// WO-1826 — Happy Path Displacement Engine
-// WO-1821 — Happy Path Qualification Criteria (5-criterion gate)
-// Continuous re-evaluation. Displacement on challenger superiority + hysteresis hold.
-// DATA SOURCE: domain pressure store only — no cone dependency (LOCKED 2026-06-20)
+// KRYL-1293 v1.1 — Happy Path: real structural result, replacing the WO-1826/WO-1821
+// mock oscillator entirely (KRYL-1089 disclosed it; this ticket removes it).
+//
+// HAPPY PATH = the lowest-governed-friction OBSERVED route, selected exclusively from
+// real route/R-T-C evidence. Never fabricated: no eligible route -> NOT_ESTABLISHED,
+// an honest absence state, never a zero-friction or simulated result.
+//
+// KRYL-1293 investigation (this session, verified via direct runtime test + repo-wide
+// search, not assumed) confirmed neither piece of required substrate exists yet:
+//   - No route/pathway traversal-record store anywhere in this codebase. Real
+//     relationships exist (deriveRelationships(), 15 real pairs for a real subject,
+//     confirmed live) but "Relationship != route" (spec §1) -- a route is not
+//     constructed from relationship adjacency here, that is the exact fabrication
+//     this ticket forbids.
+//   - No governed R/T/C measurement substrate (KRYL-1278, Resource/Time/Cost) is
+//     implementation-authorized. KRYL-1298 (the substrate ticket) is held.
+// getEligibleObservedRoutes() and hasGovernedRTCEvidence() are the real integration
+// points for both, once they exist. They are not stubs with fabricated output --
+// they are real functions that correctly return "nothing eligible" against what is
+// actually there today.
 
-import { useState, useEffect, useRef } from 'react';
-import { HIGH_CONVERGENCE_FLOOR, COUNTER_SIGNAL_CEILING } from './signalconstants.js';
+import { useState, useEffect } from 'react';
 
-import { CANONICAL_DOMAINS } from './ontology.js';
-export const EQ_DOMAINS = CANONICAL_DOMAINS.map(d => d.toUpperCase()); // KRYL-1065 — sourced from ontology
-const PERSISTENCE_THRESHOLD_MS = 72 * 60 * 60 * 1000; // CALIBRATE: 72h investor default (WO-1821)
-const DISPLACEMENT_MARGIN      = 8;                    // CALIBRATE: challenger composite score gap
-const HYSTERESIS_TICKS         = 3;                    // ticks challenger must hold before displacement fires
-                                                       // proxy: 3×4s=12s — calibrate to 15-30min on live data
-const TICK_MS                  = 4000;
+export const HP_STATUS = Object.freeze({
+  ESTABLISHED:     'ESTABLISHED',
+  NOT_ESTABLISHED: 'NOT_ESTABLISHED',
+});
 
-// ── MOCK SEED — pre-dated persistence for demo viability ─────────────────────
-const D3  = Date.now() - 3 * 24 * 60 * 60 * 1000 - 5000; // 5s buffer past 72h boundary
-const D6H = Date.now() - 6 * 60 * 60 * 1000;
+// KRYL-1089's disclosure flag is retired here -- there is no longer simulated data to
+// disclose. HP_IS_SIMULATED is removed; the 5 consumers now read `status` instead.
 
-function initSignals() {
-  return {
-    TECHNOLOGY: { score: 77, velocity: 'BUILDING',  counterSignal: 12, since: D3  },
-    CAPITAL:    { score: 84, velocity: 'BUILDING',  counterSignal: 8,  since: D3  },
-    KNOWLEDGE:  { score: 52, velocity: 'FLAT',      counterSignal: 18, since: D6H },
-    LABOR:      { score: 38, velocity: 'BUILDING',  counterSignal: 22, since: D6H },
-    MEDIA:      { score: 27, velocity: 'DECAYING',  counterSignal: 35, since: D6H },
-    OWNERSHIP:  { score: 14, velocity: 'FLAT',      counterSignal: 9,  since: D6H },
-  };
+// §1 — "Do not construct a route merely because relationships exist. Relationship != route."
+// No traversal-record store exists in this codebase (confirmed, KRYL-1293). Real function,
+// real signature, honestly returns [] against the real (currently empty) substrate.
+function getEligibleObservedRoutes(subject) {
+  return [];
 }
 
-// ── STATE CLASSIFICATION ──────────────────────────────────────────────────────
-function classifyState(score) {
-  if (score >= HIGH_CONVERGENCE_FLOOR) return 'HIGH';
-  if (score < 20)  return 'INSUFFICIENT';
-  if (score < 45)  return 'LOW';
-  return 'BUILDING';
+// §2 — an eligible route must carry governed R/T/C evidence sufficient to compare. No
+// governed R/T/C substrate exists yet (KRYL-1278 not implementation-authorized). Real
+// gate, correctly never passes today -- not a placeholder that silently defaults to true.
+function hasGovernedRTCEvidence(route) {
+  return false;
 }
 
-// ── WO-1821: ALL FIVE CRITERIA MUST HOLD ─────────────────────────────────────
-function qualifies(score, state, velocity, since, counterSignal) {
-  if (score < HIGH_CONVERGENCE_FLOOR)                 return false; // Criterion 1 + 5
-  if (Date.now() - since < PERSISTENCE_THRESHOLD_MS) return false; // Criterion 2
-  if (velocity === 'DECAYING')                        return false; // Criterion 3
-  if (counterSignal > COUNTER_SIGNAL_CEILING)         return false; // Criterion 4
-  if (state === 'TURBULENT')                          return false; // Turbulence override
-  return true;
-}
-
-function compositeScore(score, velocity) {
-  return score + (velocity === 'BUILDING' ? 5 : velocity === 'DECAYING' ? -5 : 0);
-}
-
-// ── ENGINE COMPUTATION ────────────────────────────────────────────────────────
-function computeState(signals, prev) {
-  const domainStates    = {};
-  const qualified       = [];
-  const qualLossCounters = { ...(prev?.qualLossCounters ?? {}) };
-
-  for (const d of EQ_DOMAINS) {
-    const { score, velocity, counterSignal, since } = signals[d];
-    const state    = classifyState(score);
-    const rawQual  = qualifies(score, state, velocity, since, counterSignal);
-    const wasQual  = prev?.domainStates?.[d]?.qualified ?? false;
-
-    // Qualification-loss hysteresis: a domain that was qualified must fail
-    // HYSTERESIS_TICKS consecutive ticks before losing qualification.
-    // Prevents noise-driven oscillation at the floor boundary.
-    let isQual;
-    if (wasQual && !rawQual) {
-      qualLossCounters[d] = (qualLossCounters[d] ?? 0) + 1;
-      isQual = qualLossCounters[d] < HYSTERESIS_TICKS;
-    } else {
-      qualLossCounters[d] = 0;
-      isQual = rawQual;
-    }
-
-    domainStates[d] = { score, state, velocity, counterSignal, since, qualified: isQual };
-    if (isQual) qualified.push(d);
-  }
-
-  // Happy Path: ≥2 independent qualified domains (causal independence assumed in mock)
-  let happyPath = null;
-  if (qualified.length >= 2) {
-    const peak = qualified.reduce((a, b) =>
-      compositeScore(domainStates[a].score, domainStates[a].velocity) >=
-      compositeScore(domainStates[b].score, domainStates[b].velocity) ? a : b
-    );
-    happyPath = {
-      qualified:    true,
-      domains:      qualified,
-      peakScore:    compositeScore(domainStates[peak].score, domainStates[peak].velocity),
-      peakPosition: EQ_DOMAINS.indexOf(peak),
-      since:        prev?.happyPath?.qualified ? prev.happyPath.since : Date.now(),
-      velocity:     domainStates[peak].velocity,
-    };
-  }
-
-  // Challengers: domains above 70% of floor, not yet fully qualifying
-  const challengers = EQ_DOMAINS
-    .filter(d => !qualified.includes(d) && domainStates[d].score >= HIGH_CONVERGENCE_FLOOR * 0.7)
-    .map(d => {
-      const { score, velocity, state, since, counterSignal } = domainStates[d];
-      const met = [
-        score >= HIGH_CONVERGENCE_FLOOR,
-        Date.now() - since >= PERSISTENCE_THRESHOLD_MS,
-        velocity !== 'DECAYING',
-        counterSignal <= COUNTER_SIGNAL_CEILING,
-        state !== 'TURBULENT',
-      ].filter(Boolean).length;
-      return {
-        domain:       d,
-        peakScore:    compositeScore(score, velocity),
-        peakPosition: EQ_DOMAINS.indexOf(d),
-        criteriasMet: met,
-        gap:          HIGH_CONVERGENCE_FLOOR - score,
-      };
-    });
-
-  // ── HYSTERESIS BUFFER (WO-1826 Rule 4) ───────────────────────────────────────
-  // Challenger must hold above displacement margin for HYSTERESIS_TICKS consecutive
-  // ticks before displacement fires. Prevents noise-driven displacement.
-  let dispHoldPos   = prev?.dispHoldPos   ?? null;
-  let dispHoldCount = prev?.dispHoldCount ?? 0;
-  let lastDisplacement = prev?.lastDisplacement ?? null;
-
-  const displacementCondition = (
-    happyPath?.qualified &&
-    prev?.happyPath?.qualified &&
-    happyPath.peakPosition !== prev.happyPath.peakPosition &&
-    happyPath.peakScore - prev.happyPath.peakScore >= DISPLACEMENT_MARGIN
+// §2 — "Do not introduce a new composite Friction Score. Do not invent weights." This
+// function intentionally has no aggregate-comparison logic of its own: writing one (even
+// a simple R+T+C sum) would be exactly that prohibited invention. It must be answered by
+// the authorized R/T/C substrate's own comparison rule (KRYL-1278) once that exists.
+// Correctly unreachable today: selectLowestFriction() only calls this over routes that
+// already passed hasGovernedRTCEvidence(), which never happens yet.
+function compareByGovernedFriction(routeA, routeB) {
+  throw new Error(
+    'compareByGovernedFriction: no governed R/T/C comparison rule exists yet (KRYL-1278 ' +
+    'not implementation-authorized). This is unreachable until a real rule is authorized -- ' +
+    'not something this module may invent (spec §2: no composite score, no invented weights).'
   );
-
-  if (displacementCondition) {
-    if (dispHoldPos === happyPath.peakPosition) {
-      dispHoldCount += 1;
-    } else {
-      dispHoldPos   = happyPath.peakPosition;
-      dispHoldCount = 1;
-    }
-    if (dispHoldCount >= HYSTERESIS_TICKS) {
-      lastDisplacement = {
-        at:       Date.now(),
-        outgoing: { domains: prev.happyPath.domains, peakScore: prev.happyPath.peakScore },
-        incoming: { domains: happyPath.domains,       peakScore: happyPath.peakScore      },
-      };
-      dispHoldPos   = null;
-      dispHoldCount = 0;
-    }
-  } else {
-    dispHoldPos   = null;
-    dispHoldCount = 0;
-  }
-
-  return { happyPath, challengers, lastDisplacement, domainStates, dispHoldPos, dispHoldCount, qualLossCounters };
 }
 
-// ── MOCK OSCILLATOR ───────────────────────────────────────────────────────────
-function tick(signals) {
-  const next = {};
-  for (const d of EQ_DOMAINS) {
-    const { score } = signals[d];
-    const drift     = (Math.random() - 0.47) * 2.2;
-    const nextScore = Math.max(0, Math.min(100, score + drift));
-    const velocity  = nextScore > score + 0.4 ? 'BUILDING' : nextScore < score - 0.4 ? 'DECAYING' : 'FLAT';
-    next[d] = { ...signals[d], score: nextScore, velocity };
+// §3 — select the eligible route with the lowest governed friction. Preserves genuine
+// ties rather than inventing a differentiator. Returns NOT_ESTABLISHED, never a
+// zero-friction or simulated result, when no eligible route exists.
+function selectLowestFriction(routes) {
+  const eligible = routes.filter(hasGovernedRTCEvidence);
+  if (eligible.length === 0) {
+    return { status: HP_STATUS.NOT_ESTABLISHED, route: null, tiedRoutes: null };
   }
-  return next;
+  const sorted = [...eligible].sort(compareByGovernedFriction);
+  const lowest = sorted[0];
+  const tied   = sorted.filter(r => compareByGovernedFriction(r, lowest) === 0);
+  return tied.length > 1
+    ? { status: HP_STATUS.ESTABLISHED, route: null, tiedRoutes: tied }
+    : { status: HP_STATUS.ESTABLISHED, route: lowest, tiedRoutes: null };
 }
 
 // ── EVENT DISPATCH ────────────────────────────────────────────────────────────
+// Only real, meaningful state transitions are dispatched -- hp:peak.displaced,
+// hp:peak.emergence, and hp:peak.multi_convergence are retired along with the mock
+// oscillator: they described "challengers" and per-domain HIGH-state concepts that
+// existed only to give the random walk something to oscillate around. Neither concept
+// exists in the real model.
 function dispatchHPEvent(name, detail = {}) {
   window.dispatchEvent(new CustomEvent(name, { detail }));
 }
 
 // ── REACT HOOK ────────────────────────────────────────────────────────────────
-export function useHappyPathEngine() {
-  const [state, setState] = useState(() => {
-    const signals = initSignals();
-    return { signals, engine: computeState(signals, null) };
-  });
+// subject: optional, real (e.g. a canonical entity id / subjectScope result) -- passed
+// through to getEligibleObservedRoutes() unchanged. Omitting it is honest too: with no
+// route substrate yet, no subject value changes the (always-empty) result.
+export function useHappyPathEngine(subject = null) {
+  const [state, setState] = useState(() => selectLowestFriction(getEligibleObservedRoutes(subject)));
 
-  const prevEngineRef = useRef(null);
-
-  // ── Event emission — compare prev/curr, dispatch hp:* transitions ─────────
   useEffect(() => {
-    const prev = prevEngineRef.current;
-    const curr = state.engine;
+    const prevStatus = state.status;
+    const next = selectLowestFriction(getEligibleObservedRoutes(subject));
+    setState(next);
 
-    if (prev) {
-      // hp:peak.qualified — happy path newly designated
-      if (!prev.happyPath?.qualified && curr.happyPath?.qualified) {
-        dispatchHPEvent('hp:peak.qualified', {
-          domains:      curr.happyPath.domains,
-          peakScore:    curr.happyPath.peakScore,
-          peakPosition: curr.happyPath.peakPosition,
-        });
-      }
-
-      // hp:peak.displaced — confirmed after hysteresis hold
-      if (curr.lastDisplacement && curr.lastDisplacement !== prev.lastDisplacement) {
-        dispatchHPEvent('hp:peak.displaced', curr.lastDisplacement);
-      }
-
-      // hp:peak.decay — happy path lost qualification
-      if (prev.happyPath?.qualified && !curr.happyPath?.qualified) {
-        dispatchHPEvent('hp:peak.decay', {
-          domains:   prev.happyPath.domains,
-          peakScore: prev.happyPath.peakScore,
-        });
-      }
-
-      // hp:peak.emergence — new challenger entered monitoring range
-      const prevChallengerDomains = new Set((prev.challengers ?? []).map(c => c.domain));
-      for (const c of (curr.challengers ?? [])) {
-        if (!prevChallengerDomains.has(c.domain)) {
-          dispatchHPEvent('hp:peak.emergence', {
-            domain:       c.domain,
-            peakScore:    c.peakScore,
-            criteriasMet: c.criteriasMet,
-          });
-        }
-      }
-
-      // hp:peak.multi_convergence — 2+ domains reach HIGH simultaneously
-      const prevHighCount = Object.values(prev.domainStates ?? {}).filter(s => s.state === 'HIGH').length;
-      const currHighCount = Object.values(curr.domainStates ?? {}).filter(s => s.state === 'HIGH').length;
-      if (currHighCount >= 2 && prevHighCount < 2) {
-        dispatchHPEvent('hp:peak.multi_convergence', {
-          domains: EQ_DOMAINS.filter(d => curr.domainStates[d]?.state === 'HIGH'),
-          count:   currHighCount,
-        });
-      }
+    if (prevStatus !== HP_STATUS.ESTABLISHED && next.status === HP_STATUS.ESTABLISHED) {
+      dispatchHPEvent('hp:peak.qualified', { route: next.route, tiedRoutes: next.tiedRoutes });
+    } else if (prevStatus === HP_STATUS.ESTABLISHED && next.status !== HP_STATUS.ESTABLISHED) {
+      dispatchHPEvent('hp:peak.decay', {});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject]);
 
-    prevEngineRef.current = curr;
-  }, [state.engine]);
-
-  // ── Tick ──────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const id = setInterval(() => {
-      setState(prev => {
-        const signals = tick(prev.signals);
-        const engine  = computeState(signals, prev.engine);
-        return { signals, engine };
-      });
-    }, TICK_MS);
-    return () => clearInterval(id);
-  }, []);
-
-  return {
-    engineState:   state.engine,
-    domainSignals: state.engine.domainStates,
-  };
+  return state; // { status, route, tiedRoutes }
 }
 
 // ── WO-1820: UNICORN ALERT HOOK ───────────────────────────────────────────────
-// Listens to hp:* events. Returns alert log + clear function.
-// Alert label rule: DOMAIN · prefix (ENTITY · when bay is entity-assigned — WO-1347)
+// Listens to hp:* events. Returns alert log + clear function. Unchanged in shape;
+// the event set it listens for is now the real, retired-of-mock-concepts set above.
 const HP_EVENTS = [
   'hp:peak.qualified',
-  'hp:peak.displaced',
   'hp:peak.decay',
-  'hp:peak.emergence',
-  'hp:peak.multi_convergence',
-  'hp:peak.trigger_set',
 ];
 
 const ALERT_LABELS = {
-  'hp:peak.qualified':        'HAPPY PATH DESIGNATED',
-  'hp:peak.displaced':        'HAPPY PATH DISPLACED',
-  'hp:peak.decay':            'HAPPY PATH LOST',
-  'hp:peak.emergence':        'CHALLENGER EMERGING',
-  'hp:peak.multi_convergence':'MULTI-DOMAIN CONVERGENCE',
-  'hp:peak.trigger_set':      'TRIGGER SET',
+  'hp:peak.qualified': 'HAPPY PATH ESTABLISHED',
+  'hp:peak.decay':     'HAPPY PATH LOST',
 };
 
 export function useUnicornAlerts(maxAlerts = 8) {

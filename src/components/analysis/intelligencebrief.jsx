@@ -2,6 +2,7 @@
 // Houston Mission Control / Presidential Situation Room aesthetic
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
+import { resolveConvergenceDisplay } from '../../engine/convergencedisplay.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
 import { LensRegistry }      from '../../engine/lensadapters.js';
@@ -25,13 +26,18 @@ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import MetricStrip from './metricstrip.jsx';
 import ComparativeField from './comparativefield.jsx';
 import { PartialAnswer, InsufficientInput } from '../../renderers/partialAnswerTemplates.jsx';
+// AF-01 (KRYL-1281) / AC-07 — same canonical Formation Authority call targetpacket.jsx already
+// uses (formationinference.js:inferFormation, fed by perceptionread.js:buildPerceptionField).
+// Same function, same call pattern -- a second call site, not a second pipeline.
+import { inferFormation }       from '../../engine/formationinference.js';
+import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { resolveHomePurchaseEvidence } from '../../engine/homePurchaseEvidence.js';
 import WhyThisMatters from './whythismatters.jsx';
 import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
 import PerceptionRisk from './perceptionrisk.jsx';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
-import { arbitrateHP } from '../../engine/hptiergate.js';
+// KRYL-1293 — arbitrateHP() (hptiergate.js) retired here; see the real-pipeline note below.
 import { AMBIGUOUS_COPY } from './ambiguousstate.jsx';
 
 const MONO   = "'IBM Plex Mono', monospace";
@@ -177,7 +183,11 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
     threats:        synthesis?.threats        ?? adapter.threatContext(payload),
     opportunities:  synthesis?.opportunities  ?? adapter.opportunities(payload),
     coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : adapter.coas(payload),
-    alternativeView: synthesis?.alternativeView ?? `A minority position holds that current signals reflect seasonal variance rather than structural shift.`,
+    // DEF-1303 item 3: the old fallback fabricated a generic "seasonal variance" contradiction
+    // whenever synthesis.alternativeView was absent, regardless of whether any real counter-read
+    // was ever observed. Honest empty state instead -- no observed contradiction, no contradiction
+    // line (same class as the KRYL-1175 outlook fix below).
+    alternativeView: synthesis?.alternativeView ?? '',
     // KRYL-1175: the old fallback fabricated specific outcome probabilities (0.78/0.15/0.07)
     // whenever synthesis.outlook was null/undefined -- same fabrication class found and removed
     // throughout querysynthesis.js. Honest empty state instead of an invented forecast.
@@ -286,6 +296,33 @@ export default function IntelligenceBrief() {
   // other re-render) doesn't re-run it.
   const briefSubject = useMemo(() => canonicalBriefSubject(session), [session]);
   const isExpired  = false;
+
+  // AF-01 (KRYL-1281) / AC-07 / §21 FORMATION IS NOT A VERDICT — same contract as
+  // targetpacket.jsx:326-334: run the Formation contract against the live field pool, state
+  // NO_FORMATION_ESTABLISHED only when it actually returns empty, never as a constant. A found
+  // formation is substantiated structure and IS shown.
+  // KRYL-1220 — subject-scoped via the already-computed briefSubject (canonicalBriefSubject(),
+  // same resolver targetpacket.jsx uses via subjectScope()). Only particles carrying that exact
+  // canonicalId are considered when it resolves an ENTITY; a non-ENTITY subject passes none,
+  // same ambient field as before this fix.
+  // KRYL-1220 — same bounded refresh as targetpacket.jsx: subject-attributed connectors land
+  // asynchronously, after this component's first render. 10 ticks x 2s = 20s, matching real
+  // observed fetch latency, never an indefinite poll, never fabricated data.
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    if (refreshTick >= 10) return;
+    const t = setTimeout(() => setRefreshTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [refreshTick, session]);
+  useEffect(() => { setRefreshTick(0); }, [session]);
+
+  const fieldFormation = useMemo(() => {
+    try {
+      const subject = briefSubject?.kind === 'ENTITY' ? briefSubject.canonicalId : undefined;
+      const field = buildPerceptionField({ now: Date.now(), subject });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [session, briefSubject, refreshTick]);
 
   const fs = pendingAcquisition?.fidelityScore
           ?? session?.tensor?.fidelityScore
@@ -400,14 +437,19 @@ export default function IntelligenceBrief() {
   const hpAnchorRef               = useRef(null);
   const scrollBodyRef             = useRef(null);
   const hpSnapshot                = useRef(null);
-  const { engineState }           = useHappyPathEngine();
+  // KRYL-1293 — real pipeline. engineState (old {happyPath, challengers, domainStates})
+  // and arbitrateHP() (hptiergate.js's HP-0..3 tiering) are retired: both were built on
+  // top of, and only ever validated against, the mock oscillator. The new engine's own
+  // status is already real (ESTABLISHED only when a real eligible route with real
+  // governed R/T/C evidence was selected) -- no separate arbitration layer needed.
+  const { status: hpStatus, route: hpRoute, tiedRoutes: hpTiedRoutes } = useHappyPathEngine();
   const { alerts, clearAlerts }   = useUnicornAlerts(5);
-  const hp                        = arbitrateHP(engineState, synthesis);
+  const hp                        = { qualified: hpStatus === 'ESTABLISHED', route: hpRoute, tiedRoutes: hpTiedRoutes };
   // KRYL-1113 — counter-evidence must never assert false absence (§20/§22). Engine decides the
-  // state; this render is a sink. evaluated = HP monitoring ran (engineState present);
+  // state; this render is a sink. evaluated = HP monitoring ran (hpStatus present);
   // counter-signals = surfaced unicorn alerts. Empty + evaluated => "none found" (honest);
   // never a hardcoded absence.
-  const hpCounter                 = computeCounterEvidenceState({ evaluated: !!engineState, contradictions: alerts });
+  const hpCounter                 = computeCounterEvidenceState({ evaluated: !!hpStatus, contradictions: alerts });
   const hpCounterValue            = hpCounter.state === COUNTER_EVIDENCE_STATE.FOUND
     ? `${hpCounter.contradictions.length} counter-signal${hpCounter.contradictions.length === 1 ? '' : 's'}`
     : hpCounter.label;
@@ -424,7 +466,7 @@ export default function IntelligenceBrief() {
     const dp = getQueryDomainPressure(synthesis.queryDomain);
     return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
   }, [synthesis?.queryDomain]);
-  const metrics                   = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
+  const metrics                   = useMemo(() => computeMetrics(synthesis, hp, null, lrPrior, null, domainSignal), [synthesis, hp, lrPrior, domainSignal]);
   const compositeMetrics          = useMemo(() => computeCompositeMetrics(synthesis, metrics), [synthesis, metrics]);
   const dynamics                  = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   const visibility                = useMetricVisibility(metrics, dynamics);
@@ -466,7 +508,9 @@ export default function IntelligenceBrief() {
       return [...prev, { key, type: 'signal_event', ts: a?.ts ?? Date.now(), label: 'DOMAIN ALERT', detail: a?.label ?? '—' }].slice(-100); // bounded — no unbounded growth
     });
   }, [alerts.length]);
-  const monitorMap                = useThesisMonitor(convictions.active, engineState?.domainStates, hp);
+  // KRYL-1293 — no per-domain state exists in the real model (route-based, not
+  // domain-based); passing undefined honestly, not a fabricated domainStates shape.
+  const monitorMap                = useThesisMonitor(convictions.active, undefined, hp);
   const calibration               = useMemo(() => computeCalibration(convictions.resolved), [convictions.resolved]);
 
   if (!session) {
@@ -494,27 +538,26 @@ export default function IntelligenceBrief() {
   const isComparative = synthesis?.mode === 'COMPARATIVE';
   const isDicPath = synthesis?.mode === 'INSUFFICIENT_INPUT' && !!synthesis?.decisionInputContract;
   const isDicReady = synthesis?.mode === 'DIC_READY';
-  // §26 -- single source of truth for "the screen deliberately withholds intelligence for this
-  // mode". buildBrief() has no awareness of `mode` (only resolutionEligible/queryDomain), so
-  // these three modes are NOT self-defending inside buildBrief() the way AMBIGUOUS is -- any
-  // caller that invokes buildBrief() without checking this first will get a fabricated brief.
-  // Referenced by both the render path below and handleExport() so there is exactly one
-  // definition of "withheld," not a duplicated condition that can drift out of sync.
+  // KRYL-1294 -- isDicPath used to early-return InsufficientInput as a full-page
+  // replacement, so a DIC domain (Real Estate) got a different, isolated treatment
+  // than every other domain -- one Happy Path template, not two. Traced: buildBrief()
+  // guards on resolutionEligible/queryDomain, not `mode`, and the DIC branch in
+  // querysynthesis.js always sets resolutionEligible:true -- so buildBrief() was
+  // already safe to call here, it just never got the chance to. isDicPath no longer
+  // skips buildBrief(); the missing-inputs form renders INSIDE the normal template
+  // instead (see 00 · HEADER below), reusing InsufficientInput as-is, not duplicated.
+  //
+  // §26 -- export eligibility is a SEPARATE concern from "does the brief render":
+  // exporting while required decision-specific inputs are still missing would ship
+  // a brief without the financing math the DIC exists to gate -- isBriefWithheld
+  // (export-only gate, handleExport() below) still includes isDicPath deliberately.
+  const skipBuildBrief = isComparative || isDicReady;
   const isBriefWithheld = isComparative || isDicPath || isDicReady;
-  const brief = isBriefWithheld ? null : buildBrief(session, synthesis, hp, briefSubject);
+  const brief = skipBuildBrief ? null : buildBrief(session, synthesis, hp, briefSubject);
   const outputFilters = session?.tensor?.outputFilters ?? { precursors: true, risks: true, opportunities: true, contradictions: true };
 
   if (isComparative) {
     return <ComparativeField diff={synthesis.diff} />;
-  }
-  if (isDicPath) {
-    return (
-      <InsufficientInput
-        missingRequiredInputs={synthesis.missingRequiredInputs}
-        dic={synthesis.decisionInputContract}
-        onSubmit={fields => activeId && setTensorFields(activeId, fields)}
-      />
-    );
   }
   if (isDicReady) {
     return dicEvidence
@@ -695,6 +738,13 @@ export default function IntelligenceBrief() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, whiteSpace: 'nowrap', overflow: 'hidden' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, letterSpacing: '0.28em', color: 'rgba(102,255,0,0.55)' }}>HAPPY PATH</span>
+              {/* KRYL-1293 — real pipeline (subject -> observed routes -> governed R/T/C ->
+                  lowest friction). No eligible route exists yet (no route substrate, no
+                  R/T/C substrate -- KRYL-1278 not implementation-authorized), so this is
+                  honestly NOT ESTABLISHED, not simulated. */}
+              {hpStatus !== 'ESTABLISHED' && (
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.18em', color: MID, border: `1px solid ${DIM}`, padding: '1px 5px', borderRadius: 2 }}>NOT ESTABLISHED</span>
+              )}
             </span>
             {/* HP indicator — one icon, two states. Cone-trail SVG doubles as the trigger:
                 lime/static by default, purple/blinking when qualified. No separate unicorn asset. */}
@@ -1089,6 +1139,21 @@ export default function IntelligenceBrief() {
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
+
+        {/* KRYL-1294 -- DIC missing-inputs, rendered inside the one Happy Path template
+            instead of replacing it. Same InsufficientInput component as before, same
+            required fields from the DIC, same disabled-until-filled submit -- only the
+            placement changed. */}
+        {isDicPath && (
+          <div style={{ borderTop: `1px solid rgba(255,255,255,0.08)`, borderBottom: `1px solid rgba(255,255,255,0.08)`, margin: '4px 0' }}>
+            <InsufficientInput
+              missingRequiredInputs={synthesis.missingRequiredInputs}
+              dic={synthesis.decisionInputContract}
+              onSubmit={fields => activeId && setTensorFields(activeId, fields)}
+            />
+          </div>
+        )}
+
         <MetricStrip metrics={metrics} visibility={visibility} compositeMetrics={compositeMetrics} />
         <WhyThisMatters metrics={metrics} />
         <PerceptionRisk metrics={metrics} dynamics={dynamics} />
@@ -1102,6 +1167,65 @@ export default function IntelligenceBrief() {
           <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 5 }}>Purpose</div>
           <div style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em' }}>{brief.purpose}</div>
         </Panel>
+
+        {/* FORMATION MAP — AC-07 / §5.1: structural orientation layer, deliberately NOT a
+            conventional numbered section (no seq stamp, distinct bordered treatment) sitting
+            between BLUF and Body & Key Findings. AC-10 / §15: not a score, not a verdict —
+            same fieldFormation contract as targetpacket.jsx's 02 FORMATION section (same
+            canonical inferFormation() call, §21 FORMATION IS NOT A VERDICT discipline). */}
+        <div style={{ position: 'relative', marginBottom: 20, padding: '14px 14px 14px 14px', border: `1px solid rgba(102,255,0,0.22)` }}>
+          <div style={{
+            position: 'absolute', top: -7, left: 14,
+            fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em',
+            color: LIME_MID, background: '#000', padding: '0 8px',
+            textTransform: 'uppercase',
+          }}>
+            Formation
+          </div>
+          {fieldFormation ? (
+            <>
+              <div style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.25em', textTransform: 'uppercase', marginBottom: 8 }}>
+                {briefSubject?.kind === 'ENTITY' ? `Field Scope — subject-bound (${briefSubject.canonicalId})` : 'Field Scope — live observable field, not subject-bound'}
+              </div>
+              {/* AC-07 / KRYL-1278/1281 — the visual Formation Map moved to its own MAP tab
+                  (structurepanel.jsx) alongside BRIEF/RECON/IMPACT -- the actual FORMATION nav
+                  page, full-size, no embed scaling needed. This section stays text-only: the
+                  live canonical fieldFormation result, which is what AC-07 actually requires. */}
+              <div style={{ fontFamily: MONO, fontSize: 10, color: BRT, lineHeight: 1.5, letterSpacing: '0.02em' }}>
+                A cross-domain formation is present {briefSubject?.kind === 'ENTITY' ? `for ${briefSubject.canonicalId} ` : ''}in the {briefSubject?.kind === 'ENTITY' ? 'subject-scoped' : 'live'} field:{' '}
+                {fieldFormation.participatingDomains.join(' · ')} —{' '}
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
+              </div>
+              {/* FIELD STATE spec v1.0 — mirrors targetpacket.jsx's 02 FORMATION breakdown
+                  (commit ee0a206), same fieldFormation contract, same edges already counted
+                  above. existence dropped from display for the same reason: real/defined but
+                  reads as an unlabeled confidence score, not part of the required contract. */}
+              <div style={{ marginTop: 10 }}>
+                {fieldFormation.participatingDomains.map(d => {
+                  const edgesForD = fieldFormation.graph.edges.filter(e => e.a === d || e.b === d);
+                  if (!edgesForD.length) return null;
+                  return (
+                    <div key={d} style={{ marginTop: 6, fontFamily: MONO, fontSize: 9.5, lineHeight: 1.6 }}>
+                      <span style={{ color: LIME, letterSpacing: '0.08em' }}>{d}</span>
+                      <span style={{ color: DIM }}> connects to:</span>
+                      {edgesForD.map((e, i) => (
+                        <div key={i} style={{ marginLeft: 12, color: 'rgba(255,255,255,0.55)' }}>
+                          {e.a === d ? e.b : e.a} — {e.admittedType}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            <div style={{ fontFamily: MONO, fontSize: 11.5, color: MID, lineHeight: 1.6, letterSpacing: '0.02em' }}>
+              No formation established. A formation is earned from observations in two or more
+              domains and at least one admitted cross-domain relationship connecting them — a
+              stated absence, not a low score.
+            </div>
+          )}
+        </div>
 
         {/* 02 · BODY & KEY FINDINGS */}
         <Panel seq="02" label="Body & Key Findings">
@@ -1169,7 +1293,7 @@ export default function IntelligenceBrief() {
               ))}
             </>
           )}
-          {outputFilters.contradictions && (
+          {outputFilters.contradictions && brief.alternativeView && (
             <>
               <Divider />
               <div style={{ borderLeft: `1px solid rgba(102,255,0,0.2)`, paddingLeft: 12 }}>
@@ -1463,16 +1587,14 @@ export default function IntelligenceBrief() {
           // DEF-1875 — wire the badge ribbon to real per-query state (was hardcoded
           // LOCKED/HIGH regardless of the actual analysis). The convergence % lives
           // inside the badge so label and number can never diverge again. §18/§19.
-          const cv   = Math.round((metrics?.convergence?.value ?? 0) * 100);
-          const qRel = metrics?.convergence?.queryRelevant !== false;
-          const insufficient = !metrics?.convergence || synthesis?.resolutionEligible === false;
-          let convT, convC;
-          if (insufficient)  { convT = 'INSUFFICIENT'; convC = DIM;    }
-          else if (cv >= 66) { convT = 'HIGH';         convC = PURPLE; }
-          else if (cv >= 40) { convT = 'BUILDING';     convC = LIME;   }
-          else if (cv >= 20) { convT = 'LOW';          convC = DIM;    }
-          else               { convT = 'INSUFFICIENT'; convC = DIM;    }
-          const convValue = insufficient ? convT : `${convT} · ${cv}%${qRel ? '' : ' · FIELD'}`;
+          // DEF-1303 — was reading metrics.convergence.value directly, with no knowledge of
+          // the withheld/fieldValue shape DEF-1242 added six weeks after DEF-1875 landed (and
+          // only propagated to metricstrip.jsx). Now calls the one shared resolver instead of
+          // a second, independent copy of the same rule.
+          const conv = resolveConvergenceDisplay(metrics?.convergence);
+          const convT = conv.state;
+          const convC = convT === 'HIGH' ? PURPLE : convT === 'BUILDING' ? LIME : DIM;
+          const convValue = conv.hasValue ? `${convT} · ${conv.pct}%${conv.isField ? ' · FIELD' : ''}` : convT;
           const locked = hp?.qualified === true;
           // Real fracture polarity + active-signal count for the query domain
           // (domaingravity §20). Fracture window OPEN = domain in fracture polarity;
@@ -1481,7 +1603,7 @@ export default function IntelligenceBrief() {
           const fracturing = dp?.polarity === 'fracture' && dp.signalCount > 0;
           return [
             { label: 'SIGNAL',          value: locked ? 'LOCKED' : 'TRACKING', color: locked ? LIME : DIM },
-            { label: 'CONVERGENCE',     value: convValue,                      color: qRel ? convC : DIM },
+            { label: 'CONVERGENCE',     value: convValue,                      color: conv.queryRelevant ? convC : DIM },
             { label: 'FRACTURE WINDOW', value: dp ? (fracturing ? 'OPEN' : 'CLOSED') : '—', color: fracturing ? BRT : DIM },
             { label: 'NODES',           value: dp ? String(dp.signalCount) : '—',           color: (dp?.signalCount ?? 0) > 0 ? MID : DIM },
             { label: 'KERNEL',

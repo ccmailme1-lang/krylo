@@ -8,12 +8,12 @@
 // LOCKED / AUTHORED `I_d` content (domain-level, honest) or classified absence.
 // Subject binding — A(d, Subject) — is WO-5B; nothing here is subject-specific.
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { domainIntelligence, relationshipsFor } from '../../engine/domainintelligence.js';
+import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import { subjectScope } from '../../engine/subjectscope.js';
 import { A as adSubject } from '../../engine/adsubject.js';
-import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -24,8 +24,7 @@ const BRT  = 'rgba(255,255,255,0.78)';
 const RULE = '#191d1e';
 const ABSENCE = 'rgba(255,255,255,0.28)';
 
-const [TECH_, CAP_, KNOW_, LAB_, MED_, OWN_] = CANONICAL_DOMAINS;
-const TABS = [CAP_, OWN_, TECH_, KNOW_, LAB_, MED_].map(d => d.toUpperCase());
+const TABS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function Panel({ ordinal, title, children }) {
   return (
@@ -128,7 +127,22 @@ function ItemList({ items, color = BRT }) {
 
 function DomainScroll({ domain, scope, pressure }) {
   const di = domainIntelligence(domain);
-  const ad = useMemo(() => adSubject(domain, scope), [domain, scope]);
+  // DEF-1301 — same bounded refresh as targetpacket.jsx's fieldFormation/subjectObservationCount:
+  // adSubject()'s formationObservations reads the domaingravity.js pool, which the
+  // subject-attributed connectors populate asynchronously, after this component's first
+  // render. Without a refresh trigger, `ad` never re-reads the pool once they land, and this
+  // panel would keep showing "no evidence" after Formation itself already has real
+  // subject-bound observations. 10 ticks x 2s = 20s, matching observed real fetch latency,
+  // never an indefinite poll.
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    if (refreshTick >= 10) return;
+    const t = setTimeout(() => setRefreshTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [refreshTick, domain, scope]);
+  useEffect(() => { setRefreshTick(0); }, [domain, scope]);
+
+  const ad = useMemo(() => adSubject(domain, scope), [domain, scope, refreshTick]);
   if (!di) return <Absent reason={`No I_d primitive for ${domain}.`} />;
 
   const rels = relationshipsFor(domain);
@@ -153,9 +167,30 @@ function DomainScroll({ domain, scope, pressure }) {
       <Panel ordinal="01" title="OBSERVES">
         <ItemList items={di.observes.items} />
         <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>{di.observes.maturity} · observation classes (not subject findings)</span>
-        {scoped && ad.observations.length === 0 && (
+        {/* DEF-1301 — formationObservations (real, admitted Formation observations,
+            KRYL-1220) and observations (WO-5B evidence facets) are distinct evidence
+            classes; the "no evidence" line must only appear when BOTH are empty, and
+            each present class is shown for what it actually is. */}
+        {scoped && ad.formationObservations.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em' }}>
+              {ad.formationObservations.length} subject-bound observation{ad.formationObservations.length !== 1 ? 's' : ''} admitted into Formation (KRYL-1220)
+            </span>
+            {ad.formationObservations.map((o, i) => (
+              <span key={i} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
+                observed · {o.source}{o.eventDate ? ` · ${o.eventDate}` : ''}
+              </span>
+            ))}
+          </div>
+        )}
+        {scoped && ad.observations.length === 0 && ad.formationObservations.length === 0 && (
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
             no {domain} evidence identifier-bound to {ad.subject} · a facet is only an observation of this subject if its own provenance resolves to it
+          </span>
+        )}
+        {scoped && ad.observations.length === 0 && ad.formationObservations.length > 0 && (
+          <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
+            no {domain} WO-5B evidence facet identifier-bound to {ad.subject} (a narrower evidence class than the Formation observations above) · a facet is only an observation of this subject if its own provenance resolves to it
           </span>
         )}
         {scoped && ad.observations.map((o) => (

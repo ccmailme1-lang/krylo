@@ -6,6 +6,9 @@
 //       domain,
 //       scoped: boolean,               true only for ENTITY scope
 //       observations: SubjectObservation[],   evidence IDENTIFIER-bound to the subject (5B-2)
+//       formationObservations: [...],  DEF-1301 — real observations already admitted into
+//                                       Formation (domaingravity.js pool), a DIFFERENT
+//                                       evidence class from `observations` above -- see below
 //       measures: { [measureKey]: <resolveClassEMeasure(scope:'subject')> },
 //       fieldContext: <computeDomainPressure(domain)>,   CONTEXT ONLY — never the subject's answer
 //       absence: { absenceClass, reason } | null
@@ -18,17 +21,24 @@
 //   - no evidence facet becomes a Class-E measure (CLASS_E_ONTOLOGY guard);
 //   - non-ENTITY scope → classified absence for every domain (the observation is
 //     still owed; it is not a bug).
+//
+// DEF-1301 — `observations` (WO-5B evidence facets, getDomainEvidenceFacets) and
+// `formationObservations` (KRYL-1220's gravity-pool observations, getAllSignals) are TWO
+// genuinely distinct evidence classes that were being conflated by omission: this file only
+// ever reported the WO-5B class, which is still genuinely empty (no registered facet source
+// attributes provenance.subject to an entity yet) -- so every caller concluded "no evidence"
+// even once KRYL-1220 landed real, subject-attributed, Formation-admitting observations
+// through a separate pipeline. Both are now surfaced, honestly, as what they actually are.
 
 import { domainIntelligence } from './domainintelligence.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from './domainsignalresolution.js';
-import { computeDomainPressure } from './domaingravity.js';
+import { computeDomainPressure, getAllSignals } from './domaingravity.js';
 import { isScopable } from './subjectscope.js';
-import { CANONICAL_DOMAINS } from './ontology.js';
+import { ANALYSIS_DOMAIN_ORDER } from './ontology.js';
 
 export const AD_SUBJECT_VERSION = '5b-2';
 
-const [TECH_, CAP_, KNOW_, LAB_, MED_, OWN_] = CANONICAL_DOMAINS;
-export const CANON_DOMAINS = [CAP_, OWN_, TECH_, KNOW_, LAB_, MED_].map(d => d.toUpperCase());
+export const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function authoredMeasureKeys(domain) {
   const di = domainIntelligence(domain);
@@ -53,6 +63,7 @@ export function A(domain, scope) {
       domain: D,
       scoped: false,
       observations: [],
+      formationObservations: [],
       measures: fieldMeasures,
       fieldContext: safePressure(D),
       absence: {
@@ -88,15 +99,33 @@ export function A(domain, scope) {
       source_set_hash: f.source_set_hash,
     }));
 
+  // DEF-1301 — real, subject-attributed observations already admitted into Formation, read
+  // from the SAME domaingravity.js pool / same canonicalId match that fieldFormation
+  // (targetpacket.jsx/intelligencebrief.jsx) and inferFormation() already use. This is not a
+  // new resolution path: it is the existing KRYL-1220 pipeline, surfaced here so this panel
+  // stops contradicting the FORMATION section that reads the identical underlying data.
+  const formationObservations = getAllSignals()
+    .filter(s => s.canonicalId === subject && s.domain === D)
+    .map(s => ({
+      kind: 'formation',
+      domain: D,
+      source: s.source,
+      signal: s.signal,
+      confidence: s.confidence,
+      eventDate: s.eventDate ?? null,
+      ts: s.ts,
+    }));
+
   const anyMeasure = Object.values(measures).some(m => m.status === 'FACET');
   return {
     subject,
     domain: D,
     scoped: true,
     observations,
+    formationObservations,
     measures,
     fieldContext: safePressure(D),
-    absence: (observations.length === 0 && !anyMeasure)
+    absence: (observations.length === 0 && formationObservations.length === 0 && !anyMeasure)
       ? { absenceClass: 'structural', reason: `no ${D} evidence or measure attributable to the subject yet` }
       : null,
   };

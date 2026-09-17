@@ -11,6 +11,9 @@ import { runOpenAlexSync }           from './connectors/openalexconnector.js';
 import { runUsajobsSync }            from './connectors/usajobsconnector.js';
 import { runGdeltSync }              from './connectors/gdeltconnector.js';
 import { runRedditSync }             from './connectors/redditconnector.js';
+import { runTargetedOwnershipObservation } from './connectors/secownershipconnector.js';
+import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
+import { subjectScope }              from './subjectscope.js';
 
 export function fireTopicConnectors(q) {
   runGithubSync(q).catch(() => {});
@@ -23,4 +26,28 @@ export function fireTopicConnectors(q) {
   runRedditSync(q).catch(() => {});
   // WO-2046 — entity capital realization (fires only when query resolves a known entity)
   runCapitalRealizationSync(q).catch(() => {});
+  // KRYL-1220 — second entity-attributed domain (OWNERSHIP), same trigger point as CAPITAL
+  // above. Reuses the same subjectScope() resolution capitalrealizationconnector.js now uses
+  // internally (no new resolution mechanism) — resolved once here since
+  // runTargetedOwnershipObservation() needs the CIK, which subjectScope()'s entity already
+  // carries (entity.identifiers.edgar), not just the canonicalId. Fires only when the query
+  // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
+  const scope = subjectScope(q);
+  if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
+    runTargetedOwnershipObservation({
+      entityCik:   scope.entity.identifiers.edgar,
+      canonicalId: scope.canonicalId,
+      from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // real 365-day window (KRYL-1220)
+    }).catch(() => {});
+    // KRYL-1220 — second attempt at a real second domain: EDGAR 8-K, entity-scoped, 90-day
+    // real window (confirmed via direct API check: real EXECUTIVE_CHANGE/SHAREHOLDER_VOTE
+    // filings exist for at least one real subject in this range; 7-day ambient window missed
+    // them). Uses the entity's own real name for EDGAR's server-side narrowing.
+    runTargetedEdgar8KSignalSync({
+      entityCik:   scope.entity.identifiers.edgar,
+      canonicalId: scope.canonicalId,
+      entityName:  scope.entity.name,
+      from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // matches OWNERSHIP's real 365-day window
+    }).catch(() => {});
+  }
 }

@@ -21,6 +21,11 @@ const TOKENS    = new Set([...CANONICAL, ...PILLAR]);
 // Allowlist: the single source of truth + the Founder-classified derived-view surfaces + backups.
 const ALLOW = [
   'engine/ontology.js',
+  // Frozen CF kill-experiment fixture. SPEC-cf-002-is-reconciliation.md (Founder, 2026-09-02):
+  // "the frozen cfpathwaystore.js / cfrunner.js are untouched" — it is an experiment prototype,
+  // explicitly NOT the canonical IS-4 substrate (that is pathwaystore.js, which sources ontology).
+  // Its `SIX` set is membership-only; repairing it would violate the reconciliation lock.
+  'engine/cf/cfpathwaystore.js',
   'components/oracleview_v2.jsx',
   'components/feeds/feedsbay.jsx',
   'components/surface/leveragetowers.jsx',

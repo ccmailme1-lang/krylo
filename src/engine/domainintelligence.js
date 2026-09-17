@@ -44,7 +44,7 @@ export const CROSS_DOMAIN_RELATIONSHIPS = Object.freeze({
   'LABOR|MEDIA':         'attention to a workforce event / labor conflict',
 });
 
-const CANON = new Set(CANONICAL_DOMAINS.map(d => d.toUpperCase()));
+const CANON = new Set(CANONICAL_DOMAINS.map(d => d.toUpperCase())); // KRYL-1065 — sourced from ontology
 
 // WO-3 — the runtime closed-relationship-admission boundary.
 // `F` admits a cross-domain relationship ONLY between two canonical domains, and

@@ -29,6 +29,7 @@ import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, pe
 import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
 import FrameAnchoring from './frameanchoring.jsx';
+import CFField from './cffield.jsx';   // WS6 Gate 1 (KRYL-1259) — distinct parallel CF read, after 05 PROVENANCE
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -178,7 +179,11 @@ function PacketSection({ ordinal, title, mt = 54, children }) {
 }
 
 // Honest-absence marker — used where the approved composition reserves a slot the
-// packet cannot populate from live engine state today (KRYL-1220 / KRYL-1202).
+// packet cannot populate from live engine state today. DEF-1300: KRYL-1220 (Formation
+// admission) landed and is no longer a reason to cite here — the remaining slots this
+// marker covers are the five-metric strip's per-observation layer (never scoped to
+// KRYL-1220, still genuinely absent) and 04 ATTENTION's targeted re-observation
+// (KRYL-1202, confirmed still Ready/not built).
 function NotMeasured() {
   return (
     <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: ABSENCE }}>
@@ -254,6 +259,10 @@ export default function TargetPacket() {
   const activeId       = useAnalysisStore(s => s.activeSessionId);
   const session        = activeId ? sessions[activeId] : null;
   const envelope       = session?.tensor?.envelope ?? null;
+  // KRYL-1290 subtask 7 — rendered as-is, never recomputed here. A session formed
+  // before this field existed simply won't have it; the READ section below gates
+  // on its presence and renders nothing for those (no fabricated empty box).
+  const analysisIntent = session?.tensor?.analysisIntent ?? null;
 
   const synthesis = useMemo(() => synthesizeQuery(session), [session]);
 
@@ -299,7 +308,11 @@ export default function TargetPacket() {
   const arbitration  = session?.tensor?.arbitration ?? null;
 
   const revelationStep  = 3;
-  const { engineState } = useHappyPathEngine();
+  // KRYL-1293 — real pipeline. engineState variable name kept for computeMetrics()'s
+  // hpState param below; its shape is now {status, route, tiedRoutes} (no .happyPath) --
+  // computeMetrics() reads hpState?.happyPath?.x with optional chaining, so this
+  // correctly degrades to honest zero/empty, not a crash or a fabricated value.
+  const engineState      = useHappyPathEngine();
   const lrPrior         = useMemo(() => getLRPrior({ domain: synthesis?.queryDomain, stateLabel, lens: session?.lens ?? 'GENERAL' }), [synthesis?.queryDomain, stateLabel, session?.lens]);
   // Real domain signal (0..1) — same accessor SIGNAL/PRESSURE/CONVERGENCE use. Factors real macro
   // signal into CAC/ROAS/LTV instead of pure formula; construct made visible via the metric label.
@@ -308,7 +321,23 @@ export default function TargetPacket() {
     const dp = getQueryDomainPressure(synthesis.queryDomain);
     return dp?.signalCount > 0 ? dp.magnitude / 100 : null;
   }, [synthesis?.queryDomain]);
-  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, null, domainSignal), [synthesis, engineState, lrPrior, domainSignal]);
+  // KRYL-1220 — real closed-loop structural output as computeMetrics()'s sciData input,
+  // replacing the hardcoded null every prior call passed. resolveWhyTrace() already matches
+  // `entity` against the real CanonicalEvents edgar8kevidence.js builds from EDGAR 8-K filings
+  // and calls computeSCI(event.evidenceGraph) internally (whytrace.js buildWhyTrace) — that
+  // result was being computed and then discarded (only its boolean RESOLVED/not state survived,
+  // via wtResolved below). No new EvidenceGraph construction needed; this was a genuinely
+  // computed value one line away from being used. sps is not computed by buildWhyTrace — left
+  // null rather than fabricated (§22 absence-is-signal); sci is null (not a fallback score)
+  // whenever no structural evidence event matches this entity.
+  const whyTrace         = useMemo(() => resolveWhyTrace(entity, getCanonicalEvents()), [entity]);
+  const sciData          = whyTrace.trace?.sci ? { sci: whyTrace.trace.sci, sps: null } : null;
+  // KRYL-1293 — engineState (useHappyPathEngine()) is now the real pipeline; the mock
+  // oscillator is fully retired. This file has no direct display surface for HP output --
+  // metrics computed here are only persisted into the shared metrics history store below
+  // (recordMetricsSnapshot), consumed and disclosed elsewhere (intelligencebrief.jsx's
+  // HAPPY PATH badge).
+  const metrics         = useMemo(() => computeMetrics(synthesis, engineState, null, lrPrior, sciData, domainSignal), [synthesis, engineState, lrPrior, domainSignal, sciData]);
   // Producer side of the domain metrics history store — records the real,
   // already-computed metrics object, tagged by domain. Never recomputes,
   // never fires speculatively — only when a real synthesis+domain exists.
@@ -321,38 +350,74 @@ export default function TargetPacket() {
   // WO-1880: full 6-domain pressure field — §20 both directions always
   const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
 
-  // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
-  // NO_FORMATION_ESTABLISHED only when the Formation contract actually returns
-  // empty, never as a constant. Run the contract against the live field pool.
-  // A found formation is substantiated structure and IS shown — labelled FIELD
-  // SCOPE, because subject-scoped observation binding is still the KRYL-1220
-  // bridge gap. This is not a subject verdict; it is the observable field.
-  const fieldFormation = useMemo(() => {
-    try {
-      const field = buildPerceptionField({ now: Date.now() });
-      return field.particles.length ? inferFormation(field.particles) : null;
-    } catch { return null; }
-  }, [domainPressures]);
-
   // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
   // DIC / synthesis routing / 5B are untouched (forensic recovery: those are
   // legitimate to their own contracts). `INSUFFICIENT_INPUT` stays what it means
   // — "the decision artifact can't be resolved" — and is not read as "the
   // perceptual packet has nothing to show". Missing decision parameters constrain
   // conclusions, not observation.
+  // Moved above fieldFormation (KRYL-1220) so its already-computed canonicalId can be
+  // threaded into buildPerceptionField() below without a second, redundant subjectScope()
+  // call (subjectScope() is not cheap for a long pasted query — see PERF note elsewhere).
   const subjScope = useMemo(
     () => subjectScope(session?.queryContext ?? session?.query ?? ''),
     [session?.queryContext, session?.query],
   );
+
+  // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
+  // NO_FORMATION_ESTABLISHED only when the Formation contract actually returns
+  // empty, never as a constant. Run the contract against the live field pool.
+  // A found formation is substantiated structure and IS shown.
+  // KRYL-1220 — now subject-scoped when subjScope resolves an ENTITY: only particles
+  // carrying that exact canonicalId are considered (perceptionread.js fail-closed filter).
+  // A non-ENTITY scope (GEO/DECISION_FRAME/UNRESOLVED) passes no subject — ambient field,
+  // same as before this fix, not a fabricated per-subject result.
+  // KRYL-1220 — bounded refresh. The subject-attributed connectors (capitalrealization,
+  // secownership, edgar8ksignal targeted syncs) are fire-and-forget and land asynchronously,
+  // well after this component's first render — domainPressures/subjScope don't change when
+  // they do, so fieldFormation would otherwise stay stuck at its first (pre-arrival) read of
+  // the pool forever. This re-checks the same real buildPerceptionField()/inferFormation()
+  // call on a short, bounded timer (10 ticks, 2s apart = 20s, matching the real fetch latency
+  // observed for these connectors) so a Formation that becomes real after they land is shown —
+  // never a fabricated one, never an indefinite poll.
+  const [refreshTick, setRefreshTick] = useState(0);
+  useEffect(() => {
+    if (refreshTick >= 10) return;
+    const t = setTimeout(() => setRefreshTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [refreshTick, session]);
+  useEffect(() => { setRefreshTick(0); }, [session]);
+
+  const fieldFormation = useMemo(() => {
+    try {
+      const subject = subjScope.kind === 'ENTITY' ? subjScope.canonicalId : undefined;
+      const field = buildPerceptionField({ now: Date.now(), subject });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures, subjScope, refreshTick]);
   const recognizedFrame = (() => {
     const d = synthesis?.queryDomain;
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
     return d === 'REAL_ESTATE' ? 'REAL ESTATE' : d.replace(/_/g, ' ');
   })();
-  const wtResolved = useMemo(
-    () => resolveWhyTrace(entity, getCanonicalEvents()).state === WT_STATE.RESOLVED,
-    [entity],
-  );
+  // KRYL-1220 — reuses whyTrace (computed above, alongside sciData) instead of a second,
+  // duplicate resolveWhyTrace() call against the same entity.
+  const wtResolved = whyTrace.state === WT_STATE.RESOLVED;
+
+  // DEF-1301 — the count of real, subject-attributed observations actually feeding Formation
+  // (capitalrealizationconnector.js/secownershipconnector.js/edgar8ksignal.js -> the
+  // domaingravity.js pool -> the SAME buildPerceptionField({subject}) call fieldFormation uses
+  // above). This is a DIFFERENT evidence class from wtResolved (EDGAR-8K CanonicalEvents,
+  // whytrace.js) and from adsubject.js's getDomainEvidenceFacets() (WO-5B evidence facets,
+  // still genuinely empty — no registered facet source attributes to a subject yet). PROVENANCE
+  // below must not claim "no subject-scoped evidence bound" while this count is > 0; that was
+  // the exact contradiction DEF-1301 reports (Formation admitted from real subject-bound
+  // observations while PROVENANCE denied any existed).
+  const subjectObservationCount = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return 0;
+    try { return buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId }).particles.length; }
+    catch { return 0; }
+  }, [subjScope, refreshTick]);
 
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
   // field the rest of the packet already reads. No new data source.
@@ -498,11 +563,21 @@ export default function TargetPacket() {
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
                   : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
+          {/* DEF-1303 item 1 — the label itself must change with what's actually resolved: a
+              recognized query-domain FRAME is not a resolved SUBJECT, and rendering it under
+              the SUBJECT label implied an entity was resolved when none was. CAPITAL FRAME /
+              SUBJECT / NO SUBJECT RESOLVED are now visually and semantically distinct. */}
           <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 28, fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: '#767d7a' }}>
-            <span>SUBJECT <span style={{ color: '#eceee9' }}>
+            <span>{subjScope.kind === 'ENTITY' ? 'SUBJECT' : recognizedFrame ? 'FRAME' : 'SUBJECT'} <span style={{ color: '#eceee9' }}>
               {subjScope.kind === 'ENTITY'
                 ? (subjScope.verification === 'NAMED_UNVERIFIED' ? `${subjScope.canonicalId} · NAMED, UNVERIFIED` : subjScope.canonicalId)
-                : (recognizedFrame ? `${recognizedFrame} FRAME` : subjScope.kind)}
+                : recognizedFrame
+                ? recognizedFrame
+                : subjScope.kind === 'DECISION_FRAME'
+                ? 'NO SUBJECT RESOLVED — DECISION FRAME'
+                : subjScope.kind === 'GEO'
+                ? 'NO SUBJECT RESOLVED — GEO'
+                : 'NO SUBJECT RESOLVED'}
             </span></span>
             <span style={{ color: '#3a4140' }}>·</span>
             {subjScope.dealFrame && (subjScope.dealFrame.stage || subjScope.dealFrame.round) && (
@@ -532,7 +607,10 @@ export default function TargetPacket() {
           subjectKind={subjScope.kind}
         />
 
-        {/* ── FIVE-METRIC STRIP — honest absence (KRYL-1220 capability gap) ────── */}
+        {/* ── FIVE-METRIC STRIP — honest absence (DEF-1300: not a KRYL-1220 gap —
+             KRYL-1220's Formation admission bridge is operational, see 02 FORMATION
+             below. These five metrics need a separate, deeper per-observation layer
+             KRYL-1220 was never scoped to compute — see the note under the strip. ── */}
         <section style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
           {[
             ['STRUCTURAL DENSITY',   'relationships per object'],
@@ -552,13 +630,45 @@ export default function TargetPacket() {
           ))}
         </section>
         <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 9, lineHeight: 1.7, color: ABSENCE, maxWidth: 720 }}>
-          Structural metrics require the closed-loop analytical bridge (KRYL-1220). The packet does
-          not yet receive per-observation structure, so these positions are held as measured absence,
-          not filled with a proxy.
+          KRYL-1220 (subject-bound Formation admission) is operational — see FORMATION below. These
+          five metrics need a separate, per-observation structural layer (individual relationship
+          counts, hop-distance to evidence, multi-source coverage, commitment duration, domain
+          concentration) that Formation admission does not itself compute. These positions are held
+          as honest absence, not filled with a proxy.
         </div>
 
+        {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
+             question, rendered exactly as captured at handleExecute() time. Never
+             recomputed here; that boundary is deliberate (subtask 3/6). Absent
+             entirely for sessions formed before this field existed — no fabricated
+             empty box, matches the FIVE-METRIC STRIP honest-absence convention
+             immediately above. ─── */}
+        {analysisIntent && (
+          <PacketSection ordinal="00" title="READ" mt={20}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 4 }}>
+              {[
+                ['ACTOR', analysisIntent.actor, () => null],
+                ['SUBJECT', analysisIntent.subject, v =>
+                  v.kind === 'ENTITY' ? v.entity.name :
+                  v.kind === 'GEO' ? v.location :
+                  v.kind === 'DECISION_FRAME' ? v.frame : null],
+                ['OBJECTIVE', analysisIntent.objective, v => v.cues.join(', ')],
+                ['QUESTION', analysisIntent.question, v => v.text],
+                ['OBSERVATIONAL SCOPE', analysisIntent.observationalScope, v => v.join(', ')],
+              ].map(([label, dim, format]) => (
+                <div key={label} style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6 }}>
+                  <span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>{label} </span>
+                  {dim.state === 'resolved'
+                    ? <span style={{ color: '#eceee9' }}>{format(dim.value)}</span>
+                    : <span style={{ color: ABSENCE }}>{dim.reason}</span>}
+                </div>
+              ))}
+            </div>
+          </PacketSection>
+        )}
+
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A) ─── */}
-        <PacketSection ordinal="01" title="ANALYSIS" mt={80}>
+        <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
           <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
         </PacketSection>
 
@@ -569,18 +679,46 @@ export default function TargetPacket() {
         <PacketSection ordinal="02" title="FORMATION">
           {fieldFormation ? (
             <>
-              <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LBL }}>FIELD SCOPE — LIVE OBSERVABLE FIELD, NOT SUBJECT-BOUND</div>
+              <div style={{ marginTop: 16, fontFamily: MONO, fontSize: 10, letterSpacing: '0.14em', color: LBL }}>
+                {subjScope.kind === 'ENTITY' ? `FIELD SCOPE — SUBJECT-BOUND (${subjScope.canonicalId})` : 'FIELD SCOPE — LIVE OBSERVABLE FIELD, NOT SUBJECT-BOUND'}
+              </div>
               <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
-                A cross-domain formation is present in the live field:{' '}
+                A cross-domain formation is present {subjScope.kind === 'ENTITY' ? `for ${subjScope.canonicalId} ` : ''}in the {subjScope.kind === 'ENTITY' ? 'subject-scoped' : 'live'} field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
-                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''},
-                existence {fieldFormation.existence.toFixed(2)}.
+                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
               </p>
-              <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-                This is the structure of the observable field, not a reading bound to a resolved
-                subject — subject-scoped observation binding is the KRYL-1220 analytical bridge, not
-                yet delivered to this packet. KRYLO presents this structure; what it means for a
-                decision is the reader's to draw.
+              {/* FIELD STATE spec v1.0 §4C — existence is a real, defined value (cohesion ×
+                  pressureCoherence × avgGroundedness, formationinference.js) and IS the engine's
+                  own admission gate, not a fabricated add-on. Left out of display anyway: it
+                  reads as a confidence/probability score to a guest with no stated semantics on
+                  screen, and it's not part of the FIELD contract's required fields (domains,
+                  admitted relationships, per-domain types). Still on the object if ever needed. */}
+              {/* Per-domain breakdown of the SAME edges counted above — each edge already carries
+                  admittedType (domainintelligence.js's CROSS_DOMAIN_RELATIONSHIPS, WO-3 closed
+                  admission set), attached at formation-inference time. Not a second inference
+                  pass, not a new lookup — just surfacing what admitCrossDomainRelationship()
+                  already decided. */}
+              <div style={{ marginTop: 14 }}>
+                {fieldFormation.participatingDomains.map(d => {
+                  const edgesForD = fieldFormation.graph.edges.filter(e => e.a === d || e.b === d);
+                  if (!edgesForD.length) return null;
+                  return (
+                    <div key={d} style={{ marginTop: 8, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.7 }}>
+                      <span style={{ color: LIME, letterSpacing: '0.1em' }}>{d}</span>
+                      <span style={{ color: BODY_C }}> connects to:</span>
+                      {edgesForD.map((e, i) => (
+                        <div key={i} style={{ marginLeft: 14, color: '#9aa09d' }}>
+                          {e.a === d ? e.b : e.a} — {e.admittedType}
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
+              <p style={{ margin: '14px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+                {subjScope.kind === 'ENTITY'
+                  ? `This structure is bound to ${subjScope.canonicalId} — every particle above carries that subject's real canonicalId (KRYL-1220). KRYLO presents this structure; what it means for a decision is the reader's to draw.`
+                  : `This is the structure of the observable field, not a reading bound to a resolved subject — the query did not resolve to a single entity. KRYLO presents this structure; what it means for a decision is the reader's to draw.`}
               </p>
             </>
           ) : (
@@ -646,8 +784,11 @@ export default function TargetPacket() {
         <PacketSection ordinal="04" title="ATTENTION">
           <p style={{ margin: '18px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: '#8a918d' }}>
             Directed re-observation is not yet wired into the packet. This section will carry the
-            unresolved structural questions that warrant targeted re-observation once the closed-loop
-            bridge (KRYL-1202) lands.
+            unresolved structural questions that warrant targeted re-observation once KRYL-1202
+            (Formation-Driven Closed-Loop Perception — Formation as an automatic query generator
+            for targeted re-observation) lands. This is a separate capability from KRYL-1220
+            (subject-bound Formation admission, shown in 02 above, already operational) — confirmed
+            against Jira, not assumed: KRYL-1202 is still status Ready, not yet built (DEF-1301).
           </p>
           <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
             ASSEMBLANCE, the Fracture Surface, and the Leverage Field are shown elsewhere in this
@@ -655,30 +796,57 @@ export default function TargetPacket() {
           </p>
         </PacketSection>
 
-        {/* ── 05 PROVENANCE — truthful evidence state only (KRYL-1235). WhyTracePanel
-             renders ONLY when it resolves a real structural trace (EDGAR events);
-             its non-resolved "no verified record found — add a specific decision,
-             dollar amount, or timeline" copy is removed (that is refinement
-             guidance, not provenance). ─────────────────────────────────────────── */}
+        {/* ── 05 PROVENANCE — truthful evidence state only (KRYL-1235, DEF-1301).
+             THREE real, distinct evidence classes exist here, never collapsed into one
+             pass/fail bit: (1) wtResolved — a resolved EDGAR-8K CanonicalEvent structural
+             trace (whytrace.js). (2) subjectObservationCount — real subject-attributed
+             observations already admitted into Formation (domaingravity.js pool, the
+             capitalrealization/secownership/edgar8ksignal connectors). (3) WO-5B evidence
+             facets (adsubject.js/getDomainEvidenceFacets, surfaced per-domain above) --
+             still genuinely empty, no registered facet source attributes to a subject yet.
+             WhyTracePanel renders ONLY when (1) resolves; its non-resolved "no verified
+             record found" copy is removed (that was refinement guidance, not provenance). ── */}
         <PacketSection ordinal="05" title="PROVENANCE">
           <div style={{ marginTop: 12, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#9aa09d' }}>
-            <span style={{ color: wtResolved ? LIME : ABSENCE }}>
-              {wtResolved ? 'STRUCTURAL TRACE RESOLVED' : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
+            <span style={{ color: wtResolved || subjectObservationCount > 0 ? LIME : ABSENCE }}>
+              {wtResolved
+                ? 'STRUCTURAL TRACE RESOLVED'
+                : subjectObservationCount > 0
+                ? `SUBJECT-BOUND OBSERVATIONS PRESENT (${subjectObservationCount})`
+                : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
             </span>
           </div>
           {wtResolved ? (
             <div style={{ marginTop: 16 }}>
               <WhyTracePanel entity={entity} />
             </div>
+          ) : subjectObservationCount > 0 ? (
+            <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
+              {subjectObservationCount} real observation{subjectObservationCount !== 1 ? 's' : ''}, each carrying{' '}
+              {subjScope.kind === 'ENTITY' ? subjScope.canonicalId : 'this subject'}'s real canonicalId, admitted
+              the Formation shown in 02 above (KRYL-1220). No EDGAR-8K structural trace resolved separately
+              (WhyTracePanel, a narrower evidence class) and no WO-5B evidence facet is bound for the individual
+              domain measures above — each is a genuinely distinct evidence class, not the same absence restated.
+            </p>
           ) : (
             <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
-              No evidence is identifier-bound to a subject for this query (WO-5B 5B-2). Each domain
-              measure above names the source it would require; field pressure is shown as context
-              only. This is a stated absence — the packet does not fill it with a proxy or ask the
-              guest to supply decision parameters.
+              No evidence is identifier-bound to a subject for this query — no subject-bound Formation-admitting
+              observation, no subject-bound EDGAR-8K structural trace, and no subject-bound WO-5B evidence facet
+              (5B-2). This does not claim no Formation-admitting evidence exists in the live field at all — see
+              02 FORMATION above, which is field-scoped, not subject-scoped, and may be populated independently
+              of this subject's own binding. Each domain measure above names the source it would require; field
+              pressure is shown as context only. This is a stated absence — the packet does not fill it with a
+              proxy or ask the guest to supply decision parameters.
             </p>
           )}
         </PacketSection>
+
+        {/* ── WS6 Gate 1 (KRYL-1259) — Cognitive Fabric read. A DISTINCT section
+             (not a numbered 01–05 packet section), immediately after 05 PROVENANCE.
+             Reads the pre-computed getCFFormation() only (O(1), no analytical work
+             on render — CF-004-INV-006). Never overwrites or restyles 02 FORMATION;
+             the synchronous field-particle formation path is unchanged. ── */}
+        <CFField />
 
       </div>
 
