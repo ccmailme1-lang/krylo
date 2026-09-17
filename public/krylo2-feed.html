@@ -386,7 +386,9 @@ body {
     transition:opacity 0.2s;
     pointer-events:auto;
 }
-.lnav-item:hover { opacity:0.7; }
+.lnav-item:hover { opacity:1; }
+.lnav-item:hover svg { stroke:#888; }
+.lnav-item:hover .lnav-label { color:#888; }
 .lnav-item.active { opacity:1; }
 .lnav-item.active svg { stroke:#66FF00; }
 .lnav-item.active .lnav-label { color:#66FF00; }

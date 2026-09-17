@@ -98,7 +98,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       const items = doc.querySelectorAll('.lnav-item');
       items.forEach(el => el.classList.remove('active'));
       const idx = LNAV_MODES.indexOf(navMode);
-      if (idx !== -1 && items[idx]) items[idx].classList.add('active');
+      if (idx > 0 && items[idx]) items[idx].classList.add('active'); // Home (idx 0) never highlights
     } catch { /* iframe not ready — ignore */ }
   };
 
@@ -161,8 +161,19 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
   // Mirrors relayLeftNav's elementFromPoint lookup, but drives the visual/tooltip from here
   // instead of relying on the iframe to receive the event it structurally can't receive.
   // Direct style/attribute writes (a ref, not React state) — no re-render per mousemove.
+  // Gray on hover, lime when selected (Founder, 2026-09-17) — the clone iframe is
+  // pointerEvents:none so krylo2-feed.html's own :hover CSS never fires here; hover has to be
+  // driven from this relay instead, same reason relayLeftNavHover exists at all. Inline styles
+  // are cleared (not left blank-but-present) on leave so the .active CSS rule in krylo2-feed.html
+  // still governs the lime state cleanly.
   const applyHoverOpacity = (item) => {
-    if (item) item.style.opacity = item.classList.contains('active') ? '1' : '0.3';
+    if (!item) return;
+    const active = item.classList.contains('active');
+    item.style.opacity = active ? '1' : '0.3';
+    const svg = item.querySelector('svg');
+    const label = item.querySelector('.lnav-label');
+    if (svg) svg.style.stroke = '';
+    if (label) label.style.color = '';
   };
   const relayLeftNavHover = (e) => {
     try {
@@ -172,7 +183,13 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       if (item === hoveredItemRef.current) return;
       applyHoverOpacity(hoveredItemRef.current);
       hoveredItemRef.current = item;
-      if (item && !item.classList.contains('active')) item.style.opacity = '0.7';
+      if (item && !item.classList.contains('active')) {
+        item.style.opacity = '1';
+        const svg = item.querySelector('svg');
+        const label = item.querySelector('.lnav-label');
+        if (svg) svg.style.stroke = '#888';
+        if (label) label.style.color = '#888';
+      }
       e.currentTarget.title = item?.getAttribute('title') ?? '';
     } catch { /* iframe not ready — ignore */ }
   };
