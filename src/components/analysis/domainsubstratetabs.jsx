@@ -13,6 +13,7 @@ import { domainIntelligence, relationshipsFor } from '../../engine/domainintelli
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import { subjectScope } from '../../engine/subjectscope.js';
 import { A as adSubject } from '../../engine/adsubject.js';
+import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -23,7 +24,8 @@ const BRT  = 'rgba(255,255,255,0.78)';
 const RULE = '#191d1e';
 const ABSENCE = 'rgba(255,255,255,0.28)';
 
-const TABS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+const [TECH_, CAP_, KNOW_, LAB_, MED_, OWN_] = CANONICAL_DOMAINS;
+const TABS = [CAP_, OWN_, TECH_, KNOW_, LAB_, MED_].map(d => d.toUpperCase());
 
 function Panel({ ordinal, title, children }) {
   return (

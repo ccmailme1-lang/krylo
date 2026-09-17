@@ -23,10 +23,12 @@ import { domainIntelligence } from './domainintelligence.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from './domainsignalresolution.js';
 import { computeDomainPressure } from './domaingravity.js';
 import { isScopable } from './subjectscope.js';
+import { CANONICAL_DOMAINS } from './ontology.js';
 
 export const AD_SUBJECT_VERSION = '5b-2';
 
-export const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+const [TECH_, CAP_, KNOW_, LAB_, MED_, OWN_] = CANONICAL_DOMAINS;
+export const CANON_DOMAINS = [CAP_, OWN_, TECH_, KNOW_, LAB_, MED_].map(d => d.toUpperCase());
 
 function authoredMeasureKeys(domain) {
   const di = domainIntelligence(domain);

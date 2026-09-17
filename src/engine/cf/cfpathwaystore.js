@@ -21,12 +21,14 @@
 // aggregate (ν_t is per-pathway over uncollapsed particles, never a pre-route
 // composite).
 
+import { CANONICAL_DOMAINS } from '../ontology.js';
+
 // ── Constants (declared, with basis — CLAUDE.md §1) ──────────────────────────
 export const NU_LAMBDA   = 0.15; // per-batch decay. PROPOSED — needs Founder ruling (spec §7).
 export const NU_DORMANT  = 0.20; // below this a pathway stops contributing. PROPOSED.
 const CONFIDENCE_SCALE   = 100;  // pool particles carry confidence 0..100; magnitude = /100.
 
-const SIX = new Set(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']);
+const SIX = new Set(CANONICAL_DOMAINS.map(d => d.toUpperCase()));
 
 // ── State (module singleton — reset per run) ─────────────────────────────────
 /** @type {Map<string, { domain:string, nu:number, lineage:Array<{batch:number, particle:object}> }>} */

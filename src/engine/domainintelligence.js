@@ -18,6 +18,8 @@
 // `signals` field stays UNAUTHORED per domain; `sharpeningInputs` UNAUTHORED.
 // Subject binding is WO-5B.
 
+import { CANONICAL_DOMAINS } from './ontology.js';
+
 export const DI_VERSION = '0.3';
 
 const SPEC_II = 'specs/SPEC-observable-substrate-revelation-contract.md';
@@ -42,7 +44,7 @@ export const CROSS_DOMAIN_RELATIONSHIPS = Object.freeze({
   'LABOR|MEDIA':         'attention to a workforce event / labor conflict',
 });
 
-const CANON = new Set(['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA']);
+const CANON = new Set(CANONICAL_DOMAINS.map(d => d.toUpperCase()));
 
 // WO-3 — the runtime closed-relationship-admission boundary.
 // `F` admits a cross-domain relationship ONLY between two canonical domains, and

@@ -13,6 +13,7 @@ import { emitTelemetry, getTelemetryLog, emitChipInteraction } from '../../engin
 import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '../../engine/temporalhorizon.js';
 import { parseIntent }                from '../../engine/intentparser.js';
 import { buildQueryContext }          from '../../engine/querycontext.js';
+import { CANONICAL_DOMAINS }          from '../../engine/ontology.js';
 import { activeCompletionChips }      from '../../engine/completionchips.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
@@ -91,7 +92,8 @@ const DOMAIN_CHIPS = [
 
 // The locked six — the TRENDING pool iterates these when the guest has not narrowed
 // to a pill.
-const CANON_DOMAINS = ['CAPITAL', 'OWNERSHIP', 'TECHNOLOGY', 'KNOWLEDGE', 'LABOR', 'MEDIA'];
+const [TECH_, CAP_, KNOW_, LAB_, MED_, OWN_] = CANONICAL_DOMAINS;
+const CANON_DOMAINS = [CAP_, OWN_, TECH_, KNOW_, LAB_, MED_].map(d => d.toUpperCase());
 
 // Maps the 8 Analysis Bay pills onto the locked six-domain taxonomy (specs/analysis-domain-
 // taxonomy-unification.md). Needed to filter AnalysisDomainField (which only knows the locked
