@@ -110,12 +110,16 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     } catch { /* iframe not ready — ignore */ }
   };
 
-  const isFirstNavModeRender = useRef(true);
+  // Compares against the actual previous navMode value, not "how many times has this effect
+  // run" -- React.StrictMode (src/main.jsx) deliberately double-invokes effects in dev, which
+  // an invocation-count-based flag misreads as a second real navigation even though navMode
+  // never changed value between the two calls. A value-comparison is correct in both dev and
+  // production regardless of how many times React chooses to invoke the effect.
+  const prevNavModeRef = useRef(navMode);
   useEffect(() => {
-    if (isFirstNavModeRender.current) {
-      isFirstNavModeRender.current = false;
-    } else {
+    if (navMode !== prevNavModeRef.current) {
       hasNavigatedRef.current = true;
+      prevNavModeRef.current = navMode;
     }
     applyActiveNav(iframeRef.current?.contentDocument);
     applyActiveNav(leftNavRef.current?.contentDocument);
