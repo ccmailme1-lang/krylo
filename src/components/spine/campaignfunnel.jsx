@@ -72,6 +72,13 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
   const leftNavRef  = useRef(null);
   const iframeReady = useRef(false);
   const hoveredItemRef = useRef(null); // last .lnav-item hovered inside the scriptless iframe
+  // Founder, 2026-09-17: navMode starts as 'surface' (Home) before any real navigation has
+  // happened, so the plain idx-match below was lighting Home up on the untouched landing view
+  // too -- indistinguishable from an actual click since both produce navMode==='surface'. Skip
+  // the very first navMode-driven highlight application (the initial-mount value); every
+  // subsequent one is a real navigation event (click or otherwise) and highlights normally,
+  // Home included, same as any other item.
+  const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current || !signals?.length) return;
@@ -97,12 +104,19 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     try {
       const items = doc.querySelectorAll('.lnav-item');
       items.forEach(el => el.classList.remove('active'));
+      if (!hasNavigatedRef.current) return; // untouched landing view — nothing highlights yet
       const idx = LNAV_MODES.indexOf(navMode);
       if (idx !== -1 && items[idx]) items[idx].classList.add('active'); // symmetric across all 5 items, Home included
     } catch { /* iframe not ready — ignore */ }
   };
 
+  const isFirstNavModeRender = useRef(true);
   useEffect(() => {
+    if (isFirstNavModeRender.current) {
+      isFirstNavModeRender.current = false;
+    } else {
+      hasNavigatedRef.current = true;
+    }
     applyActiveNav(iframeRef.current?.contentDocument);
     applyActiveNav(leftNavRef.current?.contentDocument);
   }, [navMode, restrictToChrome]);
