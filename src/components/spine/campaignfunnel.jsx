@@ -98,7 +98,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       const items = doc.querySelectorAll('.lnav-item');
       items.forEach(el => el.classList.remove('active'));
       const idx = LNAV_MODES.indexOf(navMode);
-      if (idx > 0 && items[idx]) items[idx].classList.add('active'); // Home (idx 0) never highlights
+      if (idx !== -1 && items[idx]) items[idx].classList.add('active'); // lime on selection, all items including Home
     } catch { /* iframe not ready — ignore */ }
   };
 
