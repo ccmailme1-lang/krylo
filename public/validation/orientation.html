@@ -1,0 +1,158 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KRYLO Guest Validation Orientation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg:        #f4f4f6;
+    --surface:   #ffffff;
+    --rule:      #d9dade;
+    --rule-soft: #e7e8eb;
+    --text:      #26282c;
+    --text-dim:  #6b7075;
+    --head:      #14161a;
+    --lime:      #2f8f00;
+    --lime-tint: #eef6e6;
+    --blue:      #0064c8;
+    --blue-tint: #e7f0fb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0a0b0c; --surface:#131517; --rule:#262a2e; --rule-soft:#1c1f22;
+      --text:#d3d6d9; --text-dim:#7d8288; --head:#f1f3f4;
+      --lime:#66FF00; --lime-tint:#16220c; --blue:#4aa8ff; --blue-tint:#10202f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0a0b0c; --surface:#131517; --rule:#262a2e; --rule-soft:#1c1f22;
+    --text:#d3d6d9; --text-dim:#7d8288; --head:#f1f3f4;
+    --lime:#66FF00; --lime-tint:#16220c; --blue:#4aa8ff; --blue-tint:#10202f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 44px 28px 80px; }
+  h1, h2 { font-family: Georgia, 'Times New Roman', serif; color: var(--head); font-weight: 400; text-wrap: balance; }
+  h1 { font-size: 26px; line-height: 1.12; letter-spacing: -0.01em; margin: 0; }
+  h2 { font-size: 17px; line-height: 1.2; margin: 0 0 12px; }
+  .eyebrow { font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px; }
+  .lede { font-size: 13.5px; color: var(--text); margin: 12px 0 0; max-width: 60ch; }
+  .rule-lime { height: 2px; width: 40px; background: var(--lime); margin: 16px 0 0; }
+  section { margin-top: 32px; }
+  section > .eyebrow { margin-bottom: 6px; }
+  p { margin: 0 0 9px; max-width: 64ch; }
+  p:last-child { margin-bottom: 0; }
+  a { color: var(--blue); }
+  .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .steps li { counter-increment: step; position: relative; padding: 0 0 16px 40px; border-left: 1px solid var(--rule-soft); margin-left: 10px; }
+  .steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
+  .steps li::before { content: counter(step, decimal-leading-zero); position: absolute; left: -11px; top: -1px; background: var(--bg); color: var(--text-dim); font-size: 10.5px; letter-spacing: 0.06em; padding: 2px 4px; }
+  .queries { margin: 0; padding: 0; list-style: none; counter-reset: q; }
+  .queries li { counter-increment: q; background: var(--surface); border: 1px solid var(--rule); border-left: 2px solid var(--lime); padding: 16px 18px; margin-bottom: 12px; }
+  .queries li:last-child { margin-bottom: 0; }
+  .q-tag { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+  .q-tag b { color: var(--lime); font-weight: 600; }
+  .q-text { font-family: Georgia, 'Times New Roman', serif; color: var(--head); font-size: 16px; line-height: 1.4; margin: 6px 0 8px; }
+  .q-why { font-size: 13.5px; color: var(--text-dim); margin: 0; max-width: none; }
+  dl.surfaces { margin: 0; display: grid; gap: 0; }
+  dl.surfaces > div { display: grid; grid-template-columns: 148px 1fr; gap: 16px; padding: 15px 0; border-top: 1px solid var(--rule-soft); }
+  dl.surfaces > div:last-child { border-bottom: 1px solid var(--rule-soft); }
+  dl.surfaces dt { font-size: 13.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--head); font-weight: 500; }
+  dl.surfaces dd { margin: 0; font-size: 15.5px; color: var(--text-dim); }
+  .callout { background: var(--blue-tint); border: 1px solid var(--rule); padding: 16px 18px; margin: 20px 0 0; font-size: 15.5px; }
+  .callout b { color: var(--head); font-weight: 600; }
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); }
+  @media (max-width: 520px) { .wrap { padding: 48px 20px 90px; } h1 { font-size: 30px; } dl.surfaces > div { grid-template-columns: 1fr; gap: 4px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Guest session · validation orientation</p>
+  <h1>Your first session with KRYLO</h1>
+  <p class="lede">KRYLO watches six domains — capital, ownership, technology, knowledge, labor, and media — for structural change and relationships forming across them. It detects emerging structure; it does not predict what happens next.</p>
+  <p class="lede">Bring KRYLO a question from your world. Explore what it surfaces, follow the relationships that interest you, and see where the structure takes you.</p>
+  <div class="rule-lime"></div>
+
+  <section>
+    <p class="eyebrow">Getting in</p>
+    <h2>Sign in and orient</h2>
+    <ol class="steps">
+      <li>Open <a href="/">krylo.org</a>. When the access panel appears, enter the <strong>access code</strong> you were given.</li>
+      <li>You'll arrive at <strong>Home — the Macro-level Domain Field Observatory.</strong></li>
+      <li>When you're ready, open <strong>Analysis</strong> and enter a real situation or question from your world — not a list of keywords.</li>
+      <li>Submit. KRYLO will build a <strong>Target Packet</strong> in Analysis for you to explore.</li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow">What to run</p>
+    <h2>Five queries, in this order</h2>
+    <p>These five queries are designed to give you different ways to experience KRYLO. Run them in order, as naturally as you can.</p>
+    <ol class="queries">
+      <li>
+        <span class="q-tag"><b>01</b> · Sparse</span>
+        <p class="q-text">"Looking to buy a commercial unit in New York City."</p>
+        <p class="q-why">The situation is intentionally underspecified. Run it as you would if this were real.</p>
+      </li>
+      <li>
+        <span class="q-tag"><b>02</b> · Same subject, fully formed</span>
+        <p class="q-text">Return to the same purchase and add: the decision on the table — buy, lease, or redevelop — a budget, and a timeline.</p>
+        <p class="q-why">Compare what surfaces against query 01.</p>
+      </li>
+      <li>
+        <span class="q-tag"><b>03</b> · A named situation in your field</span>
+        <p class="q-text">Bring something concrete you'd actually want to understand — an entity building a position, a technology being adopted, a workforce shift, or another situation from your field.</p>
+        <p class="q-why">Before you run it, note what you expect to find. Then compare what you expected with what KRYLO surfaces.</p>
+      </li>
+      <li>
+        <span class="q-tag"><b>04</b> · Deliberately vague</span>
+        <p class="q-text">"What should I do about my situation?"</p>
+        <p class="q-why">Run it as written.</p>
+      </li>
+      <li>
+        <span class="q-tag"><b>05</b> · Capital or ownership formation</span>
+        <p class="q-text">Bring a question about companies, stakes, debt, or capital reorganizing in a sector you know.</p>
+        <p class="q-why">Run it as you naturally would.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow">Reading the screen</p>
+    <h2>What each surface is</h2>
+    <p>KRYLO is organized around several views:</p>
+    <dl class="surfaces">
+      <div><dt>Home</dt><dd>The Macro-level Domain Field Observatory.</dd></div>
+      <div><dt>Analysis</dt><dd>Explore the question you brought.</dd></div>
+      <div><dt>Formation</dt><dd>Examine the structural relationships KRYLO surfaces.</dd></div>
+      <div><dt>News Feed</dt><dd>Follow relevant developments in the field.</dd></div>
+      <div><dt>Community</dt><dd>See perspectives and activity from others.</dd></div>
+      <div><dt>History</dt><dd>Revisit previous questions and sessions.</dd></div>
+    </dl>
+    <p style="margin-top:16px">Move between views as you explore. There is no required order.</p>
+    <div class="callout">
+      <b>A note on what you may see.</b> Some fields may say "NOT MEASURED" or "no verified record." If you encounter either, form your own view of what you are seeing and whether you trust it. You'll be asked about this afterward.
+    </div>
+  </section>
+
+  <section>
+    <p class="eyebrow">After your session</p>
+    <h2>You'll complete a short questionnaire</h2>
+    <p>As you go, note anything that stands out — anything that feels unclear, unsupported, contradictory, unexpected, or that changes how you see the situation.</p>
+    <p>Immediately after the session, you'll be asked about what you noticed, on your own terms: <a href="/validation/questionnaire.html">open the questionnaire</a>.</p>
+  </section>
+
+  <footer>KRYLO · Signal-Classified · Analytical Use Only</footer>
+
+</div>
+</body>
+</html>

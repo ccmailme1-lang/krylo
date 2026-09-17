@@ -1,0 +1,295 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KRYLO Guest Validation Questionnaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+  :root{
+    --bg:#050506; --panel:#0c0c0d; --row:#0e0e10; --edge:rgba(255,255,255,0.09); --edge2:rgba(255,255,255,0.055);
+    --lime:#66FF00; --text:#ededea; --dim:rgba(224,224,220,0.55); --faint:rgba(255,255,255,0.4);
+    --blue:#4aa8ff;
+    --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",monospace;
+    --disp:"Space Grotesk","IBM Plex Sans",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(120% 70% at 50% 0%,#0c0c0e 0%,var(--bg) 55%);color:var(--text);
+    font-family:var(--mono);font-size:16px;min-height:100vh;padding:34px 18px 100px;line-height:1.6}
+  .wrap{max-width:800px;margin:0 auto}
+  .eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:0.3em;color:var(--faint);text-transform:uppercase}
+  h1{font-family:var(--disp);font-size:clamp(26px,4vw,36px);font-weight:700;margin:4px 0 8px;letter-spacing:0.2px;color:var(--text)}
+  .note{font-family:var(--mono);font-size:14px;line-height:1.65;color:var(--dim);background:rgba(255,255,255,0.02);
+    border:1px solid var(--edge2);border-left:2px solid var(--lime);border-radius:8px;padding:14px 18px;margin:16px 0 28px}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:28px}
+  .meta > div{grid-column:1 / -1}
+  .meta label, .q label{display:block;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  input[type=text], textarea{
+    width:100%;font-family:var(--mono);font-size:15.5px;background:#0a0a0a;color:var(--text);
+    border:1px solid var(--edge);border-radius:7px;padding:10px 12px;resize:vertical
+  }
+  input[type=text]:focus, textarea:focus{outline:none;border-color:var(--lime)}
+  .layer{border:1px solid var(--edge);border-radius:14px;padding:24px 24px 10px;margin-bottom:26px;background:rgba(255,255,255,0.015)}
+  .layer.locked{opacity:0.35;pointer-events:none}
+  .layer-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
+  .layer-title{font-family:var(--disp);font-size:19px;font-weight:700;color:var(--text)}
+  .layer-sub{font-size:13px;color:var(--faint);letter-spacing:0.04em;margin-bottom:18px}
+  .q{margin-bottom:22px;border-top:1px solid var(--edge2);padding-top:18px}
+  .q:first-of-type{border-top:none;padding-top:0}
+  .q-text{font-family:var(--disp);font-size:17px;color:var(--text);margin-bottom:4px}
+  .q-flag{display:inline-block;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--lime);
+    border:1px solid rgba(102,255,0,0.35);border-radius:4px;padding:2px 6px;margin-left:8px;vertical-align:middle}
+  .radios{display:flex;gap:16px;margin:8px 0 4px;flex-wrap:wrap}
+  .radios label{display:flex;align-items:center;gap:6px;font-size:14.5px;color:var(--dim);text-transform:none;letter-spacing:0}
+  .followup{margin-top:10px;padding-left:14px;border-left:2px solid var(--edge2);display:none}
+  .followup.show{display:block}
+  .followup .q{border-top:none;padding-top:8px;margin-bottom:14px}
+  button{font-family:var(--mono);font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--dim);
+    background:transparent;border:1px solid var(--edge);border-radius:8px;padding:10px 18px;cursor:pointer}
+  button:hover{color:var(--text);border-color:var(--faint)}
+  button.primary{color:var(--lime);border-color:rgba(102,255,0,0.35)}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px;flex-wrap:wrap}
+  .status{font-family:var(--mono);font-size:12.5px;color:var(--faint);letter-spacing:0.06em}
+  .status.on{color:var(--lime)}
+  .foot{font-family:var(--mono);font-size:12.5px;color:var(--faint);margin-top:16px;text-align:center;letter-spacing:0.04em}
+  textarea{min-height:56px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="eyebrow">KRYLO · Guest Validation</p>
+  <h1>Post-session questionnaire</h1>
+  <div class="note">
+    Answer <b style="color:var(--lime)">Layer 1</b> in full, in the order shown, before Layer 2 unlocks. There are no correct answers — report what you actually noticed and did. This does not replace anything you noted during the session; it captures your reflection immediately after.
+  </div>
+
+  <div class="meta">
+    <div><label for="sessionId">Session ID</label><input type="text" id="sessionId" placeholder="e.g. tester id + date"></div>
+    <div><label for="guestId">Guest identifier</label><input type="text" id="guestId" placeholder="e.g. t03"></div>
+    <div><label for="querySeq">Query sequence run (paste or summarize)</label><textarea id="querySeq" placeholder="01 sparse / 02 formed / 03 own-field / 04 vague / 05 capital-ownership"></textarea></div>
+  </div>
+
+  <div class="layer" id="layer1">
+    <div class="layer-head"><span class="layer-title">Layer 1 — Unprompted</span></div>
+    <p class="layer-sub">What you noticed on your own, before anything else.</p>
+
+    <div class="q" data-q="L1Q1">
+      <div class="q-text">What did you notice first?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+
+    <div class="q" data-q="L1Q2">
+      <div class="q-text">What surprised you?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+
+    <div class="q" data-q="L1Q3">
+      <div class="q-text">What, if anything, did you disagree with?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+
+    <div class="q" data-q="L1Q4">
+      <div class="q-text">Did KRYLO state anything that you know or believe to be factually wrong?</div>
+      <div class="radios" data-radio-group="L1Q4">
+        <label><input type="radio" name="L1Q4" value="Yes"> Yes</label>
+        <label><input type="radio" name="L1Q4" value="No"> No</label>
+        <label><input type="radio" name="L1Q4" value="Not sure"> Not sure</label>
+      </div>
+      <div class="followup" data-followup-for="L1Q4">
+        <div class="q" data-q="L1Q4a"><div class="q-text">What did KRYLO say?</div><textarea data-field="response"></textarea></div>
+        <div class="q" data-q="L1Q4b"><div class="q-text">What should it have said instead?</div><textarea data-field="response"></textarea></div>
+        <div class="q" data-q="L1Q4c"><div class="q-text">How do you know it was wrong?</div><textarea data-field="response"></textarea></div>
+      </div>
+    </div>
+
+    <div class="q" data-q="L1Q5">
+      <div class="q-text">What did you investigate next?<span class="q-flag">Primary measure</span></div>
+      <textarea data-field="response"></textarea>
+    </div>
+
+    <div class="q" data-q="L1Q6">
+      <div class="q-text">What did you want to know that KRYLO did not show you?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+
+    <div class="q" data-q="L1Q7">
+      <div class="q-text">What, if anything, would you use KRYLO for?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+  </div>
+
+  <div class="layer locked" id="layer2">
+    <div class="layer-head"><span class="layer-title">Layer 2 — Hypothesis probes</span></div>
+    <p class="layer-sub">These test four hypotheses from prior simulated-user work. They are hypotheses, not expected answers.</p>
+
+    <div class="q" data-q="L2H1">
+      <div class="q-text">Did you want to know why KRYLO admitted a particular relationship or formation?</div>
+      <div class="radios" data-radio-group="L2H1">
+        <label><input type="radio" name="L2H1" value="Yes"> Yes</label>
+        <label><input type="radio" name="L2H1" value="No"> No</label>
+        <label><input type="radio" name="L2H1" value="I did not think about it"> I did not think about it</label>
+      </div>
+      <div class="followup" data-followup-for="L2H1">
+        <div class="q" data-q="L2H1a"><div class="q-text">What did you want to see?</div><textarea data-field="response"></textarea></div>
+      </div>
+    </div>
+
+    <div class="q" data-q="L2H2">
+      <div class="q-text">Did you want to know when a relationship or formation began, changed, or persisted?</div>
+      <div class="radios" data-radio-group="L2H2">
+        <label><input type="radio" name="L2H2" value="Yes"> Yes</label>
+        <label><input type="radio" name="L2H2" value="No"> No</label>
+        <label><input type="radio" name="L2H2" value="I did not think about it"> I did not think about it</label>
+      </div>
+      <div class="followup" data-followup-for="L2H2">
+        <div class="q" data-q="L2H2a"><div class="q-text">What were you trying to understand?</div><textarea data-field="response"></textarea></div>
+      </div>
+    </div>
+
+    <div class="q" data-q="L2H3">
+      <div class="q-text">Did you wonder whether running the same query again would produce the same result?</div>
+      <div class="radios" data-radio-group="L2H3">
+        <label><input type="radio" name="L2H3" value="Yes"> Yes</label>
+        <label><input type="radio" name="L2H3" value="No"> No</label>
+        <label><input type="radio" name="L2H3" value="I did not think about it"> I did not think about it</label>
+      </div>
+      <div class="followup" data-followup-for="L2H3">
+        <div class="q" data-q="L2H3a"><div class="q-text">What would you want to be able to verify?</div><textarea data-field="response"></textarea></div>
+      </div>
+    </div>
+
+    <div class="q" data-q="L2H4">
+      <div class="q-text">Did any relationship KRYLO showed feel obvious, generic, or insufficiently supported?</div>
+      <textarea data-field="response"></textarea>
+    </div>
+  </div>
+
+  <div class="bar">
+    <span class="status" id="statusLine">Not saved yet</span>
+    <div style="display:flex;gap:10px">
+      <button id="reset">Reset</button>
+      <button class="primary" id="copyJson">Copy responses as JSON</button>
+    </div>
+  </div>
+  <p class="foot">Responses auto-save to this browser only. Nothing is sent anywhere — use Copy to hand off the JSON.</p>
+</div>
+
+<script>
+(function(){
+  const STORE_KEY = 'krylo_guest_validation_v1';
+  const L1_IDS = ['L1Q1','L1Q2','L1Q3','L1Q4','L1Q5','L1Q6','L1Q7'];
+
+  function load(){ try { return JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { return {}; } }
+  function save(state){ try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch {} }
+
+  let state = load();
+  state.meta = state.meta || {};
+  state.answers = state.answers || {};
+
+  const metaFields = ['sessionId','guestId','querySeq'];
+  metaFields.forEach(id => {
+    const el = document.getElementById(id);
+    if (state.meta[id]) el.value = state.meta[id];
+    el.addEventListener('input', () => { state.meta[id] = el.value; persist(); });
+  });
+
+  document.querySelectorAll('[data-q]').forEach(qEl => {
+    const qid = qEl.dataset.q;
+    const directTextarea = qEl.querySelector(':scope > textarea[data-field="response"]');
+    if (directTextarea) {
+      const rec = state.answers[qid] || {};
+      if (rec.response) directTextarea.value = rec.response;
+      directTextarea.addEventListener('input', () => {
+        state.answers[qid] = Object.assign(state.answers[qid] || {}, {
+          question: directTextarea.closest('.q').querySelector('.q-text').textContent.replace('Primary measure','').trim(),
+          response: directTextarea.value,
+          layer: qid.startsWith('L1') ? 1 : 2,
+          ts: Date.now()
+        });
+        persist();
+      });
+    }
+  });
+
+  document.querySelectorAll('[data-radio-group]').forEach(group => {
+    const name = group.dataset.radioGroup;
+    const followup = document.querySelector('.followup[data-followup-for="' + name + '"]');
+    const rec = state.answers[name] || {};
+    group.querySelectorAll('input[type=radio]').forEach(r => {
+      if (rec.response === r.value) r.checked = true;
+      r.addEventListener('change', () => {
+        state.answers[name] = Object.assign(state.answers[name] || {}, {
+          question: group.closest('.q').querySelector('.q-text').textContent,
+          response: r.value,
+          layer: name.startsWith('L1') ? 1 : 2,
+          ts: Date.now()
+        });
+        persist();
+        if (followup) followup.classList.toggle('show', r.value === 'Yes');
+        checkLayer1Complete();
+      });
+    });
+    if (followup && rec.response === 'Yes') followup.classList.add('show');
+  });
+
+  document.querySelectorAll('.followup textarea[data-field="response"]').forEach(ta => {
+    const qid = ta.closest('.q').dataset.q;
+    const rec = state.answers[qid] || {};
+    if (rec.response) ta.value = rec.response;
+    ta.addEventListener('input', () => {
+      state.answers[qid] = Object.assign(state.answers[qid] || {}, {
+        question: ta.closest('.q').querySelector('.q-text').textContent,
+        response: ta.value,
+        layer: qid.startsWith('L1') ? 1 : 2,
+        ts: Date.now()
+      });
+      persist();
+    });
+  });
+
+  function checkLayer1Complete(){
+    const complete = L1_IDS.every(id => {
+      const rec = state.answers[id];
+      if (!rec) return false;
+      if (id === 'L1Q4') return !!rec.response;
+      return rec.response && rec.response.trim().length > 0;
+    });
+    document.getElementById('layer2').classList.toggle('locked', !complete);
+    return complete;
+  }
+
+  function persist(){
+    save(state);
+    const s = document.getElementById('statusLine');
+    s.textContent = 'Saved ' + new Date().toLocaleTimeString();
+    s.classList.add('on');
+    checkLayer1Complete();
+  }
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('Clear all responses in this browser?')) return;
+    localStorage.removeItem(STORE_KEY);
+    location.reload();
+  });
+
+  document.getElementById('copyJson').addEventListener('click', async () => {
+    const out = {
+      meta: state.meta,
+      answers: Object.keys(state.answers).map(qid => Object.assign({ id: qid }, state.answers[qid]))
+    };
+    const text = JSON.stringify(out, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      document.getElementById('statusLine').textContent = 'Copied to clipboard';
+    } catch {
+      window.prompt('Copy this JSON manually:', text);
+    }
+  });
+
+  checkLayer1Complete();
+})();
+</script>
+</body>
+</html>
