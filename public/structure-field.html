@@ -243,7 +243,6 @@
 
 <div id="panel">
   <div class="panel-drag-handle" id="panel-drag-handle"></div>
-  <button class="panel-close" id="panel-close">CLOSE ✕</button>
   <div>
     <div class="panel-eyebrow" id="panel-domain-eyebrow">—</div>
     <div class="panel-title" id="panel-title">—</div>
@@ -446,6 +445,15 @@
       nodeById = Object.fromEntries(NODES.map(n => [n.id, n]));
     }
     fitViewToNodes(); // composition fix -- pan/zoom the viewport onto the real data, see comment above viewDomain
+
+    // Panel stays on by default — open it for the highest-contribution node as soon as
+    // real data arrives; clicking any other node just switches which one it shows.
+    if (NODES.length) {
+      const def = NODES.reduce((a, b) => (b.contribution > a.contribution ? b : a));
+      panelOpenFor = def.id;
+      renderPanel(def.id);
+      panel.classList.add('open');
+    }
 
     // Readout (FORMATIONS/RELATIONSHIPS/RESOLVED) is updated by draw() itself, from
     // realFormation directly -- single source of truth, see the end of draw() below.
@@ -1207,10 +1215,8 @@
     renderDetailScatter(nodeId);
   }
 
-  document.getElementById('panel-close').addEventListener('click', () => {
-    panel.classList.remove('open');
-    panelOpenFor = null;
-  });
+  // Panel stays on by default (Founder, 2026-09-17) — the close button and Escape no longer
+  // hide it; clicking a different node switches what it shows instead.
 
   // ---- draggable panel — grab the top strip, reposition anywhere on the
   // field. Switches from right/bottom-anchored to left/top-anchored on
@@ -1302,8 +1308,6 @@
   window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
     if (e.key === 'Escape') {
-      panel.classList.remove('open');
-      panelOpenFor = null;
       stopPlay();
       return;
     }
