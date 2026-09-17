@@ -1,0 +1,2789 @@
+Yes. We can take this all the way through the architectural requirement set now.
+
+The important thing is that we do not stop at the conceptual architecture. We need to carry the model through runtime behavior, exploration, formation, scaling, validation, and integration with KRYLO's existing ontology/governance.
+
+The resulting CF specification set should be:
+
+CF-001  Architecture & Processing Model
+CF-002  Core / Remote Processor Contracts
+CF-003  Signal / Observation / Relationship / Pathway Data Model
+CF-004  Fabric Runtime & Routing Protocol
+CF-005  Dynamic Relational Exploration
+CF-006  Formation Synthesis
+CF-007  Scalability / Concurrency / Backpressure
+CF-008  Validation & Falsification
+CF-009  KRYLO Integration & Governance
+CF-010  Reference Implementation Requirements
+
+CF-001 through CF-003 are established above. Below completes the architecture.
+
+CF-004 — Cognitive Fabric Runtime & Routing Protocol
+
+Status: DRAFT
+Version: 0.1
+Parent: CF-001, CF-002, CF-003
+
+1. Purpose
+
+CF-004 defines how the Cognitive Fabric operates at runtime.
+
+The Fabric SHALL function as an intermediary processing substrate rather than as a monolithic controller.
+
+Its fundamental runtime loop is:
+
+RECEIVE
+   ↓
+CHARACTERIZE
+   ↓
+ROUTE
+   ↓
+PROCESS
+   ↓
+CAPTURE
+   ↓
+UPDATE PATHWAY
+   ↓
+EVALUATE
+   ↓
+CONTINUE / TERMINATE / ESCALATE
+2. Runtime Object
+
+Every active processing operation SHALL have a Fabric Runtime Context.
+
+FabricRuntimeContext {
+    runtime_id
+    objective_id
+
+    active_signals[]
+    active_pathways[]
+
+    processor_registry
+    capability_registry
+
+    routing_policy
+    exploration_policy
+
+    resource_state
+    runtime_state
+}
+
+The Runtime Context SHALL NOT itself become the owner of observations or relationships.
+
+It coordinates their movement.
+
+3. Signal Ingress
+
+A signal enters through:
+
+SIGNAL
+  ↓
+INGRESS
+  ↓
+VALIDATE ENVELOPE
+  ↓
+REGISTER
+  ↓
+CHARACTERIZE
+
+The Fabric SHALL assign a unique runtime identity to the signal if one does not already exist.
+
+Malformed signals SHALL be rejected without being silently transformed into valid signals.
+
+4. Signal Characterization
+
+Before routing, the Fabric SHALL establish sufficient characteristics to determine applicable processor capabilities.
+
+Characterization MAY include:
+
+signal type;
+source;
+subject;
+object;
+temporal properties;
+domain;
+known observations;
+existing relationships;
+pathway context;
+uncertainty;
+required capabilities.
+
+Characterization SHALL NOT constitute formation inference.
+
+5. Capability Resolution
+
+The Fabric SHALL resolve:
+
+SIGNAL
+   ↓
+REQUIRED CAPABILITIES
+   ↓
+AVAILABLE CORE PROCESSORS
+
+The result MAY be:
+
+NONE
+ONE
+MANY
+
+No processor match SHALL be treated as a valid runtime state.
+
+The Fabric SHALL NOT invent a capability merely because processing is desired.
+
+6. Routing
+
+Routing SHALL produce a RoutingEvent.
+
+Signal
+   │
+   ▼
+Capability Resolution
+   │
+   ├──► Core A
+   ├──► Core D
+   └──► Core H
+
+Routing SHALL be deterministic given identical:
+
+input state;
+processor state;
+capability registry;
+routing policy.
+
+Where policy explicitly permits nondeterminism, the decision SHALL still be recorded.
+
+7. Processing Dispatch
+
+The Fabric SHALL dispatch a Processing Envelope.
+
+The processor SHALL return a Processing Result.
+
+FABRIC
+  │
+  ├── envelope
+  ▼
+PROCESSOR
+  │
+  ├── result
+  ▼
+FABRIC
+
+The processor SHALL NOT directly mutate Formation state.
+
+8. Result Ingestion
+
+A Processing Result SHALL pass through:
+
+RESULT
+  ↓
+SCHEMA VALIDATION
+  ↓
+PROVENANCE VALIDATION
+  ↓
+ADMISSION CHECKS
+  ↓
+REGISTER
+  ↓
+PATHWAY UPDATE
+
+Invalid output SHALL be rejected or quarantined according to runtime policy.
+
+9. Re-entry
+
+Any valid derived Signal MAY re-enter the Fabric.
+
+CORE
+ ↓
+RESULT
+ ↓
+DERIVED SIGNAL
+ ↓
+FABRIC
+ ↓
+NEW ROUTING
+
+This permits recursive processing.
+
+A result SHALL NOT automatically re-enter indefinitely.
+
+It must acquire an exploration state.
+
+10. Runtime State Machine
+INGRESSED
+    ↓
+CHARACTERIZED
+    ↓
+ROUTABLE
+    ↓
+DISPATCHED
+    ↓
+PROCESSING
+    ↓
+RESULT RECEIVED
+    ↓
+EVALUATED
+    ├── CONTINUE
+    ├── TERMINATE
+    └── ESCALATE
+
+Failure states MAY occur at any transition.
+
+11. Runtime Invariants
+CF-004-INV-001
+
+Every processing transition SHALL be observable.
+
+CF-004-INV-002
+
+Every routing decision SHALL be recorded.
+
+CF-004-INV-003
+
+Every derived signal SHALL retain lineage.
+
+CF-004-INV-004
+
+Runtime coordination SHALL NOT overwrite evidentiary history.
+
+CF-004-INV-005
+
+A processor SHALL NOT bypass Fabric governance to directly create an admitted Formation.
+
+CF-005 — Dynamic Relational Exploration
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-005 defines how the Fabric explores relationships beyond the initial observation.
+
+This specification formally rejects:
+
+fixed-degree traversal as the primary exploration model.
+
+The system SHALL instead implement significance-conditioned exploration.
+
+2. Exploration Unit
+
+The fundamental unit is a:
+
+Pathway Expansion
+
+CURRENT PATHWAY
+       ↓
+NEW RELATIONSHIP
+       ↓
+NEW OBSERVATION
+       ↓
+NEW PATHWAY STATE
+3. Expansion
+
+An active pathway may request expansion.
+
+Expansion SHALL evaluate:
+
+candidate relationship
+        +
+context
+        +
+existing pathway
+        +
+structural significance
+        +
+uncertainty
+        +
+resource state
+4. Relational Depth
+
+Depth SHALL be calculated.
+
+But:
+
+Depth is a measurement, not a decision rule.
+
+Example:
+
+Depth 1   significance .91
+Depth 2   significance .79
+Depth 3   significance .68
+Depth 4   significance .42
+Depth 5   significance .11
+
+The system may terminate.
+
+But:
+
+Depth 1   .91
+Depth 2   .79
+Depth 3   .64
+Depth 4   .71
+Depth 5   .86
+
+must remain eligible for continuation.
+
+5. Relational Decay
+
+CF-005 SHALL support measurement of significance change across depth.
+
+Conceptually:
+
+ΔS / ΔD
+
+where:
+
+S = structural significance;
+D = relational depth.
+
+This permits identification of:
+
+DECAY
+PERSISTENCE
+AMPLIFICATION
+6. Relational Amplification
+
+A pathway SHALL be capable of being flagged when:
+
+S(n+1) > S(n)
+
+subject to the eventual significance model.
+
+This does not mean the relationship is automatically important.
+
+It means:
+
+distance did not produce the expected reduction in significance.
+
+That becomes an observation requiring further evaluation.
+
+7. Exploration Decision
+
+The runtime decision SHALL conceptually be:
+
+                  PATHWAY
+                     │
+                     ▼
+              EVALUATE STATE
+                     │
+          ┌──────────┼──────────┐
+          ▼          ▼          ▼
+       CONTINUE   TERMINATE   ESCALATE
+
+The decision MAY consider:
+
+significance;
+significance trajectory;
+formation coherence;
+uncertainty;
+novelty;
+pathway convergence;
+resource budget;
+duplicate pathways;
+policy.
+8. Convergence
+
+Multiple pathways may encounter the same structure.
+
+PATH A ───────┐
+              ▼
+          OBSERVATION X
+              ▲
+PATH B ───────┘
+
+The system SHALL recognize convergence.
+
+Convergence SHALL NOT automatically constitute a Formation.
+
+It is evidence relevant to Formation synthesis.
+
+9. Revisit
+
+A terminated pathway MAY become eligible for revisitation if new evidence changes its state.
+
+TERMINATED
+    │
+    │ new evidence
+    ▼
+REVISIT
+    │
+    ▼
+ACTIVE
+
+The system SHALL preserve the original termination event.
+
+It SHALL not rewrite history.
+
+10. Exploration Budget
+
+Every exploration SHALL have a resource budget.
+
+The budget MAY include:
+
+max active pathways
+max processing operations
+max wall-clock duration
+max remote expansions
+max queued signals
+
+These are resource controls, not epistemic claims about maximum useful relational depth.
+
+That distinction is mandatory.
+
+CF-006 — Formation Synthesis & Admission
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-006 connects the Cognitive Fabric to KRYLO's structural-formation model.
+
+The Fabric discovers and preserves relationships.
+
+It does not automatically declare them a Formation.
+
+2. Formation Pipeline
+OBSERVATIONS
+     ↓
+ADMITTED RELATIONSHIPS
+     ↓
+PATHWAYS
+     ↓
+STRUCTURAL CONFIGURATION
+     ↓
+FORMATION CANDIDATE
+     ↓
+FORMATION ADMISSION
+     ↓
+FORMATION
+3. Formation Candidate
+
+A candidate SHALL contain:
+
+candidate_id
+
+relationship_ids[]
+observation_ids[]
+pathway_ids[]
+
+boundary
+provenance
+validity
+influence_class
+coherence
+
+structural_significance
+4. Formation Boundary
+
+A candidate SHALL explicitly establish its boundary.
+
+FORMATION
+ ├── Relationship A
+ ├── Relationship B
+ ├── Relationship C
+ └── Relationship D
+
+The system SHALL be capable of answering:
+
+Why are these relationships included?
+
+and:
+
+Why are adjacent relationships excluded?
+
+5. Formation Admission
+
+CF-006 SHALL defer authoritative Formation Admission to the applicable KRYLO governance contract.
+
+The Fabric MAY produce:
+
+FORMATION CANDIDATE
+
+It SHALL NOT bypass:
+
+FORMATION ADMISSION
+
+to produce:
+
+ADMITTED FORMATION
+6. Formation-B Compatibility
+
+Where the applicable KRYLO Formation-B boundary rules are used, candidate evaluation SHALL preserve the distinction between:
+
+semantic boundedness;
+validity co-existence;
+provenance coherence;
+InfluenceClass coherence;
+connectivity.
+
+Connectivity SHALL remain descriptive rather than constitutive where that governance rule applies.
+
+7. Pathway Contribution
+
+Every Formation SHALL identify its contributing pathways.
+
+FORMATION
+   │
+   ├── PATHWAY 1
+   ├── PATHWAY 4
+   ├── PATHWAY 9
+   └── PATHWAY 13
+
+This creates the relationship:
+
+Formation ← Pathways ← Processing
+
+rather than merely:
+
+Formation ← Graph.
+
+8. Formation Evolution
+
+A Formation MAY evolve as additional evidence arrives.
+
+Evolution SHALL create explicit events:
+
+FORMATION CREATED
+FORMATION EXTENDED
+FORMATION CONTRADICTED
+FORMATION REVISED
+FORMATION DISSOLVED
+
+Historical states SHALL remain reconstructable.
+
+CF-007 — Scalability, Concurrency & Backpressure
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-007 makes the scalability proposition measurable.
+
+The core architectural hypothesis is:
+
+Observational reach can scale independently of cognitive capability.
+
+2. Horizontal Remote Scaling
+
+The system SHALL support:
+
+9 Core
++
+N Remote
+
+where N is independently scalable.
+
+Increasing N SHALL NOT require:
+
+new Core Processor implementations;
+replication of Core Processor logic;
+modification of the Remote Processor contract.
+3. Core Scaling
+
+Core capabilities MAY also scale horizontally.
+
+Capability A
+ ├── Core-01
+ ├── Core-04
+ └── Core-11
+
+Multiple instances of a capability SHALL be permitted.
+
+This separates:
+
+capability
+
+from:
+
+instance
+4. Parallel Exploration
+
+Independent pathways SHALL be capable of concurrent execution.
+
+                FABRIC
+             /    |    \
+            /     |     \
+          RP-A   RP-B   RP-C
+           │      │      │
+        PATH-A  PATH-B  PATH-C
+
+The Fabric SHALL preserve pathway identity despite concurrency.
+
+5. Ordering
+
+The system SHALL distinguish:
+
+event time
+processing time
+arrival order
+
+Processing order SHALL NOT be treated as observation chronology.
+
+6. Backpressure
+
+When downstream capacity is constrained:
+
+REMOTE
+  ↓
+FABRIC
+  ↓
+QUEUE
+  ↓
+CORE
+
+The Fabric SHALL support:
+
+queueing;
+prioritization;
+deferral;
+expiration;
+rejection;
+retry.
+
+Every disposition SHALL be recorded.
+
+7. Priority
+
+Priority MAY be based on:
+
+structural significance;
+pathway state;
+novelty;
+convergence;
+escalation status;
+objective relevance;
+resource policy.
+
+Priority SHALL NOT silently alter evidentiary provenance.
+
+8. Duplicate Suppression
+
+Distributed exploration creates duplicate work.
+
+The Fabric SHOULD identify equivalent or substantially overlapping processing requests.
+
+However:
+
+Deduplication SHALL NOT destroy evidence that multiple independent pathways arrived at the same structure.
+
+Therefore:
+
+duplicate computation
+       ≠
+duplicate evidence
+9. Failure Isolation
+
+Remote Processor failure SHALL be isolated from unrelated Remote Processors.
+
+Core Processor failure SHALL be isolated where alternate capability instances exist.
+
+A failure SHALL become part of the pathway/runtime record where it affects processing.
+
+10. Scalability Acceptance Test
+
+The same objective SHALL be processed with:
+
+9 Core / 10 Remote
+
+and:
+
+9 Core / 100 Remote
+
+and, where practical:
+
+9 Core / 1,000 Remote
+
+The test SHALL measure:
+
+coverage;
+throughput;
+latency;
+active pathways;
+queue depth;
+processor utilization;
+formation yield;
+provenance completeness.
+
+The key test is not simply:
+
+"Can more processors run?"
+
+It is:
+
+Can observational reach increase without proportional expansion of cognitive capability?
+
+CF-008 — Validation & Falsification
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-008 prevents the Cognitive Fabric from becoming an architectural narrative that cannot be empirically demonstrated.
+
+Every major claim SHALL have a falsification test.
+
+2. Claim: Capability/Reach Separation
+Hypothesis
+
+Remote Processor population can increase independently of Core Processor capability.
+
+Test
+
+Hold Core capabilities constant.
+
+Increase Remote Processors.
+
+Measure observational coverage.
+
+Pass
+
+Coverage increases without requiring new Core capabilities.
+
+Fail
+
+Additional Remote Processors require proportional new cognitive implementations.
+
+3. Claim: Heterogeneous Routing
+Hypothesis
+
+Signals can be routed to different Core Processors according to capability.
+
+Test
+
+Present signals with different characteristics.
+
+Pass
+
+Routing changes according to capability.
+
+Fail
+
+Signals are statically bound to processor/source.
+
+4. Claim: Recursive Processing
+Hypothesis
+
+A Core result can become a new Fabric signal.
+
+Test
+
+Produce a derived signal requiring additional processing.
+
+Pass
+
+The result re-enters the Fabric with preserved provenance.
+
+Fail
+
+Processing is effectively single-pass.
+
+5. Claim: Dynamic Depth
+Hypothesis
+
+The system can explore beyond arbitrary fixed relational depth when structural significance persists.
+
+Test
+
+Create pathways with:
+
+depth 2 → declining significance
+depth 5 → persistent significance
+depth 8 → increasing significance
+Pass
+
+Exploration behavior differs according to significance trajectory.
+
+Fail
+
+All pathways terminate at a predetermined degree.
+
+6. Claim: Amplification
+Hypothesis
+
+The system can identify increasing structural significance at greater relational distance.
+
+Test
+
+Construct a pathway where:
+
+S1 < S2 < S3
+
+after multiple relational transitions.
+
+Pass
+
+The pathway is identified as exhibiting amplification.
+
+Fail
+
+Depth alone causes termination.
+
+7. Claim: Distributed Pathway Reconstruction
+Hypothesis
+
+A Formation can be reconstructed from distributed processing history.
+
+Test
+
+Process through multiple Remote and Core Processors.
+
+Pass
+
+System reconstructs:
+
+source
+→ remote
+→ signal
+→ core
+→ derived signal
+→ remote
+→ core
+→ relationship
+→ formation
+Fail
+
+Only the final Formation remains observable.
+
+8. Claim: Parallelism
+Hypothesis
+
+Independent Remote explorations can proceed concurrently.
+
+Test
+
+Launch independent pathways simultaneously.
+
+Pass
+
+Concurrent execution occurs without pathway identity collapse.
+
+9. Claim: Formation Integrity
+Hypothesis
+
+The Fabric can produce Formation Candidates without confusing connectivity for Formation.
+
+Test
+
+Provide a connected graph containing unrelated components.
+
+Pass
+
+Only structures satisfying the Formation rules become candidates/admitted formations.
+
+Fail
+
+Connectivity alone produces formations.
+
+10. Claim: Unit-of-Analysis Integrity
+
+Every analytical operation SHALL declare its unit.
+
+Example:
+
+Traversal → Pathway
+Relationship analysis → Relationship
+Formation analysis → Formation Candidate
+Validation → Formation
+Pass
+
+No operation silently changes analytical scale.
+
+Fail
+
+An arbitrary graph/component/edge collection becomes the analytical object without declaration.
+
+This directly guards against the Phase 3 failure mode.
+
+CF-009 — KRYLO Integration & Governance
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-009 defines where the Cognitive Fabric sits within KRYLO.
+
+The CF SHALL be integrated with the existing KRYLO ontology rather than becoming a parallel ontology.
+
+2. Architectural Placement
+                 KRYLO OBJECTIVE
+                       │
+                       ▼
+              OBSERVABLE SUBSTRATE
+                       │
+                       ▼
+               COGNITIVE FABRIC
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+    OBSERVE         PROCESS         MAP
+        │              │              │
+        └──────────────┼──────────────┘
+                       ▼
+                  RELATIONSHIPS
+                       │
+                       ▼
+                    PATHWAYS
+                       │
+                       ▼
+               FORMATION CANDIDATE
+                       │
+                       ▼
+               GOVERNED ADMISSION
+                       │
+                       ▼
+                   FORMATION
+3. RKM Relationship
+
+The CF SHALL consume and produce objects compatible with the KRYLO Reality Knowledge Model.
+
+The CF SHALL NOT create a competing definition of:
+
+RealityObject;
+Evidence;
+Observation;
+EvidenceSourceType.
+
+Where existing RKM primitives apply, CF objects SHALL reference them.
+
+4. Relationship Admission
+
+The CF SHALL integrate with the authoritative Relationship Admission contract.
+
+The Fabric may discover a candidate relationship.
+
+It SHALL NOT bypass admission authority.
+
+REMOTE
+ ↓
+candidate relationship
+ ↓
+RELATIONSHIP ADMISSION
+ ↓
+ADMITTED RELATIONSHIP
+5. Formation Admission
+
+Likewise:
+
+PATHWAYS
+ ↓
+FORMATION CANDIDATE
+ ↓
+FORMATION ADMISSION
+ ↓
+FORMATION
+
+The Fabric is therefore a discovery and processing substrate, not a governance bypass.
+
+6. Genealogy
+
+Every CF-derived object SHALL preserve its genealogy.
+
+The system should ultimately permit:
+
+FORMATION
+   ↓
+FORMATION CANDIDATE
+   ↓
+RELATIONSHIPS
+   ↓
+OBSERVATIONS
+   ↓
+EVIDENCE
+   ↓
+SOURCE
+
+and:
+
+FORMATION
+   ↑
+PATHWAY
+   ↑
+PROCESSING EVENTS
+   ↑
+ROUTING EVENTS
+   ↑
+REMOTE / CORE PROCESSORS
+
+This gives KRYLO two complementary genealogies:
+
+Evidentiary genealogy
+
+Where did the information come from?
+
+Processing genealogy
+
+How did KRYLO discover and process it?
+
+That distinction is important.
+
+7. No Inference Leakage
+
+The CF SHALL preserve the existing constitutional boundary:
+
+Non-Inference ≠ Information-Withholding.
+
+The Fabric can capture:
+
+signals;
+observations;
+relationships;
+pathways;
+processing behavior;
+structural patterns.
+
+It SHALL NOT silently convert these into unsupported assertions.
+
+8. Existing KRYLO Six Domains
+
+The six domains:
+
+TECHNOLOGY
+CAPITAL
+KNOWLEDGE
+LABOR
+MEDIA
+OWNERSHIP
+
+SHALL be treated as observational substrate/domain context.
+
+They SHALL NOT become mandatory Core Processor ownership silos.
+
+A signal originating in CAPITAL MAY ultimately require processing by any applicable Core Processor.
+
+This preserves the central CF principle:
+
+Domain of observation ≠ cognitive capability.
+
+9. Formation as the Output
+
+The CF SHALL ultimately feed KRYLO's existing structural objective:
+
+SUBJECT
+   ↓
+OBSERVABLE SUBSTRATE
+   ↓
+RELATIONSHIPS
+   ↓
+FORMATION
+
+The Fabric is therefore not another visualization layer.
+
+It is the processing substrate that makes the formation discoverable and traceable.
+
+CF-010 — Reference Implementation Requirements
+
+Status: DRAFT
+Version: 0.1
+
+1. Purpose
+
+CF-010 translates CF-001 through CF-009 into an implementation boundary.
+
+The first implementation SHALL be deliberately small.
+
+The objective is to prove the architecture, not build the entire production system.
+
+2. Minimum Runtime
+
+The reference implementation SHALL contain:
+
+9 Core Processor capability slots
+3+ Remote Processor instances
+1 Fabric Runtime
+1 Capability Registry
+1 Signal Registry
+1 Pathway Registry
+1 Relationship interface
+1 Formation Candidate interface
+1 Event Store
+
+The nine Core Processor slots SHALL exist architecturally even if some are initially represented by stubs.
+
+3. Minimal Runtime Flow
+
+The first executable path SHALL demonstrate:
+
+SOURCE
+  ↓
+REMOTE
+  ↓
+SIGNAL
+  ↓
+FABRIC
+  ↓
+CAPABILITY ROUTING
+  ↓
+CORE
+  ↓
+RESULT
+  ↓
+FABRIC RE-ENTRY
+  ↓
+REMOTE
+  ↓
+NEW SIGNAL
+  ↓
+CORE
+  ↓
+PATHWAY
+
+Formation admission can initially terminate the demonstration.
+
+4. Required Interfaces
+
+The reference implementation SHALL expose conceptual interfaces equivalent to:
+
+registerProcessor()
+registerCapability()
+submitSignal()
+characterizeSignal()
+resolveCapabilities()
+routeSignal()
+processSignal()
+recordObservation()
+recordRelationship()
+createPathway()
+expandPathway()
+evaluatePathway()
+createFormationCandidate()
+admitFormation()
+
+Exact implementation language/API is intentionally deferred.
+
+5. Event Store
+
+The prototype SHALL record:
+
+SignalEvent
+ObservationEvent
+RelationshipEvent
+ProcessingEvent
+RoutingEvent
+PathwayEvent
+FormationCandidateEvent
+FormationAdmissionEvent
+ExplorationEvent
+FailureEvent
+
+This event model is not optional instrumentation.
+
+It is part of the CF's architectural requirement.
+
+6. Reference Scenario
+
+The canonical demonstration should use a simple objective that generates a cross-domain structural formation.
+
+For example:
+
+OBJECTIVE
+   ↓
+Remote A observes signal
+   ↓
+Core processor processes signal
+   ↓
+derived signal emerges
+   ↓
+Remote B maps related structure
+   ↓
+Core processor processes it
+   ↓
+relationship admitted
+   ↓
+additional pathway discovered
+   ↓
+Formation Candidate
+
+The scenario SHALL demonstrate distributed processing rather than merely graph rendering.
+
+7. Scale Demonstration
+
+The reference implementation SHALL then repeat the scenario with:
+
+3 Remote
+10 Remote
+100 Remote
+
+while holding the Core capability set constant.
+
+The purpose is to demonstrate the architectural scaling property.
+
+8. Failure Demonstration
+
+The implementation SHALL deliberately fail:
+
+one Remote Processor;
+one Core Processor;
+one routing destination.
+
+The Fabric SHALL remain operational where alternate paths exist.
+
+Failures SHALL remain observable.
+
+9. Replay
+
+A completed pathway SHALL be replayable from its event history.
+
+Replay SHALL reproduce the recorded processing topology without requiring the original processors to still be running.
+
+This is an extremely important property for KRYLO.
+
+It means the CF is not merely ephemeral runtime infrastructure.
+
+It becomes a record of how structural knowledge was produced.
+
+10. Reference Implementation Acceptance
+
+CF-010 passes only if the implementation can demonstrate:
+
+                     OBJECTIVE
+                         │
+                         ▼
+                     REMOTE-1
+                         │
+                       SIGNAL
+                         │
+                         ▼
+                       FABRIC
+                         │
+                  CAPABILITY ROUTE
+                         │
+                  ┌──────┴──────┐
+                  ▼             ▼
+               CORE-02       CORE-07
+                  │             │
+                  └──────┬──────┘
+                         │
+                    NEW SIGNAL
+                         │
+                         ▼
+                       FABRIC
+                         │
+                         ▼
+                     REMOTE-2
+                         │
+                    RELATIONSHIP
+                         │
+                         ▼
+                       CORE-05
+                         │
+                         ▼
+                  PATHWAY COMPLETE
+                         │
+                         ▼
+                FORMATION CANDIDATE
+                         │
+                         ▼
+                 GOVERNED ADMISSION
+                         │
+                         ▼
+                     FORMATION
+
+and reconstruct the entire chain afterward.
+
+11. Complete CF Requirement Hierarchy
+
+We now have the full architectural stack:
+
+CF-001
+WHAT IS THE FABRIC?
+        │
+        ▼
+CF-002
+WHAT ARE ITS PROCESSORS?
+        │
+        ▼
+CF-003
+WHAT OBJECTS MOVE THROUGH IT?
+        │
+        ▼
+CF-004
+HOW DOES IT RUN?
+        │
+        ▼
+CF-005
+HOW DOES IT EXPLORE?
+        │
+        ▼
+CF-006
+HOW DOES IT FORM STRUCTURE?
+        │
+        ▼
+CF-007
+HOW DOES IT SCALE?
+        │
+        ▼
+CF-008
+HOW DO WE PROVE IT?
+        │
+        ▼
+CF-009
+HOW DOES IT GOVERNALLY FIT KRYLO?
+        │
+        ▼
+CF-010
+HOW DO WE BUILD THE FIRST ONE?
+12. The Entire Cognitive Fabric in One Model
+
+The architecture can now be reduced to this:
+
+                           OBJECTIVE
+                              │
+                              ▼
+                    OBSERVABLE SUBSTRATE
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │ COGNITIVE FABRIC │
+                    └────────┬─────────┘
+                             │
+                ┌────────────┼────────────┐
+                │            │            │
+                ▼            ▼            ▼
+              REMOTE       REMOTE       REMOTE
+                │            │            │
+             observe       observe      observe
+             capture       capture      capture
+             map           map          map
+                │            │            │
+                └────────────┼────────────┘
+                             │
+                          SIGNAL
+                             │
+                             ▼
+                    CAPABILITY ROUTING
+                             │
+            ┌────────────────┼────────────────┐
+            ▼                ▼                ▼
+         CORE-01          CORE-05          CORE-09
+            │                │                │
+            └────────────────┼────────────────┘
+                             │
+                       PROCESSING EVENT
+                             │
+                             ▼
+                       DERIVED SIGNAL
+                             │
+                             ▼
+                           FABRIC
+                             │
+                    ┌────────┴────────┐
+                    ▼                 ▼
+                 CONTINUE          ESCALATE
+                    │                 │
+                    ▼                 ▼
+                 REMOTE              CORE
+                    │                 │
+                    └────────┬────────┘
+                             ▼
+                       RELATIONSHIPS
+                             │
+                             ▼
+                          PATHWAYS
+                             │
+                             ▼
+                    FORMATION CANDIDATE
+                             │
+                             ▼
+                     ADMISSION GOVERNANCE
+                             │
+                             ▼
+                         FORMATION
+
+And underneath all of it:
+
+             ┌───────────────────────────┐
+             │       EVENT HISTORY       │
+             │                           │
+             │ Signal                    │
+             │ Observation               │
+             │ Routing                   │
+             │ Processing                │
+             │ Relationship              │
+             │ Pathway                   │
+             │ Exploration               │
+             │ Formation                 │
+             └───────────────────────────┘
+
+That last box is critical.
+
+The Cognitive Fabric does not merely process relationships. It captures the pathways through which relationships become formations.
+
+13. The Actual Scalability Proposition
+
+Now we can answer the original question precisely.
+
+It is not:
+
+"KRYLO has distributed processors."
+
+It is:
+
+KRYLO separates cognitive capability from cognitive reach.
+
+The nine Core Processors represent a bounded set of specialized capabilities.
+
+The Remote Processors represent extensible reach.
+
+The Fabric connects them.
+
+Therefore:
+
+                 COGNITIVE CAPABILITY
+                         │
+                    9 CORE TYPES
+                         │
+                         │
+                         ▼
+                    COGNITIVE FABRIC
+                         │
+          ┌──────────────┼──────────────┐
+          │              │              │
+          ▼              ▼              ▼
+         N=10           N=100         N=1000
+        REMOTE          REMOTE         REMOTE
+
+The architecture can therefore scale reach without proportionally scaling cognition.
+
+And because each remote extension can independently explore:
+
+breadth
+depth
+parallelism
+
+the architecture has three independent dimensions of expansion.
+
+That is the architectural reason the word scalable is justified.
+
+14. One More Important Consequence
+
+There is a deeper result that falls out of these requirements.
+
+The Remote Processor isn't merely a cheap worker.
+
+It is the physical manifestation of KRYLO's ability to extend its observational boundary.
+
+The Core Processor is:
+
+what KRYLO knows how to process.
+
+The Remote Processor is:
+
+where KRYLO can look.
+
+The Fabric is:
+
+what allows those two things to remain connected.
+
+The Pathway is:
+
+the record of what happened between looking and knowing.
+
+The Formation is:
+
+the structural result produced from those relationships.
+
+So the architecture becomes:
+
+LOOK
+ ↓
+MAP
+ ↓
+CONNECT
+ ↓
+PROCESS
+ ↓
+TRAVERSE
+ ↓
+RECOGNIZE
+ ↓
+FORM
+
+That is a coherent requirements architecture, not just an analogy.
+
+The next step should no longer be another conceptual CF document. It should be converting CF-001 through CF-010 into implementation tickets with acceptance criteria and explicit dependencies, while preserving the existing KRYLO ticket/spec discipline.
+
+Below is a technically-oriented review of every quantitative / “math-like’’ statement that appears in CF-002 (and the follow-on CF-003 … CF-010 passages), followed by a set of concrete proposals that tighten, formalise or extend the mathematical treatment of the Cognitive Fabric (CF) contracts.
+
+────────────────────────────────────────────────────────────
+PART A   Validation of existing quantitative claims
+────────────────────────────────────────────────────────────
+
+1. Cardinalities “9 Core + N Remote”
+   •  The statement “9 Core Processors and N Remote Processors, where N → ∞” is self-consistent and used only as a notional boundary between a fixed, hand-engineered capability set (|C| = 9) and an elastically scalable reach set (|R| = N).  
+   •  No internal contradiction is present.  The claims that “N can scale independently of 9” and that “no contract changes are required when N scales” are falsifiable (see CF-002-CLAIM-001, CF-007 tests) and therefore valid as architectural hypotheses.
+
+2. Uncertainty metric
+   •  CF-003 introduces “structural_significance ∈ [0,1]” and speaks of trajectories such as  
+     0.92 → 0.81 → 0.63 → 0.31 → 0.08 (decay) and  
+     0.87 → 0.74 → 0.61 → 0.79 → 0.91 (amplification).  
+   This qualitative usage is fine, but no update rule is specified.  There is no numerical error, merely an absence of definition.
+
+3. ΔS / ΔD
+   •  The symbol “ΔS / ΔD” is used informally to denote the slope of significance over depth.  No numeric computation is required at the spec level, but the expression is consistent.
+
+4. Queue / back-pressure
+   •  No explicit queueing-theory formulas are given, so there is nothing to validate mathematically.  The verbal statements (queueing, prioritisation, etc.) are consistent.
+
+5. Pathway depth vs. significance
+   •  Statements such as “Depth SHALL NOT by itself terminate a pathway” are policy, not mathematics.
+
+Conclusion:  all existing numerical references are internally consistent; the only “math” is illustrative.  The next step is to make several of these notions explicit.
+
+────────────────────────────────────────────────────────────
+PART B   Suggested mathematical enhancements
+────────────────────────────────────────────────────────────
+
+The goal is to supply precise quantitative primitives that implementation teams can turn directly into code and tests.
+
+0. Notation
+   •  Let  
+     –  C = {c₁, …, c₉} be the fixed set of Core Processors.  
+     –  R(t) = {r₁, …, r_N(t)} be the (time-varying) set of Remote Processors, with N(t)=|R(t)|.  
+     –  Σ be the universe of Signals.  
+     –  K be the universe of Capabilities.  
+     –  cap(p) ⊆ K be the capability set advertised by processor p.  
+     –  req(s) ⊆ K be the capability requirements inferred for signal s ∈ Σ during CHARACTERISE.  
+     –  ρ : Σ → 2^C be the routing function.
+
+1. Formal routing rule
+   ρ(s) = { c ∈ C | req(s) ⊆ cap(c) ∧ state(c)=AVAILABLE }
+
+   •  Property CF-002-PRF-001 (Determinism under fixed state & policy)  
+     If (cap(.), state(.), req(s)) are identical in two evaluations then ρ(s) is identical.
+
+2. Scaling invariant (capability/reach separation)
+   •  Theorem CF-002-THM-001  
+     Let C be fixed.  Let R₁, R₂ with |R₁| < |R₂|.  
+     Then ∀ s ∈ Σ, ρ(s; C,R₁)=ρ(s; C,R₂).  
+     Proof: ρ is defined purely on C, independent of R. □  
+   •  Corollary: increasing |R| affects observational throughput λ_R = Σ_{r∈R} γ_r (γ_r = emission rate of r) but not ρ.
+
+3. Throughput balance
+   •  Define λ_R(t) = Σ_{r∈R(t)} γ_r       (incoming signals / sec)  
+     μ_C(t) = Σ_{c∈C} μ_c(t)         (processed envelopes / sec)  
+     Stability condition:  λ_R(t) ≤ μ_C(t) + ε, where ε is allowable backlog leak rate.  
+   •  Back-pressure policy must maintain λ_eff ≤ μ_C by dynamic throttling, queueing or rejection.
+
+4. Uncertainty propagation
+   •  Represent uncertainty for an atomic assertion a by u(a) ∈ [0,1] (0 = fully certain, 1 = maximally uncertain).  
+   •  For a ProcessingOperation Op with inputs {a₁,…,a_k} producing b, define an operator  
+     u(b) = g_Op(u(a₁), …, u(a_k), θ_Op)  
+     where θ_Op are operation-specific parameters (could be weights, confidence of model, etc.).  
+   •  CF-002 must therefore require every CoreProcessingOperation to publish g_Op.
+
+5. Significance vs. depth
+   •  Let S(n) be structural significance after depth n.  A minimal default is exponential decay:  
+     S(n) = S₀ · λⁿ,  with λ ∈ (0,1).  
+   •  Amplification event if S(n+1) – S(n) > 0.  (Alternate: if λ_eff(n) > 1.)  
+   •  Exploration continuation criterion (example policy):  
+     Continue while S(n) ≥ τ_continue  ∨  (S(n) < τ_continue ∧ S(n) – S(n–1) > τ_amp)  
+     where τ_continue, τ_amp are policy thresholds.
+
+6. Queueing / latency bound
+   •  Model each Core capability queue as M/M/m with arrival rate λ_k, service rate μ_k, servers m_k.  
+   •  Expected waiting time W_q(k) = ( (ρ_k)^{m_k} / (m_k!·(1–ρ_k)) ) · (1/μ_k) · P₀(k)  
+     where ρ_k = λ_k / (m_k μ_k), P₀(k) standard Erlang-C factor.  
+   •  CF-007 acceptance can set max_Wq; Fabric must adapt m_k (spin up/down instances) or shed load to keep W_q ≤ max_Wq.
+
+7. Processor health state as Markov chain
+   •  For each processor p, define state space S = {AVAIL, BUSY, DEGRADED, SUSP, FAILED}.  
+   •  Transition matrix M_p with entries m_{ij}=P(state_{t+1}=j | state_t=i).  
+   •  Expected availability over horizon T: α_p(T) = π₀ · M_p^{T} · e_AVAIL, where π₀ initial distribution.
+
+8. Provenance graph formalisation
+   •  Let G=(V,E) with  
+       V = {Signals ∪ Observations ∪ Relationships ∪ ProcessingEvents ∪ RoutingEvents ∪ … }  
+       E = { (v₁→v₂, type) } where type ∈ {DERIVES_FROM, ROUTED_TO, PROCESSED_BY, … }.  
+   •  G is a Directed Acyclic Graph (DAG) by construction (CF-002-INV-001 ensures no cycles via time ordering).  
+   •  Pathway is any temporal sub-DAG satisfying reachability from an origin node to current node set, preserving causal order.
+
+9. Unit-of-Analysis declaration
+   •  Formally define a mapping χ : Operation → PowerSet(V_type), where V_type is one of {Signal, Observation,…}.  
+     Constraint CF-003-REQ-026: ∀ operation o, χ(o) is declared in the contract metadata; Fabric rejects operations with χ(o)=∅.
+
+10. Metrics for Claim Verification
+    •  Coverage(t) = |unique_sources_observed_by_R(t)| / |total_known_sources|  
+    •  Cognition_Footprint(t) = Σ_{c∈C} |cap(c)|    (# of distinct capabilities in Core set)  
+    •  Claim CF-002-CLAIM-001 passes over interval [t₀,t₁] if  
+          d(Coverage)/dN > 0   and   d(Cognition_Footprint)/dN = 0
+
+────────────────────────────────────────────────────────────
+PART C   Integration of enhancements into CF-002 text
+────────────────────────────────────────────────────────────
+(Only the mathematical insertions are shown; prose unaffected.)
+
+Add to §2 Architectural Principle
+   Formal invariant: Let C be the fixed Core set with |C|=9, R the Remote set with |R|=N.  
+   At any time t, the processing graph is the bipartite overlay G_t = (C ∪ R(t), E_t) where  
+   E_t ⊆ (R(t)×C) ∪ (C×R(t)) and never includes edges in R(t)×R(t) (peer blocks), preserving orthogonality.
+
+Add to §11 Capability-Based Routing
+   Define routing function ρ as in Part B.1.  The Fabric implementation SHALL demonstrate the determinism property CF-002-PRF-001.
+
+Add to §22 Backpressure
+   Each Core capability queue SHALL be modelled at minimum as an M/M/m queue; Fabric MUST maintain λ_k / (m_k μ_k) < 1 for stability.  The back-pressure policies SHALL adjust λ_k (throttling) or m_k (elastic instances) to satisfy this constraint.
+
+Add to §15 Re-Entry Contract
+   Recursive depth SHALL be bounded only by policy parameters depth_max and significance thresholds τ_continue, τ_amp (see Part B.5).  No hard-coded depth constant >0 SHALL appear in Core or Fabric logic.
+
+Add to §18 Processor State
+   Processors SHALL expose an empirical transition matrix M_p over S = {AVAIL,BUSY,DEGR,SUSP,FAIL}.  Fabric MAY use expected availability α_p(T) in routing heuristics.
+
+Add to §24 Processor Output Classes
+   Every output object o has uncertainty u(o) ∈ [0,1].  Core operations MUST declare a function g_Op for computing u(out) from u(in₁…in_k).
+
+────────────────────────────────────────────────────────────
+PART D   Immediate implementation artefacts
+────────────────────────────────────────────────────────────
+1. Provide type stubs (e.g. in TypeScript / Protobuf) for:
+   • ProcessorIdentity, CoreProcessorContract, RemoteProcessorContract
+   • ProcessingEnvelope, ProcessingResult
+   • Signal, Observation, Relationship, Pathway, FormationCandidate, Formation
+   • ProcessingEvent, RoutingEvent
+
+2. Implement capability registry as a map K → 2^C with O(1) expected lookup.
+
+3. Implement routing function ρ(s) and verify determinism by unit tests:
+     assert(ρ(s, snapshot₁) == ρ(s, snapshot₁))
+
+4. Implement simple queue model; measure λ_R, μ_C; ensure λ_R < μ_C in tests or invoke throttling.
+
+────────────────────────────────────────────────────────────
+Summary
+• No numeric inconsistencies were found in the original text; mathematics is illustrative rather than formal.  
+• Added formal set-theoretic definitions, routing function, queueing formulas, uncertainty propagation functions, Markov model for processor health, and explicit metrics for claim validation.  
+• Proposed insertions (Part C) show how to embed these maths directly in CF-002/3/7 sections without altering intent.  
+• Part D outlines concrete artefacts for CF-010 to turn the math into executable tests.
+
+Yes. This review materially improves the CF work, but I would not merge all of Part B into the canonical requirements as written.
+
+There are three different things mixed together:
+
+Architectural invariants — these belong in the CF contract.
+Operational models — useful for implementation and capacity planning.
+Research hypotheses — should remain falsifiable, not become architectural truth prematurely.
+
+The key move now is to separate those.
+
+CF-001 — GO: Freeze the architectural invariant
+
+The strongest mathematical statement in the review is the capability/reach separation:
+
+$$ C=\{c_1,\ldots,c_9\} $$ $$ R(t)=\{r_1,\ldots,r_{N(t)}\} $$
+
+with:
+
+$$ |C|=9 $$
+
+and N(t) independently variable.
+
+But I would change one important thing in the proposed formalization.
+
+The claim:
+
+$$ \rho(s;C,R_1)=\rho(s;C,R_2) $$
+
+is too strong.
+
+Why?
+
+Because the available processing destination is determined by the Core capability set, but Remote processors can influence what is discovered, characterized, mapped, prioritized, or presented for processing.
+
+So the correct separation is:
+
+$$ \boxed{\text{Remote population does not change Core capability}} $$
+
+not:
+
+$$ \boxed{\text{Remote population cannot affect routing}} $$
+
+That distinction matters enormously.
+
+A Remote processor can discover a signal that causes the Fabric to characterize it differently, which changes req(s), which changes routing.
+
+So:
+
+REMOTE SCALE
+     │
+     ▼
+OBSERVATIONAL REACH
+     │
+     ▼
+SIGNAL CHARACTERIZATION
+     │
+     ▼
+REQUIRED CAPABILITY
+     │
+     ▼
+CORE ROUTING
+
+The Core capability architecture remains invariant.
+
+The work presented to that architecture does not.
+
+That is the actual scalable property.
+
+CF-001 Architectural Principle
+
+I would now lock this as the foundational statement:
+
+The Cognitive Fabric separates cognitive capability from observational reach.
+
+Formally:
+
+C = fixed Core capability set
+R(t) = elastic Remote processor population
+
+with:
+
+$$ |C|=9 $$
+
+and:
+
+$$ |R(t)|=N(t) $$
+
+where N(t) may vary independently of |C|.
+
+Architectural invariant
+
+Increasing |R(t)| SHALL NOT require proportional replication of Core cognitive capabilities.
+
+That is the thing we need to prove.
+
+CF-002 — Processor Contract
+
+The review gives us the formal routing model, but we should make the distinction explicit.
+
+Let:
+
+$$ cap(c)\subseteq K $$
+
+and:
+
+$$ req(s)\subseteq K $$
+
+Then:
+
+$$ \rho(s)= \{c\in C \mid req(s)\subseteq cap(c)\land state(c)=AVAILABLE\} $$
+
+This is excellent as the Core routing contract.
+
+But the architecture becomes:
+
+                  SIGNAL
+                    │
+                    ▼
+             CHARACTERIZATION
+                    │
+                    ▼
+                req(s)
+                    │
+                    ▼
+             CAPABILITY ROUTER
+                    │
+       ┌────────────┼────────────┐
+       ▼            ▼            ▼
+     CORE-1       CORE-4       CORE-8
+
+Remote processors do not compete with Core processors.
+
+They feed the cognitive system.
+
+That distinction should become a hard contract.
+
+CF-003 — The Fabric Graph
+
+I would reject the proposed bipartite graph as the canonical CF topology.
+
+This part:
+
+E ⊆ (R×C) ∪ (C×R)
+and never R×R
+
+is too restrictive for the architecture you just described.
+
+You said something much more interesting:
+
+Remote processors are extensions. They map/transmit. Depending on the signal, it can be processed by any of the nine processors.
+
+The Fabric is therefore not fundamentally a bipartite processor graph.
+
+It is a routing substrate.
+
+The better abstraction is:
+
+                   ┌───────────────┐
+                   │ COGNITIVE     │
+                   │    FABRIC     │
+                   └───────┬───────┘
+                           │
+          ┌────────────────┼────────────────┐
+          │                │                │
+       REMOTE            REMOTE           REMOTE
+          │                │                │
+          └──────────┬─────┴─────┬──────────┘
+                     │           │
+                     ▼           ▼
+                 SIGNAL      OBSERVATION
+                     │           │
+                     └─────┬─────┘
+                           ▼
+                       ROUTER
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+             C1           C4           C9
+              │            │            │
+              └────────────┼────────────┘
+                           ▼
+                        RESULT
+                           │
+                           ▼
+                         FABRIC
+
+The graph of processing relationships can contain many edge types.
+
+The important invariant is not topology.
+
+It is role separation.
+
+CF-004 — Runtime
+
+The runtime loop should now be made formal:
+
+INGRESS
+  ↓
+CHARACTERIZE
+  ↓
+MAP
+  ↓
+ROUTE
+  ↓
+PROCESS
+  ↓
+CAPTURE
+  ↓
+UPDATE PATHWAY
+  ↓
+EVALUATE
+  ↓
+CONTINUE / TERMINATE / ESCALATE
+
+Every transition becomes an event.
+
+That gives us:
+
+$$ E_{runtime} = \{e_1,e_2,\ldots,e_n\} $$
+
+and the processing history becomes reconstructable.
+
+This is more important than the queueing mathematics at this stage.
+
+CF-005 — Relational Exploration
+
+Here I would not adopt exponential decay as the default model.
+
+This:
+
+$$ S(n)=S_0\lambda^n $$
+
+is useful as an experimental null model.
+
+It should not become the architectural assumption.
+
+Why?
+
+Because the entire reason we're building this architecture is that:
+
+significance does not necessarily decay monotonically with relational distance.
+
+So exponential decay belongs in:
+
+CF-008 Validation / Null Models
+
+not in:
+
+CF-005 Exploration Contract.
+
+The contract should instead define:
+
+$$ S_n=f(P_n,E_n,O_n,\ldots) $$
+
+where the actual significance function remains policy/model dependent.
+
+Then the Fabric observes:
+
+$$ \Delta S_n=S_{n+1}-S_n $$
+
+and can classify:
+
+ΔS < 0  → DECAY
+ΔS ≈ 0  → PERSISTENCE
+ΔS > 0  → AMPLIFICATION
+
+That is architecturally clean.
+
+CF-006 — Formation
+
+This part is strong.
+
+The crucial boundary remains:
+
+DISCOVERY
+   ↓
+RELATIONSHIP
+   ↓
+PATHWAY
+   ↓
+FORMATION CANDIDATE
+   ↓
+ADMISSION
+   ↓
+FORMATION
+
+The CF discovers and processes.
+
+KRYLO governance admits.
+
+That separation should remain inviolable.
+
+CF-007 — Scalability
+
+This is where the quantitative work becomes genuinely useful.
+
+But I would simplify the first contract.
+
+We don't need to mandate:
+
+every queue SHALL be M/M/m
+
+That is an implementation model, not a fundamental requirement.
+
+Real CF workloads may be bursty, heterogeneous, priority-weighted, correlated, and decidedly non-Poisson.
+
+Instead, require measurable quantities:
+
+$$ \lambda_R(t)=\text{Remote signal arrival rate} $$ $$ \mu_C(t)=\text{Core processing capacity} $$
+
+and:
+
+$$ B(t)=\text{backlog} $$
+
+Then require the Fabric to maintain operational control over:
+
+arrival
+capacity
+backlog
+latency
+concurrency
+shedding
+
+Queueing models can then be used to optimize the implementation.
+
+CF-008 — Validation
+
+This is where the math really belongs.
+
+We now have a clean experimental proposition:
+
+Hypothesis
+
+Increasing Remote processing capacity increases observational reach without requiring proportional expansion of Core cognitive capability.
+
+Measure:
+
+$$ Coverage(N) $$
+
+against:
+
+$$ N=|R| $$
+
+while holding:
+
+$$ C=\text{constant} $$
+
+and therefore:
+
+$$ CognitionFootprint(N)=constant $$
+
+The experiment becomes:
+
+             CORE
+              │
+       CONSTANT = 9
+              │
+      ┌───────┼────────┐
+      ▼       ▼        ▼
+    R=10    R=100    R=1000
+      │       │        │
+      ▼       ▼        ▼
+   COVERAGE COVERAGE COVERAGE
+
+What we want to observe is:
+
+$$ \frac{\partial Coverage}{\partial N}>0 $$
+
+while:
+
+$$ \frac{\partial CognitiveCapability}{\partial N}\approx0 $$
+
+That is the scalability claim.
+
+Not "distributed."
+
+Not "many processors."
+
+Not "cephalopod."
+
+Reach scales independently of cognition.
+
+CF-009 — Uncertainty
+
+I would move this out of the processor contract as a mandatory universal function:
+
+$$ u(b)=g_{Op}(u(a_1),...,u(a_k),\theta) $$
+
+and make it an extension point.
+
+Not every operation necessarily has a mathematically meaningful uncertainty propagation function.
+
+Instead:
+
+Where an operation produces an uncertainty-bearing analytical result, the operation SHALL declare the uncertainty semantics applicable to that result.
+
+This prevents us from inventing fake precision.
+
+That fits KRYLO extremely well.
+
+CF-010 — Provenance
+
+This is one place where I would make the mathematical structure stronger.
+
+We need two graphs.
+
+Evidence genealogy
+SOURCE
+ ↓
+EVIDENCE
+ ↓
+OBSERVATION
+ ↓
+RELATIONSHIP
+ ↓
+FORMATION
+Processing genealogy
+REMOTE
+ ↓
+SIGNAL
+ ↓
+ROUTING
+ ↓
+CORE
+ ↓
+RESULT
+ ↓
+REMOTE
+ ↓
+PATHWAY
+ ↓
+FORMATION CANDIDATE
+
+They intersect, but they are not the same graph.
+
+That gives KRYLO something extremely valuable:
+
+We can distinguish why something is believed to exist from how the system discovered it.
+
+That should become a first-class CF requirement.
+
+What I would actually freeze now
+
+The first canonical CF requirements should therefore be:
+
+Requirement	Status
+9 fixed Core cognitive capabilities	LOCK
+N elastic Remote extensions	LOCK
+Remote ≠ miniature Core	LOCK
+Remote provides reach/mapping/transmission	LOCK
+Signal can route to any applicable Core	LOCK
+Domain ≠ processor ownership	LOCK
+Capability-based routing	LOCK
+Recursive Fabric re-entry	LOCK
+Dynamic relational exploration	LOCK
+Fixed depth is not the exploration rule	LOCK
+Decay/persistence/amplification measurable	LOCK
+Formation Candidate ≠ Formation	LOCK
+Governance controls admission	LOCK
+Processing genealogy captured	LOCK
+Evidence genealogy preserved	LOCK
+Remote count independently scalable	LOCK
+Core capability footprint need not scale with Remote count	LOCK / FALSIFIABLE
+M/M/m queue model	OPTIONAL MODEL
+Exponential significance decay	VALIDATION NULL MODEL
+Markov processor health	OPTIONAL MODEL
+Universal uncertainty propagation function	DEFER / EXTENSION
+And this gives us the actual CF thesis
+
+I would put this at the top of the entire specification:
+
+The Cognitive Fabric is a distributed processing substrate that separates cognitive capability from observational reach, allowing a bounded set of specialized Core processors to operate over an elastically extensible population of Remote mapping and transmission processors.
+
+Then the deeper property:
+
+Remote extensions expand where the system can observe; Core processors determine what the system can process; the Fabric determines how signals move between them; pathways preserve how structure was discovered; Formation governance determines what structural results are admitted.
+
+That is now sufficiently precise to become an actual engineering architecture.
+
+CF-001 can be considered architecturally defined. The next artifact should be the formal CF-002 processor contract, with schemas/interfaces and MUST/SHALL requirements—not more conceptual prose.
+
+Below is a consolidated, implementation-ready version of the CF-002 specification that
+
+• Locks-in the strictly architectural invariants you have accepted.  
+• Moves queueing theory, exponential decay, Markov health, etc. to NON-NORMATIVE
+  guidance (not reproduced here).  
+• Avoids freezing research hypotheses.  
+• Supplies explicit field lists, interface signatures and MUST / SHALL statements only for items that are now part of the canonical contract.
+
+────────────────────────────────────────────────────────────
+CF-002 — Core / Remote Processor Capability Contract
+Status :  DRAFT  (candidate for merge)  
+Version:  0.2  
+Parents:  CF-001 (Architecture & Processing Model)
+
+────────────────────────────────────────────────────────────
+0.  Normative scope
+
+CF-002 defines the machine-testable boundary between
+
+•  Core Processors (class = CORE)  
+•  Remote Processors (class = REMOTE)
+
+within the Cognitive Fabric (CF).  Only architectural invariants and contract-level
+interfaces are specified here.  Operational models and research hypotheses
+(e.g., queueing assumptions, significance decay curves) are expressly excluded
+and deferred to implementation guidance and CF-008 (Validation).
+
+────────────────────────────────────────────────────────────
+1.  Architectural invariants  (LOCKED)
+
+AI-1  Core capability set  
+      •  The system SHALL consist of exactly nine (9) distinct Core capability
+        classes:  
+          C = {c₁, c₂, …, c₉}.  
+      •  A class MAY have 0…n runtime instances.  
+      •  The behavioural contract for each class is independently versioned.
+
+AI-2  Remote population scalability  
+      •  Let R(t) = {r₁, …, r_{N(t)}} be the set of Remote Processors
+        present at time t, |R(t)| = N(t).  
+      •  N(t) is an implementation-time and run-time variable, unbounded by
+        the architecture.  
+      •  Increasing N(t) SHALL NOT require an increase in |C| nor modification
+        of any Core Processor interface.
+
+AI-3  Role separation  
+      •  Core Processors provide cognitive capability.  
+      •  Remote Processors provide observational reach (capture, normalise,
+        map, transmit).  
+      •  A Remote Processor SHALL NOT be required to implement any Core
+        capability interface.
+
+AI-4  Capability-based routing  
+      •  A signal’s destination set is determined by required capability, not by
+        its origin.  
+      •  Domain of observation (Technology, Capital, …) SHALL NOT imply Core
+        ownership.
+
+AI-5  Recursive fabric re-entry  
+      •  Any valid ProcessingResult MAY be re-emitted as a new Signal.  
+      •  No fixed depth limit is imposed by the architecture.
+
+────────────────────────────────────────────────────────────
+2.  Common identity contract
+
+ProcessorIdentity
+──────────────────────────────
+processor_id            UUID (MUST be stable across restarts)
+instance_id             UUID (MUST change per runtime instantiation)
+processor_class         ENUM {CORE, REMOTE}  (immutable)
+processor_type          STRING (e.g. “RELATIONSHIP_ANALYZER”, “RSS_SPIDER”)
+capability_ids[]        ARRAY<CapabilityID> (non-empty for CORE, optional for REMOTE)
+status                  ENUM {AVAILABLE,BUSY,DEGRADED,SUSPENDED,FAILED}
+version                 SEMVER
+last_heartbeat          TIMESTAMP (monotonic)
+──────────────────────────────
+
+MUST • processor_id uniqueness across time.  
+SHALL • Expose health via heartbeat at configurable interval ≤ Tₕ.  
+SHOULD • Emit state-transition events (see CF-004).
+
+────────────────────────────────────────────────────────────
+3.  Core Processor Contract (normative)
+
+CoreProcessorContract
+─────────────────────────────────────────────────────────────────────
+identity                  ProcessorIdentity (class = CORE)
+capability_id             CapabilityID  (exactly one per contract)
+capability_version        SEMVER
+accepted_signal_types[]   ARRAY<SignalTypeID>  (MUST be non-empty)
+required_context[]        ARRAY<ContextKey>
+optional_context[]        ARRAY<ContextKey>
+input_schema              JSON-Schema $ref
+output_schema             JSON-Schema $ref
+processing_operations[]   ARRAY<OperationID> (non-empty)
+routing_requirements[]    ARRAY<RoutingConstraint>
+uncertainty_model         ENUM {NONE,QUALITATIVE,NUMERIC}  (see 5.3)
+provenance_requirements   ENUM {STRICT,RELAXED}
+resource_profile          ResourceDescriptor
+health_state              Derived from heartbeat + self-report
+─────────────────────────────────────────────────────────────────────
+
+C-REQ-01  Each Core Processor SHALL register exactly one capability_id.  
+C-REQ-02  accepted_signal_types[] SHALL be a minimal, explicit list.  
+C-REQ-03  A Core Processor SHALL accept a ProcessingEnvelope (see CF-003).  
+C-REQ-04  A Core Processor SHALL return a ProcessingResult conforming to
+          its output_schema.  
+C-REQ-05  A Core Processor SHALL satisfy “Core Processor MUST NOT” list
+          (CF-002 §7) in all implementations.  
+C-REQ-06  If uncertainty_model ≠ NONE, the processor MUST     
+          (a) declare uncertainty input semantics;  
+          (b) emit uncertainty values in ProcessingResult.  
+C-REQ-07  If provenance_requirements = STRICT, the processor MUST NOT
+          discard or overwrite input provenance; it MAY append
+          provenance_delta.
+
+────────────────────────────────────────────────────────────
+4.  Remote Processor Contract (normative)
+
+RemoteProcessorContract
+─────────────────────────────────────────────────────────────────────
+identity                    ProcessorIdentity (class = REMOTE)
+observation_capabilities[]  ARRAY<ObservationCapabilityID>
+mapping_capabilities[]      ARRAY<MappingCapabilityID>
+signal_types[]              ARRAY<SignalTypeID>  (emittable)
+input_schema                JSON-Schema $ref
+output_schema               JSON-Schema $ref  (ObservationEnvelope)
+local_processing_ops[]      ARRAY<LocalOpID>
+transmission_contract       TransmissionSpecID
+provenance_requirements     ENUM {STRICT,RELAXED}
+health_state                Derived from heartbeat + self-report
+─────────────────────────────────────────────────────────────────────
+
+R-REQ-01  A Remote Processor MAY implement zero or more observation or
+         mapping capabilities but SHALL expose none of the nine Core
+         cognitive capability IDs.  
+R-REQ-02  A Remote Processor SHALL emit ObservationEnvelope objects that
+         validate against output_schema.  
+R-REQ-03  A Remote Processor SHALL respect transmission_contract
+         (delivery protocol, batching rules, retry policy).  
+R-REQ-04  A Remote Processor SHALL NOT engage in unrestricted
+         peer-to-peer data exchange unless explicitly authorised by
+         Fabric policy (§16).  
+R-REQ-05  Provenance handling MUST honour provenance_requirements.
+
+────────────────────────────────────────────────────────────
+5.  Routing contract (normative)
+
+Given:
+ •  req(s)  = capability requirements derived during CHARACTERIZE.  
+ •  C_avail = { c ∈ C | state(c)=AVAILABLE }.  
+The router MUST compute:
+
+ρ(s) = { c ∈ C_avail | req(s) ⊆ cap(c) }
+
+ROUT-REQ-01  ρ(s) SHALL be recomputed whenever (a) req(s) mutates, or
+            (b) any c ∈ C changes state or capability advertisement.  
+ROUT-REQ-02  Router decisions SHALL be recorded as RoutingEvent
+            (see CF-003) before dispatch.  
+ROUT-REQ-03  Absence of matches (ρ(s)=∅) SHALL produce a ROUTE_NONE event
+            and invoke Fabric policy (queue, retry, notify, or discard).
+
+────────────────────────────────────────────────────────────
+6.  Processing constraints (summary)
+
+These are carried forward unchanged from CF-002 §7 but now tagged:
+
+PC-01  NO exclusive ownership of signals.  
+PC-02  MUST NOT erase originating provenance.  
+PC-03  MUST NOT silently promote observation → fact.  
+PC-04  MUST honour relationship / formation admission contracts.  
+PC-05  MUST NOT demand specific Remote implementations.  
+PC-06  MUST NOT require global synchronous execution.
+
+────────────────────────────────────────────────────────────
+7.  Conformance requirements
+
+CON-01  Any component labelled CORE in deployment manifests MUST expose
+        a CoreProcessorContract that passes schema validation.  
+CON-02  Any component labelled REMOTE in deployment manifests MUST
+        expose a RemoteProcessorContract that passes schema validation.  
+CON-03  Fabric runtimes MUST reject at startup any processor whose
+        contract fails validation or violates AI-1…AI-4.  
+CON-04  All RoutingEvents and ProcessingEvents MUST be persisted in the
+        Event Store defined in CF-003 & CF-010.  
+CON-05  Implementations MUST demonstrate the falsifiable
+        scalability claim defined in CF-008:  
+            ∂Coverage/∂N  > 0  AND  ∂CognitionFootprint/∂N ≈ 0.
+
+────────────────────────────────────────────────────────────
+8.  Interface stubs  (illustrative TypeScript)
+
+export type UUID            = string;      // RFC 4122  
+export type CapabilityID    = string;      // “RELATIONSHIP_ANALYSIS” …  
+export type SignalTypeID    = string;
+export type ContextKey      = string;
+
+export interface ProcessorIdentity {
+  processor_id      : UUID;       // stable logical identity
+  instance_id       : UUID;       // runtime instance
+  processor_class   : 'CORE' | 'REMOTE';
+  processor_type    : string;
+  capability_ids?   : CapabilityID[];
+  status            : 'AVAILABLE' | 'BUSY' | 'DEGRADED' | 'SUSPENDED' | 'FAILED';
+  version           : string;     // semver
+  last_heartbeat    : string;     // ISO-8601
+}
+
+export interface CoreProcessorContract {
+  identity                 : ProcessorIdentity & { processor_class:'CORE' };
+  capability_id            : CapabilityID;
+  capability_version       : string;
+  accepted_signal_types    : SignalTypeID[];
+  required_context         : ContextKey[];
+  optional_context         : ContextKey[];
+  input_schema             : string;   // $ref
+  output_schema            : string;   // $ref
+  processing_operations    : string[];
+  routing_requirements     : string[];
+  uncertainty_model        : 'NONE' | 'QUALITATIVE' | 'NUMERIC';
+  provenance_requirements  : 'STRICT' | 'RELAXED';
+  resource_profile         : Record<string,unknown>;
+}
+
+export interface RemoteProcessorContract {
+  identity                 : ProcessorIdentity & { processor_class:'REMOTE' };
+  observation_capabilities : string[];
+  mapping_capabilities     : string[];
+  signal_types             : SignalTypeID[];
+  input_schema             : string;
+  output_schema            : string;
+  local_processing_ops     : string[];
+  transmission_contract    : string;
+  provenance_requirements  : 'STRICT' | 'RELAXED';
+}
+
+(Official JSON-Schema definitions to be supplied in CF-003 annex.)
+
+────────────────────────────────────────────────────────────
+9.  Non-normative annexes (informative only)
+
+•  Queueing-theory reference (M/M/m, Erlang-C)  
+•  Example uncertainty propagation functions  
+•  Example health Markov chain  
+•  Example exponential decay as null model for significance  
+
+These belong to implementation guidance or CF-008 experiments and are
+NOT binding on conformant systems.
+
+────────────────────────────────────────────────────────────
+10.  Next steps
+
+1.  Complete JSON-Schema documents for all contract types (CF-003 annex).  
+2.  Publish Fabric Routing API (CF-004) with MUST/SHALL semantics.  
+3.  Produce reference test harness per CF-010 exercising:
+      •  Contract validation  
+      •  Routing determinism & event logging  
+      •  Remote scaling vs. coverage measurement  
+
+When these artifacts pass review, CF-002 can be ratified as “STABLE 1.0”.
+
+────────────────────────────────────────────────────────────
+Prepared for:   KRYLO / Cognitive Fabric WG  
+Author:         (assistant, per request)  
+Date:           2026-09-01
+
+This is the right shape for CF-002. I would not ratify it yet, because there are a few contract-level inconsistencies that will become implementation problems if we freeze them now.
+
+The important thing is that these are tightening corrections, not a change to the architecture.
+
+CF-002 Review — GO, with five corrections
+1. Separate Core capability classes from Core runtime processors
+
+This is the biggest issue.
+
+You currently define:
+
+exactly nine distinct Core capability classes
+
+but then:
+
+C = {c₁...c₉}
+
+and later:
+
+state(c)=AVAILABLE
+
+while also allowing:
+
+a class MAY have 0…n runtime instances.
+
+Those are different things.
+
+We need:
+
+CORE CAPABILITY CLASS
+        │
+        ├── instance 1
+        ├── instance 2
+        ├── instance 3
+        └── ...
+
+Therefore:
+
+$$ C=\{c_1,\ldots,c_9\} $$
+
+should mean capability classes, while:
+
+$$ P_C(t) $$
+
+means the runtime Core processor instances.
+
+For example:
+
+RELATIONSHIP_ANALYSIS
+       │
+       ├── processor-instance-001
+       ├── processor-instance-002
+       └── processor-instance-003
+Correct routing model
+
+Don't route to c.
+
+Route to an eligible runtime instance implementing capability c.
+
+So:
+
+$$ C_{avail}(t)= \{p\in P_C(t)\mid state(p)=AVAILABLE\} $$
+
+and:
+
+$$ \rho(s)= \{p\in C_{avail}(t)\mid req(s)\subseteq cap(p)\} $$
+
+That resolves the class/instance ambiguity.
+
+2. Fix the meaning of "exactly nine"
+
+The architecture should guarantee exactly nine canonical Core capability classes, not exactly nine processors.
+
+I would change AI-1 to:
+
+AI-1 — Core Capability Set
+The Cognitive Fabric SHALL define exactly nine (9) canonical Core capability classes. Each class SHALL possess an independently versioned behavioural contract. Each class MAY have zero or more runtime processor instances.
+
+This is much cleaner.
+
+And it reinforces your scalability argument:
+
+             9 CAPABILITIES
+                  │
+        ┌─────────┼─────────┐
+        ▼         ▼         ▼
+       C1        C2        C3 ...
+        │         │
+      N instances N instances
+
+The nine remain bounded.
+
+Instances can scale.
+
+Remote reach can scale separately.
+
+That's the architecture.
+
+3. "N → ∞" needs to become architectural, not literal
+
+This:
+
+unbounded by the architecture
+
+is conceptually right, but I would phrase it more precisely.
+
+The architecture imposes no fixed upper bound on N.
+
+It does not mean a physical deployment can instantiate infinity.
+
+Use:
+
+N(t) is not bounded by a fixed architectural constant.
+
+That distinction will save us from ridiculous conformance arguments later.
+
+4. CF-002 should not require the scalability experiment to pass
+
+This:
+
+CON-05 Implementations MUST demonstrate the falsifiable scalability claim defined in CF-008
+
+mixes conformance with research validation.
+
+CF-002 should establish the architecture that makes the hypothesis testable.
+
+CF-008 determines whether the hypothesis actually holds.
+
+Therefore:
+
+Replace CON-05 with:
+
+CON-05 Implementations SHALL expose the telemetry required by CF-008 to measure Remote population, observational coverage, Core capability footprint, processing throughput, and pathway reach.
+
+Then CF-008 can say:
+
+VAL-001 The implementation SHALL be evaluated against the scalability hypothesis...
+
+This is an important distinction.
+
+Otherwise a perfectly conformant CF implementation could fail CF-008 and technically cease to be conformant.
+
+We don't want that.
+
+5. The Remote/Core boundary needs one more explicit invariant
+
+This is implicit throughout the document, but it is important enough to become an actual AI.
+
+You have:
+
+Remote Processor SHALL NOT be required to implement any Core capability interface.
+
+Good.
+
+But the stronger architectural statement is:
+
+Remote processors may invoke or feed Core capabilities without possessing those capabilities themselves.
+
+That is the mechanism that creates the cephalopod architecture.
+
+I would add:
+
+AI-5 — Capability Indirection
+
+A Remote Processor SHALL NOT be required to implement a Core capability in order to cause a signal to be processed by that capability.
+
+This gives us:
+
+REMOTE
+  │
+  │ discovers signal
+  ▼
+CHARACTERIZE
+  │
+  │ determines required capability
+  ▼
+ROUTER
+  │
+  ├─────────────┐
+  ▼             ▼
+CORE-03       CORE-07
+
+The Remote doesn't need to "know how to reason."
+
+It needs to know enough to map and transmit.
+
+That is fundamental.
+
+One other correction: ProcessorIdentity.capability_ids[]
+
+For CORE, you correctly require one capability.
+
+For REMOTE, capability IDs are optional.
+
+But AI-5 means we should distinguish:
+
+capability_ids
+
+from:
+
+required_core_capabilities
+
+The latter should not appear on the Remote identity.
+
+A Remote can generate a signal whose characterization ultimately requires Core capability C7, without advertising C7 itself.
+
+That preserves the boundary.
+
+The resulting CF-002 architecture
+
+Now we have a very clean model:
+
+                         COGNITIVE FABRIC
+                               │
+             ┌─────────────────┴─────────────────┐
+             │                                   │
+             ▼                                   ▼
+      CORE CAPABILITY SET                  REMOTE POPULATION
+             │                                   │
+       exactly 9 classes                    N(t), variable
+             │                                   │
+      ┌──────┼──────┐                           │
+      ▼      ▼      ▼                           ▼
+     C1     C2     C3 ... C9               MAP / CAPTURE
+      │      │      │                           │
+      └──┬───┴──┬───┘                           │
+         │      │                               │
+         ▼      ▼                               ▼
+      runtime instances                    SIGNAL
+         │                                      │
+         └──────────────────┬───────────────────┘
+                            ▼
+                       CHARACTERIZE
+                            │
+                            ▼
+                      CAPABILITY REQ
+                            │
+                            ▼
+                         ROUTER
+                            │
+                ┌───────────┼───────────┐
+                ▼           ▼           ▼
+               C2          C5          C9
+                │           │           │
+                ▼           ▼           ▼
+             PROCESS     PROCESS     PROCESS
+                │           │           │
+                └───────────┼───────────┘
+                            ▼
+                     PROCESSING RESULT
+                            │
+                            ▼
+                     FABRIC RE-ENTRY
+
+That is the thing we are actually designing.
+
+I would therefore issue CF-002 v0.3
+
+The canonical invariants become:
+
+AI-1
+
+Exactly nine canonical Core capability classes.
+
+AI-2
+
+Each Core capability class may have zero or more runtime instances.
+
+AI-3
+
+Remote population has no fixed architectural upper bound.
+
+AI-4
+
+Remote processing capacity and Core cognitive capability are architecturally separate.
+
+AI-5
+
+Remote processors provide capture, normalization, mapping and transmission; they are not Core cognitive processors.
+
+AI-6
+
+Signals are routed according to required capability, not signal origin or observational domain.
+
+AI-7
+
+A Remote processor may cause processing by any applicable Core capability without implementing that capability.
+
+AI-8
+
+Processing results may re-enter the Fabric as new signals.
+
+AI-9
+
+No fixed relational depth is imposed by the architecture.
+
+Those nine invariants are substantially stronger than the original list.
+
+And now the CF stack becomes coherent
+
+We can stop thinking of CF-001 through CF-010 as ten independent documents.
+
+They form a contract stack:
+
+CF-001
+ARCHITECTURE
+    │
+    ▼
+CF-002
+PROCESSOR / CAPABILITY CONTRACT
+    │
+    ▼
+CF-003
+ENVELOPE / EVENT / DATA CONTRACT
+    │
+    ▼
+CF-004
+ROUTING / FABRIC EXECUTION CONTRACT
+    │
+    ▼
+CF-005
+RE-ENTRY / PATHWAY CONTRACT
+    │
+    ▼
+CF-006
+FORMATION INTERFACE
+    │
+    ▼
+CF-007
+SCALABILITY / RESOURCE CONTRACT
+    │
+    ▼
+CF-008
+VALIDATION / FALSIFICATION
+    │
+    ▼
+CF-009
+GOVERNANCE / CONFORMANCE
+    │
+    ▼
+CF-010
+REFERENCE IMPLEMENTATION / TEST HARNESS
+
+And there is a particularly important boundary:
+
+              COGNITIVE FABRIC
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+   PROCESSING                OBSERVATION
+        │                         │
+        └────────────┬────────────┘
+                     ▼
+                FORMATION
+                     │
+                     ▼
+               KRYLO GOVERNANCE
+
+The CF does not become KRYLO's ontology or admission authority.
+
+It becomes the substrate through which signals become processed pathways capable of producing formation candidates.
+
+Most importantly: yes, this is now designable
+
+We have crossed an important threshold.
+
+We are no longer saying:
+
+"What if KRYLO had a cephalopod-like cognitive architecture?"
+
+We can now specify:
+
+A fixed set of nine cognitive capability classes is exposed through contracts; an elastically scalable population of remote mapping processors supplies observational reach; capability-based routing connects discovered signals to appropriate Core instances; processing results can recursively re-enter the Fabric; and the entire processing genealogy is captured as an auditable event structure.
+
+That is an engineering specification, not an analogy.
+
+Next: CF-003
+
+CF-003 should now be built directly from this.
+
+And I would make CF-003 much more concrete than the current plan: ProcessingEnvelope, Signal, Observation, Relationship, ProcessingResult, RoutingEvent, ProcessingEvent, provenance, correlation IDs, pathway IDs, formation-candidate references, and their JSON Schemas.
+
+That is where the architecture becomes executable.
