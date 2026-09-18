@@ -249,38 +249,45 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
         }}
       />
 
-      {restrictToChrome && (
-        <>
-          {/* iframe #2 — same page, SCRIPTLESS, as a rectangular left column (left nav only). */}
-          <iframe
-            ref={leftNavRef}
-            src={`${src}?v=20260917`}
-            title="KRYLO left nav"
-            onLoad={handleLeftNavLoad}
-            scrolling="no"
-            sandbox="allow-same-origin"
-            aria-hidden="true"
-            style={{
-              position: 'fixed', top: 0, left: 0, border: 'none',
-              width: CHROME_LEFT_PX, height: '100%',
-              zIndex: 1, background: 'transparent', overflow: 'hidden',
-              pointerEvents: 'none',
-              clipPath: LEFT_CLIP,   // rectangular — show only .left-nav (hide nav bar + bottom-surface)
-            }}
-          />
-          {/* transparent hit layer over the left nav → relays nav clicks */}
-          <div
-            onClick={relayLeftNav}
-            onMouseMove={relayLeftNavHover}
-            onMouseLeave={relayLeftNavLeave}
-            style={{
-              position: 'fixed', top: LEFT_NAV_TOP_PX, left: 0,
-              width: CHROME_LEFT_PX, height: `calc(100% - ${LEFT_NAV_TOP_PX}px)`,
-              zIndex: 2, pointerEvents: 'auto', background: 'transparent',
-            }}
-          />
-        </>
-      )}
+      {/* iframe #2 — same page, SCRIPTLESS, as a rectangular left column (left nav only).
+          Founder, 2026-09-18: kept permanently mounted (not conditionally rendered on
+          restrictToChrome) per the same principle as KRYL-1169 ("mount once for the
+          lifetime, switch props/visibility, never the existence") -- conditionally
+          mounting this forced a full reload of krylo2-feed.html every time navMode
+          returned to 'surface', which is what made the highlight visibly lag by about a
+          second (waiting on a real page load, not just a state update). A display:none
+          iframe is removed from the render tree entirely, so it costs nothing to the 3D
+          canvas's compositing while hidden -- same performance guarantee KRYL-1169
+          established, just applied here too. */}
+      <iframe
+        ref={leftNavRef}
+        src={`${src}?v=20260917`}
+        title="KRYLO left nav"
+        onLoad={handleLeftNavLoad}
+        scrolling="no"
+        sandbox="allow-same-origin"
+        aria-hidden="true"
+        style={{
+          display: restrictToChrome ? 'block' : 'none',
+          position: 'fixed', top: 0, left: 0, border: 'none',
+          width: CHROME_LEFT_PX, height: '100%',
+          zIndex: 1, background: 'transparent', overflow: 'hidden',
+          pointerEvents: 'none',
+          clipPath: LEFT_CLIP,   // rectangular — show only .left-nav (hide nav bar + bottom-surface)
+        }}
+      />
+      {/* transparent hit layer over the left nav → relays nav clicks */}
+      <div
+        onClick={restrictToChrome ? relayLeftNav : undefined}
+        onMouseMove={restrictToChrome ? relayLeftNavHover : undefined}
+        onMouseLeave={restrictToChrome ? relayLeftNavLeave : undefined}
+        style={{
+          display: restrictToChrome ? 'block' : 'none',
+          position: 'fixed', top: LEFT_NAV_TOP_PX, left: 0,
+          width: CHROME_LEFT_PX, height: `calc(100% - ${LEFT_NAV_TOP_PX}px)`,
+          zIndex: 2, pointerEvents: 'auto', background: 'transparent',
+        }}
+      />
     </div>
   );
 }
