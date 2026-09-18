@@ -138,6 +138,12 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
 
   const handleLeftNavLoad = () => {
     applyActiveNav(leftNavRef.current?.contentDocument);
+    // The clone iframe (title="KRYLO left nav") only exists while restrictToChrome
+    // (navMode==='surface') is true, so it fully unmounts and remounts every time navMode
+    // toggles into/out of 'surface' -- e.g. Analysis -> Home. A fresh iframe's contentDocument
+    // can still be mid-navigation for a moment even after its own 'load' event fires; one
+    // short defensive re-application covers that gap without waiting on a second real event.
+    setTimeout(() => applyActiveNav(leftNavRef.current?.contentDocument), 60);
   };
 
   // Left-column overlay → krylo-nav. The scriptless iframe #2 renders the nav but can't

@@ -1872,9 +1872,9 @@ function cycleABSlot() {
 
 <!-- Left Nav Rail -->
 <div class="left-nav">
-    <div class="lnav-item" onclick="setMode('home')" title="Home">
+    <div class="lnav-item" onclick="setMode('surface')" title="Surface">
         <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
-        <span class="lnav-label">Home</span>
+        <span class="lnav-label">Surface</span>
     </div>
     <div class="lnav-item" onclick="setMode('analysis')" title="Analysis">
         <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
@@ -2032,7 +2032,6 @@ function cycleABSlot() {
 
 /* ── Left Nav — Surface Mode Control ────────────────────── */
 const NAV_LABELS = {
-    home:      'HOME',
     surface:   'SURFACE',
     structure: 'FORMATION',
     analysis:  'ANALYSIS',
@@ -2071,7 +2070,7 @@ document.addEventListener('click', function(e) {
 function setMode(name) {
     document.querySelectorAll('.lnav-item').forEach(el => el.classList.remove('active'));
     const items = document.querySelectorAll('.lnav-item');
-    const order = ['home', 'analysis', 'feeds', 'community', 'history'];
+    const order = ['surface', 'analysis', 'feeds', 'community', 'history'];
     const idx = order.indexOf(name);
     if (idx !== -1) items[idx].classList.add('active');
     document.body.dataset.mode = name;
@@ -2082,7 +2081,7 @@ function setMode(name) {
 
     const stage      = document.querySelector('.stage');
     const rightPanel = document.querySelector('.right-panel');
-    if (name === 'surface' || name === 'home') {
+    if (name === 'surface') {
         if (stage)      { stage.style.opacity = '1'; stage.style.pointerEvents = 'auto'; }
         if (rightPanel) { rightPanel.style.opacity = '0'; rightPanel.style.pointerEvents = 'none'; }
         const heroCopy = document.querySelector('.hero-copy-wrap');
