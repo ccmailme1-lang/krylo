@@ -1188,6 +1188,19 @@ body[data-mode="artifacts"] .mo-chipbar[data-bar="artifacts"] { display:flex; }
 .hero-copy-headline .lime { color:#66FF00; }
 .hero-copy-headline .white { color:#FFFFFF; }
 .hero-copy-headline .attribution { font-size:70%; }
+.hero-copy-headline .lime.attribution { font-size:2.4vw !important; } /* attribution reused only to keep a phrase unsplit across the wrap -- not for the Archimedes-quote sizing; matches .hero-copy-headline's own font-size directly, no % inheritance ambiguity */
+
+/* Trailer-style delivery beat (Founder, 2026-09-17): the setup line lands first, then the
+   payoff phrase punches in a beat later with real weight -- not everything fading in at once. */
+@keyframes lime-punch {
+    0%   { transform: scale(0.86); filter: brightness(1); }
+    55%  { transform: scale(1.09); filter: brightness(1.5); }
+    100% { transform: scale(1);    filter: brightness(1); }
+}
+.hero-copy-headline .lime.lime-punch {
+    display: inline-block;
+    animation: lime-punch 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
 
 .hero-copy-byline {
     display:flex;
@@ -1948,7 +1961,7 @@ function cycleABSlot() {
     <div class="hero-copy-wrap">
         <div class="hero-copy">
             <div class="hero-copy-headline" id="hero-headline">
-                <span class="lime">IDENTIFYING OPTIMAL<br></span><span class="white">POSITIONS WITHIN<br>EVOLVING SYSTEMS</span>
+                <span class="white">FINDING ADVANTAGEOUS<br>POSITIONS </span><span class="lime">BEFORE THEY<br>BECOME OBVIOUS.</span>
             </div>
         </div>
         <div class="hero-copy-byline">
@@ -1982,6 +1995,7 @@ function cycleABSlot() {
 
             <!-- Composer -->
             <div class="hero-cta" style="position:relative;">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72vw;letter-spacing:0.24em;color:rgba(102,255,0,0.75);text-transform:uppercase;margin-bottom:8px;">Define your edge</div>
                 <div id="cta-zone" class="cta-zone">
                     <input id="cta-input" class="cta-input" type="text" autocomplete="off"
                            placeholder="Ask a question about any entity, signal, or relationship..." />
@@ -2010,6 +2024,7 @@ function cycleABSlot() {
 
 
 </div>
+
 
 <div class="version-stamp">v84</div>
 
@@ -2366,10 +2381,16 @@ function _confirmBayReplace() {
     const CHAR_LIMIT = 27;
 
     // Slides: plain spans, no manual <br> — wrapAt enforces the line limit
+    // Marquee Messaging Interface Spec v1.0 (Founder, 2026-09-17) — 5 ratified rolling
+    // messages, POSITION / VALUE / DISCOVERY / SCOPE / ABSENCE, in that order. Hold times
+    // vary by reading length (short claim vs. a 6-item list needs more time), not a flat
+    // 4500ms for every slide regardless of content -- an identical interval reads as
+    // mechanical/metronomic rather than a natural pace.
     const SLIDES = [
-        { html: '<span class="lime">IDENTIFYING OPTIMAL</span><span class="white"> POSITIONS WITHIN EVOLVING SYSTEMS</span>', hold: 5000 },
-        { html: '<span class="white">"Give me a lever long enough and a fulcrum on which to place it, </span><span class="lime">and I shall move the world.</span><span class="white">"</span><span class="white attribution"> — Archimedes</span>', hold: 7000 },
-        { html: '<span class="white">Leverage is the strategic use of a resource — </span><span class="white">such as </span><span class="lime">tools, capital, people, or technology</span><span class="white"> — to magnify output relative to input</span>', hold: 6000 },
+        { html: '<span class="white">FINDING ADVANTAGEOUS POSITIONS </span><span class="lime">BEFORE THEY BECOME OBVIOUS.</span>', hold: 9500 },
+        { html: '<span class="white">TECHNOLOGY. CAPITAL. KNOWLEDGE. LABOR. MEDIA. OWNERSHIP.</span>', hold: 10400 },
+        { html: '<span class="white">STRUCTURAL ABSENCE IS </span><span class="lime attribution">A MEASURABLE STATE.</span>', hold: 7700 },
+        { html: '<span class="white">RESOLVE THE </span><span class="lime">STRUCTURES OTHERS CANNOT SEE.</span>', hold: 6300 },
     ];
 
     // Word-wrap HTML at char limit, preserving color spans across line boundaries
@@ -2399,13 +2420,17 @@ function _confirmBayReplace() {
         if (line.length) lines.push(line);
         return lines.map(function(lineTokens) {
             var out = '', cur = null, buf = [];
+            function flush() {
+                if (!buf.length) return;
+                out += (out ? ' ' : '') + (cur ? '<span class="' + cur + '">' + buf.join(' ') + '</span>' : buf.join(' '));
+            }
             lineTokens.forEach(function(tok) {
                 if (tok.cls !== cur) {
-                    if (buf.length) out += cur ? '<span class="' + cur + '">' + buf.join(' ') + '</span>' : buf.join(' ');
+                    flush();
                     cur = tok.cls; buf = [tok.w];
                 } else { buf.push(tok.w); }
             });
-            if (buf.length) out += cur ? '<span class="' + cur + '">' + buf.join(' ') + '</span>' : buf.join(' ');
+            flush();
             return out;
         }).join('<br>');
     }
@@ -2433,6 +2458,11 @@ function _confirmBayReplace() {
             el.style.transition = 'opacity 0.7s cubic-bezier(0.4,0,0.2,1), transform 0.7s cubic-bezier(0.4,0,0.2,1)';
             el.style.opacity = '1';
             el.style.transform = 'translateY(0)';
+            // Trailer-style beat: the payoff (lime) phrase punches in ~550ms after the setup
+            // line has already landed, instead of the whole slide fading in as one unit.
+            setTimeout(function() {
+                el.querySelectorAll('.lime').forEach(function(l) { l.classList.add('lime-punch'); });
+            }, 550);
             timer = setTimeout(rotate, SLIDES[idx].hold);
         }, 200);
     }
