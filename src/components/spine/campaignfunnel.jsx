@@ -148,12 +148,23 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
 
   // Left-column overlay → krylo-nav. The scriptless iframe #2 renders the nav but can't
   // run its own onclick; figure out which .lnav-item was hit and post the same message.
-  const relayLeftNav = (e) => {
+  const relayLeftNav = (e, retried = false) => {
     try {
+      const { clientX, clientY } = e;
       const doc = leftNavRef.current?.contentDocument;
-      if (!doc) return;
-      const item = doc.elementFromPoint(e.clientX, e.clientY)?.closest('.lnav-item, .lnav-settings');
-      if (!item) return;
+      // The clone iframe can still be mid-load for a brief window right after its own mount
+      // (most likely on the very first click, right after initial page load) -- doc may exist
+      // but be effectively empty, or elementFromPoint may find nothing yet. One short retry
+      // covers that race instead of the click silently doing nothing.
+      if (!doc || doc.readyState !== 'complete') {
+        if (!retried) setTimeout(() => relayLeftNav({ clientX, clientY }, true), 80);
+        return;
+      }
+      const item = doc.elementFromPoint(clientX, clientY)?.closest('.lnav-item, .lnav-settings');
+      if (!item) {
+        if (!retried) setTimeout(() => relayLeftNav({ clientX, clientY }, true), 80);
+        return;
+      }
       if (item.classList.contains('lnav-settings')) {
         window.postMessage({ type: 'toggle-signal-panel' }, '*');
         return;
