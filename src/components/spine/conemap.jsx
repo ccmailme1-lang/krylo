@@ -1309,7 +1309,7 @@ function ThresholdBands() {
               </bufferGeometry>
               <lineBasicMaterial color="#4A4A4A" transparent opacity={0.35} />
             </lineSegments>
-            <Html position={[-WL - 0.55, t.y, 0]} distanceFactor={7}>
+            <Html position={[-WL - 0.55, t.y, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
               <div style={{
                 fontFamily:    "'IBM Plex Mono', monospace",
                 fontSize:      10,
@@ -1336,7 +1336,7 @@ function ThresholdBands() {
               </bufferGeometry>
               <lineBasicMaterial color="#4A4A4A" transparent opacity={b.alpha} />
             </lineSegments>
-            <Html position={[-WL - 0.4, b.y, 0]} distanceFactor={7}>
+            <Html position={[-WL - 0.4, b.y, 0]} distanceFactor={7} style={{ pointerEvents: 'none' }}>
               <div style={{
                 fontFamily:    "'IBM Plex Mono', monospace",
                 fontSize:      15,

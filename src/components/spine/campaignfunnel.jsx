@@ -174,6 +174,14 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           heroCopy.style.transform = 'translateY(40px)';
           heroCopy.style.pointerEvents = 'none';
         }
+        // An explicit click is real navigation even when the clicked item is already the
+        // current navMode value (e.g. clicking Surface while already on Surface, which is
+        // navMode's own initial default) -- the [navMode, restrictToChrome] effect only fires
+        // on an actual value change, so it would never mark this as "navigated" on its own and
+        // the click would silently do nothing visually. Mark it here, at the click itself.
+        hasNavigatedRef.current = true;
+        applyActiveNav(iframeRef.current?.contentDocument);
+        applyActiveNav(leftNavRef.current?.contentDocument);
         window.postMessage({ type: 'krylo-nav', mode }, '*');
       }
     } catch { /* iframe not ready — ignore */ }
