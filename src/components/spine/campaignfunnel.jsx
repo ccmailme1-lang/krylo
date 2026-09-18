@@ -125,6 +125,27 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     applyActiveNav(leftNavRef.current?.contentDocument);
   }, [navMode, restrictToChrome]);
 
+  // Logo tap (krylo-reset) sets navMode back to 'surface' as one part of app.jsx's own full
+  // state wipe (same message, separate listener there) -- that should read as "back to the
+  // untouched landing view", not "Surface is now selected". app.jsx's setNavMode('surface')
+  // is processed by React on the next render, which runs the [navMode, restrictToChrome]
+  // effect above AFTER this listener returns -- if navMode actually changes value, that
+  // effect would mark hasNavigatedRef true again, undoing an immediate clear here. Running
+  // the clear on a short delay instead makes it the last word, after that effect has already
+  // settled, regardless of whether navMode's value changed or stayed the same.
+  useEffect(() => {
+    function onReset(ev) {
+      if (ev.data?.type !== 'krylo-reset') return;
+      setTimeout(() => {
+        hasNavigatedRef.current = false;
+        applyActiveNav(iframeRef.current?.contentDocument);
+        applyActiveNav(leftNavRef.current?.contentDocument);
+      }, 50);
+    }
+    window.addEventListener('message', onReset);
+    return () => window.removeEventListener('message', onReset);
+  }, []);
+
   const handleLoad = () => {
     iframeReady.current = true;
     if (!iframeRef.current) return;
