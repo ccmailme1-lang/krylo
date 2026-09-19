@@ -1872,9 +1872,9 @@ function cycleABSlot() {
 
 <!-- Left Nav Rail -->
 <div class="left-nav">
-    <div class="lnav-item" onclick="setMode('surface')" title="Surface">
-        <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
-        <span class="lnav-label">Surface</span>
+    <div class="lnav-item" onclick="setMode('surface')" title="Observatory">
+        <svg viewBox="0 0 18 18"><rect x="2" y="12" width="14" height="4.5"/><path d="M4 12a5 5 0 0 1 8 -3.3"/><line x1="12" y1="8.5" x2="16.3" y2="4.2" stroke-linecap="round" stroke-width="1.8"/><circle cx="16.6" cy="3.9" r="1"/></svg>
+        <span class="lnav-label">Observatory</span>
     </div>
     <div class="lnav-item" onclick="setMode('analysis')" title="Analysis">
         <svg viewBox="0 0 18 18"><circle cx="8" cy="8" r="5"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
@@ -2032,8 +2032,8 @@ function cycleABSlot() {
 
 /* ── Left Nav — Surface Mode Control ────────────────────── */
 const NAV_LABELS = {
-    surface:   'SURFACE',
-    structure: 'FORMATION',
+    surface:   'Observatory',
+    structure: 'Observatory',
     analysis:  'ANALYSIS',
     feeds:     'RESEARCH',
     news:      'NEWS',
