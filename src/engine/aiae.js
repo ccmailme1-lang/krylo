@@ -105,10 +105,22 @@ export function generateCandidates(tensor) {
 
   const pool = [];
 
-  // Primary insight
-  if (synthesis?.primaryInsight) {
+  // Primary insight -- KRYL-1308 follow-on (Founder GO, 2026-09-18): tensor.analysisIntent
+  // (query-understanding: decisionCues or scenarioCues, already resolved by
+  // buildAnalysisIntent()) is preferred over synthesis.primaryInsight (querysynthesis.js's
+  // disconnected open-lens template) when a structured objective exists. synthesis.primaryInsight
+  // remains the fallback when analysisIntent has nothing resolved -- not removed, not disabled.
+  const objective = tensor.analysisIntent?.objective;
+  const objectiveContent =
+    objective?.state === 'resolved' && objective.value?.scenario
+      ? `${objective.value.scenario.condition} → ${objective.value.scenario.outcomeQuestion}`
+      : objective?.state === 'resolved' && objective.value?.cues
+        ? synthesis?.primaryInsight ?? null // decisionCues already flows through synthesis today -- no change to that path
+        : null;
+  const primaryInsightContent = objectiveContent ?? synthesis?.primaryInsight;
+  if (primaryInsightContent) {
     pool.push({
-      id: 'syn-primary', type: 'insight', content: synthesis.primaryInsight,
+      id: 'syn-primary', type: 'insight', content: primaryInsightContent,
       features: { impact: 0.75, confidence: conf, novelty: 0.60, actionability: 0.55, timeToValue: ttvMult, evidenceStrength: fs },
     });
   }

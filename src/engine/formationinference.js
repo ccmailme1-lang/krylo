@@ -203,7 +203,12 @@ export function inferFormation(rawParticles, opts = {}) {
     existence: E,
     boundary: Object.freeze({
       inside:   Object.freeze(inside.map(p => Object.freeze({ ...p }))),
-      excluded: Object.freeze(excludedAll.map(x => Object.freeze({ code: x.code }))),
+      // domain kept alongside code (was dropped here previously) -- the identifying
+      // field already exists on x.particle at exclusion time (normalize(), above);
+      // this only stops discarding it before the frozen object leaves the function.
+      // Additive: no existing consumer (formationprospectus.js's pass-through is the
+      // only one) reads or depends on the prior {code}-only shape.
+      excluded: Object.freeze(excludedAll.map(x => Object.freeze({ code: x.code, domain: (x.particle?.domain ?? '').toUpperCase() || null }))),
     }),
     temporal: Object.freeze({ maturity: null, direction: null, trajectory: null, velocity: null }), // §22 TEMPORAL absence
     generatedAt: now,

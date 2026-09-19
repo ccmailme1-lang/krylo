@@ -64,6 +64,18 @@ const KEY_DRIVERS = [
 
 const REVELATION_STEPS = ['Scanning', 'Interpreting', 'Stabilizing', 'Ready'];
 
+// Plain-text labels for formationinference.js's EXCLUSION codes (KRYL-1308) -- the codes
+// themselves (E_UNGROUNDED etc.) are real and already computed; this is presentation only,
+// no new classification. boundary.excluded now carries `domain` alongside `code` (see
+// formationinference.js) -- previously discarded before reaching any consumer.
+const EXCLUSION_LABELS = {
+  E_UNGROUNDED:       'no groundedness — signal present but not attributable to a real source',
+  E_UNKNOWN_DOMAIN:   'not one of the six canonical domains',
+  E_NO_EDGE:          'no admitted relationship connects this domain to another in the field',
+  E_MISSING_POLARITY: 'polarity (constructive/fracture) not available for this signal',
+  E_DUPLICATE:        'duplicate of an already-counted observation',
+};
+
 const MESH_NODES = [
   {x:28,y:18},{x:55,y:10},{x:78,y:24},{x:82,y:50},{x:55,y:62},{x:24,y:50},{x:50,y:34},
 ];
@@ -652,7 +664,10 @@ export default function TargetPacket() {
                   v.kind === 'ENTITY' ? v.entity.name :
                   v.kind === 'GEO' ? v.location :
                   v.kind === 'DECISION_FRAME' ? v.frame : null],
-                ['OBJECTIVE', analysisIntent.objective, v => v.cues.join(', ')],
+                ['OBJECTIVE', analysisIntent.objective, v =>
+                  v.cues ? v.cues.join(', ')
+                  : v.scenario ? `${v.scenario.condition} → ${v.scenario.outcomeQuestion}`
+                  : null],
                 ['QUESTION', analysisIntent.question, v => v.text],
                 ['OBSERVATIONAL SCOPE', analysisIntent.observationalScope, v => v.join(', ')],
               ].map(([label, dim, format]) => (
@@ -663,6 +678,23 @@ export default function TargetPacket() {
                     : <span style={{ color: ABSENCE }}>{dim.reason}</span>}
                 </div>
               ))}
+              {/* RECONN Factor v1.1 §12 Comparative State (KRYL-1311) — the requested
+                  comparison itself, rendered only when analysisIntent.rCmp actually
+                  resolved (explicit "versus"/"vs"/"compared to" connector confirmed in the
+                  raw question, not inferred from outcomeVariables' count alone — see
+                  analysisintent.js's deriveRCmp). No fabricated row when unresolved, same
+                  honest-absence convention as the rest of this section: the comparison was
+                  requested and understood even though KRYLO does not compute or fabricate
+                  the numeric answer here (§12's own canonical example). */}
+              {analysisIntent.rCmp?.state === 'resolved' && (
+                <div style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6 }}>
+                  <span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>COMPARISON REQUESTED </span>
+                  <span style={{ color: '#eceee9' }}>
+                    {analysisIntent.rCmp.value.subject_a} vs. {analysisIntent.rCmp.value.subject_b}
+                    {analysisIntent.rCmp.value.condition ? ` (${analysisIntent.rCmp.value.condition})` : ''}
+                  </span>
+                </div>
+              )}
             </div>
           </PacketSection>
         )}
@@ -715,6 +747,19 @@ export default function TargetPacket() {
                   );
                 })}
               </div>
+              {/* Structural Coverage (RECONN Factor v1.1 §9) -- what was observed but did not
+                  make it into this Formation, and why. Domain now survives to boundary.excluded
+                  (formationinference.js) -- previously discarded before reaching any renderer. */}
+              {fieldFormation.boundary?.excluded?.length > 0 && (
+                <div style={{ marginTop: 14, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.7 }}>
+                  <span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>EXCLUDED FROM THIS FORMATION</span>
+                  {fieldFormation.boundary.excluded.map((x, i) => (
+                    <div key={i} style={{ marginLeft: 14, marginTop: 4, color: '#9aa09d' }}>
+                      {x.domain ?? 'unresolved domain'} — {EXCLUSION_LABELS[x.code] ?? x.code}
+                    </div>
+                  ))}
+                </div>
+              )}
               <p style={{ margin: '14px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
                 {subjScope.kind === 'ENTITY'
                   ? `This structure is bound to ${subjScope.canonicalId} — every particle above carries that subject's real canonicalId (KRYL-1220). KRYLO presents this structure; what it means for a decision is the reader's to draw.`

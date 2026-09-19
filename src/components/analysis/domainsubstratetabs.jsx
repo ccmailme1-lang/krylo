@@ -83,6 +83,15 @@ function AuthoredMeasure({ domain, name, def, res: resProp }) {
           <span style={{ fontFamily: MONO, fontSize: 9, color: ABSENCE, letterSpacing: '0.14em' }}>
             DATA UNAVAILABLE · SOURCE REQUIRED
           </span>
+          {/* res.reason is the Founder-authored, per-measure reason (domainintelligence.js's
+              missingData, wired through domainsignalresolution.js) when present -- previously
+              computed and discarded; this was the specific text the honest-absence design
+              (domainsignalresolution.js's own header) already intended to show. */}
+          {res.reason && (
+            <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.02em', lineHeight: 1.6 }}>
+              {res.reason}
+            </span>
+          )}
           {res.requiredSourceClass && (
             <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
               requires: {res.requiredSourceClass}
@@ -94,7 +103,7 @@ function AuthoredMeasure({ domain, name, def, res: resProp }) {
             </span>
           )}
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.1em' }}>
-            absenceClass: STRUCTURAL
+            absenceClass: {(res.absenceClass ?? 'structural').toUpperCase()}
           </span>
         </div>
       )}

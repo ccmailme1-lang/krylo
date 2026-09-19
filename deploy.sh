@@ -13,7 +13,7 @@ echo "[2/4] Deploying frontend..."
 WEB_ROOT=$(ssh "$VPS" "grep -r 'root ' /etc/nginx/conf.d/ /etc/nginx/sites-enabled/ 2>/dev/null | grep -v '#' | head -1 | awk '{print \$NF}' | tr -d ';'" 2>/dev/null)
 WEB_ROOT="${WEB_ROOT:-/var/www/krylo}"
 echo "    → $WEB_ROOT"
-rsync -az --delete --exclude='Screen Recording *' --exclude='Screenshot *' dist/ "$VPS:$WEB_ROOT/"
+rsync -az --delete dist/ "$VPS:$WEB_ROOT/"
 
 echo "[3/4] Deploying API..."
 scp as-diff/engine.js "$VPS:$API_DIR/as-diff/engine.js"

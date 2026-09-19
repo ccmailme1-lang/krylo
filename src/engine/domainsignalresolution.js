@@ -102,18 +102,24 @@ export function resolveClassEMeasure({ domain, measureKey, scope = 'field', subj
     if (out && out.facet)  return readFacet(out.facet, D, measureKey, requiredSourceClass, requiredScope);
     if (out && out.absent) return {
       status: 'STRUCTURAL_ABSENCE', absenceClass: 'structural',
-      reason: out.absent.reason ?? 'wired producer withheld', requiredSourceClass, requiredScope,
+      reason: out.absent.reason ?? def.missingData ?? 'wired producer withheld', requiredSourceClass, requiredScope,
     };
     // null -> derived absence below
   }
 
+  // Header intent above ("the honest-absence experience becomes specific instead
+  // of a static label"): def.missingData is the Founder-authored, per-measure
+  // reason (domainintelligence.js's DOMAIN_INTELLIGENCE signalDefs) -- prefer it
+  // over a generic fallback sentence when present. Falls back to the prior
+  // generic text only for a measure def that somehow lacks missingData.
   const scopeGap = requiredScope === 'subject' && scope !== 'subject';
   return {
     status: 'STRUCTURAL_ABSENCE',
     absenceClass: 'structural',
-    reason: scopeGap
-      ? `subject-scoped measure; no subject bound (WO-5B) and no wired source`
-      : `no wired source`,
+    reason: def.missingData
+      ?? (scopeGap
+        ? `subject-scoped measure; no subject bound (WO-5B) and no wired source`
+        : `no wired source`),
     requiredSourceClass,
     requiredScope,
   };

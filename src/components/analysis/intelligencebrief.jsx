@@ -135,6 +135,15 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // present it as subject-scoped analysis: mirror the Target Packet — name the
   // resolved subject, defer observation to the packet, withhold the verdict.
   if (subj.kind === 'ENTITY' && !synthesisIsDomainAnchored(synthesis)) {
+    // KRYL-1308 follow-on (Founder GO, 2026-09-18): tensor.analysisIntent.objective is the
+    // same already-resolved canonical field targetpacket.jsx's OBJECTIVE renderer uses --
+    // preferred here too when present, so the BLUF doesn't understate what KRYLO actually
+    // recognized about the query while the subject-scoped withhold-the-verdict behavior below
+    // (assessment, empty fiveWs/evidence/coas) stays exactly as it was.
+    const objective = session?.tensor?.analysisIntent?.objective;
+    const scenarioObjective = objective?.state === 'resolved' && objective.value?.scenario
+      ? `${objective.value.scenario.condition} → ${objective.value.scenario.outcomeQuestion}`
+      : null;
     return {
       classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
       subject:       entity.toUpperCase(),
@@ -146,7 +155,9 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
       cac:           '—',
       roas:          '—',
       subjectScoped: true,
-      bluf:          `${entity} resolved as the subject of record${subj.canonicalId ? ` (${subj.canonicalId})` : ''}. Subject-scoped observation — evidence, derived measure, or classified absence per domain — is in the Target Packet. The advisory synthesis pipeline did not return a domain-anchored analysis for this input; this brief does not fill that with a verdict.`,
+      bluf:          scenarioObjective
+        ? `${entity} resolved as the subject of record${subj.canonicalId ? ` (${subj.canonicalId})` : ''}. Recognized scenario: ${scenarioObjective}. Subject-scoped observation — evidence, derived measure, or classified absence per domain — is in the Target Packet. This brief does not fill the scenario question with a verdict.`
+        : `${entity} resolved as the subject of record${subj.canonicalId ? ` (${subj.canonicalId})` : ''}. Subject-scoped observation — evidence, derived measure, or classified absence per domain — is in the Target Packet. The advisory synthesis pipeline did not return a domain-anchored analysis for this input; this brief does not fill that with a verdict.`,
       purpose:       `To carry the Target Packet's resolved subject state into the export record without re-deriving it from the raw query.`,
       fiveWs:        [],
       evidence:      [],

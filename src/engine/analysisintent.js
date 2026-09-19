@@ -16,9 +16,12 @@
 //   SUBJECT              <- subjectScope() (WO-5B/KRYL-1234), the canonical
 //                           subject resolver — not reimplemented here.
 //   OBSERVATIONAL SCOPE  <- queryContext.intent.domains (already curated)
-//   OBJECTIVE            <- queryContext.decisionCues (already computed;
+//   OBJECTIVE            <- queryContext.decisionCues (transactional vocabulary,
 //                           the same signal subjectScope's own DECISION_FRAME
-//                           path uses)
+//                           path uses) first, falling back to queryContext.scenarioCues
+//                           (strategic/operational scenario structure, KRYL-1308
+//                           follow-on, 2026-09-18) -- two distinct evidence classes,
+//                           never merged into one
 //   QUESTION             <- the verbatim question text + normalized_verb /
 //                           verb_matched (queryContext.intent doesn't pass
 //                           verb_matched through, so parseIntent() is called
@@ -35,12 +38,45 @@
 // Spec: specs/SPEC-autonomous-inquiry-chips-v1.1.md
 //
 // Non-goals (this subtask): no "KRYLO READ" UI component, no wiring, no chip UI.
+//
+// Phase 3 canonical INTENT extension (Founder GO, 2026-09-18, KRYL-1311 / RECONN Factor v1.1
+// §6). Additive only -- actor/subject/objective/question/observationalScope above are
+// UNCHANGED (targetpacket.jsx/aiae.js/intelligencebrief.jsx read them by exact key name;
+// reshaping any of the five would break those three live consumers). Adds vReq/sReq/eReq/
+// rCmp/tReq as a pure derivation over the same already-resolved data -- no new parsing
+// engine, per the RECONN ownership-boundary rule (§21: "may not create a competing query
+// interpretation engine").
+//
+//   sReq <- observationalScope's domain array, passthrough.
+//   vReq <- subject's single resolved value wrapped as a 0-or-1 element array. Real
+//           multi-subject V_req support is a separate, larger question -- not this pass.
+//   eReq <- always {state:'unresolved', reason:'NOT_DETECTED'}. No relationship-type
+//           requirement detection exists anywhere in this codebase (confirmed, KRYL-1310
+//           audit) -- never fabricated.
+//   tReq <- always {state:'unresolved', reason:'NOT_DETECTED'}. No temporal-stance
+//           vocabulary detection exists anywhere in this codebase -- never fabricated.
+//   rCmp <- the guarded case (Founder ruling, 2026-09-18): queryContext.scenarioCues's own
+//           outcomeVariables split (querycontext.js's SCENARIO_OUTCOME_RE .split on
+//           versus|vs|compared to|and) discards which delimiter matched -- "X and Y" and
+//           "X versus Y" are indistinguishable once split. Two outcomeVariables therefore
+//           does NOT by itself establish that a comparison was requested. rCmp re-checks
+//           the raw, unsplit outcomeQuestion text for an EXPLICIT comparison connector
+//           (versus/vs/compared to, excluding bare "and") before resolving -- otherwise a
+//           plain two-item list would be fabricated into a comparison request. Two distinct
+//           unresolved reasons, per Founder instruction: NOT_DETECTED (no comparison
+//           connector present -- none was requested) vs. INSUFFICIENT_VARIABLES (a
+//           comparison connector IS present but the split didn't cleanly yield exactly two
+//           usable variables).
 
 import { parseIntent }      from './intentparser.js';
 import { buildQueryContext } from './querycontext.js';
 import { subjectScope }      from './subjectscope.js';
 
-export const ANALYSIS_INTENT_VERSION = '1.0.0';
+export const ANALYSIS_INTENT_VERSION = '1.1.0';
+
+// Explicit comparison connector only -- deliberately excludes bare "and" (querycontext.js's
+// own split includes "and", which is why outcomeVariables alone can't prove a comparison).
+const EXPLICIT_COMPARISON_RE = /\bversus\b|\bvs\.?\b|\bcompared\s+to\b/i;
 
 function resolved(value) {
   return { state: 'resolved', value };
@@ -48,6 +84,20 @@ function resolved(value) {
 
 function unresolved(reason) {
   return { state: 'unresolved', reason };
+}
+
+function notDetected() {
+  return { state: 'unresolved', reason: 'NOT_DETECTED' };
+}
+
+// deriveRCmp -- see header comment. Never infers a comparison from outcomeVariables'
+// cardinality alone; requires the explicit connector in the raw, unsplit outcome text.
+function deriveRCmp(scenarioCues) {
+  if (!scenarioCues.present) return notDetected();
+  if (!EXPLICIT_COMPARISON_RE.test(scenarioCues.outcomeQuestion ?? '')) return notDetected();
+  const vars = scenarioCues.outcomeVariables ?? [];
+  if (vars.length !== 2) return { state: 'unresolved', reason: 'INSUFFICIENT_VARIABLES' };
+  return resolved({ subject_a: vars[0], subject_b: vars[1], condition: scenarioCues.condition });
 }
 
 /**
@@ -60,6 +110,11 @@ function unresolved(reason) {
  *   objective: {state, value|reason},
  *   question: {state, value},
  *   observationalScope: {state, value|reason},
+ *   vReq: Array,
+ *   sReq: Array,
+ *   eReq: {state, reason},
+ *   rCmp: {state, value|reason},
+ *   tReq: {state, reason},
  *   version: string,
  * }}
  */
@@ -73,6 +128,11 @@ export function buildAnalysisIntent(question) {
       objective:            unresolved('empty question'),
       question:             unresolved('empty question'),
       observationalScope:  unresolved('empty question'),
+      vReq: [],
+      sReq: [],
+      eReq: notDetected(),
+      rCmp: notDetected(),
+      tReq: notDetected(),
       version: ANALYSIS_INTENT_VERSION,
     };
   }
@@ -89,9 +149,16 @@ export function buildAnalysisIntent(question) {
       ? unresolved(scope.reason)
       : resolved(scope),
 
+    // KRYL-1308 follow-on (Founder GO, 2026-09-18): decisionCues (transactional vocabulary)
+    // and scenarioCues (strategic/operational scenario structure) are two distinct evidence
+    // classes, checked independently -- neither is folded into the other. Recognizing a
+    // scenario's structure (condition / outcome question / outcome variables) is query
+    // understanding, not claim generation: no projected outcome is stated or implied here.
     objective: queryContext.decisionCues.length > 0
       ? resolved({ cues: queryContext.decisionCues })
-      : unresolved('no decision cues present in question'),
+      : queryContext.scenarioCues.present
+        ? resolved({ scenario: queryContext.scenarioCues })
+        : unresolved('no decision cues or scenario structure present in question'),
 
     question: resolved({
       text,
@@ -102,6 +169,14 @@ export function buildAnalysisIntent(question) {
     observationalScope: queryContext.intent.domains.length > 0
       ? resolved(queryContext.intent.domains)
       : unresolved('no domain signal in question'),
+
+    // Canonical INTENT (RECONN Factor v1.1 §6) -- additive, derived only from the same
+    // already-resolved data above. See header comment for the full rationale per field.
+    sReq: queryContext.intent.domains,
+    vReq: scope.kind !== 'UNRESOLVED' ? [scope] : [],
+    eReq: notDetected(),
+    rCmp: deriveRCmp(queryContext.scenarioCues),
+    tReq: notDetected(),
 
     version: ANALYSIS_INTENT_VERSION,
   };

@@ -87,6 +87,38 @@ function deriveDecisionCues(text) {
   return cues;
 }
 
+// scenarioCues — strategic/operational scenario detection (Founder GO, 2026-09-18).
+// Deliberately separate from decisionCues (the 14-term transactional vocabulary above,
+// unchanged by this addition) -- a different concept, not a superset. Detects the
+// STRUCTURE of a hypothetical scenario, not isolated vocabulary: a conditional/hypothetical
+// clause co-occurring with an impact/outcome question. Neither half alone is sufficient --
+// "what is the impact of X" (no hypothesized action) and "if we do X" (no outcome question)
+// each fail independently, matching only their conjunction. This keeps generic words like
+// "increase"/"impact"/"compare" from independently triggering anything on their own.
+const SCENARIO_CONDITION_RE = /\b(?:if\s+we|if\s+the\s+company|if\s+[a-z][a-z.&'-]*(?:\s+[a-z][a-z.&'-]*){0,2},?\s+(?:we|it)|were\s+we\s+to|suppose\s+we|assuming\s+we)\b[^.,;:?!]*/i;
+const SCENARIO_OUTCOME_RE   = /\b(?:projected\s+impact|what\s+(?:is|would\s+be)\s+the\s+(?:projected\s+)?(?:impact|effect)|how\s+would\s+this\s+affect|what\s+happens?\s+to)\b[^.?!]*/i;
+
+function deriveScenarioCues(text) {
+  const t = text ?? '';
+  const conditionMatch = t.match(SCENARIO_CONDITION_RE);
+  const outcomeMatch   = t.match(SCENARIO_OUTCOME_RE);
+  if (!conditionMatch || !outcomeMatch) {
+    return { present: false, condition: null, outcomeQuestion: null, outcomeVariables: [] };
+  }
+  const outcomeVariables = outcomeMatch[0]
+    .replace(SCENARIO_OUTCOME_RE, m => m) // no-op, keeps intent explicit: split what follows the marker
+    .split(/\bversus\b|\bvs\.?\b|\bcompared\s+to\b|\band\b/i)
+    .map(s => s.replace(/^(?:projected\s+impact|what\s+(?:is|would\s+be)\s+the\s+(?:projected\s+)?(?:impact|effect)|how\s+would\s+this\s+affect|what\s+happens?\s+to)\b/i, '').trim())
+    .map(s => s.replace(/^(?:on|to)\s+/i, '').trim())
+    .filter(Boolean);
+  return {
+    present: true,
+    condition: conditionMatch[0].trim(),
+    outcomeQuestion: outcomeMatch[0].trim(),
+    outcomeVariables,
+  };
+}
+
 // ── parse confidence — deterministic aggregate, 0..1 ─────────────────────────
 function computeParseConfidence({ intent, numbers, geo, assetClass, decisionCues }) {
   let score = 0;
@@ -123,12 +155,14 @@ export function buildQueryContext(rawQuery, opts = {}) {
 
   const assetClass    = deriveAssetClass(text);
   const decisionCues  = deriveDecisionCues(text);
+  const scenarioCues  = deriveScenarioCues(text);
 
   const unresolved = [];
   if (geo.state === 'absent')        unresolved.push('geo');
   if (numbers.length === 0)          unresolved.push('numbers');
   if (assetClass.state === 'absent') unresolved.push('assetClass');
   if (decisionCues.length === 0)     unresolved.push('decisionCues');
+  if (!scenarioCues.present)         unresolved.push('scenarioCues');
 
   const ctx = {
     id:       `qc_${stableHash(text)}`,
@@ -143,6 +177,7 @@ export function buildQueryContext(rawQuery, opts = {}) {
     numbers:      [...numbers],
     assetClass,
     decisionCues,
+    scenarioCues,
     parseConfidence: computeParseConfidence({ intent, numbers, geo, assetClass, decisionCues }),
     unresolved,
     provenance: {
