@@ -103,11 +103,46 @@ Narrative Assembly may consume, from RECONN's canonical payload:
 | 01 | Question | Strong — canonical INTENT largely implemented. Gap: Question Coverage state math (RECONN §8) not built. | RECONN |
 | 02 | Context | `observations[]` cannot represent the two authoritative observation classes (`observations` / `formationObservations`) the substrate already separated in `adsubject.js`. RECONN's contract is currently less expressive than the substrate it's meant to normalize. | RECONN |
 | 03 | Developments/Chronology | `confirmationVelocity()` and `buildPath()` are real, well-built, live-authoritative-in-design capabilities — **zero callers**, Class A wiring defect. RECONN's `Θ(x)` temporal normalization (§13) doesn't exist in code. Raw `ts` is ingestion/poll time, not historical event time — not sufficient evidence of chronology on its own. | Substrate (Class A) + RECONN |
-| 04 | Relationships | Two non-integrated systems both plausibly claim RECONN §10's "governed relationship ontology": `relationontology.js`'s formal, versioned 14-value `RelationType` (11 consumers, unused by Formation), and `domainintelligence.js`'s live 15-pair cross-domain vocabulary (free-text values, actively determines admitted relationships in guest-facing Formation). No demonstrated mapping between them. **Not an engineering choice — requires an explicit Founder/architecture ruling.** `aiae.js`'s ranked candidates are not relationships (ruled out). `formationrelationship.js`'s Connector Layer is confirmed broken (`deriveRelationships()` always returns `[]`, KRYL-1280) and unreachable via UI (KRYL-1279) — disqualified on functional grounds independent of the authority question. | **RECONN / Founder ruling required** |
+| 04 | Relationships | **Superseded finding, see revision below** — RECONN §10's "governed relationship ontology" is real on both sides: `relationontology.js`'s formal, versioned 14-value `RelationType` (13 consumers, 7 genuinely semantic including two live connectors) and `domainintelligence.js`'s live 15-pair cross-domain vocabulary (actively determines admitted Formation edges). End-to-end trace across two real connectors (SEC, PatentsView) established this is **not evidence of two architecturally separate systems** — PatentsView's connector already carries a relationship identity (`rc.id`/`topology`) intentionally toward Formation, and that identity is dropped at one specific, shared, already-identified boundary (`domaingravity.js`'s pool-write function keeps only `confidence/polarity/ts/source/signal/canonicalId/eventDate`, no `id`/`topology`) — a propagation break, not an architectural fact. SEC shows a *different* defect: its connector aggregates before any per-relationship identity is even created for the Formation-side signal. `aiae.js`'s ranked candidates are not relationships (ruled out). `formationrelationship.js`'s Connector Layer is independently confirmed broken (`deriveRelationships()` always returns `[]`, KRYL-1280) and unreachable via UI (KRYL-1279). **Conclusion carried forward: repair/define the identity-propagation contract before designing any new relationship model or mapping layer — do not ratify a composite edge or any mapping yet.** | **RECONN / Founder ruling required — narrowed to identity propagation, not vocabulary choice** |
 | 05 | Tension/Divergence/Change | `convergenceclassifier.js` is live, authoritative, heavily wired (23 consumers including `app.jsx`, `conemap.jsx`, `scoutingreport.js`) — and every output self-declares `stateType: PROJECTION` ("inferred from signals, never an observed/closed outcome"). That label is silently dropped one hop downstream: `convergenceRead()` has no field for `stateType` at all, and the one real call site that reads the classifier's raw output (`scoutingreportproducer.js`) never threads it through. `groundedness` (a continuous 0–1 scalar) is not an adequate substitute — it measures degree of grounding, not categorical epistemic status (observed vs. inferred vs. absent are different dimensions). | Substrate (Class A propagation defect) + RECONN (contract vocabulary gap) |
 | 06 | Formation | Strongest substrate in the whole audit. `inferFormation()` is mature, well-governed, §21-compliant in its own code. Gap: the null-path (`return null`) discards the classification reason computed just before it (which domain/edge/floor gate failed) — traced in full (9 consumers, all truthiness-gated, none deep-read the null case; `cf/` resolved as either explicitly non-guest-path or zero-importer). Recommended fix: Option C, a separate additive export, zero blast radius. Not yet built. | Substrate |
 | 07 | Evidence | Per-object provenance is real and fail-closed (`readFacet()` rejects any facet missing `source_set_hash`/`provenance`). No canonical `evidence[]` roll-up exists. A same-sounding decoy, `buildEvidenceGraph()` (`consultingexport.js`), exists but is wired to the legacy pre-WO-5B advisory pipeline **KRYL-1235 flags for quarantine** — must not be reused for this purpose. | RECONN |
 | 08 | Unresolved | Strongest stage overall — "classified, never-fabricated absence" independently verified across `targetpacket.jsx` (`NO_FORMATION_ESTABLISHED`), `formationprospectus.js` (`held(id,'NO_FORMATION')`), `domainsignalresolution.js` (`STRUCTURAL_ABSENCE`). Same underlying gap as stage 06 — Option C closes it. | Substrate |
+
+## 7a. Relationship Architecture Audit — invariants (locked, supersedes any earlier "two separate authorities" framing)
+
+Full end-to-end trace across two real connectors (SEC, PatentsView) closed this
+audit with a materially different conclusion than the original stage-04 finding:
+**not evidence of two architecturally separate relationship systems — evidence of
+a relationship chain whose identity-continuity is currently broken at one
+specific, shared, already-identified boundary** (`domaingravity.js`'s pool-write
+function). SEC shows a second, different defect (aggregation before any
+per-relationship identity is created for the Formation-side signal at all).
+
+Until that propagation contract is repaired or deliberately ruled otherwise, the
+following invariants are locked:
+
+1. **Never fabricate the relationship between representations.** A `RelationCore`
+   and a Formation domain-pair may not be joined unless the substrate itself
+   establishes the linkage (e.g. a real, surviving identifier).
+2. **Never discard either representation merely to simplify RECONN.** If a typed
+   relation exists, preserve it. If a Formation relationship exists, preserve it.
+3. **Do not declare either representation the universal relationship authority
+   yet.** The audit proved both are real and live. It did not prove either is the
+   complete model.
+4. **RECONN must preserve provenance and identity.** Every relationship-like
+   object entering RECONN must remain attributable to the structural object that
+   actually produced it.
+5. **Future linkage must be additive.** If a legitimate connection between a
+   `RelationCore` and a Formation edge is later established, that must be an
+   explicit, governed relationship between the two — never a reinterpretation of
+   existing data.
+
+**Next step, not yet authorized:** repair/define the identity-propagation
+contract (starting from the one already-identified drop point in
+`domaingravity.js`) before designing any new relationship model, composite edge,
+or mapping layer. No bridge, composite edge, or `relationships[]` redesign is
+authorized by this contract.
 
 ## 8. Unresolved RECONN dependencies (explicit — not resolved by this contract)
 
@@ -123,7 +158,10 @@ pending a Founder/architecture ruling on §7 stage 04 above.
 Full list of RECONN-owned prerequisites, none of which Narrative Assembly may
 resolve on its own:
 
-1. Relationship vocabulary/authority ruling (blocking — Founder decision).
+1. Relationship identity-propagation repair (blocking — see §7a). Narrowed from
+   "vocabulary choice" to "fix the specific drop point in `domaingravity.js`,"
+   plus a Founder ruling only if repair reveals the two representations
+   genuinely cannot/should not be linked after all.
 2. Wire `confirmationVelocity()`/`buildPath()` to a real, live observation stream
    (Class A — mechanical once a source is identified).
 3. Stop dropping `stateType: PROJECTION` at the `convergenceRead()` boundary
