@@ -199,3 +199,28 @@ Narrative Assembly is ready for implementation once, and only once:
 - Every other stage's consumption is gated on RECONN actually emitting the
   distinction/normalization/roll-up that stage's finding requires — Narrative
   Assembly never backfills a RECONN gap itself, even temporarily.
+
+## 12. Implementation status (2026-09-20) — STOPPED, boundary reached
+
+A first implementation (`src/engine/narrativeassembly.js`, wired into
+`targetpacket.jsx`) was built and audited against §1/§3/§5/§6/§7/§11. Result:
+**not §11-compliant.** Six of eight stages (01, 02, 04, 06, 07, 08) source raw
+substrate directly (`fieldFormation`, `session.tensor.analysisIntent`) rather
+than a RECONN canonical payload, because that payload does not exist for
+`observations[]`/`relationships[]`/`formations[]`/`evidence[]` — only Phase-1
+`intent` is real. Only stages 03 and 05 are §11-compliant (correctly withheld).
+This is a **Category B** finding: the missing RECONN canonical payload is
+explicitly not Narrative Assembly's capability to build — expanding this
+implementation to also construct it would be scope creep the contract exists
+to prevent.
+
+**Disposition: implementation stopped here.** No further Narrative Assembly
+code work until the RECONN canonical payload exists. The next audit is RECONN
+itself, against `specs/SPEC-reconn-factor-v1.1.md`, to establish its actual
+implementation status and become the named upstream blocker (or clear it).
+
+**Known Narrative Assembly defect, recorded, not fixed:** null
+`analysisIntent` produces silent omission of the Question/Context opening
+rather than an explicit WITHHELD state — a real §1/Absence-Is-Signal
+violation. Left as-is pending the RECONN boundary resolving, per the same
+no-premature-fix discipline as everything else in this section.
