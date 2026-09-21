@@ -20,6 +20,8 @@ import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js'
 import { computeMetrics }        from '../../engine/metricsengine.js';
 import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
 import { inferFormation }        from '../../engine/formationinference.js';
+import { assembleNarrative }     from '../../engine/narrativeassembly.js';
+import { assembleReconnPayload } from '../../engine/reconnpayload.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
@@ -71,7 +73,7 @@ const REVELATION_STEPS = ['Scanning', 'Interpreting', 'Stabilizing', 'Ready'];
 const EXCLUSION_LABELS = {
   E_UNGROUNDED:       'no groundedness — signal present but not attributable to a real source',
   E_UNKNOWN_DOMAIN:   'not one of the six canonical domains',
-  E_NO_EDGE:          'no admitted relationship connects this domain to another in the field',
+  E_NO_EDGE:          'no domain-intelligence link connects this domain to another in the field',
   E_MISSING_POLARITY: 'polarity (constructive/fracture) not available for this signal',
   E_DUPLICATE:        'duplicate of an already-counted observation',
 };
@@ -407,6 +409,20 @@ export default function TargetPacket() {
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures, subjScope, refreshTick]);
+  // RECONN canonical payload (KRYL-1311 Category A, commit 4d76b96) — the architecture diagram's
+  // SUBSTRATE -> RECONN step, computed explicitly before Narrative Assembly consumes it.
+  const reconnPayload = useMemo(
+    () => assembleReconnPayload({ analysisIntent, fieldFormation, subjScope }),
+    [analysisIntent, fieldFormation, subjScope]
+  );
+  // Narrative Assembly v0.2 (specs/SPEC-narrative-assembly-contract-v1.md) — sequences the
+  // canonical RECONN payload (relationships, structural exclusions, temporal timing) plus
+  // fieldFormation/analysisIntent (Formation/Evidence/input-text — no canonical component exists
+  // for those yet, disclosed gap, see narrativeassembly.js header) into readable prose.
+  const narrative = useMemo(
+    () => assembleNarrative({ analysisIntent, fieldFormation, subjScope, reconnPayload }),
+    [analysisIntent, fieldFormation, subjScope, reconnPayload]
+  );
   const recognizedFrame = (() => {
     const d = synthesis?.queryDomain;
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
@@ -649,6 +665,21 @@ export default function TargetPacket() {
           as honest absence, not filled with a proxy.
         </div>
 
+        {/* ── NARRATIVE — Narrative Assembly v0.1 (specs/SPEC-narrative-assembly-contract-v1.md).
+             Sequences the SAME data already rendered in the sections below (analysisIntent,
+             fieldFormation) into one connective read, so the guest isn't left to assemble the
+             story themselves from disjointed panels. Two stages stay explicitly withheld
+             (Developments/chronology, Tension/divergence) per the contract's own substrate
+             findings -- never fabricated to fill the gap. */}
+        <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${HAIRLINE}` }}>
+          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM, marginBottom: 12 }}>
+            NARRATIVE — THE LEAD-UP
+          </div>
+          <p style={{ margin: 0, maxWidth: 720, fontFamily: SERIF, fontSize: 14, lineHeight: 1.75, color: BODY_C }}>
+            {narrative.paragraph}
+          </p>
+        </div>
+
         {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
              question, rendered exactly as captured at handleExecute() time. Never
              recomputed here; that boundary is deliberate (subtask 3/6). Absent
@@ -717,7 +748,17 @@ export default function TargetPacket() {
               <p style={{ margin: '10px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: BODY_C }}>
                 A cross-domain formation is present {subjScope.kind === 'ENTITY' ? `for ${subjScope.canonicalId} ` : ''}in the {subjScope.kind === 'ENTITY' ? 'subject-scoped' : 'live'} field:{' '}
                 {fieldFormation.participatingDomains.join(' · ')} —{' '}
-                {fieldFormation.graph.edges.length} admitted relationship{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
+                {fieldFormation.graph.edges.length} domain-intelligence formation link{fieldFormation.graph.edges.length !== 1 ? 's' : ''}.
+              </p>
+              {/* Terminology-collision fix (2026-09-20, live-render finding): "admitted
+                  relationship" here previously collided with RECONN §10's "admitted Relationship"
+                  (relationontology.js), which the NARRATIVE section above correctly reports as
+                  withheld -- same page, contradictory claim, same English word for two different
+                  real things. Formation's own admission gate (domainintelligence.js's
+                  admitCrossDomainRelationship()) is unchanged and still correct; only the
+                  guest-facing wording changed. */}
+              <p style={{ margin: '6px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.6, color: LBL_DIM }}>
+                Formation-level domain links, established by the domain-intelligence admission gate — not RECONN Relationship Coverage admissions (see NARRATIVE above).
               </p>
               {/* FIELD STATE spec v1.0 §4C — existence is a real, defined value (cohesion ×
                   pressureCoherence × avgGroundedness, formationinference.js) and IS the engine's
@@ -801,13 +842,21 @@ export default function TargetPacket() {
             </div>
           )}
 
-          {/* Signal Momentum (moved from the old top-right pane; data unchanged) */}
+          {/* Signal Momentum — synthesis.momentum removed as a display source (2026-09-20 UAT
+              finding): querysynthesis.js hardcodes it across every domain handler that sets it
+              (e.g. `momentum: { value: revMix === 'DIVERSIFIED' ? '+22%' : '+8%', h1: '+3%',
+              h24: '+9%' }` — h1/h24 always fixed regardless of anything; confirmed across 6+
+              handlers). KRYL-1175 already removed this exact pattern from one handler
+              (synthRealEstateSell) for the same reason; never cleaned up from the others. Showing
+              a specific percentage next to "No trend data" read as a real trend with no chart to
+              back it — it was never a trend, so it doesn't get a numeric display until a real,
+              ungrounded-not-hardcoded momentum computation exists. */}
           <div style={{ marginTop: 24, borderTop: `1px solid ${BORDER}`, paddingTop: 16 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.3em', color: DIM, textTransform: 'uppercase' }}>
                 Signal Momentum
               </div>
-              <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, letterSpacing: '0.05em' }}>{synthesis?.momentum?.value ?? '+—'}</span>
+              <span style={{ fontFamily: MONO, fontSize: 20, color: LIME, letterSpacing: '0.05em' }}>+—</span>
             </div>
             {TRAJ_POINTS
               ? <TrajectoryChart points={TRAJ_POINTS} color={LIME} h={55} />
@@ -815,11 +864,11 @@ export default function TargetPacket() {
             <div style={{ display: 'flex', gap: 24 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 1H ago</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h1 ?? '+—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>+—</span>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                 <span style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.1em' }}>vs 24H ago</span>
-                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>{synthesis?.momentum?.h24 ?? '+—'}</span>
+                <span style={{ fontFamily: MONO, fontSize: 11, color: LIME }}>+—</span>
               </div>
             </div>
           </div>

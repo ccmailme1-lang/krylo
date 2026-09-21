@@ -5,7 +5,6 @@ import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { resolveConvergenceDisplay } from '../../engine/convergencedisplay.js';
 import ActionMatrix          from './actionmatrix.jsx';
 import EQCanvas              from './eqcanvas.jsx';
-import { LensRegistry }      from '../../engine/lensadapters.js';
 import { getVisibleCards }   from '../../engine/editorialgate.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
 import { getQueryDomainPressure } from '../../engine/domaingravity.js';
@@ -76,7 +75,9 @@ function mapActionsToCoas(actions) {
   }));
 }
 
-function buildBrief(session, synthesis, hp = null, subjArg = null) {
+// Exported for qa_intelligencebrief.mjs — no behavior change, buildBrief is already pure over
+// its arguments. Internal callers (IntelligenceBrief component) are unaffected.
+export function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // KRYL-1239 — consume the SAME canonical subject the Target Packet resolved
   // (subjectScope over the query context), never getDisplayEntity() over the raw
   // query string. buildBrief does not resolve, extract, or infer a subject of its own.
@@ -128,6 +129,47 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
     };
   }
 
+  // DECISION INPUT CONTRACT gate (completes KRYL-1294): querysynthesis.js's DIC branch sets
+  // resolutionEligible:true (the domain itself resolved fine — REAL_ESTATE, etc.) and mode:
+  // 'INSUFFICIENT_INPUT' when a decision type needs structured fields (ZIP, price, horizon...)
+  // that session.tensor.fields doesn't have yet. That state carries no `assessment` and never
+  // reaches a domain synthesizer. KRYL-1294 correctly stopped skipping buildBrief() for this
+  // case (the missing-inputs form renders separately via InsufficientInput, see 00 · HEADER),
+  // but buildBrief() itself only guarded on resolutionEligible/queryDomain, not `mode` — so this
+  // state fell through the check above untouched and hit the lensadapters.js fallback further
+  // down (adapter.assessmentFrame/threatContext/opportunities/coas), rendering fully fabricated
+  // analytical content (fake confidence scores, risk levels, "48-72h" windows) directly below
+  // the real, honest "supply these inputs" form. Found via direct trace against a real REAL_ESTATE
+  // query with a $102M figure, 2026-09-20. Same real missingRequiredInputs the form already uses.
+  if (synthesis?.mode === 'INSUFFICIENT_INPUT' && synthesis?.decisionInputContract) {
+    const missing = synthesis.missingRequiredInputs ?? [];
+    return {
+      classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
+      subject:    entity.toUpperCase(),
+      lens:       anchorLens ?? 'UNANCHORED',
+      date:       dateStr,
+      asOf:       timeStr,
+      originator: 'ORACLE KERNEL v3.7.2',
+      domain:     domain.toUpperCase(),
+      cac:        '—',
+      roas:       '—',
+      insufficient: true,
+      bluf:       `${domain.toUpperCase()} decision recognized (${synthesis.decisionInputContract.decisionType}). Decision-specific inputs are required before synthesis can run — see the inputs form above.`,
+      purpose:    `To compute the evidence-based math for this decision once the required inputs are supplied.`,
+      fiveWs:     [],
+      evidence:   [],
+      assumptions:[],
+      assessment: missing.length
+        ? `Analysis withheld: ${missing.length} required input${missing.length !== 1 ? 's' : ''} not yet supplied (${missing.map(f => f.label).join(', ')}). See the inputs form above.`
+        : 'Analysis withheld: required decision-specific inputs not yet supplied. See the inputs form above.',
+      threats:    [],
+      opportunities: [],
+      coas:       [],
+      alternativeView: '',
+      outlook:    [],
+    };
+  }
+
   // KRYL-1239 — the packet resolved a subject but the advisory synthesis did not get
   // past its open-lens fallback for this input (typical for pasted pitch / deal-blob
   // text). That path's synth* narrative is built from the raw query and asserts "no
@@ -171,8 +213,14 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
     };
   }
 
-  const adapter = LensRegistry.resolve(rawLens);
-  const payload   = { entity, domain, lens: anchorLens };
+  // lensadapters.js's LensRegistry/adapter.assessmentFrame/threatContext/opportunities/coas
+  // fallback removed (2026-09-20 UAT finding): those are fully hardcoded template strings
+  // (fixed confidence scores, fixed risk levels, prospective "48-72h window" language) with no
+  // computation behind them — confirmed by direct read of lensadapters.js. Genuine absence of
+  // synthesis now gets the same honest-empty-state treatment as alternativeView/outlook below
+  // (DEF-1303/KRYL-1175 precedent), never a substituted narrative. lensadapters.js itself is
+  // left in place (no other importer exists — confirmed by repo-wide search — but retiring the
+  // file is a separate decision, not bundled into this fix).
 
   return {
     classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
@@ -183,17 +231,21 @@ function buildBrief(session, synthesis, hp = null, subjArg = null) {
     originator:     'ORACLE KERNEL v3.7.2',
     domain:         domain.toUpperCase(),
 
-    bluf:           synthesis?.bluf    ?? (hpDomains
+    // Same fabrication class as the removed adapter fallbacks below: "Structural convergence
+    // detected" was an unconditional claim asserted regardless of whether anything was actually
+    // detected. Honest absence instead when neither a real synthesis.bluf nor a qualified Happy
+    // Path exists.
+    bluf:           synthesis?.bluf ?? (hpDomains
       ? `Happy Path qualified: HIGH convergence across ${hpDomains.join(' + ')} — score ${hp.peakScore?.toFixed(0) ?? '—'}/100. Structural asymmetry confirmed.`
-      : `Structural convergence detected in the ${domain.toLowerCase()} domain.`),
+      : `No synthesized read is available for the ${domain.toLowerCase()} domain for this query.`),
     purpose:        synthesis?.purpose ?? `To support ${anchorLens ? anchorLens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
-    fiveWs:         synthesis?.fiveWs  ?? adapter.fiveWs?.(payload) ?? [],
+    fiveWs:         synthesis?.fiveWs  ?? [],
     evidence:       synthesis?.evidence       ?? [],
     assumptions:    synthesis?.assumptions    ?? [],
-    assessment:     synthesis?.assessment     ?? adapter.assessmentFrame(payload),
-    threats:        synthesis?.threats        ?? adapter.threatContext(payload),
-    opportunities:  synthesis?.opportunities  ?? adapter.opportunities(payload),
-    coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : adapter.coas(payload),
+    assessment:     synthesis?.assessment     ?? '',
+    threats:        synthesis?.threats        ?? [],
+    opportunities:  synthesis?.opportunities  ?? [],
+    coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : [],
     // DEF-1303 item 3: the old fallback fabricated a generic "seasonal variance" contradiction
     // whenever synthesis.alternativeView was absent, regardless of whether any real counter-read
     // was ever observed. Honest empty state instead -- no observed contradiction, no contradiction

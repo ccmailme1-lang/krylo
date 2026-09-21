@@ -1425,7 +1425,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
               <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: 'rgba(255,255,255,0.38)' }}>1. INTENT STRENGTH MAPPING (θ)</div>
               <span style={{ display: 'flex', alignItems: 'center' }}>
                 <span style={{ fontFamily: MONO, fontSize: 9, color: LIME, fontVariantNumeric: 'tabular-nums' }}>{intentMagnitude}</span>
-                <HelpMark text="How strongly-worded your question is. A more specific, confident question gets a higher number." />
+                <HelpMark text="A manual control you set yourself — not derived from your question's wording. Drag it to model how a stronger or weaker intent would change the envelope/horizon/volatility readout below." />
               </span>
             </div>
             {/* Chart — responds to slider; no pointer events needed */}
@@ -1451,10 +1451,14 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   <path d={`M 0,${y0} Q 80,${yq1} 160,${ym} T 320,${y1}`} fill="none" stroke="#66FF00" strokeWidth="2" />
                   <line x1={cx} y1="0" x2={cx} y2="140" stroke="#66FF00" strokeWidth="0.8" opacity="0.5" />
                   <circle cx={cx} cy={safecy} r="5" fill="none" stroke="#66FF00" strokeWidth="1.5" />
-                  <text x={Math.min(280, cx + 8)} y={Math.max(16, safecy - 6)} fill="#66FF00" fontSize="8" fontFamily="monospace">{im}% PROJECTION</text>
+                  {/* "PROJECTION" (implying a computed forecast) replaced with "SET" (2026-09-20
+                      UAT finding) -- this value is the guest's own manual slider position
+                      (intentMagnitude, useState(50)), not derived from the query text or any
+                      observed signal. */}
+                  <text x={Math.min(280, cx + 8)} y={Math.max(16, safecy - 6)} fill="#66FF00" fontSize="8" fontFamily="monospace">{im}% SET</text>
                   <text x="4" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace">0</text>
                   <text x="307" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace" textAnchor="end">100</text>
-                  <text x="160" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace" textAnchor="middle">RAW INTENT SIGNAL</text>
+                  <text x="160" y="136" fill="#3a3d4a" fontSize="7" fontFamily="monospace" textAnchor="middle">MANUAL INTENT DIAL</text>
                 </svg>
               );
             })()}
