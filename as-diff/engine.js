@@ -6,7 +6,7 @@
 
 import http  from 'http';
 import https from 'https';
-import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { randomUUID, createSign } from 'crypto';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
@@ -180,6 +180,49 @@ async function handlePersistExecutionPlan(req, res) {
 // past that one browser/device. Fire-and-forget from the client — a failed
 // POST never blocks the UI, it just means that batch stays local-only.
 
+// Pilot fallback (≤40 users) — Postgres (Supabase) is unreachable from this VPS (direct host is
+// IPv6-only, VPS has no IPv6 route; pooler region unknown). Appends to a local JSONL file so
+// telemetry isn't silently dropped while that's sorted out. Temporary, not a redesign of the
+// Postgres path above, which stays the primary path whenever `pool` is set.
+const TELEMETRY_FILE = new URL('./data/tester_telemetry.jsonl', import.meta.url).pathname;
+
+function appendTelemetryFile(events) {
+  const dir = TELEMETRY_FILE.slice(0, TELEMETRY_FILE.lastIndexOf('/'));
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  let written = 0;
+  const lines = [];
+  for (const ev of events) {
+    if (!ev?.type || !ev?._emittedAt) continue;
+    lines.push(JSON.stringify({
+      id: randomUUID(),
+      profile_id: ev.profileId ?? null,
+      session_id: ev.sessionId ?? null,
+      event_type: ev.type,
+      payload: ev,
+      emitted_at: new Date(ev._emittedAt).toISOString(),
+      received_at: new Date().toISOString(),
+    }));
+    written++;
+  }
+  if (lines.length) {
+    appendFileSync(TELEMETRY_FILE, lines.join('\n') + '\n');
+  }
+  return written;
+}
+
+function readTelemetryFile({ profileId, sessionId }) {
+  if (!existsSync(TELEMETRY_FILE)) return [];
+  const rows = readFileSync(TELEMETRY_FILE, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+    .filter(Boolean)
+    .filter((r) => !profileId || r.profile_id === profileId)
+    .filter((r) => !sessionId || r.session_id === sessionId);
+  rows.sort((a, b) => (a.received_at < b.received_at ? 1 : -1));
+  return rows.slice(0, 500);
+}
+
 async function handleTesterTelemetry(req, res) {
   let body;
   try { body = await parseBody(req); }
@@ -191,7 +234,13 @@ async function handleTesterTelemetry(req, res) {
   }
 
   if (!pool) {
-    return send(res, 201, { status: 'DB_WRITE_SUCCESS', written: 0, note: 'no DB configured' });
+    try {
+      const written = appendTelemetryFile(events);
+      return send(res, 201, { status: 'DB_WRITE_SUCCESS', written, note: 'file fallback (pilot)' });
+    } catch (err) {
+      console.error('[tester-telemetry] file write failed:', err.message);
+      return send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+    }
   }
 
   try {
@@ -207,8 +256,52 @@ async function handleTesterTelemetry(req, res) {
     }
     send(res, 201, { status: 'DB_WRITE_SUCCESS', written });
   } catch (err) {
-    console.error('[tester-telemetry] DB write failed:', err.message);
-    send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+    console.error('[tester-telemetry] DB write failed, falling back to file:', err.message);
+    try {
+      const written = appendTelemetryFile(events);
+      send(res, 201, { status: 'DB_WRITE_SUCCESS', written, note: 'file fallback (DB unreachable)' });
+    } catch (fileErr) {
+      console.error('[tester-telemetry] file fallback also failed:', fileErr.message);
+      send(res, 500, { status: 'DB_WRITE_FAILED', error: fileErr.message });
+    }
+  }
+}
+
+// GET /api/tester-telemetry?profileId=t03&key=ADMIN_KEY — read path, did not exist before
+// today. Requires ADMIN_KEY (env var) as a query param so this isn't wide open to the public;
+// this is a minimal gate, not a real auth system — do not treat it as one.
+async function handleTesterTelemetryRead(req, res) {
+  const u = new URL(req.url, 'http://localhost');
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey || u.searchParams.get('key') !== adminKey) {
+    return send(res, 403, { status: 'FORBIDDEN', error: 'missing or invalid key' });
+  }
+  if (!pool) {
+    const rows = readTelemetryFile({
+      profileId: u.searchParams.get('profileId'),
+      sessionId: u.searchParams.get('sessionId'),
+    });
+    return send(res, 200, { status: 'DB_READ_SUCCESS', rows, note: 'file fallback (pilot)' });
+  }
+  try {
+    const params = [];
+    let sql = 'SELECT id, profile_id, session_id, event_type, payload, emitted_at, received_at FROM tester_telemetry';
+    const where = [];
+    const profileId = u.searchParams.get('profileId');
+    const sessionId = u.searchParams.get('sessionId');
+    if (profileId) { params.push(profileId); where.push('profile_id = $' + params.length); }
+    if (sessionId) { params.push(sessionId); where.push('session_id = $' + params.length); }
+    if (where.length) sql += ' WHERE ' + where.join(' AND ');
+    sql += ' ORDER BY received_at DESC LIMIT 500';
+    const { rows } = await pool.query(sql, params);
+    send(res, 200, { status: 'DB_READ_SUCCESS', rows });
+  } catch (err) {
+    console.error('[tester-telemetry] DB read failed, falling back to file:', err.message);
+    const rows = readTelemetryFile({
+      profileId: u.searchParams.get('profileId'),
+      sessionId: u.searchParams.get('sessionId'),
+    });
+    send(res, 200, { status: 'DB_READ_SUCCESS', rows, note: 'file fallback (DB unreachable)' });
   }
 }
 
@@ -1465,6 +1558,7 @@ function routeRequest(req, res) {
   if (req.method === 'POST' && url === '/compare')                            return handleCompare(req, res);
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
   if (req.method === 'POST' && url === '/api/tester-telemetry')              return handleTesterTelemetry(req, res);
+  if (req.method === 'GET'  && url === '/api/tester-telemetry')              return handleTesterTelemetryRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);

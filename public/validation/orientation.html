@@ -1,158 +1,525 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KRYLO Guest Validation Orientation</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-<style>
-  :root {
-    --bg:        #f4f4f6;
-    --surface:   #ffffff;
-    --rule:      #d9dade;
-    --rule-soft: #e7e8eb;
-    --text:      #26282c;
-    --text-dim:  #6b7075;
-    --head:      #14161a;
-    --lime:      #2f8f00;
-    --lime-tint: #eef6e6;
-    --blue:      #0064c8;
-    --blue-tint: #e7f0fb;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg:#0a0b0c; --surface:#131517; --rule:#262a2e; --rule-soft:#1c1f22;
-      --text:#d3d6d9; --text-dim:#7d8288; --head:#f1f3f4;
-      --lime:#66FF00; --lime-tint:#16220c; --blue:#4aa8ff; --blue-tint:#10202f;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KRYLO · Guest Session · Validation Orientation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --surface-2: #161616;
+      --border: #222222;
+      --border-strong: #2e2e2e;
+      --text: #e8e8e8;
+      --text-muted: #8a8a8a;
+      --text-dim: #5c5c5c;
+      --lime: #c8ff00;
+      --blue: #4a9eff;
+      --purple: #a78bfa;
+      --white: #ffffff;
     }
-  }
-  :root[data-theme="dark"] {
-    --bg:#0a0b0c; --surface:#131517; --rule:#262a2e; --rule-soft:#1c1f22;
-    --text:#d3d6d9; --text-dim:#7d8288; --head:#f1f3f4;
-    --lime:#66FF00; --lime-tint:#16220c; --blue:#4aa8ff; --blue-tint:#10202f;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font-family: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
-    font-size: 13px; line-height: 1.45; -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 640px; margin: 0 auto; padding: 44px 28px 80px; }
-  h1, h2 { font-family: Georgia, 'Times New Roman', serif; color: var(--head); font-weight: 400; text-wrap: balance; }
-  h1 { font-size: 26px; line-height: 1.12; letter-spacing: -0.01em; margin: 0; }
-  h2 { font-size: 17px; line-height: 1.2; margin: 0 0 12px; }
-  .eyebrow { font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-dim); margin: 0 0 10px; }
-  .lede { font-size: 13.5px; color: var(--text); margin: 12px 0 0; max-width: 60ch; }
-  .rule-lime { height: 2px; width: 40px; background: var(--lime); margin: 16px 0 0; }
-  section { margin-top: 32px; }
-  section > .eyebrow { margin-bottom: 6px; }
-  p { margin: 0 0 9px; max-width: 64ch; }
-  p:last-child { margin-bottom: 0; }
-  a { color: var(--blue); }
-  .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
-  .steps li { counter-increment: step; position: relative; padding: 0 0 16px 40px; border-left: 1px solid var(--rule-soft); margin-left: 10px; }
-  .steps li:last-child { border-left-color: transparent; padding-bottom: 0; }
-  .steps li::before { content: counter(step, decimal-leading-zero); position: absolute; left: -11px; top: -1px; background: var(--bg); color: var(--text-dim); font-size: 10.5px; letter-spacing: 0.06em; padding: 2px 4px; }
-  .queries { margin: 0; padding: 0; list-style: none; counter-reset: q; }
-  .queries li { counter-increment: q; background: var(--surface); border: 1px solid var(--rule); border-left: 2px solid var(--lime); padding: 16px 18px; margin-bottom: 12px; }
-  .queries li:last-child { margin-bottom: 0; }
-  .q-tag { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
-  .q-tag b { color: var(--lime); font-weight: 600; }
-  .q-text { font-family: Georgia, 'Times New Roman', serif; color: var(--head); font-size: 16px; line-height: 1.4; margin: 6px 0 8px; }
-  .q-why { font-size: 13.5px; color: var(--text-dim); margin: 0; max-width: none; }
-  dl.surfaces { margin: 0; display: grid; gap: 0; }
-  dl.surfaces > div { display: grid; grid-template-columns: 148px 1fr; gap: 16px; padding: 15px 0; border-top: 1px solid var(--rule-soft); }
-  dl.surfaces > div:last-child { border-bottom: 1px solid var(--rule-soft); }
-  dl.surfaces dt { font-size: 13.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--head); font-weight: 500; }
-  dl.surfaces dd { margin: 0; font-size: 15.5px; color: var(--text-dim); }
-  .callout { background: var(--blue-tint); border: 1px solid var(--rule); padding: 16px 18px; margin: 20px 0 0; font-size: 15.5px; }
-  .callout b { color: var(--head); font-weight: 600; }
-  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 12.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-dim); }
-  @media (max-width: 520px) { .wrap { padding: 48px 20px 90px; } h1 { font-size: 30px; } dl.surfaces > div { grid-template-columns: 1fr; gap: 4px; } }
-</style>
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16.54px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      min-height: 100vh;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* Layout */
+    .page {
+      max-width: 794px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem 4rem;
+    }
+
+    @media (min-width: 768px) {
+      .page {
+        padding: 3.5rem 2rem 5rem;
+      }
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.75rem;
+      margin-bottom: 2.25rem;
+    }
+
+    .logo-link {
+      display: inline-block;
+      line-height: 0;
+      text-decoration: none;
+    }
+
+    .logo-link:hover {
+      text-decoration: none;
+      opacity: 0.9;
+    }
+
+    .logo {
+      height: 30px;
+      width: auto;
+      display: block;
+    }
+
+    @media (min-width: 480px) {
+      .logo {
+        height: 36px;
+      }
+    }
+
+    .classification {
+      margin-top: 0.85rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--lime);
+    }
+
+    /* Opening */
+    .opening {
+      margin-bottom: 2.75rem;
+    }
+
+    .opening p {
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+    }
+
+    .opening p:last-child {
+      margin-bottom: 0;
+      color: var(--text-muted);
+    }
+
+    /* Progression bar */
+    .progression {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 0.75rem;
+      align-items: center;
+      margin-bottom: 2.75rem;
+      padding: 0.85rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .progression .step {
+      color: var(--text-dim);
+    }
+
+    .progression .step.active {
+      color: var(--lime);
+    }
+
+    .progression .sep {
+      color: var(--border-strong);
+      user-select: none;
+    }
+
+    /* Sections */
+    section {
+      margin-bottom: 2.75rem;
+    }
+
+    .section-label {
+      font-size: 0.68rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--purple);
+      margin-bottom: 0.85rem;
+    }
+
+    h2 {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    p, li {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    ol, ul {
+      padding-left: 1.25rem;
+      margin-top: 0.5rem;
+    }
+
+    li {
+      margin-bottom: 0.45rem;
+    }
+
+    li strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Query cards */
+    .queries {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .query-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 1.1rem 1.15rem;
+    }
+
+    .query-card .num {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 0.45rem;
+    }
+
+    .query-card .title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 0.55rem;
+    }
+
+    .query-card .body {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-bottom: 0.65rem;
+    }
+
+    .query-card .quote {
+      font-size: 0.82rem;
+      color: var(--blue);
+      border-left: 2px solid var(--blue);
+      padding-left: 0.75rem;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .query-card .note {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-top: 0.55rem;
+    }
+
+    /* Surfaces list */
+    .surfaces {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.55rem;
+    }
+
+    @media (min-width: 520px) {
+      .surfaces {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .surface-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.75rem 0.9rem;
+    }
+
+    .surface-item .name {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--white);
+      margin-bottom: 0.2rem;
+    }
+
+    .surface-item .desc {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    /* Notice */
+    .notice {
+      background: var(--surface-2);
+      border: 1px solid var(--border-strong);
+      padding: 1rem 1.1rem;
+      margin-top: 1.25rem;
+    }
+
+    .notice .label {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--purple);
+      margin-bottom: 0.45rem;
+    }
+
+    .notice p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    /* Actions */
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (min-width: 480px) {
+      .actions {
+        flex-direction: row;
+        gap: 1rem;
+      }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.85rem 1.35rem;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--lime);
+      color: #0a0a0a;
+      border-color: var(--lime);
+    }
+
+    .btn-primary:hover {
+      background: #d4ff33;
+      border-color: #d4ff33;
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text-muted);
+      color: var(--white);
+      text-decoration: none;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 3rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
+  <div class="page">
 
-  <p class="eyebrow">Guest session · validation orientation</p>
-  <h1>Your first session with KRYLO</h1>
-  <p class="lede">KRYLO watches six domains — capital, ownership, technology, knowledge, labor, and media — for structural change and relationships forming across them. It detects emerging structure; it does not predict what happens next.</p>
-  <p class="lede">Bring KRYLO a question from your world. Explore what it surfaces, follow the relationships that interest you, and see where the structure takes you.</p>
-  <div class="rule-lime"></div>
+    <!-- Header -->
+    <header class="header">
+      <a href="https://krylo.org" class="logo-link" aria-label="KRYLO" target="_blank" rel="noopener">
+        <img
+          class="logo"
+          src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAOAAAABECAYAAACYoDkZAAAKZmlDQ1BJQ0MgUHJvZmlsZQAASImVlgdQU+kWx79700NCCAlVSuhNegsgJXQEpUgXlZBQQgkhNMWOLK7AiiIighVYFFBwVYqsoiKKBRFQwIIuyCKirIsFUVHZCzwl+97se/POzDffb8493/+e79x7Zg4AZMAWCOJhCQAS+ClCPzdHRnBIKAM3CjAAC6iADiTYnGQBy8fHCyD2bf+7ve8D0Ox+V39W6z+f/1ejciOTOQBAPghHcJM5CQifRdYARyBMAQC1C/GrpacIZhnxA7oQSRDh67McPc8DsxwxzxNzMf5+TgCg0QDgSWy2MBoAEnJDwEjjRCM6JCOEjfhcHh/hcITtEhISuQgfQVgbiREgPKvPjBDRif6bZsR3TTY7+jvP32XO8M68ZEE8e93/WY7/bQnxqd/eoYksUlziHCN5QfdjIheYx13gKN4CpwgXWJi6wPx4ER0RPy9lgSNFYtgiOlFCJ9Y35rAX/Bkx7p7fNUVy4IvkLBDR5IqcjeSL6vgHfePkNJG7xIjGOC1fOOvm+I0TkhdiOCKcHCf6LlbA9xxEapgmkrNQJOdIEZ0okTqkimgKROoWyxb1+/h/r4nIWWAGPFMi186dckoUrBPyomNSGCykoyIZHnyOwWKGiZGJKQCz/Tn/+d/6zfUdJN2y4EusQH7b90gf7F7wRRQC0JgNgOzDBZ/6IQAoWQA0tHJShfMVnU0DIH1PBBSk7+WAElAD2kAfmAALYAMcgAtYCryBPwgBqwEHxIAEIATpYAPYCrJBLtgF9oIScBiUg+PgJDgNGsF5cBlcA7dAF+gFj8AgGAEvwQR4D6YhCMJBZIgGyUHKkAakB5lATMgOcoG8ID8oBAqHoiE+lAptgLZBuVABVAIdhaqgX6Bz0GXoBtQNPYCGoDHoDfQJRsEkmA4rwpqwIcyEWbAn7A+vgqPhJDgDzoJ3wsVwGXwCboAvw7fgXngQfglPogBKDCWNUkHpo5goJ5Q3KhQVhRKiNqFyUEWoMlQtqhnVjrqLGkSNoz6isWgamoHWR9ug3dEBaA46Cb0JnYcuQR9HN6Db0HfRQ+gJ9FcMGaOA0cNYYzwwwZhoTDomG1OEqcTUY65iejEjmPdYLFYaq4W1xLpjQ7Cx2PXYPOxBbB32ErYbO4ydxOFwcjg9nC3OG8fGpeCycftxJ3AXcT24EdwHvBheGW+Cd8WH4vn4THwRvhrfgu/Bj+KnCRIEDYI1wZvAJawj5BMqCM2EO4QRwjSRStQi2hL9ibHErcRiYi3xKnGA+FZMTExVzErMV4wntkWsWOyU2HWxIbGPJEmSLsmJFEZKJe0kHSNdIj0gvSWTyZpkB3IoOYW8k1xFvkJ+Qv4gThM3EPcQ54pvFi8VbxDvEX9FIVA0KCzKakoGpYhyhnKHMi5BkNCUcJJgS2ySKJU4J9EvMUmlUY2p3tQEah61mnqD+lwSJ6kp6SLJlcySLJe8IjlMQ9HUaE40Dm0brYJ2lTZCx9K16B70WHou/SS9kz4hJSllJhUotVaqVOqC1KA0SlpT2kM6Xjpf+rR0n/QnGUUZlkykzA6ZWpkemSnZRbIOspGyObJ1sr2yn+QYci5ycXK75RrlHsuj5XXlfeXT5Q/JX5UfX0RfZLOIsyhn0elFDxVgBV0FP4X1CuUKHQqTikqKbooCxf2KVxTHlaSVHJRilQqVWpTGlGnKdso85ULli8ovGFIMFiOeUcxoY0yoKKi4q6SqHFXpVJlW1VINUM1UrVN9rEZUY6pFqRWqtapNqCurL1PfoF6j/lCDoMHUiNHYp9GuMaWppRmkuV2zUfO5lqyWh1aGVo3WgDZZ2147SbtM+54OVoepE6dzUKdLF9Y1143RLdW9owfrWejx9A7qdS/GLLZazF9ctrhfn6TP0k/Tr9EfMpA28DLINGg0eGWobhhquNuw3fCrkblRvFGF0SNjSeOlxpnGzcZvTHRNOCalJvdMyaaupptNm0xfm+mZRZodMrtvTjNfZr7dvNX8i4WlhdCi1mLMUt0y3PKAZT+TzvRh5jGvW2GsHK02W523+mhtYZ1ifdr6Txt9mzibapvnS7SWRC6pWDJsq2rLtj1qO2jHsAu3O2I3aK9iz7Yvs3/qoObAdah0GGXpsGJZJ1ivHI0chY71jlNO1k4bnS45o5zdnHOcO10kXQJcSlyeuKq6RrvWuE64mbutd7vkjnH3dN/t3u+h6MHxqPKYWGq5dOPSNk+S5wrPEs+nXrpeQq/mZfCypcv2LBtYrrGcv7zRG3h7eO/xfuyj5ZPk86sv1tfHt9T3mZ+x3wa/9hW0FWtWVK947+/on+//KEA7IDWgNZASGBZYFTgV5BxUEDQYbBi8MfhWiHwIL6QpFBcaGFoZOrnSZeXelSNh5mHZYX2rtFatXXVjtfzq+NUX1lDWsNecCceEB4VXh39me7PL2JMRHhEHIiY4Tpx9nJdcB24hdyzSNrIgcjTKNqog6nm0bfSe6LEY+5iimHGeE6+E9zrWPfZw7FScd9yxuJn4oPi6BHxCeMI5viQ/jt+WqJS4NrFboCfIFgwmWSftTZoQegork6HkVclNKXRkEOpI1U79IXUozS6tNO1DemD6mbXUtfy1Het01+1YN5rhmvHzevR6zvrWDSobtm4Y2sjaeHQTtCliU+tmtc1Zm0e2uG05vpW4NW7r7UyjzILMd9uCtjVnKWZtyRr+we2HmmzxbGF2/3ab7Yd/RP/I+7Fzh+mO/Tu+5nBzbuYa5Rblfs7j5N38yfin4p9mdkbt7My3yD+0C7uLv6tvt/3u4wXUgoyC4T3L9jQUMgpzCt/tXbP3RpFZ0eF9xH2p+waLvYqb9qvv37X/c0lMSW+pY2ndAYUDOw5MHeQe7DnkcKj2sOLh3MOfjvCO3D/qdrShTLOsqBxbnlb+rCKwov1n5s9VlfKVuZVfjvGPDR73O95WZVlVVa1QnV8D16TWjJ0IO9F10vlkU61+7dE66brcU+BU6qkXv4T/0nfa83TrGeaZ2rMaZw/U0+pzGqCGdQ0TjTGNg00hTd3nlp5rbbZprv/V4Ndj51XOl16QupDfQmzJapm5mHFx8pLg0vjl6MvDrWtaH10JvnKvzbet86rn1evXXK9daWe1X7xue/38Desb524ybzbesrjV0GHeUX/b/HZ9p0Vnwx3LO01dVl3N3Uu6W3rsey7fdb577Z7HvVu9y3u7+wL67veH9Q/e595//iD+weuHaQ+nH20ZwAzkPJZ4XPRE4UnZbzq/1Q1aDF4Ych7qeLri6aNhzvDL35N//zyS9Yz8rGhUebTqucnz82OuY10vVr4YeSl4OT2e/Qf1jwOvtF+d/dPhz46J4ImR18LXM2/y3sq9PfbO7F3rpM/kk/cJ76encj7IfTj+kfmx/VPQp9Hp9M+4z8VfdL40f/X8OjCTMDMjYAvnJxUUsuCoKADeHAOAHAIArQsA4sr5+XnOoPmZf47AP/H8jD1nFgCU9wPgvx4Ar9sA7C9BxldEnxIGgA8F8dsA2NT0+/qXzc/lALDZyCjNEwrAP9j8zC6S97/vYFZ1Tvdv+18qOvE9GF7FAwAAAIplWElmTU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAIdpAAQAAAABAAAATgAAAAAAAACQAAAAAQAAAJAAAAABAAOShgAHAAAAEgAAAHigAgAEAAAAAQAAAOCgAwAEAAAAAQAAAEQAAAAAQVNDSUkAAABTY3JlZW5zaG90sdXXcQAAAAlwSFlzAAAWJQAAFiUBSVIk8AAAAdVpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDYuMC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6ZXhpZj0iaHR0cDovL25zLmFkb2JlLmNvbS9leGlmLzEuMC8iPgogICAgICAgICA8ZXhpZjpQaXhlbFlEaW1lbnNpb24+Njg8L2V4aWY6UGl4ZWxZRGltZW5zaW9uPgogICAgICAgICA8ZXhpZjpQaXhlbFhEaW1lbnNpb24+MjI0PC9leGlmOlBpeGVsWERpbWVuc2lvbj4KICAgICAgICAgPGV4aWY6VXNlckNvbW1lbnQ+U2NyZWVuc2hvdDwvZXhpZjpVc2VyQ29tbWVudD4KICAgICAgPC9yZGY6RGVzY3JpcHRpb24+CiAgIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+CmCU1c4AAAAcaURPVAAAAAIAAAAAAAAAIgAAACgAAAAiAAAAIgAABv+tzItiAAAGy0lEQVR4AeycO0geSxSAJxpQoigWKQRRsRAFC0OCKSxsAhLUQhsb0VYhRANWNqYRUgVNJYjaBCIqvhBMREVQJFEwD4gWQrTQqMQH0YiKj71zFs6f3//uzpzZXXf3cmfg5+zOzO55zHw7OzujdxhjBv/ppCOgIxBABO5wnRrAAAKvVeoIQAQ0gLof6AgEGAENYIDB16p1BDSAug/oCAQYAQ1ggMHXqnUENIC6D+gIBBgBDWCAwdeqdQQ0gLoP6AgEGAENYIDB16p1BDSAug/oCAQYgcAATExMZE+fPjVdn5iYYGdnZwGGQavWEQguArAVzddfaWmpcXR0ZGCCY8jz2w6tz9921/H+d7x9HwE5aGx8fJzdvXuXt8ffdHl5ycrLy9mHDx/+ZobsqKSkhMHPLg0ODrKVlRWzuKqqihUUFNhVZWNjY+zLly+25VhQV1fHsrKy8FQqT05O2NevX9nS0hL7/fu3tH50hQcPHrCKiororBvH8/PzbGZmJpLX2NjIUlNTI+fRB1dXV6ytrS06y/I4Ozub1dbWWpZB5urqKhsYGLAtd1oQFxfHHj16xIqLi02Zn5/PkpKS2Pr6Ovv8+TP7+PEjm52dVY6hE3t8G3lglLu4uMCBz3j79q35wwwoC/NIuLi4iKZayq6urkgsDw8PLetg5rt37yJ1eaPZHp+enuIlypI/DAwOle29Y/X29fUJdfAHRuRe8fHxwrpQmJmZGakfqwvPX758KbzPr1+/pPfAe1Elf4gaBwcHQr1QeH19bbx588Zz/TF22jd+TEVXhljBh/cHEDGFGUIqgCkpKeiOrayuribF0w2AoBw6EX/Sk3TV1NTY2gsF0GmxzYqKioR1+Zw+UhevsZJ+AggPjZGREaHdVoW7u7vGw4cPSf5Y+SjJu30ARfChcf8FCKkA8tdGq3a8kZeQkEBqULcAgtLj42OSrnv37t2wMfYEYMb2am5uji2+cc5fgyN18Ror6SeAMJo5TfBGY2W/B3m3CyAFPnQi7BBSARwaGhK2887ODrkxvQAQjIHRDeMsknt7e0Lb8/LyzPv09/cL671+/Zqkzy8A79+/b/B5qdBmWeGrV69IPonia1F2ewCqwIeGhRlCKoCbm5vCthwdHSU3pFcA8o8KJJ2Tk5NC2+vr6837fP/+XVjv8ePHJH1+Acg/HgntpRTC9CgtLY3kF/ZngrwdAJ3Ah8aGFUIKgPzrmjnvEjUovKKirzLpFYDUV6jnz5+LTDd6e3tN26OXkWIvgI4q8wvL/QLw/Pw81kxH5w0NDWTf0EeJ9B5AN/ChsWGEkALgkydPpA0Lcy30Uya9AhBev2S6oBxe1URpeXnZkD1k1tbWSLpAnx8Awnzbq9TZ2Un2jRJvXsdbAL2AD20KG4QUAKGBRAnmWOgfRcoAnJqaMud3P378EKk1y/iaHUk3fLSxS/v7++bShl055Pf09JD0gP9+AMjX+kTmmmUdHR0GX7e9sUHE6iK+Nkj2jdK+vI53AHoJH9oVJggpAMLamyi9f/9eqQFlALa3t5v3k41KYFNOTg5J98LCgq0LMJI2NTXZlkNBWVkZSQ+0sR8A8g0DQnujv+7yTSLCuhsbG2TfsA9LpDcA3gZ8aHhYIKQAKJtr4EcM9E0mqQDCfUQjF/Qq6lpWa2ursBOKPmhAZ4b1NplfWO4HgDC6idL29nbE3paWFlFVgzqXRv8I0j2AtwkfOhAGCGUAwugmS9TXQPRbBUDZ7hvYAYL3Fcnc3FyhG6KHzM+fP0k6UL8fAMrW/+D1He159uyZ0He+vS9SF69xKd0B6Ad86GDQEMoAhB0TouTk6akCoKwuzHEwljIJO1mcpOHhYbIOsEED6GIO6Cd82GGChFAGoKzDTk9PK3VO8FkGFc4BMzIyZOoNldH327dv0vtZVVBZYtEAmoOfsxEwCPiChtAtgPDxAn2gShmAsEEaRhGYx4hS9IcGim4A20lKTk5W8lGPgA5GwCDhw84TxEjoFkBYY0P7qVIGIBWSra0tJd2wk0U1RW/WpvqnAVQEMAzwYeP6DaEbAGHnCNqtIr0CsLu7W1k/7GhRSU5esTWACgCGCT7sxH5C6AbAubk5ZQDARy8ABPj5vwBR1g87WlTSixcvlHVoAIkAQgNG7/+Djo8QBC2jIXTa2Sg+uAGQ/1W3o3i5BRAWjgsLCx3phn2fKik9PV1ZjwaQCGBlZWWkLcIEH4ITDSHYivleSjcAOt1B4RZAeCBRF+BjYwU7Wqjpz58/jmKuAdQAkjuOGwDhKyRsF4vt5LJztwACQPz/xCjtTkGbYEcL2E1Jnz59UvYN9PzfAfwHAAD//wMVXK8AAAUoSURBVO2czys1URjH58XCQnaSpbKQlZ1kqfzKvyBlLRaSHRayloUUYWFhIRsiIsoGSwuRwkqEhOS3eed7M9Pc3pnnPGfmnnvHe59TtxnznPs853yf85mZc+cMy7Ism/MpLi62Hx8fbbfMz8+zvsfxHbcO2uIWtBFtjesz6PsHBwdumEjbtrY27Xa9vLyQsb6/v218VKWrq0s7NjS4vLxUuU7ZR0ZGIvkfHh4m/d/c3ETy68/f+Pg4GePs7MyL0d3dTdZ9eHjw6vpjxNjnAYgAzc3N9sfHh9fAJEDohw9tQxtjiEF+Ny6Ac3NzpP+gdqsAxAAuLS21MVCpsry8rB0b7VlaWqLceraamppI/gVA5hXQHRxJgjCb8KH/KgDf39+9ARm0c3FxoT1IOQCibdPT00EhvWNou5tDnW1HR4fnI2zn7e0tkm+0QwDUBBCiJQHCbMOHfqsAPD09DRujqeNfX192QUGB1mDlAjg0NETGPjk50YrrQlpSUkL6hfHo6CiSbwEwdffJvwV1k4JtLiHMBXzoswrAxcVF5WBtaWnRGqxcAAcHB8nYUQFEv+/u7kjfExMTWn3yjyO5AjoC+wXR2c8FhLmCD7qoAFxYWLBvb2/Jwao7D0wCgDs7O2SfdE8q/jEmAMYAEEJmE8JcwscFcGtrixysuvPAJAC4trZG9qm+vj7ySVwAjAlgtiDMNXxcAAcGBsjBqjsPFADjP4YYGxsjc+I/Kfb29pJ17+/vI59sMIYCPoEHgyqSx0xeCZMAHxfAyspKMoEwQquARAQeEwDjA9jT00Pm5Pr62tMezzOp4n9myM2hol5mAEQQExAmBT70jzMHRL3X11cqh/bs7KyXcEVybAEwPoANDQ1kPvx3Jdvb22RdzIdVOdO0Zw5ABM4khEmCD33jAoif5alyfn7OTqIAGB9ArIxSFdyG4lmqalXR1NQUO3dMEDMLYKYgTBp8OgBOTk6S+fafcVVJyncASSEdIx79qDSEXbVIQhXHtWOOyImnUSfzACJ4nCthEuFDn7hXQPRdVZqamliJFABpJTc3N1k6Hh8f046YVszxNeDi1DUDYFQIkwqfDoCFhYXKW5mZmRlOcvJ+DqjiggtgXV2dypXSvrGxwcqZJqDmANSFMMnw6QCIuldXV2RCub+myRWQlNHmAoic7O/v084IK6YN5eXlvw9ALoRJh08XwNXVVSKdto2EwqfqIwCSMmoBWFVVFXkuiFeaVLmKaFcPgoiO0xpMzQl/A3zQgDsHRF3Ve2UYVpx5oACYOQCRl4qKChvrYrkFP950dnamjeVM8ODzkR0AETAIwt8CH9q/u7tL5s0/r8PtiqpgAbUvEYH7T09PpJv+/v7U9/r6+sh6h4eHgf5V8WFXvRNYW1sb2TfaH6dEfc9xdHQ0tcg87LHD8/Ozvbe3Z5eVlUXuG0fbPz+VnE12igOhtbKyYhUVFaUF/Pz8tNrb26319fW04/KHKGBagerqaquxsdFyXui2nLm55ZxoLecdR9NhPf9GCXei/OMfV0L/v7fAPo4F1ZVj/+onmvw/mmT9CugMnlRxVidYra2tqX1ntb3lLN/6schGFMgfBXIGYP5ILD0VBcIVEADDtRGLKGBcAQHQuMQSQBQIV0AADNdGLKKAcQUEQOMSSwBRIFwBATBcG7GIAsYVEACNSywBRIFwBQTAcG3EIgoYV0AANC6xBBAFwhUQAMO1EYsoYFwBAdC4xBJAFAhXQAAM10YsooBxBQRA4xJLAFEgXIG/L3y639VtzHwAAAAASUVORK5CYII="
+          alt="KRYLO"
+        />
+      </a>
+      <div class="classification">Guest Session · Validation Orientation</div>
+    </header>
 
-  <section>
-    <p class="eyebrow">Getting in</p>
-    <h2>Sign in and orient</h2>
-    <ol class="steps">
-      <li>Open <a href="/">krylo.org</a>. When the access panel appears, enter the <strong>access code</strong> you were given.</li>
-      <li>You'll arrive at <strong>Home — the Macro-level Domain Field Observatory.</strong></li>
-      <li>When you're ready, open <strong>Analysis</strong> and enter a real situation or question from your world — not a list of keywords.</li>
-      <li>Submit. KRYLO will build a <strong>Target Packet</strong> in Analysis for you to explore.</li>
-    </ol>
-  </section>
-
-  <section>
-    <p class="eyebrow">What to run</p>
-    <h2>Five queries, in this order</h2>
-    <p>These five queries are designed to give you different ways to experience KRYLO. Run them in order, as naturally as you can.</p>
-    <ol class="queries">
-      <li>
-        <span class="q-tag"><b>01</b> · Sparse</span>
-        <p class="q-text">"Looking to buy a commercial unit in New York City."</p>
-        <p class="q-why">The situation is intentionally underspecified. Run it as you would if this were real.</p>
-      </li>
-      <li>
-        <span class="q-tag"><b>02</b> · Same subject, fully formed</span>
-        <p class="q-text">Return to the same purchase and add: the decision on the table — buy, lease, or redevelop — a budget, and a timeline.</p>
-        <p class="q-why">Compare what surfaces against query 01.</p>
-      </li>
-      <li>
-        <span class="q-tag"><b>03</b> · A named situation in your field</span>
-        <p class="q-text">Bring something concrete you'd actually want to understand — an entity building a position, a technology being adopted, a workforce shift, or another situation from your field.</p>
-        <p class="q-why">Before you run it, note what you expect to find. Then compare what you expected with what KRYLO surfaces.</p>
-      </li>
-      <li>
-        <span class="q-tag"><b>04</b> · Deliberately vague</span>
-        <p class="q-text">"What should I do about my situation?"</p>
-        <p class="q-why">Run it as written.</p>
-      </li>
-      <li>
-        <span class="q-tag"><b>05</b> · Capital or ownership formation</span>
-        <p class="q-text">Bring a question about companies, stakes, debt, or capital reorganizing in a sector you know.</p>
-        <p class="q-why">Run it as you naturally would.</p>
-      </li>
-    </ol>
-  </section>
-
-  <section>
-    <p class="eyebrow">Reading the screen</p>
-    <h2>What each surface is</h2>
-    <p>KRYLO is organized around several views:</p>
-    <dl class="surfaces">
-      <div><dt>Home</dt><dd>The Macro-level Domain Field Observatory.</dd></div>
-      <div><dt>Analysis</dt><dd>Explore the question you brought.</dd></div>
-      <div><dt>Formation</dt><dd>Examine the structural relationships KRYLO surfaces.</dd></div>
-      <div><dt>News Feed</dt><dd>Follow relevant developments in the field.</dd></div>
-      <div><dt>Community</dt><dd>See perspectives and activity from others.</dd></div>
-      <div><dt>History</dt><dd>Revisit previous questions and sessions.</dd></div>
-    </dl>
-    <p style="margin-top:16px">Move between views as you explore. There is no required order.</p>
-    <div class="callout">
-      <b>A note on what you may see.</b> Some fields may say "NOT MEASURED" or "no verified record." If you encounter either, form your own view of what you are seeing and whether you trust it. You'll be asked about this afterward.
+    <!-- Opening -->
+    <div class="opening">
+      <p>
+        KRYLO watches six domains — capital, ownership, technology, knowledge, labor, and media — for structural change and relationships forming across them. It detects emerging structure; it does not predict what happens next.
+      </p>
+      <p>
+        Bring KRYLO a question from your world. Explore what it surfaces, follow the relationships that interest you, and see where the structure takes you.
+      </p>
     </div>
-  </section>
 
-  <section>
-    <p class="eyebrow">After your session</p>
-    <h2>You'll complete a short questionnaire</h2>
-    <p>As you go, note anything that stands out — anything that feels unclear, unsupported, contradictory, unexpected, or that changes how you see the situation.</p>
-    <p>Immediately after the session, you'll be asked about what you noticed, on your own terms: <a href="/validation/questionnaire.html">open the questionnaire</a>.</p>
-  </section>
+    <!-- Progression -->
+    <div class="progression" aria-label="Session progression">
+      <span class="step active">Get In</span>
+      <span class="sep">→</span>
+      <span class="step">Run</span>
+      <span class="sep">→</span>
+      <span class="step">Explore</span>
+      <span class="sep">→</span>
+      <span class="step">Respond</span>
+    </div>
 
-  <footer>KRYLO · Signal-Classified · Analytical Use Only</footer>
+    <!-- 1. Getting in -->
+    <section>
+      <div class="section-label">01 · Access</div>
+      <h2>Getting in</h2>
+      <p style="margin-bottom: 0.75rem; color: var(--text);">Sign in and orient</p>
+      <ol>
+        <li>Open <a href="https://krylo.org" target="_blank" rel="noopener">krylo.org</a>. When the access panel appears, enter the access code you were given.</li>
+        <li>You’ll arrive at <strong>Home</strong> — the Macro-level Domain Field Observatory.</li>
+        <li>When you’re ready, open <strong>Analysis</strong> and enter a real situation or question from your world — not a list of keywords.</li>
+        <li>Submit. KRYLO will build a Target Packet in Analysis for you to explore.</li>
+      </ol>
+    </section>
 
-</div>
+    <!-- 2. What to run -->
+    <section>
+      <div class="section-label">02 · Protocol</div>
+      <h2>What to run</h2>
+      <p style="margin-bottom: 1.1rem;">
+        Five queries, in this order. These are designed to give you different ways to experience KRYLO. Run them in order, as naturally as you can.
+      </p>
+      <p style="margin-bottom: 1.25rem; font-size: 0.82rem; color: var(--text-dim);">
+        Click “New Query” before each one. Starting each query fresh keeps them independent of each other.
+      </p>
+
+      <div class="queries">
+        <article class="query-card">
+          <div class="num">01 · Sparse</div>
+          <div class="title">Underspecified situation</div>
+          <div class="body">The situation is intentionally underspecified. Run it as you would if this were real.</div>
+          <div class="quote">“Looking to buy a commercial unit in New York City.”</div>
+        </article>
+
+        <article class="query-card">
+          <div class="num">02 · Same subject, fully formed</div>
+          <div class="title">Decision, budget, timeline</div>
+          <div class="body">Return to the same purchase and add: the decision on the table — buy, lease, or redevelop — a budget, and a timeline. Compare what surfaces against query 01.</div>
+        </article>
+
+        <article class="query-card">
+          <div class="num">03 · A named situation in your field</div>
+          <div class="title">Concrete from your world</div>
+          <div class="body">Bring something concrete you’d actually want to understand — an entity building a position, a technology being adopted, a workforce shift, or another situation from your field.</div>
+          <div class="note">Before you run it, note what you expect to find. Then compare what you expected with what KRYLO surfaces.</div>
+        </article>
+
+        <article class="query-card">
+          <div class="num">04 · Deliberately vague</div>
+          <div class="title">Open-ended prompt</div>
+          <div class="body">Run it as written.</div>
+          <div class="quote">“What should I do about my situation?”</div>
+        </article>
+
+        <article class="query-card">
+          <div class="num">05 · Capital or ownership formation</div>
+          <div class="title">Structural reorganization</div>
+          <div class="body">Bring a question about companies, stakes, debt, or capital reorganizing in a sector you know. Run it as you naturally would.</div>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. Reading the screen -->
+    <section>
+      <div class="section-label">03 · Surfaces</div>
+      <h2>Reading the screen</h2>
+      <p style="margin-bottom: 1rem;">KRYLO is organized around several views. Move between them as you explore. There is no required order.</p>
+
+      <div class="surfaces">
+        <div class="surface-item">
+          <div class="name">Home</div>
+          <div class="desc">Macro-level Domain Field Observatory</div>
+        </div>
+        <div class="surface-item">
+          <div class="name">Analysis</div>
+          <div class="desc">Explore the question you brought</div>
+        </div>
+        <div class="surface-item">
+          <div class="name">Formation</div>
+          <div class="desc">Examine structural relationships</div>
+        </div>
+        <div class="surface-item">
+          <div class="name">News Feed</div>
+          <div class="desc">Follow relevant developments</div>
+        </div>
+        <div class="surface-item">
+          <div class="name">Community</div>
+          <div class="desc">Perspectives and activity from others</div>
+        </div>
+        <div class="surface-item">
+          <div class="name">History</div>
+          <div class="desc">Revisit previous questions and sessions</div>
+        </div>
+      </div>
+
+      <div class="notice">
+        <div class="label">What you may see</div>
+        <p>
+          Some fields may say “NOT MEASURED” or “no verified record.” If you encounter either, form your own view of what you are seeing and whether you trust it. You’ll be asked about this afterward.
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. After -->
+    <section>
+      <div class="section-label">04 · Close</div>
+      <h2>After your session</h2>
+      <p style="margin-bottom: 0.75rem; color: var(--text);">You’ll complete a short questionnaire</p>
+      <p>
+        As you go, note anything that stands out — anything that feels unclear, unsupported, contradictory, unexpected, or that changes how you see the situation.
+      </p>
+      <p style="margin-top: 0.75rem;">
+        Immediately after the session, open the questionnaire and answer on your own terms.
+      </p>
+    </section>
+
+    <!-- Actions -->
+    <div class="actions">
+      <a class="btn btn-primary" href="https://krylo.org" target="_blank" rel="noopener">Open KRYLO</a>
+      <!-- Replace https://krylo.org/validation/questionnaire.html with the real questionnaire link -->
+      <a class="btn btn-secondary" href="https://krylo.org/validation/questionnaire.html" target="_blank" rel="noopener">Complete Questionnaire</a>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      KRYLO · Signal-Classified · Analytical Use Only
+    </footer>
+
+  </div>
 </body>
 </html>
