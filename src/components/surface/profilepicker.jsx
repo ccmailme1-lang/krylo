@@ -8,7 +8,11 @@ import { useProfileStore, TEST_PROFILES } from '../../store/useprofilestore.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
-const valid = (c) => TEST_PROFILES.some(p => p.id === c && p.active); // only ACTIVATED accounts sign in
+// KRYL — case-insensitive lookup. Codes are stored/shown uppercase (e.g. 'FHFFBAJS') but were
+// being compared against a .toLowerCase()'d input, so every guest code typed as shown always
+// failed to match — this silently blocked every real guest from ever signing in.
+const findProfile = (c) => TEST_PROFILES.find(p => p.id.toLowerCase() === c.trim().toLowerCase());
+const valid = (c) => { const p = findProfile(c); return !!(p && p.active); }; // only ACTIVATED accounts sign in
 
 export default function ProfilePicker() {
   const activeId  = useProfileStore(s => s.activeId);
@@ -20,9 +24,10 @@ export default function ProfilePicker() {
   // Link sign-in: ?t=<code> hands a tester their account, then the URL is cleaned.
   useEffect(() => {
     if (activeId) return;
-    const p = (new URLSearchParams(window.location.search).get('t') || '').trim().toLowerCase();
-    if (p && valid(p)) {
-      setActive(p);
+    const raw = (new URLSearchParams(window.location.search).get('t') || '').trim();
+    const linkProfile = raw && findProfile(raw);
+    if (linkProfile && linkProfile.active) {
+      setActive(linkProfile.id);
       const url = new URL(window.location.href);
       url.searchParams.delete('t');
       window.history.replaceState({}, '', url);
@@ -44,9 +49,8 @@ export default function ProfilePicker() {
   if (activeId) return null;
 
   const submit = () => {
-    const c = code.trim().toLowerCase();
-    const p = TEST_PROFILES.find(x => x.id === c);
-    if (p && p.active) setActive(c);
+    const p = findProfile(code);
+    if (p && p.active) setActive(p.id);
     else setErr(p ? 'inactive' : 'invalid'); // exists-but-off vs unknown
   };
 

@@ -5,7 +5,7 @@ import React, { useState, useMemo } from 'react';
 import { useAnalysisStore }        from '../../store/useanalysisstore.js';
 import { synthesizeQuery }         from '../../engine/querysynthesis.js';
 import { getVisibleCards }         from '../../engine/editorialgate.js';
-import { canonicalBriefSubject, cleanLens, synthesisIsDomainAnchored } from '../../engine/briefcontext.js';
+import { canonicalBriefSubject, cleanLens } from '../../engine/briefcontext.js';
 import { classifyFrame, frameHeadline } from '../../engine/frameclassify.js';
 import { useHappyPathEngine }      from '../../engine/happypathdisplacementengine.js';
 import { computeMetrics }         from '../../engine/metricsengine.js';
@@ -201,14 +201,23 @@ export default function ActionMatrix() {
     return <AmbiguousState variant="compact" />;
   }
 
-  // §21 (FORMATION IS NOT A VERDICT) — with no ENTITY subject and no domain-anchored
-  // synthesis there is no substantiated basis for a derived action set. Do NOT
-  // fabricate one: the old fall-through rendered synthGeneral's "REFINE YOUR QUERY"
+  // §21 (FORMATION IS NOT A VERDICT) — with no ENTITY subject there is no substantiated
+  // basis for a derived action set, regardless of whether a domain-level read exists.
+  // KRYL — domain-anchored ≠ subject-anchored (found 2026-09-22 tracing a real guest
+  // failure): this previously also required !synthesisIsDomainAnchored(synthesis), so a
+  // query that resolved to a real canonical domain (e.g. CAPITAL, via the live signal
+  // field) but never resolved a SUBJECT still fell through to the full ranked Action
+  // Matrix below — a fabricated rank/risk-score/engine-arbitrated recommendation sitting
+  // directly next to a packet that says DECISION VERDICT: NOT PRODUCED and NO SUBJECT
+  // RESOLVED. synthesisIsDomainAnchored() correctly answers "is this a real vs. template
+  // analysis" for other consumers (BLUF/5Ws) — it was never a subject-safety signal, and
+  // must not gate whether ranked actions render. Subject resolution alone decides that.
+  // Do NOT fabricate one: the old fall-through rendered synthGeneral's "REFINE YOUR QUERY"
   // coaching actions plus a 50/100 score and a "LEVERAGE WINDOW — OPEN" badge, none
   // of it derived from anything. Show the frame's own anchor checklist when a frame
   // was recognised; otherwise state the honest absence and point at the Structural
   // Field. Missing decision inputs constrain a derivative, never the structural read.
-  if (subj.kind !== 'ENTITY' && !synthesisIsDomainAnchored(synthesis)) {
+  if (subj.kind !== 'ENTITY') {
     const hasFrame = frame.class !== 'NO_FRAME';
     return (
       <div style={{ width: '100%', height: '100%', background: '#000', fontFamily: MONO, padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>

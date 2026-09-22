@@ -4,6 +4,7 @@
 // WO-1367: localStorage persistence — survives page reload, capped at 1000 events.
 
 import { validateSystemEvent } from './driftmonitor.js';
+import { getActiveProfile } from '../store/useprofilestore.js';
 
 const STORAGE_KEY = 'krylo_telemetry_log';
 const MAX_EVENTS  = 1000;
@@ -56,7 +57,11 @@ function flushPending() {
 }
 
 export function emitTelemetry(event) {
-  const stamped = { ...event, _emittedAt: Date.now() };
+  // KRYL — attach the active profile to every event, not just the ones whose caller happened to
+  // pass profileId explicitly (previously only app.jsx's session_open did). Explicit profileId on
+  // the event always wins if already set.
+  const profileId = event.profileId ?? (typeof window !== 'undefined' ? getActiveProfile() : null);
+  const stamped = { ...event, profileId, _emittedAt: Date.now() };
   _log.push(stamped);
   if (_log.length > MAX_EVENTS) _log.splice(0, _log.length - MAX_EVENTS);
   persistLog(_log);

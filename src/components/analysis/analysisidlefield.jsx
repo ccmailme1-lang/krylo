@@ -527,6 +527,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const activeSessionId       = useAnalysisStore(s => s.activeSessionId);
   const setActiveSession      = useAnalysisStore(s => s.setActiveSession);
   const storeSetOutputFilters = useAnalysisStore(s => s.setOutputFilters);
+  const pendingDomainReset    = useAnalysisStore(s => s.pendingDomainReset);
+  const clearDomainResetRequest = useAnalysisStore(s => s.clearDomainResetRequest);
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const hasSession    = !!activeSession;
   const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession]);
@@ -755,6 +757,15 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     () => selectedDomains[0] ? (ANALYSIS_PILL_TO_DOMAIN[selectedDomains[0]] ?? null) : null,
     [selectedDomains]
   );
+  // KRYL — the RE-RUN lifecycle-boundary fix's other half: historybay.jsx sets
+  // pendingDomainReset before creating a re-run session, since it has no access to this
+  // component's local selectedDomains state. Clear the stale pill selection here so a domain
+  // locked by an earlier, unrelated query can never silently route a re-run query too.
+  useEffect(() => {
+    if (!pendingDomainReset) return;
+    setSelectedDomains([]);
+    clearDomainResetRequest();
+  }, [pendingDomainReset, clearDomainResetRequest]);
   const { data: domainMetrics } = useDomainMetrics(selectedDomains[0]);
   useEffect(() => {
     if (!onDomainSelect) return;
@@ -1722,6 +1733,19 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
                 {/* SES gauge pod removed — replaced by the world clocks */}
 
+                {/* KRYL-1317 — payload-contract heading (Founder-directed, 2026-09-22). The
+                    search box itself teaches a guest what KRYLO needs to bind a query — subject,
+                    decision context, and bounded parameters — before they hit an open-lens/
+                    no-subject result without knowing what would have produced a bound answer. */}
+                <div style={{ textAlign: 'center', marginBottom: 14 }}>
+                  <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.32em', color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>
+                    Bring a Question
+                  </div>
+                  <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.24em', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', marginTop: 6 }}>
+                    Subject + Decision Context + Bounded Parameters
+                  </div>
+                </div>
+
                 {/* ── OBJECTIVE (textarea + toolbar) ── */}
                 <div style={{
                   background: 'rgba(10,10,10,0.96)',
@@ -1744,7 +1768,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     onFocus={() => setFocused(true)}
                     onBlur={e => { setSeedQuery(e.target.value); handleQueryBlur(); }}
                     onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleExecute(); }}
-                    placeholder="Describe what you're trying to accomplish..."
+                    placeholder="Amazon — automation's impact on warehouse labor — next 3 yrs"
                     rows={4}
                     style={{
                       width: '100%', boxSizing: 'border-box',
@@ -1755,6 +1779,12 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                       caretColor: LIME, outline: 'none',
                     }}
                   />
+                  {/* KRYL-1317 — helper line between the box and the submit affordance below.
+                      The existing circular submit button already functions as SEARCH — not
+                      duplicating it with a second button per the Founder-approved layout. */}
+                  <div style={{ padding: '0 24px 4px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
+                    KRYLO detects structure across the question.
+                  </div>
                   {/* Toolbar */}
                   <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

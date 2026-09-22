@@ -4404,6 +4404,46 @@ export function synthesizeQuery(session) {
     };
   }
 
+  // KRYL — GAP-24-adjacent defect, found 2026-09-22 tracing a real guest failure: a domainLock
+  // carrying one of the six canonical domain names (e.g. 'TECHNOLOGY') — not a SYNTH_MAP vignette
+  // key — used to skip this whole institutional-resolution branch (the `!domainLock` guard below
+  // excluded it unconditionally) and fall through to the SYNTH_MAP dispatch further down, where an
+  // unmapped key silently defaults to synthGeneral's canned template — the exact fabrication this
+  // branch exists to prevent. A stale/leftover domainLock (see historybay.jsx RE-RUN gap) must not
+  // be able to route around this protection. Canonical domainLock values now enter the resolver
+  // directly, with an explicit override, same honest-withhold behavior as the no-lock path below.
+  if (domainLock && isCanonicalDomain(domainLock)) {
+    const canon = synthCanonical(query, domainLock);
+    if (canon.withheld) {
+      return {
+        queryDomain: (canon.primary ? canon.primary.toUpperCase() : 'AMBIGUOUS'),
+        domainVector: vector, resolutionEligible: false,
+        canonical: canon, withheldReason: canon.reason,
+        recommendedAction: canon.recommendedAction,
+        ses, provenanceState,
+      };
+    }
+    const cwLock = {};
+    for (const [d, v] of Object.entries(canon.classification.weights)) cwLock[d.toUpperCase()] = v;
+    const coActiveUpperLock = canon.coActive.map(d => d.toUpperCase());
+    return {
+      queryDomain: canon.primary.toUpperCase(),
+      domainVector: { ...vector, primary: canon.primary.toUpperCase(), weights: cwLock, coActive: coActiveUpperLock },
+      resolutionEligible: true,
+      stateType:   STATE_TYPE.PROJECTION,
+      stateLabel:  canon.stateLabel,
+      confidence:  canon.confidence,
+      momentum:    canon.momentum,
+      direction:   canon.direction,
+      signalCount: canon.signalCount,
+      provenance:  canon.provenance,
+      grounded:    true,
+      canonical:   canon,
+      recommendedAction: canon.recommendedAction,
+      ses, provenanceState,
+    };
+  }
+
   // KRYL-1080/1089/1091 — INSTITUTIONAL RESOLUTION.
   // When the life-domain ladder abstains (GENERAL), an institutional/structural query used to
   // fall to synthGeneral — a canned template with static confidence 0.71 + mock momentum.
@@ -4536,6 +4576,8 @@ export function synthesizeQuery(session) {
   // as the confidence score sitting next to it. Data-layer disclosure only — how/whether this
   // renders in the UI is a separate decision, not made here.
   return { ...result, ...groundedMetrics,
+           // TEMPORARY DIAGNOSTIC — remove after root-causing why a GENERAL/canonical-eligible
+           // query reaches this SYNTH_MAP dispatch instead of the synthCanonical() branch above.
            // Always-present estimate: classification confidence (0–1) is computed for every query,
            // so the UI never has to render an empty window — it shows this labeled EST when the
            // signal-grounded confidence is null. Real number, honestly labeled, never fabricated.

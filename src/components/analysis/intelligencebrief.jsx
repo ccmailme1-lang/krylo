@@ -104,6 +104,15 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // to the ambient Happy Path BLUF or the lens-adapter frames — those invent a
   // confident brief for input the engine itself rated as having no anchor.
   if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
+    // KRYL — canonicalresolution.js's synthCanonical() already writes a specific, honest
+    // explanation into recommendedAction for the two withheld cases (NO_LIVE_SIGNAL: domain
+    // classified fine, live field just has no signal right now; NO_DOMAIN_EVIDENCE: query
+    // didn't classify to any canonical domain). That message was being computed and discarded
+    // here in favor of the fully generic AMBIGUOUS_COPY regardless of which case applied —
+    // the guest never learned which one they hit. Prefer the specific message when the engine
+    // provided one; AMBIGUOUS_COPY remains the fallback for a true AMBIGUOUS (no domain
+    // classification reached at all, so there is no specific reason to give).
+    const specificReason = synthesis?.recommendedAction ?? null;
     return {
       classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
       subject:    entity.toUpperCase(),
@@ -115,12 +124,12 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       cac:        '—',
       roas:       '—',
       insufficient: true,
-      bluf:       AMBIGUOUS_COPY.bluf,
-      purpose:    AMBIGUOUS_COPY.purpose,
+      bluf:       specificReason ?? AMBIGUOUS_COPY.bluf,
+      purpose:    specificReason ?? AMBIGUOUS_COPY.purpose,
       fiveWs:     [],
       evidence:   [],
       assumptions:[],
-      assessment: 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
+      assessment: specificReason ?? 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
       threats:    [],
       opportunities: [],
       coas:       [],
@@ -222,6 +231,28 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // left in place (no other importer exists — confirmed by repo-wide search — but retiring the
   // file is a separate decision, not bundled into this fix).
 
+  // KRYL — Brief-only copy reconciliation for the domain-anchored/no-subject state (found
+  // 2026-09-22, same guest-failure trace as the P4 action gate fix above). synthesis.assessment
+  // (set by canonicalresolution.js's synthCanonical() — engine code, not touched here) uses
+  // "Resolved to LABOR..." language that reads as subject resolution to a guest, directly next
+  // to a header that says SUBJECT: NO SUBJECT RESOLVED. bluf separately falls back to a generic
+  // "No synthesized read is available" a few lines below, which then contradicts the real
+  // field-level signal assessment goes on to describe. Reconciled here, at the Brief's own
+  // presentation layer only, from the same underlying fields synthesis already carries
+  // (queryDomain/signalCount/direction/confidence/momentum) — synthesis itself is untouched.
+  const domainAnchoredNoSubject = subj.kind !== 'ENTITY'
+    && synthesis?.resolutionEligible === true
+    && !!synthesis?.queryDomain
+    && !['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(synthesis.queryDomain);
+  const reconciledBluf = domainAnchoredNoSubject
+    ? `${synthesis.queryDomain} frame recognized in the live field. No subject resolved — this is a field-level read, not a subject-scoped synthesized read.`
+    : null;
+  const reconciledAssessment = domainAnchoredNoSubject
+    ? `${synthesis.queryDomain} frame recognized in the live field with ${synthesis.signalCount ?? 0} observation${(synthesis.signalCount ?? 0) === 1 ? '' : 's'}, ${synthesis.direction ?? 'constructive'} polarity, magnitude ${Math.round((synthesis.confidence ?? 0) * 100)}/100.` +
+      (synthesis.momentum?.value ? ` Momentum: ${synthesis.momentum.value} vs. the live cross-domain mean.` : '') +
+      ` Field-level signal, not a subject-specific finding.`
+    : null;
+
   return {
     classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
     subject:        entity.toUpperCase(),
@@ -235,14 +266,14 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
     // detected" was an unconditional claim asserted regardless of whether anything was actually
     // detected. Honest absence instead when neither a real synthesis.bluf nor a qualified Happy
     // Path exists.
-    bluf:           synthesis?.bluf ?? (hpDomains
+    bluf:           reconciledBluf ?? synthesis?.bluf ?? (hpDomains
       ? `Happy Path qualified: HIGH convergence across ${hpDomains.join(' + ')} — score ${hp.peakScore?.toFixed(0) ?? '—'}/100. Structural asymmetry confirmed.`
       : `No synthesized read is available for the ${domain.toLowerCase()} domain for this query.`),
     purpose:        synthesis?.purpose ?? `To support ${anchorLens ? anchorLens.toLowerCase() + '-lens' : 'general'} decision-maker action.`,
     fiveWs:         synthesis?.fiveWs  ?? [],
     evidence:       synthesis?.evidence       ?? [],
     assumptions:    synthesis?.assumptions    ?? [],
-    assessment:     synthesis?.assessment     ?? '',
+    assessment:     reconciledAssessment ?? synthesis?.assessment ?? '',
     threats:        synthesis?.threats        ?? [],
     opportunities:  synthesis?.opportunities  ?? [],
     coas:           synthesis?.actions ? mapActionsToCoas(synthesis.actions) : [],

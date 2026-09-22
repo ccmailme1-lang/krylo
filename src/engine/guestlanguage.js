@@ -15,7 +15,11 @@ export const GUEST_WITHHOLD_COPY = Object.freeze({
   TRACE_ERROR:        'This record exists but can’t be shown yet — the evidence didn’t pass our verification check.',
 
   // consultingexport.js export-gate states
-  EXPORT_BLOCKED_ABSENCE: 'Add a specific decision, dollar amount, or timeline to get a grounded answer.',
+  // KRYL-1317 — same payload-contract instruction as the search box (BRING A QUESTION /
+  // SUBJECT + DECISION CONTEXT + BOUNDED PARAMETERS), shown again here as the after-the-fact
+  // reinforcement when a search didn't carry enough to ground an answer. Same instruction at
+  // two moments (before search, after an under-specified one), not two different messages.
+  EXPORT_BLOCKED_ABSENCE: 'GROUNDED ANSWERS REQUIRE A SUBJECT, DECISION CONTEXT, AND BOUNDED PARAMETERS.',
   EXPORT_BELOW_GATE:      'grounded so far — keep refining to unlock export.',
   EXPORT_READY:           'verified evidence found — ready to export.',
 

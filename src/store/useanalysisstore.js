@@ -18,10 +18,23 @@ export const useAnalysisStore = create((set) => ({
   activeSessionId:    null,
   pendingQuery:       null,
   pendingAcquisition: null,
+  // KRYL — lifecycle-boundary fix for a real guest-facing defect (2026-09-22): a domain pill
+  // selected in analysisidlefield.jsx (local component state, selectedDomains) only ever got
+  // cleared by that component's own "New Query" button (resetSession(), which calls
+  // setSelectedDomains([])). historybay.jsx's RE-RUN creates a brand-new session directly via
+  // createSession() and never goes through that button, so a stale pill selection from an
+  // earlier, unrelated query silently locked domain routing for the re-run too — landing on
+  // querysynthesis.js's generic synthGeneral() fallback regardless of the re-run query's actual
+  // content. This flag is the bridge: any entry point that creates a session outside
+  // analysisidlefield.jsx's own submit flow sets it; analysisidlefield.jsx clears its local
+  // selectedDomains when it sees it set, then clears the flag.
+  pendingDomainReset: false,
 
   setPendingQuery:       (text)     => set({ pendingQuery: text }),
   setPendingAcquisition: (envelope) => set({ pendingAcquisition: envelope }),
   clearPendingAcquisition: ()       => set({ pendingAcquisition: null }),
+  requestDomainReset:      ()       => set({ pendingDomainReset: true }),
+  clearDomainResetRequest: ()       => set({ pendingDomainReset: false }),
 
   createSession: (id, lens, query = '', tensor = {}) => set((state) => {
     const resolvedLens = lens || loadProfile().defaultLens || 'GENERAL';

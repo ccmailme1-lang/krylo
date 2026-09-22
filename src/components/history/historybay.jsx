@@ -555,6 +555,7 @@ export default function HistoryBay({ onRerunNavigate }) {
   const setSwipeIndex  = useUIStore(s => s.setSwipeIndex);
   const createSession  = useAnalysisStore(s => s.createSession);
   const sessions       = useAnalysisStore(s => s.sessions);
+  const requestDomainReset = useAnalysisStore(s => s.requestDomainReset);
   const transactions   = buildTransactions(sessions);
 
   // Poll telemetry log every 2s — module-level array, not React state
@@ -566,11 +567,17 @@ export default function HistoryBay({ onRerunNavigate }) {
   }, []);
 
   const handleRerun = useCallback((entry) => {
+    // KRYL — a domain pill selected during an earlier, unrelated query lives in
+    // analysisidlefield.jsx's own local state and previously only got cleared by that
+    // component's "New Query" button. RE-RUN bypassed that entirely, silently carrying a stale
+    // domain lock into a fresh session. requestDomainReset() tells analysisidlefield.jsx to
+    // clear it before this new session's synthesis runs.
+    requestDomainReset();
     const id = `session-${Date.now()}`;
     createSession(id, 'OPEN', entry.query);
     setSwipeIndex(1);
     onRerunNavigate?.();
-  }, [createSession, setSwipeIndex, onRerunNavigate]);
+  }, [createSession, requestDomainReset, setSwipeIndex, onRerunNavigate]);
 
   const visibleHistory = sortRows(
     history.filter(e => inRange(e.ts, rangeKey, customRange)),

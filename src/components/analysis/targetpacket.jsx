@@ -591,6 +591,21 @@ export default function TargetPacket() {
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
                   : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
+          {/* KRYL — synthesis.recommendedAction already carries an honest, specific explanation
+              from canonicalresolution.js's synthCanonical() when the classified domain has no
+              live signal (NO_LIVE_SIGNAL) or the query didn't classify to any canonical domain
+              (NO_DOMAIN_EVIDENCE) — see synthesis.withheldReason. That message was being computed
+              and returned but never rendered anywhere, so a guest whose query legitimately
+              withheld (§22 — never fabricate) saw nothing explaining why. Surfaced here, once,
+              only when resolutionEligible is explicitly false. */}
+          {synthesis?.resolutionEligible === false && synthesis?.recommendedAction && (
+            <p style={{
+              margin: '10px 0 0', maxWidth: 950, fontFamily: MONO, fontSize: 12.5,
+              lineHeight: 1.5, color: '#9aa39f', borderLeft: `2px solid ${LIME}`, paddingLeft: 12,
+            }}>
+              {synthesis.recommendedAction}
+            </p>
+          )}
           {/* DEF-1303 item 1 — the label itself must change with what's actually resolved: a
               recognized query-domain FRAME is not a resolved SUBJECT, and rendering it under
               the SUBJECT label implied an entity was resolved when none was. CAPITAL FRAME /
