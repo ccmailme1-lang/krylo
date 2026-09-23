@@ -1,7 +1,7 @@
 // frameanchoring.jsx — KRYL-1236, stage 1.
 //
 // A READ surface. When the query does not resolve to a subject ENTITY, it shows the
-// analytical-object class the engine recognised (DECISION_FRAME / PORTFOLIO_FRAME /
+// analytical-object class the engine recognised (DECISION_SITUATION / PORTFOLIO_FRAME /
 // MARKET_THEME), the evidence the engine already extracted, and the class-native
 // anchor checklist — the specific inputs that would make the frame resolvable.
 //
@@ -22,7 +22,7 @@ const VAL  = '#eceee9';
 const BODY = '#b6bcb7';
 
 const CLASS_COPY = {
-  DECISION_FRAME:
+  DECISION_SITUATION:
     'A decision was recognised, but no subject. The anchors below are what would bind it to one — supplying them scopes observation, it does not produce a verdict.',
   PORTFOLIO_FRAME:
     'A fund / portfolio-level mandate — no single subject by design. The anchors below scope the observation to the mandate.',

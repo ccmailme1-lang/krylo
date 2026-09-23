@@ -7,6 +7,11 @@
 //     { kind: 'ENTITY',        canonicalId, entity, matchedOn, confidence }
 //   | { kind: 'GEO',           location }                       (from resolved queryContext.geo only)
 //   | { kind: 'DECISION_FRAME', frame }                         decision cues, no entity — unit-of-analysis unsettled
+//   | { kind: 'PORTFOLIO_FRAME' | 'MARKET_THEME' | 'DECISION_SITUATION', frame, classification }
+//                                                                 structural frame via classifyFrame() — no entity,
+//                                                                 no transactional decision cue, no geo, but a
+//                                                                 broader recognized structural object (KRYL, T1,
+//                                                                 2026-09-23 — see frameclassify.js)
 //   | { kind: 'UNRESOLVED',     reason }
 //
 // The name-extraction rule ignores the leading question/aux stem so
@@ -14,6 +19,7 @@
 // "IS ANDURIL" pseudo-anchor (SPEC-subject-scoping-contract.md §3a).
 
 import { resolve } from './entityresolution.js';
+import { classifyFrame } from './frameclassify.js';
 
 const TRIM_WORDS = new Set([
   // question / auxiliary stems
@@ -104,7 +110,26 @@ export function subjectScope(input) {
     };
   }
 
-  return { kind: 'UNRESOLVED', reason: 'no entity resolved; no decision cues; no resolved geo' };
+  // 4. Structural frame — classifyFrame() recognizes a broader analytical object
+  // (portfolio/fund mandate, market/sector theme, or a decision situation via a wider
+  // decision-detection than step 3's narrow transactional-verb list) even when no entity,
+  // geo, or transactional decision cue matched above. KRYL — T1, 2026-09-23: previously
+  // classifyFrame()'s result was computed elsewhere (frameanchoring.jsx, actionmatrix.jsx,
+  // display-only) but never reached this function — the single subject-state authority —
+  // so a query KRYLO had genuinely classified could still be reported to the guest as flatly
+  // UNRESOLVED. classifyFrame() is the sole source for these three kinds; not re-derived here
+  // (same discipline as decisionAnchors/portfolioAnchors/marketAnchors inside that module).
+  const frame = classifyFrame(text);
+  if (frame.class !== 'NO_FRAME') {
+    return {
+      kind: frame.class, // 'PORTFOLIO_FRAME' | 'MARKET_THEME' | 'DECISION_SITUATION'
+      frame: text.slice(0, 140),
+      classification: frame,
+      reason: `${frame.class.replace(/_/g, ' ').toLowerCase()} recognized, no entity resolved`,
+    };
+  }
+
+  return { kind: 'UNRESOLVED', reason: 'no entity resolved; no decision cues; no resolved geo; no structural frame' };
 }
 
 export function isScopable(scope) {

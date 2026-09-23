@@ -13,6 +13,7 @@ import { useConvictionStore, useThesisMonitor, computeCalibration } from '../../
 import { emitTelemetry }     from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import { canonicalBriefSubject, cleanLens, synthesisIsDomainAnchored } from '../../engine/briefcontext.js';
+import { frameHeadline } from '../../engine/frameclassify.js';
 import { buildExportPayload, triggerDownload, canExport, EXPORT_FS_GATE, RUNTIME_STATE } from '../../engine/consultingexport.js';
 import { guestWithholdCopy } from '../../engine/guestlanguage.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
@@ -113,6 +114,19 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
     // provided one; AMBIGUOUS_COPY remains the fallback for a true AMBIGUOUS (no domain
     // classification reached at all, so there is no specific reason to give).
     const specificReason = synthesis?.recommendedAction ?? null;
+    // KRYL — T1 follow-on, 2026-09-23: detectDomain() (no canonical domain-pressure
+    // vocabulary) and subjectScope() (structural-object recognition) answer genuinely
+    // different questions — confirmed by trace, not merged here. But this branch was
+    // collapsing PORTFOLIO_FRAME/MARKET_THEME (subjectScope DID recognize something) into
+    // the exact same generic copy as UNRESOLVED (subjectScope recognized nothing) — same
+    // "known state reported as unknown" pattern the ENTITY+abstained branch below (line
+    // ~188) already has a precedent fix for. Mirrors that precedent: state what WAS
+    // recognized, then honestly withhold the domain-pressure synthesis, rather than
+    // pretending nothing was understood. UNRESOLVED still falls through to AMBIGUOUS_COPY
+    // unchanged — genuinely nothing was recognized there, generic copy stays correct.
+    const frameReason = (subj.kind === 'PORTFOLIO_FRAME' || subj.kind === 'MARKET_THEME')
+      ? `${frameHeadline(subj.scope?.classification) ?? subj.kind.replace(/_/g, ' ')} recognized. No canonical domain-pressure signal is available for this input, so live-signal synthesis is withheld — this is a stated absence, not a low score. See the Target Packet's Frame Anchoring section for what KRYLO can observe about this frame.`
+      : null;
     return {
       classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
       subject:    entity.toUpperCase(),
@@ -124,12 +138,12 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       cac:        '—',
       roas:       '—',
       insufficient: true,
-      bluf:       specificReason ?? AMBIGUOUS_COPY.bluf,
-      purpose:    specificReason ?? AMBIGUOUS_COPY.purpose,
+      bluf:       frameReason ?? specificReason ?? AMBIGUOUS_COPY.bluf,
+      purpose:    frameReason ?? specificReason ?? AMBIGUOUS_COPY.purpose,
       fiveWs:     [],
       evidence:   [],
       assumptions:[],
-      assessment: specificReason ?? 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
+      assessment: frameReason ?? specificReason ?? 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
       threats:    [],
       opportunities: [],
       coas:       [],

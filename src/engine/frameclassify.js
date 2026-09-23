@@ -5,7 +5,7 @@
 // the anchors that would make the frame resolvable.
 //
 //   classifyFrame(query | queryContext) →
-//     { class: 'DECISION_FRAME' | 'PORTFOLIO_FRAME' | 'MARKET_THEME' | 'NO_FRAME',
+//     { class: 'DECISION_SITUATION' | 'PORTFOLIO_FRAME' | 'MARKET_THEME' | 'NO_FRAME',
 //       evidence: { ...what the engine already extracted },
 //       anchors: [ { key, label, value | null, hint? } ],
 //       unresolved: [ ...anchor keys with no value ] }
@@ -15,12 +15,20 @@
 // formation. This module is a surface/remediation layer over what queryContext
 // already computes — it does NOT import synthesis and does NOT redesign
 // classification.
+//
+// KRYL — 'DECISION_SITUATION' (renamed 2026-09-23, was 'DECISION_FRAME'): collided with
+// subjectScope()'s own, older, more-widely-consumed 'DECISION_FRAME' kind — same string,
+// different detection semantics (subjectScope: a narrow 15-verb transactional vocabulary;
+// this module: a broader hasDecision regex). Renamed here, the newer/less-consumed side of
+// the collision, rather than subjectScope()'s side, which has far more existing call sites
+// depending on that exact string. Resolved ahead of subjectScope() being enhanced to consume
+// this module's classification — that integration needed the collision gone first.
 
 import { buildQueryContext } from './querycontext.js';
 import { resolve } from './entityresolution.js';
 
 export const FRAME_CLASSIFY_VERSION = '2';
-export const FRAME_CLASSES = Object.freeze(['DECISION_FRAME', 'PORTFOLIO_FRAME', 'MARKET_THEME', 'NO_FRAME']);
+export const FRAME_CLASSES = Object.freeze(['DECISION_SITUATION', 'PORTFOLIO_FRAME', 'MARKET_THEME', 'NO_FRAME']);
 
 // ── surface-language detectors (evidence, not resolution) ────────────────────
 const PORTFOLIO_RE = /\b(?:portfolio|fund|vintage|diversified|\blp\b|\bgp\b|limited partner|general partner|deployment mandate|deploy(?:ment)? vehicle|minimum (?:investment|ticket|check)|single commitment|candidate universe)\b|\b\d{1,3}\s*[-–—to]{1,3}\s*\d{1,3}\s+(?:companies|startups|names|positions|investments)\b|\btarget\s+(?:portfolio|count)\b/i;
@@ -179,14 +187,14 @@ export function classifyFrame(input) {
 
   let cls;
   if (hasPortfolio)      cls = 'PORTFOLIO_FRAME';
-  else if (hasDecision)  cls = 'DECISION_FRAME';
+  else if (hasDecision)  cls = 'DECISION_SITUATION';
   else if (hasMarket)    cls = 'MARKET_THEME';
   else                   cls = 'NO_FRAME';
 
   const anchors =
-    cls === 'DECISION_FRAME'  ? decisionAnchors(t, qc, subjectResolution) :
-    cls === 'PORTFOLIO_FRAME' ? portfolioAnchors(t, qc, subjectResolution) :
-    cls === 'MARKET_THEME'    ? marketAnchors(t, qc) :
+    cls === 'DECISION_SITUATION' ? decisionAnchors(t, qc, subjectResolution) :
+    cls === 'PORTFOLIO_FRAME'    ? portfolioAnchors(t, qc, subjectResolution) :
+    cls === 'MARKET_THEME'       ? marketAnchors(t, qc) :
     [];
 
   return Object.freeze({

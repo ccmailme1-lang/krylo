@@ -35,10 +35,18 @@ export function canonicalBriefSubject(session) {
   }
   // Unresolved — DEF-1239 residual: do NOT paste the raw query string into the
   // Subject / Anchor fields. State the honest absence, matching the packet.
+  // KRYL — T1, 2026-09-23: PORTFOLIO_FRAME/MARKET_THEME/DECISION_SITUATION added —
+  // classifyFrame()-sourced kinds, now reachable via the enhanced subjectScope(). Without
+  // explicit entries here they'd safely fall to the generic 'NO SUBJECT RESOLVED' via the
+  // existing ?? fallback (confirmed in the T0 audit — no crash risk either way), but that
+  // would silently discard the more specific classification subjectScope() now provides.
   const UNRESOLVED_LABEL = {
-    DECISION_FRAME: 'DECISION FRAME — NO SUBJECT',
-    GEO:            'GEO — NO SUBJECT',
-    UNRESOLVED:     'NO SUBJECT RESOLVED',
+    DECISION_FRAME:     'DECISION FRAME — NO SUBJECT',
+    PORTFOLIO_FRAME:    'PORTFOLIO FRAME — NO SUBJECT',
+    MARKET_THEME:       'MARKET THEME — NO SUBJECT',
+    DECISION_SITUATION: 'DECISION SITUATION — NO SUBJECT',
+    GEO:                'GEO — NO SUBJECT',
+    UNRESOLVED:         'NO SUBJECT RESOLVED',
   };
   return {
     label:       UNRESOLVED_LABEL[scope.kind] ?? 'NO SUBJECT RESOLVED',

@@ -13,6 +13,7 @@ import { domainIntelligence, relationshipsFor } from '../../engine/domainintelli
 import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import { subjectScope } from '../../engine/subjectscope.js';
+import { frameHeadline } from '../../engine/frameclassify.js';
 import { A as adSubject } from '../../engine/adsubject.js';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -298,13 +299,19 @@ export default function DomainSubstrateTabs({ subject = null, domainPressures = 
     [subject],
   );
 
+  // KRYL — T1, 2026-09-23: PORTFOLIO_FRAME/MARKET_THEME/DECISION_SITUATION added — same
+  // classifyFrame()-sourced kinds as targetpacket.jsx/briefcontext.js this pass. Checked ahead
+  // of the generic fallback so they render their own honest-absence text instead of the
+  // "enter a company" copy that previously fired even when KRYLO had classified something.
   const header = scope.kind === 'ENTITY'
     ? <>The subject <b style={{ color: BRT }}>{scope.entity.name}</b> through each domain. Each tab is <span style={{ color: BRT }}>A(domain, {scope.entity.name})</span> — what that domain observes about this subject, evidence vs derived measure vs structural absence. Field pressure is context, never the answer.</>
     : scope.kind === 'GEO'
       ? <>Subject: <b style={{ color: BRT }}>{String(scope.location)}</b> (geo). Domain sources are not geo-scoped yet — the six domains render classified absence; the observation is still owed.</>
       : scope.kind === 'DECISION_FRAME'
         ? <>This query is a <b style={{ color: BRT }}>decision frame</b>, not a resolvable subject. Subjecthood for decision frames is unsettled (unit-of-analysis). The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
-        : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
+        : (scope.kind === 'PORTFOLIO_FRAME' || scope.kind === 'MARKET_THEME' || scope.kind === 'DECISION_SITUATION')
+          ? <>This query is a <b style={{ color: BRT }}>{(frameHeadline(scope.classification) ?? scope.kind.replace(/_/g, ' ')).toLowerCase()}</b>, not a resolvable subject. The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
+          : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
 
   return (
     <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>

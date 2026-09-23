@@ -107,10 +107,37 @@ const ANALYSIS_PILL_TO_DOMAIN = {
   OWNERSHIP:  'OWNERSHIP',
 };
 
+// KRYL — Domain Grid ratification (Founder, 2026-09-23): the visible grid becomes the 6
+// canonical pressures. This changes the INTERFACE REPRESENTATION only — the underlying 8-pill
+// taxonomy above (ANALYSIS_PILL_TO_DOMAIN, and whatever distinct precursor/keyword content each
+// of the 8 pills carries elsewhere) is NOT deleted, flattened, or merged. Clicking a canonical
+// pill selects every underlying pill-key that maps to it (e.g. CAPITAL selects both FINANCIAL
+// and MARKET), preserving the existing many-to-one relationship instead of inventing a new
+// single 'CAPITAL' key with no mapping entry.
+const CANONICAL_DOMAIN_CHIPS = [
+  { key: 'CAPITAL',    label: 'CAPITAL',    icon: DOMAIN_CHIPS[0].icon }, // reuse FINANCIAL's icon
+  { key: 'LABOR',      label: 'LABOR',      icon: DOMAIN_CHIPS[4].icon }, // reuse CAREER's icon
+  { key: 'KNOWLEDGE',  label: 'KNOWLEDGE',  icon: DOMAIN_CHIPS[2].icon }, // reuse LEGAL's icon
+  { key: 'TECHNOLOGY', label: 'TECHNOLOGY', icon: DOMAIN_CHIPS[5].icon },
+  { key: 'MEDIA',      label: 'MEDIA',      icon: DOMAIN_CHIPS[6].icon },
+  { key: 'OWNERSHIP',  label: 'OWNERSHIP',  icon: DOMAIN_CHIPS[7].icon },
+];
+
+// Reverse of ANALYSIS_PILL_TO_DOMAIN — every underlying pill-key that belongs to a canonical
+// pressure, derived from the same source mapping (not hand-duplicated, so the two can never
+// silently drift apart).
+const CANONICAL_TO_PILLS = Object.entries(ANALYSIS_PILL_TO_DOMAIN).reduce((acc, [pill, canon]) => {
+  (acc[canon] ??= []).push(pill);
+  return acc;
+}, {});
+
+// KRYL — FORECAST WINDOW removed (Founder ratification, 2026-09-23): a Class A doctrine
+// violation of "WE DON'T PREDICT. WE DETECT." (CLAUDE.md SS10). Confirmed zero other consumers
+// of signalScope === 'forecast' anywhere in the codebase before removing — this was a UI-only
+// option with no backing logic depending on it.
 const SIGNAL_SCOPE_OPTIONS = [
   { key: 'live',       label: 'LIVE'            },
   { key: 'historical', label: 'HISTORICAL'       },
-  { key: 'forecast',   label: 'FORECAST WINDOW'  },
 ];
 
 const OUTPUT_FILTERS_DEF = [
@@ -1078,10 +1105,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     }
   }
 
+  // KRYL — `key` is now a canonical pressure (e.g. 'CAPITAL'), not a raw pill. Toggles every
+  // underlying pill-key that maps to it together (CANONICAL_TO_PILLS), so selectedDomains still
+  // contains the real pill-keys everything downstream (ANALYSIS_PILL_TO_DOMAIN lookups,
+  // selectedDomains[0] consumers, etc.) already expects — only the clickable surface changed.
   function toggleDomain(key) {
-    setSelectedDomains(prev =>
-      prev.includes(key) ? prev.filter(d => d !== key) : [...prev, key]
-    );
+    const pills = CANONICAL_TO_PILLS[key] ?? [key];
+    setSelectedDomains(prev => {
+      const active = pills.some(p => prev.includes(p));
+      return active ? prev.filter(d => !pills.includes(d)) : [...prev, ...pills];
+    });
   }
 
   // KRYL-1306 — the actual refinement toggle. Deliberately NOT selectSituation: that function
@@ -1690,7 +1723,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   <span style={{ color: LIME }}>EDGE?</span>
                 </div>
                 <div style={{ fontFamily: MONO, fontSize: 11, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.22em', marginTop: 10 }}>
-                  Search across topics, domains or ask anything
+                  Map structural relationships across entities
                 </div>
               </div>
 
@@ -1700,9 +1733,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 <div style={{ marginBottom: 14 }}>
                   <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {DOMAIN_CHIPS.map(({ key, label, icon }, i) => {
-                      const active   = selectedDomains.includes(key);
-                      const dominant = selectedDomains[0] === key && selectedDomains.length > 1;
+                    {CANONICAL_DOMAIN_CHIPS.map(({ key, label, icon }, i) => {
+                      // KRYL — key is a canonical pressure; selectedDomains holds the underlying
+                      // pill-keys (see toggleDomain/CANONICAL_TO_PILLS above), so membership is
+                      // checked against the whole underlying group, not a literal key match.
+                      const pills    = CANONICAL_TO_PILLS[key] ?? [key];
+                      const active   = pills.some(p => selectedDomains.includes(p));
+                      const dominant = pills.includes(selectedDomains[0]) && selectedDomains.length > 1;
                       return (
                         <button
                           key={key}
@@ -1742,7 +1779,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     Bring a Question
                   </div>
                   <div style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.24em', color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', marginTop: 6 }}>
-                    Subject + Decision Context + Bounded Parameters
+                    Subject + Context + Scope
                   </div>
                 </div>
 
@@ -1768,7 +1805,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     onFocus={() => setFocused(true)}
                     onBlur={e => { setSeedQuery(e.target.value); handleQueryBlur(); }}
                     onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleExecute(); }}
-                    placeholder="Amazon — automation's impact on warehouse labor — next 3 yrs"
+                    placeholder="e.g. Amazon — automation's impact on warehouse labor — next 3 years"
                     rows={4}
                     style={{
                       width: '100%', boxSizing: 'border-box',
@@ -1781,9 +1818,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   />
                   {/* KRYL-1317 — helper line between the box and the submit affordance below.
                       The existing circular submit button already functions as SEARCH — not
-                      duplicating it with a second button per the Founder-approved layout. */}
+                      duplicating it with a second button per the Founder-approved layout.
+                      Wording is the ratified execution-transition tagline (locked copy), not
+                      new text authored here — "KRYLO detects structure across the question."
+                      was rejected for framing KRYLO as operating on the question itself, which
+                      conflicts with the structural-intelligence positioning. */}
                   <div style={{ padding: '0 24px 4px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
-                    KRYLO detects structure across the question.
+                    MAPPING STRUCTURAL REALITY.
                   </div>
                   {/* Toolbar */}
                   <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

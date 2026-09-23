@@ -14,6 +14,7 @@ import { emitTelemetry }    from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import DomainSubstrateTabs   from './domainsubstratetabs.jsx';
 import { subjectScope }       from '../../engine/subjectscope.js';
+import { frameHeadline }      from '../../engine/frameclassify.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
 import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
@@ -585,6 +586,12 @@ export default function TargetPacket() {
               ? `${subjScope.entity.name} is named as the subject of this submission — not independently verified. The submission is the source; its claims are not evidence. The six domains below are stated absence until a source binds to ${subjScope.entity.name}. This packet does not produce a decision verdict.`
               : subjScope.kind === 'ENTITY'
               ? `${subjScope.entity.name} resolved. The six domains below are what KRYLO can and cannot observe about it — evidence, derived measure, or classified absence. This packet does not produce a decision verdict.`
+              // KRYL — T1, 2026-09-23: subjScope.kind can now be PORTFOLIO_FRAME/MARKET_THEME/
+              // DECISION_SITUATION (via classifyFrame(), enhanced into subjectScope()). Checked
+              // ahead of recognizedFrame (the domain-level label) since the structural frame is
+              // the more specific, more useful classification when both are available.
+              : (subjScope.kind === 'PORTFOLIO_FRAME' || subjScope.kind === 'MARKET_THEME' || subjScope.kind === 'DECISION_SITUATION')
+                ? `${frameHeadline(subjScope.classification) ?? subjScope.kind.replace(/_/g, ' ')} recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
               : recognizedFrame
                 ? `${recognizedFrame} frame recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
                 : subjScope.kind === 'DECISION_FRAME'
@@ -611,9 +618,13 @@ export default function TargetPacket() {
               the SUBJECT label implied an entity was resolved when none was. CAPITAL FRAME /
               SUBJECT / NO SUBJECT RESOLVED are now visually and semantically distinct. */}
           <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 28, fontFamily: MONO, fontSize: 11, letterSpacing: '0.14em', color: '#767d7a' }}>
-            <span>{subjScope.kind === 'ENTITY' ? 'SUBJECT' : recognizedFrame ? 'FRAME' : 'SUBJECT'} <span style={{ color: '#eceee9' }}>
+            <span>{subjScope.kind === 'ENTITY' ? 'SUBJECT' : (subjScope.kind === 'PORTFOLIO_FRAME' || subjScope.kind === 'MARKET_THEME' || subjScope.kind === 'DECISION_SITUATION' || recognizedFrame) ? 'FRAME' : 'SUBJECT'} <span style={{ color: '#eceee9' }}>
               {subjScope.kind === 'ENTITY'
                 ? (subjScope.verification === 'NAMED_UNVERIFIED' ? `${subjScope.canonicalId} · NAMED, UNVERIFIED` : subjScope.canonicalId)
+                // KRYL — T1, 2026-09-23: same precedence as the PRIMARY SIGNAL paragraph above —
+                // structural frame kind checked before recognizedFrame's domain-level label.
+                : (subjScope.kind === 'PORTFOLIO_FRAME' || subjScope.kind === 'MARKET_THEME' || subjScope.kind === 'DECISION_SITUATION')
+                ? (frameHeadline(subjScope.classification) ?? subjScope.kind.replace(/_/g, ' '))
                 : recognizedFrame
                 ? recognizedFrame
                 : subjScope.kind === 'DECISION_FRAME'
@@ -709,7 +720,10 @@ export default function TargetPacket() {
                 ['SUBJECT', analysisIntent.subject, v =>
                   v.kind === 'ENTITY' ? v.entity.name :
                   v.kind === 'GEO' ? v.location :
-                  v.kind === 'DECISION_FRAME' ? v.frame : null],
+                  // KRYL — T1, 2026-09-23: DECISION_FRAME is subjectScope()'s own native kind;
+                  // PORTFOLIO_FRAME/MARKET_THEME/DECISION_SITUATION are the classifyFrame()-
+                  // sourced kinds added this pass — all four carry the same `v.frame` field.
+                  (v.kind === 'DECISION_FRAME' || v.kind === 'PORTFOLIO_FRAME' || v.kind === 'MARKET_THEME' || v.kind === 'DECISION_SITUATION') ? v.frame : null],
                 ['OBJECTIVE', analysisIntent.objective, v =>
                   v.cues ? v.cues.join(', ')
                   : v.scenario ? `${v.scenario.condition} → ${v.scenario.outcomeQuestion}`
