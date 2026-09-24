@@ -29,24 +29,25 @@ function DomainRow({ row }) {
     );
   }
 
-  const edgeLabel = row.edge === 'A' ? 'Entity A holds the structural edge'
-                  : row.edge === 'B' ? 'Entity B holds the structural edge'
-                  : 'No structural edge detected — parity';
-
+  // Founder ruling 2026-09-23 (Option A): the per-row "holds the structural edge" line and its
+  // edge-driven color are removed — row.edge is cmp.winner relabeled (crediff.js), which is a
+  // winner determination the governing spec prohibits (WO-DRAFT-comparative-diff-command.md
+  // AC-4 / §8). The engine still carries row.edge; it is intentionally not rendered here.
   return (
     <div style={{ padding: '14px 0', borderBottom: HAIRLINE }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <span style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.18em', color: TEXT, textTransform: 'uppercase' }}>
           {row.domain}
         </span>
-        <span style={{ fontFamily: MONO, fontSize: 8, color: row.edge === 'PARITY' ? DIM : LIME }}>
+        <span style={{ fontFamily: MONO, fontSize: 8, color: DIM }}>
           {row.dominant_axis ? `axis: ${row.dominant_axis}` : ''}
         </span>
       </div>
-      <div style={{ fontFamily: MONO, fontSize: 9, color: TEXT, marginTop: 4 }}>
-        {edgeLabel}
-        {row.incomparable ? ' — structural gap flagged as its own signal' : ''}
-      </div>
+      {row.incomparable && (
+        <div style={{ fontFamily: MONO, fontSize: 9, color: TEXT, marginTop: 4 }}>
+          Structural gap flagged as its own signal
+        </div>
+      )}
       <div style={{ fontFamily: MONO, fontSize: 7.5, color: DIM, marginTop: 3 }}>
         leverage margin {row.leverage_margin} · shared space {row.shared_space}
       </div>
