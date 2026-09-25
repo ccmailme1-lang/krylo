@@ -90,10 +90,67 @@ function notDetected() {
   return { state: 'unresolved', reason: 'NOT_DETECTED' };
 }
 
+// Word-boundary tokens an operand window stops at -- prepositions/articles/the connector's own
+// verb, never part of a candidate operand. Deliberately small and mechanical (proximity to the
+// connector, not entity recognition) -- this is not a duplicate of intentparser.js's
+// ENTITY_STOPWORDS (a different, private list this read-only module cannot import), just the
+// minimum needed to bound a window around an already-located match.
+const OPERAND_BOUNDARY_WORDS = new Set([
+  'the', 'a', 'an', 'in', 'on', 'for', 'of', 'with', 'to', 'and', 'or', 'is', 'are', 'was', 'were',
+  'evidence', 'compare', 'comparing', 'contrast', 'benchmark',
+]);
+
+// extractComparisonOperands -- KRYL, P1 fix, 2026-09-23. Given raw text containing an EXPLICIT
+// comparison connector (vs/versus/compared to), returns the contiguous run of non-boundary
+// tokens immediately adjacent to the connector on each side, as PARSED CANDIDATE text -- not a
+// resolved entity, not verified against any registry, never fed into session creation or
+// execution (same posture as subject_a/subject_b already had for the scenario-gated case
+// below; the only new part is where the raw text comes from). Returns null if either side
+// yields nothing (e.g. the connector is at the very start/end of the string).
+function extractComparisonOperands(rawText) {
+  const m = (rawText ?? '').match(EXPLICIT_COMPARISON_RE);
+  if (!m) return null;
+  const before = rawText.slice(0, m.index).trim().split(/\s+/).filter(Boolean);
+  const after  = rawText.slice(m.index + m[0].length).trim().split(/\s+/).filter(Boolean);
+
+  const left = [];
+  for (let i = before.length - 1; i >= 0; i--) {
+    const clean = before[i].replace(/[^\w-]/g, '');
+    if (!clean || OPERAND_BOUNDARY_WORDS.has(clean.toLowerCase())) break;
+    left.unshift(clean);
+  }
+  const right = [];
+  for (const tok of after) {
+    const clean = tok.replace(/[^\w-]/g, '');
+    if (!clean || OPERAND_BOUNDARY_WORDS.has(clean.toLowerCase())) break;
+    right.push(clean);
+  }
+
+  const subject_a = left.join(' ');
+  const subject_b = right.join(' ');
+  return (subject_a && subject_b) ? { subject_a, subject_b } : null;
+}
+
 // deriveRCmp -- see header comment. Never infers a comparison from outcomeVariables'
 // cardinality alone; requires the explicit connector in the raw, unsplit outcome text.
-function deriveRCmp(scenarioCues) {
-  if (!scenarioCues.present) return notDetected();
+//
+// KRYL — P1 fix, 2026-09-23: a plain comparative sentence ("Compare Latuda vs Vraylar...")
+// has an explicit comparison connector but no hypothetical-scenario structure (no "if we..."
+// condition co-occurring with an outcome question), so scenarioCues.present is false and the
+// scenario-gated split below never ran -- rCmp silently returned NOT_DETECTED for a query that
+// plainly requested a comparison, which is what routed it into the single-subject SUBJECT
+// conditioning UI with no honest signal available to do otherwise. Now extracts candidate
+// operands via extractComparisonOperands() above for this case too, same resolved shape
+// (subject_a/subject_b) the scenario-gated branch already returns -- condition is always null
+// here since there is no hypothetical-scenario structure to report one from.
+function deriveRCmp(scenarioCues, rawText) {
+  if (!scenarioCues.present) {
+    if (!EXPLICIT_COMPARISON_RE.test(rawText ?? '')) return notDetected();
+    const operands = extractComparisonOperands(rawText);
+    return operands
+      ? resolved({ subject_a: operands.subject_a, subject_b: operands.subject_b, condition: null })
+      : { state: 'unresolved', reason: 'COMPARISON_DETECTED_OUTSIDE_SCENARIO_STRUCTURE' };
+  }
   if (!EXPLICIT_COMPARISON_RE.test(scenarioCues.outcomeQuestion ?? '')) return notDetected();
   const vars = scenarioCues.outcomeVariables ?? [];
   if (vars.length !== 2) return { state: 'unresolved', reason: 'INSUFFICIENT_VARIABLES' };
@@ -175,7 +232,7 @@ export function buildAnalysisIntent(question) {
     sReq: queryContext.intent.domains,
     vReq: scope.kind !== 'UNRESOLVED' ? [scope] : [],
     eReq: notDetected(),
-    rCmp: deriveRCmp(queryContext.scenarioCues),
+    rCmp: deriveRCmp(queryContext.scenarioCues, text),
     tReq: notDetected(),
 
     version: ANALYSIS_INTENT_VERSION,

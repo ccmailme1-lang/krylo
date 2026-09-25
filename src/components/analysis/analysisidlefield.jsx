@@ -1176,6 +1176,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       clearTimeout(queryDebounceRef.current);
       setSeedQuery(centerTextareaRef.current.value);
     }
+    // Submit fix (2026-09-24): everything below must use the text actually flushed from the
+    // box, not the `seedQuery` state closure — that state is set by a 150ms debounce and by the
+    // setSeedQuery above, so within this call it can still hold the previous render's text
+    // (browser-verified: Submit ran the analysis on stale text while the box showed the new).
+    const flushedQuery = (centerTextareaRef.current?.value ?? seedQuery).trim();
     // Allow simulator to run without a selected lens — fall back to OPEN
     const effectiveLens = activeLens ?? 'OPEN';
     setMissingField(null);
@@ -1193,7 +1198,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     const preset     = LENS_PRESETS[effectiveLens] ?? LENS_PRESETS.OPEN;
     const geometry   = preset.scaffold.geometry;
     const domainList = LENS_DOMAIN_MAP[effectiveLens] ?? [];
-    const parsed     = parseIntent(seedQuery.trim());
+    const parsed     = parseIntent(flushedQuery);
     // KRYL-1290 subtask 6 — Analysis-field -> Analysis Intent integration. Computed
     // at the same formed-question boundary as `parsed`, from the same flushed
     // seedQuery text. Attached to tensor as inert additive data only: not passed
@@ -1201,7 +1206,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     // cannot change their behavior. buildEnvelope() (lineage.js) explicitly
     // whitelists the tensor fields it reads (query/lens/domain/horizon/floor/
     // domains) — analysisIntent is invisible to it. No KRYLO READ UI yet.
-    const analysisIntent = buildAnalysisIntent(seedQuery.trim());
+    const analysisIntent = buildAnalysisIntent(flushedQuery);
     const horizonRes = resolveHorizon(horizon, 'OPERATOR');
 
     const domain = LENS_BROKER_DOMAIN_MAP[effectiveLens] ?? 'GENERAL';
@@ -1223,7 +1228,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       rules:              rules.filter(r => r.value.trim().length > 0),
       constraintStrength: geometry.constraintStrength,
       intentEntropy:      geometry.intentEntropy,
-      seedQuery:          seedQuery.trim(),
+      seedQuery:          flushedQuery,
       floor:              selectedFloor ?? 0,
       intentMagnitude,
       volatilityShock,
@@ -1247,7 +1252,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     // cannot alter routing/domain detection or any Truth-Engine behavior. querysynthesis.js is
     // untouched per the ratified Phase 1 scope.
     tensor.structuralRefinements = selectedStructuralRefinements;
-    tensor.synthesis          = synthesizeQuery({ query: seedQuery.trim(), lens: effectiveLens, domain, tensor: { domainLock: tensor.domainLock } });
+    tensor.synthesis          = synthesizeQuery({ query: flushedQuery, lens: effectiveLens, domain, tensor: { domainLock: tensor.domainLock } });
     tensor.fidelityScore      = tensor.synthesis?.confidence ?? 0;
     tensor.arbitration        = arbitrate(tensor);
 
@@ -1273,18 +1278,18 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       }
     }
 
-    emitTelemetry({ type: 'session_open', sessionId: id, source: 'analysis-field', query: seedQuery.trim(), anchor: effectiveLens, kernel_state_hash: tensor.kernel_state_hash, timestamp: ts });
+    emitTelemetry({ type: 'session_open', sessionId: id, source: 'analysis-field', query: flushedQuery, anchor: effectiveLens, kernel_state_hash: tensor.kernel_state_hash, timestamp: ts });
 
     clearTimeout(processingTimer.current);
     processingTimer.current = setTimeout(() => {
-      createSession(id, effectiveLens, seedQuery.trim(), tensor);
+      createSession(id, effectiveLens, flushedQuery, tensor);
       setProcessing(false);
     }, 900);
 
     // KRYL-P1 — fire the same real topic connectors the hero's krylo-submit path fires,
     // so cone coverage (capital/technology/knowledge in particular) doesn't depend on
     // which entry point the query came through.
-    fireTopicConnectors(seedQuery.trim());
+    fireTopicConnectors(flushedQuery);
   }
 
   function resetSession() {
@@ -1729,44 +1734,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
               <div data-search-box style={{ width: 600, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 0 }}>
 
-                {/* ── CHOOSE A DOMAIN ── */}
-                <div style={{ marginBottom: 14 }}>
-                  <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.28em', marginBottom: 10 }}>CHOOSE A DOMAIN</div>
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    {CANONICAL_DOMAIN_CHIPS.map(({ key, label, icon }, i) => {
-                      // KRYL — key is a canonical pressure; selectedDomains holds the underlying
-                      // pill-keys (see toggleDomain/CANONICAL_TO_PILLS above), so membership is
-                      // checked against the whole underlying group, not a literal key match.
-                      const pills    = CANONICAL_TO_PILLS[key] ?? [key];
-                      const active   = pills.some(p => selectedDomains.includes(p));
-                      const dominant = pills.includes(selectedDomains[0]) && selectedDomains.length > 1;
-                      return (
-                        <button
-                          key={key}
-                          onClick={() => toggleDomain(key)}
-                          style={{
-                            display: 'flex', alignItems: 'center', gap: 6,
-                            padding: '7px 14px', borderRadius: 999, cursor: 'pointer',
-                            background: active ? 'rgba(102,255,0,0.06)' : 'rgba(255,255,255,0.03)',
-                            border: `1px solid ${active ? LIME : 'rgba(255,255,255,0.14)'}`,
-                            color: active ? LIME : 'rgba(255,255,255,0.45)',
-                            fontFamily: MONO, fontSize: 9, letterSpacing: '0.14em',
-                            boxShadow: active ? '0 0 10px rgba(102,255,0,0.22)' : 'none',
-                            transition: 'all 140ms',
-                            opacity: 0, animation: 'krylo-fade-in 0.3s ease forwards', animationDelay: `${i * 60}ms`,
-                          }}
-                          onMouseEnter={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)'; e.currentTarget.style.color = '#fff'; } }}
-                          onMouseLeave={e => { if (!active) { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)'; e.currentTarget.style.color = 'rgba(255,255,255,0.45)'; } }}
-                        >
-                          <span style={{ opacity: active ? 1 : 0.45, display: 'flex' }}>{icon}</span>
-                          {dominant && <span style={{ width: 5, height: 5, borderRadius: '50%', background: LIME, flexShrink: 0 }} />}
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
 
                 {/* SES gauge pod removed — replaced by the world clocks */}
 
@@ -1816,16 +1783,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                       caretColor: LIME, outline: 'none',
                     }}
                   />
-                  {/* KRYL-1317 — helper line between the box and the submit affordance below.
-                      The existing circular submit button already functions as SEARCH — not
-                      duplicating it with a second button per the Founder-approved layout.
-                      Wording is the ratified execution-transition tagline (locked copy), not
-                      new text authored here — "KRYLO detects structure across the question."
-                      was rejected for framing KRYLO as operating on the question itself, which
-                      conflicts with the structural-intelligence positioning. */}
-                  <div style={{ padding: '0 24px 4px', fontFamily: MONO, fontSize: 9, letterSpacing: '0.1em', color: 'rgba(255,255,255,0.28)', textAlign: 'center' }}>
-                    MAPPING STRUCTURAL REALITY.
-                  </div>
                   {/* Toolbar */}
                   <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

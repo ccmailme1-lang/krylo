@@ -104,7 +104,15 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
   // (AMBIGUOUS / resolutionEligible:false), refuse to fabricate. Do NOT fall back
   // to the ambient Happy Path BLUF or the lens-adapter frames — those invent a
   // confident brief for input the engine itself rated as having no anchor.
-  if (synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') {
+  // KRYL — 2026-09-24: a RESOLVED entity whose text carries no domain vocabulary
+  // (queryDomain AMBIGUOUS) was caught here and shown the generic "Insufficient signal … add a
+  // decision, dollar amount, or timeline" copy while the Target Packet, on the same query,
+  // resolved the subject and presented its observations — a direct contradiction, and a
+  // decision-input gate on already-substantiated structure (CLAUDE.md §21). The subject-scoped
+  // ENTITY branch below already carries the correct honest copy for exactly this case; this gate
+  // was preempting it. Stand down for a resolved entity so that branch handles it.
+  const entityResolvedAmbiguousDomain = subj.kind === 'ENTITY' && synthesis?.queryDomain === 'AMBIGUOUS';
+  if ((synthesis?.resolutionEligible === false || synthesis?.queryDomain === 'AMBIGUOUS') && !entityResolvedAmbiguousDomain) {
     // KRYL — canonicalresolution.js's synthCanonical() already writes a specific, honest
     // explanation into recommendedAction for the two withheld cases (NO_LIVE_SIGNAL: domain
     // classified fine, live field just has no signal right now; NO_DOMAIN_EVIDENCE: query
