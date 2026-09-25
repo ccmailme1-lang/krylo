@@ -1850,34 +1850,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </div>
                   );
                 })()}
-                {/* ── COMPLETE THE PICTURE (KRYL-1222) ── */}
-                {/* Prescriptive layer: what the query is missing, not what it typed (that's
-                    TRENDING). Derivation is the activeCompletionChips memo above. A chip states
-                    its mechanic and, on click, opens the existing control — it never fills a
-                    value. Only `timeline` is enabled today (its control is the only one mounted). */}
-                {completionChips.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>COMPLETE THE PICTURE</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {completionChips.map(chip => (
-                        <div key={chip.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                          <button
-                            onClick={() => routeCompletionChip(chip)}
-                            style={{
-                              flexShrink: 0, fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
-                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
-                              color: LIME, transition: 'all 140ms', whiteSpace: 'nowrap',
-                            }}
-                          >{chip.label}</button>
-                          <span style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.5, color: 'rgba(255,255,255,0.32)', paddingTop: 4 }}>
-                            {chip.mechanic}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
                 {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement
                     selection) ── */}
                 {/* Pure render of eligibleRefinementChips (computed above via chipsubstrate.js —
