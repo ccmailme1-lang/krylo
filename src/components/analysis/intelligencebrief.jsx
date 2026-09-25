@@ -35,6 +35,7 @@ import { resolveHomePurchaseEvidence } from '../../engine/homePurchaseEvidence.j
 import WhyThisMatters from './whythismatters.jsx';
 import { computeCounterEvidenceState, COUNTER_EVIDENCE_STATE } from '../../engine/counterevidence.js';
 import PerceptionRisk from './perceptionrisk.jsx';
+import { buildInterpretationLedger } from '../../engine/analysisintent.js';
 import { useMetricVisibility } from '../../hooks/useMetricVisibility.js';
 import { logEmission, logOutcome, getLRPrior, getByConvictionId } from '../../engine/pathstore.js';
 // KRYL-1293 — arbitrateHP() (hptiergate.js) retired here; see the real-pipeline note below.
@@ -1255,6 +1256,19 @@ export default function IntelligenceBrief() {
           <FieldRow label="As Of"      value={brief.asOf} />
           <FieldRow label="Originator" value={brief.originator} valueColor={LIME_MID} />
         </Panel>
+
+        {(() => {
+          const L = buildInterpretationLedger(session?.tensor?.analysisIntent);
+          if (!L || !(L.unaddressed.length > 0)) return null;
+          return (
+            <Panel seq="00" label="Interpretation Ledger">
+              <FieldRow label="Question"    value={L.verbatim} valueColor={BRT} />
+              <FieldRow label="Established" value={L.established.length ? L.established.join(' · ') : 'nothing from the question was established'} />
+              <FieldRow label="Not carried" value={L.unaddressed.join(' · ')} />
+              <FieldRow label="Basis"       value={L.basis} />
+            </Panel>
+          );
+        })()}
 
         {/* KRYL-1294 -- DIC missing-inputs, rendered inside the one Happy Path template
             instead of replacing it. Same InsufficientInput component as before, same

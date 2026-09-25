@@ -238,3 +238,95 @@ export function buildAnalysisIntent(question) {
     version: ANALYSIS_INTENT_VERSION,
   };
 }
+
+const LEDGER_STOPWORDS = new Set([
+  'the', 'a', 'an', 'in', 'on', 'for', 'of', 'with', 'to', 'and', 'or', 'is', 'are', 'was', 'were',
+  'be', 'been', 'do', 'does', 'did', 'at', 'by', 'from', 'as', 'that', 'this', 'these', 'those',
+  'it', 'its', 'their', 'our', 'my', 'we', 'i', 'you', 'me', 'us', 'about', 'into', 'than', 'then',
+  'what', 'which', 'who', 'whom', 'how', 'why', 'when', 'where', 'can', 'could', 'should', 'would',
+  'will', 'may', 'might', 'if', 'so', 'not', 'no', 'any', 'all', 'some', 'there', 'have', 'has',
+  'had', 'between', 'over', 'under', 'per', 'vs', 'versus', 'compared', 'compare', 'comparing',
+  'show', 'map', 'find', 'give', 'tell', 'identify', 'list', 'analyze', 'analyse', 'evaluate',
+]);
+
+function ledgerTokens(text) {
+  return ((text ?? '').match(/[A-Za-z0-9][A-Za-z0-9'’-]*/g) ?? []).map(t => t.replace(/['’]s$/i, ''));
+}
+
+function tokenSet(text) {
+  return new Set(ledgerTokens(text).map(t => t.toLowerCase()));
+}
+
+// buildInterpretationLedger -- pure, read-only derivation over an already-built analysisIntent.
+// Interprets nothing new: it reports (a) what the intent established, (b) which words of the
+// verbatim question are covered by nothing established (mechanical token subtraction, no
+// entity recognition, no inference), and (c) what the observations that follow are bound to.
+export function buildInterpretationLedger(intent) {
+  if (!intent || intent.question?.state !== 'resolved') return null;
+  const text = intent.question.value.text ?? '';
+  const subj = intent.subject?.state === 'resolved' ? intent.subject.value : null;
+  const entityName = subj?.kind === 'ENTITY' ? subj.entity.name : null;
+
+  const covered = new Set();
+  if (entityName) {
+    tokenSet(entityName).forEach(t => covered.add(t));
+    tokenSet(subj.matchedOn).forEach(t => covered.add(t));
+  }
+  if (intent.objective?.state === 'resolved' && intent.objective.value.cues) {
+    intent.objective.value.cues.forEach(c => tokenSet(String(c)).forEach(t => covered.add(t)));
+  }
+
+  const established = [];
+  if (entityName) established.push(`subject: ${entityName}`);
+  else if (subj) established.push(`subject frame: ${subj.kind.replace(/_/g, ' ').toLowerCase()}`);
+  if (intent.observationalScope?.state === 'resolved') {
+    established.push(`scope: ${intent.observationalScope.value.join(', ')}`);
+  }
+  if (intent.objective?.state === 'resolved') {
+    established.push(intent.objective.value.cues
+      ? `objective cues: ${intent.objective.value.cues.join(', ')}`
+      : 'objective: scenario structure');
+  }
+
+  const comparison = [];
+  if (intent.rCmp?.state === 'resolved') {
+    for (const op of [intent.rCmp.value.subject_a, intent.rCmp.value.subject_b]) {
+      const opT = [...tokenSet(String(op))];
+      const enT = [...tokenSet(entityName ?? '')];
+      const observed = !!entityName && opT.length > 0 && enT.length > 0 && (
+        opT.every(t => enT.includes(t)) || enT.every(t => opT.includes(t))
+      );
+      comparison.push({ operand: op, observed });
+    }
+  }
+
+  const notCarried = [];
+  let run = [];
+  for (const tok of ledgerTokens(text)) {
+    const lc = tok.toLowerCase();
+    if (covered.has(lc) || LEDGER_STOPWORDS.has(lc)) {
+      if (run.length) { notCarried.push(run.join(' ')); run = []; }
+    } else run.push(tok);
+  }
+  if (run.length) notCarried.push(run.join(' '));
+
+  const objectiveOpen = intent.objective?.state !== 'resolved';
+  const unobservedOperand = comparison.some(c => !c.observed);
+  const answersNothingAbout = notCarried.length > 0 || objectiveOpen || unobservedOperand;
+
+  let basis;
+  if (entityName) {
+    basis = `Observations in this packet are bound to ${entityName} alone.` +
+      (answersNothingAbout
+        ? ` They describe ${entityName}; they do not answer the relationship, comparison or objective the question asks about.`
+        : '');
+  } else {
+    basis = 'Observations in this packet are the live field. They are not scoped to a subject named in the question and do not answer it.';
+  }
+
+  const seen = new Set();
+  const unaddressed = [...comparison.filter(c => !c.observed).map(c => c.operand), ...notCarried]
+    .filter(x => { const k = x.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+
+  return { verbatim: text, established, comparison, notCarried, unaddressed, basis };
+}

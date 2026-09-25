@@ -1783,48 +1783,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                       caretColor: LIME, outline: 'none',
                     }}
                   />
-                  {/* Toolbar */}
-                  <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      {/* + attachment */}
-                      <div style={{ position: 'relative' }}>
-                        <button
-                          onClick={() => setPlusOpen(p => !p)}
-                          style={{ width: 28, height: 28, borderRadius: '50%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.38)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, lineHeight: 1, padding: 0 }}
-                        >+</button>
-                        {plusOpen && (
-                          <div style={{ position: 'absolute', bottom: 36, left: 0, background: '#111', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, overflow: 'hidden', minWidth: 200, zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
-                            {[
-                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>, label: 'Upload document' },
-                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6m-3-3v6"/></svg>, label: 'Import from file' },
-                            ].map(({ icon, label }) => (
-                              <button key={label} onClick={() => setPlusOpen(false)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', textAlign: 'left', fontFamily: MONO, fontSize: 10, letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                              >
-                                <span style={{ color: 'rgba(255,255,255,0.38)', flexShrink: 0 }}>{icon}</span>{label}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      {/* Exclude sim */}
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none' }}>
-                        <input type="checkbox" checked={excludeSimulator} onChange={e => setExcludeSimulator(e.target.checked)} style={{ accentColor: LIME, width: 11, height: 11, cursor: 'pointer' }} />
-                        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: excludeSimulator ? 'rgba(102,255,0,0.6)' : 'rgba(255,255,255,0.22)', textTransform: 'uppercase', transition: 'color 150ms' }}>EXCLUDE SIM</span>
-                      </label>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <button style={{ width: 30, height: 30, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.22)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
-                      </button>
-                      <button onClick={handleExecute} style={{ width: 34, height: 34, borderRadius: '50%', background: LIME, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
+                  {/* Chips live INSIDE the search box (Founder rule 2026-09-24: no chip renders outside the box). */}
+                  <div style={{ padding: '0 24px 8px' }}>
                 {/* ── SELECTED STRUCTURAL REFINEMENTS (KRYL-1306 §6/§24-25) ── */}
                 {/* Visual-only breadcrumb: originalQuery + [refinement] + [refinement]. Never
                     mutates seedQuery/the textarea (§4, §13, §9) — this is the additive-payload
@@ -1890,6 +1850,98 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </div>
                   );
                 })()}
+                {/* ── COMPLETE THE PICTURE (KRYL-1222) ── */}
+                {/* Prescriptive layer: what the query is missing, not what it typed (that's
+                    TRENDING). Derivation is the activeCompletionChips memo above. A chip states
+                    its mechanic and, on click, opens the existing control — it never fills a
+                    value. Only `timeline` is enabled today (its control is the only one mounted). */}
+                {completionChips.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>COMPLETE THE PICTURE</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {completionChips.map(chip => (
+                        <div key={chip.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                          <button
+                            onClick={() => routeCompletionChip(chip)}
+                            style={{
+                              flexShrink: 0, fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
+                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
+                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
+                              color: LIME, transition: 'all 140ms', whiteSpace: 'nowrap',
+                            }}
+                          >{chip.label}</button>
+                          <span style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.5, color: 'rgba(255,255,255,0.32)', paddingTop: 4 }}>
+                            {chip.mechanic}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement
+                    selection) ── */}
+                {/* Pure render of eligibleRefinementChips (computed above via chipsubstrate.js —
+                    adsubject.js's grounded observations, AUTHORED+GROUNDED+SCOPE-BOUND+
+                    PROVENANCE+ANALYZABLE, KRYL-1306 §15). No eligible candidate -> the block
+                    does not render — honest absence, never padded with unrelated content.
+                    Clicking toggles selectedRefinementIds only (toggleRefinement) — it never
+                    calls selectSituation, never touches seedQuery/activeSituation. Selecting a
+                    chip is strictly additive to the query (§4 immutability, §13 no rewrite). */}
+                {eligibleRefinementChips.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>STRUCTURAL SIGNALS</div>
+                    <StaggeredChips
+                      chips={eligibleRefinementChips}
+                      selected={selectedRefinementIds}
+                      onSelect={toggleRefinement}
+                      getKey={c => c.id}
+                      getLabel={c => selectedRefinementIds.includes(c.id) ? c.label : `+ ${c.label}`}
+                      isSelected={(c, ids) => ids.includes(c.id)}
+                    />
+                  </div>
+                )}
+                  </div>
+                  {/* Toolbar */}
+                  <div style={{ padding: '10px 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {/* + attachment */}
+                      <div style={{ position: 'relative' }}>
+                        <button
+                          onClick={() => setPlusOpen(p => !p)}
+                          style={{ width: 28, height: 28, borderRadius: '50%', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.38)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, lineHeight: 1, padding: 0 }}
+                        >+</button>
+                        {plusOpen && (
+                          <div style={{ position: 'absolute', bottom: 36, left: 0, background: '#111', border: '1px solid rgba(255,255,255,0.10)', borderRadius: 12, overflow: 'hidden', minWidth: 200, zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}>
+                            {[
+                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>, label: 'Upload document' },
+                              { icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6m-3-3v6"/></svg>, label: 'Import from file' },
+                            ].map(({ icon, label }) => (
+                              <button key={label} onClick={() => setPlusOpen(false)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.72)', cursor: 'pointer', textAlign: 'left', fontFamily: MONO, fontSize: 10, letterSpacing: '0.05em', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <span style={{ color: 'rgba(255,255,255,0.38)', flexShrink: 0 }}>{icon}</span>{label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      {/* Exclude sim */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none' }}>
+                        <input type="checkbox" checked={excludeSimulator} onChange={e => setExcludeSimulator(e.target.checked)} style={{ accentColor: LIME, width: 11, height: 11, cursor: 'pointer' }} />
+                        <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: excludeSimulator ? 'rgba(102,255,0,0.6)' : 'rgba(255,255,255,0.22)', textTransform: 'uppercase', transition: 'color 150ms' }}>EXCLUDE SIM</span>
+                      </label>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button style={{ width: 30, height: 30, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.22)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+                      </button>
+                      <button onClick={handleExecute} style={{ width: 34, height: 34, borderRadius: '50%', background: LIME, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
 
                 {/* ── SIGNAL SCOPE ── */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 12 }}>
@@ -1921,102 +1973,6 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                   ))}
                 </div>
 
-                {/* ── AUTONOMOUS INQUIRY (KRYL-1290) ── */}
-                {/* Pre-question discovery layer: "what could I examine from what I just
-                    typed" — visible only while raw interest exists and no situation has
-                    been selected yet. Labels are mechanical placeholders, not final copy —
-                    see inquirygeneration.js header. Styling reuses the existing COMPLETE
-                    THE PICTURE pill precedent below, unchanged.
-                    KRYL-1306 correction (Founder-directed, supersedes the KRYL-1290 subtask 5
-                    comment this replaced): selecting an inquiry chip adds it as a chip token to
-                    the same +ADDED box structural refinements use — it never writes
-                    chip.question into seedQuery/the textarea. The earlier "append to the
-                    sentence" behavior was tried and explicitly reverted; the textarea stays
-                    untouched, no new state beyond the shared selectedRefinementIds, no submit,
-                    no activeSituation mutation.
-                    DEF (KRYL-1290 follow-up) — gated on !processing: handleExecute()
-                    sets processing true as its first line, well before the 900ms
-                    session-creation delay. Without this gate, selecting a chip could
-                    still recompute a new candidate set in the moment right after
-                    execute was clicked but before results replaced the view — a race
-                    with no usable selection window. Standard practice (follow-up-chip
-                    UX patterns, researched) never shows a new set while a request is
-                    in flight; new chips belong attached to the next completed
-                    response, not competing with an in-progress submit. */}
-                {seedQuery.trim().length > 0 && activeSituation == null && !processing && inquiryChips.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>WHAT TO EXAMINE</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {inquiryChips.map(chip => {
-                        const active = selectedRefinementIds.includes(chip.id);
-                        return (
-                          <button
-                            key={chip.id}
-                            onClick={() => toggleRefinement(chip)}
-                            style={{
-                              fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
-                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
-                              color: LIME, whiteSpace: 'nowrap', transition: 'all 140ms',
-                            }}
-                          >{active ? '✓ ' : '+ '}{chip.label}</button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── COMPLETE THE PICTURE (KRYL-1222) ── */}
-                {/* Prescriptive layer: what the query is missing, not what it typed (that's
-                    TRENDING). Derivation is the activeCompletionChips memo above. A chip states
-                    its mechanic and, on click, opens the existing control — it never fills a
-                    value. Only `timeline` is enabled today (its control is the only one mounted). */}
-                {completionChips.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>COMPLETE THE PICTURE</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {completionChips.map(chip => (
-                        <div key={chip.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                          <button
-                            onClick={() => routeCompletionChip(chip)}
-                            style={{
-                              flexShrink: 0, fontFamily: MONO, fontSize: 9, letterSpacing: '0.12em',
-                              padding: '5px 12px', borderRadius: 999, cursor: 'pointer',
-                              background: 'rgba(102,255,0,0.06)', border: `1px solid ${LIME}`,
-                              color: LIME, transition: 'all 140ms', whiteSpace: 'nowrap',
-                            }}
-                          >{chip.label}</button>
-                          <span style={{ fontFamily: MONO, fontSize: 9, lineHeight: 1.5, color: 'rgba(255,255,255,0.32)', paddingTop: 4 }}>
-                            {chip.mechanic}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement
-                    selection) ── */}
-                {/* Pure render of eligibleRefinementChips (computed above via chipsubstrate.js —
-                    adsubject.js's grounded observations, AUTHORED+GROUNDED+SCOPE-BOUND+
-                    PROVENANCE+ANALYZABLE, KRYL-1306 §15). No eligible candidate -> the block
-                    does not render — honest absence, never padded with unrelated content.
-                    Clicking toggles selectedRefinementIds only (toggleRefinement) — it never
-                    calls selectSituation, never touches seedQuery/activeSituation. Selecting a
-                    chip is strictly additive to the query (§4 immutability, §13 no rewrite). */}
-                {eligibleRefinementChips.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>STRUCTURAL SIGNALS</div>
-                    <StaggeredChips
-                      chips={eligibleRefinementChips}
-                      selected={selectedRefinementIds}
-                      onSelect={toggleRefinement}
-                      getKey={c => c.id}
-                      getLabel={c => selectedRefinementIds.includes(c.id) ? c.label : `+ ${c.label}`}
-                      isSelected={(c, ids) => ids.includes(c.id)}
-                    />
-                  </div>
-                )}
 
               </div>
 

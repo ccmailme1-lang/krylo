@@ -14,6 +14,7 @@ import { emitTelemetry }    from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import DomainSubstrateTabs   from './domainsubstratetabs.jsx';
 import { subjectScope }       from '../../engine/subjectscope.js';
+import { buildInterpretationLedger } from '../../engine/analysisintent.js';
 import { frameHeadline }      from '../../engine/frameclassify.js';
 import { resolveWhyTrace, WT_STATE } from '../../engine/whytraceresolver.js';
 import { getCanonicalEvents } from '../../engine/connectors/edgar8kevidence.js';
@@ -424,6 +425,7 @@ export default function TargetPacket() {
     () => assembleNarrative({ analysisIntent, fieldFormation, subjScope, reconnPayload }),
     [analysisIntent, fieldFormation, subjScope, reconnPayload]
   );
+  const ledger = useMemo(() => buildInterpretationLedger(analysisIntent), [analysisIntent]);
   const recognizedFrame = (() => {
     const d = synthesis?.queryDomain;
     if (!d || ['GENERAL', 'AMBIGUOUS', 'COMPARATIVE'].includes(d)) return null;
@@ -704,6 +706,11 @@ export default function TargetPacket() {
           <p style={{ margin: 0, maxWidth: 720, fontFamily: SERIF, fontSize: 14, lineHeight: 1.75, color: BODY_C }}>
             {narrative.paragraph}
           </p>
+          {ledger && (ledger.unaddressed.length > 0) && (
+            <p style={{ margin: '10px 0 0', maxWidth: 720, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: ABSENCE }}>
+              This narrative does not address: {ledger.unaddressed.join(' · ')}. {ledger.basis}
+            </p>
+          )}
         </div>
 
         {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
@@ -755,6 +762,25 @@ export default function TargetPacket() {
                   </span>
                 </div>
               )}
+              {(() => {
+                const L = ledger;
+                if (!L) return null;
+                return (
+                  <div style={{ marginTop: 6, paddingTop: 10, borderTop: `1px solid ${HAIRLINE}`, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6 }}>
+                    <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>QUESTION AS ASKED </span><span style={{ color: '#eceee9' }}>{L.verbatim}</span></div>
+                    <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>ESTABLISHED </span>
+                      <span style={{ color: '#eceee9' }}>{L.established.length ? L.established.join(' · ') : 'nothing from the question was established'}</span></div>
+                    {L.comparison.map(c => (
+                      <div key={c.operand}><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>COMPARISON OPERAND </span>
+                        <span style={{ color: '#eceee9' }}>{c.operand}</span>
+                        <span style={{ color: c.observed ? '#eceee9' : ABSENCE }}>{c.observed ? ' — observed below' : ' — not observed in this packet'}</span></div>
+                    ))}
+                    <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>NOT CARRIED INTO OBSERVATION </span>
+                      <span style={{ color: L.notCarried.length ? ABSENCE : '#eceee9' }}>{L.notCarried.length ? L.notCarried.join(' · ') : 'none'}</span></div>
+                    <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>OBSERVATION BASIS </span><span style={{ color: '#eceee9' }}>{L.basis}</span></div>
+                  </div>
+                );
+              })()}
             </div>
           </PacketSection>
         )}
