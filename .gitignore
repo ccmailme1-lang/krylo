@@ -56,3 +56,6 @@ codec/target/
 restore/
 specs/petro_locator
 specs/eia.key
+
+# Personal Claude Code permissions/sandbox (may contain command patterns with credentials)
+.claude/settings.local.json
