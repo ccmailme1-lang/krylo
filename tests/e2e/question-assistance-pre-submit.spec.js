@@ -1,8 +1,9 @@
 // tests/e2e/question-assistance-pre-submit.spec.js — KRYL-1326 PRE-SUBMIT slice
 // Real-browser guest-path verification of the ratified contract (Founder rulings 2026-09-26):
-// the 8 behavioral cases, the additive `+` append, the position-tracked ownership rules
-// (P-Q2: KRYLO removes only text it can still identify as its own unmodified addition), and
-// SUBMIT authority (the exact textarea string is the QUESTION).
+// the 8 behavioral cases, the additive `+` append into the query, and SUBMIT authority (the exact
+// textarea string is the QUESTION). Sixth-batch ruling: once appended, the wording is ordinary,
+// guest-editable query text — KRYLO keeps no `+ ADDED` token, no clear-all control, and no
+// ownership of it.
 import { test, expect } from '@playwright/test';
 
 const PHRASE  = 'technology / architecture changes';
@@ -21,12 +22,12 @@ test.beforeEach(async ({ page }) => {
   await page.locator('textarea').first().waitFor({ timeout: 20000 });
 });
 
-const box       = page => page.locator('textarea').first();
-const header    = page => page.getByText('ADD TO YOUR QUESTION', { exact: true });
-const chip      = page => page.locator('button[data-chip]').filter({ hasText: PHRASE });
-const token     = page => page.locator('button[title="Remove this addition"]');
-const clearAll  = page => page.getByText('clear all', { exact: true });
-const settle    = page => page.waitForTimeout(450); // seedQuery debounce (150ms) + render
+const box      = page => page.locator('textarea').first();
+const header   = page => page.getByText('ADD TO YOUR QUESTION', { exact: true });
+const chip     = page => page.locator('button[data-chip]').filter({ hasText: PHRASE });
+const addedRow = page => page.getByText('+ ADDED', { exact: true });
+const clearAll = page => page.getByText('clear all', { exact: true });
+const settle   = page => page.waitForTimeout(450); // seedQuery debounce (150ms) + render
 
 async function typeInto(page, text) {
   const b = box(page);
@@ -68,83 +69,47 @@ for (const [name, input, offered] of CASES) {
   });
 }
 
-// ── Append / deselect ───────────────────────────────────────────────────────────────────────
-test('select appends exactly the displayed wording, never submits, and shows the + ADDED token', async ({ page }) => {
+// ── Append: plain query text, no parallel representation ────────────────────────────────────
+test('select appends exactly the displayed wording and never submits', async ({ page }) => {
   await appendViaChip(page);
   await expect(box(page)).toHaveValue(BARE + APPEND);
   await expect(header(page)).toHaveCount(0);                 // no longer a bare subject phrase
-  await expect(token(page)).toHaveCount(1);
-  await expect(token(page)).toContainText(PHRASE);
   await expect(page.getByText('TARGET PACKET', { exact: false })).toHaveCount(0); // did not submit
 });
 
-test('deselect (token x) with the addition untouched restores the original text exactly', async ({ page }) => {
+test('selecting a suggestion creates NO additive + ADDED token and NO clear-all control', async ({ page }) => {
   await appendViaChip(page);
-  await token(page).click();
-  await settle(page);
-  await expect(box(page)).toHaveValue(BARE);
-  await expect(token(page)).toHaveCount(0);
-  await expect(chip(page)).toBeVisible();                    // eligible again
+  await expect(box(page)).toHaveValue(BARE + APPEND);
+  await expect(addedRow(page)).toHaveCount(0);
+  await expect(clearAll(page)).toHaveCount(0);
+  await expect(page.locator('button[title="Remove this addition"]')).toHaveCount(0);
+  await expect(page.locator('button[title="Remove this refinement"]')).toHaveCount(0);
 });
 
-test('clear all removes an intact addition (bulk deselect)', async ({ page }) => {
-  await appendViaChip(page);
-  await clearAll(page).click();
-  await settle(page);
-  await expect(box(page)).toHaveValue(BARE);
-  await expect(token(page)).toHaveCount(0);
-});
-
-// ── Ownership (P-Q2): identify by tracked offset, never by string match ─────────────────────
-test('editing the appended text drops the token and leaves the guest text intact', async ({ page }) => {
+test('the appended wording is ordinary text: the guest edits it directly and nothing restores or removes it', async ({ page }) => {
   await appendViaChip(page);
   await box(page).press('End');
-  await box(page).press('Backspace');                        // edits inside KRYLO's segment
+  await box(page).press('Backspace');                        // edit inside the appended wording
   await settle(page);
   await expect(box(page)).toHaveValue(BARE + APPEND.slice(0, -1));
-  await expect(token(page)).toHaveCount(0);
-  await expect(clearAll(page)).toHaveCount(0);               // nothing left that could remove text
+  await box(page).pressSequentially('!', { delay: 8 });
+  await settle(page);
+  await expect(box(page)).toHaveValue(BARE + APPEND.slice(0, -1) + '!');
+  await expect(addedRow(page)).toHaveCount(0);
+  await expect(clearAll(page)).toHaveCount(0);
 });
 
-test('editing the original text (before the segment) keeps the token; removal takes only the segment', async ({ page }) => {
-  await appendViaChip(page);
-  await box(page).press('Home');
-  await box(page).pressSequentially('X');
-  await settle(page);
-  await expect(box(page)).toHaveValue('X' + BARE + APPEND);
-  await expect(token(page)).toHaveCount(1);
-  await token(page).click();
-  await settle(page);
-  await expect(box(page)).toHaveValue('X' + BARE);
-});
-
-test('deleting the appended text drops the token; retyping identical text creates no ownership', async ({ page }) => {
+test('the guest deleting the appended wording restores the original query and the suggestion returns', async ({ page }) => {
   await appendViaChip(page);
   await box(page).press('End');
   for (let i = 0; i < APPEND.length; i++) await box(page).press('Backspace');
   await settle(page);
   await expect(box(page)).toHaveValue(BARE);
-  await expect(token(page)).toHaveCount(0);
-  await box(page).pressSequentially(APPEND, { delay: 8 });   // guest retypes the identical string
-  await settle(page);
-  await expect(box(page)).toHaveValue(BARE + APPEND);
-  await expect(token(page)).toHaveCount(0);                  // KRYLO must never remove the retyped text
-  await expect(clearAll(page)).toHaveCount(0);
-});
-
-test('guest text identical to the addition is never removed in place of KRYLO\'s segment', async ({ page }) => {
-  await appendViaChip(page);
-  await box(page).press('End');
-  await box(page).pressSequentially(APPEND, { delay: 8 });   // guest types a second, identical copy
-  await settle(page);
-  await expect(box(page)).toHaveValue(BARE + APPEND + APPEND);
-  await token(page).click();                                 // removes KRYLO's copy (at its offset) only
-  await settle(page);
-  await expect(box(page)).toHaveValue(BARE + APPEND);        // the guest's copy remains
+  await expect(chip(page)).toBeVisible();                    // eligible again
 });
 
 // ── SUBMIT authority ────────────────────────────────────────────────────────────────────────
-test('submit uses the exact resulting textarea string; additions do not enter structuralRefinements', async ({ page }) => {
+test('submit uses the exact resulting textarea string; the append does not enter structuralRefinements', async ({ page }) => {
   await appendViaChip(page);
   const expected = BARE + APPEND;
   await expect(box(page)).toHaveValue(expected);
