@@ -889,9 +889,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   // ── KRYL-1326 — PRE-SUBMIT question assistance (Founder rulings 2026-09-26) ─────────────────
   // Supersedes the KRYL-1290 WHAT TO EXAMINE restatement chips (retired; their render was already
-  // removed in 80a2f6c). Pure derivation from the live typed text: ADDITIVE phrases to append,
-  // or nothing. KRYL-1329: the six canonical pressures as unranked peers; eligibility is rule A1-A2
-  // (bare subject phrase) in inquirygeneration.js's deriveAdditiveAssist.
+  // removed in 80a2f6c). Pure derivation from the live typed text: an ADDITIVE phrase to append,
+  // or nothing. Eligibility is rule A1-A3 in inquirygeneration.js's deriveAdditiveAssist.
   const additiveAssist = useMemo(
     () => deriveAdditiveAssist(seedQuery.trim()),
     [seedQuery],
