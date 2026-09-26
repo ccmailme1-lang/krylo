@@ -139,28 +139,43 @@ export function deriveInquiryPossibilities(rawInput) {
 
 export { VISIBLE_CAP };
 
-// ── KRYL-1326 — PRE-SUBMIT additive question assistance (Founder rulings 2026-09-26) ─────────
+// ── KRYL-1326 / KRYL-1329 — PRE-SUBMIT additive question assistance (Founder rulings 2026-09-26) ─
 // Separate from deriveInquiryPossibilities above (unchanged): that function restates the parsed
-// entity/domain; this one only ever proposes an ADDITIVE phrase to append to what the guest is
-// typing. Deterministic, PRE-SUBMIT only, built from parseIntent()/buildQueryContext() and
-// nothing else — no observations, no evidence, no LLM, no new classifier or keyword matcher.
+// entity/domain; this one only ever proposes ADDITIVE phrases the guest may append to what they are
+// typing. Deterministic, PRE-SUBMIT only, built from parseIntent()/buildQueryContext() and nothing
+// else — no observations, no evidence, no LLM, no new classifier or keyword matcher.
 //
-// Eligibility (rule A1-A3, KRYL-1326 R2-Q3). Offer ONLY when ALL hold, otherwise return []:
-//   A1. the typed text is a bare subject phrase: exactly one parsed entity phrase and nothing
-//       more (punctuation/case-insensitive equality with that phrase).
-//   A2. no other structure evidence: no matched verb (this also covers the comparison verb, so
-//       comparison assistance is deferred, not fabricated), no decision cues, no scenario cues,
-//       no numbers, no resolved geo.
-//   A3. exactly one parser domain matched, and it is TECHNOLOGY (R2-Q2: TECHNOLOGY only — the
-//       other parser domains map many-to-one onto the canonical six and can name a domain the
-//       guest did not express).
-// The phrase is newly ratified copy for this ticket (R2-Q1), not inherited from a repo table.
-export const ADDITIVE_TECHNOLOGY_PHRASE = 'technology / architecture changes';
+// KRYL-1329: a FIXED MENU of the six canonical pressures. The menu makes NO applicability claim —
+// it presents possible dimensions the guest may choose to add; the guest decides whether one
+// belongs in the question. The parser's domain signals do not gate it (they are incomplete and
+// many-to-one). All six are unranked peers, in the fixed order below; there is no scoring, no
+// ranking, no cap. Each phrase indicates a direction for inquiry, never an assertion that the
+// change exists.
+//
+// Eligibility — a CONSERVATIVE gate, not a completeness detector (T1): the menu is offered only
+// when the typed text is a bare subject phrase and nothing else. Otherwise [].
+//   A1. exactly one parsed entity phrase, and the typed text (punctuation/case-insensitive) equals
+//       that phrase.
+//   A2. no other structure evidence: no matched verb (this also covers the comparison verb), no
+//       decision cues, no scenario cues, no numbers, no resolved geo.
+// The parser limitation is accepted: a single-word subject, or a mis-extraction, yields NO menu
+// (absence of assistance, never a fabricated one). The menu never guesses a pressure.
+//
+// One-and-done (T2): once a phrase is appended the text is no longer a bare subject phrase, so the
+// menu disappears by rule A1 — no multi-add.
+export const ADDITIVE_PRESSURE_PHRASES = Object.freeze([
+  { pressure: 'CAPITAL',    phrase: 'capital / financing changes' },
+  { pressure: 'OWNERSHIP',  phrase: 'ownership / control changes' },
+  { pressure: 'TECHNOLOGY', phrase: 'technology / architecture changes' },
+  { pressure: 'KNOWLEDGE',  phrase: 'knowledge / research changes' },
+  { pressure: 'LABOR',      phrase: 'labor / workforce changes' },
+  { pressure: 'MEDIA',      phrase: 'media / coverage changes' },
+]);
 
 const compareForm = t => (t ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
 /**
- * deriveAdditiveAssist — the additive suggestion(s) for the typed text; [] when none is eligible.
+ * deriveAdditiveAssist — the six additive suggestions for a bare subject phrase; [] otherwise.
  * @param {string} rawInput
  * @returns {Array<{id: string, label: string, appendText: string, basis: string[]}>}
  *   `appendText` is exactly what is appended to the guest's text (leading space + "+ " + phrase).
@@ -180,13 +195,11 @@ export function deriveAdditiveAssist(rawInput) {
   if (ctx.scenarioCues?.present) return [];
   if ((ctx.numbers ?? []).length > 0) return [];
   if (ctx.geo && ctx.geo.state && ctx.geo.state !== 'absent') return [];
-  // A3 — exactly one domain, and it is TECHNOLOGY.
-  if (parsed.domains.length !== 1 || parsed.domains[0] !== 'TECHNOLOGY') return [];
 
-  return [{
-    id:         'add:TECHNOLOGY',
-    label:      ADDITIVE_TECHNOLOGY_PHRASE,
-    appendText: ` + ${ADDITIVE_TECHNOLOGY_PHRASE}`,
-    basis:      ['entities', 'domains'],
-  }];
+  return ADDITIVE_PRESSURE_PHRASES.map(({ pressure, phrase }) => ({
+    id:         `add:${pressure}`,
+    label:      phrase,
+    appendText: ` + ${phrase}`,
+    basis:      ['entities'],
+  }));
 }
