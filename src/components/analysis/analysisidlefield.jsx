@@ -14,7 +14,7 @@ import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '..
 import { parseIntent }                from '../../engine/intentparser.js';
 import { buildQueryContext }          from '../../engine/querycontext.js';
 import { activeCompletionChips }      from '../../engine/completionchips.js';
-import { deriveInquiryPossibilities } from '../../engine/inquirygeneration.js';
+import { deriveAdditiveAssist } from '../../engine/inquirygeneration.js';
 import { buildAnalysisIntent }        from '../../engine/analysisintent.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
@@ -278,6 +278,32 @@ function TokenBox({ activeSituation, selectedFloor, horizon, seedQuery,
       />
     </div>
   );
+}
+
+// KRYL-1326 — position tracking for PRE-SUBMIT additions. A token owns a segment of the guest's
+// text by offset + verbatim match, never by searching for the string (a search cannot tell
+// KRYLO's segment from identical text the guest typed or retyped). Given the text before and
+// after one edit, shift each token's offset when the edit is wholly before it, keep it when the
+// edit is wholly after it, and DROP it when the edit touches the segment (the text is then the
+// guest's). Ambiguous edits resolve conservatively — toward dropping the token.
+function shiftAdditions(additions, oldText, newText) {
+  if (oldText === newText) return additions;
+  let p = 0;
+  const max = Math.min(oldText.length, newText.length);
+  while (p < max && oldText[p] === newText[p]) p++;
+  let endOld = oldText.length, endNew = newText.length;
+  while (endOld > p && endNew > p && oldText[endOld - 1] === newText[endNew - 1]) { endOld--; endNew--; }
+  const delta = newText.length - oldText.length;
+  const out = [];
+  for (const a of additions) {
+    const start = a.offset;
+    const end   = a.offset + a.appendedText.length;
+    let next = null;
+    if (endOld <= start)  next = { ...a, offset: start + delta };
+    else if (p >= end)    next = a;
+    if (next && newText.substr(next.offset, next.appendedText.length) === next.appendedText) out.push(next);
+  }
+  return out;
 }
 
 function StaggeredChips({ chips, selected, onSelect, getKey, getLabel, isSelected }) {
@@ -770,6 +796,15 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   // additive row, never chips-inside-the-textarea). Collapses a long selection to "+N more";
   // never affects selectedRefinementIds/the actual selection itself, purely visual.
   const [refinementsRowExpanded, setRefinementsRowExpanded] = useState(false);
+  // KRYL-1326 — PRE-SUBMIT additions the guest selected (Founder rulings 2026-09-26, P-Q1): kept
+  // OUTSIDE selectedRefinementIds because the suggestion correctly disappears once its text is in
+  // the box, and the addition must persist as part of the guest's composed question. The ref is
+  // the source of truth (read synchronously by the textarea onChange); state mirrors it to render.
+  // Tokens never enter tensor.structuralRefinements.
+  const [appendedAdditions, setAppendedAdditions] = useState([]);
+  const additionsRef = useRef([]);
+  const prevTextRef  = useRef('');
+  function commitAdditions(next) { additionsRef.current = next; setAppendedAdditions(next); }
   const REFINEMENTS_ROW_COLLAPSE_AT = 4;
   // Two distinct taxonomies exist by design (specs/analysis-domain-taxonomy-
   // unification.md): selectedDomains[0] is the raw 8-pill UI key the user
@@ -887,26 +922,22 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     });
   }, [chipDisplayResult, seedQuery, selectedDomains]);
 
-  // ── KRYL-1290 — Autonomous Inquiry chips ────────────────────────────────────
-  // Pre-question discovery layer: "what could I examine from what I just typed",
-  // not "what's missing from a query already forming" (that's completion, below).
-  // Pure derivation from the live seed text — never re-parses beyond what
-  // deriveInquiryPossibilities already does internally. Render-only this subtask:
-  // no click transition, no analysisintent.js wiring (spec:
-  // specs/SPEC-autonomous-inquiry-chips-v1.1.md).
-  const inquiryChips = useMemo(
-    () => deriveInquiryPossibilities(seedQuery.trim()),
+  // ── KRYL-1326 — PRE-SUBMIT question assistance (Founder rulings 2026-09-26) ─────────────────
+  // Supersedes the KRYL-1290 WHAT TO EXAMINE restatement chips (retired; their render was already
+  // removed in 80a2f6c). Pure derivation from the live typed text: an ADDITIVE phrase to append,
+  // or nothing. Eligibility is rule A1-A3 in inquirygeneration.js's deriveAdditiveAssist.
+  const additiveAssist = useMemo(
+    () => deriveAdditiveAssist(seedQuery.trim()),
     [seedQuery],
   );
 
-  // KRYL-1306 — one shared selection pool (selectedRefinementIds), not a second id set, across
-  // both chip sources: STRUCTURAL SIGNALS (chipsubstrate.js) and WHAT TO EXAMINE (KRYL-1290
-  // inquiry chips). Selecting either kind only ever adds a chip token to the same +ADDED box —
-  // an inquiry chip's question text is never merged into seedQuery (that was the earlier,
-  // reverted append behavior; this replaces it entirely per explicit correction).
+  // KRYL-1306 — the shared selection pool (selectedRefinementIds) now serves the STRUCTURAL
+  // SIGNALS chips (chipsubstrate.js) only. The 2026-09-16 direction that a chip's text is never
+  // merged into the query was deliberately superseded for PRE-SUBMIT additions (KRYL-1326 D1);
+  // those live in appendedAdditions, not in this pool (P-Q1).
   const allSelectableChips = useMemo(
-    () => [...eligibleRefinementChips, ...inquiryChips],
-    [eligibleRefinementChips, inquiryChips]
+    () => [...eligibleRefinementChips],
+    [eligibleRefinementChips]
   );
   // Selection is strictly additive user state, never derived from or written back into
   // seedQuery (§4, §13). Pruned (not wiped) when the live candidate set changes and a
@@ -1132,15 +1163,63 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
       query: seedQuery.trim(),
       domains: selectedDomains,
       chipLabel: chip.label,
-      source: chipDisplayResult.chipSources?.get(chip.label)
-        ?? (inquiryChips.some(c => c.id === chip.id) ? 'inquiry' : 'unknown'),
+      source: chipDisplayResult.chipSources?.get(chip.label) ?? 'unknown',
     });
+  }
+
+  // KRYL-1326 — add a PRE-SUBMIT addition: append exactly the displayed wording to the guest's
+  // text (uncontrolled textarea, so write the ref and mirror to seedQuery — the same write path
+  // the removed KRYL-1290 chip click used). Never submits. Re-checks eligibility against the
+  // text actually in the box, since seedQuery lags the textarea by a debounce.
+  function addAddition(cand) {
+    const ta = centerTextareaRef.current;
+    if (!ta || processing) return;
+    if (additionsRef.current.some(a => a.id === cand.id)) return;
+    if (!deriveAdditiveAssist(ta.value).some(c => c.id === cand.id)) return;
+    const current = ta.value;
+    const next    = current + cand.appendText;
+    ta.value = next;
+    prevTextRef.current = next;
+    commitAdditions([...additionsRef.current, {
+      id: cand.id, label: cand.label, appendedText: cand.appendText, offset: current.length,
+    }]);
+    clearTimeout(queryDebounceRef.current);
+    setSeedQuery(next);
+    ta.focus();
+    ta.setSelectionRange(next.length, next.length);
+  }
+
+  // KRYL-1326 — remove one addition. KRYLO removes ONLY text it can still identify as its own
+  // unmodified addition: the segment must still sit at its tracked offset, verbatim. Otherwise
+  // the guest's text is left exactly as it is and only the token is dropped.
+  function removeAddition(id) {
+    const a = additionsRef.current.find(x => x.id === id);
+    if (!a) return;
+    const rest = additionsRef.current.filter(x => x.id !== id);
+    const ta   = centerTextareaRef.current;
+    if (ta && ta.value.substr(a.offset, a.appendedText.length) === a.appendedText) {
+      const cur  = ta.value;
+      const next = cur.slice(0, a.offset) + cur.slice(a.offset + a.appendedText.length);
+      ta.value = next;
+      prevTextRef.current = next;
+      commitAdditions(shiftAdditions(rest, cur, next));
+      clearTimeout(queryDebounceRef.current);
+      setSeedQuery(next);
+    } else {
+      commitAdditions(rest);
+    }
+  }
+
+  // "clear all" on the + ADDED row = bulk deselect of the additions (same rule as above).
+  function clearAllAdditions() {
+    for (const a of [...additionsRef.current]) removeAddition(a.id);
   }
 
   function removeSituationToken() {
     setActiveSituation(null); setSelectedFloor(null); setHorizon(null); setHorizonTouched(false);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
     setSelectedRefinementIds([]);
+    commitAdditions([]); prevTextRef.current = '';
     pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, horizonTouched: false, seedQuery: '' });
   }
   function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); setHorizonTouched(false); pushHistory({ selectedFloor: null, horizon: null, horizonTouched: false }); }
@@ -1297,6 +1376,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setActiveSituation(null);
     setSeedQuery('');
     if (centerTextareaRef.current) centerTextareaRef.current.value = '';
+    commitAdditions([]); prevTextRef.current = '';
     setSelectedFloor(null);
     setHorizon(DEFAULT_HORIZON);
     setHorizonTouched(false);
@@ -1347,6 +1427,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setRules(snap.rules ?? []);
     setSeedQuery(snap.seedQuery ?? '');
     if (centerTextareaRef.current) centerTextareaRef.current.value = snap.seedQuery ?? '';
+    commitAdditions([]); prevTextRef.current = snap.seedQuery ?? '';
     requestAnimationFrame(() => { isApplyingSnap.current = false; });
   }
 
@@ -1763,6 +1844,9 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     defaultValue=""
                     onChange={e => {
                       const v = e.target.value;
+                      // KRYL-1326 — keep addition offsets in step with every edit, synchronously.
+                      if (additionsRef.current.length) commitAdditions(shiftAdditions(additionsRef.current, prevTextRef.current, v));
+                      prevTextRef.current = v;
                       clearTimeout(queryDebounceRef.current);
                       queryDebounceRef.current = setTimeout(() => {
                         setSeedQuery(v);
@@ -1791,20 +1875,27 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     display, not a second query. Each chip removable independently; removing one
                     only edits selectedRefinementIds, same as deselecting it in STRUCTURAL
                     SIGNALS below. */}
-                {selectedStructuralRefinements.length > 0 && (() => {
-                  const overflow = selectedStructuralRefinements.length > REFINEMENTS_ROW_COLLAPSE_AT;
+                {(selectedStructuralRefinements.length > 0 || appendedAdditions.length > 0) && (() => {
+                  // KRYL-1326 — the row shows the legacy chip tokens AND the PRE-SUBMIT additions
+                  // (P-Q1). An addition's token is the visible record of text now in the box; it
+                  // is not a second query source and never itself edits or submits the question.
+                  const rowTokens = [
+                    ...selectedStructuralRefinements.map(chip => ({ kind: 'chip', key: chip.id, label: chip.label, chip })),
+                    ...appendedAdditions.map(add => ({ kind: 'addition', key: add.id, label: add.label, add })),
+                  ];
+                  const overflow = rowTokens.length > REFINEMENTS_ROW_COLLAPSE_AT;
                   const visible = (overflow && !refinementsRowExpanded)
-                    ? selectedStructuralRefinements.slice(0, REFINEMENTS_ROW_COLLAPSE_AT)
-                    : selectedStructuralRefinements;
-                  const hiddenCount = selectedStructuralRefinements.length - visible.length;
+                    ? rowTokens.slice(0, REFINEMENTS_ROW_COLLAPSE_AT)
+                    : rowTokens;
+                  const hiddenCount = rowTokens.length - visible.length;
                   return (
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 }}>
                       <span style={{ fontFamily: MONO, fontSize: 7, color: 'rgba(255,255,255,0.28)', letterSpacing: '0.2em' }}>+ ADDED</span>
-                      {visible.map(chip => (
+                      {visible.map(tok => (
                         <button
-                          key={chip.id}
-                          onClick={() => toggleRefinement(chip)}
-                          title="Remove this refinement"
+                          key={tok.key}
+                          onClick={() => (tok.kind === 'chip' ? toggleRefinement(tok.chip) : removeAddition(tok.add.id))}
+                          title={tok.kind === 'chip' ? 'Remove this refinement' : 'Remove this addition'}
                           style={{
                             display: 'flex', alignItems: 'center', gap: 5,
                             borderRadius: 999, padding: '4px 10px',
@@ -1813,7 +1904,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                             color: LIME, cursor: 'pointer',
                           }}
                         >
-                          <span style={{ color: LIME }}>+</span> {chip.label} <span style={{ opacity: 0.6 }}>×</span>
+                          <span style={{ color: LIME }}>+</span> {tok.label} <span style={{ opacity: 0.6 }}>×</span>
                         </button>
                       ))}
                       {hiddenCount > 0 && (
@@ -1839,7 +1930,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                         >show less</button>
                       )}
                       <button
-                        onClick={() => { setSelectedRefinementIds([]); setRefinementsRowExpanded(false); }}
+                        onClick={() => { setSelectedRefinementIds([]); clearAllAdditions(); setRefinementsRowExpanded(false); }}
                         style={{
                           fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em',
                           padding: '4px 10px', borderRadius: 999, cursor: 'pointer',
@@ -1850,6 +1941,24 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     </div>
                   );
                 })()}
+                {/* ── ADD TO YOUR QUESTION (KRYL-1326) ── */}
+                {/* PRE-SUBMIT question assistance: an additive phrase KRYLO offers to append to
+                    what the guest is typing (rule A1-A3, inquirygeneration.js). Selecting it
+                    appends exactly the displayed wording to the box and never submits; the guest
+                    can keep editing. No suggestion -> the block does not render. */}
+                {!processing && additiveAssist.length > 0 && (
+                  <div style={{ marginTop: 20 }}>
+                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>ADD TO YOUR QUESTION</div>
+                    <StaggeredChips
+                      chips={additiveAssist}
+                      selected={[]}
+                      onSelect={addAddition}
+                      getKey={c => c.id}
+                      getLabel={c => `+ ${c.label}`}
+                      isSelected={() => false}
+                    />
+                  </div>
+                )}
                 {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement
                     selection) ── */}
                 {/* Pure render of eligibleRefinementChips (computed above via chipsubstrate.js —

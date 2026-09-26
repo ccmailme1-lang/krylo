@@ -30,6 +30,7 @@
 // existing output is untouched (regression-safe: same inputs, same function).
 
 import { parseIntent } from './intentparser.js';
+import { buildQueryContext } from './querycontext.js';
 
 const VERB_TEMPLATE = {
   TRACK:       x => `TRACK ${x} OVER TIME`,
@@ -137,3 +138,55 @@ export function deriveInquiryPossibilities(rawInput) {
 }
 
 export { VISIBLE_CAP };
+
+// ── KRYL-1326 — PRE-SUBMIT additive question assistance (Founder rulings 2026-09-26) ─────────
+// Separate from deriveInquiryPossibilities above (unchanged): that function restates the parsed
+// entity/domain; this one only ever proposes an ADDITIVE phrase to append to what the guest is
+// typing. Deterministic, PRE-SUBMIT only, built from parseIntent()/buildQueryContext() and
+// nothing else — no observations, no evidence, no LLM, no new classifier or keyword matcher.
+//
+// Eligibility (rule A1-A3, KRYL-1326 R2-Q3). Offer ONLY when ALL hold, otherwise return []:
+//   A1. the typed text is a bare subject phrase: exactly one parsed entity phrase and nothing
+//       more (punctuation/case-insensitive equality with that phrase).
+//   A2. no other structure evidence: no matched verb (this also covers the comparison verb, so
+//       comparison assistance is deferred, not fabricated), no decision cues, no scenario cues,
+//       no numbers, no resolved geo.
+//   A3. exactly one parser domain matched, and it is TECHNOLOGY (R2-Q2: TECHNOLOGY only — the
+//       other parser domains map many-to-one onto the canonical six and can name a domain the
+//       guest did not express).
+// The phrase is newly ratified copy for this ticket (R2-Q1), not inherited from a repo table.
+export const ADDITIVE_TECHNOLOGY_PHRASE = 'technology / architecture changes';
+
+const compareForm = t => (t ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+
+/**
+ * deriveAdditiveAssist — the additive suggestion(s) for the typed text; [] when none is eligible.
+ * @param {string} rawInput
+ * @returns {Array<{id: string, label: string, appendText: string, basis: string[]}>}
+ *   `appendText` is exactly what is appended to the guest's text (leading space + "+ " + phrase).
+ */
+export function deriveAdditiveAssist(rawInput) {
+  const text = (rawInput ?? '').trim();
+  if (!text) return [];
+
+  const parsed = parseIntent(text);
+  // A1 — a bare subject phrase, nothing else.
+  if (parsed.entities.length !== 1) return [];
+  if (compareForm(text) !== compareForm(parsed.entities[0])) return [];
+  // A2 — no other structure evidence.
+  if (parsed.verb_matched) return [];
+  const ctx = buildQueryContext(text);
+  if ((ctx.decisionCues ?? []).length > 0) return [];
+  if (ctx.scenarioCues?.present) return [];
+  if ((ctx.numbers ?? []).length > 0) return [];
+  if (ctx.geo && ctx.geo.state && ctx.geo.state !== 'absent') return [];
+  // A3 — exactly one domain, and it is TECHNOLOGY.
+  if (parsed.domains.length !== 1 || parsed.domains[0] !== 'TECHNOLOGY') return [];
+
+  return [{
+    id:         'add:TECHNOLOGY',
+    label:      ADDITIVE_TECHNOLOGY_PHRASE,
+    appendText: ` + ${ADDITIVE_TECHNOLOGY_PHRASE}`,
+    basis:      ['entities', 'domains'],
+  }];
+}
