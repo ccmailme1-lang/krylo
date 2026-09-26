@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { loadProfile } from '../engine/userprofile.js';
 import { buildQueryContext } from '../engine/querycontext.js';
+import { buildAnalysisIntent } from '../engine/analysisintent.js';
 
 // Stable action skeleton — IDs assigned at session construction, never at render.
 function buildActionSkeleton() {
@@ -41,6 +42,13 @@ export const useAnalysisStore = create((set) => ({
     // KRYL-1221 Phase 1 — the single build point for the canonical query record.
     // Additive: nothing reads it yet (consumer migration is Phase 2).
     const queryContext = buildQueryContext(query);
+    // Interpretation carried for the session lifetime on every creation path: only the idle field
+    // builds tensor.analysisIntent itself; a session created elsewhere (history re-run, cone
+    // assignment, ingestion, brief re-run) gets the same existing buildAnalysisIntent() result.
+    // A tensor that already carries one (idle field) is passed through untouched.
+    const sessionTensor = (!tensor?.analysisIntent && typeof query === 'string' && query.trim())
+      ? { ...tensor, analysisIntent: buildAnalysisIntent(query) }
+      : tensor;
     return ({
       sessions: {
         ...state.sessions,
@@ -49,7 +57,7 @@ export const useAnalysisStore = create((set) => ({
           lens: resolvedLens,
           query,
           queryContext,
-          tensor,
+          tensor: sessionTensor,
           targets:    [],
           signals:    [],
           artifacts:  [],
