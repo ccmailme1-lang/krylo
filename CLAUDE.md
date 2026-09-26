@@ -528,3 +528,26 @@ completed; deployed version/commit verified; live instance reachable and healthy
 BAU/harness validation completed against the live instance; target functionality verified in
 production. A successful build, commit, or push is never Complete when the stated objective is a
 live deployment.
+
+## 23. Release Gate — Deploy to Prod status (Founder, 2026-09-25, LOCKED)
+
+Only a Jira ticket in **Deploy to Prod** is eligible for release to production. No build
+goes to production without at least one accompanying Deploy-to-Prod ticket that covers it. A merged branch, a
+green build, a commit on `main`, or a passing localhost check is not eligibility.
+
+```
+IMPLEMENT -> VALIDATE -> BUILD -> ticket to DEPLOY TO PROD -> [explicit "deploy"] -> DEPLOY -> VERIFY LIVE -> DONE
+```
+
+Jira flow: `BACKLOG -(Load)-> READY -(Execute)-> IN PROGRESS -(Request Review)-> REVIEW -(Approve)-> DEPLOY TO PROD -(Request Review)-> DONE` (REVIEW -> READY: Reverse / rework only; new tickets start in BACKLOG). BACKLOG is the queue for anything not vetted or needing further decomposition; READY means vetted, decomposed, and pulled (Founder, 2026-09-25). DONE means
+deployed and verified live (§22 Completion Definition) — not merely approved in REVIEW. The status sits between REVIEW and DONE.
+
+- Deploy to Prod status is **eligibility, not authorization** — `deploy` still requires the Founder's explicit go.
+- Before any `deploy.sh`: list the tickets the build carries and their current Jira status. Any
+  change in the build with no Deploy-to-Prod ticket behind it blocks the deploy — name it, do not ship it.
+- Only the Founder moves a ticket into Deploy to Prod. Do not transition a ticket to DEPLOY TO PROD on my own judgment.
+- Verify the status live in Jira before deploying; never from memory or a prior session's note.
+- Extends §22: the Deployment Completion chain runs only after this gate is satisfied.
+*Incident (2026-09-25): a Founder-requested UI removal was made in a separate worktree, never
+committed, and lost at merge; the deployed build (80a2f6c) still carried it, with no ticket state
+tying the shipped contents to a decision.*
