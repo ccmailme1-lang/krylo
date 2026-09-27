@@ -26,10 +26,52 @@ const DOMAIN_MAP = {
   TECHNOLOGY:  ['tech', 'software', 'ai ', 'data', 'platform', 'digital', 'compute', 'model', 'algorithm', 'infrastructure'],
 };
 
+// KRYL-1330 — word-boundary keyword and verb matching. The previous matching used substring
+// tests (`lower.includes(keyword)`), so a keyword hit could come from letters inside an unrelated
+// word ("thai " -> ai, "refund" -> fund, "glossary" -> loss, "reviewer" -> review, "checkout" ->
+// check, "growth" -> grow, "transferable" -> transfer, "improve" -> prove). A hit must now mean the
+// guest wrote that word (or an inflected form of it). Rules:
+//   - a keyword/pattern matches only at word boundaries, with an optional inflection suffix;
+//   - the two deliberate stems in the vocabulary ('tech', 'regulat') match any word starting with
+//     them (technology, technical, regulation, regulatory);
+//   - a pattern that already carries its own spaces (' vs ') is matched exactly as written.
+// The vocabulary (DOMAIN_MAP, VERB_MAP) is unchanged; whole-word polysemy such as "series" in
+// "Series Finale" is a vocabulary question, not a matching one, and is out of scope here.
+const KEYWORD_STEMS = new Set(['tech', 'regulat']);
+const INFLECTION    = '(?:s|es|d|ed|ing|al)?';
+const _matcherCache = new Map();
+
+function keywordMatcher(kw) {
+  let re = _matcherCache.get(kw);
+  if (re) return re;
+  if (kw.startsWith(' ') || kw.endsWith(' ') && kw.trim() !== 'ai') {
+    re = { exact: kw };                                   // pattern carries its own spacing
+  } else {
+    const word = kw.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const tail = KEYWORD_STEMS.has(kw) ? '[a-z]*' : INFLECTION;
+    re = { re: new RegExp('(^|[^a-z0-9])' + word + tail + '(?![a-z0-9])') };
+  }
+  _matcherCache.set(kw, re);
+  return re;
+}
+
+// First match of `kw` in `lower`: { start, end } (offsets into `lower`) or null.
+function findKeyword(lower, kw) {
+  const m = keywordMatcher(kw);
+  if (m.exact !== undefined) {
+    const i = lower.indexOf(m.exact);
+    return i === -1 ? null : { start: i, end: i + m.exact.length };
+  }
+  const r = m.re.exec(lower);
+  if (!r) return null;
+  const start = r.index + r[1].length;
+  return { start, end: r.index + r[0].length };
+}
+
 function matchVerb(lower) {
   for (const [verb, patterns] of Object.entries(VERB_MAP)) {
     for (const p of patterns) {
-      if (lower.includes(p)) {
+      if (findKeyword(lower, p)) {
         return { verb, score: p.length / Math.max(lower.length, 1) };
       }
     }
@@ -91,7 +133,7 @@ function extractEntities(raw) {
 
 function inferDomains(lower) {
   return Object.entries(DOMAIN_MAP)
-    .filter(([, kws]) => kws.some(kw => lower.includes(kw)))
+    .filter(([, kws]) => kws.some(kw => findKeyword(lower, kw)))
     .map(([domain]) => domain);
 }
 
