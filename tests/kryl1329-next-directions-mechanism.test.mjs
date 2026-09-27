@@ -1,15 +1,14 @@
 // tests/kryl1329-next-directions-mechanism.test.mjs — KRYL-1329 mechanism verification.
-// Pure-function tests of deriveNextDirections against _TEST_ONLY_DRAFT_CATALOG (see
-// src/engine/inquirygeneration.js for why that catalog is test-only and never read by product
-// code). The PRODUCTION catalog (NEXT_DIRECTION_CATALOG) is separately asserted empty/frozen here
-// (D4/D6 unratified) — that assertion is the actual deployment gate; if the Founder ratifies rows
-// into NEXT_DIRECTION_CATALOG, this file's mechanism coverage still applies unchanged.
+// Rewritten 2026-09-27 (Founder: "stop patching the chip filter — recompute from the current query,
+// no chip-sequence memory, guest-typed text and chip selection are the same input").
+// Pure-function tests of deriveNextDirections against NEXT_DIRECTION_CATALOG (the real, ratified
+// product catalog — there is no separate test-only catalog now; the mechanism has no session state
+// to fixture around).
 //
 // Run: node tests/kryl1329-next-directions-mechanism.test.mjs
 import assert from 'node:assert/strict';
 import {
-  deriveNextDirections, guestAuthoredText, MAX_CHIPS_PER_ROUND, MAX_ROUNDS,
-  NEXT_DIRECTION_CATALOG, _TEST_ONLY_DRAFT_CATALOG as CAT,
+  deriveNextDirections, establishedDirections, MAX_CHIPS_PER_ROUND, MAX_ROUNDS, NEXT_DIRECTION_CATALOG,
 } from '../src/engine/inquirygeneration.js';
 
 let passed = 0, failed = 0;
@@ -18,140 +17,91 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  FAIL - ${name}\n    ${e.message}`); }
 }
 
-console.log('KRYL-1329 product contract (2026-09-27)');
-test('the catalog is ratified and progression continues while grounded candidates remain (Founder fix, 2026-09-27: single-word suppression removed -- only exact-phrase duplication blocks a repeat)', () => {
+console.log('KRYL-1329 product contract (2026-09-27 rewrite)');
+test('catalog is ratified and non-empty', () => {
   assert.ok(NEXT_DIRECTION_CATALOG.length > 0);
-  // Vendor Platform Decoupling: T1 and T2 both ground on "platform"; T2 must NOT be suppressed by
-  // the coincidental word "vendor" in the subject text -- that was the bug.
-  let text = 'Vendor Platform Decoupling', appended = [];
-  const seen = [];
-  for (let round = 1; round <= 4; round++) {
-    const r = deriveNextDirections({ text, appended });
-    seen.push(r.map(c => c.label));
-    if (!r.length) break;
-    text += r[0].appendText; appended.push(r[0].label);
-  }
-  assert.deepEqual(seen, [
-    ['technology / architecture changes', 'technology / vendor changes'],
-    ['technology / vendor changes'],
-    [],
-  ]);
-  assert.deepEqual(
-    deriveNextDirections({ text: 'AI Data Center Pushback', appended: [] }).map(c => c.label),
-    ['technology / architecture changes', 'technology / adoption changes', 'local politician reaction'],  // T2's triggers (platform/software/infrastructure/compute) aren't in this text
-  );
 });
 
-console.log('\nGOAL 1 — never more than MAX_CHIPS_PER_ROUND, on any input, in any round');
-test('corpus-wide chip count bound', () => {
-  const corpus = ['Digital Software Platform', 'Private Equity Roll-Up', 'Contract Liability Review',
-    'Thai Restaurant Chain', 'Tesla', 'warehouse robotics', 'Is Anduril a good acquisition target?',
-    'AWS vs Azure', '', '???'];
-  for (const q of corpus) {
-    assert.ok(deriveNextDirections({ text: q, appended: [], catalog: CAT }).length <= MAX_CHIPS_PER_ROUND, q);
-  }
+console.log('\nGOVERNING QUESTION — "is there a materially useful, grounded direction not yet established?"');
+test('Vendor Platform Decoupling: both grounded directions offered together (the fixed bug)', () => {
+  const r = deriveNextDirections({ text: 'Vendor Platform Decoupling' }).map(c => c.label);
+  assert.deepEqual(r, ['technology / architecture changes', 'technology / vendor changes']);
+});
+test('a candidate is suppressed ONLY by its own exact phrase being present, never by one coincidental word', () => {
+  // "vendor" appears in the SUBJECT ("Vendor Platform"); that must not suppress the unrelated
+  // candidate "technology / vendor changes", which the guest never actually stated.
+  const r = deriveNextDirections({ text: 'Vendor Platform Decoupling' }).map(c => c.label);
+  assert.ok(r.includes('technology / vendor changes'), 'wrongly suppressed by coincidental word overlap');
+});
+test('AI Data Center Pushback: every grounded direction offered', () => {
+  const r = deriveNextDirections({ text: 'AI Data Center Pushback' }).map(c => c.label);
+  assert.deepEqual(r, ['technology / architecture changes', 'technology / adoption changes', 'local politician reaction']);
+});
+test('no grounded word anywhere in the text -> []', () => {
+  assert.deepEqual(deriveNextDirections({ text: 'Regional Bank Consolidation' }), []);
 });
 
-console.log('\nGOAL 2 — up to MAX_ROUNDS rounds, one selection per round, hard stop, zero ends immediately');
-test('a 3-direction input runs 3 -> 2 -> 1 -> stop, catalog order, no repeats', () => {
-  let text = 'Digital Software Platform', appended = [];
-  const seen = [];
-  for (let round = 1; round <= MAX_ROUNDS + 1; round++) {
-    const r = deriveNextDirections({ text, appended, catalog: CAT });
-    seen.push(r.map(c => c.id));
-    if (!r.length) break;
-    text += r[0].appendText; appended.push(r[0].label);
-  }
-  assert.deepEqual(seen, [['nd:T1', 'nd:T2', 'nd:T3'], ['nd:T2', 'nd:T3'], ['nd:T3'], []]);
+console.log('\nFREE TEXT === CHIP SELECTION — identical treatment, no remembered sequence');
+test('a guest who types the appended phrase by hand gets the same result as one who selected it', () => {
+  const viaChip = (() => {
+    const r1 = deriveNextDirections({ text: 'Vendor Platform Decoupling' });
+    return 'Vendor Platform Decoupling' + r1[0].appendText;
+  })();
+  const viaTyping = 'Vendor Platform Decoupling + technology / architecture changes';
+  assert.equal(viaChip, viaTyping);
+  assert.deepEqual(deriveNextDirections({ text: viaChip }), deriveNextDirections({ text: viaTyping }));
 });
-test('zero candidates ends assistance immediately (input grounding only one direction)', () => {
-  // "Vendor Decoupling" (no "Platform") grounds nothing in the current catalog -- a genuinely
-  // zero-direction input, distinct from the fix above (which was about a wrongly-SUPPRESSED
-  // second direction, not an absent one).
-  const r1 = deriveNextDirections({ text: 'Vendor Decoupling', appended: [], catalog: CAT });
-  assert.deepEqual(r1, []);
-});
-test('MAX_ROUNDS is enforced structurally, independent of catalog size', () => {
-  const appended = ['a', 'b', 'c'];
-  assert.deepEqual(deriveNextDirections({ text: 'Digital Software Platform a b c', appended, catalog: CAT }), []);
+test('a guest who types the FULL 2-component query in one go, never touching a chip, sees []', () => {
+  const r = deriveNextDirections({ text: 'Vendor Platform Decoupling + technology / architecture changes + technology / vendor changes' });
+  assert.deepEqual(r, []);
 });
 
-console.log('\nGOAL 3 — grounded only in the guest\'s own words; KRYLO text never grounds; no repeats');
-test('R-F: guestAuthoredText strips exactly an appended phrase, nothing else, for every catalog row', () => {
-  for (const c of CAT) {
-    assert.equal(guestAuthoredText(`Some Guest Text + ${c.phrase}`, [c.phrase]), 'Some Guest Text');
-  }
+console.log('\nEDITING IS AUTHORITATIVE — no memory of a prior round, every call recomputes from current text');
+test('deleting an established direction from the text makes it eligible again', () => {
+  const withBoth = 'Vendor Platform Decoupling + technology / architecture changes + technology / vendor changes';
+  assert.deepEqual(deriveNextDirections({ text: withBoth }), []);
+  const withOneDeleted = 'Vendor Platform Decoupling + technology / vendor changes'; // guest deleted T1's segment
+  assert.deepEqual(deriveNextDirections({ text: withOneDeleted }).map(c => c.id), ['nd:T1']);
 });
-test('selecting T1 never makes a different family (F/M/L/H/C) eligible purely from KRYLO\'s own words', () => {
-  const r1 = deriveNextDirections({ text: 'Digital Software Platform', appended: [], catalog: CAT });
-  const text2 = 'Digital Software Platform' + r1[0].appendText;
-  const r2 = deriveNextDirections({ text: text2, appended: [r1[0].label], catalog: CAT });
-  for (const c of r2) assert.ok(c.id.startsWith('nd:T'), `non-T family ${c.id} appeared after only a T selection`);
-});
-test('an already-appended phrase is never re-offered', () => {
-  const q = `Digital Software Platform + technology / architecture changes`;
-  const r = deriveNextDirections({ text: q, appended: ['technology / architecture changes'], catalog: CAT });
-  assert.ok(!r.some(c => c.label === 'technology / architecture changes'));
-});
-test('guest edits between rounds change what the next round offers', () => {
-  const r1 = deriveNextDirections({ text: 'Digital Software Platform', appended: [], catalog: CAT });
-  const edited = 'Digital Software Platform' + r1[0].appendText + ' cloud';
-  const r2 = deriveNextDirections({ text: edited, appended: [r1[0].label], catalog: CAT });
-  assert.deepEqual(r2.map(c => c.id), ['nd:T2', 'nd:T3']);
+test('order of establishment does not matter (pure function of current text only)', () => {
+  const a = deriveNextDirections({ text: 'Vendor Platform Decoupling + technology / vendor changes' });
+  const b = deriveNextDirections({ text: 'Vendor Platform Decoupling + technology / architecture changes' });
+  assert.deepEqual(a.map(c => c.id), ['nd:T1']);
+  assert.deepEqual(b.map(c => c.id), ['nd:T2']);
 });
 
-console.log('\nGOAL 4 — complete questions and cue-bearing input get zero by default');
-test('question, decision-cue, number, comparison, empty, noise all give zero', () => {
-  for (const q of ['Is Digital Software Platform a good investment?', 'Buy Digital Software Platform now',
-                   'Digital Software Platform for $5 million', 'AWS vs Azure', '', '???']) {
-    assert.deepEqual(deriveNextDirections({ text: q, appended: [], catalog: CAT }), [], q);
-  }
+console.log('\n3-COMPONENT CEILING — a maximum, not a goal (fewer than 3 is a valid, correct end state)');
+test('establishedDirections counts correctly and the ceiling stops offers once reached', () => {
+  const q = 'AI Data Center Pushback + technology / architecture changes + technology / adoption changes + local politician reaction';
+  assert.equal(establishedDirections(q).length, 3);
+  assert.deepEqual(deriveNextDirections({ text: q }), []);
 });
-test('KNOWN LIMITATION (disclosed, out of scope): geo suppression does not fire for a plain place name, because querycontext.js\'s own geo detector does not recognize one (its comment: "real geo extraction is a follow-on ticket") — this is a pre-existing capability gap, not a KRYL-1329 defect', () => {
-  const r = deriveNextDirections({ text: 'Digital Software Platform in Austin', appended: [], catalog: CAT });
-  assert.ok(r.length > 0, 'documents the known gap; will start failing (a good thing) once geo extraction is built');
+test('2 established with nothing further grounded is a valid, correct stop (never forces a 3rd)', () => {
+  const q = 'Vendor Platform Decoupling + technology / architecture changes + technology / vendor changes';
+  assert.equal(establishedDirections(q).length, 2);
+  assert.deepEqual(deriveNextDirections({ text: q }), [], 'must not invent a candidate to fill the ceiling');
+});
+test('MAX_CHIPS_PER_ROUND bounds a single offer regardless of how many directions are grounded at once', () => {
+  const r = deriveNextDirections({ text: 'AI Data Center Pushback' });
+  assert.ok(r.length <= MAX_CHIPS_PER_ROUND);
 });
 
-console.log('\nCROSS-ROW CONTAMINATION MATRIX — every selection order, for every multi-candidate input');
-test('order never introduces an out-of-family candidate, never re-offers a selected one, respects the hard stop', () => {
-  function permutations(arr) {
-    if (arr.length <= 1) return [arr];
-    const out = [];
-    for (let i = 0; i < arr.length; i++) {
-      const rest = [...arr.slice(0, i), ...arr.slice(i + 1)];
-      for (const p of permutations(rest)) out.push([arr[i], ...p]);
-    }
-    return out;
-  }
-  for (const base of ['Digital Software Platform', 'Private Equity Roll-Up', 'Contract Liability Review']) {
-    const round1 = deriveNextDirections({ text: base, appended: [], catalog: CAT });
-    const round1Ids = new Set(round1.map(c => c.id));
-    if (!round1.length) continue;
-    for (const order of permutations(round1.map(c => c.id))) {
-      let text = base, appended = [];
-      for (const id of order) {
-        const avail = deriveNextDirections({ text, appended, catalog: CAT });
-        for (const c of avail) assert.ok(round1Ids.has(c.id), `${base} ${order}: out-of-family ${c.id}`);
-        const cand = avail.find(c => c.id === id);
-        assert.ok(cand, `${base} ${order}: ${id} not offered when it should be, appended=${JSON.stringify(appended)}`);
-        text += cand.appendText; appended.push(cand.label);
-      }
-      const after = deriveNextDirections({ text, appended, catalog: CAT });
-      if (appended.length >= MAX_ROUNDS) assert.deepEqual(after, [], `${base} ${order}: round offered past MAX_ROUNDS`);
-    }
+console.log('\nGETS OUT OF THE WAY — complete questions and cue-bearing input');
+test('a complete question, decision-cue, number, or comparison yields zero, regardless of grounded words present', () => {
+  for (const q of ['Is Vendor Platform Decoupling a good investment?', 'Buy Vendor Platform Decoupling now',
+                   'Vendor Platform Decoupling for $5 million', 'AWS vs Azure', '', '???']) {
+    assert.deepEqual(deriveNextDirections({ text: q }), [], q);
   }
 });
 
-console.log('\nCONCURRENCY / PURITY — the function has no module-level mutable state, so interleaved calls');
-console.log('from concurrent renders/edits cannot contaminate each other\'s results');
-test('500 randomly interleaved calls across 7 distinct inputs match each input\'s independently-computed baseline', () => {
-  const inputs = ['Digital Software Platform', 'Vendor Platform', 'Private Equity Roll-Up', 'Contract Liability Review',
-                  'Career Role Organization', 'Thai Restaurant Chain', ''];
-  const baseline = new Map(inputs.map(q => [q, JSON.stringify(deriveNextDirections({ text: q, appended: [], catalog: CAT }).map(c => c.id))]));
+console.log('\nPURITY / CONCURRENCY — no module-level state; safe under any call order or interleaving');
+test('500 randomly interleaved calls across 6 distinct texts match each text\'s independently-computed baseline', () => {
+  const inputs = ['Vendor Platform Decoupling', 'Vendor Platform Decoupling + technology / architecture changes',
+                  'AI Data Center Pushback', 'Contract Liability Review', 'Regional Bank Consolidation', ''];
+  const baseline = new Map(inputs.map(q => [q, JSON.stringify(deriveNextDirections({ text: q }).map(c => c.id))]));
   for (let i = 0; i < 500; i++) {
     const q = inputs[Math.floor(Math.random() * inputs.length)];
-    const r = JSON.stringify(deriveNextDirections({ text: q, appended: [], catalog: CAT }).map(c => c.id));
-    assert.equal(r, baseline.get(q), `iteration ${i}, input ${JSON.stringify(q)}`);
+    assert.equal(JSON.stringify(deriveNextDirections({ text: q }).map(c => c.id)), baseline.get(q), `iteration ${i}, ${JSON.stringify(q)}`);
   }
 });
 

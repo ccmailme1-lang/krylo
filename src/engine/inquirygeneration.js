@@ -139,29 +139,33 @@ export function deriveInquiryPossibilities(rawInput) {
 
 export { VISIBLE_CAP };
 
-// ── KRYL-1329 — PRE-SUBMIT next-question assistance, up to three rounds (Founder rulings 2026-09-26) ─
-// Separate from deriveInquiryPossibilities above (unchanged). Deterministic, PRE-SUBMIT only, no LLM,
-// no observations, no evidence, no ontology-derived candidates.
+// ── KRYL-1329 — PRE-SUBMIT next-question assistance (Founder rulings 2026-09-26/27) ─────────────
+// REWRITTEN 2026-09-27 (Founder: "stop patching the chip filter, you're solving the wrong problem").
+// This is NOT a chip-sequence/round tracker. There is no remembered state at all: every call
+// recomputes from scratch against whatever the CURRENT full query text is, whether the guest typed
+// it, edited it, or arrived at it by selecting a suggestion. The governing question, asked fresh
+// every time:
 //
-// Model: 0-3 candidates per round; the guest selects at most one; the exact text is appended; the next
-// round re-evaluates the guest's text; at most three rounds; zero candidates ends assistance.
+//   "Given the guest's CURRENT text, is there a materially useful, EXPLICITLY GROUNDED direction
+//    the guest has not already established?" -- yes -> offer it (up to 3 at once); no -> [].
 //
-// GROUNDING (R-F): only GUEST-AUTHORED text grounds a candidate. Text KRYLO appended in an earlier round
-// is removed before grounding, so KRYLO's own words never become evidence and a selection is not new
-// evidence — it only removes that candidate from later rounds (a phrase already appended, or already in
-// the text, is never offered again).
-// Each candidate is grounded in an explicit SPAN of the guest's text: the keyword the parser matched
-// (parseIntent().domain_hits from KRYL-1331, on the KRYL-1330 word-boundary matching), reported with
-// its offsets. No span, no candidate.
-// DIRECTIONALITY / zero-default: a candidate is suppressed when the guest's text already contains a
-// content word of its own phrase (the direction is already expressed), when the guest's text carries a
-// decision, scenario, number or place cue, or when it is a question (ends with "?").
+// Grounding rule (Founder-ruled 2026-09-27, unchanged from the audit fix): a candidate must trace
+// to an explicit trigger WORD present anywhere in the current text. No generic/ontology-derived
+// category menus (the six-pressure menu this replaced was rejected for exactly that). "Already
+// established" is decided ONLY by the candidate's exact phrase already being present in the text --
+// never by a single word of the phrase coincidentally appearing elsewhere (that was the bug: the
+// word "vendor" in the SUBJECT "Vendor Platform" wrongly suppressed the candidate "technology /
+// vendor changes", which the guest had never actually stated).
+// Free text and chip selection are the same input: a guest who types
+// "Vendor Platform Decoupling + technology / architecture changes" gets IDENTICAL treatment to one
+// who selected that chip -- both are just "the current text contains that phrase already."
+// Maximum 3 established directions total (a ceiling, not a target): once 3 of the catalog's
+// phrases are present in the text, or no ungrounded/unestablished catalog row remains, return [].
 //
-// CATALOG STATUS: every phrase and trigger below is DRAFT for the Founder's review (D4) and the
-// adjacent-direction license (D6) is ASSUMED for this localhost prototype only. Order = catalog order;
-// no scoring, no ranking. `call` records the reviewer disposition from the D4 table.
+// CATALOG STATUS: every phrase and trigger below is DRAFT for the Founder's review (D4). Order =
+// catalog order; no scoring, no ranking.
 export const MAX_CHIPS_PER_ROUND = 3;
-export const MAX_ROUNDS          = 3;
+export const MAX_ROUNDS          = 3; // kept as the "3 components max" ceiling name for compatibility
 
 // RATIFIED (Founder product contract + UI approval, 2026-09-27, KRYL-1329): D4/D6 closed by direct
 // ruling. Grounding is a trigger WORD the guest actually wrote, found anywhere in their own text --
@@ -179,62 +183,53 @@ export const NEXT_DIRECTION_CATALOG = Object.freeze([
 // purity fuzz) keeps running against a fixed reference catalog.
 export const _TEST_ONLY_DRAFT_CATALOG = NEXT_DIRECTION_CATALOG;
 
-const PHRASE_STOPWORDS = new Set(['changes', 'change']);
 const hasWord = (lowerText, w) => new RegExp('(^|[^a-z0-9])' + w + '(?:s|es)?(?![a-z0-9])').test(lowerText);
-const contentWords = phrase => phrase.split(/[^a-z]+/).filter(w => w && !PHRASE_STOPWORDS.has(w));
 
-// The guest-authored text: `text` with every phrase KRYLO appended (first occurrence of " + <phrase>")
-// removed. A phrase the guest has edited no longer matches and is treated as guest text.
-export function guestAuthoredText(text, appended = []) {
-  let out = text ?? '';
-  for (const phrase of appended) {
-    const i = out.indexOf(` + ${phrase}`);
-    if (i !== -1) out = out.slice(0, i) + out.slice(i + ` + ${phrase}`.length);
-  }
-  return out;
+/**
+ * establishedDirections — which catalog directions the CURRENT text already states, regardless of
+ * how they got there (guest typed them, or a chip was selected). Exported so the UI/tests can ask
+ * "how many components does this query already have" without re-deriving the candidate logic.
+ * @returns {Array<{id: string, phrase: string}>}
+ */
+export function establishedDirections(text, catalog = NEXT_DIRECTION_CATALOG) {
+  const lower = (text ?? '').toLowerCase();
+  return catalog.filter(c => lower.includes(c.phrase));
 }
 
 /**
- * deriveNextDirections — candidates for the current round; [] when none qualifies or assistance is over.
- * @param {{text: string, appended?: string[]}} input  the current full query text and the phrases
- *   KRYLO has appended so far in this assistance sequence (round = appended.length).
+ * deriveNextDirections — recomputed fresh every call from the CURRENT text alone. No memory of
+ * prior rounds or prior selections; a guest who types the same end state by hand gets the same
+ * answer as one who used every suggestion.
+ * @param {{text: string}} input  the current full query text, verbatim.
  * @returns {Array<{id: string, label: string, appendText: string, basis: {keyword: string, start: number, end: number}}>}
  */
-export function deriveNextDirections({ text, appended = [], catalog = NEXT_DIRECTION_CATALOG } = {}) {
-  const full = text ?? '';
-  if (!full.trim() || appended.length >= MAX_ROUNDS) return [];
+export function deriveNextDirections({ text, catalog = NEXT_DIRECTION_CATALOG } = {}) {
+  const full = (text ?? '').trim();
+  if (!full) return [];
+  if (/[?]\s*$/.test(full)) return [];                              // a complete question: zero by default
 
-  const guest = guestAuthoredText(full, appended);
-  if (!guest.trim()) return [];
-  if (/[?]\s*$/.test(guest.trim())) return [];                     // a question: zero by default
-
-  const ctx = buildQueryContext(guest);
-  if ((ctx.decisionCues ?? []).length > 0) return [];               // cue-bearing input: zero by default
+  const ctx = buildQueryContext(full);
+  if ((ctx.decisionCues ?? []).length > 0) return [];                // cue-bearing input: zero by default
   if (ctx.scenarioCues?.present) return [];
   if ((ctx.numbers ?? []).length > 0) return [];
   if (ctx.geo && ctx.geo.state && ctx.geo.state !== 'absent') return [];
 
-  const lowerG   = guest.toLowerCase();
-  const lowerAll = full.toLowerCase();
+  if (establishedDirections(full, catalog).length >= MAX_ROUNDS) return []; // 3 components max, a ceiling
+
+  const lower = full.toLowerCase();
   const out = [];
   for (const c of catalog) {
     if (out.length >= MAX_CHIPS_PER_ROUND) break;
-    if (appended.includes(c.phrase)) continue;                       // selection removes the candidate
-    if (lowerAll.includes(c.phrase)) continue;                       // never offer text already present
-    // Grounding: a trigger word the guest actually wrote, found directly in their own text (any
-    // catalog row, not just the parser's six-domain vocabulary).
-    const trigger = c.triggers.find(t => hasWord(lowerG, t));
+    if (lower.includes(c.phrase)) continue;                          // already established -- guest-typed
+                                                                      // or previously selected, treated the same
+    // Grounding: an explicit trigger word present anywhere in the current text. This is the ONLY
+    // "already expressed" signal (no single-word-overlap heuristic): "vendor" appearing in the
+    // subject "Vendor Platform" must not suppress "technology / vendor changes" merely because
+    // that candidate's own phrase happens to contain the word "vendor" too (found on real input,
+    // 2026-09-27) -- the candidate is only excluded once ITS OWN phrase is literally in the text.
+    const trigger = c.triggers.find(t => hasWord(lower, t));
     if (!trigger) continue;                                          // no explicit word, no candidate
-    // "Direction already expressed" is now decided ONLY by the exact-phrase check on line 223
-    // above. The prior check here -- suppress if ANY single content word of the candidate phrase
-    // appears anywhere in the guest's text -- broke suggestion progression on real input: for
-    // "vendor platform and amazon", the candidate "technology / vendor changes" was wrongly
-    // suppressed because its own content word "vendor" coincidentally matches the guest's SUBJECT
-    // ("Vendor Platform"), not because the guest ever stated that direction. Found via live
-    // production testing (2026-09-27): a grounded, ungrounded-elsewhere candidate must still
-    // surface in round 2, per the product contract (progress to the 3-component max unless no
-    // grounded dimension remains).
-    const m = new RegExp('(^|[^a-z0-9])' + trigger + '[a-z]*').exec(lowerG);
+    const m = new RegExp('(^|[^a-z0-9])' + trigger + '[a-z]*').exec(lower);
     out.push({
       id:         `nd:${c.id}`,
       label:      c.phrase,

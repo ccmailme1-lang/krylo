@@ -1,12 +1,9 @@
 // tests/e2e/kryl1329-next-directions.spec.js — KRYL-1329 browser/wiring verification.
-// The PRODUCT catalog (NEXT_DIRECTION_CATALOG) is frozen empty pending Founder ratification of D4
-// (phrase wording) and D6 (adjacent-direction license) — see src/engine/inquirygeneration.js. So
-// no chip can ever render in the shipped app right now. That is what this file verifies: the freeze
-// is real in the running app (not just in source), and the surrounding UI wiring (textarea, submit,
-// debounce/effect timers) is race-safe under fast typing regardless of catalog content.
-// Mechanism coverage (round progression, grounding, no-bootstrap, contamination matrix, concurrency
-// purity of the pure function) is in tests/kryl1329-next-directions-mechanism.test.mjs, run against
-// the catalog explicitly so it stays valid once the Founder ratifies rows into the real catalog.
+// Rewritten 2026-09-27 alongside the engine rewrite (no chip-sequence memory; recompute from the
+// current query text every time). Mechanism coverage (grounding, ceiling, free-text equivalence,
+// edit-reoffers, purity) is exhaustively covered in tests/kryl1329-next-directions-mechanism.test.mjs;
+// this file verifies the actual DOM wiring: visual treatment, click-to-append, race-safety under
+// fast typing, and submit.
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -21,7 +18,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 const box    = page => page.locator('textarea').first();
-const header = page => page.getByText('ADD TO YOUR QUESTION', { exact: true });
 const chips  = page => page.locator('button[data-chip]');
 const settle = page => page.waitForTimeout(450);
 async function typeInto(page, text) {
@@ -29,53 +25,75 @@ async function typeInto(page, text) {
   if (text) await b.pressSequentially(text, { delay: 8 });
   await settle(page);
 }
+const T_ARCH = 'technology / architecture changes';
+const T_VEND = 'technology / vendor changes';
 
-const CORPUS = [
-  'Digital Software Platform', 'Vendor Platform Decoupling', 'Private Equity Roll-Up', 'Lithium Battery Supply',
-  'Regional Bank Consolidation', 'Streaming Rights Deal', 'Hospital Staffing Costs', 'Union Contract Renegotiation',
-  'Cloud Data Migration', 'Patent Portfolio Licensing', 'Tesla', 'Goldman Sachs', 'warehouse robotics',
-  'Is Anduril a good acquisition target?', 'AWS vs Azure', "I'm 40 and considering a career change into data science",
-  'Housing market in Austin 2026', '', '???',
-];
+test('Vendor Platform Decoupling offers both grounded directions together (the fixed bug, live)', async ({ page }) => {
+  await typeInto(page, 'Vendor Platform Decoupling');
+  const labels = await chips(page).allInnerTexts();
+  expect(labels.map(t => t.replace(/^\+\s*/, ''))).toEqual([T_ARCH, T_VEND]);
+});
 
-test('deploy gate: the shipped catalog is frozen — no chip renders for any corpus input (D4/D6 unratified)', async ({ page }) => {
-  for (const q of CORPUS) {
+test('selecting one leaves the other available; selecting that one reaches the ceiling', async ({ page }) => {
+  await typeInto(page, 'Vendor Platform Decoupling');
+  await page.getByText(`+ ${T_ARCH}`, { exact: true }).click();
+  await settle(page);
+  await expect(box(page)).toHaveValue(`Vendor Platform Decoupling + ${T_ARCH}`);
+  await expect(chips(page)).toHaveCount(1);
+  await page.getByText(`+ ${T_VEND}`, { exact: true }).click();
+  await settle(page);
+  await expect(box(page)).toHaveValue(`Vendor Platform Decoupling + ${T_ARCH} + ${T_VEND}`);
+  await expect(chips(page)).toHaveCount(0); // 2 established, nothing further grounded: a valid stop
+});
+
+test('a guest who types the full 2-component query by hand sees no further suggestion (free text == chip selection)', async ({ page }) => {
+  await typeInto(page, `Vendor Platform Decoupling + ${T_ARCH} + ${T_VEND}`);
+  await expect(chips(page)).toHaveCount(0);
+});
+
+test('deleting an established segment makes that direction eligible again', async ({ page }) => {
+  await typeInto(page, `Vendor Platform Decoupling + ${T_VEND}`);
+  await expect(chips(page)).toHaveCount(1);
+  await expect(chips(page).first()).toHaveText(`+ ${T_ARCH}`);
+});
+
+test('visual treatment: small quiet bordered chip, matching the existing NOT ESTABLISHED badge language', async ({ page }) => {
+  await typeInto(page, 'AI Data Center Pushback');
+  const style = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('button')].find(x => x.innerText.includes('local politician'));
+    const s = getComputedStyle(b);
+    return { border: s.border, radius: s.borderRadius, bg: s.backgroundColor, fontSize: s.fontSize };
+  });
+  expect(style.border).toContain('1px');
+  expect(style.bg).toBe('rgba(0, 0, 0, 0)');
+});
+
+test('no chip renders for a complete question, comparison, or noise', async ({ page }) => {
+  for (const q of ['Is Vendor Platform Decoupling a good investment?', 'AWS vs Azure', '', '???']) {
     await typeInto(page, q);
-    await expect(header(page)).toHaveCount(0);
     await expect(chips(page)).toHaveCount(0);
   }
 });
 
-test('the assistance row leaves no artifact even if the guest types a phrase from the draft catalog verbatim', async ({ page }) => {
-  // If the freeze were only cosmetic (e.g. hidden by CSS instead of an empty data source), typing
-  // the phrase text itself might still trigger some latent render. It must not.
-  await typeInto(page, 'Digital Software Platform + technology / architecture changes');
-  await expect(header(page)).toHaveCount(0);
-  await expect(chips(page)).toHaveCount(0);
-});
-
-test('race safety: rapid typing/deleting produces no crash, no console error, and the box always holds exactly what was typed', async ({ page }) => {
+test('race safety: rapid typing/deleting produces no crash and the box holds exactly what was typed', async ({ page }) => {
   const errs = [];
   page.on('pageerror', e => errs.push(String(e)));
   const b = box(page);
   await b.click();
-  // Fast, low-delay keystrokes across a multi-word phrase, interleaved with deletions, to stress the
-  // 150ms seedQuery debounce and the assist-reset effects without waiting between actions.
-  const text = 'Digital Software Platform Technology Infrastructure';
+  const text = 'Vendor Platform Decoupling Technology Infrastructure';
   await b.pressSequentially(text, { delay: 2 });
   for (let i = 0; i < 8; i++) await b.press('Backspace');
   await b.pressSequentially(' Systems', { delay: 2 });
-  await page.waitForTimeout(800); // let every in-flight debounce/effect settle
-  const expected = text.slice(0, -8) + ' Systems';
-  await expect(b).toHaveValue(expected);
+  await page.waitForTimeout(800);
+  await expect(b).toHaveValue(text.slice(0, -8) + ' Systems');
   expect(errs).toEqual([]);
-  await expect(chips(page)).toHaveCount(0); // still frozen throughout
 });
 
-test('submit still works with the assistance feature present but inert: exact text, no page errors', async ({ page }) => {
-  const errs = [];
-  page.on('pageerror', e => errs.push(String(e)));
-  await typeInto(page, 'Digital Software Platform');
+test('submit uses the exact resulting textarea string', async ({ page }) => {
+  await typeInto(page, 'Vendor Platform Decoupling');
+  await page.getByText(`+ ${T_ARCH}`, { exact: true }).click();
+  await settle(page);
+  const expected = `Vendor Platform Decoupling + ${T_ARCH}`;
   await box(page).press('Control+Enter');
   await expect(page.getByText('QUESTION AS ASKED', { exact: false }).first()).toBeVisible({ timeout: 30000 });
   const state = await page.evaluate(async () => {
@@ -84,7 +102,6 @@ test('submit still works with the assistance feature present but inert: exact te
     const s = st.sessions[st.activeSessionId];
     return { query: s?.query, q: s?.tensor?.analysisIntent?.question?.value?.text };
   });
-  expect(state.query).toBe('Digital Software Platform');
-  expect(state.q).toBe('Digital Software Platform');
-  expect(errs).toEqual([]);
+  expect(state.query).toBe(expected);
+  expect(state.q).toBe(expected);
 });
