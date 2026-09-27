@@ -60,7 +60,11 @@ function findKeyword(lower, kw) {
   const m = keywordMatcher(kw);
   if (m.exact !== undefined) {
     const i = lower.indexOf(m.exact);
-    return i === -1 ? null : { start: i, end: i + m.exact.length };
+    if (i === -1) return null;
+    // Match as written (padding included), but report the span of the word itself, not its padding.
+    const lead = m.exact.length - m.exact.trimStart().length;
+    const trail = m.exact.length - m.exact.trimEnd().length;
+    return { start: i + lead, end: i + m.exact.length - trail };
   }
   const r = m.re.exec(lower);
   if (!r) return null;
@@ -71,12 +75,13 @@ function findKeyword(lower, kw) {
 function matchVerb(lower) {
   for (const [verb, patterns] of Object.entries(VERB_MAP)) {
     for (const p of patterns) {
-      if (findKeyword(lower, p)) {
-        return { verb, score: p.length / Math.max(lower.length, 1) };
+      const m = findKeyword(lower, p);
+      if (m) {
+        return { verb, score: p.length / Math.max(lower.length, 1), hit: { pattern: p.trim(), start: m.start, end: m.end } };
       }
     }
   }
-  return { verb: 'INVESTIGATE', score: 0 };
+  return { verb: 'INVESTIGATE', score: 0, hit: null };
 }
 
 // Words that are only capitalized because they're a sentence-initial word or a
@@ -131,6 +136,20 @@ function extractEntities(raw) {
   return [...new Set([...quoted, ...caps])].slice(0, 6);
 }
 
+// KRYL-1331 — read-only exposure of WHICH keyword matched and WHERE (offsets into the input text) for
+// each domain hit, so a consumer can show the explicit span behind a hit without duplicating the
+// vocabulary. Detection is unchanged: inferDomains() below still decides `domains`.
+function inferDomainHits(lower) {
+  const hits = [];
+  for (const [domain, kws] of Object.entries(DOMAIN_MAP)) {
+    for (const kw of kws) {
+      const m = findKeyword(lower, kw);
+      if (m) hits.push({ domain, keyword: kw.trim(), start: m.start, end: m.end });
+    }
+  }
+  return hits;
+}
+
 function inferDomains(lower) {
   return Object.entries(DOMAIN_MAP)
     .filter(([, kws]) => kws.some(kw => findKeyword(lower, kw)))
@@ -154,11 +173,13 @@ export function parseIntent(rawInput) {
       domains:          [],
       ambiguity_score:  1.0,
       parser_version:   PARSER_VERSION,
+      domain_hits:      [],
+      verb_hit:         null,
     };
   }
 
   const lower    = rawInput.toLowerCase();
-  const { verb, score } = matchVerb(lower);
+  const { verb, score, hit: verbHit } = matchVerb(lower);
   const entities = extractEntities(rawInput);
   const domains  = inferDomains(lower);
 
@@ -177,5 +198,8 @@ export function parseIntent(rawInput) {
     domains,
     ambiguity_score: ambiguityScore(score, entities.length, domains.length),
     parser_version:  PARSER_VERSION,
+    // KRYL-1331 — additive, read-only: the matched keyword and its [start, end) offsets in raw_input.
+    domain_hits:     inferDomainHits(lower),
+    verb_hit:        verbHit,
   };
 }
