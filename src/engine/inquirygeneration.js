@@ -139,54 +139,95 @@ export function deriveInquiryPossibilities(rawInput) {
 
 export { VISIBLE_CAP };
 
-// ── KRYL-1326 — PRE-SUBMIT additive question assistance (Founder rulings 2026-09-26) ─────────
-// Separate from deriveInquiryPossibilities above (unchanged): that function restates the parsed
-// entity/domain; this one only ever proposes an ADDITIVE phrase to append to what the guest is
-// typing. Deterministic, PRE-SUBMIT only, built from parseIntent()/buildQueryContext() and
-// nothing else — no observations, no evidence, no LLM, no new classifier or keyword matcher.
+// ── KRYL-1329 — PRE-SUBMIT next-question assistance, up to three rounds (Founder rulings 2026-09-26) ─
+// Separate from deriveInquiryPossibilities above (unchanged). Deterministic, PRE-SUBMIT only, no LLM,
+// no observations, no evidence, no ontology-derived candidates.
 //
-// Eligibility (rule A1-A3, KRYL-1326 R2-Q3). Offer ONLY when ALL hold, otherwise return []:
-//   A1. the typed text is a bare subject phrase: exactly one parsed entity phrase and nothing
-//       more (punctuation/case-insensitive equality with that phrase).
-//   A2. no other structure evidence: no matched verb (this also covers the comparison verb, so
-//       comparison assistance is deferred, not fabricated), no decision cues, no scenario cues,
-//       no numbers, no resolved geo.
-//   A3. exactly one parser domain matched, and it is TECHNOLOGY (R2-Q2: TECHNOLOGY only — the
-//       other parser domains map many-to-one onto the canonical six and can name a domain the
-//       guest did not express).
-// The phrase is newly ratified copy for this ticket (R2-Q1), not inherited from a repo table.
-export const ADDITIVE_TECHNOLOGY_PHRASE = 'technology / architecture changes';
+// Model: 0-3 candidates per round; the guest selects at most one; the exact text is appended; the next
+// round re-evaluates the guest's text; at most three rounds; zero candidates ends assistance.
+//
+// GROUNDING (R-F): only GUEST-AUTHORED text grounds a candidate. Text KRYLO appended in an earlier round
+// is removed before grounding, so KRYLO's own words never become evidence and a selection is not new
+// evidence — it only removes that candidate from later rounds (a phrase already appended, or already in
+// the text, is never offered again).
+// Each candidate is grounded in an explicit SPAN of the guest's text: the keyword the parser matched
+// (parseIntent().domain_hits from KRYL-1331, on the KRYL-1330 word-boundary matching), reported with
+// its offsets. No span, no candidate.
+// DIRECTIONALITY / zero-default: a candidate is suppressed when the guest's text already contains a
+// content word of its own phrase (the direction is already expressed), when the guest's text carries a
+// decision, scenario, number or place cue, or when it is a question (ends with "?").
+//
+// CATALOG STATUS: every phrase and trigger below is DRAFT for the Founder's review (D4) and the
+// adjacent-direction license (D6) is ASSUMED for this localhost prototype only. Order = catalog order;
+// no scoring, no ranking. `call` records the reviewer disposition from the D4 table.
+export const MAX_CHIPS_PER_ROUND = 3;
+export const MAX_ROUNDS          = 3;
 
-const compareForm = t => (t ?? '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+export const NEXT_DIRECTION_CATALOG = Object.freeze([
+  { id: 'T1', phrase: 'technology / architecture changes', triggers: ['tech', 'software', 'digital', 'ai', 'platform', 'infrastructure', 'compute', 'algorithm'], call: 'CHANGE' },
+  { id: 'T2', phrase: 'technology / vendor changes',       triggers: ['platform', 'software', 'infrastructure', 'compute'], call: 'D6' },
+  { id: 'T3', phrase: 'technology / adoption changes',     triggers: ['digital', 'software', 'ai', 'tech'], call: 'D6' },
+  { id: 'F2', phrase: 'funding / allocation changes',      triggers: ['fund', 'portfolio', 'asset', 'equity'], call: 'D6' },
+  { id: 'F3', phrase: 'ownership / stake changes',         triggers: ['equity', 'stock', 'portfolio'], call: 'D6' },
+  { id: 'M3', phrase: 'competitive / share changes',       triggers: ['industry', 'sector', 'share'], call: 'D6' },
+  { id: 'L2', phrase: 'contract / obligation changes',     triggers: ['contract', 'liability', 'lawsuit'], call: 'CHANGE' },
+  { id: 'H3', phrase: 'hospital / capacity changes',       triggers: ['hospital', 'healthcare'], call: 'D6' },
+  { id: 'C2', phrase: 'role / skills changes',             triggers: ['career', 'role', 'job'], call: 'D6' },
+  { id: 'C3', phrase: 'organization / staffing changes',   triggers: ['organization', 'workforce', 'hiring'], call: 'D6' },
+]);
+
+const PHRASE_STOPWORDS = new Set(['changes', 'change']);
+const hasWord = (lowerText, w) => new RegExp('(^|[^a-z0-9])' + w + '(?:s|es)?(?![a-z0-9])').test(lowerText);
+const contentWords = phrase => phrase.split(/[^a-z]+/).filter(w => w && !PHRASE_STOPWORDS.has(w));
+
+// The guest-authored text: `text` with every phrase KRYLO appended (first occurrence of " + <phrase>")
+// removed. A phrase the guest has edited no longer matches and is treated as guest text.
+export function guestAuthoredText(text, appended = []) {
+  let out = text ?? '';
+  for (const phrase of appended) {
+    const i = out.indexOf(` + ${phrase}`);
+    if (i !== -1) out = out.slice(0, i) + out.slice(i + ` + ${phrase}`.length);
+  }
+  return out;
+}
 
 /**
- * deriveAdditiveAssist — the additive suggestion(s) for the typed text; [] when none is eligible.
- * @param {string} rawInput
- * @returns {Array<{id: string, label: string, appendText: string, basis: string[]}>}
- *   `appendText` is exactly what is appended to the guest's text (leading space + "+ " + phrase).
+ * deriveNextDirections — candidates for the current round; [] when none qualifies or assistance is over.
+ * @param {{text: string, appended?: string[]}} input  the current full query text and the phrases
+ *   KRYLO has appended so far in this assistance sequence (round = appended.length).
+ * @returns {Array<{id: string, label: string, appendText: string, basis: {keyword: string, start: number, end: number}}>}
  */
-export function deriveAdditiveAssist(rawInput) {
-  const text = (rawInput ?? '').trim();
-  if (!text) return [];
+export function deriveNextDirections({ text, appended = [] } = {}) {
+  const full = text ?? '';
+  if (!full.trim() || appended.length >= MAX_ROUNDS) return [];
 
-  const parsed = parseIntent(text);
-  // A1 — a bare subject phrase, nothing else.
-  if (parsed.entities.length !== 1) return [];
-  if (compareForm(text) !== compareForm(parsed.entities[0])) return [];
-  // A2 — no other structure evidence.
-  if (parsed.verb_matched) return [];
-  const ctx = buildQueryContext(text);
-  if ((ctx.decisionCues ?? []).length > 0) return [];
+  const guest = guestAuthoredText(full, appended);
+  if (!guest.trim()) return [];
+  if (/[?]\s*$/.test(guest.trim())) return [];                     // a question: zero by default
+
+  const ctx = buildQueryContext(guest);
+  if ((ctx.decisionCues ?? []).length > 0) return [];               // cue-bearing input: zero by default
   if (ctx.scenarioCues?.present) return [];
   if ((ctx.numbers ?? []).length > 0) return [];
   if (ctx.geo && ctx.geo.state && ctx.geo.state !== 'absent') return [];
-  // A3 — exactly one domain, and it is TECHNOLOGY.
-  if (parsed.domains.length !== 1 || parsed.domains[0] !== 'TECHNOLOGY') return [];
 
-  return [{
-    id:         'add:TECHNOLOGY',
-    label:      ADDITIVE_TECHNOLOGY_PHRASE,
-    appendText: ` + ${ADDITIVE_TECHNOLOGY_PHRASE}`,
-    basis:      ['entities', 'domains'],
-  }];
+  const hits     = parseIntent(guest).domain_hits ?? [];           // span-level evidence (KRYL-1331)
+  const lowerG   = guest.toLowerCase();
+  const lowerAll = full.toLowerCase();
+  const out = [];
+  for (const c of NEXT_DIRECTION_CATALOG) {
+    if (out.length >= MAX_CHIPS_PER_ROUND) break;
+    if (appended.includes(c.phrase)) continue;                       // selection removes the candidate
+    if (lowerAll.includes(c.phrase)) continue;                       // never offer text already present
+    const hit = hits.find(h => c.triggers.includes(h.keyword));
+    if (!hit) continue;                                              // no explicit span, no candidate
+    if (contentWords(c.phrase).some(w => hasWord(lowerG, w))) continue;   // direction already expressed
+    out.push({
+      id:         `nd:${c.id}`,
+      label:      c.phrase,
+      appendText: ` + ${c.phrase}`,
+      basis:      { keyword: hit.keyword, start: hit.start, end: hit.end },
+    });
+  }
+  return out;
 }

@@ -14,7 +14,7 @@ import { resolveHorizon, HORIZON_ORDER, HORIZON_META, DEFAULT_HORIZON } from '..
 import { parseIntent }                from '../../engine/intentparser.js';
 import { buildQueryContext }          from '../../engine/querycontext.js';
 import { activeCompletionChips }      from '../../engine/completionchips.js';
-import { deriveAdditiveAssist } from '../../engine/inquirygeneration.js';
+import { deriveNextDirections } from '../../engine/inquirygeneration.js';
 import { buildAnalysisIntent }        from '../../engine/analysisintent.js';
 import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
@@ -887,14 +887,22 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     });
   }, [chipDisplayResult, seedQuery, selectedDomains]);
 
-  // ── KRYL-1326 — PRE-SUBMIT question assistance (Founder rulings 2026-09-26) ─────────────────
-  // Supersedes the KRYL-1290 WHAT TO EXAMINE restatement chips (retired; their render was already
-  // removed in 80a2f6c). Pure derivation from the live typed text: an ADDITIVE phrase to append,
-  // or nothing. Eligibility is rule A1-A3 in inquirygeneration.js's deriveAdditiveAssist.
+  // ── KRYL-1329 — PRE-SUBMIT next-question assistance, up to three rounds (Founder rulings 2026-09-26) ─
+  // Supersedes the KRYL-1290 WHAT TO EXAMINE restatement chips (retired; render removed in 80a2f6c) and
+  // the KRYL-1326 single suggestion. Pure derivation from the live typed text: 0-3 candidates per round,
+  // each grounded in an explicit span of the GUEST's own words (KRYLO-appended text never grounds).
+  // `assistAppended` is only the list of phrases already appended this sequence (the round counter and
+  // the "never offer again" list) — KRYLO keeps no token, ownership or parallel representation of the text.
+  const [assistAppended, setAssistAppended] = useState([]);
+  const [assistStopped,  setAssistStopped]  = useState(false);
   const additiveAssist = useMemo(
-    () => deriveAdditiveAssist(seedQuery.trim()),
-    [seedQuery],
+    () => (assistStopped ? [] : deriveNextDirections({ text: seedQuery, appended: assistAppended })),
+    [seedQuery, assistAppended, assistStopped],
   );
+  // Assistance ends with the text: clearing the box resets the sequence.
+  useEffect(() => {
+    if (!seedQuery.trim()) { setAssistAppended([]); setAssistStopped(false); }
+  }, [seedQuery]);
 
   // KRYL-1306 — the shared selection pool (selectedRefinementIds) now serves the STRUCTURAL
   // SIGNALS chips (chipsubstrate.js) only. The 2026-09-16 direction that a chip's text is never
@@ -1132,18 +1140,18 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     });
   }
 
-  // KRYL-1326 — select a PRE-SUBMIT suggestion: append exactly the displayed wording to the
-  // guest's text (uncontrolled textarea, so write the ref and mirror to seedQuery — the same write
-  // path the removed KRYL-1290 chip click used). Never submits. From this point the appended
-  // wording is ordinary, guest-editable query text: KRYLO keeps no token, no ownership and no
-  // parallel representation of it (Founder ruling, sixth batch). Eligibility is re-checked against
-  // the text actually in the box, since seedQuery lags the textarea by a debounce.
+  // KRYL-1329 — select a next-direction suggestion: append exactly the displayed wording to the guest's
+  // text (uncontrolled textarea, so write the ref and mirror to seedQuery — the same write path the
+  // removed KRYL-1290 chip click used). Never submits. The appended wording is ordinary, guest-editable
+  // text; the only record kept is the phrase in assistAppended (round counter / never-offer-again).
+  // Eligibility is re-checked against the text actually in the box, since seedQuery lags a debounce.
   function appendAssist(cand) {
     const ta = centerTextareaRef.current;
-    if (!ta || processing) return;
-    if (!deriveAdditiveAssist(ta.value).some(c => c.id === cand.id)) return;
+    if (!ta || processing || assistStopped) return;
+    if (!deriveNextDirections({ text: ta.value, appended: assistAppended }).some(c => c.id === cand.id)) return;
     const next = ta.value + cand.appendText;
     ta.value = next;
+    setAssistAppended(prev => [...prev, cand.label]);
     clearTimeout(queryDebounceRef.current);
     setSeedQuery(next);
     ta.focus();
@@ -1154,6 +1162,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setActiveSituation(null); setSelectedFloor(null); setHorizon(null); setHorizonTouched(false);
     setSeedQuery(''); setSignalVisible(false); signalShownRef.current = false;
     setSelectedRefinementIds([]);
+    setAssistAppended([]); setAssistStopped(false);
     pushHistory({ activeSituation: null, selectedFloor: null, horizon: null, horizonTouched: false, seedQuery: '' });
   }
   function removeFloorToken()   { setSelectedFloor(null); setHorizon(null); setHorizonTouched(false); pushHistory({ selectedFloor: null, horizon: null, horizonTouched: false }); }
@@ -1184,6 +1193,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   }
 
   function handleExecute() {
+    setAssistStopped(true);        // KRYL-1329: submitting ends assistance (no further round)
     // flush uncontrolled textarea value before reading seedQuery
     if (centerTextareaRef.current) {
       clearTimeout(queryDebounceRef.current);
@@ -1310,6 +1320,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setActiveSituation(null);
     setSeedQuery('');
     if (centerTextareaRef.current) centerTextareaRef.current.value = '';
+    setAssistAppended([]); setAssistStopped(false);
     setSelectedFloor(null);
     setHorizon(DEFAULT_HORIZON);
     setHorizonTouched(false);
@@ -1360,6 +1371,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     setRules(snap.rules ?? []);
     setSeedQuery(snap.seedQuery ?? '');
     if (centerTextareaRef.current) centerTextareaRef.current.value = snap.seedQuery ?? '';
+    setAssistAppended([]); setAssistStopped(false);
     requestAnimationFrame(() => { isApplyingSnap.current = false; });
   }
 
