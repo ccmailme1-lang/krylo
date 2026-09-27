@@ -1788,6 +1788,11 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     defaultValue=""
                     onChange={e => {
                       const v = e.target.value;
+                      // KRYL-1329: reset the assist sequence IMMEDIATELY on the raw value, not the
+                      // 150ms-debounced seedQuery -- a fast clear+retype can outrun the debounce and
+                      // leave a stale assistAppended entry suppressing a candidate that's genuinely
+                      // grounded in the new, current text (found during live verification).
+                      if (!v.trim()) { setAssistAppended([]); setAssistStopped(false); }
                       clearTimeout(queryDebounceRef.current);
                       queryDebounceRef.current = setTimeout(() => {
                         setSeedQuery(v);

@@ -18,10 +18,17 @@ function test(name, fn) {
   catch (e) { failed++; console.log(`  FAIL - ${name}\n    ${e.message}`); }
 }
 
-console.log('KRYL-1329 deploy gate');
-test('production catalog is frozen empty (D4/D6 unratified -> no executable candidates)', () => {
-  assert.equal(NEXT_DIRECTION_CATALOG.length, 0);
-  assert.deepEqual(deriveNextDirections({ text: 'Digital Software Platform', appended: [] }), []);
+console.log('KRYL-1329 product contract (2026-09-27)');
+test('the catalog is ratified: both validation cases from the product contract produce the specified suggestions', () => {
+  assert.ok(NEXT_DIRECTION_CATALOG.length > 0);
+  assert.deepEqual(
+    deriveNextDirections({ text: 'Vendor Platform Decoupling', appended: [] }).map(c => c.label),
+    ['technology / architecture changes'],
+  );
+  assert.deepEqual(
+    deriveNextDirections({ text: 'AI Data Center Pushback', appended: [] }).map(c => c.label),
+    ['technology / architecture changes', 'technology / adoption changes', 'local politician reaction'],
+  );
 });
 
 console.log('\nGOAL 1 — never more than MAX_CHIPS_PER_ROUND, on any input, in any round');
