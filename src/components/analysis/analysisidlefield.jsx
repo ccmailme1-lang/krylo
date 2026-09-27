@@ -1885,23 +1885,23 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     what the guest is typing (rule A1-A3, inquirygeneration.js). Selecting it
                     appends exactly the displayed wording to the box and never submits; the guest
                     can keep editing. No suggestion -> the block does not render. */}
-                {/* Inline "+ text" treatment (Founder UI approval, 2026-09-27) — reads as an additive
-                    continuation of the query, not a pill/chip control. Distinct component from
-                    StaggeredChips (used by the legacy STRUCTURAL SIGNALS row below); this one has
-                    no border/background/pill shape. */}
+                {/* Inline "+ suggestion" treatment (Founder reference image, 2026-09-27): a small
+                    rounded-rect (NOT the full-oval StaggeredChips pill used elsewhere), subtle
+                    filled background, distinct from the legacy STRUCTURAL SIGNALS chips below. */}
                 {!processing && additiveAssist.length > 0 && (
-                  <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: '6px 18px' }}>
+                  <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                     {additiveAssist.map(cand => (
                       <button
                         key={cand.id}
                         onClick={() => appendAssist(cand)}
                         style={{
-                          background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: 6, padding: '5px 11px', cursor: 'pointer',
                           fontFamily: MONO, fontSize: 12, letterSpacing: '0.02em',
-                          color: LIME, opacity: 0.85, transition: 'opacity 120ms',
+                          color: 'rgba(255,255,255,0.85)', transition: 'background 120ms, border-color 120ms',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
-                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.13)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.10)'; }}
                       >+ {cand.label}</button>
                     ))}
                   </div>
