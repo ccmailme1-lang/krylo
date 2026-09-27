@@ -1,9 +1,8 @@
 // tests/e2e/kryl1329-next-directions.spec.js — KRYL-1329 browser/wiring verification.
-// Rewritten 2026-09-27 alongside the engine rewrite (no chip-sequence memory; recompute from the
-// current query text every time). Mechanism coverage (grounding, ceiling, free-text equivalence,
-// edit-reoffers, purity) is exhaustively covered in tests/kryl1329-next-directions-mechanism.test.mjs;
-// this file verifies the actual DOM wiring: visual treatment, click-to-append, race-safety under
-// fast typing, and submit.
+// Rewritten 2026-09-27, second pass, for the two-level dimension model (DOMAIN -> STRUCTURAL).
+// Mechanism coverage (grounding, dimension gating, free-text equivalence, edit-reoffers, legacy-row
+// preservation, purity) is exhaustively covered in tests/kryl1329-next-directions-mechanism.test.mjs;
+// this file verifies the actual DOM wiring: visual treatment, click-to-append, race-safety, submit.
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
@@ -25,44 +24,49 @@ async function typeInto(page, text) {
   if (text) await b.pressSequentially(text, { delay: 8 });
   await settle(page);
 }
-const T_ARCH = 'technology / architecture changes';
-const T_VEND = 'technology / vendor changes';
 
-test('Vendor Platform Decoupling offers both grounded directions together (the fixed bug, live)', async ({ page }) => {
+test('the exact Founder acceptance sequence, live: subject -> domain -> structural -> []', async ({ page }) => {
   await typeInto(page, 'Vendor Platform Decoupling');
-  const labels = await chips(page).allInnerTexts();
-  expect(labels.map(t => t.replace(/^\+\s*/, ''))).toEqual([T_ARCH, T_VEND]);
+  await expect(chips(page)).toHaveCount(3);
+  await expect(chips(page).nth(0)).toHaveText('+ Technology'); // ontology.js CANONICAL_DOMAINS order
+  await expect(chips(page).nth(1)).toHaveText('+ Capital');
+  await expect(chips(page).nth(2)).toHaveText('+ Knowledge');
+
+  await page.getByText('+ Technology', { exact: true }).click();
+  await settle(page);
+  await expect(box(page)).toHaveValue('Vendor Platform Decoupling + Technology');
+  await expect(chips(page)).toHaveCount(3);
+  await expect(chips(page).nth(0)).toHaveText('+ architecture changes');
+
+  await page.getByText('+ architecture changes', { exact: true }).click();
+  await settle(page);
+  await expect(box(page)).toHaveValue('Vendor Platform Decoupling + Technology + architecture changes');
+  await expect(chips(page)).toHaveCount(0); // no further material dimension remains
 });
 
-test('selecting one leaves the other available; selecting that one reaches the ceiling', async ({ page }) => {
-  await typeInto(page, 'Vendor Platform Decoupling');
-  await page.getByText(`+ ${T_ARCH}`, { exact: true }).click();
-  await settle(page);
-  await expect(box(page)).toHaveValue(`Vendor Platform Decoupling + ${T_ARCH}`);
-  await expect(chips(page)).toHaveCount(1);
-  await page.getByText(`+ ${T_VEND}`, { exact: true }).click();
-  await settle(page);
-  await expect(box(page)).toHaveValue(`Vendor Platform Decoupling + ${T_ARCH} + ${T_VEND}`);
-  await expect(chips(page)).toHaveCount(0); // 2 established, nothing further grounded: a valid stop
-});
-
-test('a guest who types the full 2-component query by hand sees no further suggestion (free text == chip selection)', async ({ page }) => {
-  await typeInto(page, `Vendor Platform Decoupling + ${T_ARCH} + ${T_VEND}`);
+test('typed entirely as free text reaches the identical end state', async ({ page }) => {
+  await typeInto(page, 'Vendor Platform Decoupling Technology Architecture changes');
   await expect(chips(page)).toHaveCount(0);
 });
 
-test('deleting an established segment makes that direction eligible again', async ({ page }) => {
-  await typeInto(page, `Vendor Platform Decoupling + ${T_VEND}`);
+test('deleting the structural component makes it eligible again', async ({ page }) => {
+  await typeInto(page, 'Vendor Platform Decoupling Technology');
+  await expect(chips(page)).toHaveCount(3);
+  await expect(chips(page).first()).toHaveText('+ architecture changes');
+});
+
+test('the legacy word-grounded suggestion (validated on real production input) still works', async ({ page }) => {
+  await typeInto(page, 'AI Data Center Pushback');
   await expect(chips(page)).toHaveCount(1);
-  await expect(chips(page).first()).toHaveText(`+ ${T_ARCH}`);
+  await expect(chips(page).first()).toHaveText('+ local politician reaction');
 });
 
 test('visual treatment: small quiet bordered chip, matching the existing NOT ESTABLISHED badge language', async ({ page }) => {
-  await typeInto(page, 'AI Data Center Pushback');
+  await typeInto(page, 'Vendor Platform Decoupling');
   const style = await page.evaluate(() => {
-    const b = [...document.querySelectorAll('button')].find(x => x.innerText.includes('local politician'));
+    const b = [...document.querySelectorAll('button')].find(x => x.innerText.includes('Technology'));
     const s = getComputedStyle(b);
-    return { border: s.border, radius: s.borderRadius, bg: s.backgroundColor, fontSize: s.fontSize };
+    return { border: s.border, bg: s.backgroundColor };
   });
   expect(style.border).toContain('1px');
   expect(style.bg).toBe('rgba(0, 0, 0, 0)');
@@ -80,20 +84,21 @@ test('race safety: rapid typing/deleting produces no crash and the box holds exa
   page.on('pageerror', e => errs.push(String(e)));
   const b = box(page);
   await b.click();
-  const text = 'Vendor Platform Decoupling Technology Infrastructure';
-  await b.pressSequentially(text, { delay: 2 });
-  for (let i = 0; i < 8; i++) await b.press('Backspace');
+  const typed = 'Vendor Platform Decoupling Technology Infras';
+  await b.pressSequentially(typed, { delay: 2 });
+  for (let i = 0; i < 6; i++) await b.press('Backspace'); // removes exactly "Infras" (6 chars)
   await b.pressSequentially(' Systems', { delay: 2 });
   await page.waitForTimeout(800);
-  await expect(b).toHaveValue(text.slice(0, -8) + ' Systems');
+  await expect(b).toHaveValue(typed.slice(0, -6) + ' Systems'); // "...Technology  Systems" (2 spaces: the
+  // trailing space before "Infras" plus the leading space of " Systems" — arithmetic, not a defect
   expect(errs).toEqual([]);
 });
 
 test('submit uses the exact resulting textarea string', async ({ page }) => {
   await typeInto(page, 'Vendor Platform Decoupling');
-  await page.getByText(`+ ${T_ARCH}`, { exact: true }).click();
+  await page.getByText('+ Technology', { exact: true }).click();
   await settle(page);
-  const expected = `Vendor Platform Decoupling + ${T_ARCH}`;
+  const expected = 'Vendor Platform Decoupling + Technology';
   await box(page).press('Control+Enter');
   await expect(page.getByText('QUESTION AS ASKED', { exact: false }).first()).toBeVisible({ timeout: 30000 });
   const state = await page.evaluate(async () => {
