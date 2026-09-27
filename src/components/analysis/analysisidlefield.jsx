@@ -1895,13 +1895,13 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                         key={cand.id}
                         onClick={() => appendAssist(cand)}
                         style={{
-                          background: '#e8e8e8', border: '1px solid #d6d6d6',
-                          borderRadius: 4, padding: '3px 8px', cursor: 'pointer',
-                          fontFamily: MONO, fontSize: 11, fontWeight: 400, letterSpacing: '0.01em',
-                          color: '#333333', transition: 'background 120ms, border-color 120ms',
+                          background: 'transparent', border: '1px solid rgba(255,255,255,0.25)',
+                          borderRadius: 2, padding: '1px 5px', cursor: 'pointer',
+                          fontFamily: MONO, fontSize: 8, letterSpacing: '0.18em',
+                          color: 'rgba(255,255,255,0.5)', transition: 'border-color 120ms, color 120ms',
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.borderColor = '#c8c8c8'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = '#e8e8e8'; e.currentTarget.style.borderColor = '#d6d6d6'; }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.4)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'; e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
                       >+ {cand.label}</button>
                     ))}
                   </div>
