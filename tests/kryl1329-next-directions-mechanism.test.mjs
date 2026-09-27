@@ -19,15 +19,26 @@ function test(name, fn) {
 }
 
 console.log('KRYL-1329 product contract (2026-09-27)');
-test('the catalog is ratified: both validation cases from the product contract produce the specified suggestions', () => {
+test('the catalog is ratified and progression continues while grounded candidates remain (Founder fix, 2026-09-27: single-word suppression removed -- only exact-phrase duplication blocks a repeat)', () => {
   assert.ok(NEXT_DIRECTION_CATALOG.length > 0);
-  assert.deepEqual(
-    deriveNextDirections({ text: 'Vendor Platform Decoupling', appended: [] }).map(c => c.label),
-    ['technology / architecture changes'],
-  );
+  // Vendor Platform Decoupling: T1 and T2 both ground on "platform"; T2 must NOT be suppressed by
+  // the coincidental word "vendor" in the subject text -- that was the bug.
+  let text = 'Vendor Platform Decoupling', appended = [];
+  const seen = [];
+  for (let round = 1; round <= 4; round++) {
+    const r = deriveNextDirections({ text, appended });
+    seen.push(r.map(c => c.label));
+    if (!r.length) break;
+    text += r[0].appendText; appended.push(r[0].label);
+  }
+  assert.deepEqual(seen, [
+    ['technology / architecture changes', 'technology / vendor changes'],
+    ['technology / vendor changes'],
+    [],
+  ]);
   assert.deepEqual(
     deriveNextDirections({ text: 'AI Data Center Pushback', appended: [] }).map(c => c.label),
-    ['technology / architecture changes', 'technology / adoption changes', 'local politician reaction'],
+    ['technology / architecture changes', 'technology / adoption changes', 'local politician reaction'],  // T2's triggers (platform/software/infrastructure/compute) aren't in this text
   );
 });
 
@@ -53,11 +64,12 @@ test('a 3-direction input runs 3 -> 2 -> 1 -> stop, catalog order, no repeats', 
   }
   assert.deepEqual(seen, [['nd:T1', 'nd:T2', 'nd:T3'], ['nd:T2', 'nd:T3'], ['nd:T3'], []]);
 });
-test('a 1-direction input stops after that single selection (zero ends assistance)', () => {
-  const r1 = deriveNextDirections({ text: 'Vendor Platform', appended: [], catalog: CAT });
-  assert.deepEqual(r1.map(c => c.id), ['nd:T1']);
-  const r2 = deriveNextDirections({ text: 'Vendor Platform' + r1[0].appendText, appended: [r1[0].label], catalog: CAT });
-  assert.deepEqual(r2, []);
+test('zero candidates ends assistance immediately (input grounding only one direction)', () => {
+  // "Vendor Decoupling" (no "Platform") grounds nothing in the current catalog -- a genuinely
+  // zero-direction input, distinct from the fix above (which was about a wrongly-SUPPRESSED
+  // second direction, not an absent one).
+  const r1 = deriveNextDirections({ text: 'Vendor Decoupling', appended: [], catalog: CAT });
+  assert.deepEqual(r1, []);
 });
 test('MAX_ROUNDS is enforced structurally, independent of catalog size', () => {
   const appended = ['a', 'b', 'c'];

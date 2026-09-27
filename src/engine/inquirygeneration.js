@@ -225,7 +225,15 @@ export function deriveNextDirections({ text, appended = [], catalog = NEXT_DIREC
     // catalog row, not just the parser's six-domain vocabulary).
     const trigger = c.triggers.find(t => hasWord(lowerG, t));
     if (!trigger) continue;                                          // no explicit word, no candidate
-    if (contentWords(c.phrase).some(w => hasWord(lowerG, w))) continue;   // direction already expressed
+    // "Direction already expressed" is now decided ONLY by the exact-phrase check on line 223
+    // above. The prior check here -- suppress if ANY single content word of the candidate phrase
+    // appears anywhere in the guest's text -- broke suggestion progression on real input: for
+    // "vendor platform and amazon", the candidate "technology / vendor changes" was wrongly
+    // suppressed because its own content word "vendor" coincidentally matches the guest's SUBJECT
+    // ("Vendor Platform"), not because the guest ever stated that direction. Found via live
+    // production testing (2026-09-27): a grounded, ungrounded-elsewhere candidate must still
+    // surface in round 2, per the product contract (progress to the 3-component max unless no
+    // grounded dimension remains).
     const m = new RegExp('(^|[^a-z0-9])' + trigger + '[a-z]*').exec(lowerG);
     out.push({
       id:         `nd:${c.id}`,
