@@ -1880,17 +1880,25 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                     what the guest is typing (rule A1-A3, inquirygeneration.js). Selecting it
                     appends exactly the displayed wording to the box and never submits; the guest
                     can keep editing. No suggestion -> the block does not render. */}
+                {/* Inline "+ text" treatment (Founder UI approval, 2026-09-27) — reads as an additive
+                    continuation of the query, not a pill/chip control. Distinct component from
+                    StaggeredChips (used by the legacy STRUCTURAL SIGNALS row below); this one has
+                    no border/background/pill shape. */}
                 {!processing && additiveAssist.length > 0 && (
-                  <div style={{ marginTop: 20 }}>
-                    <div style={{ fontFamily: MONO, fontSize: 8, color: 'rgba(255,255,255,0.18)', letterSpacing: '0.28em', marginBottom: 10 }}>ADD TO YOUR QUESTION</div>
-                    <StaggeredChips
-                      chips={additiveAssist}
-                      selected={[]}
-                      onSelect={appendAssist}
-                      getKey={c => c.id}
-                      getLabel={c => `+ ${c.label}`}
-                      isSelected={() => false}
-                    />
+                  <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: '6px 18px' }}>
+                    {additiveAssist.map(cand => (
+                      <button
+                        key={cand.id}
+                        onClick={() => appendAssist(cand)}
+                        style={{
+                          background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+                          fontFamily: MONO, fontSize: 12, letterSpacing: '0.02em',
+                          color: LIME, opacity: 0.85, transition: 'opacity 120ms',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.opacity = '1'; }}
+                        onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; }}
+                      >+ {cand.label}</button>
+                    ))}
                   </div>
                 )}
                 {/* ── STRUCTURAL SIGNAL CHIPS (KRYL-1304 substrate + KRYL-1306 refinement

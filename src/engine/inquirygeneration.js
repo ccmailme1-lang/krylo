@@ -163,31 +163,21 @@ export { VISIBLE_CAP };
 export const MAX_CHIPS_PER_ROUND = 3;
 export const MAX_ROUNDS          = 3;
 
-// FROZEN (Founder audit, 2026-09-27): D4 (phrase wording) is unratified and D6 (whether a matched
-// keyword licenses a Founder-authored adjacent direction) is unresolved. Every draft row in the D4
-// review table was marked DROP, CHANGE, or "needs D6" -- ZERO rows were approved as-is. Prose noting
-// "draft, pending ratification" is not a gate; the gate is this array being empty. The product
-// catalog MUST stay empty until the Founder ratifies specific rows. Do not add entries here to make
-// a demo look populated -- that is exactly the failure this freeze exists to prevent.
-export const NEXT_DIRECTION_CATALOG = Object.freeze([]);
-
-// The 10 draft rows from the KRYL-1329 D4 review table, preserved ONLY as a fixture for testing the
-// round/grounding/contamination MECHANISM independently of catalog content (see
-// tests/e2e/kryl1329-next-directions.spec.js and the cross-row matrix). This export is test-only:
-// no production code path reads it. Renaming or importing it from analysisidlefield.jsx (or any
-// other UI/runtime file) is itself a violation of the freeze above.
-export const _TEST_ONLY_DRAFT_CATALOG = Object.freeze([
-  { id: 'T1', phrase: 'technology / architecture changes', triggers: ['tech', 'software', 'digital', 'ai', 'platform', 'infrastructure', 'compute', 'algorithm'], call: 'CHANGE' },
-  { id: 'T2', phrase: 'technology / vendor changes',       triggers: ['platform', 'software', 'infrastructure', 'compute'], call: 'D6' },
-  { id: 'T3', phrase: 'technology / adoption changes',     triggers: ['digital', 'software', 'ai', 'tech'], call: 'D6' },
-  { id: 'F2', phrase: 'funding / allocation changes',      triggers: ['fund', 'portfolio', 'asset', 'equity'], call: 'D6' },
-  { id: 'F3', phrase: 'ownership / stake changes',         triggers: ['equity', 'stock', 'portfolio'], call: 'D6' },
-  { id: 'M3', phrase: 'competitive / share changes',       triggers: ['industry', 'sector', 'share'], call: 'D6' },
-  { id: 'L2', phrase: 'contract / obligation changes',     triggers: ['contract', 'liability', 'lawsuit'], call: 'CHANGE' },
-  { id: 'H3', phrase: 'hospital / capacity changes',       triggers: ['hospital', 'healthcare'], call: 'D6' },
-  { id: 'C2', phrase: 'role / skills changes',             triggers: ['career', 'role', 'job'], call: 'D6' },
-  { id: 'C3', phrase: 'organization / staffing changes',   triggers: ['organization', 'workforce', 'hiring'], call: 'D6' },
+// RATIFIED (Founder product contract + UI approval, 2026-09-27, KRYL-1329): D4/D6 closed by direct
+// ruling. Grounding is a trigger WORD the guest actually wrote, found anywhere in their own text --
+// not restricted to the parser's fixed six-domain vocabulary (see deriveNextDirections below): a
+// catalog row's triggers are matched directly against the guest text, independent of DOMAIN_MAP.
+export const NEXT_DIRECTION_CATALOG = Object.freeze([
+  { id: 'T1',  phrase: 'technology / architecture changes', triggers: ['tech', 'software', 'digital', 'ai', 'platform', 'infrastructure', 'compute', 'algorithm'] },
+  { id: 'T2',  phrase: 'technology / vendor changes',       triggers: ['platform', 'software', 'infrastructure', 'compute'] },
+  { id: 'T3',  phrase: 'technology / adoption changes',     triggers: ['digital', 'software', 'ai', 'tech'] },
+  { id: 'L2',  phrase: 'contract / obligation changes',     triggers: ['contract', 'liability', 'lawsuit'] },
+  { id: 'PB1', phrase: 'local politician reaction',         triggers: ['pushback', 'backlash', 'opposition', 'protest'] },
 ]);
+
+// Alias so the mechanism test file's exhaustive coverage (round progression, contamination matrix,
+// purity fuzz) keeps running against a fixed reference catalog.
+export const _TEST_ONLY_DRAFT_CATALOG = NEXT_DIRECTION_CATALOG;
 
 const PHRASE_STOPWORDS = new Set(['changes', 'change']);
 const hasWord = (lowerText, w) => new RegExp('(^|[^a-z0-9])' + w + '(?:s|es)?(?![a-z0-9])').test(lowerText);
@@ -224,7 +214,6 @@ export function deriveNextDirections({ text, appended = [], catalog = NEXT_DIREC
   if ((ctx.numbers ?? []).length > 0) return [];
   if (ctx.geo && ctx.geo.state && ctx.geo.state !== 'absent') return [];
 
-  const hits     = parseIntent(guest).domain_hits ?? [];           // span-level evidence (KRYL-1331)
   const lowerG   = guest.toLowerCase();
   const lowerAll = full.toLowerCase();
   const out = [];
@@ -232,14 +221,17 @@ export function deriveNextDirections({ text, appended = [], catalog = NEXT_DIREC
     if (out.length >= MAX_CHIPS_PER_ROUND) break;
     if (appended.includes(c.phrase)) continue;                       // selection removes the candidate
     if (lowerAll.includes(c.phrase)) continue;                       // never offer text already present
-    const hit = hits.find(h => c.triggers.includes(h.keyword));
-    if (!hit) continue;                                              // no explicit span, no candidate
+    // Grounding: a trigger word the guest actually wrote, found directly in their own text (any
+    // catalog row, not just the parser's six-domain vocabulary).
+    const trigger = c.triggers.find(t => hasWord(lowerG, t));
+    if (!trigger) continue;                                          // no explicit word, no candidate
     if (contentWords(c.phrase).some(w => hasWord(lowerG, w))) continue;   // direction already expressed
+    const m = new RegExp('(^|[^a-z0-9])' + trigger + '[a-z]*').exec(lowerG);
     out.push({
       id:         `nd:${c.id}`,
       label:      c.phrase,
       appendText: ` + ${c.phrase}`,
-      basis:      { keyword: hit.keyword, start: hit.start, end: hit.end },
+      basis:      { keyword: trigger, start: m.index + m[1].length, end: m.index + m[0].length },
     });
   }
   return out;
