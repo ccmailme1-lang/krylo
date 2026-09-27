@@ -163,7 +163,20 @@ export { VISIBLE_CAP };
 export const MAX_CHIPS_PER_ROUND = 3;
 export const MAX_ROUNDS          = 3;
 
-export const NEXT_DIRECTION_CATALOG = Object.freeze([
+// FROZEN (Founder audit, 2026-09-27): D4 (phrase wording) is unratified and D6 (whether a matched
+// keyword licenses a Founder-authored adjacent direction) is unresolved. Every draft row in the D4
+// review table was marked DROP, CHANGE, or "needs D6" -- ZERO rows were approved as-is. Prose noting
+// "draft, pending ratification" is not a gate; the gate is this array being empty. The product
+// catalog MUST stay empty until the Founder ratifies specific rows. Do not add entries here to make
+// a demo look populated -- that is exactly the failure this freeze exists to prevent.
+export const NEXT_DIRECTION_CATALOG = Object.freeze([]);
+
+// The 10 draft rows from the KRYL-1329 D4 review table, preserved ONLY as a fixture for testing the
+// round/grounding/contamination MECHANISM independently of catalog content (see
+// tests/e2e/kryl1329-next-directions.spec.js and the cross-row matrix). This export is test-only:
+// no production code path reads it. Renaming or importing it from analysisidlefield.jsx (or any
+// other UI/runtime file) is itself a violation of the freeze above.
+export const _TEST_ONLY_DRAFT_CATALOG = Object.freeze([
   { id: 'T1', phrase: 'technology / architecture changes', triggers: ['tech', 'software', 'digital', 'ai', 'platform', 'infrastructure', 'compute', 'algorithm'], call: 'CHANGE' },
   { id: 'T2', phrase: 'technology / vendor changes',       triggers: ['platform', 'software', 'infrastructure', 'compute'], call: 'D6' },
   { id: 'T3', phrase: 'technology / adoption changes',     triggers: ['digital', 'software', 'ai', 'tech'], call: 'D6' },
@@ -197,7 +210,7 @@ export function guestAuthoredText(text, appended = []) {
  *   KRYLO has appended so far in this assistance sequence (round = appended.length).
  * @returns {Array<{id: string, label: string, appendText: string, basis: {keyword: string, start: number, end: number}}>}
  */
-export function deriveNextDirections({ text, appended = [] } = {}) {
+export function deriveNextDirections({ text, appended = [], catalog = NEXT_DIRECTION_CATALOG } = {}) {
   const full = text ?? '';
   if (!full.trim() || appended.length >= MAX_ROUNDS) return [];
 
@@ -215,7 +228,7 @@ export function deriveNextDirections({ text, appended = [] } = {}) {
   const lowerG   = guest.toLowerCase();
   const lowerAll = full.toLowerCase();
   const out = [];
-  for (const c of NEXT_DIRECTION_CATALOG) {
+  for (const c of catalog) {
     if (out.length >= MAX_CHIPS_PER_ROUND) break;
     if (appended.includes(c.phrase)) continue;                       // selection removes the candidate
     if (lowerAll.includes(c.phrase)) continue;                       // never offer text already present

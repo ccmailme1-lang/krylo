@@ -44,8 +44,16 @@ const _matcherCache = new Map();
 function keywordMatcher(kw) {
   let re = _matcherCache.get(kw);
   if (re) return re;
-  if (kw.startsWith(' ') || kw.endsWith(' ') && kw.trim() !== 'ai') {
-    re = { exact: kw };                                   // pattern carries its own spacing
+  if (kw.startsWith(' ') || kw.endsWith(' ')) {
+    // Pattern carries its own spacing (' vs ', 'ai '). Matched with a leading word boundary too
+    // (fixes the pre-existing "Dubai ", "chai " substring bug the same root cause produces) and,
+    // deliberately, NO inflection suffix: unlike a real word, a short all-caps acronym like "ai"
+    // must not also match "aid"/"aim"/"air"/"ail" via the generic inflection tail (found during
+    // KRYL-1330 review: the generic regex path below would have matched "Financial Aid" -> ai+d).
+    const word = kw.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const lead = kw.startsWith(' ') ? '(^|[^a-z0-9])' : '(^|[^a-z0-9])';
+    const trail = kw.endsWith(' ') ? '(?=[^a-z0-9]|$)' : '';
+    re = { re: new RegExp(lead + word + trail) };
   } else {
     const word = kw.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const tail = KEYWORD_STEMS.has(kw) ? '[a-z]*' : INFLECTION;
@@ -58,14 +66,6 @@ function keywordMatcher(kw) {
 // First match of `kw` in `lower`: { start, end } (offsets into `lower`) or null.
 function findKeyword(lower, kw) {
   const m = keywordMatcher(kw);
-  if (m.exact !== undefined) {
-    const i = lower.indexOf(m.exact);
-    if (i === -1) return null;
-    // Match as written (padding included), but report the span of the word itself, not its padding.
-    const lead = m.exact.length - m.exact.trimStart().length;
-    const trail = m.exact.length - m.exact.trimEnd().length;
-    return { start: i + lead, end: i + m.exact.length - trail };
-  }
   const r = m.re.exec(lower);
   if (!r) return null;
   const start = r.index + r[1].length;

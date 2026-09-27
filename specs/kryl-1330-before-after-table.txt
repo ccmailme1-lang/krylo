@@ -1,0 +1,16 @@
+REPRODUCED DOMAIN MISFIRES (original 6)    "Thai Restaurant Chain"                BEFORE [["TECHNOLOGY"],"INVESTIGATE",false]     AFTER [[],"INVESTIGATE",false]
+REPRODUCED DOMAIN MISFIRES (original 6)    "Shareholder Voting Rights"            BEFORE [["MARKET"],"INVESTIGATE",false]         AFTER [[],"INVESTIGATE",false]
+REPRODUCED DOMAIN MISFIRES (original 6)    "Glossary Publishing House"            BEFORE [["FINANCIAL"],"INVESTIGATE",false]      AFTER [[],"INVESTIGATE",false]
+REPRODUCED DOMAIN MISFIRES (original 6)    "Refund Processing Center"             BEFORE [["FINANCIAL"],"INVESTIGATE",false]      AFTER [[],"INVESTIGATE",false]
+REPRODUCED DOMAIN MISFIRES (original 6)    "Bondi Beach Resort"                   BEFORE [["FINANCIAL"],"INVESTIGATE",false]      AFTER [[],"INVESTIGATE",false]
+REPRODUCED VERB MISFIRES (original 5)      "Different Ways Teams Operate"         BEFORE [[],"COMPARE",true]                      AFTER [[],"INVESTIGATE",false]
+REPRODUCED VERB MISFIRES (original 5)      "Checkout Process Redesign"            BEFORE [[],"AUDIT",true]                        AFTER [[],"INVESTIGATE",false]
+REPRODUCED VERB MISFIRES (original 5)      "Reviewer Board Meeting"               BEFORE [[],"AUDIT",true]                        AFTER [[],"INVESTIGATE",false]
+REPRODUCED VERB MISFIRES (original 5)      "Growth Equity Partners"               BEFORE [["FINANCIAL"],"ACCELERATE",true]        AFTER [["FINANCIAL"],"INVESTIGATE",false]
+REPRODUCED VERB MISFIRES (original 5)      "Transferable Skills Program"          BEFORE [[],"REPOSITION",true]                   AFTER [[],"INVESTIGATE",false]
+NEW MISFIRES FOUND DURING REVIEW (ai/d, Dubai/chai) "Dubai Real Estate Fund"               BEFORE [["FINANCIAL","TECHNOLOGY"],"INVESTIGATE",false] AFTER [["FINANCIAL"],"INVESTIGATE",false]
+NEW MISFIRES FOUND DURING REVIEW (ai/d, Dubai/chai) "Chai Tea Startup"                     BEFORE [["TECHNOLOGY"],"INVESTIGATE",false]     AFTER [[],"INVESTIGATE",false]
+NEW MISFIRES FOUND DURING REVIEW (ai/d, Dubai/chai) "Shanghai Manufacturing Base"          BEFORE [["TECHNOLOGY"],"INVESTIGATE",false]     AFTER [[],"INVESTIGATE",false]
+
+TOTAL inputs 72 | changed 13
+SPAN CHECK across all 72 inputs: PASS
