@@ -142,7 +142,7 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       lens:       anchorLens ?? 'UNANCHORED',
       date:       dateStr,
       asOf:       timeStr,
-      originator: 'ORACLE KERNEL v3.7.2',
+      originator: 'KRYLO ANALYSIS ENGINE',
       domain:     'INSUFFICIENT SIGNAL',
       cac:        '—',
       roas:       '—',
@@ -181,7 +181,7 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       lens:       anchorLens ?? 'UNANCHORED',
       date:       dateStr,
       asOf:       timeStr,
-      originator: 'ORACLE KERNEL v3.7.2',
+      originator: 'KRYLO ANALYSIS ENGINE',
       domain:     domain.toUpperCase(),
       cac:        '—',
       roas:       '—',
@@ -224,7 +224,7 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       lens:          anchorLens ?? 'SUBJECT-SCOPED',
       date:          dateStr,
       asOf:          timeStr,
-      originator:    'ORACLE KERNEL v3.7.2',
+      originator:    'KRYLO ANALYSIS ENGINE',
       domain:        'SUBJECT-SCOPED',   // not a domain verdict — observation lives in the packet
       cac:           '—',
       roas:          '—',
@@ -282,7 +282,7 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
     lens:           anchorLens ?? 'UNANCHORED',
     date:           dateStr,
     asOf:           timeStr,
-    originator:     'ORACLE KERNEL v3.7.2',
+    originator:     'KRYLO ANALYSIS ENGINE',
     domain:         domain.toUpperCase(),
 
     // Same fabrication class as the removed adapter fallbacks below: "Structural convergence
@@ -840,7 +840,7 @@ export default function IntelligenceBrief() {
       }}>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <span style={{ color: LIME, fontSize: 9, animation: 'ib-blink 1.4s ease-in-out infinite' }}>●</span>
-          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME_MID, letterSpacing: '0.22em' }}>ORACLE KERNEL ACTIVE</span>
+          <span style={{ fontFamily: MONO, fontSize: 9, color: LIME_MID, letterSpacing: '0.22em' }}>ANALYSIS ENGINE ACTIVE</span>
           <span style={{ fontFamily: MONO, fontSize: 9, color: DIM, letterSpacing: '0.18em' }}>MISSION: {brief.subject}</span>
         </div>
         <div style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
@@ -1262,9 +1262,9 @@ export default function IntelligenceBrief() {
           if (!L || !(L.unaddressed.length > 0)) return null;
           return (
             <Panel seq="00" label="Interpretation Ledger">
-              <FieldRow label="Question"    value={L.verbatim} valueColor={BRT} />
+              <FieldRow label="Question"    value={L.verbatim.length > 160 ? `${L.verbatim.slice(0, 160).trim()}…` : L.verbatim} valueColor={BRT} />
               <FieldRow label="Established" value={L.established.length ? L.established.join(' · ') : 'nothing from the question was established'} />
-              <FieldRow label="Not carried" value={L.unaddressed.join(' · ')} />
+              <FieldRow label="Not carried" value={L.unaddressedDisplay.join(' · ')} />
               <FieldRow label="Basis"       value={L.basis} />
             </Panel>
           );
@@ -1769,7 +1769,7 @@ export default function IntelligenceBrief() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.28em', color: exportUnlocked ? LIME_MID : DIM }}>
-              CONSULTING I/O · WO-1752
+              CONSULTING I/O
             </span>
             <span
               style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: DIM }}

@@ -34,6 +34,7 @@ import PetroTemplate from './petrotemplate.jsx';
 import WhyTracePanel from './whytracepanel.jsx';
 import FrameAnchoring from './frameanchoring.jsx';
 import CFField from './cffield.jsx';   // WS6 Gate 1 (KRYL-1259) — distinct parallel CF read, after 05 PROVENANCE
+import StructuralBrief from './structuralbrief.jsx';   // KRYL-1332 — client-facing summary layer
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Times New Roman', serif";
@@ -575,6 +576,14 @@ export default function TargetPacket() {
           </div>
         </header>
 
+        <StructuralBrief
+          subjScope={subjScope}
+          question={session?.query}
+          domainPressures={domainPressures}
+          activeDomainPressures={activeDomainPressures}
+          fieldFormation={fieldFormation}
+        />
+
         {/* ── PRIMARY SIGNAL — perceptual state only (KRYL-1235). No recommendation,
              no action guidance, no legacy narrative. States what was recognized,
              what is / isn't resolvable, and what the packet below represents. ─── */}
@@ -593,9 +602,9 @@ export default function TargetPacket() {
               // ahead of recognizedFrame (the domain-level label) since the structural frame is
               // the more specific, more useful classification when both are available.
               : (subjScope.kind === 'PORTFOLIO_FRAME' || subjScope.kind === 'MARKET_THEME' || subjScope.kind === 'DECISION_SITUATION')
-                ? `${frameHeadline(subjScope.classification) ?? subjScope.kind.replace(/_/g, ' ')} recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
+                ? `${frameHeadline(subjScope.classification) ?? subjScope.kind.replace(/_/g, ' ')} recognized. Subject not established — this is a field-level structural observation, not a subject-bound one. The six domains below are the observational read around this frame; they are not a recommendation.`
               : recognizedFrame
-                ? `${recognizedFrame} frame recognized. Not resolvable to a specific subject — decision-specific parameters are absent, which constrains conclusions, not observation. The six domains below are the observational read around this frame; they are not a recommendation.`
+                ? `${recognizedFrame} frame recognized. Subject not established — this is a field-level structural observation, not a subject-bound one. The six domains below are the observational read around this frame; they are not a recommendation.`
                 : subjScope.kind === 'DECISION_FRAME'
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
                   : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
@@ -686,7 +695,7 @@ export default function TargetPacket() {
           ))}
         </section>
         <div style={{ marginTop: 10, fontFamily: MONO, fontSize: 9, lineHeight: 1.7, color: ABSENCE, maxWidth: 720 }}>
-          KRYL-1220 (subject-bound Formation admission) is operational — see FORMATION below. These
+          Subject-bound Formation admission is operational — see FORMATION below. These
           five metrics need a separate, per-observation structural layer (individual relationship
           counts, hop-distance to evidence, multi-source coverage, commitment duration, domain
           concentration) that Formation admission does not itself compute. These positions are held
@@ -708,7 +717,7 @@ export default function TargetPacket() {
           </p>
           {ledger && (ledger.unaddressed.length > 0) && (
             <p style={{ margin: '10px 0 0', maxWidth: 720, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: ABSENCE }}>
-              This narrative does not address: {ledger.unaddressed.join(' · ')}. {ledger.basis}
+              This narrative does not address: {ledger.unaddressedDisplay.join(' · ')}. {ledger.basis}
             </p>
           )}
         </div>
@@ -735,7 +744,10 @@ export default function TargetPacket() {
                   v.cues ? v.cues.join(', ')
                   : v.scenario ? `${v.scenario.condition} → ${v.scenario.outcomeQuestion}`
                   : null],
-                ['QUESTION', analysisIntent.question, v => v.text],
+                // KRYL-1332 -- the full verbatim question renders once, in full, in "QUESTION AS
+                // ASKED" a few lines below (ledger.verbatim) -- this row would otherwise repeat
+                // the identical text a second time in the same section.
+                ['QUESTION', analysisIntent.question, v => (v.text.length > 120 ? `${v.text.slice(0, 120).trim()}…` : v.text)],
                 ['OBSERVATIONAL SCOPE', analysisIntent.observationalScope, v => v.join(', ')],
               ].map(([label, dim, format]) => (
                 <div key={label} style={{ fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6 }}>
@@ -776,7 +788,7 @@ export default function TargetPacket() {
                         <span style={{ color: c.observed ? '#eceee9' : ABSENCE }}>{c.observed ? ' — observed below' : ' — not observed in this packet'}</span></div>
                     ))}
                     <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>NOT CARRIED INTO OBSERVATION </span>
-                      <span style={{ color: L.notCarried.length ? ABSENCE : '#eceee9' }}>{L.notCarried.length ? L.notCarried.join(' · ') : 'none'}</span></div>
+                      <span style={{ color: L.notCarried.length ? ABSENCE : '#eceee9' }}>{L.notCarried.length ? L.notCarriedDisplay.join(' · ') : 'none'}</span></div>
                     <div><span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>OBSERVATION BASIS </span><span style={{ color: '#eceee9' }}>{L.basis}</span></div>
                   </div>
                 );
@@ -849,16 +861,31 @@ export default function TargetPacket() {
               {fieldFormation.boundary?.excluded?.length > 0 && (
                 <div style={{ marginTop: 14, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.7 }}>
                   <span style={{ color: LBL_DIM, letterSpacing: '0.14em' }}>EXCLUDED FROM THIS FORMATION</span>
-                  {fieldFormation.boundary.excluded.map((x, i) => (
-                    <div key={i} style={{ marginLeft: 14, marginTop: 4, color: '#9aa09d' }}>
-                      {x.domain ?? 'unresolved domain'} — {EXCLUSION_LABELS[x.code] ?? x.code}
-                    </div>
-                  ))}
+                  {/* Render collapse only (KRYL-1332) — the underlying exclusion data is unchanged
+                      and still one entry per excluded observation (formationinference.js's
+                      excludedAll, correct as-is); this only stops printing 30+ near-identical
+                      rows for the same domain+reason. Grouped by (domain, code), counted, sorted
+                      by count desc for legibility. */}
+                  {Object.values(
+                    fieldFormation.boundary.excluded.reduce((acc, x) => {
+                      const domain = x.domain ?? 'unresolved domain';
+                      const key = `${domain}|${x.code}`;
+                      if (!acc[key]) acc[key] = { domain, code: x.code, count: 0 };
+                      acc[key].count += 1;
+                      return acc;
+                    }, {})
+                  )
+                    .sort((a, b) => b.count - a.count)
+                    .map((g, i) => (
+                      <div key={i} style={{ marginLeft: 14, marginTop: 4, color: '#9aa09d' }}>
+                        {g.domain} — {EXCLUSION_LABELS[g.code] ?? g.code}{g.count > 1 ? ` (×${g.count})` : ''}
+                      </div>
+                    ))}
                 </div>
               )}
               <p style={{ margin: '14px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
                 {subjScope.kind === 'ENTITY'
-                  ? `This structure is bound to ${subjScope.canonicalId} — every particle above carries that subject's real canonicalId (KRYL-1220). KRYLO presents this structure; what it means for a decision is the reader's to draw.`
+                  ? `This structure is bound to ${subjScope.canonicalId} — every particle above carries that subject's real canonicalId. KRYLO presents this structure; what it means for a decision is the reader's to draw.`
                   : `This is the structure of the observable field, not a reading bound to a resolved subject — the query did not resolve to a single entity. KRYLO presents this structure; what it means for a decision is the reader's to draw.`}
               </p>
             </>
@@ -933,11 +960,10 @@ export default function TargetPacket() {
         <PacketSection ordinal="04" title="ATTENTION">
           <p style={{ margin: '18px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 11.5, lineHeight: 1.65, color: '#8a918d' }}>
             Directed re-observation is not yet wired into the packet. This section will carry the
-            unresolved structural questions that warrant targeted re-observation once KRYL-1202
-            (Formation-Driven Closed-Loop Perception — Formation as an automatic query generator
-            for targeted re-observation) lands. This is a separate capability from KRYL-1220
-            (subject-bound Formation admission, shown in 02 above, already operational) — confirmed
-            against Jira, not assumed: KRYL-1202 is still status Ready, not yet built (DEF-1301).
+            unresolved structural questions that warrant targeted re-observation once
+            Formation-Driven Closed-Loop Perception (Formation as an automatic query generator
+            for targeted re-observation) lands. This is a separate capability from
+            subject-bound Formation admission (shown in 02 above, already operational) — not yet built.
           </p>
           <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
             ASSEMBLANCE, the Fracture Surface, and the Leverage Field are shown elsewhere in this
@@ -973,15 +999,15 @@ export default function TargetPacket() {
             <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
               {subjectObservationCount} real observation{subjectObservationCount !== 1 ? 's' : ''}, each carrying{' '}
               {subjScope.kind === 'ENTITY' ? subjScope.canonicalId : 'this subject'}'s real canonicalId, admitted
-              the Formation shown in 02 above (KRYL-1220). No EDGAR-8K structural trace resolved separately
-              (WhyTracePanel, a narrower evidence class) and no WO-5B evidence facet is bound for the individual
+              the Formation shown in 02 above. No structural trace resolved separately
+              (a narrower evidence class) and no evidence facet is bound for the individual
               domain measures above — each is a genuinely distinct evidence class, not the same absence restated.
             </p>
           ) : (
             <p style={{ margin: '12px 0 0', maxWidth: 640, fontFamily: MONO, fontSize: 10, lineHeight: 1.7, color: ABSENCE }}>
               No evidence is identifier-bound to a subject for this query — no subject-bound Formation-admitting
-              observation, no subject-bound EDGAR-8K structural trace, and no subject-bound WO-5B evidence facet
-              (5B-2). This does not claim no Formation-admitting evidence exists in the live field at all — see
+              observation, no subject-bound structural trace, and no subject-bound evidence facet.
+              This does not claim no Formation-admitting evidence exists in the live field at all — see
               02 FORMATION above, which is field-scoped, not subject-scoped, and may be populated independently
               of this subject's own binding. Each domain measure above names the source it would require; field
               pressure is shown as context only. This is a stated absence — the packet does not fill it with a

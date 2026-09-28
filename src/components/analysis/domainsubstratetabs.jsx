@@ -100,7 +100,7 @@ function AuthoredMeasure({ domain, name, def, res: resProp }) {
           )}
           {res.requiredScope === 'subject' && (
             <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em' }}>
-              scope: subject (WO-5B)
+              scope: subject-specific
             </span>
           )}
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.1em' }}>
@@ -160,7 +160,9 @@ function DomainScroll({ domain, scope, pressure }) {
 
   const authoredMeasures = Object.entries(di.signalDefs || {}).filter(([, d]) => d?.maturity === 'AUTHORED');
   const pendingMeasures = di.signals?.maturity === 'UNAUTHORED';
-  const sourceTag = (di.axisSource || '').replace('specs/SPEC-observable-substrate-revelation-contract.md', 'SPEC II');
+  // KRYL-1332 — presentation-layer translation only (guestlanguage.js pattern): the internal spec
+  // section reference never reaches the guest; the analytical fact preserved is ratification status.
+  const sourceTag = /LOCKED/.test(di.axisSource || '') ? 'AUTHORED DEFINITION · LOCKED' : (di.axisSource || '');
 
   // OBSERVES evidence: subject-attributed observations when scoped (5B-2 fills
   // these; empty at 5B-1); otherwise the field-scoped evidence facets (WO-1B/C/D).
@@ -184,7 +186,7 @@ function DomainScroll({ domain, scope, pressure }) {
         {scoped && ad.formationObservations.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <span style={{ fontFamily: MONO, fontSize: 8, color: LIME, letterSpacing: '0.06em' }}>
-              {ad.formationObservations.length} subject-bound observation{ad.formationObservations.length !== 1 ? 's' : ''} admitted into Formation (KRYL-1220)
+              {ad.formationObservations.length} subject-bound observation{ad.formationObservations.length !== 1 ? 's' : ''} admitted into Formation
             </span>
             {ad.formationObservations.map((o, i) => (
               <span key={i} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
@@ -200,7 +202,7 @@ function DomainScroll({ domain, scope, pressure }) {
         )}
         {scoped && ad.observations.length === 0 && ad.formationObservations.length > 0 && (
           <span style={{ fontFamily: MONO, fontSize: 8, color: ABSENCE, letterSpacing: '0.06em', lineHeight: 1.6 }}>
-            no {domain} WO-5B evidence facet identifier-bound to {ad.subject} (a narrower evidence class than the Formation observations above) · a facet is only an observation of this subject if its own provenance resolves to it
+            no {domain} evidence facet identifier-bound to {ad.subject} (a narrower evidence class than the Formation observations above) · a facet is only an observation of this subject if its own provenance resolves to it
           </span>
         )}
         {scoped && ad.observations.map((o) => (
@@ -244,8 +246,8 @@ function DomainScroll({ domain, scope, pressure }) {
         {pendingMeasures && (
           <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.1em' }}>
             {authoredMeasures.length > 0
-              ? 'remaining per-`I_d` measures: UNAUTHORED (WO-1 Class E — pending Founder authorship)'
-              : 'per-`I_d` signal definitions: UNAUTHORED (WO-1 Class E — measures pending Founder authorship)'}
+              ? 'remaining per-`I_d` measures: UNAUTHORED — pending Founder authorship'
+              : 'per-`I_d` signal definitions: UNAUTHORED — measures pending Founder authorship'}
           </span>
         )}
         {fc && fc.signalCount > 0 && (
@@ -283,7 +285,7 @@ function DomainScroll({ domain, scope, pressure }) {
       </Panel>
 
       <Panel ordinal="06" title="SHARPEN">
-        <Absent reason="Sharpening inputs pending authorship (WO-1 Class E). Once authored, this names the subject-specific input that would tighten the read — it never tells the guest what to decide." />
+        <Absent reason="Sharpening inputs pending authorship. Once authored, this names the subject-specific input that would tighten the read — it never tells the guest what to decide." />
       </Panel>
     </div>
   );

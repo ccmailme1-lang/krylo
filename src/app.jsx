@@ -60,6 +60,10 @@ import { runCensusSync }           from './engine/connectors/censusconnector.js'
 import { runEdgar8KSync }          from './engine/connectors/edgar8kconnector.js';
 import { runEdgar8KSignalSync }    from './engine/connectors/edgar8ksignal.js';
 import { runEdgar8KEvidenceSync }  from './engine/connectors/edgar8kevidence.js';
+// KRYL-1332 — one real, hand-entered, dated evidence fact (Alphabet/CAPITAL), registered
+// through the existing WO-1B/C/D evidence-facet extension point. Side-effect import only —
+// see the file header for exactly what this is and is not.
+import './engine/facetproducers/realsubjectevidenceseed.js';
 import { runCIPipelineOnRKM }      from './engine/cipipelinerun.js';
 import AnalysisContinuum from './components/analysis/analysiscontinuum.jsx';
 import IngestionBuilder   from './components/analysis/ingestionbuilder.jsx';

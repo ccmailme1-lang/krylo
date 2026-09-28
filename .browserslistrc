@@ -1,0 +1,7 @@
+# KRYL-1332 (2026-09-28) — permanent fix, not a workaround. This repo had no browserslist
+# config, so autoprefixer's browserslist dependency walked UP the directory tree past this
+# repo's boundary looking for one (same class of bug as the missing postcss.config.js — see
+# that file's header). browserslist's search stops at the FIRST config file it finds, so this
+# file alone closes the gap. "defaults" is browserslist's own standard recommended query
+# (https://github.com/browserslist/browserslist#best-practices) — not an invented threshold.
+defaults

@@ -15,11 +15,17 @@ export const GUEST_WITHHOLD_COPY = Object.freeze({
   TRACE_ERROR:        'This record exists but can’t be shown yet — the evidence didn’t pass our verification check.',
 
   // consultingexport.js export-gate states
-  // KRYL-1317 — same payload-contract instruction as the search box (BRING A QUESTION /
-  // SUBJECT + DECISION CONTEXT + BOUNDED PARAMETERS), shown again here as the after-the-fact
-  // reinforcement when a search didn't carry enough to ground an answer. Same instruction at
-  // two moments (before search, after an under-specified one), not two different messages.
-  EXPORT_BLOCKED_ABSENCE: 'GROUNDED ANSWERS REQUIRE A SUBJECT, DECISION CONTEXT, AND BOUNDED PARAMETERS.',
+  // KRYL-1332 (Founder, 2026-09-27/28): the ORIGINAL text here ('GROUNDED ANSWERS REQUIRE A
+  // SUBJECT, DECISION CONTEXT, AND BOUNDED PARAMETERS') was wrong on its own terms too, but a
+  // first attempt at fixing it (2026-09-27, 'SUBJECT NOT ESTABLISHED...') was ALSO wrong -- it
+  // named the wrong condition. This copy renders when `structuralAbsence` is true, i.e.
+  // whyTrace.state === WT_STATE.STRUCTURAL_ABSENCE (intelligencebrief.jsx) -- a subject can be
+  // fully resolved and this still fires, because it means no verified structural trace record
+  // was found for THIS EXPORT, not that no subject was established. Found live (2026-09-28):
+  // Alphabet resolved, 22 subject-bound observations admitted, and this line still claimed
+  // 'subject not established' -- a false, checkable claim. Mirrors STRUCTURAL_ABSENCE's own
+  // honest wording instead of inventing a second description of the same real state.
+  EXPORT_BLOCKED_ABSENCE: 'No verified structural record found for this export yet.',
   EXPORT_BELOW_GATE:      'grounded so far — keep refining to unlock export.',
   EXPORT_READY:           'verified evidence found — ready to export.',
 

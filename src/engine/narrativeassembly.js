@@ -171,12 +171,17 @@ function buildParagraph(stages) {
   const by = Object.fromEntries(stages.map(s => [s.stage, s]));
   const sentences = [];
 
+  // KRYL-1332 (2026-09-28) -- the full verbatim question is already shown once, in full, in
+  // the READ section (QUESTION AS ASKED). Re-quoting all of it here too (a pasted brochure can
+  // run 300+ words) turned this into the same text repeated, not a narrative. Short questions
+  // are unaffected; only a long one gets shortened here.
+  const shortQ = s => (s.length > 120 ? `${s.slice(0, 120).trim()}…` : s);
   if (by.QUESTION.state === STAGE.PRESENT && by.CONTEXT.state === STAGE.PRESENT) {
-    const q = by.QUESTION.text.replace(/^The question: /, '');
+    const q = shortQ(by.QUESTION.text.replace(/^The question: /, ''));
     const c = by.CONTEXT.text.replace(/^Context: the field examined is /, '');
     sentences.push(terminated(`KRYLO examined "${q}" — the field examined is ${c}`));
   } else if (by.QUESTION.state === STAGE.PRESENT) {
-    sentences.push(terminated(by.QUESTION.text.replace(/^The question: /, 'The question asked was: ')));
+    sentences.push(terminated(shortQ(by.QUESTION.text.replace(/^The question: /, 'The question asked was: '))));
   } else {
     // Known defect fixed here (recorded in SPEC-narrative-assembly-contract-v1.md §12, pending
     // exactly this resumption): a null/unresolved analysisIntent no longer silently skips the

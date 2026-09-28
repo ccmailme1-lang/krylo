@@ -328,5 +328,20 @@ export function buildInterpretationLedger(intent) {
   const unaddressed = [...comparison.filter(c => !c.observed).map(c => c.operand), ...notCarried]
     .filter(x => { const k = x.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
 
-  return { verbatim: text, established, comparison, notCarried, unaddressed, basis };
+  // KRYL-1332 (2026-09-28) -- display-only squelch. `notCarried`/`unaddressed` above are
+  // UNCHANGED (still real per-run token data, still what answersNothingAbout/callers reason
+  // over) -- this only stops a long pasted block (a brochure, not a question) from being
+  // reprinted as dozens of punctuation-stripped fragments. A short, real leftover (e.g. one
+  // comparison operand, "TSMC relationship binding") is never squelched -- only the case a
+  // human would recognize as "that's just the input text, not new information."
+  const notCarriedWordCount = notCarried.reduce((n, run) => n + run.split(/\s+/).filter(Boolean).length, 0);
+  const notCarriedDisplay = notCarried.length === 0 ? []
+    : notCarriedWordCount > 25
+      ? [`${notCarriedWordCount} words of unstructured input text not carried into observation (see the question above)`]
+      : notCarried;
+  const seen2 = new Set();
+  const unaddressedDisplay = [...comparison.filter(c => !c.observed).map(c => c.operand), ...notCarriedDisplay]
+    .filter(x => { const k = x.toLowerCase(); if (seen2.has(k)) return false; seen2.add(k); return true; });
+
+  return { verbatim: text, established, comparison, notCarried, unaddressed, notCarriedDisplay, unaddressedDisplay, basis };
 }

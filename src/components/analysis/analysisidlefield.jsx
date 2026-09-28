@@ -900,6 +900,14 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     () => (assistStopped ? [] : deriveNextDirections({ text: seedQuery })),
     [seedQuery, assistStopped],
   );
+  // Visual-only (Founder, 2026-09-27): color the substring a chip actually appended, once it's
+  // merged into the sentence. `appendedSegments` is a record of exact appendText strings for the
+  // overlay to find and color -- it never feeds deriveNextDirections/seedQuery/eligibility, so a
+  // stale or unmatched entry can only fail to highlight, never change behavior. `displayText`
+  // mirrors the uncontrolled textarea's raw value on every keystroke (not the 150ms-debounced
+  // seedQuery) so the overlay never visibly lags what's actually in the box.
+  const [displayText, setDisplayText] = useState('');
+  const [appendedSegments, setAppendedSegments] = useState([]);
   // Assistance ends with the text: clearing the box resets the sequence.
   useEffect(() => {
     if (!seedQuery.trim()) setAssistStopped(false);
@@ -1155,6 +1163,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     ta.value = next;
     clearTimeout(queryDebounceRef.current);
     setSeedQuery(next);
+    setDisplayText(next);
+    setAppendedSegments(prev => [...prev, cand.appendText]);
     ta.focus();
     ta.setSelectionRange(next.length, next.length);
   }
@@ -1791,9 +1801,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                       const v = e.target.value;
                       // KRYL-1329: reset the assist sequence IMMEDIATELY on the raw value, not the
                       // 150ms-debounced seedQuery -- a fast clear+retype can outrun the debounce and
-                      // leave a stale assistAppended entry suppressing a candidate that's genuinely
-                      // grounded in the new, current text (found during live verification).
-                      if (!v.trim()) { setAssistAppended([]); setAssistStopped(false); }
+                      // leave stale state suppressing a candidate that's genuinely grounded in the
+                      // new, current text (found during live verification).
+                      setDisplayText(v);
+                      if (!v.trim()) { setAppendedSegments([]); setAssistStopped(false); }
                       clearTimeout(queryDebounceRef.current);
                       queryDebounceRef.current = setTimeout(() => {
                         setSeedQuery(v);

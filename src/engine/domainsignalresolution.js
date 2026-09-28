@@ -118,7 +118,7 @@ export function resolveClassEMeasure({ domain, measureKey, scope = 'field', subj
     absenceClass: 'structural',
     reason: def.missingData
       ?? (scopeGap
-        ? `subject-scoped measure; no subject bound (WO-5B) and no wired source`
+        ? `subject-scoped measure; no subject bound and no wired source`
         : `no wired source`),
     requiredSourceClass,
     requiredScope,
