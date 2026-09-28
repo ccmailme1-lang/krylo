@@ -15,6 +15,11 @@
 // structure is never hidden here for lack of a resolved subject.
 
 import { A } from '../../engine/adsubject.js';
+// KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
+// already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
+// shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
+// individual signals that produced an average was always possible, just never rendered.
+import { getDomainSignals } from '../../engine/domaingravity.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const HELV   = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -64,6 +69,13 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const relationshipCount = edges.length;
   const observationTotal = domainLines.reduce((s, p) => s + p.signalCount, 0);
 
+  // Fix 1/2 (KRYL-1332, Founder-locked 2026-09-28): magnitude averages multiple observations
+  // into one scalar, and a relationship's admittedType is a fixed category label -- both real,
+  // neither fabricated, but each collapses information a guest can't recover from the summary
+  // alone. Surface what's underneath each, from data already computed above -- no new inference.
+  const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain)]));
+  const evidenceByDomain = evidence.reduce((acc, o) => { (acc[o.domain] ??= []).push(o); return acc; }, {});
+
   // KRYL-1332 (Founder, 2026-09-28): "What is the structural relationship around one or more
   // components?" is the anchor every brief opens with -- the sentence leads with the
   // relationship (or its honest absence), not a generic observation-count summary.
@@ -97,23 +109,51 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           sections down. */}
       <Row label="RELATIONSHIPS">
         {edges.length ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {edges.map((e, i) => (
-              <div key={i}>{e.a} ↔ {e.b} — {e.admittedType}</div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {edges.map((e, i) => {
+              // Fix 2: admittedType is a fixed category per domain-pair (real, but the same
+              // label every time those two domains co-occur) -- attach the actual dated
+              // evidence from each side of the pair instead of leaving it a bare category.
+              const support = [...(evidenceByDomain[e.a] ?? []), ...(evidenceByDomain[e.b] ?? [])]
+                .sort((x, y) => (y.eventDate ?? '').localeCompare(x.eventDate ?? '')).slice(0, 3);
+              return (
+                <div key={i}>
+                  <div>{e.a} ↔ {e.b} — {e.admittedType}</div>
+                  {support.length > 0 && (
+                    <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                      supported by: {support.map(s => `${s.domain} ${s.source} ${s.eventDate}`).join(' · ')}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : <span style={{ color: ABSENCE }}>No formation established — fewer than two connected domains in the live field.</span>}
       </Row>
 
       <Row label="WHAT THE STRUCTURE SHOWS">
         {domainLines.length ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {domainLines.map(p => (
-              <div key={p.domain}>
-                <span style={{ color: LIME }}>{p.domain}</span> — {p.signalCount} observation{p.signalCount !== 1 ? 's' : ''},{' '}
-                {p.polarity} polarity, magnitude {p.magnitude.toFixed(0)}/100.
-              </div>
-            ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {domainLines.map(p => {
+              // Fix 1: magnitude is an average -- show the individual signal confidences it
+              // came from, so "0/100" from 3 observations isn't indistinguishable from "0/100"
+              // meaning nothing was observed (the KNOWLEDGE/OWNERSHIP case found live tonight).
+              const sigs = (signalsByDomain[p.domain] ?? []).slice(0, 6);
+              return (
+                <div key={p.domain}>
+                  <div>
+                    <span style={{ color: LIME }}>{p.domain}</span> — {p.signalCount} observation{p.signalCount !== 1 ? 's' : ''},{' '}
+                    {p.polarity} polarity, magnitude {p.magnitude.toFixed(0)}/100.
+                  </div>
+                  {sigs.length > 0 && (
+                    <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                      magnitude is the average of: {sigs.map(s => Math.round(s.confidence)).join(', ')}
+                      {p.signalCount > sigs.length ? `, +${p.signalCount - sigs.length} more` : ''}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : <span style={{ color: ABSENCE }}>No domain shows active signal for this field yet.</span>}
       </Row>
@@ -134,9 +174,9 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
 
       <Row label="UNRESOLVED">
         <span style={{ color: ABSENCE }}>
-          Temporal deltas (current vs. prior period) and per-relationship evidence citations are not yet computed —
-          a stated absence, not filled with an estimate. This briefing describes observable structure; it does not
-          determine suitability for a particular investor or decision.
+          Temporal deltas (current vs. prior period) are not yet computed — a stated absence, not filled with an
+          estimate. This briefing describes observable structure; it does not determine suitability for a
+          particular investor or decision.
         </span>
       </Row>
     </section>
