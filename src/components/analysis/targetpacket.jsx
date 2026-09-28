@@ -60,6 +60,9 @@ const BODY_C   = '#b6bcb7';   // body copy
 const BRIGHT   = '#f4f6f2';   // headline text
 const ABSENCE  = '#4f5654';   // honest-absence text
 
+// KRYL-1332 (Founder, 2026-09-28) — gate, not delete, for the meeting; see the render site below.
+const SHOW_LEGACY_NARRATIVE = false;
+
 const KEY_DRIVERS = [
   { label: 'Signal density rate',   delta: '+14%', pos: true  },
   { label: 'Cross-domain reach',    delta: '+21%', pos: true  },
@@ -584,6 +587,19 @@ export default function TargetPacket() {
           fieldFormation={fieldFormation}
         />
 
+        {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A). Moved up
+             (Founder, 2026-09-28) to sit right after StructuralBrief -- was previously below
+             PRIMARY SIGNAL/FIVE-METRIC STRIP/READ. ─── */}
+        <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
+          <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
+        </PacketSection>
+
+        {/* KRYL-1332 (Founder, 2026-09-28) — PRIMARY SIGNAL through CFField (READ, verbose
+             FORMATION/BASIS/ATTENTION/PROVENANCE, Cognitive Fabric) gated off the primary guest
+             view: presentation-layer only, no data/model change. StructuralBrief above is now
+             the authoritative guest-facing result; these become developer/detail views, still
+             fully present, one flag away from restoring. */}
+        {SHOW_LEGACY_NARRATIVE && (<>
         {/* ── PRIMARY SIGNAL — perceptual state only (KRYL-1235). No recommendation,
              no action guidance, no legacy narrative. States what was recognized,
              what is / isn't resolvable, and what the packet below represents. ─── */}
@@ -675,7 +691,14 @@ export default function TargetPacket() {
         {/* ── FIVE-METRIC STRIP — honest absence (DEF-1300: not a KRYL-1220 gap —
              KRYL-1220's Formation admission bridge is operational, see 02 FORMATION
              below. These five metrics need a separate, deeper per-observation layer
-             KRYL-1220 was never scoped to compute — see the note under the strip. ── */}
+             KRYL-1220 was never scoped to compute — see the note under the strip.
+             HIDDEN for the 2026-09-28 meeting (Founder, KRYL-1332): unlike NARRATIVE (redundant
+             with real data shown elsewhere), these five read NOT MEASURED for every query, with
+             no exception, because the per-observation layer they need doesn't exist yet for
+             ANY subject -- a permanent wall, not a per-query absence. Not a §21 concern: no
+             query has ever had real data here to hide. Gated, not deleted. ── */}
+        {SHOW_LEGACY_NARRATIVE && (
+          <>
         <section style={{ marginTop: 26, display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', borderTop: `1px solid ${RULE}`, borderBottom: `1px solid ${RULE}` }}>
           {[
             ['STRUCTURAL DENSITY',   'relationships per object'],
@@ -701,26 +724,35 @@ export default function TargetPacket() {
           concentration) that Formation admission does not itself compute. These positions are held
           as honest absence, not filled with a proxy.
         </div>
+          </>
+        )}
 
         {/* ── NARRATIVE — Narrative Assembly v0.1 (specs/SPEC-narrative-assembly-contract-v1.md).
              Sequences the SAME data already rendered in the sections below (analysisIntent,
              fieldFormation) into one connective read, so the guest isn't left to assemble the
              story themselves from disjointed panels. Two stages stay explicitly withheld
              (Developments/chronology, Tension/divergence) per the contract's own substrate
-             findings -- never fabricated to fill the gap. */}
-        <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${HAIRLINE}` }}>
-          <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM, marginBottom: 12 }}>
-            NARRATIVE — THE LEAD-UP
-          </div>
-          <p style={{ margin: 0, maxWidth: 720, fontFamily: SERIF, fontSize: 14, lineHeight: 1.75, color: BODY_C }}>
-            {narrative.paragraph}
-          </p>
-          {ledger && (ledger.unaddressed.length > 0) && (
-            <p style={{ margin: '10px 0 0', maxWidth: 720, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: ABSENCE }}>
-              This narrative does not address: {ledger.unaddressedDisplay.join(' · ')}. {ledger.basis}
+             findings -- never fabricated to fill the gap.
+             HIDDEN for the 2026-09-28 meeting (Founder, KRYL-1332): dense internal-reasoning
+             prose, redundant with StructuralBrief above (same underlying data, same honest
+             absences, plain language). Not a §21 concern -- Formation/evidence/domains are all
+             still fully rendered elsewhere on this page; this is one redundant restatement,
+             gated off, not deleted. Re-enable by flipping SHOW_LEGACY_NARRATIVE back to true. */}
+        {SHOW_LEGACY_NARRATIVE && (
+          <div style={{ marginTop: 28, paddingTop: 20, borderTop: `1px solid ${HAIRLINE}` }}>
+            <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.22em', color: LBL_DIM, marginBottom: 12 }}>
+              NARRATIVE — THE LEAD-UP
+            </div>
+            <p style={{ margin: 0, maxWidth: 720, fontFamily: SERIF, fontSize: 14, lineHeight: 1.75, color: BODY_C }}>
+              {narrative.paragraph}
             </p>
-          )}
-        </div>
+            {ledger && (ledger.unaddressed.length > 0) && (
+              <p style={{ margin: '10px 0 0', maxWidth: 720, fontFamily: MONO, fontSize: 10.5, lineHeight: 1.6, color: ABSENCE }}>
+                This narrative does not address: {ledger.unaddressedDisplay.join(' · ')}. {ledger.basis}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* ── 00 READ (KRYL-1290 subtask 7) — KRYLO's interpretation of the formed
              question, rendered exactly as captured at handleExecute() time. Never
@@ -797,10 +829,6 @@ export default function TargetPacket() {
           </PacketSection>
         )}
 
-        {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A) ─── */}
-        <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
-          <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
-        </PacketSection>
 
         {/* ── 02 FORMATION — honest state only (KRYL-1235). The ASSEMBLANCE proxy
              paths and the OLP rationale are removed. A formation is earned from
@@ -1022,6 +1050,7 @@ export default function TargetPacket() {
              on render — CF-004-INV-006). Never overwrites or restyles 02 FORMATION;
              the synchronous field-particle formation path is unchanged. ── */}
         <CFField />
+        </>)}
 
       </div>
 
