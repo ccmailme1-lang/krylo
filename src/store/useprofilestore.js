@@ -15,9 +15,9 @@ const KEY = 'krylo_active_tester_v1';
 // active:true for an account when you hand it out.
 export const TEST_PROFILES = Object.freeze([
   { id: 'xs', name: 'Founder', active: true }, // always on — never locks the Founder out
-  { id: 'FHFFBAJS', name: 'Participant 01', active: true },
-  { id: 'V37JVA8X', name: 'Participant 02', active: true },
-  { id: 'VE38DB6K', name: 'Participant 03', active: true },
+  { id: 'FHFFBAJS', name: 'Participant 01', active: false },
+  { id: 'V37JVA8X', name: 'Participant 02', active: false },
+  { id: 'VE38DB6K', name: 'Participant 03', active: false },
   { id: 'AB5W9SMJ', name: 'Participant 04', active: false },
   { id: '9T9EDANY', name: 'Participant 05', active: false },
   { id: 'YPH2V6AN', name: 'Participant 06', active: false },
