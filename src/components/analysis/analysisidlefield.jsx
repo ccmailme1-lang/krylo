@@ -1741,11 +1741,12 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
               (STRUCTURE·ACTION PLAN), RECON, IMPACT — at the same panel width. */}
           {hasSession && (() => {
             const petroMode = isPetroQuery(activeSession?.query ?? '');
-            // KRYL-1332 (Founder, 2026-09-28) — StructurePanel (BRIEF/MAP/RECON/IMPACT, defaults
-            // to BRIEF = the full Export Brief) hidden from the primary guest view. Presentation
-            // only: TargetPacket takes the full width in its place; nothing underneath changed.
-            // One flag away from restoring (matches targetpacket.jsx's SHOW_LEGACY_NARRATIVE).
-            const showStructurePanel = false;
+            // KRYL-1332 (Founder, 2026-09-28) — CORRECTED: StructurePanel itself must stay
+            // visible (MAP/RECON/IMPACT are required views, not optional). Only BRIEF (the full
+            // Export Brief) is removed, and that's now done inside structurepanel.jsx's own TABS
+            // list, not by hiding this whole panel. Restored to true after MAP/RECON/IMPACT were
+            // mistakenly taken down along with BRIEF.
+            const showStructurePanel = true;
             return (
               <>
                 <div style={{ position: 'absolute', top: 64, left: 0, right: (petroMode || !showStructurePanel) ? 0 : '50%', bottom: 0, zIndex: 10, background: '#000' }}>

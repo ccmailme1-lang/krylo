@@ -13,7 +13,12 @@ import { getAllDomainPressures } from '../../engine/domaingravity.js';
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 
-const TABS = ['BRIEF', 'MAP', 'RECON', 'IMPACT'];
+// KRYL-1332 (Founder, 2026-09-28): BRIEF (the full Export Brief) removed from the tab set --
+// approved scope was specifically "hide the Export Brief," not MAP/RECON/IMPACT, which were
+// mistakenly taken down along with it when the whole panel was gated off. Restoring those three,
+// keeping only BRIEF out. IntelligenceBrief import/component itself is untouched -- still
+// reachable if BRIEF is ever restored, just not in this tab list.
+const TABS = ['MAP', 'RECON', 'IMPACT'];
 
 // MAP tab — scaled down so structure-field.html's own margin math (which was landing labels
 // too close to the panel edges at 1:1) gets more native room to lay itself out, while the visible
@@ -90,7 +95,7 @@ function FormationMapTab({ query }) {
 }
 
 export default function StructurePanel({ query }) {
-  const [tab, setTab] = useState('BRIEF');
+  const [tab, setTab] = useState('MAP');
 
   return (
     <div style={{
