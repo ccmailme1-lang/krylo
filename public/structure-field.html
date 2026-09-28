@@ -452,6 +452,13 @@
       const def = NODES.reduce((a, b) => (b.contribution > a.contribution ? b : a));
       panelOpenFor = def.id;
       renderPanel(def.id);
+      // KRYL-1332 (Founder, 2026-09-28) — the ACTUAL root cause of the persistent overlap: this
+      // is where the panel's content gets set for real, live node data, but positionPanelDefault()
+      // was never called here. The position was set once at init (before nodeById had any real
+      // nodes in it, so every candidate scored the same and it landed at the top-left fallback)
+      // and never recalculated once real data replaced the empty state. Every prior fix to the
+      // collision math itself was correct but never actually ran against real node positions.
+      positionPanelDefault();
       panel.classList.add('open');
     }
 
@@ -1271,6 +1278,13 @@
     if (hit) {
       panelOpenFor = hit.id;
       renderPanel(hit.id);
+      // KRYL-1332 (Founder, 2026-09-28) -- the actual bug: positionPanelDefault() only ran once
+      // on load/resize, never on click, so the panel's position was frozen at whatever it opened
+      // to first, regardless of which node was later clicked. Content updated, position never
+      // did -- that's why the collision fix appeared to do nothing when testing by clicking
+      // different nodes. Re-run it here, every click (it already no-ops if the guest dragged
+      // the panel themselves, via panelUserPositioned).
+      positionPanelDefault();
       panel.classList.add('open');
     }
   });
@@ -1331,10 +1345,47 @@
   // correct on any viewport instead of overlapping the axis column.
   function positionPanelDefault() {
     if (panelUserPositioned) return;
-    panel.style.left = (plot.x + 24) + 'px';
-    panel.style.top = (plot.y + 16) + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
+    // KRYL-1332 (Founder, 2026-09-28) — real geometric collision avoidance, third pass. The first
+    // two passes (quadrant node-count, then 4 fixed corners with a fixed margin) both still failed
+    // on sparse fields, because the panel is LARGE relative to the plot -- with few nodes scattered
+    // near the middle, all 4 corners can be similarly bad, and no fixed margin fixes a wrong search
+    // space. This instead scores a grid of candidate top-left positions across the whole plot (not
+    // just 4 corners) by the MINIMUM distance from the panel's rect to any node's actual point, and
+    // picks whichever candidate maximizes that minimum -- i.e. genuinely furthest from the nearest
+    // node, wherever in the plot that turns out to be.
+    const PANEL_W = 300, PANEL_H = 460, EDGE_GAP = 16, STEPS = 9;
+    const nodePoints = Object.values(nodeById).map(n => {
+      const p = n._pos || lerpPath(n.path, currentT);
+      return { x: toPxX(p.x), y: toPxY(p.y) };
+    });
+    const maxX1 = Math.max(plot.x + EDGE_GAP, plot.x + plot.w - EDGE_GAP - PANEL_W);
+    const maxY1 = Math.max(plot.y + EDGE_GAP, plot.y + plot.h - EDGE_GAP - PANEL_H);
+    const minX1 = plot.x + EDGE_GAP, minY1 = plot.y + EDGE_GAP;
+    function clearance(x1, y1) {
+      const x2 = x1 + PANEL_W, y2 = y1 + PANEL_H;
+      let min = Infinity;
+      for (const p of nodePoints) {
+        // distance from point to the panel's own rect (0 if the point is inside it, matching how
+        // close a label immediately outside the rect still reads as touching)
+        const dx = Math.max(x1 - p.x, 0, p.x - x2);
+        const dy = Math.max(y1 - p.y, 0, p.y - y2);
+        const d = Math.hypot(dx, dy);
+        if (d < min) min = d;
+      }
+      return nodePoints.length ? min : 0;
+    }
+    let best = { x1: minX1, y1: minY1, clr: -1 };
+    for (let i = 0; i <= STEPS; i++) {
+      for (let j = 0; j <= STEPS; j++) {
+        const x1 = minX1 + (maxX1 - minX1) * (i / STEPS);
+        const y1 = minY1 + (maxY1 - minY1) * (j / STEPS);
+        const clr = clearance(x1, y1);
+        if (clr > best.clr) best = { x1, y1, clr };
+      }
+    }
+    panel.style.right = panel.style.bottom = 'auto';
+    panel.style.left = best.x1 + 'px';
+    panel.style.top = best.y1 + 'px';
   }
 
   // positionHudBelowAxis — same fix as positionPanelDefault, applied to .hint/.disclosure/
