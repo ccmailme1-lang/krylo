@@ -590,7 +590,10 @@ export default function TargetPacket() {
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A). Moved up
              (Founder, 2026-09-28) to sit right after StructuralBrief -- was previously below
              PRIMARY SIGNAL/FIVE-METRIC STRIP/READ. ─── */}
-        <PacketSection ordinal="01" title="ANALYSIS" mt={20}>
+        {/* KRYL-1332 (Founder, 2026-09-28) -- was "ANALYSIS", same word as the top nav label
+            right above it ("ANALYSIS · BUILDING CONVERGENCE") -- confusing duplicate name for a
+            different thing (this is the per-domain drill-down, not the page mode). */}
+        <PacketSection ordinal="01" title="BY DOMAIN" mt={20}>
           <DomainSubstrateTabs subject={session?.queryContext ?? session?.query ?? ''} domainPressures={domainPressures} />
         </PacketSection>
 

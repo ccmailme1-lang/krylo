@@ -1457,6 +1457,10 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  // KRYL-1332 (Founder, 2026-09-28) — LOCALHOST ONLY, not yet approved for prod. See the <aside>
+  // gate below for why: this was claimed hidden in the earlier 8-section pass but never was.
+  const showSimPanel = false;
+
   return (
     <>
       <style>{`
@@ -1476,7 +1480,14 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
       <div style={{ width: '100%', height: '100%', background: BG, color: '#fff', overflow: 'hidden', fontFamily: MONO, position: 'relative', display: 'flex' }}>
 
-        {/* ── SIMULATION CONTROL PANEL ─────────────────────────────────── */}
+        {/* KRYL-1332 (Founder, 2026-09-28) -- gate, LOCALHOST ONLY, not yet approved for prod.
+            This aside was claimed hidden in the earlier 8-section pass but never actually was --
+            same miss as MAP/RECON/IMPACT, caught from a live screenshot. <main> already uses
+            flex:1 in this flex row, so hiding <aside> reflows the layout automatically -- no
+            extra width fix needed. Only real functional loss: the New Query button lives in
+            here, so a replacement is added in <main>'s header below when this is off. */}
+        {showSimPanel && (
+        /* ── SIMULATION CONTROL PANEL ─────────────────────────────────── */
         <aside data-sim-panel style={{
           width: 242, flexShrink: 0,
           borderRight: `1px solid ${BORDER}`,
@@ -1708,6 +1719,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
 
         </aside>
+        )}
 
         {/* ── MAIN FIELD ───────────────────────────────────────────────── */}
         <main style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
@@ -1725,9 +1737,28 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                 {hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_TELEMETRY, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
-              <span>Validation Engine</span>
-              <span>v3.11.0</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {/* KRYL-1332 (Founder, 2026-09-28) -- LOCALHOST ONLY: New Query replacement, since
+                  the button normally lives in the now-hidden simulation panel. Same resetSession
+                  handler, no functional change. */}
+              {!showSimPanel && hasSession && (
+                <button onClick={resetSession} style={{
+                  fontFamily: MONO, fontSize: 8, letterSpacing: '0.2em',
+                  color: LIME, background: 'transparent',
+                  border: '1px solid rgba(102,255,0,0.3)',
+                  padding: '5px 16px', textTransform: 'uppercase', cursor: 'pointer',
+                }}>
+                  New Query
+                </button>
+              )}
+              {/* Validation Engine / version label -- hidden with the rest of the system
+                  material, same flag, same LOCALHOST-ONLY status. */}
+              {showSimPanel && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_TELEMETRY, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.16em', textTransform: 'uppercase' }}>
+                  <span>Validation Engine</span>
+                  <span>v3.11.0</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1749,7 +1780,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
             const showStructurePanel = true;
             return (
               <>
-                <div style={{ position: 'absolute', top: 64, left: 0, right: (petroMode || !showStructurePanel) ? 0 : '50%', bottom: 0, zIndex: 10, background: '#000' }}>
+                <div style={{ position: 'absolute', top: 64, left: 0, right: (petroMode || !showStructurePanel) ? 0 : '52.5%', bottom: 0, zIndex: 10, background: '#000' }}>
                   <TargetPacket />
                 </div>
                 {!petroMode && showStructurePanel && (
@@ -1973,11 +2004,16 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
                           </div>
                         )}
                       </div>
-                      {/* Exclude sim */}
+                      {/* Exclude sim -- KRYL-1332 (Founder, 2026-09-28), LOCALHOST ONLY: same
+                          system/debug-facing material as the simulation panel, caught from the
+                          search box this time. excludeSimulator state/logic untouched -- gated
+                          display only. */}
+                      {showSimPanel && (
                       <label style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none' }}>
                         <input type="checkbox" checked={excludeSimulator} onChange={e => setExcludeSimulator(e.target.checked)} style={{ accentColor: LIME, width: 11, height: 11, cursor: 'pointer' }} />
                         <span style={{ fontFamily: MONO, fontSize: 8, letterSpacing: '0.14em', color: excludeSimulator ? 'rgba(102,255,0,0.6)' : 'rgba(255,255,255,0.22)', textTransform: 'uppercase', transition: 'color 150ms' }}>EXCLUDE SIM</span>
                       </label>
+                      )}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <button style={{ width: 30, height: 30, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.22)', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
