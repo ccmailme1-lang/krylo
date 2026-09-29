@@ -61,15 +61,37 @@ function FormationMapTab({ query }) {
     } catch { return null; }
   }, [domainPressures]);
 
+  // KRYL-1332 (Founder, 2026-09-28) -- real bug: switching tabs away from MAP and back remounts
+  // this iframe fresh, but `onLoad` (the DOM `load` event) can fire before structure-field.html's
+  // own script has finished executing far enough to register its message listener -- a genuine
+  // race, worse on a remount than first mount, which is why nothing worked until a full page
+  // refresh gave the timing more slack. A ref keeps the latest fieldFormation available to a
+  // one-time 'krylo-map-ready' listener (the iframe now pings back once its listener is actually
+  // live), so the send happens in response to a real readiness signal, not a guess about `onLoad`
+  // timing. onLoad's own send stays as a harmless redundant first attempt.
+  const fieldFormationRef = useRef(fieldFormation);
+  useEffect(() => { fieldFormationRef.current = fieldFormation; }, [fieldFormation]);
+
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
     iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation }, '*');
   }, [fieldFormation]);
 
+  useEffect(() => {
+    function onMapReady(e) {
+      if (e.data?.type !== 'krylo-map-ready') return;
+      if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
+      iframeReady.current = true;
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current }, '*');
+    }
+    window.addEventListener('message', onMapReady);
+    return () => window.removeEventListener('message', onMapReady);
+  }, []);
+
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current }, '*');
     }
   };
 

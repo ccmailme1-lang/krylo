@@ -487,6 +487,16 @@
     if (e.data?.type === 'krylo-field-formation') applyFieldFormation(e.data.formation);
   });
 
+  // KRYL-1332 (Founder, 2026-09-28) — real bug: switching tabs away from MAP and back remounts
+  // this iframe fresh, and the parent (structurepanel.jsx) sends the formation postMessage from
+  // its own `onLoad` handler. That DOM `load` event can fire before this script has reached this
+  // exact line and registered its message listener above -- a genuine race, not a caching issue
+  // -- so the remounted iframe silently never received its data, and nothing worked until a full
+  // page refresh gave the race more slack to resolve by luck. This tells the parent the listener
+  // is actually ready, so it can send (or re-send) the data in response instead of guessing from
+  // `onLoad` timing alone.
+  window.parent.postMessage({ type: 'krylo-map-ready' }, '*');
+
   function nodeStateAt(node, t) {
     const pos = lerpPath(node.path, t);
     return { pos, px: toPxX(pos.x), py: toPxY(pos.y) };
