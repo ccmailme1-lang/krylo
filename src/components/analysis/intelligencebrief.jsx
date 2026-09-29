@@ -136,6 +136,26 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
     const frameReason = (subj.kind === 'PORTFOLIO_FRAME' || subj.kind === 'MARKET_THEME')
       ? `${frameHeadline(subj.scope?.classification) ?? subj.kind.replace(/_/g, ' ')} recognized. No canonical domain-pressure signal is available for this input, so live-signal synthesis is withheld — this is a stated absence, not a low score. See the Target Packet's Frame Anchoring section for what KRYLO can observe about this frame.`
       : null;
+    // KRYL-1335 — RSI Structural Query Path. A canonical-domain miss (AMBIGUOUS) does not
+    // mean KRYLO recognized nothing: structuralqueryinterpreter.js may have found real
+    // structural participants + relationship language independent of the six canonical
+    // domains. When it did, say so and report the real (additive, evidence-grounded)
+    // relationship check from structuralentitysynthesis.js — never a fabricated verdict,
+    // exactly the same honest-absence discipline as frameReason/specificReason above.
+    const sq = synthesis?.structuralQuery;
+    const structuralReason = sq?.state === 'INTERPRETABLE'
+      ? (() => {
+          const rels = sq.evidence?.relationships ?? [];
+          const supported = rels.filter(r => r.state === 'SUPPORTED');
+          const entityList = sq.entities.join(', ');
+          const relSummary = rels.length
+            ? (supported.length
+                ? `${supported.length} of ${rels.length} candidate relationship${rels.length !== 1 ? 's' : ''} supported by real evidence.`
+                : `No candidate relationship${rels.length !== 1 ? 's' : ''} (${rels.length} checked) currently supported by real evidence — this is a stated absence, not a low score.`)
+            : 'Only one structural participant recognized — nothing to relate it to yet.';
+          return `Structural participants recognized independent of canonical-domain classification: ${entityList}. ${relSummary}`;
+        })()
+      : null;
     return {
       classification: '//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//',
       subject:    entity.toUpperCase(),
@@ -147,12 +167,18 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       cac:        '—',
       roas:       '—',
       insufficient: true,
-      bluf:       frameReason ?? specificReason ?? AMBIGUOUS_COPY.bluf,
-      purpose:    frameReason ?? specificReason ?? AMBIGUOUS_COPY.purpose,
+      // KRYL-1335 — a resolved-but-no-signal canonical domain (specificReason) must not
+      // suppress a real structural finding; the RSI spec's own #17 acceptance criterion is
+      // explicit that the system "must not stop at CAPITAL." Combine rather than override —
+      // frameReason (PORTFOLIO_FRAME/MARKET_THEME) still takes priority when present, since
+      // that already reflects a resolved-subject state structuralReason has no bearing on.
+      bluf:       frameReason ?? ([specificReason, structuralReason].filter(Boolean).join(' ') || AMBIGUOUS_COPY.bluf),
+      purpose:    frameReason ?? specificReason ?? (structuralReason ? 'To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.' : AMBIGUOUS_COPY.purpose),
       fiveWs:     [],
       evidence:   [],
       assumptions:[],
-      assessment: frameReason ?? specificReason ?? 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.',
+      assessment: frameReason ?? ([specificReason, structuralReason].filter(Boolean).join(' ') || 'Analysis withheld: the input did not meet the minimum signal threshold for synthesis.'),
+      structuralQuery: sq ?? null,
       threats:    [],
       opportunities: [],
       coas:       [],

@@ -4319,6 +4319,8 @@ import { STATE_TYPE } from './statecontract.js'; // DEF-1863 — hard state cont
 import { getQueryDomainPressure, GRAVITY_TIE_THRESHOLD } from './domaingravity.js';
 import { runPairwiseDiff } from './crediff.js';
 import { resolveDecisionInputContract } from './matchDecisionInputContract.js';
+import { interpretStructuralQuery } from './structuralqueryinterpreter.js';
+import { synthStructuralEntity } from './structuralentitysynthesis.js';
 
 // ── Diff command (WO-DRAFT-comparative-diff-command) ───────────────────────────
 // Recognizes exactly one phrase shape: "diff A and/vs/versus/& B". No separator (bare
@@ -4336,7 +4338,27 @@ export function parseDiffCommand(query) {
   return { entityA, entityB };
 }
 
+// KRYL-1335 — RSI Structural Query Path. A thin, additive wrapper: the real synthesis logic
+// is completely unchanged (synthesizeQueryCore below is a straight rename, zero behavior
+// change), this only attaches a new, independent `structuralQuery` field to every return
+// path (mirroring how `ses`/`provenanceState` are already attached to every path above),
+// so the existing canonical-domain result is never altered, gated, or replaced.
+// structuralQuery is evidence-grounded via structuralentitysynthesis.js only when
+// interpretStructuralQuery() finds real structural language -- see both files' headers for
+// why this is additive and does not touch DOMAIN_LEXICON, inferFormation(), or KRYL-1334.
 export function synthesizeQuery(session) {
+  const query = session?.query ?? '';
+  const structuralInterp = interpretStructuralQuery(query);
+  const structuralQuery = structuralInterp.state === 'INTERPRETABLE'
+    ? { ...structuralInterp, evidence: synthStructuralEntity(structuralInterp) }
+    : structuralInterp;
+
+  const result = synthesizeQueryCore(session);
+  if (!result) return result;
+  return { ...result, structuralQuery };
+}
+
+function synthesizeQueryCore(session) {
   if (!session) return null;
   const query = session.query ?? '';
 

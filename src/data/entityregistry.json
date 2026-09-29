@@ -397,5 +397,19 @@
     "aliases": ["Anduril", "Anduril Industries Inc"],
     "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null },
     "domainTags": ["TECHNOLOGY", "CAPITAL"]
+  },
+  {
+    "canonicalId": "sysco",
+    "canonicalName": "SYSCO",
+    "aliases": ["Sysco Corporation", "Sysco Corp"],
+    "identifiers": { "edgar": "0000096021", "ticker": "SYY", "fec": null, "uei": null },
+    "domainTags": ["CAPITAL", "OWNERSHIP"]
+  },
+  {
+    "canonicalId": "restaurant-depot",
+    "canonicalName": "RESTAURANT DEPOT",
+    "aliases": ["Restaurant Depot", "Jetro Restaurant Depot", "Jetro Holdings"],
+    "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null },
+    "domainTags": ["OWNERSHIP"]
   }
 ]

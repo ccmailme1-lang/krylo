@@ -53,15 +53,63 @@ const SEED_FACETS = {
       }),
     ],
   },
+  // KRYL-1335 (2026-09-29) — real, dated, sourced restaurant-supply-chain fact: Sysco (the
+  // largest US food distributor) acquiring Restaurant Depot. Directly in RSI's domain (food
+  // distributor / supplier consolidation), registered under both new entityregistry.json
+  // entries so KRYL-1335's structural-entity evidence check can actually find it.
+  sysco: {
+    OWNERSHIP: [
+      makeSignalFacet({
+        facet_id:        'seed-evidence:sysco:OWNERSHIP:restaurant-depot-acquisition-2026-03',
+        domain_id:       'OWNERSHIP',
+        ontology:        'DOMAIN_EVIDENCE',
+        producer_id:     'real-evidence-seed',
+        source_set_hash: 'seed:sysco:restaurant-depot-acquisition-2026-03',
+        provenance: {
+          source:    'Sysco investor relations + SEC Form 425, 2026-03-30/31 — corroborated by Las Vegas Sun',
+          semantics: 'Sysco, the largest US food distributor and a major restaurant-industry supplier, ' +
+                     'announced acquisition of Restaurant Depot (Jetro Holdings) for $29.1B — $21.6B cash ' +
+                     'plus 91.5M Sysco shares (~16% combined-company stake for Restaurant Depot ' +
+                     'shareholders). Consolidates Sysco\'s scheduled-delivery distributor network with ' +
+                     'Restaurant Depot\'s cash-and-carry distribution model; combined company ~$100B ' +
+                     'revenue (2025). Subject to federal regulatory review, targeted close Q3 FY2027.',
+          eventDate: '2026-03-30',
+          subject:   { canonicalId: 'sysco' },
+        },
+        signal_unit: { kind: 'evidence', scale: 'reported', unit: 'USD', value: 29_100_000_000 },
+        repro: {
+          config: { derivation: 'hand-entered, single-subject seed — not a live connector' },
+          source_refs: [
+            'https://investors.sysco.com/annual-reports-and-sec-filings/news-releases/2026/03-30-2026-113036743',
+            'https://www.sec.gov/Archives/edgar/data/96021/000095014226000924/eh260758848_425-transcript.htm',
+            'https://lasvegassun.com/news/2026/mar/31/food-distributor-giant-sysco-plans-to-gobble-up-an/',
+          ],
+          producer_version: PRODUCER_VERSION,
+        },
+      }),
+    ],
+  },
 };
 
 export const realEvidenceSeedSource = {
   id: 'real-evidence-seed',
+  // Field-scope fix: domainsignalresolution.js's own documented contract for
+  // getDomainEvidenceFacets is "subject: omit/null -> field-scoped (all domain evidence
+  // facets)" -- this source was unconditionally returning [] for that case, so no
+  // field-scoped caller (KRYL-1335's structuralentitysynthesis.js included) could ever see
+  // ANY seeded fact, entity-scoped queries were the only path that worked. Field scope now
+  // returns every seeded facet for the domain, across all subjects -- entity scope is
+  // unchanged (still identifier-bound, still only that one subject's facets).
   produce({ domain, subject }) {
-    if (!subject || subject.kind !== 'ENTITY') return [];
-    const bySubject = SEED_FACETS[subject.canonicalId];
-    if (!bySubject) return [];
-    return bySubject[String(domain).toUpperCase()] ?? [];
+    const D = String(domain).toUpperCase();
+    if (subject && subject.kind === 'ENTITY') {
+      const bySubject = SEED_FACETS[subject.canonicalId];
+      return bySubject?.[D] ?? [];
+    }
+    if (subject) return []; // non-ENTITY scope: nothing binds (unchanged behavior)
+    const out = [];
+    for (const bySubject of Object.values(SEED_FACETS)) out.push(...(bySubject[D] ?? []));
+    return out;
   },
 };
 

@@ -64,6 +64,12 @@ export const RELATION_TYPES = Object.freeze({
   POWERS:              'POWERS',
   ENABLES:             'ENABLES',
   BRIDGES_TO:          'BRIDGES_TO',
+  // KRYL-1336 (2026-09-29) — added for the Sysco/Restaurant Depot acquisition edge (real,
+  // sourced, pending regulatory close — see rsievidencemigration.js). No existing type fit a
+  // full-company acquisition; the closest neighbors (BENEFICIAL_OWNER_OF = a stake, not
+  // control; OPERATES/GATES/PROVIDES/POWERS/ENABLES = operational, not ownership) all
+  // misrepresent what the real filing actually says.
+  ACQUIRED:            'ACQUIRED',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently
