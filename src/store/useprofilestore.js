@@ -53,7 +53,7 @@ export const TEST_PROFILES = Object.freeze([
   { id: 'QRU4HECZ', name: 'Participant 36', active: false },
   { id: 'N6259D8N', name: 'Participant 37', active: false },
   { id: 'PFWHWFQQ', name: 'Participant 38', active: false },
-  { id: 'TZ596FGX', name: 'Participant 39', active: false },
+  { id: 'TZ596FGX', name: 'Participant 39', active: true },
   { id: '6HTAXX5Z', name: 'Participant 40', active: false },
 ]);
 
