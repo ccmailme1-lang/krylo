@@ -29,11 +29,13 @@ export function formationIdFor({ subject, fieldScope, formationScope, entityA, e
 
 /**
  * buildCandidateRows — one candidate row per SUPPORTED relationship pair in a structuralQuery's
- * evidence result. `relationshipType` is derived from the real evidence facet's edge `type`
- * when present (KRYL-1336's typed-edge shape carries this in its semantics text today, not a
- * separate field -- a real gap: relationship_type is currently a placeholder 'OBSERVED' until
- * typedEdgeAsFacetShape() is extended to carry its real `type` through structurally instead of
- * folding it into free text. Not fixed here -- flagged, not silently worked around).
+ * evidence result. `relationshipType` is the real typed-edge type (e.g. 'ACQUIRED') when the
+ * supporting evidence came from entitytopologyregistry.js's typed-edge store (KRYL-1336 gap
+ * fix, structuralentitysynthesis.js's typedEdgeAsFacetShape() now carries it through
+ * structurally instead of folding it into free text). A one-entity domain facet
+ * (EVIDENCE_FACET_SOURCES) genuinely has no relation type -- 'OBSERVED' for that case is an
+ * honest label for "a real fact exists, but it doesn't classify a relation type," not a
+ * placeholder standing in for something unbuilt.
  * @param {{entities, evidence}} structuralQuery
  * @param {{subject: string|null, fieldScope: string|null, formationScope: string|null}} scope
  * @returns {object[]} candidate rows, NOT yet compared against prior state
@@ -43,7 +45,7 @@ export function buildCandidateRows(structuralQuery, scope) {
   return rels
     .filter(r => r.state === 'SUPPORTED')
     .map(r => {
-      const relationshipType = 'OBSERVED'; // see doc comment above -- real gap, not invented past this
+      const relationshipType = r.facet?.relationType ?? 'OBSERVED';
       return {
         formation_id: formationIdFor({ ...scope, entityA: r.a, entityB: r.b, relationshipType }),
         subject_scope: scope.subject ?? null,

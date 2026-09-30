@@ -77,6 +77,7 @@ function typedEdgeAsFacetShape(e) {
   const toLabel   = NODE_LABELS[e.to] ?? e.to;
   return {
     sourceId: 'entity-topology-registry',
+    relationType: e.type, // real, structured typed-edge type (e.g. 'ACQUIRED') -- KRYL-1334 gap fix
     provenance: {
       source: e.source,
       semantics: `${fromLabel} — ${e.type} — ${toLabel}`,
@@ -104,7 +105,12 @@ export function synthStructuralEntity(structuralQuery) {
   // typed edges (KRYL-1336's actual persistent store). Same candidate shape, same text-match
   // discipline, so a pair is SUPPORTED from either source, never a synthetic combination of
   // partial matches from each.
-  const candidates = [...allFieldEvidenceFacets(), ...TYPED_EDGES.map(typedEdgeAsFacetShape)];
+  // Typed edges first: when the same real fact exists in both sources (e.g. Sysco/Restaurant
+  // Depot, present as both a one-entity text facet and a typed edge), the typed edge is the
+  // more structured, more authoritative source (it carries a real relationType; a one-entity
+  // facet cannot). .find() returns the first match, so order here determines which source's
+  // relationType (if any) reaches formationsnapshot.js.
+  const candidates = [...TYPED_EDGES.map(typedEdgeAsFacetShape), ...allFieldEvidenceFacets()];
 
   const relationships = pairsOf(entities).map(([a, b]) => {
     const ta = termFor(a), tb = termFor(b);
@@ -113,7 +119,7 @@ export function synthStructuralEntity(structuralQuery) {
       return text.includes(ta) && text.includes(tb);
     });
     return hit
-      ? { a, b, state: EVIDENCE_STATE.SUPPORTED, facet: { sourceId: hit.sourceId, source: hit.provenance?.source ?? null, semantics: hit.provenance?.semantics ?? null } }
+      ? { a, b, state: EVIDENCE_STATE.SUPPORTED, facet: { sourceId: hit.sourceId, source: hit.provenance?.source ?? null, semantics: hit.provenance?.semantics ?? null, relationType: hit.relationType ?? null } }
       : { a, b, state: EVIDENCE_STATE.NO_EVIDENCE, facet: null };
   });
 
