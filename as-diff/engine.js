@@ -10,6 +10,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } fr
 import { randomUUID, createSign } from 'crypto';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
+import { lastFormationState, writeFormationState, formationStateHistory } from './formationstatestore.js';
+import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 
 // WO-1042 — fixed port, no override
@@ -302,6 +304,53 @@ async function handleTesterTelemetryRead(req, res) {
       sessionId: u.searchParams.get('sessionId'),
     });
     send(res, 200, { status: 'DB_READ_SUCCESS', rows, note: 'file fallback (DB unreachable)' });
+  }
+}
+
+// ── KRYL-1334: Formation-State Persistence (automatic trigger) ──────────────
+// POST /v1/formation-state — the material-change trigger from the ratified hybrid sampling
+// policy (clock trigger is separate, unbuilt infrastructure -- not this endpoint). Client
+// posts one candidate row per SUPPORTED relationship pair from a real query
+// (formationsnapshot.js's buildCandidateRows(), computed client-side where structuralQuery
+// actually lives); this endpoint looks up the last known state for that formation_id and
+// applies decideWrite() -- the material-change decision is made HERE, server-side, because
+// only the server knows the last persisted state. Fire-and-forget from the client, same as
+// tester-telemetry above -- a failed POST never blocks the guest's query.
+async function handleFormationStateWrite(req, res) {
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { status: 'DB_WRITE_FAILED', error: 'Invalid JSON body' }); }
+
+  const candidate = body?.candidate;
+  if (!candidate?.formation_id || !candidate?.entity_a || !candidate?.entity_b || !candidate?.relationship_type) {
+    return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'candidate.{formation_id,entity_a,entity_b,relationship_type} required' });
+  }
+  if (!pool) return send(res, 503, { status: 'DB_WRITE_FAILED', error: 'persistence layer unavailable' });
+
+  try {
+    const last = await lastFormationState(candidate.formation_id);
+    const decision = decideWrite(candidate, last, 'material_change');
+    if (!decision) return send(res, 200, { status: 'NO_MATERIAL_CHANGE', written: false });
+    const written = await writeFormationState(decision);
+    send(res, 201, { status: 'DB_WRITE_SUCCESS', written: true, id: written.id, capturedAt: written.captured_at });
+  } catch (err) {
+    console.error('[formation-state] write failed:', err.message);
+    send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+  }
+}
+
+// GET /v1/formation-state?formationId=... — full history for one formation, oldest first.
+async function handleFormationStateRead(req, res) {
+  if (!pool) return send(res, 503, { status: 'DB_READ_FAILED', error: 'persistence layer unavailable' });
+  const u = new URL(req.url, 'http://localhost');
+  const formationId = u.searchParams.get('formationId');
+  if (!formationId) return send(res, 422, { status: 'DB_READ_FAILED', error: 'formationId required' });
+  try {
+    const rows = await formationStateHistory(formationId);
+    send(res, 200, { status: 'DB_READ_SUCCESS', rows });
+  } catch (err) {
+    console.error('[formation-state] read failed:', err.message);
+    send(res, 500, { status: 'DB_READ_FAILED', error: err.message });
   }
 }
 
@@ -1559,6 +1608,8 @@ function routeRequest(req, res) {
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
   if (req.method === 'POST' && url === '/api/tester-telemetry')              return handleTesterTelemetry(req, res);
   if (req.method === 'GET'  && url === '/api/tester-telemetry')              return handleTesterTelemetryRead(req, res);
+  if (req.method === 'POST' && url === '/v1/formation-state')                return handleFormationStateWrite(req, res);
+  if (req.method === 'GET'  && url === '/v1/formation-state')                return handleFormationStateRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);

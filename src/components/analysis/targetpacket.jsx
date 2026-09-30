@@ -10,6 +10,7 @@ import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
 import { useEntitySignal, ENTITY_SIGNAL_STATUS } from '../../hooks/useEntitySignal.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
+import { captureFormationSnapshots } from '../../engine/formationsnapshotclient.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
 import DomainSubstrateTabs   from './domainsubstratetabs.jsx';
@@ -285,6 +286,17 @@ export default function TargetPacket() {
   const analysisIntent = session?.tensor?.analysisIntent ?? null;
 
   const synthesis = useMemo(() => synthesizeQuery(session), [session]);
+
+  // KRYL-1334 — automatic capture trigger (material_change side of the hybrid sampling
+  // policy; the clock-driven baseline side is separate, unbuilt infrastructure). Fires once
+  // per real synthesis result that actually has a structurally-interpretable query -- the
+  // client never decides what counts as a material change itself, it only reports candidates;
+  // the server (handleFormationStateWrite) is the one that compares against the last known
+  // state and decides whether to write. Fire-and-forget -- never blocks or alters this render.
+  useEffect(() => {
+    if (synthesis?.structuralQuery?.state !== 'INTERPRETABLE') return;
+    captureFormationSnapshots(synthesis.structuralQuery, { subject: null, fieldScope: null, formationScope: null });
+  }, [synthesis?.structuralQuery]);
 
   // Petro Locator (hidden utility, isolated from the engine): a "cheapest fuel near
   // me" query resolves to a live cheapest-station lookup. Withholds, never fabricates.
