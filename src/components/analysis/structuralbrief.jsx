@@ -44,9 +44,22 @@ function Row({ label, children }) {
   );
 }
 
-export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation }) {
+export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, structuralQuery }) {
   const isEntity = subjScope?.kind === 'ENTITY';
-  const subjectLabel = isEntity ? subjScope.entity.name : 'FIELD SCAN — NO SUBJECT RESOLVED';
+  // KRYL-1336 fix (2026-09-30): KRYL-1335/1336's real entity/relationship recognition +
+  // evidence check (querysynthesis.js's structuralQuery, computed for every query) was wired
+  // into intelligencebrief.jsx's buildBrief() -- a DIFFERENT component from this one, which is
+  // what the guest actually sees (targetpacket.jsx renders StructuralBrief, not
+  // IntelligenceBrief -- BRIEF was removed from structurepanel.jsx's tabs, KRYL-1332). So none
+  // of that work ever reached the guest. Additive fix here only -- no new computation, no
+  // change to isEntity's existing behavior, reuses the exact structuralQuery shape already
+  // built and passed down from targetpacket.jsx's existing `synthesis` object.
+  const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
+  const subjectLabel = isEntity
+    ? subjScope.entity.name
+    : structurallyInterpretable
+      ? `STRUCTURAL PARTICIPANTS: ${structuralQuery.entities.join(', ')}`
+      : 'FIELD SCAN — NO SUBJECT RESOLVED';
 
   // WHAT THE STRUCTURE SHOWS -- real, per-domain, already-computed pressure data (magnitude,
   // polarity, signalCount) -- the same values FractureSignalSurface/domainsubstratetabs.jsx read,
@@ -80,14 +93,21 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // components?" is the anchor every brief opens with -- the sentence leads with the
   // relationship (or its honest absence), not a generic observation-count summary.
   const domainList = domainLines.length ? ` (${domainLines.map(p => p.domain).join(', ')})` : '';
+  const entityRelPairs = structuralQuery?.evidence?.relationships ?? [];
+  const entitySupported = entityRelPairs.filter(r => r.state === 'SUPPORTED');
   const briefSentence = isEntity
     ? (relationshipCount > 0
         ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
           `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.`
         : `No admitted structural relationship around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
           `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.`)
-    : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
-      `across ${domainLines.length} of 6 domains${domainList}.`;
+    : structurallyInterpretable
+      ? (entityRelPairs.length
+          ? `No canonical domain matched, but ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} recognized: ` +
+            `${entitySupported.length} of ${entityRelPairs.length} candidate relationship${entityRelPairs.length !== 1 ? 's' : ''} supported by real evidence — the rest are a stated absence, not a low score.`
+          : `Structural participant recognized (${structuralQuery.entities.join(', ')}), but only one — nothing to relate it to yet.`)
+      : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
+        `across ${domainLines.length} of 6 domains${domainList}.`;
 
   return (
     <section style={{ padding: '20px 0 26px', borderBottom: `1px solid ${RULE}` }}>
@@ -108,6 +128,20 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           components" is the anchor question, so the answer sits right under it, not three
           sections down. */}
       <Row label="RELATIONSHIPS">
+        {structurallyInterpretable && entityRelPairs.length ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: edges.length ? 14 : 0 }}>
+            {entityRelPairs.map((r, i) => (
+              <div key={`entity-${i}`}>
+                <div>{r.a} ↔ {r.b} — {r.state === 'SUPPORTED' ? 'supported by real evidence' : 'no evidence found'}</div>
+                {r.state === 'SUPPORTED' && r.facet && (
+                  <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                    {r.facet.semantics} — {r.facet.source}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
         {edges.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {edges.map((e, i) => {
@@ -128,7 +162,8 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
               );
             })}
           </div>
-        ) : <span style={{ color: ABSENCE }}>No formation established — fewer than two connected domains in the live field.</span>}
+        ) : (structurallyInterpretable && entityRelPairs.length ? null :
+          <span style={{ color: ABSENCE }}>No formation established — fewer than two connected domains in the live field.</span>)}
       </Row>
 
       <Row label="WHAT THE STRUCTURE SHOWS">

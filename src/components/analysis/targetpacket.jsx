@@ -585,6 +585,7 @@ export default function TargetPacket() {
           domainPressures={domainPressures}
           activeDomainPressures={activeDomainPressures}
           fieldFormation={fieldFormation}
+          structuralQuery={synthesis?.structuralQuery}
         />
 
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A). Moved up
