@@ -1,7 +1,14 @@
 // as-diff/db.js
 // WO-1334 — PostgreSQL connection pool + schema migration
 // 2026-09-21: Supabase (managed Postgres). Reverted from a same-day MariaDB/IONOS attempt that
-// hit an unresolvable external-access block on IONOS's webhosting-tier database.
+// hit an unresolvable external-access block on IONOS's webhosting-tier database (confirmed by
+// IONOS support, 2026-09-29: a hard limitation of that product tier, not a missed config option).
+// 2026-09-29: moved OFF Supabase -- the hosted project's hostname stopped resolving in production
+// (DNS/ENOTFOUND, confirmed via live logs), an operational failure independent of this ticket.
+// Now PostgreSQL 16, self-hosted on this same VPS (root access already available here, which is
+// exactly what IONOS support said is required for a database with real external-access control --
+// moot anyway since krylo-api and this DB now share one machine, so it's a localhost connection,
+// not external access at all). See ssl handling below.
 // Minimal inline .env loader below because ecosystem.config.cjs never loaded one and dotenv
 // isn't a dependency — must run here, at the top of this file, before `pool` is evaluated (ES
 // import hoisting means loading it from engine.js instead would run too late).
@@ -26,8 +33,12 @@ if (!process.env.DATABASE_URL) {
   console.warn('[WO-1334] DATABASE_URL not set — persistence layer disabled');
 }
 
+// KRYL-1334 (2026-09-29): SSL is required for Supabase's remote connection but breaks against a
+// local Postgres (localhost, now the real backend -- see db.js header) that isn't configured for
+// it. Only request SSL for a non-local host; a localhost/127.0.0.1 connectionString skips it.
+const isLocalDb = /^(postgres(?:ql)?:\/\/[^@]*@)?(localhost|127\.0\.0\.1)([:/]|$)/.test(process.env.DATABASE_URL ?? '');
 export const pool = process.env.DATABASE_URL
-  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } })
+  ? new Pool({ connectionString: process.env.DATABASE_URL, ssl: isLocalDb ? false : { rejectUnauthorized: false } })
   : null;
 
 // Idempotent migration — runs on engine start
@@ -68,6 +79,34 @@ async function runMigration() {
     CREATE INDEX IF NOT EXISTS idx_tester_telemetry_profile  ON tester_telemetry (profile_id);
     CREATE INDEX IF NOT EXISTS idx_tester_telemetry_session  ON tester_telemetry (session_id);
     CREATE INDEX IF NOT EXISTS idx_tester_telemetry_received ON tester_telemetry (received_at DESC);
+
+    -- KRYL-1334 Part 1 (2026-09-30) -- Relational Change / Temporal Persistence. Schema per the
+    -- ratified MAP design (specs/SPEC-relational-change-temporal-axis.md + tonight's three
+    -- corrections): formation_id is derived from subject+field_scope+formation_scope+entity_a+
+    -- entity_b+relationship_type (comparison-granularity ruling, LOCKED) -- computed by the
+    -- application layer, stored as a plain column for indexed lookup, never re-derived
+    -- inconsistently across writers. entity_a/entity_b are KRYL-1335/1336's structural
+    -- participant labels (e.g. SUPPLIER, DISTRIBUTOR) -- entity-to-entity, not domain-to-domain
+    -- (structural.js already covers domain-to-domain via inferFormation(), untouched, separate
+    -- concern). state has no STABLE-as-event: a STABLE read is the ABSENCE of a new row for that
+    -- formation_id between two samples, derived at diff time, never written (per tonight's
+    -- correction: "a stable segment... should not require a new STABLE event glyph").
+    CREATE TABLE IF NOT EXISTS formation_state (
+      id                 SERIAL PRIMARY KEY,
+      formation_id       TEXT        NOT NULL,
+      subject_scope      TEXT,
+      entity_a           TEXT        NOT NULL,
+      entity_b           TEXT        NOT NULL,
+      relationship_type  TEXT        NOT NULL,
+      state              TEXT        NOT NULL CHECK (state IN
+                           ('NEW','STRENGTHENING','WEAKENING','RECONFIGURATION','DISSOLUTION')),
+      evidence_ref       TEXT,
+      provenance         JSONB,
+      trigger            TEXT        NOT NULL CHECK (trigger IN ('clock','material_change')),
+      captured_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_formation_state_scope
+      ON formation_state (formation_id, captured_at DESC);
   `);
   console.log('[WO-1334] migration complete (Supabase/Postgres)');
 }
