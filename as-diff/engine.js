@@ -341,6 +341,11 @@ async function handleFormationStateWrite(req, res) {
 
 // GET /v1/formation-state?formationId=... — full history for one formation, oldest first.
 async function handleFormationStateRead(req, res) {
+  // KRYL-1334 (2026-09-30) -- root cause of the scrubber not rendering: a GET to this exact URL,
+  // made before this route existed, got nginx's SPA-fallback 200+index.html response, which the
+  // browser cached (no Cache-Control header = cacheable by default). Every response from this
+  // endpoint is time-sensitive persisted state, never meant to be cached.
+  res.setHeader('Cache-Control', 'no-store');
   if (!pool) return send(res, 503, { status: 'DB_READ_FAILED', error: 'persistence layer unavailable' });
   const u = new URL(req.url, 'http://localhost');
   const formationId = u.searchParams.get('formationId');

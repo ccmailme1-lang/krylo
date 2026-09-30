@@ -106,8 +106,14 @@ function FormationMapTab({ query }) {
           subject: null, fieldScope: null, formationScope: null,
           entityA: r.a, entityB: r.b, relationshipType: r.facet?.relationType ?? 'OBSERVED',
         })))];
+        // KRYL-1334 (2026-09-30) -- cache-busted: a GET to this exact URL, made once before the
+        // backend route existed tonight, could get a 200+HTML fallback response cached by the
+        // browser (this endpoint had no Cache-Control header at the time). Real root cause of
+        // the scrubber not appearing during testing turned out to be a stale local dev-server
+        // tab, not this -- kept anyway, since it's a correct, low-cost defensive fix in its own
+        // right (this endpoint's data is always time-sensitive, never cacheable).
         const results = await Promise.all(ids.map(id =>
-          fetch(`/v1/formation-state?formationId=${encodeURIComponent(id)}`)
+          fetch(`/v1/formation-state?formationId=${encodeURIComponent(id)}&_=${Date.now()}`, { cache: 'no-store' })
             .then(r => r.ok ? r.json() : { rows: [] })
             .then(j => j.rows ?? [])
             .catch(() => [])
@@ -116,7 +122,7 @@ function FormationMapTab({ query }) {
       } catch { if (!cancelled) setFormationHistory([]); }
     }
     load();
-    return () => { cancelled = true; };
+    return () => { cancelled = true; console.log('[KRYL-1334-DIAG] effect cleanup ran (cancelled=true) -- component unmounted or query changed again'); };
   }, [query]);
 
   const fieldFormationRef = useRef(fieldFormation);
@@ -153,7 +159,7 @@ function FormationMapTab({ query }) {
   const nativeH = size.h / MAP_SCALE;
 
   return (
-    <div ref={wrapRef} style={{ width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div ref={wrapRef} style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
       {size.w > 0 && (
         <iframe
           ref={iframeRef}
