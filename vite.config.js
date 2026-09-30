@@ -96,6 +96,7 @@ export default defineConfig({
       '/api/v1/persistence/execution-plan':   { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/tester-telemetry': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/v1/timing-proxy':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/v1/formation-state':  { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/compare':             { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/stream': {
         target: 'https://krylo.org',

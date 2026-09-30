@@ -64,6 +64,30 @@
   .hint b { color: rgba(255,255,255,0.6); font-weight: 500; }
 
   .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
+
+  /* KRYL-1334 (2026-09-30) — real persisted formation trajectories. One row per formation_id;
+     X = real time (captured_at, linear-mapped into the real min..max range, never a synthetic
+     scale). No canvas: plain positioned divs are simplest-correct for a handful of rows with a
+     handful of real points each, and stay trivially inspectable/debuggable. */
+  .formation-history-wrap { margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .fh-row { position: relative; height: 22px; }
+  .fh-label {
+    position: absolute; left: 0; top: -13px; font-size: 9px; letter-spacing: 0.08em;
+    color: var(--text-mono-dim); text-transform: uppercase;
+  }
+  .fh-line { position: absolute; left: 0; right: 0; top: 11px; height: 1px; background: var(--hairline-strong); }
+  .fh-dot {
+    position: absolute; top: 5px; width: 12px; height: 12px; margin-left: -6px;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .fh-dot.hidden-by-scrub { opacity: 0.15; pointer-events: none; }
+  .fh-dot::after { content: ''; display: block; border-radius: 50%; width: 8px; height: 8px; }
+  .fh-dot[data-state="NEW"]::after,
+  .fh-dot[data-state="STRENGTHENING"]::after { background: var(--signal-lime); }
+  .fh-dot[data-state="WEAKENING"]::after { background: rgba(255,120,60,0.85); }
+  .fh-dot[data-state="RECONFIGURATION"] { transform: rotate(45deg); }
+  .fh-dot[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: rgba(255,200,60,0.85); }
+  .fh-dot[data-state="DISSOLUTION"]::after { background: transparent; border: 1px solid rgba(255,255,255,0.5); }
   .scrubber-readout {
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -214,7 +238,7 @@
 <div class="hud hud-top">
   <div class="mark">
     STRUCTURAL RESOLUTION FIELD
-    <span>Live formation field — positioned on φ (strength); φ̇ (momentum) not yet available. Ambient field state, not bound to the resolved subject.</span>
+    <span>Live formation field — positioned on observation count and relationship connectivity. Ambient field state, not bound to the resolved subject.</span>
   </div>
   <div class="status">
     FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
@@ -226,9 +250,10 @@
 </div>
 
 <div class="hud scrubber-wrap">
+  <div class="formation-history-wrap" id="formation-history-wrap"></div>
   <div class="scrubber-readout">
-    <span>OBSERVATION WINDOW</span>
-    <span>T+<b id="t-readout">00:00</b> &nbsp; / &nbsp; T+47:00</span>
+    <span id="scrubber-label">OBSERVATION WINDOW</span>
+    <span id="scrubber-range">T+<b id="t-readout">00:00</b> &nbsp; / &nbsp; T+47:00</span>
   </div>
   <div class="scrubber-row">
     <button class="ctrl" id="play-btn" aria-pressed="false" title="Play / Pause (Space)">▶</button>
@@ -350,9 +375,11 @@
   function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
 
-  const DOMAIN = { min: -1, max: 1 }; // nominal STRENGTH/MOMENTUM range -- unchanged, still the
-  // true meaning of every axis value. Ambient decorative particles are still generated across
-  // this full range (see buildAmbient below) -- untouched by the viewport fit.
+  const DOMAIN = { min: -1, max: 1 }; // nominal OBSERVATION-COUNT/CONNECTIVITY plot range
+  // (KRYL-1332, both axes' real meaning changed 2026-09-28/29) -- unchanged, still the true
+  // meaning of every axis value.
+  // Ambient decorative particles are still generated across this full range (see buildAmbient
+  // below) -- untouched by the viewport fit.
 
   // viewDomain -- KRYL-1287 composition fix (2026-09-09). Real STRENGTH values are unsigned
   // meanMagnitude, always in [0,1] -- never populate the left half of the nominal [-1,1] domain
@@ -393,23 +420,31 @@
   // fabricated data" defect KRYL-1285 documented. Empty until the parent posts real data (or
   // an explicit absence) via postMessage; see applyFieldFormation() below.
   //
-  // Y (MOMENTUM, φ̇) is a KNOWN GAP, not fixed here: fieldFormation (the real source, same one
-  // BRIEF's own '02 FORMATION' section uses) has no per-vertex momentum/velocity value --
-  // its vertices carry only { domain, meanMagnitude }. NEUTRAL_Y below is a rendering
-  // placeholder ONLY so every node has a valid plot coordinate -- it is never labeled,
-  // colored, or treated as a real momentum reading anywhere in this file. See KRYL-1287's
-  // explicit scope note: do not invent, infer, or substitute a momentum value here.
+  // Both axes (KRYL-1332, revised 2026-09-29 after discussion) are now real, existing data, no
+  // invented metric on either:
+  //   X = OBSERVATION COUNT — each domain's real signal count (domainSignalCounts, sent from the
+  //       parent -- the same number StructuralBrief already shows as "N observations").
+  //   Y = RELATIONSHIP CONNECTIVITY — each node's degree: how many admitted relationships touch
+  //       it, counted directly from formation.graph.edges (degreeByDomain in applyFieldFormation).
+  // Strength/magnitude (the ORIGINAL X, and the very first Y before that was momentum -- a KNOWN
+  // GAP with no per-vertex value in fieldFormation, previously a name-hash placeholder honestly
+  // labeled "NOT AVAILABLE") stays real and visible in the detail panel (node.contribution /
+  // CONTRIBUTION), just no longer a spatial axis.
   const NEUTRAL_Y = 0;
-  // layoutY — a deterministic PLACEMENT function, not a data value. With every node otherwise
-  // pinned to NEUTRAL_Y (no real momentum exists to position them), real formations packed
-  // nodes onto a single horizontal line -- crowded labels, garbled edge text (confirmed live,
-  // 2026-09-09). This spreads nodes across a small vertical band purely so they have room to
-  // read clearly; it is a hash of the domain NAME (not of any measurement), reproducible run to
-  // run for the same domain, and still rendered/labeled as "MOMENTUM -- NOT AVAILABLE" -- this
-  // is layout, never a substitute for measured φ̇.
-  function layoutY(domain) {
-    const h = hashStr(domain) / 4294967295; // 0..1
-    return (h - 0.5) * 1.1; // spread across roughly [-0.55, 0.55]
+  let latestDomainSignalCounts = {}; // populated by the 'krylo-field-formation' message handler
+  // normalizeToAxis — normalizes any real per-domain value map (observation counts, or relationship
+  // degree) against the other domains present in the CURRENT formation (min..max -> the same
+  // visual band layoutY originally used, roughly [-0.55, 0.55]), so the node with the highest
+  // value sits highest/rightmost and the lowest sits lowest/leftmost. All domains tying (or no
+  // data at all) centers everyone at 0 -- an honest "no spread to show" rather than an arbitrary
+  // placement. Shared by both axes -- same real-data normalization, different input map.
+  function normalizeToAxis(domain, counts) {
+    const vals = Object.values(counts || {}).filter(v => typeof v === 'number');
+    if (!vals.length) return NEUTRAL_Y;
+    const min = Math.min(...vals), max = Math.max(...vals);
+    if (max === min) return NEUTRAL_Y;
+    const norm = ((counts[domain] ?? 0) - min) / (max - min); // 0..1
+    return (norm - 0.5) * 1.1;
   }
   let NODES = [];
   let EDGES = [];
@@ -424,12 +459,22 @@
     if (!formation) {
       NODES = []; EDGES = []; nodeById = {};
     } else {
+      // KRYL-1332 (Founder, 2026-09-29) -- axis reassignment, decided after discussion: X was
+      // strength/magnitude, now observation count (real signalCount); Y was observation count
+      // (just shipped), now relationship connectivity -- each node's degree (how many admitted
+      // relationships touch it), counted directly from formation.graph.edges, not a new score.
+      // Neither axis requires inventing a metric. Magnitude/strength stays real and available
+      // (node.contribution, shown in the detail panel's CONTRIBUTION field) -- it's just no
+      // longer one of the two spatial axes.
+      const degreeByDomain = {};
+      for (const v of formation.graph.vertices) degreeByDomain[v.domain] = 0;
+      for (const e of formation.graph.edges) {
+        degreeByDomain[e.a] = (degreeByDomain[e.a] ?? 0) + 1;
+        degreeByDomain[e.b] = (degreeByDomain[e.b] ?? 0) + 1;
+      }
       NODES = formation.graph.vertices.map(v => {
-        // meanMagnitude is 0..1 and unsigned (no polarity at this aggregation level) --
-        // mapped onto the positive half of the STRENGTH domain only, not stretched across
-        // the full [-1,1] bipolar range, which would imply a directionality it doesn't carry.
-        const x = v.meanMagnitude;
-        const y = layoutY(v.domain); // layout spread, not momentum -- see layoutY comment above
+        const x = normalizeToAxis(v.domain, latestDomainSignalCounts); // real observation count
+        const y = normalizeToAxis(v.domain, degreeByDomain);           // real relationship degree
         return {
           id: v.domain, label: v.domain.toUpperCase(), provenance: null,
           contribution: v.meanMagnitude,
@@ -484,8 +529,134 @@
   }
 
   window.addEventListener('message', (e) => {
-    if (e.data?.type === 'krylo-field-formation') applyFieldFormation(e.data.formation);
+    if (e.data?.type === 'krylo-field-formation') {
+      latestDomainSignalCounts = e.data.domainSignalCounts || {};
+      applyFieldFormation(e.data.formation);
+      // KRYL-1334 (2026-09-30) -- runs AFTER applyFieldFormation's unconditional scrubber-hide
+      // above, and un-hides it when real persisted history exists. Two genuinely different
+      // absences: applyFieldFormation's hide is about the OLD fake animation (no real
+      // trajectory for a live snapshot, correctly still hidden when there's no real history
+      // either); formationHistory is real persisted KRYL-1334 data, a different question.
+      applyFormationHistory(e.data.formationHistory || []);
+    }
   });
+
+  // ---- KRYL-1334 real formation-history trajectories --------------------
+  const fhWrapEl = document.getElementById('formation-history-wrap');
+  let formationHistoryData = []; // real rows, grouped by formation_id, each sorted by captured_at
+  let fhRange = null; // { min, max } real epoch ms, or null when there's nothing to range over
+
+  const FH_GLYPH = { NEW: '●', STRENGTHENING: '●', WEAKENING: '●', RECONFIGURATION: '◆', DISSOLUTION: '○' };
+
+  function groupByFormationId(rows) {
+    const byId = new Map();
+    for (const r of rows) {
+      if (!byId.has(r.formation_id)) byId.set(r.formation_id, []);
+      byId.get(r.formation_id).push(r);
+    }
+    for (const group of byId.values()) group.sort((a, b) => new Date(a.captured_at) - new Date(b.captured_at));
+    return byId;
+  }
+
+  function applyFormationHistory(rows) {
+    formationHistoryData = rows ?? [];
+    fhWrapEl.innerHTML = '';
+
+    if (formationHistoryData.length === 0) {
+      fhRange = null;
+      return; // nothing real to show -- leave applyFieldFormation's hide decision as-is
+    }
+
+    // Real range only -- no padding, no synthetic extension past the last real timestamp.
+    const times = formationHistoryData.map(r => new Date(r.captured_at).getTime());
+    fhRange = { min: Math.min(...times), max: Math.max(...times) };
+
+    if (scrubberWrapEl) scrubberWrapEl.style.display = ''; // real data exists -- un-hide
+    const scrubberLabelEl = document.getElementById('scrubber-label');
+    if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
+    updateScrubberRangeLabel();
+
+    const grouped = groupByFormationId(formationHistoryData);
+    let rowIndex = 0;
+    for (const [formationId, group] of grouped) {
+      const row = document.createElement('div');
+      row.className = 'fh-row';
+
+      const label = document.createElement('div');
+      label.className = 'fh-label';
+      // formation_id encodes subject|fieldScope|formationScope|entityA|entityB|relationshipType
+      // (formationsnapshot.js's formationIdFor) -- show the real entity pair, not the raw key.
+      const parts = formationId.split('|');
+      const entityA = parts[3], entityB = parts[4];
+      label.textContent = `${entityA} ↔ ${entityB}`;
+      row.appendChild(label);
+
+      const line = document.createElement('div');
+      line.className = 'fh-line';
+      row.appendChild(line);
+
+      // STABLE is never a stored row -- a single line spanning the row already communicates
+      // persistence between real transitions; only real transitions get a glyph.
+      for (const r of group) {
+        const t = new Date(r.captured_at).getTime();
+        const pct = fhRange.max === fhRange.min ? 0 : ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100;
+        const dot = document.createElement('div');
+        dot.className = 'fh-dot';
+        dot.dataset.state = r.state;
+        dot.dataset.t = String(t);
+        dot.style.left = pct + '%';
+        dot.title = `${r.state} — ${new Date(r.captured_at).toLocaleString()}`;
+        dot.addEventListener('click', (ev) => { ev.stopPropagation(); renderFormationTransitionPanel(r, entityA, entityB); });
+        row.appendChild(dot);
+      }
+
+      fhWrapEl.appendChild(row);
+      rowIndex++;
+    }
+
+    applyScrubTimeFilter(); // respect whatever the scrubber is already set to
+  }
+
+  function updateScrubberRangeLabel() {
+    const rangeEl = document.getElementById('scrubber-range');
+    if (!rangeEl || !fhRange) return;
+    const fmt = (ms) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    rangeEl.textContent = `${fmt(fhRange.min)} → ${fmt(fhRange.max)}`;
+  }
+
+  // Scrubbing reveals/dims real points by their real timestamp -- never moves or interpolates
+  // a point's position, only whether it's shown at the current scrub position (t in [0,1]
+  // maps linearly onto the real [fhRange.min, fhRange.max]).
+  function applyScrubTimeFilter() {
+    if (!fhRange) return;
+    const cutoff = fhRange.min + currentT * (fhRange.max - fhRange.min);
+    fhWrapEl.querySelectorAll('.fh-dot').forEach(dot => {
+      const t = Number(dot.dataset.t);
+      dot.classList.toggle('hidden-by-scrub', t > cutoff);
+    });
+  }
+
+  // Reuses the existing detail panel DOM (panelEyebrow/panelTitle/panelDomain), same as
+  // renderPanel() does for a node -- a relationship transition isn't a node (no contribution/
+  // φ/φ̇ to show), so those numeric fields are left honestly blank rather than filled with a
+  // number that doesn't mean anything for this data shape.
+  function renderFormationTransitionPanel(row, entityA, entityB) {
+    panelOpenFor = null; // this isn't a NODES-array id -- prevents renderPanel's own refresh calls (setT/play) from clobbering this view with stale node data
+    panelEyebrow.textContent = 'RELATIONSHIP CHANGE';
+    panelTitle.textContent = row.state;
+    panelDomain.textContent = `${entityA} ↔ ${entityB} — observed ${new Date(row.captured_at).toLocaleString()}`;
+    panelContrib.textContent = '—';
+    panelPhi.textContent = '—';
+    panelPhidot.textContent = '—';
+    const basis = row.provenance?.semantics || row.evidence_ref || 'No evidence text recorded for this transition.';
+    const source = row.provenance?.source || '';
+    opRows.innerHTML = `
+      <div class="op-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+        <span class="op-name" style="white-space:normal; line-height:1.5;">${basis}</span>
+        ${source ? `<span class="op-class">${source}</span>` : ''}
+      </div>`;
+    panel.classList.add('open');
+  }
 
   // KRYL-1332 (Founder, 2026-09-28) — real bug: switching tabs away from MAP and back remounts
   // this iframe fresh, and the parent (structurepanel.jsx) sends the formation postMessage from
@@ -643,16 +814,15 @@
     for (let v = -1; v <= 1.0001; v += 0.5) if (inViewY(v)) ctx.fillText(v.toFixed(1), plot.x - 12, toPxY(v) + 3);
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('STRENGTH  ( φ )', plot.x + plot.w / 2, plot.y + plot.h + 40);
-    // KRYL-1287 — φ̇ (momentum) has no real per-vertex value in fieldFormation (the live source
-    // this file now renders); every node sits at a fixed neutral Y (see NEUTRAL_Y). The axis
-    // label says so explicitly and renders dimmed, rather than silently showing an axis that
-    // looks measured but never carries real data.
+    ctx.fillText('OBSERVATION COUNT', plot.x + plot.w / 2, plot.y + plot.h + 40);
+    // KRYL-1332 (2026-09-28) — Y is now real observation count (signalCountY), not the earlier
+    // name-hash placeholder. Label updated to match; no longer dimmed/"not available" since this
+    // is real data now.
     ctx.save();
     ctx.translate(plot.x - 54, plot.y + plot.h / 2);
     ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = getVar('--text-mono-dim');
-    ctx.fillText('MOMENTUM  ( φ̇ )  — NOT AVAILABLE', 0, 0);
+    ctx.fillStyle = getVar('--text-mono');
+    ctx.fillText('RELATIONSHIP CONNECTIVITY', 0, 0);
     ctx.restore();
     ctx.restore();
   }
@@ -1047,6 +1217,7 @@
     const pct = currentT * 100;
     fillEl.style.width = pct + '%';
     thumbEl.style.left = pct + '%';
+    applyScrubTimeFilter(); // KRYL-1334 -- real timeline, independent of the particle-field redraw below
     if (redraw) {
       draw(currentT);
       if (panelOpenFor) renderPanel(panelOpenFor);

@@ -9,6 +9,9 @@ import CausalImpactView from './causalimpactview.jsx';
 import { inferFormation } from '../../engine/formationinference.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { getAllDomainPressures } from '../../engine/domaingravity.js';
+import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
+import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
+import { formationIdFor } from '../../engine/formationsnapshot.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -69,20 +72,71 @@ function FormationMapTab({ query }) {
   // one-time 'krylo-map-ready' listener (the iframe now pings back once its listener is actually
   // live), so the send happens in response to a real readiness signal, not a guess about `onLoad`
   // timing. onLoad's own send stays as a harmless redundant first attempt.
+  // KRYL-1332 (Founder, 2026-09-28) -- Y-axis fix: MAP's Y was a hash of the domain NAME (layout
+  // spacing only, honestly labeled "MOMENTUM -- NOT AVAILABLE"). Replacing with real, already-
+  // computed observation counts (domainPressures[domain].signalCount, the same number
+  // StructuralBrief already shows as "N observations") -- genuinely independent of X (magnitude
+  // is an average, count is a count; the KNOWLEDGE/OWNERSHIP case found live tonight -- 3 obs/
+  // magnitude 0 vs. 1 obs/magnitude 98 -- is exactly the kind of thing this now shows directly).
+  // Only counts cross the postMessage boundary, not the full domainPressures object.
+  const domainSignalCounts = useMemo(() => {
+    const out = {};
+    for (const [domain, p] of Object.entries(domainPressures)) out[domain] = p.signalCount;
+    return out;
+  }, [domainPressures]);
+
+  // KRYL-1334 (Founder, 2026-09-30) -- real persisted formation history, for the scrubber.
+  // Locally computed structuralQuery, same pattern FormationMapTab already uses for
+  // fieldFormation (independent from targetpacket.jsx's own synthesis -- no shared parent
+  // state exists to read it from without a bigger prop-threading change; not attempted here,
+  // matches this component's existing accepted duplication precedent). Only SUPPORTED pairs
+  // have a real formation_id worth fetching history for -- NO_EVIDENCE pairs have never been
+  // persisted (buildCandidateRows only ever writes SUPPORTED pairs), so fetching them would
+  // always return empty; skipped rather than making a request known to return nothing.
+  const [formationHistory, setFormationHistory] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const interp = interpretStructuralQuery(query);
+        if (interp.state !== 'INTERPRETABLE') { if (!cancelled) setFormationHistory([]); return; }
+        const ev = synthStructuralEntity(interp);
+        const supported = ev.relationships.filter(r => r.state === 'SUPPORTED');
+        const ids = [...new Set(supported.map(r => formationIdFor({
+          subject: null, fieldScope: null, formationScope: null,
+          entityA: r.a, entityB: r.b, relationshipType: r.facet?.relationType ?? 'OBSERVED',
+        })))];
+        const results = await Promise.all(ids.map(id =>
+          fetch(`/v1/formation-state?formationId=${encodeURIComponent(id)}`)
+            .then(r => r.ok ? r.json() : { rows: [] })
+            .then(j => j.rows ?? [])
+            .catch(() => [])
+        ));
+        if (!cancelled) setFormationHistory(results.flat());
+      } catch { if (!cancelled) setFormationHistory([]); }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, [query]);
+
   const fieldFormationRef = useRef(fieldFormation);
+  const domainSignalCountsRef = useRef(domainSignalCounts);
+  const formationHistoryRef = useRef(formationHistory);
   useEffect(() => { fieldFormationRef.current = fieldFormation; }, [fieldFormation]);
+  useEffect(() => { domainSignalCountsRef.current = domainSignalCounts; }, [domainSignalCounts]);
+  useEffect(() => { formationHistoryRef.current = formationHistory; }, [formationHistory]);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation }, '*');
-  }, [fieldFormation]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory }, '*');
+  }, [fieldFormation, domainSignalCounts, formationHistory]);
 
   useEffect(() => {
     function onMapReady(e) {
       if (e.data?.type !== 'krylo-map-ready') return;
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
       iframeReady.current = true;
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current }, '*');
     }
     window.addEventListener('message', onMapReady);
     return () => window.removeEventListener('message', onMapReady);
@@ -91,7 +145,7 @@ function FormationMapTab({ query }) {
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current }, '*');
     }
   };
 
