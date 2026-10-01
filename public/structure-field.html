@@ -281,7 +281,7 @@
   <div>
     <div class="panel-section-title">Validation profile (Class A)</div>
     <div class="panel-disclosure">
-      <b>NOT MEASURED</b> — the 8-operator validation contract exists; no status below has been computed yet. This is a stated gap (KRYL-1220), not a proxy.
+      <b>NOT MEASURED</b> — the 8-operator validation contract exists; no status below has been computed yet. This is a stated gap, not a proxy.
     </div>
     <div id="op-rows"></div>
   </div>
@@ -501,7 +501,7 @@
     // which reads as broken, not as "no data").
     if (scrubberWrapEl) scrubberWrapEl.style.display = 'none';
     if (hintEl) hintEl.textContent = formation
-      ? 'Live observable field — not bound to the resolved subject (KRYL-1220 pending). Hover a node to see its relationships.'
+      ? 'Live observable field — not bound to the resolved subject. Hover a node to see its relationships.'
       : 'No formation established in the live field — this is a stated absence, not a low score.';
 
     // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
@@ -1000,7 +1000,7 @@
       const color = getVar('--text-mono');
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
-      const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1);
+      const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1) * 1.05; // +5% sphere size
 
       // KRYL-1337 (2026-10-01) -- real CONTRIBUTION/PROVENANCE/pos (the old click-card's data,
       // now gone) surfaced on hover instead, same calloutStack mechanism edge-relationship text
@@ -1079,19 +1079,19 @@
       // belong to the same node), collected as a single collision candidate rather than
       // drawn immediately. Resolved and drawn in one pass below, after every node and edge
       // label has been collected, so collision resolution sees the whole picture at once.
-      const mainFont = "11px 'IBM Plex Mono', monospace";
+      const mainFont = "11.55px 'IBM Plex Mono', monospace"; // +5% label size
       ctx.font = mainFont;
       const mainW = ctx.measureText(n.label).width;
       let subText = null, subFont = null, subFillStyle = null, subW = 0, subIsProvenance = false;
       if (n.provenance) {
-        subFont = "8px 'IBM Plex Mono', monospace";
+        subFont = "8.4px 'IBM Plex Mono', monospace"; // +5% label size
         ctx.font = subFont;
         subText = `[${n.provenance}]`;
         subW = ctx.measureText(subText).width;
         subFillStyle = 'rgba(255,255,255,0.24)';
         subIsProvenance = true;
       } else if (n.resolved) {
-        subFont = "10px 'IBM Plex Mono', monospace";
+        subFont = "10.5px 'IBM Plex Mono', monospace"; // +5% label size
         ctx.font = subFont;
         subText = `EMERGING · integrity ${formationIntegrity.toFixed(2)}`;
         subW = ctx.measureText(subText).width;
@@ -1487,9 +1487,9 @@
   // AXIS_LABEL_GAP/HUD_GAP constants, so no clamp is needed here — just place each block from
   // the real measured edge of the one before it.
   function positionHudBelowAxis() {
-    const top = (plot.y + plot.h + AXIS_LABEL_GAP) + 'px';
-    hintEl.style.top = top; hintEl.style.bottom = 'auto';
-    scrubberWrapEl.style.top = (hintEl.getBoundingClientRect().bottom + HUD_GAP) + 'px';
+    // Scrubber only — placed directly under the map's own axis label, not chained off .hint.
+    // .hint keeps its original fixed CSS position; moving the scrubber must not move it too.
+    scrubberWrapEl.style.top = (plot.y + plot.h + AXIS_LABEL_GAP) + 'px';
     scrubberWrapEl.style.bottom = 'auto';
   }
 

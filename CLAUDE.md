@@ -551,3 +551,29 @@ deployed and verified live (§22 Completion Definition) — not merely approved 
 *Incident (2026-09-25): a Founder-requested UI removal was made in a separate worktree, never
 committed, and lost at merge; the deployed build (80a2f6c) still carried it, with no ticket state
 tying the shipped contents to a decision.*
+
+**Iron-clad addendum (Founder, 2026-10-01, LOCKED, no exceptions):** Claude does not decide, on
+its own initiative, to move anything to production — ever. This extends to any action whose
+effect reaches the live, guest-facing site: `deploy.sh`, restarting/reloading the live
+PM2-managed production process, editing a production-only file whose effect is immediate
+(`/opt/krylo-api/.env`, `ecosystem.config.cjs`, nginx config on the production VPS — "just a
+config tweak" or "just a debug header" does not exempt this), or any SSH action against the
+production VPS with a live effect.
+
+- Default state is **ask, then wait.** "Ready for validation on prod — want me to deploy?" and
+  then stop. A later turn's silence, a vague reply, or "it's obviously done" is never consent.
+- An explicit "go"/"deploy" is scoped to that specific exchange, for that specific change. It
+  does not carry forward to a later, different change, and a withheld go ("not yet," "localhost
+  only," "stop") persists until explicitly lifted again — never inferred from a later, unrelated
+  "go."
+- **When a real guest/tester is actively using production** (e.g. an active pilot account), that
+  fact raises the bar further: flag it explicitly as part of any deploy question, don't just ask
+  mechanically and wait for a bare yes.
+- Jira ticket status moving (including to Deploy to Prod) is eligibility, never authorization —
+  not even when the Founder moves it themself.
+*Incident (2026-10-01): across a long session, repeated real "go"/"deploy" exchanges accumulated
+until asking-and-moving-on started to function like consent-by-default, while a real guest (RSI)
+was actively testing in production. "You take advantage of the access... you don't make the
+decision on your own to move to production" — the fix is procedural (full stop before prod, every
+time, regardless of how many prior exchanges that session already had), not a per-session judgment
+call.*
