@@ -279,10 +279,6 @@
     </div>
   </div>
   <div>
-    <div class="panel-section-title">Evidentiary field</div>
-    <div class="panel-canvas-wrap"><canvas id="detail-canvas"></canvas></div>
-  </div>
-  <div>
     <div class="panel-section-title">Validation profile (Class A)</div>
     <div class="panel-disclosure">
       <b>NOT MEASURED</b> — the 8-operator validation contract exists; no status below has been computed yet. This is a stated gap (KRYL-1220), not a proxy.
@@ -491,21 +487,10 @@
     }
     fitViewToNodes(); // composition fix -- pan/zoom the viewport onto the real data, see comment above viewDomain
 
-    // Panel stays on by default — open it for the highest-contribution node as soon as
-    // real data arrives; clicking any other node just switches which one it shows.
-    if (NODES.length) {
-      const def = NODES.reduce((a, b) => (b.contribution > a.contribution ? b : a));
-      panelOpenFor = def.id;
-      renderPanel(def.id);
-      // KRYL-1332 (Founder, 2026-09-28) — the ACTUAL root cause of the persistent overlap: this
-      // is where the panel's content gets set for real, live node data, but positionPanelDefault()
-      // was never called here. The position was set once at init (before nodeById had any real
-      // nodes in it, so every candidate scored the same and it landed at the top-left fallback)
-      // and never recalculated once real data replaced the empty state. Every prior fix to the
-      // collision math itself was correct but never actually ran against real node positions.
-      positionPanelDefault();
-      panel.classList.add('open');
-    }
+    // KRYL-1337 (2026-10-01) — domain-node detail moved from a click-opened card (which
+    // structurally overlapped the map, and carried a fake Evidentiary Field scatter) to the
+    // existing hover treatment below. No panel auto-open for domain nodes anymore; #panel is
+    // now reserved for KRYL-1334's formation-history glyph inspection only (untouched).
 
     // Readout (FORMATIONS/RELATIONSHIPS/RESOLVED) is updated by draw() itself, from
     // realFormation directly -- single source of truth, see the end of draw() below.
@@ -656,7 +641,8 @@
   // φ/φ̇ to show), so those numeric fields are left honestly blank rather than filled with a
   // number that doesn't mean anything for this data shape.
   function renderFormationTransitionPanel(row, entityA, entityB) {
-    panelOpenFor = null; // this isn't a NODES-array id -- prevents renderPanel's own refresh calls (setT/play) from clobbering this view with stale node data
+    // KRYL-1337 -- panelOpenFor itself (the old renderPanel()-refresh guard) is gone now that
+    // renderPanel() is; this function no longer needs to defend against it.
     panelEyebrow.textContent = 'RELATIONSHIP CHANGE';
     panelTitle.textContent = row.state;
     panelDomain.textContent = `${entityA} ↔ ${entityB} — observed ${new Date(row.captured_at).toLocaleString()}`;
@@ -1016,6 +1002,19 @@
       const dim = hoverId && !isHover;
       const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1);
 
+      // KRYL-1337 (2026-10-01) -- real CONTRIBUTION/PROVENANCE/pos (the old click-card's data,
+      // now gone) surfaced on hover instead, same calloutStack mechanism edge-relationship text
+      // already uses (fixed right-side column, leader line back to the node). Real values only
+      // -- s.pos is the same real lerpPath() position the removed card used for phi/phi-dot.
+      if (isHover) {
+        calloutStack.push({
+          text: `${n.label} — CONTRIBUTION ${n.contribution.toFixed(2)}  φ ${s.pos.x.toFixed(2)}  φ̇ ${s.pos.y.toFixed(2)}` +
+                (n.provenance ? `  — ${n.provenance}` : ''),
+          mx: s.px, my: s.py,
+          globalAlpha: 1,
+        });
+      }
+
       // local density halo
       if (!n._haloRand) n._haloRand = mulberry32(hashStr(n.id));
       if (!n._haloOffsets) {
@@ -1233,10 +1232,7 @@
     fillEl.style.width = pct + '%';
     thumbEl.style.left = pct + '%';
     applyScrubTimeFilter(); // KRYL-1334 -- real timeline, independent of the particle-field redraw below
-    if (redraw) {
-      draw(currentT);
-      if (panelOpenFor) renderPanel(panelOpenFor);
-    }
+    if (redraw) draw(currentT);
   }
 
   function tFromEvent(e) {
@@ -1305,10 +1301,7 @@
   let rafId = null;
   function loop(ts) {
     timeMs = ts;
-    if (!dragging) {
-      draw(currentT);
-      if (panelOpenFor) renderPanel(panelOpenFor, false);
-    }
+    if (!dragging) draw(currentT);
     rafId = requestAnimationFrame(loop);
   }
 
@@ -1318,108 +1311,20 @@
   const panelTitle = document.getElementById('panel-title');
   const panelDomain = document.getElementById('panel-domain');
   const panelEyebrow = document.getElementById('panel-domain-eyebrow');
+  // Still real consumers: renderFormationTransitionPanel() (KRYL-1334, above) sets these three
+  // to '-' (a relationship transition has no contribution/phi/phi-dot -- honestly blank, not
+  // removed) and writes its real evidence text into opRows.
   const panelContrib = document.getElementById('panel-contrib');
   const panelPhi = document.getElementById('panel-phi');
   const panelPhidot = document.getElementById('panel-phidot');
   const opRows = document.getElementById('op-rows');
-  const detailCanvas = document.getElementById('detail-canvas');
-  const dctx = detailCanvas.getContext('2d');
-  let panelOpenFor = null;
-
-  const OP_LIBRARY = ['TEMPORAL', 'STRUCTURAL', 'INDEPENDENCE', 'STABILITY'];
-  const OP_STATES = { PASS: 'op-pass', UNDETERMINED: 'op-undetermined', CONFLICT: 'op-conflict', 'N/A': 'op-na', 'NOT MEASURED': 'op-not-measured' };
-
-  // Was syntheticOpsFor() -- a per-node RNG faking PASS/UNDETERMINED/CONFLICT/N-A. The 8-operator
-  // contract isn't wired to real computation yet (KRYL-1220 territory); showing fabricated
-  // statuses here is exactly the false-neutrality §1 forbids. Honest absence instead, same
-  // treatment as targetpacket.jsx's five-metric strip.
-  function opsFor(nodeId) {
-    return OP_LIBRARY.map(name => ({ name, state: 'NOT MEASURED' }));
-  }
-
-  function renderDetailScatter(nodeId) {
-    const rect = detailCanvas.getBoundingClientRect();
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    detailCanvas.width = rect.width * dpr; detailCanvas.height = rect.height * dpr;
-    dctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dctx.clearRect(0, 0, rect.width, rect.height);
-
-    const node = nodeById[nodeId];
-    const rand = mulberry32(hashStr(nodeId) ^ 0x9e3779b9);
-    const cx = rect.width / 2, cy = rect.height / 2;
-
-    // faint path trail
-    if (node.path && node.path.length > 1) {
-      dctx.save();
-      dctx.strokeStyle = 'rgba(255,255,255,0.10)';
-      dctx.lineWidth = 1;
-      dctx.setLineDash([3, 4]);
-      dctx.beginPath();
-      for (let i = 0; i < node.path.length; i++) {
-        const p = node.path[i];
-        const x = cx + p.x * rect.width * 0.38;
-        const y = cy - p.y * rect.height * 0.38;
-        if (i === 0) dctx.moveTo(x, y); else dctx.lineTo(x, y);
-      }
-      dctx.stroke();
-      dctx.restore();
-    }
-
-    // density cloud
-    for (let i = 0; i < 100; i++) {
-      const [gx, gy] = gaussianPair(rand);
-      const x = cx + gx * rect.width * 0.16;
-      const y = cy + gy * rect.height * 0.22;
-      dctx.beginPath();
-      dctx.fillStyle = momentumColor(clamp01(0.5 + gy * 0.3));
-      dctx.globalAlpha = 0.55;
-      dctx.arc(x, y, 1.35, 0, Math.PI * 2);
-      dctx.fill();
-    }
-    dctx.globalAlpha = 1;
-
-    // current position marker
-    const pos = node._pos || lerpPath(node.path, currentT);
-    const mx = cx + pos.x * rect.width * 0.38;
-    const my = cy - pos.y * rect.height * 0.38;
-    dctx.beginPath();
-    dctx.fillStyle = node.resolved ? getVar('--unicorn-purple') : momentumColor((pos.y - DOMAIN.min) / 2);
-    dctx.arc(mx, my, 3.2, 0, Math.PI * 2);
-    dctx.fill();
-    dctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    dctx.lineWidth = 1;
-    dctx.beginPath(); dctx.arc(mx, my, 6, 0, Math.PI * 2); dctx.stroke();
-
-    // axes
-    dctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    dctx.beginPath(); dctx.moveTo(0, cy); dctx.lineTo(rect.width, cy); dctx.stroke();
-    dctx.beginPath(); dctx.moveTo(cx, 0); dctx.lineTo(cx, rect.height); dctx.stroke();
-  }
-
-  function renderPanel(nodeId, rebuildOps = true) {
-    const node = nodeById[nodeId];
-    const pos = node._pos || lerpPath(node.path, currentT);
-    panelEyebrow.textContent = node.resolved ? 'RESOLVED FORMATION' : 'COMPONENT';
-    panelTitle.textContent = node.label;
-    panelDomain.textContent = node.provenance
-      ? `PROVENANCE — ${node.provenance}`
-      : 'PROVENANCE — cross-component (no single origin)';
-    panelContrib.textContent = node.contribution.toFixed(2);
-    panelPhi.textContent = pos.x.toFixed(2);
-    panelPhidot.textContent = pos.y.toFixed(2);
-
-    if (rebuildOps) {
-      opRows.innerHTML = opsFor(nodeId).map(op => `
-        <div class="op-row">
-          <span class="op-name">${op.name}<span class="op-class">CLASS A</span></span>
-          <span class="op-pill ${OP_STATES[op.state]}">${op.state}</span>
-        </div>`).join('');
-    }
-    renderDetailScatter(nodeId);
-  }
-
-  // Panel stays on by default (Founder, 2026-09-17) — the close button and Escape no longer
-  // hide it; clicking a different node switches what it shows instead.
+  // KRYL-1337 (2026-10-01) -- removed: renderPanel()/renderDetailScatter()/opsFor() (the
+  // domain-node click card). renderDetailScatter was a confirmed-fake 100-dot Gaussian cloud
+  // seeded from a hash of the node id, zero real data. opsFor() was the same false-neutrality
+  // problem -- permanent fabricated-looking "NOT MEASURED" rows for a validation contract that
+  // doesn't exist yet (KRYL-1220). Real data (CONTRIBUTION/PROVENANCE/position) now lives in
+  // the hover treatment below. #panel/panelTitle/panelDomain/etc. stay -- still used by
+  // KRYL-1334's formation-history glyph inspection (renderFormationTransitionPanel, unchanged).
 
   // ---- draggable panel — grab the top strip, reposition anywhere on the
   // field. Switches from right/bottom-anchored to left/top-anchored on
@@ -1470,19 +1375,10 @@
     const moved = Math.hypot(e.clientX - pointerDownPos.x, e.clientY - pointerDownPos.y);
     pointerDownPos = null;
     if (moved > 6) return;
-    const hit = hitTest(e.clientX, e.clientY);
-    if (hit) {
-      panelOpenFor = hit.id;
-      renderPanel(hit.id);
-      // KRYL-1332 (Founder, 2026-09-28) -- the actual bug: positionPanelDefault() only ran once
-      // on load/resize, never on click, so the panel's position was frozen at whatever it opened
-      // to first, regardless of which node was later clicked. Content updated, position never
-      // did -- that's why the collision fix appeared to do nothing when testing by clicking
-      // different nodes. Re-run it here, every click (it already no-ops if the guest dragged
-      // the panel themselves, via panelUserPositioned).
-      positionPanelDefault();
-      panel.classList.add('open');
-    }
+    // KRYL-1337 (2026-10-01) -- domain-node click no longer opens the card (see hover handler
+    // below for where its real data moved to). #panel stays reserved for KRYL-1334's
+    // formation-history glyph clicks, which don't go through this canvas hitTest at all (they're
+    // separate DOM elements with their own listeners in applyFormationHistory) -- untouched.
   });
   canvas.addEventListener('pointermove', (e) => {
     const hit = hitTest(e.clientX, e.clientY);
