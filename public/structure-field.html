@@ -57,12 +57,6 @@
   .status { text-align: right; font-size: 11px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
 
-  .hint {
-    bottom: 96px; left: 32px; font-size: 10px; letter-spacing: 0.08em;
-    text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.8;
-  }
-  .hint b { color: rgba(255,255,255,0.6); font-weight: 500; }
-
   .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
 
   /* KRYL-1334 (2026-09-30) — real persisted formation trajectories. One row per formation_id;
@@ -104,7 +98,7 @@
     width: 28px; height: 28px;
     border: 1px solid var(--hairline-strong);
     background: #050505;
-    color: rgba(255,255,255,0.7);
+    color: var(--signal-lime);
     font-family: inherit;
     font-size: 11px;
     cursor: pointer;
@@ -128,10 +122,10 @@
   }
   .scrubber-thumb {
     position: absolute; top: 5px; width: 16px; height: 16px; margin-left: -8px;
-    border: 1px solid rgba(255,255,255,0.7); border-radius: 50%; background: #050505;
+    border: 1px solid var(--signal-lime); border-radius: 50%; background: #050505;
     transition: box-shadow 180ms;
   }
-  .scrubber-thumb::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: rgba(255,255,255,0.75); }
+  .scrubber-thumb::after { content: ''; position: absolute; inset: 4px; border-radius: 50%; background: var(--signal-lime); }
   .scrubber.dragging .scrubber-thumb,
   .scrubber:hover .scrubber-thumb {
     box-shadow: 0 0 0 3px rgba(255,255,255,0.08);
@@ -226,7 +220,6 @@
     #panel { right: 16px; left: 16px; width: auto; top: 100px; }
     .hud-top { flex-direction: column; gap: 14px; }
     .status { text-align: left; }
-    .hint { bottom: 150px; }
     .mark span { max-width: none; }
   }
 </style>
@@ -243,10 +236,6 @@
   <div class="status">
     FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
   </div>
-</div>
-
-<div class="hud hint">
-  Waiting for live field state…
 </div>
 
 <div class="hud scrubber-wrap">
@@ -298,7 +287,6 @@
   const integrityEl = document.getElementById('integrity');
   const tReadoutEl = document.getElementById('t-readout');
   const playBtn = document.getElementById('play-btn');
-  const hintEl = document.querySelector('.hint');
   const scrubberWrapEl = document.querySelector('.scrubber-wrap');
   const hudTopEl = document.querySelector('.hud-top');
 
@@ -317,19 +305,19 @@
     const marginL = Math.max(50, Math.min(90, W * 0.08));
     const marginR = Math.max(40, Math.min(60, W * 0.05));
     const marginT = Math.max(70, Math.min(120, H * 0.10));
-    // .hud-top was pinned at a fixed 32px CSS left/right, independent of marginL/marginR --
-    // the same class of fixed-vs-plot-derived mismatch already fixed for .hint/.scrubber-wrap
-    // below. Keep it locked to the plot's actual left/right edges instead.
+    // .hud-top and .scrubber-wrap were both pinned at a fixed 32px CSS left/right, independent
+    // of marginL/marginR (and of each other, since marginL != marginR in general). Lock both to
+    // the plot's actual left/right edges so the scrubber's width always matches the MAP plot's
+    // width exactly, not a separate hardcoded guess.
     hudTopEl.style.left = marginL + 'px';
     hudTopEl.style.right = marginR + 'px';
-    // Bottom margin fits 3 stacked blocks below the plot: axis label + hint/disclosure row +
-    // scrubber row. Two prior attempts guessed this as a function of H (150px, then 200px) and
-    // both measured short on a real screenshot — disclosure (3 lines) is taller than hint (1
-    // line) and the guess didn't account for real content height at all. Measure the real
-    // elements instead: their height doesn't depend on `plot`, so it's knowable up front.
+    scrubberWrapEl.style.left = marginL + 'px';
+    scrubberWrapEl.style.right = marginR + 'px';
+    // Bottom margin fits 2 stacked blocks below the plot: axis label + scrubber row. Measure the
+    // real element instead of guessing a function of H -- its height doesn't depend on `plot`,
+    // so it's knowable up front.
     const BOTTOM_BUFFER = 16;
-    const hudBlockH = hintEl.offsetHeight;
-    const marginB = Math.max(90, AXIS_LABEL_GAP + hudBlockH + HUD_GAP + scrubberWrapEl.offsetHeight + BOTTOM_BUFFER);
+    const marginB = Math.max(90, AXIS_LABEL_GAP + scrubberWrapEl.offsetHeight + BOTTOM_BUFFER);
     plot = { x: marginL, y: marginT, w: W - marginL - marginR, h: H - marginT - marginB };
   }
 
@@ -500,9 +488,6 @@
     // hidden rather than left interactive-but-inert (dragging it would visibly do nothing,
     // which reads as broken, not as "no data").
     if (scrubberWrapEl) scrubberWrapEl.style.display = 'none';
-    if (hintEl) hintEl.textContent = formation
-      ? 'Live observable field — not bound to the resolved subject. Hover a node to see its relationships.'
-      : 'No formation established in the live field — this is a stated absence, not a low score.';
 
     // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
     // calls draw(currentT) every frame regardless of play/pause -- a one-shot draw(1) call
@@ -561,45 +546,8 @@
     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
     updateScrubberRangeLabel();
 
-    const grouped = groupByFormationId(formationHistoryData);
-    let rowIndex = 0;
-    for (const [formationId, group] of grouped) {
-      const row = document.createElement('div');
-      row.className = 'fh-row';
-
-      const label = document.createElement('div');
-      label.className = 'fh-label';
-      // formation_id encodes subject|fieldScope|formationScope|entityA|entityB|relationshipType
-      // (formationsnapshot.js's formationIdFor) -- show the real entity pair, not the raw key.
-      const parts = formationId.split('|');
-      const entityA = parts[3], entityB = parts[4];
-      label.textContent = `${entityA} ↔ ${entityB}`;
-      row.appendChild(label);
-
-      const line = document.createElement('div');
-      line.className = 'fh-line';
-      row.appendChild(line);
-
-      // STABLE is never a stored row -- a single line spanning the row already communicates
-      // persistence between real transitions; only real transitions get a glyph.
-      for (const r of group) {
-        const t = new Date(r.captured_at).getTime();
-        const pct = fhRange.max === fhRange.min ? 0 : ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100;
-        const dot = document.createElement('div');
-        dot.className = 'fh-dot';
-        dot.dataset.state = r.state;
-        dot.dataset.t = String(t);
-        dot.style.left = pct + '%';
-        dot.title = `${r.state} — ${new Date(r.captured_at).toLocaleString()}`;
-        dot.addEventListener('click', (ev) => { ev.stopPropagation(); renderFormationTransitionPanel(r, entityA, entityB); });
-        row.appendChild(dot);
-      }
-
-      fhWrapEl.appendChild(row);
-      rowIndex++;
-    }
-
-    applyScrubTimeFilter(); // respect whatever the scrubber is already set to
+    // Row rendering (line + dots per formation) removed — fhWrapEl stays empty. fhRange/
+    // scrubber-readout above still drive the scrubber control itself, which keeps working.
 
     // KRYL-1334 (2026-09-30) -- root cause of possible panel/scrubber overlap: resize()
     // computes plot.h (and therefore positionPanelDefault()'s safe bottom boundary) by
@@ -1480,15 +1428,11 @@
     panel.style.top = best.y1 + 'px';
   }
 
-  // positionHudBelowAxis — same fix as positionPanelDefault, applied to .hint/.disclosure/
-  // .scrubber-wrap. All three were pinned at fixed CSS bottom offsets, independent of where the
-  // canvas actually draws its axis label and independent of each other's real height. marginB
-  // (resize(), above) now reserves exactly enough room for this real chain using the same
-  // AXIS_LABEL_GAP/HUD_GAP constants, so no clamp is needed here — just place each block from
-  // the real measured edge of the one before it.
+  // positionHudBelowAxis — same fix as positionPanelDefault, applied to .scrubber-wrap, which
+  // was pinned at a fixed CSS bottom offset independent of where the canvas actually draws its
+  // axis label. marginB (resize(), above) reserves exactly enough room using AXIS_LABEL_GAP, so
+  // no clamp is needed here — just place the block from the real measured plot edge.
   function positionHudBelowAxis() {
-    // Scrubber only — placed directly under the map's own axis label, not chained off .hint.
-    // .hint keeps its original fixed CSS position; moving the scrubber must not move it too.
     scrubberWrapEl.style.top = (plot.y + plot.h + AXIS_LABEL_GAP) + 'px';
     scrubberWrapEl.style.bottom = 'auto';
   }

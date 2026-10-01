@@ -138,6 +138,17 @@ src/engine/convergenceclassifier.js              — kappa classification (KRYL-
   *Incident (WO-295): an architectural replacement (InstancedMesh -> individual components) was
   built as an additive feature without reading the existing architecture — the working map was
   destroyed.*
+- **Full-sweep removal**: before deleting any element, variable, or function referenced elsewhere
+  in the file, grep every usage of it first and remove all of them in the same edit — never
+  incrementally across turns, which leaves the file in a half-migrated state. Verify immediately
+  with a syntax check (extract `<script>`, `node --check`, or equivalent) before reporting done,
+  not after the user reports a blank/broken page. Treat terse removal instructions ("remove it")
+  as full-scope: the whole dependency chain goes, not just the visible markup.
+  *Incident (2026-10-01): removing `.hint` from `structure-field.html` left a dangling
+  `hintEl.offsetHeight` reference in `resize()`; the resulting TypeError aborted `init()` before
+  the canvas ever drew a frame, producing several turns of blank-page reports before being traced
+  to one leftover reference. See memory
+  `feedback_full_sweep_before_removal_literal_terse_instructions.md`.*
 
 ## 5. Design Sovereignty (Founder authority — no exceptions)
 
