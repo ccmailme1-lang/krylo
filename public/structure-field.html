@@ -615,6 +615,21 @@
     }
 
     applyScrubTimeFilter(); // respect whatever the scrubber is already set to
+
+    // KRYL-1334 (2026-09-30) -- root cause of possible panel/scrubber overlap: resize()
+    // computes plot.h (and therefore positionPanelDefault()'s safe bottom boundary) by
+    // measuring scrubberWrapEl's height ONCE at init/window-resize -- adding real trajectory
+    // rows here changes that height afterward without ever re-triggering the same
+    // measure-then-place sequence the window resize handler already uses. Same bug class,
+    // same fix, as KRYL-1332's original panel-overlap root cause (positionPanelDefault()
+    // existed but was never called against real data). Only runs this reflow when formation
+    // history actually changed the block's height -- not on every call, so this doesn't fight
+    // a user who already dragged the panel (positionPanelDefault() itself still respects
+    // panelUserPositioned).
+    resize();
+    positionHudBelowAxis();
+    positionPanelDefault();
+    draw(currentT); // resize() resets canvas.width, which clears the drawing buffer -- must repaint
   }
 
   function updateScrubberRangeLabel() {
