@@ -33,6 +33,8 @@
 
 import { getAllSignals } from './domaingravity.js';
 import { getFrictionStatusForRelationship } from './rtc/rtcmemory.js';
+import { toTopologyNodeId } from './entityresolution.js';
+import { findAdmittedRelationshipsFor } from './canonicalrelationshipprojection.js';
 
 export const RECONN_PAYLOAD_VERSION = 'reconn-payload-0.1';
 
@@ -57,23 +59,50 @@ export function ratifyIntent(analysisIntent) {
 }
 
 // ── 2. Relationship Coverage (RECONN §10) ────────────────────────────────────────────────────
-// BLOCKED, per Founder ruling — not a bug, not a missing wiring step this module can close. §10's
-// canonical authority (relationontology.js) has no persistence layer (see header). This function
-// takes no data — the blocker is architectural, not query-dependent, so it cannot resolve to
-// PRESENT for any input until the persistence work lands upstream (out of Category A's scope).
-export function relationshipCoverage() {
+// UNBLOCKED 2026-10-02 — the exact gap this function was BLOCKED on is closed. The 2026-09-20
+// ruling named the missing piece precisely: §10/§21 require the governed formal relationship
+// ontology as authority, and relationontology.js's admission decisions (admissionengine.js's
+// admitCandidate()) are never persisted anywhere, so there was nothing real to query. That
+// persistence layer is what KRYL-1339/1340 (canonicalrelationship.js's admitRelationship(),
+// ratified 2026-10-01) actually built: a governed, provenance-gated, Founder-ratified admission
+// mechanism (HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE / SHARED_PATENT_ASSIGNMENT / ACQUIRED) that DOES
+// persist admitted relationships and IS queryable (canonicalrelationshipprojection.js's
+// findAdmittedRelationshipsFor()). This is not the same silent substitution the 2026-09-20 review
+// gate already caught and reversed once in this file (domainintelligence.js's
+// CROSS_DOMAIN_RELATIONSHIPS, which answers a different, orthogonal "which domains co-occur"
+// question) — canonical ρ is the formal relationship ontology itself (what relationship exists
+// between two named entities), ratified to supersede relationontology.js's old RelationType enum
+// per the Stage 1 formalization's own ruling that KRYL-1334's relationship_type maps onto
+// canonical ρ.type. Same real data already proven live tonight via structuralbrief.jsx.
+export function relationshipCoverage(subjScope) {
+  if (subjScope?.kind !== 'ENTITY' || !subjScope.canonicalId) {
+    return Object.freeze({
+      state: 'WITHHELD',
+      reason: 'no resolved entity subject to look up admitted canonical relationships for',
+      relationships: [],
+    });
+  }
+  // toTopologyNodeId (entityresolution.js) — the same real bridge structuralbrief.jsx's
+  // equivalent fix uses, here taking subjScope's own canonicalId (the field this module's real
+  // callers actually set — confirmed against qa_reconnpayload.mjs's subjScope shape, not
+  // structuralbrief.jsx's differently-shaped subjScope.entity) rather than assuming a nested
+  // `.entity` object this module's callers don't provide.
+  const id = toTopologyNodeId(subjScope.canonicalId);
+  const admitted = findAdmittedRelationshipsFor(id);
+  if (admitted.length === 0) {
+    return Object.freeze({
+      state: 'NO_EVIDENCE',
+      reason: 'no canonical relationship admitted for this entity',
+      relationships: [],
+    });
+  }
   return Object.freeze({
-    state: 'BLOCKED',
-    reason: 'RECONN §10/§21 require the governed formal relationship ontology (relationontology.js) '
-      + 'as Relationship Coverage\'s authority. Its admission decisions are not persisted anywhere '
-      + '(admissionengine.js\'s admitCandidate() explicitly does not persist; its one production '
-      + 'caller, secownershipconnector.js, discards the TruthEvent). Computing Relationship '
-      + 'Coverage against its canonical authority requires new persistence infrastructure, outside '
-      + 'Category (A)\'s wiring-only boundary. Not substituted with domainintelligence.js\'s '
-      + 'CROSS_DOMAIN_RELATIONSHIPS — that answers an orthogonal question (which domains are '
-      + 'connected), not the formal relationship ontology §10 requires (what relationship exists '
-      + 'between them).',
-    relationships: [],
+    state: 'PRESENT',
+    // phiClass included -- consumers need it to know whether part is ordered (Semantic,
+    // e.g. ACQUIRED's acquirer->target) or unordered (Statistical) before rendering an arrow.
+    // Dropping it here was itself a semantic-degradation bug, found 2026-10-02 -- see
+    // narrativeassembly.js's relationshipsStage().
+    relationships: admitted.map(r => Object.freeze({ part: r.part, type: r.type, phiClass: r.phiClass, nuState: r.nuState ?? {} })),
   });
 }
 
@@ -188,7 +217,7 @@ export function assembleReconnPayload({ analysisIntent, fieldFormation, subjScop
   return Object.freeze({
     version: RECONN_PAYLOAD_VERSION,
     intent: Object.freeze(ratifyIntent(analysisIntent)),
-    relationshipCoverage: relationshipCoverage(), // BLOCKED, always — see function header
+    relationshipCoverage: relationshipCoverage(subjScope),
     structuralCoverage: Object.freeze(structuralCoverage(fieldFormation)),
     temporalState: Object.freeze(domains.map(d => Object.freeze(temporalState(d, canonicalId)))),
     generatedAt: Date.now(),

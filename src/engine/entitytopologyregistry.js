@@ -28,18 +28,11 @@ export function resolveTopology(source) {
   return entityTopologyRegistry[key] ?? [];
 }
 
-// WO-1856 — Register an inventor migration edge (additive only, no removals).
-// Called by patentsviewconnector when an inventor is found at 2+ assignees.
-export function registerInventorMigrationEdge(sourceOrg, destOrg) {
-  const src = sourceOrg.toUpperCase().replace(/[\s-]/g, '_');
-  const dst = destOrg.toUpperCase().replace(/[\s-]/g, '_');
-
-  if (!entityTopologyRegistry[src]) entityTopologyRegistry[src] = [];
-  if (!entityTopologyRegistry[src].includes(dst)) entityTopologyRegistry[src].push(dst);
-
-  if (!entityTopologyRegistry[dst]) entityTopologyRegistry[dst] = [];
-  if (!entityTopologyRegistry[dst].includes(src)) entityTopologyRegistry[dst].push(src);
-}
+// WO-1856's registerInventorMigrationEdge() (v1, untyped, symmetric-only) removed KRYL-1340 —
+// confirmed zero callers repo-wide after patentsviewconnector.js's rewrite to canonical ρ
+// admission (canonicalrelationshipprojection.js), which projects the ratified
+// SHARED_PATENT_ASSIGNMENT type via registerTypedEdge() below instead -- a strict superset
+// (writes both TYPED_EDGES and this same v1 adjacency object), so no v1 behavior is lost.
 
 // ── v2 — typed, directed edges (additive extension, v1 untouched above) ────────
 // v1's registry is flat/symmetric (peer clusters only). Real relationships have a
@@ -51,7 +44,7 @@ export const TYPED_EDGES = []; // { from, to, type, source, ts, validFrom, valid
 
 // KRYL-Lean-Ontology R extension — closed predicate vocabulary (Lean spec's 𝑃).
 // Built from every `type` value actually observed in live callers as of this audit:
-// registerOwnershipEdge (BENEFICIAL_OWNER_OF) and chokepointedges.js's EDGES table
+// secownershipconnector.js (BENEFICIAL_OWNER_OF) and chokepointedges.js's EDGES table
 // (OPERATES/GATES/PROVIDES/POWERS/ENABLES). BRIDGES_TO is synthetic — added by
 // bridgeV1ToV2() below, not a real-world relationship, kept in the same enum so
 // getTypedEdgesFor()/findPath() consumers can filter it out explicitly if they need
@@ -70,6 +63,11 @@ export const RELATION_TYPES = Object.freeze({
   // control; OPERATES/GATES/PROVIDES/POWERS/ENABLES = operational, not ownership) all
   // misrepresent what the real filing actually says.
   ACQUIRED:            'ACQUIRED',
+  // KRYL-1340 (2026-10-01) — added for the ratified SHARED_PATENT_ASSIGNMENT canonical
+  // relationship type (see canonicalrelationshipprojection.js). Real evidence: an inventor has
+  // patents assigned to two organizations -- co-occurrence only, no direction, no migration
+  // claim (see ratifiedrelationshiptypes.js's own header for why COUPLED_WITH was retired).
+  SHARED_PATENT_ASSIGNMENT: 'SHARED_PATENT_ASSIGNMENT',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently
@@ -94,9 +92,20 @@ function normId(name) {
 // annotations that vary by filing ("LUXURBAN HOTELS INC.  (LUXH, LUXHP)  (CIK
 // 0001893311)"), so name-based normId() silently produced a different ID per
 // lookup than per registration — getTypedEdgesFor() returned empty for an edge
-// that was actually present. CIK-based IDs don't have this problem.
+// that was actually present. CIK-based IDs don't have this problem -- EXCEPT
+// zero-padding, confirmed as a real, separate bug (KRYL-1341, 2026-10-01): a raw
+// CIK was concatenated verbatim, so nodeId('96021', ...) and
+// nodeId('0000096021', ...) -- the same real company, two real sources
+// (rsievidencemigration.js's hardcoded constant vs. entityresolution.js's curated
+// registry, which stores CIKs zero-padded) -- produced two different identity
+// strings, silently breaking lookup the same way the 2026-07-07 bug did. Normalized
+// to the same 10-digit zero-padded convention edgar8kconnector.js/
+// edgarnarrativeconnector.js already use (String(cik).padStart(10,'0')) -- not a
+// new convention invented here, the existing one applied consistently.
 export function nodeId(cik, fallbackName) {
-  return cik ? `CIK:${cik}` : normId(fallbackName);
+  if (!cik) return normId(fallbackName);
+  const digits = String(cik).replace(/\D/g, '');
+  return `CIK:${digits.padStart(10, '0')}`;
 }
 
 // validFrom/validTo — additive, optional. Default validFrom = ts (creation time, existing
@@ -121,16 +130,12 @@ export function registerTypedEdge({ from, to, fromCik, toCik, type, source, from
   if (!entityTopologyRegistry[t].includes(f)) entityTopologyRegistry[t].push(f);
 }
 
-// Edge type #2 — beneficial ownership, sourced from SEC Schedule 13D/13G filings
-// (secownershipconnector.js). Structurally guaranteed by the filing itself — the
-// [subject, filer] CIK pair is a required field, not extracted from prose.
-export function registerOwnershipEdge({ subjectCik, subjectName, filerCik, filerName }) {
-  registerTypedEdge({
-    from: filerName, to: subjectName, fromCik: filerCik, toCik: subjectCik,
-    fromLabel: filerName, toLabel: subjectName,
-    type: 'BENEFICIAL_OWNER_OF', source: 'SEC_13D_13G',
-  });
-}
+// registerOwnershipEdge() removed KRYL-1340 — confirmed zero callers repo-wide after
+// secownershipconnector.js's rewrite to canonical ρ admission
+// (canonicalrelationshipprojection.js), which projects HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE via
+// registerTypedEdge() directly, with the same from=filer/to=subject direction this function used
+// (the direction transform lives in canonicalrelationshipprojection.js's PROJECTIONS table, since
+// canonical ρ itself stores the opposite, ratified subject->filer order — see that file's header).
 
 // Read-only query — all typed edges touching a given entity, in either direction.
 // Accepts a CIK (preferred, stable) or falls back to name-based lookup (fragile —

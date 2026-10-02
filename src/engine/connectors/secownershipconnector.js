@@ -9,15 +9,13 @@
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
-import { registerOwnershipEdge, nodeId } from '../entitytopologyregistry.js';
+import { nodeId } from '../entitytopologyregistry.js';
 import { realiseSnapshot } from '../gwrealiser.js';
 import { buildStructure } from '../sigmaengine.js';
-import { makeRelationCore, RelationType } from '../relationontology.js';
-import { admitCandidate } from '../admissionengine.js';
-import { Vocabulary } from '../truthevent.js';
 import { resolveByIdentifier, createEntity } from '../entityresolution.js';
 import { admitAndDispatch } from '../evidenceadmissiongate.js';
 import { ProvenanceDAG } from '../causalos/provenance.js';
+import { admitAndProject } from '../canonicalrelationshipprojection.js';
 
 const SEARCH_BASE = '/api/edgar';
 const MAX_HITS    = 100;
@@ -111,40 +109,31 @@ export async function runSecOwnershipSync({ from, to } = {}) {
       admitIfUnknown(pair.subjectCik, pair.subjectName, pair.accession);
       admitIfUnknown(pair.filerCik,   pair.filerName,   pair.accession);
 
-      registerOwnershipEdge({
-        subjectCik: pair.subjectCik, subjectName: pair.subjectName,
-        filerCik:   pair.filerCik,   filerName:   pair.filerName,
-      });
-      if (!firstSeedId) firstSeedId = nodeId(pair.subjectCik, pair.subjectName);
-      registered++;
-
-      // RelationCore + admission — real evidence, real provenance (SEC accession number, a
-      // unique, verifiable filing identifier — stronger than any hash placeholder). structurally
-      // guaranteed pair per this file's own header comment. DEPENDS_ON reflects Schedule 13D/13G's
-      // actual claim: the filer has taken/discloses a beneficial ownership position dependent on
-      // the subject company's shares existing — closer to the real relation than a symmetric type.
-      try {
-        const rc = makeRelationCore({
-          id: `rc_sec13d_${nodeId(pair.subjectCik, pair.subjectName)}_${nodeId(pair.filerCik, pair.filerName)}_${pair.accession ?? Date.now()}`,
-          sourceId: nodeId(pair.filerCik, pair.filerName),
-          targetId: nodeId(pair.subjectCik, pair.subjectName),
-          relationType: RelationType.DEPENDS_ON,
-          eta: 0.9, // structurally guaranteed field per SEC filing schema, not inferred
-          phi0: 0.5, // placeholder pending real calibration — no doctrine establishes this value
-          structuralSupport: 0.9,
-          provenanceHash: pair.accession ?? `no_accession_${Date.now()}`,
-          createdAt: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
-        });
-        const { decision, event } = admitCandidate(
-          { ...rc, vocabulary: Vocabulary.SRE_RELATIONCORE, relationType: RelationType.DEPENDS_ON, origin: 'OBSERVED' },
-          { decidedBy: 'sec_ownership_producer', rulesetVersion: '1.0.0', now: Date.now(),
-            sreRelationTypes: new Set(Object.values(RelationType)) }
-        );
-        if (decision !== 'VALIDATED') {
-          console.info(`[SEC13D->M7] ${rc.id}: ${decision} (${event.rationale.map(r => r.ruleId + ':' + r.outcome).join(', ')})`);
-        }
-      } catch (rcErr) {
-        console.warn('[SEC13D->M7] RelationCore/admission failed:', rcErr.message);
+      // KRYL-1340 — canonical ρ admission replaces the old unconditional registerOwnershipEdge()
+      // + makeRelationCore()/admitCandidate() audit-trail pair (confirmed inert: discarded after
+      // an optional log, never gated the real write, see KRYL-1340/1348 forensic trace). Real
+      // behavior change, intentional: admission requires a real accession number (formalization
+      // §5 -- no evidence, no admitted relationship). A hit with a null accession previously still
+      // got an unconditional typed edge; it now does not. This is the correct consequence of
+      // ratifying HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE, not a regression.
+      const admission = admitAndProject(
+        {
+          part: [nodeId(pair.subjectCik, pair.subjectName), nodeId(pair.filerCik, pair.filerName)],
+          type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE',
+          nuId: {},
+          nuState: {},
+          evidence: {
+            provenance: { accession: pair.accession, source: 'SEC_13D_13G', filingDate: pair.filingDate },
+            ts: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
+          },
+        },
+        { subjectCik: pair.subjectCik, subjectName: pair.subjectName, filerCik: pair.filerCik, filerName: pair.filerName, source: 'SEC_13D_13G' }
+      );
+      if (!admission.admitted) {
+        console.info(`[SEC13D] not admitted (${pair.accession ?? 'no accession'}): ${admission.reason}`);
+      } else {
+        if (!firstSeedId) firstSeedId = nodeId(pair.subjectCik, pair.subjectName);
+        registered++;
       }
     } catch (err) {
       errors.push({ hit: hit._id, error: err.message });

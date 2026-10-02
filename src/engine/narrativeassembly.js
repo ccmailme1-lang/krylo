@@ -28,6 +28,8 @@
 //     → convergenceRead()) is untouched by Category (A) and remains a separate, unresolved gap.
 //   - Formation, Evidence: still raw fieldFormation — no canonical component exists yet.
 
+import { NODE_LABELS } from './entitytopologyregistry.js';
+
 const STAGE = Object.freeze({ PRESENT: 'PRESENT', WITHHELD: 'WITHHELD' });
 
 function questionStage(analysisIntent) {
@@ -82,19 +84,25 @@ function developmentsStage(reconnPayload) {
   };
 }
 
-// Relationships — sourced from reconnPayload.relationshipCoverage (RECONN §10). BLOCKED today,
-// unconditionally: relationontology.js has no persistence layer (KRYL-1133/1134/1310/1311 Jira
-// comments carry the full chain). This deliberately no longer reads fieldFormation.graph.edges —
-// doing so would present domainintelligence.js's domain-pair vocabulary as if it were RECONN's
-// governed relationship authority, which the review gate found and reversed in reconnpayload.js
-// itself. Same discipline applies here.
+// Relationships — sourced from reconnPayload.relationshipCoverage (RECONN §10). UNBLOCKED
+// 2026-10-02: canonical ρ (KRYL-1339/1340, ratified 2026-10-01) is the persisted, governed
+// relationship authority reconnpayload.js's relationshipCoverage() was waiting on — see that
+// function's header for the full lineage. This still deliberately does not read
+// fieldFormation.graph.edges directly — doing so would present domainintelligence.js's
+// domain-pair vocabulary as if it were RECONN's governed relationship authority, which the
+// review gate found and reversed in reconnpayload.js itself. Same discipline applies here.
 function relationshipsStage(reconnPayload) {
   const rc = reconnPayload?.relationshipCoverage;
   if (rc?.state === 'PRESENT' && rc.relationships?.length) {
-    const parts = rc.relationships.map(r => `${r.a} ↔ ${r.b} (${r.type})`);
+    // Arrow direction matches phiClass -- Semantic types (e.g. ACQUIRED's acquirer->target) are
+    // genuinely ordered; Statistical types are not. Found live 2026-10-02: this previously used
+    // an unconditional '↔', losing ACQUIRED's directional meaning -- same bug class already
+    // fixed in structuralbrief.jsx, just not carried over here.
+    const parts = rc.relationships.map(r =>
+      `${r.part.map(id => NODE_LABELS[id] ?? id).join(r.phiClass === 'Semantic' ? ' → ' : ' ↔ ')} (${r.type})`);
     return {
       stage: 'RELATIONSHIPS', state: STAGE.PRESENT,
-      text: `${rc.relationships.length} governed relationship${rc.relationships.length !== 1 ? 's' : ''} connect the observed domains: ${parts.join('; ')}.`,
+      text: `${rc.relationships.length} governed relationship${rc.relationships.length !== 1 ? 's' : ''}: ${parts.join('; ')}.`,
     };
   }
   return {

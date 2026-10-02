@@ -147,11 +147,24 @@ export function buildBrief(session, synthesis, hp = null, subjArg = null) {
       ? (() => {
           const rels = sq.evidence?.relationships ?? [];
           const supported = rels.filter(r => r.state === 'SUPPORTED');
+          // UNRESOLVED (not a resolvable named entity -- nothing checkable) and NO_EVIDENCE
+          // (real entities, genuinely checked, nothing found) were collapsing into the same
+          // "N checked" text -- false for UNRESOLVED, which was never checked at all. Found by
+          // qa_enum_collapse_audit.mjs, same defect class as structuralbrief.jsx's fix tonight.
+          const unresolved = rels.filter(r => r.state === 'UNRESOLVED');
+          const checked = rels.filter(r => r.state !== 'UNRESOLVED');
           const entityList = sq.entities.join(', ');
           const relSummary = rels.length
-            ? (supported.length
-                ? `${supported.length} of ${rels.length} candidate relationship${rels.length !== 1 ? 's' : ''} supported by real evidence.`
-                : `No candidate relationship${rels.length !== 1 ? 's' : ''} (${rels.length} checked) currently supported by real evidence — this is a stated absence, not a low score.`)
+            ? [
+                unresolved.length
+                  ? `${unresolved.length} of ${rels.length} pair${rels.length !== 1 ? 's' : ''} involve a term that isn't a resolvable named entity — nothing real to check there.`
+                  : null,
+                checked.length
+                  ? (supported.length
+                      ? `Of the ${checked.length} pair${checked.length !== 1 ? 's' : ''} actually checked: ${supported.length} supported by real evidence.`
+                      : `No candidate relationship${checked.length !== 1 ? 's' : ''} (${checked.length} checked) currently supported by real evidence — this is a stated absence, not a low score.`)
+                  : null,
+              ].filter(Boolean).join(' ')
             : 'Only one structural participant recognized — nothing to relate it to yet.';
           return `Structural participants recognized independent of canonical-domain classification: ${entityList}. ${relSummary}`;
         })()

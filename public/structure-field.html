@@ -58,6 +58,13 @@
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
 
   .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
+  /* No real formation history yet for this query -- the control stays visible and labeled,
+     never vanished (vanishing reads as "nothing was ever here," not "no data yet"). The
+     label/readout (the explanation) stays at full, normal contrast -- dimming the text that
+     explains the absent state would hide the one thing a guest actually needs to read.
+     Only the now-meaningless play button and scrub track are dimmed/disabled -- same
+     dim+disable precedent as .fh-dot.hidden-by-scrub, scoped to what's actually inert. */
+  .scrubber-wrap.no-history .scrubber-row { opacity: 0.35; pointer-events: none; }
 
   /* KRYL-1334 (2026-09-30) — real persisted formation trajectories. One row per formation_id;
      X = real time (captured_at, linear-mapped into the real min..max range, never a synthetic
@@ -231,18 +238,18 @@
 <div class="hud hud-top">
   <div class="mark">
     STRUCTURAL RESOLUTION FIELD
-    <span>Live formation field — positioned on observation count and relationship connectivity. Ambient field state, not bound to the resolved subject.</span>
+    <span>Live formation field — position derived from the real cross-domain co-presence graph (which domains carry live signal together, not admitted entity relationships). Ambient field state, not bound to the resolved subject.</span>
   </div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; RELATIONSHIPS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENCE <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
   </div>
 </div>
 
-<div class="hud scrubber-wrap">
+<div class="hud scrubber-wrap no-history">
   <div class="formation-history-wrap" id="formation-history-wrap"></div>
   <div class="scrubber-readout">
-    <span id="scrubber-label">OBSERVATION WINDOW</span>
-    <span id="scrubber-range">T+<b id="t-readout">00:00</b> &nbsp; / &nbsp; T+47:00</span>
+    <span id="scrubber-label">NO FORMATION HISTORY YET</span>
+    <span id="scrubber-range">—</span>
   </div>
   <div class="scrubber-row">
     <button class="ctrl" id="play-btn" aria-pressed="false" title="Play / Pause (Space)">▶</button>
@@ -404,31 +411,67 @@
   // fabricated data" defect KRYL-1285 documented. Empty until the parent posts real data (or
   // an explicit absence) via postMessage; see applyFieldFormation() below.
   //
-  // Both axes (KRYL-1332, revised 2026-09-29 after discussion) are now real, existing data, no
-  // invented metric on either:
-  //   X = OBSERVATION COUNT — each domain's real signal count (domainSignalCounts, sent from the
-  //       parent -- the same number StructuralBrief already shows as "N observations").
-  //   Y = RELATIONSHIP CONNECTIVITY — each node's degree: how many admitted relationships touch
-  //       it, counted directly from formation.graph.edges (degreeByDomain in applyFieldFormation).
-  // Strength/magnitude (the ORIGINAL X, and the very first Y before that was momentum -- a KNOWN
-  // GAP with no per-vertex value in fieldFormation, previously a name-hash placeholder honestly
-  // labeled "NOT AVAILABLE") stays real and visible in the detail panel (node.contribution /
-  // CONTRIBUTION), just no longer a spatial axis.
-  const NEUTRAL_Y = 0;
-  let latestDomainSignalCounts = {}; // populated by the 'krylo-field-formation' message handler
-  // normalizeToAxis — normalizes any real per-domain value map (observation counts, or relationship
-  // degree) against the other domains present in the CURRENT formation (min..max -> the same
-  // visual band layoutY originally used, roughly [-0.55, 0.55]), so the node with the highest
-  // value sits highest/rightmost and the lowest sits lowest/leftmost. All domains tying (or no
-  // data at all) centers everyone at 0 -- an honest "no spread to show" rather than an arbitrary
-  // placement. Shared by both axes -- same real-data normalization, different input map.
-  function normalizeToAxis(domain, counts) {
-    const vals = Object.values(counts || {}).filter(v => typeof v === 'number');
-    if (!vals.length) return NEUTRAL_Y;
-    const min = Math.min(...vals), max = Math.max(...vals);
-    if (max === min) return NEUTRAL_Y;
-    const norm = ((counts[domain] ?? 0) - min) / (max - min); // 0..1
-    return (norm - 0.5) * 1.1;
+  // KRYL-1332's two-independent-real-metrics-on-Cartesian-axes approach (X = observation count,
+  // Y = relationship degree) is superseded (Founder decision, 2026-10-01): when those two scalars
+  // happened to tie across every domain in a real formation, every node centered on the same
+  // line -- real data, honestly rendered, but visually flat regardless of how connected the
+  // real graph actually was. Position is now derived directly from the real admitted-edge graph
+  // itself (force-directed layout: real edges only, no fabricated coordinates -- see
+  // computeGraphLayout below), so connectivity produces nonlinear formations on its own instead
+  // of being projected onto two named axes. Strength/magnitude stays real and visible in the
+  // detail panel (node.contribution / CONTRIBUTION) as before.
+  //
+  // computeGraphLayout — spring-embedder (Fruchterman-Reingold style): every pair of nodes
+  // repels, every real edge pulls its two endpoints toward an ideal distance. Deterministic
+  // (seeded off the real vertex-id set via mulberry32/hashStr, both already used elsewhere in
+  // this file) so the same real formation always lays out the same way -- not a per-render
+  // jitter. Result is rescaled to fit the existing [-1,1] viewport the rest of this file already
+  // assumes (toPxX/toPxY, fitViewToNodes), so nothing downstream needs to change.
+  function computeGraphLayout(vertices, edges) {
+    const ids = vertices.map(v => v.domain);
+    if (!ids.length) return {};
+    const rand = mulberry32(hashStr(ids.slice().sort().join('|')));
+    const pos = {};
+    for (const id of ids) {
+      const a = rand() * Math.PI * 2, r = 0.25 + rand() * 0.15;
+      pos[id] = { x: Math.cos(a) * r, y: Math.sin(a) * r };
+    }
+    if (ids.length < 2) return pos;
+
+    const adj = new Set(edges.map(e => `${e.a}|${e.b}`));
+    const connected = (p, q) => adj.has(`${p}|${q}`) || adj.has(`${q}|${p}`);
+
+    const REPULSION = 0.012, SPRING = 0.06, IDEAL = 0.55, ITER = 400, DAMP = 0.9;
+    for (let iter = 0; iter < ITER; iter++) {
+      const disp = {};
+      for (const id of ids) disp[id] = { x: 0, y: 0 };
+      for (let i = 0; i < ids.length; i++) {
+        for (let j = i + 1; j < ids.length; j++) {
+          const p = ids[i], q = ids[j];
+          const dx = pos[p].x - pos[q].x, dy = pos[p].y - pos[q].y;
+          const d = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+          const rep = REPULSION / (d * d);
+          disp[p].x += (dx / d) * rep; disp[p].y += (dy / d) * rep;
+          disp[q].x -= (dx / d) * rep; disp[q].y -= (dy / d) * rep;
+          if (connected(p, q)) {
+            const spring = SPRING * (d - IDEAL);
+            disp[p].x -= (dx / d) * spring; disp[p].y -= (dy / d) * spring;
+            disp[q].x += (dx / d) * spring; disp[q].y += (dy / d) * spring;
+          }
+        }
+      }
+      for (const id of ids) { pos[id].x += disp[id].x * DAMP; pos[id].y += disp[id].y * DAMP; }
+    }
+
+    const xs = ids.map(id => pos[id].x), ys = ids.map(id => pos[id].y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const spanX = Math.max(0.001, maxX - minX), spanY = Math.max(0.001, maxY - minY);
+    const scale = 1.6 / Math.max(spanX, spanY); // uniform scale both axes -- don't distort real shape
+    const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+    const out = {};
+    for (const id of ids) out[id] = { x: (pos[id].x - cx) * scale, y: (pos[id].y - cy) * scale };
+    return out;
   }
   let NODES = [];
   let EDGES = [];
@@ -443,22 +486,13 @@
     if (!formation) {
       NODES = []; EDGES = []; nodeById = {};
     } else {
-      // KRYL-1332 (Founder, 2026-09-29) -- axis reassignment, decided after discussion: X was
-      // strength/magnitude, now observation count (real signalCount); Y was observation count
-      // (just shipped), now relationship connectivity -- each node's degree (how many admitted
-      // relationships touch it), counted directly from formation.graph.edges, not a new score.
-      // Neither axis requires inventing a metric. Magnitude/strength stays real and available
-      // (node.contribution, shown in the detail panel's CONTRIBUTION field) -- it's just no
-      // longer one of the two spatial axes.
-      const degreeByDomain = {};
-      for (const v of formation.graph.vertices) degreeByDomain[v.domain] = 0;
-      for (const e of formation.graph.edges) {
-        degreeByDomain[e.a] = (degreeByDomain[e.a] ?? 0) + 1;
-        degreeByDomain[e.b] = (degreeByDomain[e.b] ?? 0) + 1;
-      }
+      // Founder decision 2026-10-01 -- position is graph-derived (computeGraphLayout, above),
+      // not two independent real metrics on Cartesian axes. Magnitude/strength stays real and
+      // available (node.contribution, shown in the detail panel's CONTRIBUTION field) -- it's
+      // just not a spatial axis either way.
+      const layout = computeGraphLayout(formation.graph.vertices, formation.graph.edges);
       NODES = formation.graph.vertices.map(v => {
-        const x = normalizeToAxis(v.domain, latestDomainSignalCounts); // real observation count
-        const y = normalizeToAxis(v.domain, degreeByDomain);           // real relationship degree
+        const { x, y } = layout[v.domain] ?? { x: 0, y: 0 };
         return {
           id: v.domain, label: v.domain.toUpperCase(), provenance: null,
           contribution: v.meanMagnitude,
@@ -480,14 +514,20 @@
     // existing hover treatment below. No panel auto-open for domain nodes anymore; #panel is
     // now reserved for KRYL-1334's formation-history glyph inspection only (untouched).
 
-    // Readout (FORMATIONS/RELATIONSHIPS/RESOLVED) is updated by draw() itself, from
+    // Readout (FORMATIONS/CO-PRESENCE/RESOLVED) is updated by draw() itself, from
     // realFormation directly -- single source of truth, see the end of draw() below.
 
-    // No real time-based trajectory exists for a single live snapshot -- the scrubber/play
-    // control implies scrubbing through an animation that isn't real data here, so it's
-    // hidden rather than left interactive-but-inert (dragging it would visibly do nothing,
-    // which reads as broken, not as "no data").
-    if (scrubberWrapEl) scrubberWrapEl.style.display = 'none';
+    // No real time-based trajectory exists for a single live snapshot -- standard disabled-
+    // control convention (Spotify's shuffle button unavailable, Gmail's archive in certain
+    // views): stays visible, dimmed, non-interactive, honestly labeled. Never removed from
+    // layout -- a vanished control reads as "nothing was ever here," not "no data yet."
+    if (scrubberWrapEl) {
+      scrubberWrapEl.classList.add('no-history');
+      const labelEl = document.getElementById('scrubber-label');
+      if (labelEl) labelEl.textContent = 'NO FORMATION HISTORY YET';
+      const rangeEl = document.getElementById('scrubber-range');
+      if (rangeEl) rangeEl.textContent = '—';
+    }
 
     // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
     // calls draw(currentT) every frame regardless of play/pause -- a one-shot draw(1) call
@@ -500,7 +540,6 @@
 
   window.addEventListener('message', (e) => {
     if (e.data?.type === 'krylo-field-formation') {
-      latestDomainSignalCounts = e.data.domainSignalCounts || {};
       applyFieldFormation(e.data.formation);
       // KRYL-1334 (2026-09-30) -- runs AFTER applyFieldFormation's unconditional scrubber-hide
       // above, and un-hides it when real persisted history exists. Two genuinely different
@@ -541,7 +580,7 @@
     const times = formationHistoryData.map(r => new Date(r.captured_at).getTime());
     fhRange = { min: Math.min(...times), max: Math.max(...times) };
 
-    if (scrubberWrapEl) scrubberWrapEl.style.display = ''; // real data exists -- un-hide
+    if (scrubberWrapEl) scrubberWrapEl.classList.remove('no-history'); // real data exists -- re-enable
     const scrubberLabelEl = document.getElementById('scrubber-label');
     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
     updateScrubberRangeLabel();
@@ -756,23 +795,14 @@
       if (inViewY(v)) { ctx.beginPath(); ctx.moveTo(plot.x, toPxY(v)); ctx.lineTo(plot.x + plot.w, toPxY(v)); ctx.stroke(); }
     }
     ctx.font = "10px 'IBM Plex Mono', monospace";
-    ctx.fillStyle = getVar('--text-mono-dim');
-    ctx.textAlign = 'center';
-    for (let v = -1; v <= 1.0001; v += 0.5) if (inViewX(v)) ctx.fillText(v.toFixed(1), toPxX(v), plot.y + plot.h + 18);
-    ctx.textAlign = 'right';
-    for (let v = -1; v <= 1.0001; v += 0.5) if (inViewY(v)) ctx.fillText(v.toFixed(1), plot.x - 12, toPxY(v) + 3);
+    // Founder decision 2026-10-01 -- position is graph-derived (computeGraphLayout), not two
+    // independently-measured metrics on named Cartesian axes, so per-tick numeric values and
+    // per-axis metric names (formerly "OBSERVATION COUNT" / "RELATIONSHIP CONNECTIVITY") would
+    // claim a precision/meaning that no longer exists. Gridlines stay as a neutral spatial
+    // reference frame only; one honest label replaces the two retired metric names.
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('OBSERVATION COUNT', plot.x + plot.w / 2, plot.y + plot.h + 40);
-    // KRYL-1332 (2026-09-28) — Y is now real observation count (signalCountY), not the earlier
-    // name-hash placeholder. Label updated to match; no longer dimmed/"not available" since this
-    // is real data now.
-    ctx.save();
-    ctx.translate(plot.x - 54, plot.y + plot.h / 2);
-    ctx.rotate(-Math.PI / 2);
-    ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('RELATIONSHIP CONNECTIVITY', 0, 0);
-    ctx.restore();
+    ctx.fillText('STRUCTURAL LAYOUT — derived from the real cross-domain co-presence graph', plot.x + plot.w / 2, plot.y + plot.h + 40);
     ctx.restore();
   }
 

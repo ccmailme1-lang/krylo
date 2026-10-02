@@ -25,7 +25,9 @@ test('Relationships stage is WITHHELD even when fieldFormation has real admitted
   const formation = inferFormation(particles, { now: 1000 });
   assert.ok(formation?.graph?.edges?.length, 'precondition: formation must have real edges');
   const payload = assembleReconnPayload({ analysisIntent: null, fieldFormation: formation, subjScope: {} });
-  assert.equal(payload.relationshipCoverage.state, 'BLOCKED'); // sanity on the payload itself
+  // KRYL-1347 (2026-10-02): subjScope: {} has no kind/canonicalId, so the honest result is
+  // WITHHELD (nothing to look up), not the old unconditional BLOCKED -- see reconnpayload.js.
+  assert.equal(payload.relationshipCoverage.state, 'WITHHELD'); // sanity on the payload itself
   const n = assembleNarrative({ analysisIntent: null, fieldFormation: formation, subjScope: {}, reconnPayload: payload });
   const relStage = n.stages.find(s => s.stage === 'RELATIONSHIPS');
   assert.equal(relStage.state, 'WITHHELD');

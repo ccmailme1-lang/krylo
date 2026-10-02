@@ -5,11 +5,8 @@
 
 import { surfaceRouter } from '../surfacerouter.js';
 import { POLARITY, DECAY } from '../signalconstants.js';
-import { registerInventorMigrationEdge } from '../entitytopologyregistry.js';
 import { extractMigrationCandidates } from '../producers/patentsviewmigrationproducer.js';
-import { admitCandidate } from '../admissionengine.js';
-import { Vocabulary } from '../truthevent.js';
-import { RelationType } from '../relationontology.js';
+import { admitAndProject } from '../canonicalrelationshipprojection.js';
 import { registerEvidenceFacetSource } from '../domainsignalresolution.js';
 import { patentsViewEvidenceSource, setPatentsViewSignals } from '../facetproducers/patentsviewfacets.js';
 
@@ -222,24 +219,27 @@ async function buildMigrationSignals(now) {
   const signals = [];
 
   for (const rc of candidates) {
-    // Register into entitytopologyregistry (v1, additive only) — unchanged prior behavior.
-    registerInventorMigrationEdge(rc.sourceId, rc.targetId);
-
-    // Run the real candidate through admission (M6). Gate-0 currently Defers all 14 SRE types
-    // (SPEC-gate0-sre-dispositions.md), so this is expected to REJECT today — that's the correct,
-    // honest outcome, not a bug. The event is still produced, proving the full pipeline is wired:
-    // real evidence -> RelationCore -> admission decision -> TruthEvent.
-    try {
-      const { decision, event } = admitCandidate(
-        { ...rc, vocabulary: Vocabulary.SRE_RELATIONCORE, relationType: RelationType.COUPLED_WITH, origin: 'OBSERVED' },
-        { decidedBy: 'patentsview_migration_producer', rulesetVersion: '1.0.0', now,
-          sreRelationTypes: new Set(Object.values(RelationType)) }
-      );
-      if (decision !== 'VALIDATED') {
-        console.info(`[PatentsView->M7] candidate ${rc.id} evaluated: ${decision} (${event.rationale.map(r => r.ruleId + ':' + r.outcome).join(', ')})`);
-      }
-    } catch (e) {
-      console.warn('[PatentsView->M7] admission evaluation failed:', e.message);
+    // KRYL-1340 — canonical ρ admission replaces the old registerInventorMigrationEdge() (v1,
+    // untyped, no real projection) + makeRelationCore()/admitCandidate() (COUPLED_WITH,
+    // confirmed never-Founder-ratified legacy label, discarded after an optional log, see
+    // KRYL-1340/1348 forensic trace) pair. SHARED_PATENT_ASSIGNMENT is the ratified type:
+    // Statistical, part unordered (no real direction evidence), ν_id={inventorId} (same two
+    // orgs sharing a DIFFERENT inventor is a different relationship).
+    const admission = admitAndProject(
+      {
+        part: [rc.sourceId, rc.targetId],
+        type: 'SHARED_PATENT_ASSIGNMENT',
+        nuId: { inventorId: rc.inventorId },
+        nuState: {},
+        evidence: {
+          provenance: { patentIds: rc.evidencePatentIds },
+          ts: now,
+        },
+      },
+      { orgA: rc.sourceId, orgAName: rc.sourceId, orgB: rc.targetId, orgBName: rc.targetId, source: 'PATENTSVIEW' }
+    );
+    if (!admission.admitted) {
+      console.info(`[PatentsView] candidate ${rc.id} not admitted: ${admission.reason}`);
     }
 
     const confidence = clamp(rc.phi0 * 100, 0, 100);

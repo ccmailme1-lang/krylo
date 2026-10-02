@@ -60,14 +60,17 @@ test('empty question → RATIFIED shape, empty/unresolved sub-fields (no crash, 
 console.log('\n2/3. Relationship + Structural Coverage (RECONN §9/§10):');
 const P = (domain, confidence, polarity = 'constructive', ts = 1) => ({ domain, confidence, polarity, ts });
 
-test('relationshipCoverage is BLOCKED unconditionally — architectural, not query-dependent', () => {
+// KRYL-1347 (2026-10-02): relationshipCoverage() is now query-dependent (subjScope-keyed),
+// not unconditionally BLOCKED — the persistence layer this was architecturally waiting on
+// (KRYL-1339/1340's canonical ρ) now exists. With no subjScope at all there is nothing to
+// look up, so the honest result is WITHHELD, not a fabricated BLOCKED-forever default.
+test('relationshipCoverage with no subjScope → honest WITHHELD, not a fabricated BLOCKED default', () => {
   const particles = [P('TECHNOLOGY', 80), P('CAPITAL', 80)];
   const formation = inferFormation(particles, { now: 1000 });
-  assert.ok(formation, 'precondition: formation must actually assert (proves BLOCKED is not just "no data")');
+  assert.ok(formation, 'precondition: formation must actually assert');
   const rc = relationshipCoverage();
-  assert.equal(rc.state, 'BLOCKED');
+  assert.equal(rc.state, 'WITHHELD');
   assert.deepEqual(rc.relationships, []);
-  assert.ok(/relationontology\.js/.test(rc.reason));
 });
 test('real 2-domain formation → structuralCoverage CLASSIFIED (not the §9 ratio), covered matches participatingDomains', () => {
   const particles = [P('TECHNOLOGY', 80), P('CAPITAL', 80)];
@@ -175,7 +178,12 @@ test('real question + real formation + real subjScope → one canonical payload,
 
   assert.equal(payload.version, RECONN_PAYLOAD_VERSION);
   assert.equal(payload.intent.state, 'RATIFIED');
-  assert.equal(payload.relationshipCoverage.state, 'BLOCKED');
+  // KRYL-1347 (2026-10-02): relationshipCoverage() is no longer unconditionally BLOCKED — the
+  // canonical-ρ persistence layer it was waiting on (KRYL-1339/1340) now exists. 'QA_ENTITY_1'
+  // is a synthetic id with no real admitted relationship, so the honest result is NO_EVIDENCE,
+  // not a fabricated match and not the stale always-BLOCKED default. See reconnpayload.js's
+  // relationshipCoverage() header for the full lineage.
+  assert.equal(payload.relationshipCoverage.state, 'NO_EVIDENCE');
   assert.equal(payload.structuralCoverage.state, 'CLASSIFIED');
   assert.ok(Array.isArray(payload.temporalState));
   assert.equal(payload.temporalState.length, formation.participatingDomains.length);
@@ -190,7 +198,9 @@ test('real question + real formation + real subjScope → one canonical payload,
 test('no inputs at all → payload still assembles, every component honestly WITHHELD/BLOCKED', () => {
   const payload = assembleReconnPayload({});
   assert.equal(payload.intent.state, 'WITHHELD');
-  assert.equal(payload.relationshipCoverage.state, 'BLOCKED'); // architectural, unconditional
+  // No subjScope at all -> honest WITHHELD (nothing to look up), not the stale always-BLOCKED
+  // default -- see KRYL-1347 comment above.
+  assert.equal(payload.relationshipCoverage.state, 'WITHHELD');
   assert.equal(payload.structuralCoverage.state, 'WITHHELD');
   assert.deepEqual(payload.temporalState, []);
 });

@@ -71,7 +71,7 @@ export function extractMigrationCandidates(patents, now) {
     const eta   = Math.min(1, Math.max(0.01, totalPatents / 10));
     const phi0  = Math.min(1, Math.max(0, destData.count / totalPatents));
 
-    candidates.push(makeRelationCore({
+    const rc = makeRelationCore({
       id: `rc_pv_migration_${normalizeOrgKey(sourceOrg)}_${normalizeOrgKey(destOrg)}_${now}`,
       sourceId: normalizeOrgKey(sourceOrg),
       targetId: normalizeOrgKey(destOrg),
@@ -81,7 +81,13 @@ export function extractMigrationCandidates(patents, now) {
       structuralSupport: 0.5, // §3 — placeholder pending real calibration
       provenanceHash,
       createdAt: now,
-    }));
+    });
+    // KRYL-1340/Stage-1 — additive fields, not part of the RelationCore schema itself: the
+    // canonical SHARED_PATENT_ASSIGNMENT type (which replaces COUPLED_WITH as the ratified
+    // label for this evidence) requires inventorId in ν_id and the real patent ids as
+    // provenance. makeRelationCore() has no slot for either -- attached alongside the RelationCore
+    // object rather than inventing a new RelationCore field.
+    candidates.push(Object.freeze({ ...rc, inventorId, evidencePatentIds }));
   }
 
   return candidates;

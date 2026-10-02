@@ -20,6 +20,16 @@ import { A } from '../../engine/adsubject.js';
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
 // individual signals that produced an average was always possible, just never rendered.
 import { getDomainSignals } from '../../engine/domaingravity.js';
+// KRYL-1341 fix (2026-10-01, live validation finding) — the isEntity branch checked domain
+// co-presence (fieldFormation.graph.edges) but never checked canonical ρ (real, admitted
+// entity-to-entity relationships, e.g. Sysco ACQUIRED Restaurant Depot) for the resolved
+// subject at all. Strictly additive: domain co-presence answers "which of the 6 domains are
+// co-active around this entity" (unchanged below); canonical ρ answers a different question,
+// "is there a real, evidenced relationship between this entity and another named entity" — the
+// two are never merged into one list or one count (see render block below).
+import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
+import { toTopologyNodeId } from '../../engine/entityresolution.js';
+import { findAdmittedRelationshipsFor } from '../../engine/canonicalrelationshipprojection.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const HELV   = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -82,6 +92,18 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const relationshipCount = edges.length;
   const observationTotal = domainLines.reduce((s, p) => s + p.signalCount, 0);
 
+  // Canonical ρ lookup for the resolved entity subject. KRYL-1342 (2026-10-02): was an inline
+  // reimplementation of this exact bridge (nodeId(identifiers.edgar, name)) -- the same
+  // operation reconnpayload.js's relationshipCoverage() already does via the real shared
+  // toTopologyNodeId(canonicalId). Consolidated onto the one shared function so the two
+  // surfaces can't silently drift if the bridge logic ever changes. ρ's own identity
+  // contract (part = nodeId()-derived strings, confirmed against all 3 real producers) is
+  // untouched -- this only removes a duplicate consumer-side path to the same real id.
+  // Independent of `edges` above — never combined into relationshipCount or domainList.
+  const entityCanonicalRelationships = isEntity
+    ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
+    : [];
+
   // Fix 1/2 (KRYL-1332, Founder-locked 2026-09-28): magnitude averages multiple observations
   // into one scalar, and a relationship's admittedType is a fixed category label -- both real,
   // neither fabricated, but each collapses information a guest can't recover from the summary
@@ -95,16 +117,33 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const domainList = domainLines.length ? ` (${domainLines.map(p => p.domain).join(', ')})` : '';
   const entityRelPairs = structuralQuery?.evidence?.relationships ?? [];
   const entitySupported = entityRelPairs.filter(r => r.state === 'SUPPORTED');
+  // Distinguish genuinely-checked-and-empty from never-resolvable -- collapsing both into
+  // "candidate relationship" let a generic role noun (SUPPLIER, DISTRIBUTOR) read as if it had
+  // been checked against real evidence and come up empty, when nothing was ever resolvable
+  // enough to check. Real defect found live 2026-10-02.
+  const entityUnresolved = entityRelPairs.filter(r => r.state === 'UNRESOLVED');
+  const entityChecked = entityRelPairs.filter(r => r.state !== 'UNRESOLVED');
+  // Canonical-ρ clause appended only when at least one real relationship exists — when
+  // entityCanonicalRelationships is empty, the sentence is byte-identical to before this fix.
+  const canonicalClause = entityCanonicalRelationships.length
+    ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
+      `admitted for this entity: ${entityCanonicalRelationships.map(r => r.type).join(', ')}.`
+    : '';
   const briefSentence = isEntity
     ? (relationshipCount > 0
         ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
-          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.`
-        : `No admitted structural relationship around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
-          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.`)
+          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}`
+        : `No domain formation established around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
+          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}`)
     : structurallyInterpretable
       ? (entityRelPairs.length
-          ? `No canonical domain matched, but ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} recognized: ` +
-            `${entitySupported.length} of ${entityRelPairs.length} candidate relationship${entityRelPairs.length !== 1 ? 's' : ''} supported by real evidence — the rest are a stated absence, not a low score.`
+          ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
+            (entityUnresolved.length
+              ? `, but ${entityUnresolved.length} of ${entityRelPairs.length} pair${entityRelPairs.length !== 1 ? 's' : ''} involve a term that isn't a resolvable named entity — nothing real to check there.`
+              : '.') +
+            (entityChecked.length
+              ? ` Of the ${entityChecked.length} pair${entityChecked.length !== 1 ? 's' : ''} actually checked: ${entitySupported.length} supported by real evidence — the rest are a stated absence, not a low score.`
+              : '')
           : `Structural participant recognized (${structuralQuery.entities.join(', ')}), but only one — nothing to relate it to yet.`)
       : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
         `across ${domainLines.length} of 6 domains${domainList}.`;
@@ -132,7 +171,11 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: edges.length ? 14 : 0 }}>
             {entityRelPairs.map((r, i) => (
               <div key={`entity-${i}`}>
-                <div>{r.a} ↔ {r.b} — {r.state === 'SUPPORTED' ? 'supported by real evidence' : 'no evidence found'}</div>
+                <div>{r.a} ↔ {r.b} — {
+                  r.state === 'SUPPORTED' ? 'supported by real evidence'
+                  : r.state === 'UNRESOLVED' ? 'not a resolvable named entity'
+                  : 'no evidence found'
+                }</div>
                 {r.state === 'SUPPORTED' && r.facet && (
                   <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
                     {r.facet.semantics} — {r.facet.source}
@@ -144,6 +187,15 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         ) : null}
         {edges.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* KRYL-1343 (2026-10-02): explicit header, matching the canonical block's own
+                precedent below. These are domainintelligence.js's CROSS_DOMAIN_RELATIONSHIPS --
+                which two of the six domains have live signal at once -- not an admitted,
+                entity-to-entity canonical ρ relationship. Sat unlabeled directly under the
+                generic RELATIONSHIPS heading, next to real entity relationships with no visual
+                distinction -- a guest could misread domain co-presence as an admitted fact
+                about named entities. Same question split already enforced in KRYL-1341's fix;
+                this closes the remaining asymmetry (one block had a header, the other didn't). */}
+            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>CROSS-DOMAIN CO-PRESENCE (not admitted ρ)</div>
             {edges.map((e, i) => {
               // Fix 2: admittedType is a fixed category per domain-pair (real, but the same
               // label every time those two domains co-occur) -- attach the actual dated
@@ -164,6 +216,27 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         ) : (structurallyInterpretable && entityRelPairs.length ? null :
           <span style={{ color: ABSENCE }}>No formation established — fewer than two connected domains in the live field.</span>)}
+        {/* KRYL-1341 fix — rendered as its own, visibly separate block, never merged into the
+            domain co-presence list above or counted into relationshipCount/domainList. A
+            different real question (named-entity relationship) gets its own answer, not a
+            blended one. */}
+        {isEntity && entityCanonicalRelationships.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: edges.length ? 14 : 0 }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>CANONICAL RELATIONSHIPS (named-entity)</div>
+            {entityCanonicalRelationships.map((r, i) => (
+              <div key={`canonical-${i}`}>
+                <div>
+                  {r.part.map(id => NODE_LABELS[id] ?? id).join(r.phiClass === 'Semantic' ? ' → ' : ' ↔ ')} — {r.type}
+                </div>
+                {Object.keys(r.nuState ?? {}).length > 0 && (
+                  <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                    {Object.entries(r.nuState).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </Row>
 
       <Row label="WHAT THE STRUCTURE SHOWS">
