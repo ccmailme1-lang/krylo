@@ -41,7 +41,7 @@ export function fireTopicConnectors(q) {
       entityCik:   scope.entity.identifiers.edgar,
       canonicalId: scope.canonicalId,
       from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // real 365-day window (KRYL-1220)
-    }).catch(() => {});
+    }).catch((err) => ({ error: err?.message ?? 'ownership observation failed' })); // never silent: the outcome travels on the event below
     // KRYL-1220 — second attempt at a real second domain: EDGAR 8-K, entity-scoped, 90-day
     // real window (confirmed via direct API check: real EXECUTIVE_CHANGE/SHAREHOLDER_VOTE
     // filings exist for at least one real subject in this range; 7-day ambient window missed
@@ -63,8 +63,11 @@ export function fireTopicConnectors(q) {
     // a window event once admission genuinely settles, so any mounted component can force its
     // own re-render -- same event-based cross-component pattern this app already uses
     // (krylo-submit, krylo-click, krylo-field-formation), not a new mechanism.
-    ownershipObservation.then(() => {
-      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId } }));
+    ownershipObservation.then((result) => {
+      // KRYL-1353 -- the observation's outcome rides on the event: `error` is the failure text
+      // (after the connector's retry), or null on success. The Brief states a failure plainly
+      // instead of looking identical to "no relationships exist" (§16: no silent absence).
+      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: result?.error ?? null } }));
       // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
       // capture time and decides what is a material change), THEN tell readers it landed so the
       // scrubber reads history that includes it. Separate event so the Brief above never waits.

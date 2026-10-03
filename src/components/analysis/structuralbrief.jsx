@@ -67,10 +67,14 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // Scoped to this subject only (ignores the event for a different canonicalId) so switching
   // queries doesn't cause a stale re-render from a prior subject's late-arriving observation.
   const [, forceRhoRefresh] = useState(0);
+  // KRYL-1353: the last ownership-observation outcome, keyed by subject so a failure for one
+  // entity can never be shown against another. error is null on success.
+  const [ownershipOutcome, setOwnershipOutcome] = useState(null);
   useEffect(() => {
     if (!isEntity) return;
     function onRhoUpdated(e) {
       if (e.detail?.canonicalId !== subjScope.canonicalId) return;
+      setOwnershipOutcome({ id: e.detail.canonicalId, error: e.detail?.error ?? null });
       forceRhoRefresh(n => n + 1);
     }
     window.addEventListener('krylo-rho-updated', onRhoUpdated);
@@ -157,12 +161,17 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
     ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
       `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
     : '';
+  // A failed ownership observation is stated, never left looking like "no relationships" (§16).
+  const ownershipFailure = isEntity && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
+  const failureClause = ownershipFailure
+    ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
+    : '';
   const briefSentence = isEntity
     ? (relationshipCount > 0
         ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
-          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}`
+          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}${failureClause}`
         : `No domain formation established around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
-          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}`)
+          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}${failureClause}`)
     : structurallyInterpretable
       ? (entityRelPairs.length
           ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +

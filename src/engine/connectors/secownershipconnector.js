@@ -48,6 +48,14 @@ function admitIfUnknown(cik, name, accession) {
 // no `entityName` key is added to the query when omitted. Correctness of a targeted call never
 // depends on the backend proxy (/api/edgar -> localhost:4000, outside this repo) honoring this
 // param — runTargetedOwnershipObservation below always re-filters client-side regardless.
+// KRYL-1353 -- one retry with backoff, the same precedent and values as edgar8kconnector.js's
+// KRYL-1094 (FETCH_RETRIES=1, RETRY_DELAY_MS=1500): SEC rate-limits by IP, and a single transient
+// 429/5xx previously made a whole targeted observation fail silently (the Brief then looked
+// identical to "no relationships exist"). Live: production returned HTTP 500 on both entity-scoped
+// EDGAR calls at 19:51 UTC 2026-10-03 and succeeded on the next attempt.
+const FETCH_RETRIES  = 1;
+const RETRY_DELAY_MS = 1500;
+
 async function searchOwnershipFilings(startdt, enddt, entityName) {
   const params = new URLSearchParams({
     forms:     'SCHEDULE 13D,SCHEDULE 13G',
@@ -57,10 +65,19 @@ async function searchOwnershipFilings(startdt, enddt, entityName) {
     hits:      String(MAX_HITS),
   });
   if (entityName) params.set('entityName', entityName);
-  const res = await fetch(`${SEARCH_BASE}?${params}`);
-  if (!res.ok) throw new Error(`EDGAR ownership search HTTP ${res.status}`);
-  const json = await res.json();
-  return json.hits?.hits ?? [];
+  let lastErr;
+  for (let attempt = 0; attempt <= FETCH_RETRIES; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+    try {
+      const res = await fetch(`${SEARCH_BASE}?${params}`);
+      if (!res.ok) throw new Error(`EDGAR ownership search HTTP ${res.status}`);
+      const json = await res.json();
+      return json.hits?.hits ?? [];
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr;
 }
 
 // Each hit's ciks/display_names arrays are parallel — index 0 is the subject
