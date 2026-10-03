@@ -531,28 +531,68 @@ async function handleTesterTelemetryRead(req, res) {
 // applies decideWrite() -- the material-change decision is made HERE, server-side, because
 // only the server knows the last persisted state. Fire-and-forget from the client, same as
 // tester-telemetry above -- a failed POST never blocks the guest's query.
+// One candidate through the single-write semantics: validate -> last known state -> decideWrite()
+// -> persist. Shared by the single and the batch endpoint so the two can never diverge.
+// No `if (!pool)` 503: formationstatestore.js falls back to a local file when the DB is missing or
+// unreachable (KRYL-1334), so persistence no longer depends on the pool. captured_at is assigned
+// by the store at write time (capture time) -- a caller can never supply it.
+async function persistFormationCandidate(candidate) {
+  if (!candidate?.formation_id || !candidate?.entity_a || !candidate?.entity_b || !candidate?.relationship_type) {
+    return { code: 422, body: { status: 'DB_WRITE_FAILED', error: 'candidate.{formation_id,entity_a,entity_b,relationship_type} required' } };
+  }
+  try {
+    const last = await lastFormationState(candidate.formation_id);
+    const decision = decideWrite(candidate, last, 'material_change');
+    if (!decision) return { code: 200, body: { status: 'NO_MATERIAL_CHANGE', written: false } };
+    const written = await writeFormationState(decision);
+    return { code: 201, body: { status: 'DB_WRITE_SUCCESS', written: true, id: written.id, capturedAt: written.captured_at } };
+  } catch (err) {
+    console.error('[formation-state] write failed:', err.message);
+    return { code: 500, body: { status: 'DB_WRITE_FAILED', error: err.message } };
+  }
+}
+
 async function handleFormationStateWrite(req, res) {
   let body;
   try { body = await parseBody(req); }
   catch { return send(res, 400, { status: 'DB_WRITE_FAILED', error: 'Invalid JSON body' }); }
 
-  const candidate = body?.candidate;
-  if (!candidate?.formation_id || !candidate?.entity_a || !candidate?.entity_b || !candidate?.relationship_type) {
-    return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'candidate.{formation_id,entity_a,entity_b,relationship_type} required' });
-  }
-  // No `if (!pool)` 503 here: formationstatestore.js falls back to a local file when the DB is
-  // missing or unreachable (KRYL-1334), so persistence no longer depends on the pool.
+  const { code, body: out } = await persistFormationCandidate(body?.candidate);
+  send(res, code, out);
+}
 
-  try {
-    const last = await lastFormationState(candidate.formation_id);
-    const decision = decideWrite(candidate, last, 'material_change');
-    if (!decision) return send(res, 200, { status: 'NO_MATERIAL_CHANGE', written: false });
-    const written = await writeFormationState(decision);
-    send(res, 201, { status: 'DB_WRITE_SUCCESS', written: true, id: written.id, capturedAt: written.captured_at });
-  } catch (err) {
-    console.error('[formation-state] write failed:', err.message);
-    send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+// POST /v1/formation-state/batch -- many candidates, ONE request (KRYL-1334). Each candidate goes
+// through persistFormationCandidate() sequentially, exactly as if posted alone: same validation,
+// same decideWrite(), same store, same capture-time stamp. Sequential on purpose -- two candidates
+// for the same formation_id in one batch must see each other's write. The ceiling mirrors
+// secownershipconnector.js's MAX_HITS (100): one observation's admitted relationships always fit.
+const FORMATION_BATCH_MAX = 100;
+async function handleFormationStateBatchWrite(req, res) {
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { status: 'DB_WRITE_FAILED', error: 'Invalid JSON body' }); }
+
+  const candidates = body?.candidates;
+  if (!Array.isArray(candidates) || candidates.length === 0) {
+    return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'candidates must be a non-empty array' });
   }
+  if (candidates.length > FORMATION_BATCH_MAX) {
+    return send(res, 422, { status: 'DB_WRITE_FAILED', error: `${candidates.length} candidates exceeds the batch ceiling of ${FORMATION_BATCH_MAX}` });
+  }
+
+  const results = [];
+  for (const candidate of candidates) {
+    const { body: out } = await persistFormationCandidate(candidate);
+    results.push({ formation_id: candidate?.formation_id ?? null, ...out });
+  }
+  send(res, 200, {
+    status: 'BATCH_COMPLETE',
+    received: results.length,
+    written: results.filter(r => r.written).length,
+    unchanged: results.filter(r => r.status === 'NO_MATERIAL_CHANGE').length,
+    failed: results.filter(r => r.status === 'DB_WRITE_FAILED').length,
+    results,
+  });
 }
 
 // GET /v1/formation-state?formationId=... — full history for one formation, oldest first.
@@ -1834,6 +1874,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/guest-state')                  return handleGuestStateRead(req, res);
   if (req.method === 'GET'  && url.startsWith('/admin'))                    return handleAdminPage(req, res);
   if (req.method === 'POST' && url === '/v1/formation-state')                return handleFormationStateWrite(req, res);
+  if (req.method === 'POST' && url === '/v1/formation-state/batch')          return handleFormationStateBatchWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/formation-state')                return handleFormationStateRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
