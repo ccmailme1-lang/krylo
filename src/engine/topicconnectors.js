@@ -34,7 +34,7 @@ export function fireTopicConnectors(q) {
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
   const scope = subjectScope(q);
   if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
-    runTargetedOwnershipObservation({
+    const ownershipObservation = runTargetedOwnershipObservation({
       entityCik:   scope.entity.identifiers.edgar,
       canonicalId: scope.canonicalId,
       from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // real 365-day window (KRYL-1220)
@@ -49,5 +49,19 @@ export function fireTopicConnectors(q) {
       entityName:  scope.entity.name,
       from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // matches OWNERSHIP's real 365-day window
     }).catch(() => {});
+
+    // Supplier Structural Intelligence -- real bug found live 2026-10-03: structuralbrief.jsx
+    // and structurepanel.jsx both read canonical ρ synchronously at render time, but this
+    // observation call above is async (a real EDGAR round-trip, several real seconds). The
+    // Brief/Map render BEFORE admission completes and nothing re-renders them afterward -- the
+    // guest never sees the real relationship that was, in fact, just admitted a moment later.
+    // Confirmed live, twice (JPMorgan Chase, then Goldman Sachs): both rendered with zero
+    // canonical relationships despite 64 and 77 being admitted moments afterward. Fix: dispatch
+    // a window event once admission genuinely settles, so any mounted component can force its
+    // own re-render -- same event-based cross-component pattern this app already uses
+    // (krylo-submit, krylo-click, krylo-field-formation), not a new mechanism.
+    ownershipObservation.then(() => {
+      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId } }));
+    });
   }
 }

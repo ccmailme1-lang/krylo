@@ -223,7 +223,22 @@ and revalidate failures immediately, no reporting mid-stream; "Build Complete" i
 
 **Definition of Done:** BAU (works as expected against current baseline) + BASELINE (verified
 against the currently-tagged baseline commit, not a hardcoded name) + VOICED (report-surface text
-follows §7, no size/style overlap).
+follows §7, no size/style overlap) + REACHABLE, risk-weighted by scope, not applied mechanically
+to every change: **Full Gate** (substrate/mechanism changes — admission, identity, interpretation,
+persistence, routing, downstream capability behavior) — a traced producer, persistence path,
+consumer, and UI path is not sufficient on its own; show the actual real user input and the call
+path it traces through to execution, or document exactly where reachability terminates. A
+consumer existing in the repo is not evidence the product can reach it. **Targeted Gate** (narrower
+live-path changes) — verify the one affected path only. **Lightweight** (presentation-only: labels,
+capitalization, spacing, disclosure styling with no behavior/data/semantics/reachability change) —
+no gate required. Hard-stop regardless of tier: if a change can alter what a real user can reach
+or what the system means, trace and verify reachability.
+*Incident (2026-10-02): KRYL-1341 correctly tightened structural-entity admission; the old,
+invalid mechanism had been accidentally providing the formation-history/scrubber subsystem's only
+real reachability. 176/176 regression passed while that subsystem's live entry path was dead the
+whole time — caught only by chance, hours later, while validating something else. See memory
+`feedback_reachability_gate_sop.md` for the full gate (Structural Dependency graph vs. Product
+Reachability graph, Behavioral Retirement Audit, Golden Journeys).*
 
 **Ticket Definition Requirement (LOCKED, applies to net-new tickets going forward).** Every new
 KRYL ticket's description must define all six of: (1) original intent, (2) acceptance criteria,

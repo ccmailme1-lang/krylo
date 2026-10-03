@@ -50,7 +50,7 @@ function admitIfUnknown(cik, name, accession) {
 // param — runTargetedOwnershipObservation below always re-filters client-side regardless.
 async function searchOwnershipFilings(startdt, enddt, entityName) {
   const params = new URLSearchParams({
-    forms:     'SC 13D,SC 13G',
+    forms:     'SCHEDULE 13D,SCHEDULE 13G',
     dateRange: 'custom',
     startdt,
     enddt,
@@ -219,6 +219,8 @@ export async function runTargetedOwnershipObservation({ entityCik, canonicalId =
 
   const admitted = [];
   const rejected = [];
+  const rhoAdmitted = []; // real canonical ρ admission results (admitAndProject) — see below
+  const rhoRejected = [];
   for (const pair of matches) {
     const dag = new ProvenanceDAG();
     dag.add({
@@ -273,7 +275,33 @@ export async function runTargetedOwnershipObservation({ entityCik, canonicalId =
 
     if (result.admitted) admitted.push(result.artifact);
     else rejected.push(result.rejection);
+
+    // KRYL (Supplier Structural Intelligence, Section 17) — this function previously only
+    // called admitAndDispatch() (EAG/signal-dispatch path, above). That path never reaches
+    // canonical ρ (confirmed by tracing evidenceadmissiongate.js: zero references to
+    // admitAndProject/canonicalrelationship anywhere in it) — runSecOwnershipSync() was the
+    // only caller that actually admitted into ρ, and it is untargeted (whole date-window,
+    // every hit, not scoped to one entity). A per-vendor join needs a per-entity call that
+    // actually reaches ρ, so this mirrors runSecOwnershipSync's own admitAndProject() shape
+    // exactly (same type, same part/nuId/nuState/evidence shape) rather than inventing a
+    // second one. Additive — the admitAndDispatch() call above is untouched, still runs,
+    // still feeds its existing EAG/signal consumers unchanged.
+    const rhoAdmission = admitAndProject(
+      {
+        part: [nodeId(pair.subjectCik, pair.subjectName), nodeId(pair.filerCik, pair.filerName)],
+        type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE',
+        nuId: {},
+        nuState: {},
+        evidence: {
+          provenance: { accession: pair.accession, source: 'SEC_13D_13G_TARGETED', filingDate: pair.filingDate },
+          ts: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
+        },
+      },
+      { subjectCik: pair.subjectCik, subjectName: pair.subjectName, filerCik: pair.filerCik, filerName: pair.filerName, source: 'SEC_13D_13G_TARGETED' }
+    );
+    if (rhoAdmission.admitted) rhoAdmitted.push(rhoAdmission);
+    else rhoRejected.push({ pair, reason: rhoAdmission.reason });
   }
 
-  return { admitted, rejected, matched: matches.length, total: hits.length };
+  return { admitted, rejected, rhoAdmitted, rhoRejected, matched: matches.length, total: hits.length };
 }

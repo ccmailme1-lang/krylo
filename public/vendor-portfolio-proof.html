@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Supplier Structural Intelligence — Portfolio Proof (localhost only)</title>
+<!--
+  specs/SPEC-external-supplier-structural-intelligence.md Section 17 exit-criterion proof.
+  Plain, unstyled utilitarian page -- intentionally no design decisions (CLAUDE.md Section 5:
+  design/creative decisions are Founder-only). Not wired into app.jsx's navMode switch, not
+  part of the Layer Order (CLAUDE.md Section 3) -- a standalone proof artifact, not a product
+  surface. Calls POST /api/vendor-portfolio on this same localhost:4000 server.
+-->
+<style>
+  body { font-family: monospace; font-size: 13px; margin: 20px; color: #000; background: #fff; }
+  table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+  th, td { border: 1px solid #999; padding: 4px 8px; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  textarea { width: 100%; height: 160px; font-family: monospace; font-size: 12px; }
+  .disposition-RESOLVED { color: #060; }
+  .disposition-NO_MATCH, .disposition-UNRESOLVED, .disposition-MULTIPLE_MATCHES { color: #900; }
+  .no-evidence { color: #666; font-style: italic; }
+  button { font-family: monospace; padding: 6px 14px; margin-top: 8px; }
+  #status { margin-top: 8px; }
+</style>
+</head>
+<body>
+<h2>Supplier Structural Intelligence — Portfolio Proof</h2>
+<p>Vendor &rarr; entity resolution &rarr; live EDGAR observation &rarr; canonical &rho; &rarr; supplier join &rarr; portfolio view.
+Localhost proof only. Bounded ceiling enforced server-side (25 vendors).</p>
+
+<textarea id="vendorsInput"></textarea>
+<br>
+<button id="runBtn">Run Proof</button>
+<span id="status"></span>
+
+<table id="resultsTable" style="display:none">
+  <thead>
+    <tr>
+      <th>Contract ID</th>
+      <th>Vendor (observed)</th>
+      <th>Disposition</th>
+      <th>Canonical Entity</th>
+      <th>Evidenced Relationship</th>
+      <th>Source Evidence</th>
+      <th>Structural State</th>
+    </tr>
+  </thead>
+  <tbody id="resultsBody"></tbody>
+</table>
+
+<script>
+const DEFAULT_VENDORS = [
+  { contractId: 'VA-2026-00142', vendorRole: 'prime', contractStatus: 'active', vendorName: 'Lockheed Martin' },
+  { contractId: 'VA-2026-00178', vendorRole: 'prime', contractStatus: 'active', vendorName: 'Boeing' },
+  { contractId: 'VA-2026-00201', vendorRole: 'subcontractor', contractStatus: 'active', vendorName: 'Aterian, Inc.', identifiers: { edgar: '0001757715' } },
+  { contractId: 'VA-2026-00233', vendorRole: 'subcontractor', contractStatus: 'active', vendorName: 'Quonset Point Regional Supply Co' },
+  { contractId: 'VA-2026-00250', vendorRole: 'subcontractor', contractStatus: 'pending', vendorName: '' },
+];
+document.getElementById('vendorsInput').value = JSON.stringify(DEFAULT_VENDORS, null, 2);
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function renderRow(record) {
+  const r = record.resolution;
+  const baseCols = `
+    <td>${escapeHtml(record.contractId ?? '—')}</td>
+    <td>${escapeHtml(r.observedName || '(empty)')}</td>
+    <td class="disposition-${r.disposition}">${escapeHtml(r.disposition)}</td>
+    <td>${escapeHtml(r.resolvedCanonicalId ?? '—')}</td>
+  `;
+
+  if (record.relationships === null) {
+    return `<tr>${baseCols}<td class="no-evidence">(no join — disposition not RESOLVED)</td><td>—</td><td>—</td></tr>`;
+  }
+  if (record.relationships === 'NO_EVIDENCE') {
+    return `<tr>${baseCols}<td class="no-evidence">NO_EVIDENCE</td><td>—</td><td>—</td></tr>`;
+  }
+  if (Array.isArray(record.relationships) && record.relationships.length === 0) {
+    return `<tr>${baseCols}<td class="no-evidence">NO_EVIDENCE</td><td>—</td><td>—</td></tr>`;
+  }
+  // One row per evidenced relationship -- never merges two relationships' evidence into one row.
+  return record.relationships.map(rel => `
+    <tr>
+      ${baseCols}
+      <td>${escapeHtml(rel.type)}: ${escapeHtml(rel.part.join(' ↔ '))}</td>
+      <td>${rel.evidence ? escapeHtml(JSON.stringify(rel.evidence)) : '<span class="no-evidence">(not freshly observed this run)</span>'}</td>
+      <td>${rel.structuralState ? escapeHtml(rel.structuralState) : '<span class="no-evidence">(unknown — not admitted this run)</span>'}</td>
+    </tr>
+  `).join('');
+}
+
+document.getElementById('runBtn').addEventListener('click', async () => {
+  const statusEl = document.getElementById('status');
+  const table = document.getElementById('resultsTable');
+  const body = document.getElementById('resultsBody');
+  let vendors;
+  try {
+    vendors = JSON.parse(document.getElementById('vendorsInput').value);
+  } catch (e) {
+    statusEl.textContent = 'Invalid JSON: ' + e.message;
+    return;
+  }
+
+  statusEl.textContent = 'Running… (live EDGAR calls, one per resolved vendor)';
+  table.style.display = 'none';
+  body.innerHTML = '';
+
+  try {
+    const res = await fetch('/api/vendor-portfolio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendors, observationWindow: { from: '2026-09-25', to: '2026-10-03' } }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      statusEl.textContent = 'Error: ' + (data.error ?? res.status);
+      return;
+    }
+    body.innerHTML = data.results.map(renderRow).join('');
+    table.style.display = '';
+    statusEl.textContent = `Done — ${data.results.length} vendor(s) evaluated.`;
+  } catch (e) {
+    statusEl.textContent = 'Request failed: ' + e.message;
+  }
+});
+</script>
+</body>
+</html>

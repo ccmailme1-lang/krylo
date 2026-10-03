@@ -8,14 +8,29 @@ import http  from 'http';
 import https from 'https';
 import { readFileSync, writeFileSync, existsSync, mkdirSync, appendFileSync } from 'fs';
 import { randomUUID, createSign } from 'crypto';
+import { fileURLToPath } from 'url';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
+import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
 // WO-1042 — fixed port, no override
 const PORT = 4000;
+
+// Supplier Structural Intelligence (specs/SPEC-external-supplier-structural-intelligence.md) --
+// secownershipconnector.js's searchOwnershipFilings() calls fetch('/api/edgar?...') with a
+// browser-relative URL (correct in that context -- the Vite dev proxy resolves it against the
+// page origin). This server process IS that origin's backing API, so a relative fetch here has
+// no base to resolve against and throws. Rewriting only '/api/'-prefixed relative calls to this
+// same server's own address -- additive, does not touch any existing https.request-based proxy
+// handler in this file (none of them use fetch()).
+const _realFetch = globalThis.fetch;
+globalThis.fetch = (fetchTarget, opts) => {
+  const abs = typeof fetchTarget === 'string' && fetchTarget.startsWith('/api/') ? `http://localhost:${PORT}${fetchTarget}` : fetchTarget;
+  return _realFetch(abs, opts);
+};
 
 // WO-2019 — Maersk Consumer Key (env var preferred; falls back to specs/maersk.env)
 const MAERSK_KEY = process.env.MAERSK_CONSUMER_KEY ||
@@ -106,6 +121,82 @@ function send(res, status, payload) {
   res.end(body);
 }
 
+function sendHtml(res, status, html) {
+  res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(html);
+}
+
+// Minimal internal admin page (2026-10-02) -- a real page instead of hand-built curl/browser
+// URLs for checking tester telemetry / guest state. The admin key is typed into this page once
+// (kept in sessionStorage, this tab only) and sent from the browser straight to the existing
+// GET /api/tester-telemetry and /api/guest-state read endpoints -- same auth gate as before,
+// just a form instead of a hand-built URL. No new privilege, no new exposure surface.
+async function handleAdminPage(req, res) {
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>KRYLO Admin</title>
+<style>
+  body { font-family: 'IBM Plex Mono', monospace; background: #0a0a0a; color: #e0e0dc; padding: 24px; max-width: 900px; margin: 0 auto; }
+  h1 { font-size: 15px; letter-spacing: 0.1em; color: #66FF00; font-weight: 400; }
+  label { display: block; font-size: 11px; color: #888; margin: 14px 0 4px; }
+  input, select { width: 100%; box-sizing: border-box; background: #141414; border: 1px solid #333; color: #e0e0dc; padding: 8px; font-family: inherit; font-size: 13px; }
+  button { margin-top: 16px; background: #66FF00; color: #0a0a0a; border: none; padding: 10px 18px; font-family: inherit; font-size: 12px; letter-spacing: 0.05em; cursor: pointer; }
+  button:hover { opacity: 0.85; }
+  #results { margin-top: 24px; white-space: pre-wrap; font-size: 11px; line-height: 1.5; border-top: 1px solid #222; padding-top: 16px; }
+  .row { border-bottom: 1px solid #1a1a1a; padding: 8px 0; }
+  .meta { color: #666; font-size: 10px; }
+  .err { color: #ff5555; }
+</style></head>
+<body>
+  <h1>KRYLO ADMIN — GUEST ACTIVITY</h1>
+  <label>Admin Key (kept only in this browser tab)</label>
+  <input id="key" type="password" placeholder="ADMIN_KEY">
+  <label>Query</label>
+  <select id="source">
+    <option value="tester-telemetry">Tester Telemetry (activity log)</option>
+    <option value="guest-state">Guest State (saved work-product)</option>
+  </select>
+  <label>Profile ID (leave blank for all)</label>
+  <input id="profileId" placeholder="e.g. TZ596FGX">
+  <button onclick="run()">Run Query</button>
+  <div id="results"></div>
+<script>
+  const keyEl = document.getElementById('key');
+  keyEl.value = sessionStorage.getItem('krylo_admin_key') || '';
+  keyEl.addEventListener('input', () => sessionStorage.setItem('krylo_admin_key', keyEl.value));
+
+  async function run() {
+    const key = keyEl.value.trim();
+    const source = document.getElementById('source').value;
+    const profileId = document.getElementById('profileId').value.trim();
+    const out = document.getElementById('results');
+    out.textContent = 'Loading...';
+    if (!key) { out.innerHTML = '<span class="err">Admin key required.</span>'; return; }
+    const params = new URLSearchParams({ key });
+    if (profileId) params.set('profileId', profileId);
+    try {
+      const res = await fetch('/api/' + source + '?' + params.toString());
+      const body = await res.json();
+      if (!res.ok) { out.innerHTML = '<span class="err">' + (body.error || res.status) + '</span>'; return; }
+      const rows = body.rows || [];
+      if (rows.length === 0) { out.textContent = 'No rows.'; return; }
+      out.innerHTML = rows.map(r => {
+        if (source === 'tester-telemetry') {
+          const p = r.payload || {};
+          return '<div class="row"><div class="meta">' + (r.received_at || '') + ' · ' + r.profile_id + ' · ' + r.event_type + '</div>' +
+                 '<div>' + JSON.stringify(p) + '</div></div>';
+        }
+        return '<div class="row"><div class="meta">' + (r.updated_at || r.updatedAt || '') + ' · ' + (r.profile_id || r.profileId) + ' · ' + (r.store_key || r.storeKey) + '</div>' +
+               '<div>' + JSON.stringify(r.data) + '</div></div>';
+      }).join('');
+    } catch (e) {
+      out.innerHTML = '<span class="err">' + e.message + '</span>';
+    }
+  }
+</script>
+</body></html>`;
+  sendHtml(res, 200, html);
+}
+
 // ── WO-1043: Route handlers (funnel tiering) ─────────────────────────────────
 
 async function handleCompare(req, res) {
@@ -186,7 +277,11 @@ async function handlePersistExecutionPlan(req, res) {
 // IPv6-only, VPS has no IPv6 route; pooler region unknown). Appends to a local JSONL file so
 // telemetry isn't silently dropped while that's sorted out. Temporary, not a redesign of the
 // Postgres path above, which stays the primary path whenever `pool` is set.
-const TELEMETRY_FILE = new URL('./data/tester_telemetry.jsonl', import.meta.url).pathname;
+// fileURLToPath (not .pathname) -- .pathname percent-encodes special characters (e.g. a space
+// in the repo's own path, "web apps"), which silently misdirected both this file and
+// GUEST_STATE_FILE below to a nonexistent path on this machine. Invisible in production (no
+// special characters in /opt/krylo-api), confirmed live locally while testing guest-state.
+const TELEMETRY_FILE = fileURLToPath(new URL('./data/tester_telemetry.jsonl', import.meta.url));
 
 function appendTelemetryFile(events) {
   const dir = TELEMETRY_FILE.slice(0, TELEMETRY_FILE.lastIndexOf('/'));
@@ -266,6 +361,126 @@ async function handleTesterTelemetry(req, res) {
       console.error('[tester-telemetry] file fallback also failed:', fileErr.message);
       send(res, 500, { status: 'DB_WRITE_FAILED', error: fileErr.message });
     }
+  }
+}
+
+// Guest State Durability (2026-10-02) -- server mirror for guest work-product previously saved
+// only to browser localStorage. One upserted row per (profileId, storeKey). Same DB-with-
+// file-fallback shape as tester-telemetry above, not a new design -- see db.js's guest_state
+// table comment for why.
+const GUEST_STATE_FILE = fileURLToPath(new URL('./data/guest_state.json', import.meta.url));
+
+function readGuestStateFile() {
+  if (!existsSync(GUEST_STATE_FILE)) return {};
+  try { return JSON.parse(readFileSync(GUEST_STATE_FILE, 'utf8')); } catch { return {}; }
+}
+
+function writeGuestStateFileEntry(profileId, storeKey, data) {
+  const dir = GUEST_STATE_FILE.slice(0, GUEST_STATE_FILE.lastIndexOf('/'));
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const all = readGuestStateFile();
+  all[`${profileId}::${storeKey}`] = { profileId, storeKey, data, updatedAt: new Date().toISOString() };
+  writeFileSync(GUEST_STATE_FILE, JSON.stringify(all, null, 2));
+}
+
+// POST /api/vendor-portfolio -- Supplier Structural Intelligence Section 17 proof endpoint.
+// Localhost proof only (not referenced by any production route or nginx config); runs the real
+// vendor -> entity resolution -> live EDGAR observation -> canonical ρ -> supplier join path and
+// returns the bounded portfolio view for vendor-portfolio-proof.html to render.
+async function handleVendorPortfolio(req, res) {
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { error: 'Invalid JSON body' }); }
+
+  const vendors = body?.vendors;
+  if (!Array.isArray(vendors)) return send(res, 422, { error: 'vendors must be an array' });
+  if (vendors.length > MAX_PORTFOLIO_SIZE) {
+    return send(res, 422, { error: `population of ${vendors.length} exceeds the bounded ceiling of ${MAX_PORTFOLIO_SIZE}` });
+  }
+
+  try {
+    const results = await evaluateVendorPortfolio(vendors, body?.observationWindow);
+    return send(res, 200, { results });
+  } catch (err) {
+    return send(res, 500, { error: err.message });
+  }
+}
+
+async function handleGuestStateWrite(req, res) {
+  let body;
+  try { body = await parseBody(req); }
+  catch { return send(res, 400, { status: 'DB_WRITE_FAILED', error: 'Invalid JSON body' }); }
+
+  const { profileId, storeKey, data } = body ?? {};
+  if (!profileId || !storeKey || data === undefined) {
+    return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'profileId, storeKey, data required' });
+  }
+
+  if (!pool) {
+    try {
+      writeGuestStateFileEntry(profileId, storeKey, data);
+      return send(res, 201, { status: 'DB_WRITE_SUCCESS', note: 'file fallback (pilot)' });
+    } catch (err) {
+      console.error('[guest-state] file write failed:', err.message);
+      return send(res, 500, { status: 'DB_WRITE_FAILED', error: err.message });
+    }
+  }
+
+  try {
+    await pool.query(
+      `INSERT INTO guest_state (profile_id, store_key, data, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (profile_id, store_key) DO UPDATE SET data = $3, updated_at = NOW()`,
+      [profileId, storeKey, JSON.stringify(data)]
+    );
+    send(res, 201, { status: 'DB_WRITE_SUCCESS' });
+  } catch (err) {
+    console.error('[guest-state] DB write failed, falling back to file:', err.message);
+    try {
+      writeGuestStateFileEntry(profileId, storeKey, data);
+      send(res, 201, { status: 'DB_WRITE_SUCCESS', note: 'file fallback (DB unreachable)' });
+    } catch (fileErr) {
+      console.error('[guest-state] file fallback also failed:', fileErr.message);
+      send(res, 500, { status: 'DB_WRITE_FAILED', error: fileErr.message });
+    }
+  }
+}
+
+// GET /api/guest-state?profileId=t03&key=ADMIN_KEY — admin recovery read, same minimal
+// ADMIN_KEY gate as tester-telemetry's read path (not a real auth system).
+async function handleGuestStateRead(req, res) {
+  const u = new URL(req.url, 'http://localhost');
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey || u.searchParams.get('key') !== adminKey) {
+    return send(res, 403, { status: 'FORBIDDEN', error: 'missing or invalid key' });
+  }
+  const profileId = u.searchParams.get('profileId');
+  const storeKey = u.searchParams.get('storeKey');
+
+  if (!pool) {
+    const all = readGuestStateFile();
+    const rows = Object.values(all)
+      .filter((r) => !profileId || r.profileId === profileId)
+      .filter((r) => !storeKey || r.storeKey === storeKey);
+    return send(res, 200, { status: 'DB_READ_SUCCESS', rows, note: 'file fallback (pilot)' });
+  }
+  try {
+    const params = [];
+    let sql = 'SELECT profile_id, store_key, data, updated_at FROM guest_state';
+    const where = [];
+    if (profileId) { params.push(profileId); where.push('profile_id = $' + params.length); }
+    if (storeKey)  { params.push(storeKey);  where.push('store_key = $' + params.length); }
+    if (where.length) sql += ' WHERE ' + where.join(' AND ');
+    sql += ' ORDER BY updated_at DESC LIMIT 500';
+    const { rows } = await pool.query(sql, params);
+    send(res, 200, { status: 'DB_READ_SUCCESS', rows });
+  } catch (err) {
+    console.error('[guest-state] DB read failed, falling back to file:', err.message);
+    const all = readGuestStateFile();
+    const rows = Object.values(all)
+      .filter((r) => !profileId || r.profileId === profileId)
+      .filter((r) => !storeKey || r.storeKey === storeKey);
+    send(res, 200, { status: 'DB_READ_SUCCESS', rows, note: 'file fallback (DB unreachable)' });
   }
 }
 
@@ -1095,7 +1310,7 @@ function handleUsajobsProxy(req, res) {
     hostname: 'data.usajobs.gov',
     path: `/api/search?Keyword=${encodeURIComponent(q)}&ResultsPerPage=10`,
     method: 'GET',
-    headers: { 'Authorization-Key': apiKey, 'Host': 'data.usajobs.gov', 'User-Agent': 'houzzco@gmail.com' },
+    headers: { 'Authorization-Key': apiKey, 'Host': 'data.usajobs.gov', 'User-Agent': 'concec@krylo.org' },
   };
   const proxy = https.request(options, upstream => {
     let body = ''; upstream.on('data', c => { body += c; }); upstream.on('end', () => {
@@ -1613,6 +1828,10 @@ function routeRequest(req, res) {
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
   if (req.method === 'POST' && url === '/api/tester-telemetry')              return handleTesterTelemetry(req, res);
   if (req.method === 'GET'  && url === '/api/tester-telemetry')              return handleTesterTelemetryRead(req, res);
+  if (req.method === 'POST' && url === '/api/guest-state')                  return handleGuestStateWrite(req, res);
+  if (req.method === 'POST' && url === '/api/vendor-portfolio')             return handleVendorPortfolio(req, res);
+  if (req.method === 'GET'  && url === '/api/guest-state')                  return handleGuestStateRead(req, res);
+  if (req.method === 'GET'  && url.startsWith('/admin'))                    return handleAdminPage(req, res);
   if (req.method === 'POST' && url === '/v1/formation-state')                return handleFormationStateWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/formation-state')                return handleFormationStateRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);

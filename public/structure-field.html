@@ -102,12 +102,12 @@
 
   .ctrl {
     flex: 0 0 auto;
-    width: 28px; height: 28px;
+    width: 31px; height: 31px;
     border: 1px solid var(--hairline-strong);
     background: #050505;
     color: var(--signal-lime);
     font-family: inherit;
-    font-size: 11px;
+    font-size: 12px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     border-radius: 2px;
@@ -128,7 +128,7 @@
     background: rgba(255,255,255,0.18);
   }
   .scrubber-thumb {
-    position: absolute; top: 5px; width: 16px; height: 16px; margin-left: -8px;
+    position: absolute; top: 4px; width: 18px; height: 18px; margin-left: -9px;
     border: 1px solid var(--signal-lime); border-radius: 50%; background: #050505;
     transition: box-shadow 180ms;
   }
@@ -547,6 +547,12 @@
       // trajectory for a live snapshot, correctly still hidden when there's no real history
       // either); formationHistory is real persisted KRYL-1334 data, a different question.
       applyFormationHistory(e.data.formationHistory || []);
+      // Supplier Structural Intelligence -- real admitted canonical ρ relationships for the
+      // resolved query subject, computed in structurepanel.jsx (parent) and carried over the
+      // same existing message, same discipline as formation/formationHistory above: this iframe
+      // never resolves an entity or queries ρ itself, it only renders what the parent already
+      // computed.
+      applyEntityRelationships(e.data.entityRelationships || []);
     }
   });
 
@@ -632,6 +638,7 @@
     // renderPanel() is; this function no longer needs to defend against it.
     panelEyebrow.textContent = 'RELATIONSHIP CHANGE';
     panelTitle.textContent = row.state;
+    panelDomain.style.color = ''; // reset any brighter override applyEntityRelationships left behind
     panelDomain.textContent = `${entityA} ↔ ${entityB} — observed ${new Date(row.captured_at).toLocaleString()}`;
     panelContrib.textContent = '—';
     panelPhi.textContent = '—';
@@ -644,6 +651,55 @@
         ${source ? `<span class="op-class">${source}</span>` : ''}
       </div>`;
     panel.classList.add('open');
+    // Ownership handoff: the scrubber now owns the panel's open content, not the entity-
+    // relationships feature below -- a later NO_EVIDENCE query must not close THIS content.
+    entityPanelOpen = false;
+  }
+
+  // Supplier Structural Intelligence -- reuses the SAME panel DOM renderFormationTransitionPanel
+  // above already uses, new content only, no new screen region (spec: "no additional screen
+  // region is introduced"). entityPanelOpen tracks whether THIS function currently owns the
+  // panel's open state, so an empty relationships array (NO_EVIDENCE, or a query with no
+  // resolved entity) never force-closes a panel the scrubber legitimately opened via
+  // renderFormationTransitionPanel -- the two features never fight over the same element.
+  // Deterministic per-type sentence, same discipline structuralbrief.jsx uses (KRYL-1332):
+  // a template filled with values already computed, never fabricated prose. Direction is the
+  // real semantic order each ratified type's admission already establishes, not guessed --
+  // HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE's part is [subject, filer] (secownershipconnector.js),
+  // ACQUIRED's is [acquirer, target] (rsievidencemigration.js). A type without a specific
+  // sentence yet falls back to the plain arrow form -- honest, never invents a direction this
+  // function hasn't verified.
+  function relationshipSentence(r) {
+    const [a, b] = r.part;
+    if (r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}.`;
+    if (r.type === 'ACQUIRED') return `${a} acquired ${b}.`;
+    if (r.type === 'SHARED_PATENT_ASSIGNMENT') return `${a} and ${b} share a patent assignment.`;
+    return `${a} ↔ ${b} — ${r.type}.`;
+  }
+
+  let entityPanelOpen = false;
+  function applyEntityRelationships(relationships) {
+    if (!relationships || relationships.length === 0) {
+      if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
+      return; // NO_EVIDENCE: no edge on the plot, no panel -- nothing invented to fill space
+    }
+    panelEyebrow.textContent = 'EVIDENCED RELATIONSHIP (canonical ρ)';
+    panelTitle.textContent = relationships.length === 1 ? relationships[0].type : `${relationships.length} ADMITTED RELATIONSHIPS`;
+    // Brighter than the shared .panel-domain class (--text-mono-dim, 0.32 alpha -- too low-
+    // contrast for primary content); reset explicitly in renderFormationTransitionPanel above so
+    // this override never leaks into its own, unrelated use of the same element.
+    panelDomain.style.color = '#f4f6f2';
+    panelDomain.textContent = relationships.length === 1 ? relationshipSentence(relationships[0]) : '';
+    panelContrib.textContent = '—';
+    panelPhi.textContent = '—';
+    panelPhidot.textContent = '—';
+    opRows.innerHTML = relationships.map(r => `
+      <div class="op-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
+        <span class="op-name" style="white-space:normal; line-height:1.5; color:#f4f6f2;">${relationshipSentence(r)}</span>
+        <span class="op-class">${r.type}</span>
+      </div>`).join('');
+    panel.classList.add('open');
+    entityPanelOpen = true;
   }
 
   // KRYL-1332 (Founder, 2026-09-28) — real bug: switching tabs away from MAP and back remounts
@@ -802,7 +858,7 @@
     // reference frame only; one honest label replaces the two retired metric names.
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('STRUCTURAL LAYOUT — derived from the real cross-domain co-presence graph', plot.x + plot.w / 2, plot.y + plot.h + 40);
+    ctx.fillText('STRUCTURAL LAYOUT — Derived from the real cross-domain co-presence graph', plot.x + plot.w / 2, plot.y + plot.h + 40);
     ctx.restore();
   }
 
@@ -1221,6 +1277,7 @@
 
   let dragging = false;
   scrubberEl.addEventListener('pointerdown', (e) => {
+    if (!fhRange) return; // no real history -- same guard as togglePlay(), see its comment
     dragging = true;
     scrubberEl.classList.add('dragging');
     scrubberEl.setPointerCapture(e.pointerId);
@@ -1262,6 +1319,11 @@
   }
 
   function togglePlay() {
+    // KRYL (2026-10-02, live finding): CSS pointer-events:none on .no-history blocks mouse
+    // clicks but not the Space keybinding below, which calls this directly -- the actual
+    // disabled state has to be enforced here, not just visually. fhRange is null exactly when
+    // there's no real formation history (same condition driving the .no-history class).
+    if (!fhRange) return;
     if (playing) {
       stopPlay();
     } else {
@@ -1401,6 +1463,7 @@
       return;
     }
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      if (!fhRange) return; // no real history -- same guard as togglePlay(), see its comment
       e.preventDefault();
       stopPlay();
       const step = e.shiftKey ? 0.08 : 0.02;

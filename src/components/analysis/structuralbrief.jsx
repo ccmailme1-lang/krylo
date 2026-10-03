@@ -14,12 +14,13 @@
 // was removed, gated, or gets less true — see §21 (FORMATION IS NOT A VERDICT): real field-level
 // structure is never hidden here for lack of a resolved subject.
 
+import { useState, useEffect } from 'react';
 import { A } from '../../engine/adsubject.js';
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
 // individual signals that produced an average was always possible, just never rendered.
-import { getDomainSignals } from '../../engine/domaingravity.js';
+import { getDomainSignals, DEFAULT_WINDOW_MS } from '../../engine/domaingravity.js';
 // KRYL-1341 fix (2026-10-01, live validation finding) — the isEntity branch checked domain
 // co-presence (fieldFormation.graph.edges) but never checked canonical ρ (real, admitted
 // entity-to-entity relationships, e.g. Sysco ACQUIRED Restaurant Depot) for the resolved
@@ -56,6 +57,25 @@ function Row({ label, children }) {
 
 export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, structuralQuery }) {
   const isEntity = subjScope?.kind === 'ENTITY';
+
+  // Real bug found live 2026-10-03 (confirmed twice: JPMorgan Chase, then Goldman Sachs): this
+  // component reads canonical ρ synchronously at render time, but topicconnectors.js's live
+  // EDGAR observation is async (a real network round-trip) -- the Brief renders before admission
+  // completes, and nothing re-rendered it afterward, so a real relationship that WAS admitted a
+  // moment later never reached the guest. Fix: listen for the 'krylo-rho-updated' event
+  // topicconnectors.js now dispatches once admission genuinely settles, and force one re-render.
+  // Scoped to this subject only (ignores the event for a different canonicalId) so switching
+  // queries doesn't cause a stale re-render from a prior subject's late-arriving observation.
+  const [, forceRhoRefresh] = useState(0);
+  useEffect(() => {
+    if (!isEntity) return;
+    function onRhoUpdated(e) {
+      if (e.detail?.canonicalId !== subjScope.canonicalId) return;
+      forceRhoRefresh(n => n + 1);
+    }
+    window.addEventListener('krylo-rho-updated', onRhoUpdated);
+    return () => window.removeEventListener('krylo-rho-updated', onRhoUpdated);
+  }, [isEntity, subjScope?.canonicalId]);
   // KRYL-1336 fix (2026-09-30): KRYL-1335/1336's real entity/relationship recognition +
   // evidence check (querysynthesis.js's structuralQuery, computed for every query) was wired
   // into intelligencebrief.jsx's buildBrief() -- a DIFFERENT component from this one, which is
@@ -108,7 +128,15 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // into one scalar, and a relationship's admittedType is a fixed category label -- both real,
   // neither fabricated, but each collapses information a guest can't recover from the summary
   // alone. Surface what's underneath each, from data already computed above -- no new inference.
-  const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain)]));
+  // KRYL (2026-10-02, live finding): getDomainSignals() defaulted to a 5-minute sliding window
+  // while domainLines (the summary counts above) is a frozen prop snapshot from query time --
+  // two different temporal bases. Sitting on an open query long enough let the detail view
+  // silently drift past the summary's snapshot and go empty while the summary count kept
+  // showing the same number, as if nothing changed. DEFAULT_WINDOW_MS * 2 is not an arbitrary
+  // widening -- it's the exact real ceiling domaingravity.js's own pool prunes to (see its
+  // "Prune entries beyond 2x window" comment), so this asks for everything the pool could
+  // possibly still have, not an unbounded/fabricated window.
+  const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain, DEFAULT_WINDOW_MS * 2)]));
   const evidenceByDomain = evidence.reduce((acc, o) => { (acc[o.domain] ??= []).push(o); return acc; }, {});
 
   // KRYL-1332 (Founder, 2026-09-28): "What is the structural relationship around one or more
@@ -253,10 +281,25 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                     <span style={{ color: LIME }}>{p.domain}</span> — {p.signalCount} observation{p.signalCount !== 1 ? 's' : ''},{' '}
                     {p.polarity} polarity, magnitude {p.magnitude.toFixed(0)}/100.
                   </div>
-                  {sigs.length > 0 && (
-                    <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
-                      magnitude is the average of: {sigs.map(s => Math.round(s.confidence)).join(', ')}
+                  {sigs.length > 0 ? (
+                    // Collapsed by default (<details>, not always-rendered) -- the underlying
+                    // per-observation values stay fully available (Fix 1's goal: "0/100" from
+                    // real zero vs. "0/100" meaning no data must stay distinguishable), but raw
+                    // calculation detail doesn't belong inline in the primary briefing read.
+                    <details style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                      <summary style={{ cursor: 'pointer' }}>individual readings</summary>
+                      {sigs.map(s => Math.round(s.confidence)).join(', ')}
                       {p.signalCount > sigs.length ? `, +${p.signalCount - sigs.length} more` : ''}
+                    </details>
+                  ) : (
+                    // Same disabled+explained convention as the MAP scrubber (2026-10-02): the
+                    // underlying signal pool prunes past DEFAULT_WINDOW_MS*2 (domaingravity.js),
+                    // so a query left open long enough can genuinely have nothing left to show
+                    // here even though the summary count above was computed earlier and hasn't
+                    // changed. Never omit this row silently -- that reads as broken, not as
+                    // "the detail aged out of the live pool."
+                    <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE, opacity: 0.5 }}>
+                      individual readings — no longer in the live signal pool
                     </div>
                   )}
                 </div>
@@ -275,7 +318,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         ) : (
           <span style={{ color: ABSENCE }}>
-            {isEntity ? 'No dated subject-bound evidence resolved yet for this subject.' : 'No subject resolved — evidence is not identifier-bound to a field-level scan.'}
+            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : 'No subject resolved — evidence is not identifier-bound to a field-level scan.'}
           </span>
         )}
       </Row>

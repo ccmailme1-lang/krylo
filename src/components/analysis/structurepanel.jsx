@@ -12,6 +12,10 @@ import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
 import { formationIdFor } from '../../engine/formationsnapshot.js';
+import { subjectScope } from '../../engine/subjectscope.js';
+import { toTopologyNodeId } from '../../engine/entityresolution.js';
+import { findAdmittedRelationshipsFor } from '../../engine/canonicalrelationshipprojection.js';
+import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -57,6 +61,42 @@ function FormationMapTab({ query }) {
   // was an explicit non-goal of that ticket's scope, not an undelivered dependency. Wiring
   // subject-scoping in here is a real, separate, not-yet-authorized follow-on, not a defect.
   const domainPressures = useMemo(() => getAllDomainPressures(), [query]);
+
+  // Supplier Structural Intelligence (specs/SPEC-external-supplier-structural-intelligence.md) --
+  // the "real, separate, not-yet-authorized follow-on" the comment above named is this. Reuses
+  // subjectScope() (the same resolver topicconnectors.js's fireTopicConnectors() already uses to
+  // decide whether to fire a live EDGAR observation for this exact query) -- no new resolution
+  // mechanism. Does NOT call runTargetedOwnershipObservation() itself: fireTopicConnectors()
+  // already fires it once per real query submit elsewhere in the app, in this same JS runtime, so
+  // a second call here would be a duplicate call site. This only READS whatever canonical ρ
+  // already holds by the time this renders -- same pattern structuralbrief.jsx's
+  // entityCanonicalRelationships already uses, proven live against JPMorgan Chase (64 real
+  // admitted relationships) during this ticket's verification.
+  const subjScope = useMemo(() => subjectScope(query), [query]);
+
+  // Same real bug/fix as structuralbrief.jsx (2026-10-03): the live EDGAR observation is async,
+  // this component reads ρ synchronously at render time, so it renders before admission
+  // completes. Listens for the same 'krylo-rho-updated' event, scoped to this subject only.
+  const [rhoTick, setRhoTick] = useState(0);
+  useEffect(() => {
+    if (subjScope.kind !== 'ENTITY') return;
+    function onRhoUpdated(e) {
+      if (e.detail?.canonicalId !== subjScope.canonicalId) return;
+      setRhoTick(n => n + 1);
+    }
+    window.addEventListener('krylo-rho-updated', onRhoUpdated);
+    return () => window.removeEventListener('krylo-rho-updated', onRhoUpdated);
+  }, [subjScope]);
+
+  const entityRelationships = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return [];
+    return findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).map(r => ({
+      id: r.id,
+      type: r.type,
+      phiClass: r.phiClass,
+      part: r.part.map(id => NODE_LABELS[id] ?? id),
+    }));
+  }, [subjScope, rhoTick]);
   const fieldFormation = useMemo(() => {
     try {
       const field = buildPerceptionField({ now: Date.now() });
@@ -128,21 +168,23 @@ function FormationMapTab({ query }) {
   const fieldFormationRef = useRef(fieldFormation);
   const domainSignalCountsRef = useRef(domainSignalCounts);
   const formationHistoryRef = useRef(formationHistory);
+  const entityRelationshipsRef = useRef(entityRelationships);
   useEffect(() => { fieldFormationRef.current = fieldFormation; }, [fieldFormation]);
   useEffect(() => { domainSignalCountsRef.current = domainSignalCounts; }, [domainSignalCounts]);
   useEffect(() => { formationHistoryRef.current = formationHistory; }, [formationHistory]);
+  useEffect(() => { entityRelationshipsRef.current = entityRelationships; }, [entityRelationships]);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory }, '*');
-  }, [fieldFormation, domainSignalCounts, formationHistory]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships }, '*');
+  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships]);
 
   useEffect(() => {
     function onMapReady(e) {
       if (e.data?.type !== 'krylo-map-ready') return;
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
       iframeReady.current = true;
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current }, '*');
     }
     window.addEventListener('message', onMapReady);
     return () => window.removeEventListener('message', onMapReady);
@@ -151,7 +193,7 @@ function FormationMapTab({ query }) {
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current }, '*');
     }
   };
 

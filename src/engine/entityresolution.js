@@ -224,6 +224,39 @@ export function resolve(name) {
 }
 
 /**
+ * resolveCandidates(name) → [{entity, confidence}, ...] sorted desc by confidence
+ * Additive extension of resolve() -- exposes the FULL qualifying candidate set instead
+ * of only the single best match. resolve() itself is unchanged; this just surfaces what
+ * it already computes internally. Needed by callers (procurement vendor resolution,
+ * KRYL supplier-structural-intelligence) that must detect ambiguity -- two or more
+ * candidates clearing the match threshold -- rather than silently picking a winner.
+ */
+export function resolveCandidates(name, { minConfidence = 0.85 } = {}) {
+  if (!name || typeof name !== 'string') return [];
+  const norm = normalize(name);
+  if (!norm) return [];
+
+  const searchIndex = RUNTIME_INDEX.length ? [...INDEX, ...RUNTIME_INDEX] : INDEX;
+
+  // Exact matches win outright (mirrors resolve()'s own pass-1/pass-2 split) -- dedup by
+  // canonicalId since an entity can have multiple aliases normalizing to the same string.
+  const exactByEntity = new Map();
+  for (const { norm: candidateNorm, entity } of searchIndex) {
+    if (candidateNorm === norm) exactByEntity.set(entity.canonicalId, { entity, confidence: 1.0 });
+  }
+  if (exactByEntity.size) return [...exactByEntity.values()];
+
+  const bestByEntity = new Map();
+  for (const { norm: candidateNorm, entity } of searchIndex) {
+    const score = jaccard(norm, candidateNorm);
+    if (score < minConfidence) continue;
+    const prev = bestByEntity.get(entity.canonicalId);
+    if (!prev || score > prev.confidence) bestByEntity.set(entity.canonicalId, { entity, confidence: score });
+  }
+  return [...bestByEntity.values()].sort((a, b) => b.confidence - a.confidence);
+}
+
+/**
  * resolveAll(names) → Map<string, entity|null>
  * Batch resolve. Input names are the map keys.
  */
