@@ -12,6 +12,7 @@ import { getAllDomainPressures } from '../../engine/domaingravity.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
 import { formationIdFor } from '../../engine/formationsnapshot.js';
+import { fetchSubjectFormationHistory } from '../../engine/formationsnapshotclient.js';
 import { subjectScope } from '../../engine/subjectscope.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
@@ -152,13 +153,26 @@ function FormationMapTab({ query }) {
   // persisted (buildCandidateRows only ever writes SUPPORTED pairs), so fetching them would
   // always return empty; skipped rather than making a request known to return nothing.
   const [formationHistory, setFormationHistory] = useState([]);
+  // KRYL-1350: topicconnectors.js dispatches 'krylo-formation-captured' once a resolved entity's
+  // canonical-ρ snapshots have been written; bump a tick so the read below includes them.
+  const [captureTick, setCaptureTick] = useState(0);
+  useEffect(() => {
+    if (subjScope.kind !== 'ENTITY') return;
+    function onCaptured(e) {
+      if (e.detail?.canonicalId !== subjScope.canonicalId) return;
+      setCaptureTick(n => n + 1);
+    }
+    window.addEventListener('krylo-formation-captured', onCaptured);
+    return () => window.removeEventListener('krylo-formation-captured', onCaptured);
+  }, [subjScope]);
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
+        // Role-word route (KRYL-1334, unchanged): no longer exits early -- a real-name query is
+        // UNINTERPRETABLE here and must still reach the canonical read below (KRYL-1350).
         const interp = interpretStructuralQuery(query);
-        if (interp.state !== 'INTERPRETABLE') { if (!cancelled) setFormationHistory([]); return; }
-        const ev = synthStructuralEntity(interp);
+        const ev = interp.state === 'INTERPRETABLE' ? synthStructuralEntity(interp) : { relationships: [] };
         const supported = ev.relationships.filter(r => r.state === 'SUPPORTED');
         const ids = [...new Set(supported.map(r => formationIdFor({
           subject: null, fieldScope: null, formationScope: null,
@@ -176,12 +190,14 @@ function FormationMapTab({ query }) {
             .then(j => j.rows ?? [])
             .catch(() => [])
         ));
-        if (!cancelled) setFormationHistory(results.flat());
+        // KRYL-1350 (route B): a resolved entity subject's canonical-ρ history, one request.
+        const canonicalRows = subjScope.kind === 'ENTITY' ? await fetchSubjectFormationHistory(subjScope.canonicalId) : [];
+        if (!cancelled) setFormationHistory([...results.flat(), ...canonicalRows]);
       } catch { if (!cancelled) setFormationHistory([]); }
     }
     load();
     return () => { cancelled = true; console.log('[KRYL-1334-DIAG] effect cleanup ran (cancelled=true) -- component unmounted or query changed again'); };
-  }, [query]);
+  }, [query, captureTick]);
 
   const fieldFormationRef = useRef(fieldFormation);
   const domainSignalCountsRef = useRef(domainSignalCounts);

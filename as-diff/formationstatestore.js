@@ -92,6 +92,26 @@ export async function lastFormationState(formationId) {
   return all.length ? all[all.length - 1] : null;
 }
 
+// Every snapshot for one resolved subject (all of its canonical formations), oldest first --
+// KRYL-1350's read: one request for a subject instead of one per formation_id. Same DB + file
+// merge as formationStateHistory().
+export async function formationStateHistoryBySubject(subject) {
+  let fromDb = [];
+  if (pool) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT * FROM formation_state WHERE subject_scope = $1 ORDER BY captured_at ASC`,
+        [subject]
+      );
+      fromDb = rows;
+    } catch (err) {
+      logDbFallback('read', err);
+    }
+  }
+  const fromFile = readFileRows().filter(r => r.subject_scope === subject);
+  return [...fromDb, ...fromFile].sort(byCapturedAt);
+}
+
 // Full history for a formation_id, oldest first -- what diffFormationHistory() consumes.
 export async function formationStateHistory(formationId) {
   const fromDb = await dbRowsFor(formationId);

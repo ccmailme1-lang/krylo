@@ -59,6 +59,45 @@ export function buildCandidateRows(structuralQuery, scope) {
 }
 
 /**
+ * buildCanonicalCandidateRows — KRYL-1350 (Founder ruling: route B). One candidate row per
+ * admitted canonical ρ for a RESOLVED entity subject, instead of deriving pairs from role words.
+ * The formation identity is the existing locked key, unchanged: formationIdFor() with the
+ * subject's canonical id as `subject`, the ρ's two participants (stable topology node ids) as the
+ * order-normalized pair, and the ρ's ratified type. evidence_ref is the latest real admission
+ * evidence (source:accession), so decideWrite()'s material-change check fires exactly when a
+ * newer filing changes it. No evidence recorded -> evidence_ref null, never a made-up one.
+ * Pure: the caller supplies `evidenceOf(relationshipId)` (canonicalrelationshipprojection.js's
+ * latestEvidenceFor) so this file stays free of ρ imports.
+ * @param {string} subject — the subject's canonicalId (e.g. 'goldman-sachs')
+ * @param {{id: string, type: string, part: string[]}[]} relationships — admitted ρ touching it
+ * @param {(id: string) => ({provenance?: object}|null)} evidenceOf
+ * @returns {object[]} candidate rows for POST /v1/formation-state/batch
+ */
+export function buildCanonicalCandidateRows(subject, relationships, evidenceOf = () => null) {
+  if (!subject) return [];
+  const rows = [];
+  for (const rho of relationships ?? []) {
+    const [a, b] = rho.part ?? [];
+    if (!a || !b || !rho.type) continue;
+    const prov = evidenceOf(rho.id)?.provenance ?? null;
+    rows.push({
+      formation_id: formationIdFor({ subject, fieldScope: null, formationScope: null, entityA: a, entityB: b, relationshipType: rho.type }),
+      subject_scope: subject,
+      entity_a: a,
+      entity_b: b,
+      relationship_type: rho.type,
+      evidence_ref: prov?.accession ? `${prov.source ?? ''}:${prov.accession}` : null,
+      provenance: prov ? {
+        source: prov.source ?? null, accession: prov.accession ?? null,
+        filingDate: prov.filingDate ?? null, form: prov.form ?? null,
+        semantics: `${rho.type}: ${a} ↔ ${b}` + (prov.filingDate ? `; observed ${prov.filingDate}` : '') + (prov.form ? `; ${prov.form}` : ''),
+      } : null,
+    });
+  }
+  return rows;
+}
+
+/**
  * decideWrite — hybrid sampling policy (Founder-ruled, GUIDELINES #2): write when there's no
  * prior row for this formation_id (NEW), or when the evidence_ref materially changed since the
  * last write (material_change trigger). Never writes an identical row twice -- that's exactly

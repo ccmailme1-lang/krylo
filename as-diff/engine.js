@@ -11,7 +11,7 @@ import { randomUUID, createSign } from 'crypto';
 import { fileURLToPath } from 'url';
 import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
-import { lastFormationState, writeFormationState, formationStateHistory } from './formationstatestore.js';
+import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
@@ -605,9 +605,10 @@ async function handleFormationStateRead(req, res) {
   // No `if (!pool)` 503: reads merge the DB (when reachable) with the file fallback (KRYL-1334).
   const u = new URL(req.url, 'http://localhost');
   const formationId = u.searchParams.get('formationId');
-  if (!formationId) return send(res, 422, { status: 'DB_READ_FAILED', error: 'formationId required' });
+  const subject = u.searchParams.get('subject'); // KRYL-1350: all formations of one resolved subject
+  if (!formationId && !subject) return send(res, 422, { status: 'DB_READ_FAILED', error: 'formationId or subject required' });
   try {
-    const rows = await formationStateHistory(formationId);
+    const rows = formationId ? await formationStateHistory(formationId) : await formationStateHistoryBySubject(subject);
     send(res, 200, { status: 'DB_READ_SUCCESS', rows });
   } catch (err) {
     console.error('[formation-state] read failed:', err.message);

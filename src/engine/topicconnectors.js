@@ -14,6 +14,9 @@ import { runRedditSync }             from './connectors/redditconnector.js';
 import { runTargetedOwnershipObservation } from './connectors/secownershipconnector.js';
 import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
 import { subjectScope }              from './subjectscope.js';
+import { toTopologyNodeId }          from './entityresolution.js';
+import { findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
+import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
 
 export function fireTopicConnectors(q) {
   runGithubSync(q).catch(() => {});
@@ -62,6 +65,16 @@ export function fireTopicConnectors(q) {
     // (krylo-submit, krylo-click, krylo-field-formation), not a new mechanism.
     ownershipObservation.then(() => {
       window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId } }));
+      // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
+      // capture time and decides what is a material change), THEN tell readers it landed so the
+      // scrubber reads history that includes it. Separate event so the Brief above never waits.
+      captureCanonicalFormationSnapshots(
+        scope.canonicalId,
+        findAdmittedRelationshipsFor(toTopologyNodeId(scope.canonicalId)),
+        latestEvidenceFor,
+      ).then(() => {
+        window.dispatchEvent(new CustomEvent('krylo-formation-captured', { detail: { canonicalId: scope.canonicalId } }));
+      }).catch(() => {});
     });
   }
 }
