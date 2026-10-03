@@ -292,7 +292,6 @@
   const nNodesEl = document.getElementById('n-nodes');
   const nEdgesEl = document.getElementById('n-edges');
   const integrityEl = document.getElementById('integrity');
-  const tReadoutEl = document.getElementById('t-readout');
   const playBtn = document.getElementById('play-btn');
   const scrubberWrapEl = document.querySelector('.scrubber-wrap');
   const hudTopEl = document.querySelector('.hud-top');
@@ -552,7 +551,7 @@
       // same existing message, same discipline as formation/formationHistory above: this iframe
       // never resolves an entity or queries ρ itself, it only renders what the parent already
       // computed.
-      applyEntityRelationships(e.data.entityRelationships || []);
+      applyEntityRelationships(e.data.entityRelationships || [], e.data.entitySubjectLabel || null);
     }
   });
 
@@ -677,8 +676,56 @@
     return `${a} ↔ ${b} — ${r.type}.`;
   }
 
+  // Supplier Structural Intelligence -- the resolved subject as a node on the plot, joined by one
+  // edge to the domain node its admitted relationship type belongs to. Additive over
+  // NODES/EDGES (draw() is generic over both); the FORMATIONS/CO-PRESENCE readout reads
+  // realFormation directly, so it is unaffected. Only ratified types with a stated domain get
+  // an edge -- others stay panel-only (no domain invented). No anchor domain node on the plot
+  // means no entity node: a stated absence, not a guess at where it would go.
+  const ENTITY_NODE_ID = '__entity_subject__';
+  const ENTITY_TYPE_DOMAIN = { HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE: 'OWNERSHIP' };
+  const ENTITY_NODE_OFFSET = 0.6; // layout units outward from the formation centre, past the anchor
+  function syncEntityNode(relationships, subjectLabel) {
+    NODES = NODES.filter(n => n.id !== ENTITY_NODE_ID);
+    EDGES = EDGES.filter(e => e.to !== ENTITY_NODE_ID);
+    delete nodeById[ENTITY_NODE_ID];
+    if (relationships && relationships.length && subjectLabel) {
+      const byDomain = {};
+      for (const r of relationships) {
+        const d = ENTITY_TYPE_DOMAIN[r.type];
+        if (d && nodeById[d]) (byDomain[d] ??= new Set()).add(r.type);
+      }
+      const anchors = Object.keys(byDomain).map(d => nodeById[d]);
+      if (anchors.length) {
+        const all = NODES.map(n => n.path[0]);
+        const cx = all.reduce((s, p) => s + p.x, 0) / all.length;
+        const cy = all.reduce((s, p) => s + p.y, 0) / all.length;
+        const ax = anchors.reduce((s, n) => s + n.path[0].x, 0) / anchors.length;
+        const ay = anchors.reduce((s, n) => s + n.path[0].y, 0) / anchors.length;
+        let dx = ax - cx, dy = ay - cy;
+        const len = Math.hypot(dx, dy) || 1;
+        dx /= len; dy /= len;
+        const x = Math.max(-0.9, Math.min(0.9, ax + dx * ENTITY_NODE_OFFSET));
+        const y = Math.max(-0.9, Math.min(0.9, ay + dy * ENTITY_NODE_OFFSET));
+        const node = {
+          id: ENTITY_NODE_ID, label: String(subjectLabel).toUpperCase(), provenance: null,
+          contribution: 0, path: [{ x, y }, { x, y }], entity: true, entityRelCount: relationships.length,
+          _haloOffsets: [], // no density halo: contribution is not a measurement of this node
+        };
+        NODES.push(node);
+        nodeById[ENTITY_NODE_ID] = node;
+        for (const d of Object.keys(byDomain)) {
+          EDGES.push({ from: d, to: ENTITY_NODE_ID, label: [...byDomain[d]].join(', '), stagger: 0, strength: 1 });
+        }
+      }
+    }
+    fitViewToNodes();
+    draw(currentT);
+  }
+
   let entityPanelOpen = false;
-  function applyEntityRelationships(relationships) {
+  function applyEntityRelationships(relationships, subjectLabel) {
+    syncEntityNode(relationships, subjectLabel);
     if (!relationships || relationships.length === 0) {
       if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
       return; // NO_EVIDENCE: no edge on the plot, no panel -- nothing invented to fill space
@@ -1031,10 +1078,14 @@
       // per-node y through the blue<->lime momentum gradient would visually imply a real,
       // measured momentum reading that doesn't exist, even though it now varies node to node.
       // Neutral, undoctrine-coded color instead, for every real node regardless of position.
-      const color = getVar('--text-mono');
+      const color = n.entity ? getVar('--signal-lime') : getVar('--text-mono');
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
-      const r = (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1) * 1.05; // +5% sphere size
+      // Entity (subject) node: fixed ring size -- its contribution is not a measurement, so it
+      // must not drive the radius the way a domain node's real meanMagnitude does.
+      const r = n.entity
+        ? 6.5 * (isHover ? 1.18 : 1)
+        : (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1) * 1.05; // +5% sphere size
 
       // KRYL-1337 (2026-10-01) -- real CONTRIBUTION/PROVENANCE/pos (the old click-card's data,
       // now gone) surfaced on hover instead, same calloutStack mechanism edge-relationship text
@@ -1042,7 +1093,9 @@
       // -- s.pos is the same real lerpPath() position the removed card used for phi/phi-dot.
       if (isHover) {
         calloutStack.push({
-          text: `${n.label} — CONTRIBUTION ${n.contribution.toFixed(2)}  φ ${s.pos.x.toFixed(2)}  φ̇ ${s.pos.y.toFixed(2)}` +
+          text: n.entity
+            ? `${n.label} — ${n.entityRelCount} ADMITTED RELATIONSHIP${n.entityRelCount !== 1 ? 'S' : ''} (canonical ρ)`
+            : `${n.label} — CONTRIBUTION ${n.contribution.toFixed(2)}  φ ${s.pos.x.toFixed(2)}  φ̇ ${s.pos.y.toFixed(2)}` +
                 (n.provenance ? `  — ${n.provenance}` : ''),
           mx: s.px, my: s.py,
           globalAlpha: 1,
@@ -1237,7 +1290,6 @@
     integrityEl.textContent = realFormation ? realFormation.existence.toFixed(2) : '—';
     nEdgesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.graph.edges.length : 0) : '—';
     nNodesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.participatingDomains.length : 0) : '—';
-    tReadoutEl.textContent = String(Math.round(t * 47)).padStart(2, '0') + ':00';
 
     drawCrosshair();
   }

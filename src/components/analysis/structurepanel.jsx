@@ -97,6 +97,12 @@ function FormationMapTab({ query }) {
       part: r.part.map(id => NODE_LABELS[id] ?? id),
     }));
   }, [subjScope, rhoTick]);
+  // Label for the subject's node on the Map plot -- the same NODE_LABELS entry ρ's own part ids
+  // already resolve through above (EDGAR display name), falling back to the registry name.
+  const entitySubjectLabel = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return null;
+    return NODE_LABELS[toTopologyNodeId(subjScope.canonicalId)] ?? subjScope.entity?.name ?? null;
+  }, [subjScope]);
   const fieldFormation = useMemo(() => {
     try {
       const field = buildPerceptionField({ now: Date.now() });
@@ -173,18 +179,20 @@ function FormationMapTab({ query }) {
   useEffect(() => { domainSignalCountsRef.current = domainSignalCounts; }, [domainSignalCounts]);
   useEffect(() => { formationHistoryRef.current = formationHistory; }, [formationHistory]);
   useEffect(() => { entityRelationshipsRef.current = entityRelationships; }, [entityRelationships]);
+  const entitySubjectLabelRef = useRef(entitySubjectLabel);
+  useEffect(() => { entitySubjectLabelRef.current = entitySubjectLabel; }, [entitySubjectLabel]);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships }, '*');
-  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel }, '*');
+  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel]);
 
   useEffect(() => {
     function onMapReady(e) {
       if (e.data?.type !== 'krylo-map-ready') return;
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
       iframeReady.current = true;
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current }, '*');
     }
     window.addEventListener('message', onMapReady);
     return () => window.removeEventListener('message', onMapReady);
@@ -193,7 +201,7 @@ function FormationMapTab({ query }) {
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current }, '*');
     }
   };
 
