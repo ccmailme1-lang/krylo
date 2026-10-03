@@ -78,6 +78,7 @@ function extractOwnershipPair(hit) {
     filerName:   names[1],
     filingDate:  src.file_date ?? null,
     accession:   src.adsh ?? null,
+    form:        src.form ?? null, // e.g. "SCHEDULE 13G/A" -- the filing's own real form type
   };
 }
 
@@ -123,7 +124,7 @@ export async function runSecOwnershipSync({ from, to } = {}) {
           nuId: {},
           nuState: {},
           evidence: {
-            provenance: { accession: pair.accession, source: 'SEC_13D_13G', filingDate: pair.filingDate },
+            provenance: { accession: pair.accession, source: 'SEC_13D_13G', filingDate: pair.filingDate, form: pair.form },
             ts: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
           },
         },
@@ -293,7 +294,7 @@ export async function runTargetedOwnershipObservation({ entityCik, canonicalId =
         nuId: {},
         nuState: {},
         evidence: {
-          provenance: { accession: pair.accession, source: 'SEC_13D_13G_TARGETED', filingDate: pair.filingDate },
+          provenance: { accession: pair.accession, source: 'SEC_13D_13G_TARGETED', filingDate: pair.filingDate, form: pair.form },
           ts: pair.filingDate ? Date.parse(pair.filingDate) : Date.now(),
         },
       },

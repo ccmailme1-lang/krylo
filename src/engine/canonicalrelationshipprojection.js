@@ -27,6 +27,9 @@ import './ratifiedrelationshiptypes.js';
 // In-memory only -- see persistence note above. Keyed by canonical type, value = array of
 // admitted ρ for that type (what admitRelationship's same-ness search is run against).
 const _admittedByType = new Map();
+// Latest admission evidence per relationship id -- see admitAndProject()'s note. Same lifetime
+// (in-memory, per runtime) as _admittedByType.
+const _latestEvidenceById = new Map();
 
 function existingFor(type) {
   if (!_admittedByType.has(type)) _admittedByType.set(type, []);
@@ -104,6 +107,21 @@ export function admitAndProject(assertion, meta) {
     if (idx >= 0) existing[idx] = result.relationship;
   }
 
+  // admitRelationship() returns a historyEntry (the evidence provenance) and a predicate for
+  // every admission; both were previously discarded here, so nothing downstream could say WHEN a
+  // relationship was observed, from WHICH filing, or what structural state that observation was.
+  // Kept as the latest entry per relationship id, inside this same module as ρ itself -- not a
+  // second store of relationships, just the evidence the spec's historyEntry already defines.
+  // "Latest" means the most recently OBSERVED evidence (largest entry ts), not the last one
+  // processed -- a source can return filings in any order (EDGAR returns newest first). Equal ts
+  // keeps the entry already held, so re-observing the same filing never rewrites its state.
+  if (result.historyEntry) {
+    const held = _latestEvidenceById.get(result.relationship.id);
+    if (!held || (result.historyEntry.ts ?? 0) > (held.ts ?? 0)) {
+      _latestEvidenceById.set(result.relationship.id, { ...result.historyEntry, predicate: result.predicate });
+    }
+  }
+
   const projection = PROJECTIONS[assertion.type];
   if (!projection) {
     throw new Error(`admitAndProject: no projection config for ratified type "${assertion.type}" -- add one to PROJECTIONS, never guess a mapping`);
@@ -119,6 +137,13 @@ export function admitAndProject(assertion, meta) {
   }
 
   return result;
+}
+
+// Latest admission evidence for one admitted relationship id: { provenance, nuState, ts,
+// predicate } as produced by that relationship's most recent admission, or null when none was
+// recorded -- a stated absence, never a default.
+export function latestEvidenceFor(relationshipId) {
+  return _latestEvidenceById.get(relationshipId) ?? null;
 }
 
 // Exposed for tests / inspection only -- not a public persistence API.

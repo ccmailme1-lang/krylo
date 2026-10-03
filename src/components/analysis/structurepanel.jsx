@@ -14,7 +14,7 @@ import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js
 import { formationIdFor } from '../../engine/formationsnapshot.js';
 import { subjectScope } from '../../engine/subjectscope.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
-import { findAdmittedRelationshipsFor } from '../../engine/canonicalrelationshipprojection.js';
+import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
 
 const MONO = "'IBM Plex Mono', monospace";
@@ -90,19 +90,31 @@ function FormationMapTab({ query }) {
 
   const entityRelationships = useMemo(() => {
     if (subjScope.kind !== 'ENTITY') return [];
-    return findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).map(r => ({
-      id: r.id,
-      type: r.type,
-      phiClass: r.phiClass,
-      part: r.part.map(id => NODE_LABELS[id] ?? id),
-    }));
+    return findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).map(r => {
+      const ev = latestEvidenceFor(r.id);
+      return {
+        id: r.id,
+        type: r.type,
+        phiClass: r.phiClass,
+        part: r.part.map(id => NODE_LABELS[id] ?? id),
+        // Real admission evidence (null fields stay null -- the panel shows a stated absence).
+        evidence: ev ? {
+          filingDate: ev.provenance?.filingDate ?? null,
+          form: ev.provenance?.form ?? null,
+          accession: ev.provenance?.accession ?? null,
+          state: ev.predicate ?? null,
+        } : null,
+      };
+    });
   }, [subjScope, rhoTick]);
   // Label for the subject's node on the Map plot -- the same NODE_LABELS entry ρ's own part ids
   // already resolve through above (EDGAR display name), falling back to the registry name.
   const entitySubjectLabel = useMemo(() => {
     if (subjScope.kind !== 'ENTITY') return null;
-    return NODE_LABELS[toTopologyNodeId(subjScope.canonicalId)] ?? subjScope.entity?.name ?? null;
-  }, [subjScope]);
+    const raw = NODE_LABELS[toTopologyNodeId(subjScope.canonicalId)] ?? subjScope.entity?.name ?? null;
+    // NODE_LABELS entries carry a trailing "(CIK ##########)" -- identifier text, not the name.
+    return raw ? raw.replace(/\s*\(CIK\s*\d+\)\s*$/, '') : null;
+  }, [subjScope, rhoTick]); // rhoTick: NODE_LABELS is filled by the same async admission
   const fieldFormation = useMemo(() => {
     try {
       const field = buildPerceptionField({ now: Date.now() });

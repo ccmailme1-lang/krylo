@@ -383,7 +383,7 @@
   let viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 };
 
   function fitViewToNodes() {
-    if (!NODES.length) { viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 }; return; }
+    if (!NODES.some(n => !n.entity)) { viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 }; return; } // no formation nodes (the subject node alone doesn't set the view)
     const xs = NODES.map(n => n.path[0].x), ys = NODES.map(n => n.path[0].y);
     let xMin = Math.min(...xs), xMax = Math.max(...xs);
     let yMin = Math.min(...ys), yMax = Math.max(...ys);
@@ -676,6 +676,21 @@
     return `${a} ↔ ${b} — ${r.type}.`;
   }
 
+  // Real admission evidence for one relationship (date, form, structural state, accession), as
+  // carried on the parent's payload from ρ's own recorded admission. A relationship with no
+  // recorded evidence says so -- never a default date or state.
+  function evidenceText(r) {
+    const esc = (v) => String(v).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const e = r.evidence;
+    if (!e) return 'evidence not recorded for this relationship';
+    const parts = [];
+    if (e.filingDate) parts.push(`observed ${esc(e.filingDate)}`);
+    if (e.form) parts.push(esc(e.form));
+    if (e.state) parts.push(`structural state: ${esc(e.state)}`);
+    if (e.accession) parts.push(`accession ${esc(e.accession)}`);
+    return parts.length ? parts.join(' · ') : 'evidence not recorded for this relationship';
+  }
+
   // Supplier Structural Intelligence -- the resolved subject as a node on the plot, joined by one
   // edge to the domain node its admitted relationship type belongs to. Additive over
   // NODES/EDGES (draw() is generic over both); the FORMATIONS/CO-PRESENCE readout reads
@@ -696,17 +711,42 @@
         if (d && nodeById[d]) (byDomain[d] ??= new Set()).add(r.type);
       }
       const anchors = Object.keys(byDomain).map(d => nodeById[d]);
-      if (anchors.length) {
+      {
+        // The subject node is always drawn when ρ exists for it. Anchored (a mapped domain node
+        // is in the formation): offset outward past that anchor, joined by a lime edge.
+        // Unanchored (no mapped domain node in this formation): placed at the formation's
+        // centre with NO edge -- the absence of an edge is the honest statement that this
+        // formation has no node for the relationship's domain.
         const all = NODES.map(n => n.path[0]);
-        const cx = all.reduce((s, p) => s + p.x, 0) / all.length;
-        const cy = all.reduce((s, p) => s + p.y, 0) / all.length;
-        const ax = anchors.reduce((s, n) => s + n.path[0].x, 0) / anchors.length;
-        const ay = anchors.reduce((s, n) => s + n.path[0].y, 0) / anchors.length;
-        let dx = ax - cx, dy = ay - cy;
-        const len = Math.hypot(dx, dy) || 1;
-        dx /= len; dy /= len;
-        const x = Math.max(-0.9, Math.min(0.9, ax + dx * ENTITY_NODE_OFFSET));
-        const y = Math.max(-0.9, Math.min(0.9, ay + dy * ENTITY_NODE_OFFSET));
+        const cx = all.length ? all.reduce((s, p) => s + p.x, 0) / all.length : 0;
+        const cy = all.length ? all.reduce((s, p) => s + p.y, 0) / all.length : 0;
+        let x = 0.75, y = -0.75; // no formation nodes at all: lower-right corner, clear of the centred absence text
+        if (!anchors.length && all.length) {
+          // Unanchored: the point on a coarse grid farthest from every existing node and edge, so
+          // the edge-less subject node never sits on someone else's edge and reads as joined to it.
+          const segs = EDGES.map(e => [nodeById[e.from]?.path[0], nodeById[e.to]?.path[0]]).filter(([p, q]) => p && q);
+          const dSeg = (px, py, [p, q]) => {
+            const vx = q.x - p.x, vy = q.y - p.y, L2 = vx * vx + vy * vy || 1;
+            const t = Math.max(0, Math.min(1, ((px - p.x) * vx + (py - p.y) * vy) / L2));
+            return Math.hypot(px - (p.x + t * vx), py - (p.y + t * vy));
+          };
+          let best = -1;
+          for (let gx = -0.85; gx <= 0.851; gx += 0.1) {
+            for (let gy = -0.85; gy <= 0.851; gy += 0.1) {
+              const score = Math.min(...all.map(p => Math.hypot(gx - p.x, gy - p.y)), ...segs.map(s => dSeg(gx, gy, s)));
+              if (score > best) { best = score; x = gx; y = gy; }
+            }
+          }
+        }
+        if (anchors.length) {
+          const ax = anchors.reduce((s, n) => s + n.path[0].x, 0) / anchors.length;
+          const ay = anchors.reduce((s, n) => s + n.path[0].y, 0) / anchors.length;
+          let dx = ax - cx, dy = ay - cy;
+          const len = Math.hypot(dx, dy) || 1;
+          dx /= len; dy /= len;
+          x = Math.max(-0.9, Math.min(0.9, ax + dx * ENTITY_NODE_OFFSET));
+          y = Math.max(-0.9, Math.min(0.9, ay + dy * ENTITY_NODE_OFFSET));
+        }
         const node = {
           id: ENTITY_NODE_ID, label: String(subjectLabel).toUpperCase(), provenance: null,
           contribution: 0, path: [{ x, y }, { x, y }], entity: true, entityRelCount: relationships.length,
@@ -736,13 +776,16 @@
     // contrast for primary content); reset explicitly in renderFormationTransitionPanel above so
     // this override never leaks into its own, unrelated use of the same element.
     panelDomain.style.color = '#f4f6f2';
-    panelDomain.textContent = relationships.length === 1 ? relationshipSentence(relationships[0]) : '';
+    panelDomain.textContent = relationships.length === 1
+      ? relationshipSentence(relationships[0]) + (relationships[0].evidence?.filingDate ? ` observed ${relationships[0].evidence.filingDate}` : '')
+      : '';
     panelContrib.textContent = '—';
     panelPhi.textContent = '—';
     panelPhidot.textContent = '—';
     opRows.innerHTML = relationships.map(r => `
       <div class="op-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
         <span class="op-name" style="white-space:normal; line-height:1.5; color:#f4f6f2;">${relationshipSentence(r)}</span>
+        <span class="op-class">${evidenceText(r)}</span>
         <span class="op-class">${r.type}</span>
       </div>`).join('');
     panel.classList.add('open');
@@ -963,7 +1006,7 @@
     // an intentional, explained absence -- the same failure mode the BRIEF packet already
     // avoids with its prominent "No formation established" paragraph. Mirror that treatment
     // here, centered in the plot, once a real (non-loading) empty result has actually arrived.
-    if (hasReceivedFormation && NODES.length === 0) {
+    if (hasReceivedFormation && NODES.every(n => n.entity)) { // real formation nodes only -- the subject node is not formation evidence
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
