@@ -14,7 +14,7 @@ import { POLARITY }       from './signalconstants.js';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_WINDOW_MS = 300_000; // 5 min — matches surfacerouter oracle TTL
+export const DEFAULT_WINDOW_MS = 300_000; // 5 min — matches surfacerouter oracle TTL
 
 // 40%+ fracture signals in window → domain polarity = 'fracture'
 export const FRACTURE_POLARITY_THRESHOLD = 0.40;
