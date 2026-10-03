@@ -155,7 +155,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // entityCanonicalRelationships is empty, the sentence is byte-identical to before this fix.
   const canonicalClause = entityCanonicalRelationships.length
     ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
-      `admitted for this entity: ${entityCanonicalRelationships.map(r => r.type).join(', ')}.`
+      `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
     : '';
   const briefSentence = isEntity
     ? (relationshipCount > 0
