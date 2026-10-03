@@ -540,7 +540,8 @@ async function handleFormationStateWrite(req, res) {
   if (!candidate?.formation_id || !candidate?.entity_a || !candidate?.entity_b || !candidate?.relationship_type) {
     return send(res, 422, { status: 'DB_WRITE_FAILED', error: 'candidate.{formation_id,entity_a,entity_b,relationship_type} required' });
   }
-  if (!pool) return send(res, 503, { status: 'DB_WRITE_FAILED', error: 'persistence layer unavailable' });
+  // No `if (!pool)` 503 here: formationstatestore.js falls back to a local file when the DB is
+  // missing or unreachable (KRYL-1334), so persistence no longer depends on the pool.
 
   try {
     const last = await lastFormationState(candidate.formation_id);
@@ -561,7 +562,7 @@ async function handleFormationStateRead(req, res) {
   // browser cached (no Cache-Control header = cacheable by default). Every response from this
   // endpoint is time-sensitive persisted state, never meant to be cached.
   res.setHeader('Cache-Control', 'no-store');
-  if (!pool) return send(res, 503, { status: 'DB_READ_FAILED', error: 'persistence layer unavailable' });
+  // No `if (!pool)` 503: reads merge the DB (when reachable) with the file fallback (KRYL-1334).
   const u = new URL(req.url, 'http://localhost');
   const formationId = u.searchParams.get('formationId');
   if (!formationId) return send(res, 422, { status: 'DB_READ_FAILED', error: 'formationId required' });
