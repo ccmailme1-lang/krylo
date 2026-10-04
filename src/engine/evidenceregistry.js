@@ -7,6 +7,8 @@
 // Pattern: mirrors telemetry.js (WO-1367) persistence architecture
 // Clock: Date.now() — monotonic wall clock (substrate_time authority in CausalOS)
 
+import { syncGuestState } from './gueststatesync.js';
+
 const STORAGE_KEY      = 'krylo_evidence_registry';
 const MAX_PREDICTIONS  = 500;
 
@@ -56,6 +58,7 @@ function _persist(registry) {
       }
     } catch { /* silent */ }
   }
+  syncGuestState(STORAGE_KEY, registry);
 }
 
 // ── REGISTRY STATE ───────────────────────────────────────────────────────────

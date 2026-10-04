@@ -10,6 +10,7 @@
 //   Earliness weight: rank = LR × f(earlyRatio); 3-tier tag early/mid/late at emission
 
 import { useState, useCallback } from 'react';
+import { syncGuestState } from './gueststatesync.js';
 
 const STORE_KEY = 'krylo_path_memory_v1';
 const MIN_N     = 5; // withhold LR-prior below this — accepted decision 4
@@ -48,6 +49,7 @@ function load() {
 function persist(records) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(records)); }
   catch {}
+  syncGuestState(STORE_KEY, records);
 }
 
 // ── Core API (pure, imperative) ───────────────────────────────────────────────

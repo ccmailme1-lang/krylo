@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import HelpMark                       from '../shared/helpmark.jsx';
 import { useAnalysisStore }           from '../../store/useanalysisstore.js';
+import { syncGuestState }             from '../../engine/gueststatesync.js';
 import TargetPacket                   from './targetpacket.jsx';
 import StructurePanel                 from './structurepanel.jsx';
 import { isPetroQuery }               from '../../engine/petrolocator.js';
@@ -610,6 +611,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
 
   useEffect(() => {
     try { localStorage.setItem('krylo_dna_cards_v4', JSON.stringify(dnaCards)); } catch {}
+    syncGuestState('krylo_dna_cards_v4', dnaCards);
   }, [dnaCards]);
 
   useEffect(() => {

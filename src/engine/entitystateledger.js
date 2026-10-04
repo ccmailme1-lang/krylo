@@ -7,6 +7,8 @@
 // or recomputes a signal or metric, and nothing in the existing pipeline calls it yet.
 // Wiring a call site into the Phase 3 boundary (spec §4) is a separate, later decision.
 
+import { syncGuestState } from './gueststatesync.js';
+
 const STORE_KEY = 'krylo_entity_state_ledger_v1';
 
 function readLedger() {
@@ -17,6 +19,7 @@ function readLedger() {
 function writeLedger(entries) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(entries)); }
   catch { /* storage unavailable — MVP degrades to no-op, never throws */ }
+  syncGuestState(STORE_KEY, entries);
 }
 
 // Append a new entry. Enforces append-only (no update/delete API exists) and flags

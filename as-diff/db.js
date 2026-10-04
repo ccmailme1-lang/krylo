@@ -107,6 +107,22 @@ async function runMigration() {
     );
     CREATE INDEX IF NOT EXISTS idx_formation_state_scope
       ON formation_state (formation_id, captured_at DESC);
+
+    -- Guest State Durability (2026-10-02) -- server mirror for guest work-product that previously
+    -- lived only in browser localStorage (saved projects, evidence, DNA cards, path memory, etc.):
+    -- confirmed via repo-wide grep that only tester_telemetry had a server copy; everything else
+    -- was device-only and unrecoverable if a guest cleared browser data or switched devices.
+    -- One row per (profile_id, store_key) pair, upserted on every save -- same fire-and-forget,
+    -- DB-with-file-fallback pattern as tester_telemetry above, not a new design.
+    CREATE TABLE IF NOT EXISTS guest_state (
+      id          SERIAL PRIMARY KEY,
+      profile_id  TEXT        NOT NULL,
+      store_key   TEXT        NOT NULL,
+      data        JSONB       NOT NULL,
+      updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE (profile_id, store_key)
+    );
+    CREATE INDEX IF NOT EXISTS idx_guest_state_profile ON guest_state (profile_id);
   `);
   console.log('[WO-1334] migration complete (Supabase/Postgres)');
 }

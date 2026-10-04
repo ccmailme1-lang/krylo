@@ -12,6 +12,8 @@
 // raw_text verbatim. Extraction/vectorization/drift/comparison are later, separate,
 // not-yet-hardened phases (see spec NOTES).
 
+import { syncGuestState } from './gueststatesync.js';
+
 const STORE_KEY = 'krylo_narrative_snapshots_v1';
 
 export const SOURCE = {
@@ -28,6 +30,7 @@ function readStore() {
 function writeStore(entries) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(entries)); }
   catch { /* storage unavailable — degrades to no-op, never throws */ }
+  syncGuestState(STORE_KEY, entries);
 }
 
 // Append a new NarrativeSnapshot. No update/delete API exists — append-only.

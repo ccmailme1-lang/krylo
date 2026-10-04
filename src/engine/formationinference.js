@@ -104,7 +104,17 @@ function buildGraph(domainAgg, coFloor) {
       // fallback: a non-admissible pair is dropped, not relabeled.
       const adm = admitCrossDomainRelationship(strong[i], strong[j]);
       if (!adm.admitted) continue;
-      edges.push({ a: strong[i], b: strong[j], property: 'co_presence', admittedType: adm.type });
+      // Retain the real per-endpoint observations already computed above (domainAgg) --
+      // not a new derived metric, not a joint "relationship strength" (nothing upstream
+      // observes the relationship itself, only each domain independently). This is what
+      // KRYLO actually knows about each side of the admitted pair: how much real signal,
+      // which direction (constructive/fracture via net's sign), how many real particles.
+      const aAgg = domainAgg.get(strong[i]), bAgg = domainAgg.get(strong[j]);
+      edges.push({
+        a: strong[i], b: strong[j], property: 'co_presence', admittedType: adm.type,
+        aMeanMag: aAgg.meanMag, aNet: aAgg.net, aCount: aAgg.count,
+        bMeanMag: bAgg.meanMag, bNet: bAgg.net, bCount: bAgg.count,
+      });
     }
   // participating vertices = domains carrying ≥1 edge
   const withEdge = new Set();

@@ -1,5 +1,6 @@
 // WO-1813 — Project Registry
 import { loadProfile } from './userprofile.js';
+import { syncGuestState } from './gueststatesync.js';
 
 const STORAGE_KEY = 'krylo_projects';
 const MAX_PROJECTS = 50;
@@ -47,12 +48,14 @@ export function saveProject(name, sessionState = {}, bay = 1) {
   } catch {
     // quota exceeded
   }
+  syncGuestState(STORAGE_KEY, next);
   return project;
 }
 
 export function deleteProject(id) {
   const next = listProjects().filter(p => p.id !== id);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  syncGuestState(STORAGE_KEY, next);
 }
 
 export function getProject(id) {

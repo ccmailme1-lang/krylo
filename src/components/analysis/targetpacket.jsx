@@ -10,6 +10,7 @@ import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
 import { useEntitySignal, ENTITY_SIGNAL_STATUS } from '../../hooks/useEntitySignal.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
+import { syncGuestState }    from '../../engine/gueststatesync.js';
 import { captureFormationSnapshots } from '../../engine/formationsnapshotclient.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
 import { getDisplayEntity }  from '../../utils/formatters.js';
@@ -492,7 +493,9 @@ export default function TargetPacket() {
     try {
       const existing = JSON.parse(localStorage.getItem('krylo_search_dna') ?? '[]');
       const deduped  = existing.filter(e => e.query !== q || Math.abs(e.ts - entry.ts) > 5000);
-      localStorage.setItem('krylo_search_dna', JSON.stringify([...deduped, entry].slice(-500)));
+      const next = [...deduped, entry].slice(-500);
+      localStorage.setItem('krylo_search_dna', JSON.stringify(next));
+      syncGuestState('krylo_search_dna', next);
       window.postMessage({ type: 'krylo-dna-update' }, '*');
     } catch {}
   }, [synthesis?.queryDomain, synthesis?.stateLabel, synthesis?.resolutionEligible, session?.query, session?.lens]);

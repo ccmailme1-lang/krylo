@@ -14,6 +14,8 @@
 // Integrity: each metric (signal/validity/convergence/cac/roas/ltv) is
 // averaged independently, never blended into one composite number.
 
+import { syncGuestState } from './gueststatesync.js';
+
 const STORE_KEY = 'krylo_domain_metrics_v1';
 const MAX_PER_DOMAIN = 200; // cap — this is a rolling window, not an archive
 
@@ -27,6 +29,7 @@ function readStore() {
 function writeStore(store) {
   try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); }
   catch { /* storage unavailable — degrades to no-op, never throws */ }
+  syncGuestState(STORE_KEY, store);
 }
 
 // Producer — the only write path. metrics is computeMetrics()'s real return
