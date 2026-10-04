@@ -85,10 +85,18 @@
   .fh-dot::after { content: ''; display: block; border-radius: 50%; width: 8px; height: 8px; }
   .fh-dot[data-state="NEW"]::after,
   .fh-dot[data-state="STRENGTHENING"]::after { background: var(--signal-lime); }
-  .fh-dot[data-state="WEAKENING"]::after { background: rgba(255,120,60,0.85); }
+  .fh-dot[data-state="WEAKENING"]::after { background: var(--signal-blue); }
   .fh-dot[data-state="RECONFIGURATION"] { transform: rotate(45deg); }
-  .fh-dot[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: rgba(255,200,60,0.85); }
+  .fh-dot[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: var(--unicorn-purple); }
   .fh-dot[data-state="DISSOLUTION"]::after { background: transparent; border: 1px solid rgba(255,255,255,0.5); }
+  /* KRYL-1350 -- elapsed time between two consecutive state-change observations. Sits above the
+     row line at the midpoint of its segment; a label, not a line, so nothing implies the
+     formation was continuously observed across the gap. */
+  .fh-int {
+    position: absolute; top: -1px; transform: translateX(-50%); white-space: nowrap;
+    font-size: 9px; letter-spacing: 0.06em; color: var(--text-mono-dim); pointer-events: none;
+  }
+  .fh-int.hidden-by-scrub { opacity: 0.15; }
   .scrubber-readout {
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -574,6 +582,17 @@
   let formationHistoryData = []; // real rows, grouped by formation_id, each sorted by captured_at
   let fhRange = null; // { min, max } real epoch ms, or null when there's nothing to range over
 
+  let fhRowMeta = []; // per-formation label state for applyScrubTimeFilter (KRYL-1350)
+
+  // Elapsed wall-clock time between two real captured_at values, largest two units.
+  function fmtInterval(ms) {
+    const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
+    if (d >= 1) return h % 24 ? `${d}d ${h % 24}h` : `${d}d`;
+    if (h >= 1) return m % 60 ? `${h}h ${m % 60}m` : `${h}h`;
+    if (m >= 1) return `${m}m`;
+    return `${s}s`;
+  }
+
   const FH_GLYPH = { NEW: '●', STRENGTHENING: '●', WEAKENING: '●', RECONFIGURATION: '◆', DISSOLUTION: '○' };
 
   function groupByFormationId(rows) {
@@ -589,6 +608,7 @@
   function applyFormationHistory(rows) {
     formationHistoryData = rows ?? [];
     fhWrapEl.innerHTML = '';
+    fhRowMeta = [];
 
     if (formationHistoryData.length === 0) {
       fhRange = null;
@@ -604,8 +624,60 @@
     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
     updateScrubberRangeLabel();
 
-    // Row rendering (line + dots per formation) removed — fhWrapEl stays empty. fhRange/
-    // scrubber-readout above still drive the scrubber control itself, which keeps working.
+    // KRYL-1350 -- one row per formation_id (the row rendering KRYL-1337 removed, rebuilt with
+    // state-change markers + interval labels). A marker is the first row of a formation or a row
+    // whose state differs from the previous row of the SAME formation; same-state rows draw
+    // nothing. x = captured_at linear-mapped into [fhRange.min, fhRange.max]; no interpolation.
+    const pctOf = (t) => fhRange.max === fhRange.min ? 50 : ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100;
+    for (const [formationId, group] of groupByFormationId(formationHistoryData)) {
+      const parts = formationId.split('|');
+      const hasPair = parts.length >= 5;
+      const entityA = hasPair ? parts[3] : formationId, entityB = hasPair ? parts[4] : '';
+      const markers = group
+        .filter((r, i) => i === 0 || r.state !== group[i - 1].state)
+        .map(r => ({ r, t: new Date(r.captured_at).getTime() }));
+
+      const row = document.createElement('div');
+      row.className = 'fh-row';
+      const label = document.createElement('div');
+      label.className = 'fh-label';
+      label.title = 'Elapsed time is between real captured_at observations -- not continuous observation.';
+      row.appendChild(label);
+      const line = document.createElement('div');
+      line.className = 'fh-line';
+      row.appendChild(line);
+
+      markers.forEach((m, i) => {
+        const next = markers[i + 1];
+        const dot = document.createElement('div');
+        dot.className = 'fh-dot';
+        dot.dataset.state = m.r.state;
+        dot.dataset.t = String(m.t);
+        dot.style.left = pctOf(m.t) + '%';
+        dot.title = `${m.r.state} — ${new Date(m.r.captured_at).toLocaleString()}` +
+          (next ? `\nuntil next change: ${fmtInterval(next.t - m.t)} between observations (not continuous observation)` : '');
+        dot.addEventListener('click', (ev) => { ev.stopPropagation(); renderFormationTransitionPanel(m.r, entityA, entityB); });
+        row.appendChild(dot);
+        if (next) {
+          const int = document.createElement('div');
+          int.className = 'fh-int';
+          int.dataset.t = String(next.t);
+          int.style.left = ((pctOf(m.t) + pctOf(next.t)) / 2) + '%';
+          int.textContent = fmtInterval(next.t - m.t);
+          row.appendChild(int);
+        }
+      });
+
+      const newMarker = markers.find(m => m.r.state === 'NEW');
+      fhRowMeta.push({
+        labelEl: label,
+        name: hasPair ? `${entityA} ↔ ${entityB}` : formationId,
+        tNew: newMarker ? newMarker.t : null,
+        changes: markers.length - 1,
+      });
+      fhWrapEl.appendChild(row);
+    }
+    applyScrubTimeFilter(); // paints per-row metadata + respects whatever the scrubber is already set to
 
     // KRYL-1334 (2026-09-30) -- root cause of possible panel/scrubber overlap: resize()
     // computes plot.h (and therefore positionPanelDefault()'s safe bottom boundary) by
@@ -636,10 +708,17 @@
   function applyScrubTimeFilter() {
     if (!fhRange) return;
     const cutoff = fhRange.min + currentT * (fhRange.max - fhRange.min);
-    fhWrapEl.querySelectorAll('.fh-dot').forEach(dot => {
-      const t = Number(dot.dataset.t);
-      dot.classList.toggle('hidden-by-scrub', t > cutoff);
+    fhWrapEl.querySelectorAll('.fh-dot, .fh-int').forEach(el => {
+      el.classList.toggle('hidden-by-scrub', Number(el.dataset.t) > cutoff);
     });
+    // KRYL-1350 -- per-formation metadata. Age = scrubber time minus that formation's first NEW
+    // observation; no NEW row says so, and a scrub position before NEW shows no age (not zero).
+    for (const m of fhRowMeta) {
+      const age = m.tNew === null ? 'NO NEW OBSERVED'
+        : fhRange.max === fhRange.min ? 'N/A' // one capture time overall -- no elapsed interval exists
+        : cutoff < m.tNew ? '—' : fmtInterval(cutoff - m.tNew);
+      m.labelEl.textContent = `${m.name} · CHANGES ${m.changes} · FORMATION AGE: ${age}`;
+    }
   }
 
   // Reuses the existing detail panel DOM (panelEyebrow/panelTitle/panelDomain), same as
@@ -1009,7 +1088,7 @@
     return candidates;
   }
 
-  // drawSurfaceBoundary — the frame marking the crosshair's actual bounds. plot.{x,y,w,h} is
+  // drawSurfaceBoundary — the frame marking the plot's actual bounds. plot.{x,y,w,h} is
   // recomputed every resize() from real window.innerWidth/innerHeight (not a fixed constant), so
   // this stays correct at any window size while still framing exactly the ~1467x617px region
   // confirmed against the live app.
@@ -1050,28 +1129,9 @@
 
   let hoverId = null;
   let timeMs = 0;
-  let crosshairPx = null; // {x,y} in canvas px, or null when pointer is off the plot
-
-  // drawCrosshair — spatial (φ, φ̇) readout at the cursor. Independent of the
-  // scrubber's t: crosshair reads whatever frame is currently rendered, it
-  // doesn't control time — the two axes (space vs. time) don't collide.
-  function drawCrosshair() {
-    if (!crosshairPx) return;
-    const { x: px, y: py } = crosshairPx;
-    if (px < plot.x || px > plot.x + plot.w || py < plot.y || py > plot.y + plot.h) return;
-
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.32)';
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 3]);
-    ctx.beginPath(); ctx.moveTo(px, plot.y); ctx.lineTo(px, plot.y + plot.h); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(plot.x, py); ctx.lineTo(plot.x + plot.w, py); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.restore();
-    // No x/y value tags (Founder, 2026-10-04): position is a force-directed layout of the real
-    // admitted edges, so its coordinates have no measured meaning and a number on an axis would
-    // imply one. The dashed crosshair itself stays as a tracing aid.
-  }
+  // No cursor crosshair (Founder, 2026-10-04): position is a force-directed layout of the real
+  // admitted edges, so its coordinates have no measured meaning -- the x/y value tags implied
+  // one, and the dashed lines that followed the cursor had no purpose without them.
 
   function draw(t) {
     ctx.clearRect(0, 0, W, H);
@@ -1409,8 +1469,6 @@
     integrityEl.textContent = realFormation ? realFormation.existence.toFixed(2) : '—';
     nEdgesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.graph.edges.length : 0) : '—';
     nNodesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.participatingDomains.length : 0) : '—';
-
-    drawCrosshair();
   }
 
   // ---- scrubber --------------------------------------------------------
@@ -1598,10 +1656,8 @@
       hoverId = next;
       canvas.style.cursor = next ? 'pointer' : 'default';
     }
-    crosshairPx = { x: e.clientX, y: e.clientY };
     // Re-coupled (2026-08-21): cursor X-position drives the time scrubber again, strictly bounded
-    // to the plot rect — both X and Y must be inside plot.x/y/w/h, the same rect drawCrosshair()
-    // checks, so the scrubber only moves while the crosshair itself is actually visible.
+    // to the plot rect — both X and Y must be inside plot.x/y/w/h.
     // KRYL-1287 (2026-09-09) -- this coupling is demo-era: it silently dragged currentT off 1
     // on every hover, even with the scrubber UI hidden (real data mode hides it, see
     // applyFieldFormation), which would have fought directly against the new hover-reveals-
@@ -1616,7 +1672,6 @@
   });
   canvas.addEventListener('pointerleave', () => {
     hoverId = null;
-    crosshairPx = null;
     canvas.style.cursor = 'default';
     draw(currentT);
   });
