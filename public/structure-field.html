@@ -898,22 +898,6 @@
   // page refresh gave the race more slack to resolve by luck. This tells the parent the listener
   // is actually ready, so it can send (or re-send) the data in response instead of guessing from
   // `onLoad` timing alone.
-  // The scrubber track ends where the date range label begins (Founder, 2026-10-03), not at the
-  // far edge. The label's width changes with its text, so this re-measures on any change.
-  (function trimTrackToDateLabel() {
-    const rangeEl = document.getElementById('scrubber-range');
-    const trackEl = document.querySelector('.scrubber');
-    if (!rangeEl || !trackEl) return;
-    function trim() {
-      trackEl.style.marginRight = '0px';
-      const gap = trackEl.getBoundingClientRect().right - rangeEl.getBoundingClientRect().left;
-      trackEl.style.marginRight = Math.max(0, gap) + 'px';
-    }
-    new ResizeObserver(trim).observe(rangeEl);
-    window.addEventListener('resize', trim);
-    trim();
-  })();
-
   window.parent.postMessage({ type: 'krylo-map-ready' }, '*');
 
   function nodeStateAt(node, t) {
