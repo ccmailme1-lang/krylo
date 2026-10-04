@@ -1,0 +1,3233 @@
+[
+  {
+    "section": "1. Supplier / Vendor",
+    "n": 1,
+    "q": "What structural relationships are emerging between restaurant suppliers, distributors, and technology providers that could affect RSI?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555960
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT STRUCTURAL RELATIONSHIPS ARE EMERGING BETWEEN.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "EMERGING",
+          "AFFECTING",
+          "STRUCTURAL",
+          "RELATIONSHIP"
+        ],
+        "context": "What structural relationships are emerging between restaurant suppliers, distributors, and technology providers that could affect RSI?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "EMERGING",
+            "AFFECTING",
+            "STRUCTURAL",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, TECHNOLOGY. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, TECHNOLOGY. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "EMERGING",
+          "AFFECTING",
+          "STRUCTURAL",
+          "RELATIONSHIP"
+        ],
+        "context": "What structural relationships are emerging between restaurant suppliers, distributors, and technology providers that could affect RSI?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "EMERGING",
+            "AFFECTING",
+            "STRUCTURAL",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "1. Supplier / Vendor",
+    "n": 2,
+    "q": "Where are supplier dependencies becoming more concentrated, and what entities are connected to those changes?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555979
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHERE ARE SUPPLIER DEPENDENCIES BECOMING MORE CONCENTRATED,.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "CONCENTRATING",
+          "CONNECTED",
+          "DEPENDENT"
+        ],
+        "context": "Where are supplier dependencies becoming more concentrated, and what entities are connected to those changes?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "SUPPLIER",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "CONCENTRATING",
+            "CONNECTED",
+            "DEPENDENT"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER. Only one structural participant recognized — nothing to relate it to yet.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER. Only one structural participant recognized — nothing to relate it to yet.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "CONCENTRATING",
+          "CONNECTED",
+          "DEPENDENT"
+        ],
+        "context": "Where are supplier dependencies becoming more concentrated, and what entities are connected to those changes?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "SUPPLIER",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "CONCENTRATING",
+            "CONNECTED",
+            "DEPENDENT"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "1. Supplier / Vendor",
+    "n": 3,
+    "q": "What relationships between suppliers and distributors appear to be changing?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555982
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT RELATIONSHIPS BETWEEN SUPPLIERS AND DISTRIBUTORS.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What relationships between suppliers and distributors appear to be changing?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR. No candidate relationship (1 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR. No candidate relationship (1 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What relationships between suppliers and distributors appear to be changing?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "2. Facility / Distribution",
+    "n": 4,
+    "q": "What structural changes are occurring across distribution facilities that could affect RSI's supply network?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555983
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT STRUCTURAL CHANGES ARE OCCURRING ACROSS DISTRIBUTION.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "FACILITY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "AFFECTING",
+          "STRUCTURAL"
+        ],
+        "context": "What structural changes are occurring across distribution facilities that could affect RSI's supply network?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "FACILITY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "AFFECTING",
+            "STRUCTURAL"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: FACILITY. Only one structural participant recognized — nothing to relate it to yet.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: FACILITY. Only one structural participant recognized — nothing to relate it to yet.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "FACILITY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "AFFECTING",
+          "STRUCTURAL"
+        ],
+        "context": "What structural changes are occurring across distribution facilities that could affect RSI's supply network?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "FACILITY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "AFFECTING",
+            "STRUCTURAL"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "2. Facility / Distribution",
+    "n": 5,
+    "q": "Where are facility, logistics, and supplier relationships becoming more interconnected?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555984
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHERE ARE FACILITY, LOGISTICS, AND SUPPLIER RELATIONSHIPS.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "FACILITY",
+          "LOGISTICS"
+        ],
+        "relationshipIntent": [
+          "INTERCONNECTED",
+          "RELATIONSHIP"
+        ],
+        "context": "Where are facility, logistics, and supplier relationships becoming more interconnected?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOGISTICS",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOGISTICS",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "INTERCONNECTED",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, FACILITY, LOGISTICS. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, FACILITY, LOGISTICS. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "FACILITY",
+          "LOGISTICS"
+        ],
+        "relationshipIntent": [
+          "INTERCONNECTED",
+          "RELATIONSHIP"
+        ],
+        "context": "Where are facility, logistics, and supplier relationships becoming more interconnected?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOGISTICS",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOGISTICS",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "INTERCONNECTED",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "2. Facility / Distribution",
+    "n": 6,
+    "q": "What changes in distribution infrastructure could create new dependencies for member restaurants?",
+    "synthesis": {
+      "queryDomain": "TECHNOLOGY",
+      "domainVector": {
+        "primary": "GENERAL",
+        "weights": {},
+        "state": "SOFT",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": true
+      },
+      "resolutionEligible": false,
+      "canonical": {
+        "withheld": true,
+        "reason": "NO_LIVE_SIGNAL",
+        "primary": "technology",
+        "classification": {
+          "primary": "technology",
+          "weights": {
+            "technology": 1
+          },
+          "confidence": 0.2,
+          "evidenceHits": 1,
+          "coActive": [],
+          "resolved": true
+        },
+        "note": "Domain resolved; no live signal in the current window.",
+        "recommendedAction": "Resolved to TECHNOLOGY. The live TECHNOLOGY field carries no signal in the current window — there is nothing being perceived here yet."
+      },
+      "withheldReason": "NO_LIVE_SIGNAL",
+      "recommendedAction": "Resolved to TECHNOLOGY. The live TECHNOLOGY field carries no signal in the current window — there is nothing being perceived here yet.",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555985
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT CHANGES IN DISTRIBUTION INFRASTRUCTURE COULD CREATE.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "UNRESOLVED",
+        "entities": [],
+        "relationshipIntent": [
+          "CHANGING",
+          "DEPENDENT"
+        ],
+        "context": "What changes in distribution infrastructure could create new dependencies for member restaurants?"
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Resolved to TECHNOLOGY. The live TECHNOLOGY field carries no signal in the current window — there is nothing being perceived here yet.",
+      "purpose": "Resolved to TECHNOLOGY. The live TECHNOLOGY field carries no signal in the current window — there is nothing being perceived here yet.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Resolved to TECHNOLOGY. The live TECHNOLOGY field carries no signal in the current window — there is nothing being perceived here yet.",
+      "structuralQuery": {
+        "state": "UNRESOLVED",
+        "entities": [],
+        "relationshipIntent": [
+          "CHANGING",
+          "DEPENDENT"
+        ],
+        "context": "What changes in distribution infrastructure could create new dependencies for member restaurants?"
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "3. Company / Market",
+    "n": 7,
+    "q": "What relationships between major suppliers, distributors, and restaurant companies are changing?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555987
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT RELATIONSHIPS BETWEEN MAJOR SUPPLIERS, DISTRIBUTORS,.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "COMPANY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What relationships between major suppliers, distributors, and restaurant companies are changing?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, COMPANY. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, COMPANY. No candidate relationships (3 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "COMPANY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What relationships between major suppliers, distributors, and restaurant companies are changing?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "3. Company / Market",
+    "n": 8,
+    "q": "Where are market conditions creating new relationships or disrupting existing ones across the restaurant supply chain?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555987
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHERE ARE MARKET CONDITIONS CREATING NEW RELATIONSHIPS OR.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "MARKET"
+        ],
+        "relationshipIntent": [
+          "DISRUPTED",
+          "RELATIONSHIP"
+        ],
+        "context": "Where are market conditions creating new relationships or disrupting existing ones across the restaurant supply chain?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "MARKET",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "DISRUPTED",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "MARKET THEME — NO SUBJECT",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "MARKET THEME · supply chain recognized. No canonical domain-pressure signal is available for this input, so live-signal synthesis is withheld — this is a stated absence, not a low score. See the Target Packet's Frame Anchoring section for what KRYLO can observe about this frame.",
+      "purpose": "MARKET THEME · supply chain recognized. No canonical domain-pressure signal is available for this input, so live-signal synthesis is withheld — this is a stated absence, not a low score. See the Target Packet's Frame Anchoring section for what KRYLO can observe about this frame.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "MARKET THEME · supply chain recognized. No canonical domain-pressure signal is available for this input, so live-signal synthesis is withheld — this is a stated absence, not a low score. See the Target Packet's Frame Anchoring section for what KRYLO can observe about this frame.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "MARKET"
+        ],
+        "relationshipIntent": [
+          "DISRUPTED",
+          "RELATIONSHIP"
+        ],
+        "context": "Where are market conditions creating new relationships or disrupting existing ones across the restaurant supply chain?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "MARKET",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "DISRUPTED",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "3. Company / Market",
+    "n": 9,
+    "q": "What structural connections should RSI be watching across its supplier and distribution ecosystem?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555989
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT STRUCTURAL CONNECTIONS SHOULD RSI BE WATCHING ACROSS.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER"
+        ],
+        "relationshipIntent": [
+          "STRUCTURAL",
+          "WATCHING"
+        ],
+        "context": "What structural connections should RSI be watching across its supplier and distribution ecosystem?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "SUPPLIER",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "STRUCTURAL",
+            "WATCHING"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER. Only one structural participant recognized — nothing to relate it to yet.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER. Only one structural participant recognized — nothing to relate it to yet.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER"
+        ],
+        "relationshipIntent": [
+          "STRUCTURAL",
+          "WATCHING"
+        ],
+        "context": "What structural connections should RSI be watching across its supplier and distribution ecosystem?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "SUPPLIER",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "STRUCTURAL",
+            "WATCHING"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "4. Technology / Operations",
+    "n": 10,
+    "q": "How are automation and supply-chain technology changes altering relationships among facilities, suppliers, distributors, and restaurants?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555990
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for HOW ARE AUTOMATION AND SUPPLY-CHAIN TECHNOLOGY CHANGES.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "How are automation and supply-chain technology changes altering relationships among facilities, suppliers, distributors, and restaurants?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, TECHNOLOGY. No candidate relationships (6 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, TECHNOLOGY. No candidate relationships (6 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "How are automation and supply-chain technology changes altering relationships among facilities, suppliers, distributors, and restaurants?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "TECHNOLOGY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "4. Technology / Operations",
+    "n": 11,
+    "q": "What technology changes are creating new dependencies in restaurant distribution?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555990
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT TECHNOLOGY CHANGES ARE CREATING NEW DEPENDENCIES IN.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "DEPENDENT"
+        ],
+        "context": "What technology changes are creating new dependencies in restaurant distribution?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "TECHNOLOGY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "DEPENDENT"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: TECHNOLOGY. Only one structural participant recognized — nothing to relate it to yet.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: TECHNOLOGY. Only one structural participant recognized — nothing to relate it to yet.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "DEPENDENT"
+        ],
+        "context": "What technology changes are creating new dependencies in restaurant distribution?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "TECHNOLOGY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING",
+            "DEPENDENT"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "4. Technology / Operations",
+    "n": 12,
+    "q": "Where is technology changing the structure of the supply network rather than simply improving an existing process?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555991
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHERE IS TECHNOLOGY CHANGING THE STRUCTURE OF THE SUPPLY.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "Where is technology changing the structure of the supply network rather than simply improving an existing process?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "TECHNOLOGY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: TECHNOLOGY. Only one structural participant recognized — nothing to relate it to yet.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: TECHNOLOGY. Only one structural participant recognized — nothing to relate it to yet.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "TECHNOLOGY"
+        ],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "Where is technology changing the structure of the supply network rather than simply improving an existing process?",
+        "evidence": {
+          "relationships": [],
+          "singleEntities": [
+            {
+              "entity": "TECHNOLOGY",
+              "state": "NO_EVIDENCE"
+            }
+          ],
+          "relationshipIntent": [
+            "CHANGING"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "5. Capital / Ownership",
+    "n": 13,
+    "q": "What ownership or investment changes could alter relationships among suppliers, distributors, and restaurant companies?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555991
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT OWNERSHIP OR INVESTMENT CHANGES COULD ALTER.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "COMPANY",
+          "OWNERSHIP",
+          "INVESTMENT"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What ownership or investment changes could alter relationships among suppliers, distributors, and restaurant companies?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "OWNERSHIP",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, COMPANY, OWNERSHIP, INVESTMENT. No candidate relationships (10 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, COMPANY, OWNERSHIP, INVESTMENT. No candidate relationships (10 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "COMPANY",
+          "OWNERSHIP",
+          "INVESTMENT"
+        ],
+        "relationshipIntent": [
+          "CHANGING",
+          "RELATIONSHIP"
+        ],
+        "context": "What ownership or investment changes could alter relationships among suppliers, distributors, and restaurant companies?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "OWNERSHIP",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "OWNERSHIP",
+              "b": "INVESTMENT",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "5. Capital / Ownership",
+    "n": 14,
+    "q": "Where is capital moving in ways that could change the structure of the restaurant supply chain?",
+    "synthesis": {
+      "queryDomain": "CAPITAL",
+      "domainVector": {
+        "primary": "GENERAL",
+        "weights": {},
+        "state": "SOFT",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": true
+      },
+      "resolutionEligible": false,
+      "canonical": {
+        "withheld": true,
+        "reason": "NO_LIVE_SIGNAL",
+        "primary": "capital",
+        "classification": {
+          "primary": "capital",
+          "weights": {
+            "capital": 1
+          },
+          "confidence": 0.2,
+          "evidenceHits": 1,
+          "coActive": [],
+          "resolved": true
+        },
+        "note": "Domain resolved; no live signal in the current window.",
+        "recommendedAction": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet."
+      },
+      "withheldReason": "NO_LIVE_SIGNAL",
+      "recommendedAction": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555992
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHERE IS CAPITAL MOVING IN WAYS THAT COULD CHANGE THE.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "UNRESOLVED",
+        "entities": [],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "Where is capital moving in ways that could change the structure of the restaurant supply chain?"
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "purpose": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "structuralQuery": {
+        "state": "UNRESOLVED",
+        "entities": [],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "Where is capital moving in ways that could change the structure of the restaurant supply chain?"
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "5. Capital / Ownership",
+    "n": 15,
+    "q": "What acquisitions or ownership changes are creating new connections across the ecosystem?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555992
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT ACQUISITIONS OR OWNERSHIP CHANGES ARE CREATING NEW.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "OWNERSHIP",
+          "ACQUISITION"
+        ],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "What acquisitions or ownership changes are creating new connections across the ecosystem?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "OWNERSHIP",
+              "b": "ACQUISITION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: OWNERSHIP, ACQUISITION. No candidate relationship (1 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: OWNERSHIP, ACQUISITION. No candidate relationship (1 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "OWNERSHIP",
+          "ACQUISITION"
+        ],
+        "relationshipIntent": [
+          "CHANGING"
+        ],
+        "context": "What acquisitions or ownership changes are creating new connections across the ecosystem?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "OWNERSHIP",
+              "b": "ACQUISITION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CHANGING"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "6. Broad / End-to-End",
+    "n": 16,
+    "q": "What structural relationships across suppliers, distributors, facilities, companies, locations, and markets could affect RSI's supply network over the next several years?",
+    "synthesis": {
+      "queryDomain": "AMBIGUOUS",
+      "domainVector": {
+        "primary": "AMBIGUOUS",
+        "weights": {},
+        "state": "HOLD",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": false
+      },
+      "resolutionEligible": false,
+      "stateType": "PROJECTION",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555993
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for WHAT STRUCTURAL RELATIONSHIPS ACROSS SUPPLIERS,.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "COMPANY",
+          "LOCATION",
+          "MARKET"
+        ],
+        "relationshipIntent": [
+          "AFFECTING",
+          "STRUCTURAL",
+          "RELATIONSHIP"
+        ],
+        "context": "What structural relationships across suppliers, distributors, facilities, companies, locations, and markets could affect RSI's supply network over the next several years?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "AFFECTING",
+            "STRUCTURAL",
+            "RELATIONSHIP"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, COMPANY, LOCATION, MARKET. No candidate relationships (15 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "To report the structural participants and relationship language KRYLO recognized, and whether real evidence currently supports any relationship between them.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, COMPANY, LOCATION, MARKET. No candidate relationships (15 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "COMPANY",
+          "LOCATION",
+          "MARKET"
+        ],
+        "relationshipIntent": [
+          "AFFECTING",
+          "STRUCTURAL",
+          "RELATIONSHIP"
+        ],
+        "context": "What structural relationships across suppliers, distributors, facilities, companies, locations, and markets could affect RSI's supply network over the next several years?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "AFFECTING",
+            "STRUCTURAL",
+            "RELATIONSHIP"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  },
+  {
+    "section": "7. Critical Test",
+    "n": 17,
+    "q": "There is friction in the finance market. Where is that friction occurring, what entities are connected to it, and how could it affect suppliers, distributors, partners, competitors, facilities, companies, locations, and markets?",
+    "synthesis": {
+      "queryDomain": "CAPITAL",
+      "domainVector": {
+        "primary": "GENERAL",
+        "weights": {},
+        "state": "SOFT",
+        "entropy": 0,
+        "coActive": [],
+        "resolutionEligible": true
+      },
+      "resolutionEligible": false,
+      "canonical": {
+        "withheld": true,
+        "reason": "NO_LIVE_SIGNAL",
+        "primary": "capital",
+        "classification": {
+          "primary": "capital",
+          "weights": {
+            "capital": 1
+          },
+          "confidence": 0.2,
+          "evidenceHits": 1,
+          "coActive": [],
+          "resolved": true
+        },
+        "note": "Domain resolved; no live signal in the current window.",
+        "recommendedAction": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet."
+      },
+      "withheldReason": "NO_LIVE_SIGNAL",
+      "recommendedAction": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "ses": {
+        "observationHealth": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "evidenceFreshness": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "signalDensity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "narrativeVolatility": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "sourceIntegrity": {
+          "value": null,
+          "status": "ABSENT",
+          "groundedness": 0
+        },
+        "causalVisibility": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "dependencyComplexity": {
+          "value": null,
+          "status": "ESTIMATED",
+          "groundedness": 0
+        },
+        "environmentalWarnings": [
+          "Observation environment not yet established — SES ungrounded; no environmental conditioning applied."
+        ],
+        "activeConditions": [
+          "ENVIRONMENT_UNOBSERVED"
+        ],
+        "affectedDomains": [],
+        "groundedness": 0,
+        "ts": 1790704555994
+      },
+      "provenanceState": {
+        "state": "STRUCTURAL_ABSENCE",
+        "resolved": false,
+        "reason": "No structural evidence event recorded for THERE IS FRICTION IN THE FINANCE MARKET. WHERE IS THAT.... A provenance trace requires a filed structural event."
+      },
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "COMPANY",
+          "LOCATION",
+          "MARKET",
+          "PARTNER",
+          "COMPETITOR"
+        ],
+        "relationshipIntent": [
+          "CONNECTED",
+          "AFFECTING",
+          "FRICTION"
+        ],
+        "context": "There is friction in the finance market. Where is that friction occurring, what entities are connected to it, and how could it affect suppliers, distributors, partners, competitors, facilities, companies, locations, and markets?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "MARKET",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "MARKET",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "PARTNER",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CONNECTED",
+            "AFFECTING",
+            "FRICTION"
+          ]
+        }
+      }
+    },
+    "brief": {
+      "classification": "//KRYLO//SIGNAL-CLASSIFIED//ANALYTICAL-USE-ONLY//",
+      "subject": "NO SUBJECT RESOLVED",
+      "lens": "UNANCHORED",
+      "date": "2026-09-29",
+      "asOf": "13:55:55 EST",
+      "originator": "KRYLO ANALYSIS ENGINE",
+      "domain": "INSUFFICIENT SIGNAL",
+      "cac": "—",
+      "roas": "—",
+      "insufficient": true,
+      "bluf": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet. Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, COMPANY, LOCATION, MARKET, PARTNER, COMPETITOR. No candidate relationships (28 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "purpose": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet.",
+      "fiveWs": [],
+      "evidence": [],
+      "assumptions": [],
+      "assessment": "Resolved to CAPITAL. The live CAPITAL field carries no signal in the current window — there is nothing being perceived here yet. Structural participants recognized independent of canonical-domain classification: SUPPLIER, DISTRIBUTOR, FACILITY, COMPANY, LOCATION, MARKET, PARTNER, COMPETITOR. No candidate relationships (28 checked) currently supported by real evidence — this is a stated absence, not a low score.",
+      "structuralQuery": {
+        "state": "INTERPRETABLE",
+        "entities": [
+          "SUPPLIER",
+          "DISTRIBUTOR",
+          "FACILITY",
+          "COMPANY",
+          "LOCATION",
+          "MARKET",
+          "PARTNER",
+          "COMPETITOR"
+        ],
+        "relationshipIntent": [
+          "CONNECTED",
+          "AFFECTING",
+          "FRICTION"
+        ],
+        "context": "There is friction in the finance market. Where is that friction occurring, what entities are connected to it, and how could it affect suppliers, distributors, partners, competitors, facilities, companies, locations, and markets?",
+        "evidence": {
+          "relationships": [
+            {
+              "a": "SUPPLIER",
+              "b": "DISTRIBUTOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "SUPPLIER",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "FACILITY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "DISTRIBUTOR",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPANY",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "FACILITY",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "LOCATION",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "COMPANY",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "MARKET",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "LOCATION",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "MARKET",
+              "b": "PARTNER",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "MARKET",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            },
+            {
+              "a": "PARTNER",
+              "b": "COMPETITOR",
+              "state": "NO_EVIDENCE",
+              "facet": null
+            }
+          ],
+          "singleEntities": [],
+          "relationshipIntent": [
+            "CONNECTED",
+            "AFFECTING",
+            "FRICTION"
+          ]
+        }
+      },
+      "threats": [],
+      "opportunities": [],
+      "coas": [],
+      "alternativeView": "",
+      "outlook": []
+    },
+    "error": null
+  }
+]
