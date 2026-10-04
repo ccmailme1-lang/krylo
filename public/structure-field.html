@@ -177,6 +177,20 @@
   }
   .panel-close:hover { color: var(--text-mono); }
 
+  /* Canonical-ρ relationships: a compact chip, not a panel (Founder, 2026-10-03). The Brief already
+     lists every admitted relationship, so the Map shows structure first and opens the detail list
+     only on request. Same lime-on-black treatment as .ctrl (locked palette). */
+  #rel-chip {
+    position: fixed; z-index: 3; display: none;
+    font-family: inherit; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--signal-lime); background: #050505;
+    border: 1px solid var(--signal-lime); border-radius: 2px;
+    padding: 6px 10px; cursor: pointer; white-space: nowrap;
+    transition: border-color 160ms, color 160ms;
+  }
+  #rel-chip.show { display: block; }
+  #rel-chip:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+
   .panel-eyebrow { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-mono-dim); }
   .panel-title {
     font-family: Georgia, 'Times New Roman', serif; color: #fff; line-height: 1.15; margin-top: 3px;
@@ -261,6 +275,8 @@
     </div>
   </div>
 </div>
+
+<button id="rel-chip" type="button" aria-expanded="false"></button>
 
 <div id="panel">
   <div class="panel-drag-handle" id="panel-drag-handle"></div>
@@ -653,6 +669,7 @@
     // Ownership handoff: the scrubber now owns the panel's open content, not the entity-
     // relationships feature below -- a later NO_EVIDENCE query must not close THIS content.
     entityPanelOpen = false;
+    syncChipState(); // the chip's caret/aria must reflect that the entity list is no longer the open one
   }
 
   // Supplier Structural Intelligence -- reuses the SAME panel DOM renderFormationTransitionPanel
@@ -764,12 +781,95 @@
   }
 
   let entityPanelOpen = false;
+  let entityRelsData = [];
+  const relChipEl = document.getElementById('rel-chip');
+
+  function chipLabel() {
+    const n = entityRelsData.length;
+    return `${n} ADMITTED RELATIONSHIP${n !== 1 ? 'S' : ''} ${entityPanelOpen ? '▾' : '▸'}`;
+  }
+  function syncChipState() {
+    relChipEl.textContent = chipLabel();
+    relChipEl.setAttribute('aria-expanded', String(entityPanelOpen));
+  }
+
+  // Place the chip where it is farthest from every node (same minimum-distance scoring as
+  // positionPanelDefault(), sized for the chip), and anchor an OPEN panel directly beneath it so
+  // the two never overlap each other. A panel the guest has dragged keeps wherever they put it.
+  function positionRelChip() {
+    if (!relChipEl.classList.contains('show')) return;
+    const CW = relChipEl.offsetWidth || 220, CH = relChipEl.offsetHeight || 26, GAP = 12, STEPS = 9;
+    const pts = Object.values(nodeById).map(n => { const p = n._pos || lerpPath(n.path, currentT); return { x: toPxX(p.x), y: toPxY(p.y) }; });
+    // Edges count as obstacles too, not just nodes: sample each drawn edge every ~10px so the chip
+    // never lands on a line (a chip over a crossing of edges is the overlap this exists to remove).
+    for (const e of EDGES) {
+      const a = nodeById[e.from], b = nodeById[e.to]; if (!a || !b) continue;
+      const pa = a._pos || lerpPath(a.path, currentT), pb = b._pos || lerpPath(b.path, currentT);
+      const ax = toPxX(pa.x), ay = toPxY(pa.y), bx = toPxX(pb.x), by = toPxY(pb.y);
+      const n = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / 10));
+      for (let i = 1; i < n; i++) pts.push({ x: ax + (bx - ax) * (i / n), y: ay + (by - ay) * (i / n) });
+    }
+    const minX = plot.x + GAP, minY = plot.y + GAP;
+    const maxX = Math.max(minX, plot.x + plot.w - GAP - CW), maxY = Math.max(minY, plot.y + plot.h - GAP - CH);
+    const clr = (x1, y1) => pts.length ? Math.min(...pts.map(p => Math.hypot(Math.max(x1 - p.x, 0, p.x - (x1 + CW)), Math.max(y1 - p.y, 0, p.y - (y1 + CH))))) : 0;
+    let best = { x: minX, y: minY, c: -1 };
+    for (let i = 0; i <= STEPS; i++) for (let j = 0; j <= STEPS; j++) {
+      const x = minX + (maxX - minX) * (i / STEPS), y = minY + (maxY - minY) * (j / STEPS), c = clr(x, y);
+      if (c > best.c) best = { x, y, c };
+    }
+    relChipEl.style.left = best.x + 'px';
+    relChipEl.style.top = best.y + 'px';
+    if (entityPanelOpen && !panelUserPositioned) {
+      // Open on whichever side of the chip has room -- below it when it fits, otherwise above --
+      // and shrink to that room (the panel already scrolls internally), so the panel can never sit
+      // on top of the chip: the guest must always be able to click the chip to close it.
+      const PH_MAX = 460, MIN_H = 140;
+      const roomBelow = plot.y + plot.h - GAP - (best.y + CH + 6);
+      const roomAbove = best.y - 6 - (plot.y + GAP);
+      const useBelow = roomBelow >= PH_MAX || roomBelow >= roomAbove;
+      const H = Math.max(MIN_H, Math.min(PH_MAX, useBelow ? roomBelow : roomAbove));
+      panel.style.right = panel.style.bottom = 'auto';
+      panel.style.maxHeight = H + 'px';
+      // The panel's real width, not an assumed 300px: in narrow frames (<=900px) the existing CSS
+      // lets it grow to its content, so measure after a provisional left, then clamp the right edge.
+      panel.style.left = Math.max(plot.x + GAP, best.x) + 'px';
+      const PW = panel.offsetWidth || 300;
+      panel.style.left = Math.max(plot.x + GAP, Math.min(best.x, plot.x + plot.w - GAP - PW)) + 'px';
+      panel.style.top = (useBelow ? best.y + CH + 6 : best.y - 6 - H) + 'px';
+    }
+  }
+
+  function setEntityPanelOpen(open) {
+    if (open) {
+      fillEntityPanel(entityRelsData);
+      panel.classList.add('open');
+      entityPanelOpen = true;
+    } else if (entityPanelOpen) {
+      panel.classList.remove('open');
+      entityPanelOpen = false;
+    }
+    syncChipState();
+    positionRelChip();
+  }
+  relChipEl.addEventListener('click', () => setEntityPanelOpen(!entityPanelOpen));
+
   function applyEntityRelationships(relationships, subjectLabel) {
     syncEntityNode(relationships, subjectLabel);
-    if (!relationships || relationships.length === 0) {
+    entityRelsData = relationships || [];
+    if (entityRelsData.length === 0) {
+      relChipEl.classList.remove('show');
       if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
-      return; // NO_EVIDENCE: no edge on the plot, no panel -- nothing invented to fill space
+      return; // NO_EVIDENCE: no edge on the plot, no chip, no panel -- nothing invented to fill space
     }
+    // The detail panel is NOT opened here: a compact chip is shown instead, and the guest opens the
+    // list on request. If they already have it open, refresh its content in place.
+    relChipEl.classList.add('show');
+    syncChipState();
+    if (entityPanelOpen) fillEntityPanel(entityRelsData);
+    positionRelChip();
+  }
+
+  function fillEntityPanel(relationships) {
     panelEyebrow.textContent = 'EVIDENCED RELATIONSHIP (canonical ρ)';
     panelTitle.textContent = relationships.length === 1 ? relationships[0].type : `${relationships.length} ADMITTED RELATIONSHIPS`;
     // Brighter than the shared .panel-domain class (--text-mono-dim, 0.32 alpha -- too low-
@@ -788,8 +888,6 @@
         <span class="op-class">${evidenceText(r)}</span>
         <span class="op-class">${r.type}</span>
       </div>`).join('');
-    panel.classList.add('open');
-    entityPanelOpen = true;
   }
 
   // KRYL-1332 (Founder, 2026-09-28) — real bug: switching tabs away from MAP and back remounts
@@ -1653,7 +1751,7 @@
     setT(0, false);
     rafId = requestAnimationFrame(loop);
   }
-  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); });
+  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); });
   init();
 })();
 </script>
