@@ -89,14 +89,6 @@
   .fh-dot[data-state="RECONFIGURATION"] { transform: rotate(45deg); }
   .fh-dot[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: var(--unicorn-purple); }
   .fh-dot[data-state="DISSOLUTION"]::after { background: transparent; border: 1px solid rgba(255,255,255,0.5); }
-  /* KRYL-1350 -- elapsed time between two consecutive state-change observations. Sits above the
-     row line at the midpoint of its segment; a label, not a line, so nothing implies the
-     formation was continuously observed across the gap. */
-  .fh-int {
-    position: absolute; top: -1px; transform: translateX(-50%); white-space: nowrap;
-    font-size: 9px; letter-spacing: 0.06em; color: var(--text-mono-dim); pointer-events: none;
-  }
-  .fh-int.hidden-by-scrub { opacity: 0.15; }
   .scrubber-readout {
     display: flex; justify-content: space-between; align-items: baseline;
     font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -582,17 +574,6 @@
   let formationHistoryData = []; // real rows, grouped by formation_id, each sorted by captured_at
   let fhRange = null; // { min, max } real epoch ms, or null when there's nothing to range over
 
-  let fhRowMeta = []; // per-formation label state for applyScrubTimeFilter (KRYL-1350)
-
-  // Elapsed wall-clock time between two real captured_at values, largest two units.
-  function fmtInterval(ms) {
-    const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60), d = Math.floor(h / 24);
-    if (d >= 1) return h % 24 ? `${d}d ${h % 24}h` : `${d}d`;
-    if (h >= 1) return m % 60 ? `${h}h ${m % 60}m` : `${h}h`;
-    if (m >= 1) return `${m}m`;
-    return `${s}s`;
-  }
-
   const FH_GLYPH = { NEW: '●', STRENGTHENING: '●', WEAKENING: '●', RECONFIGURATION: '◆', DISSOLUTION: '○' };
 
   function groupByFormationId(rows) {
@@ -608,7 +589,6 @@
   function applyFormationHistory(rows) {
     formationHistoryData = rows ?? [];
     fhWrapEl.innerHTML = '';
-    fhRowMeta = [];
 
     if (formationHistoryData.length === 0) {
       fhRange = null;
@@ -624,60 +604,8 @@
     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
     updateScrubberRangeLabel();
 
-    // KRYL-1350 -- one row per formation_id (the row rendering KRYL-1337 removed, rebuilt with
-    // state-change markers + interval labels). A marker is the first row of a formation or a row
-    // whose state differs from the previous row of the SAME formation; same-state rows draw
-    // nothing. x = captured_at linear-mapped into [fhRange.min, fhRange.max]; no interpolation.
-    const pctOf = (t) => fhRange.max === fhRange.min ? 50 : ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100;
-    for (const [formationId, group] of groupByFormationId(formationHistoryData)) {
-      const parts = formationId.split('|');
-      const hasPair = parts.length >= 5;
-      const entityA = hasPair ? parts[3] : formationId, entityB = hasPair ? parts[4] : '';
-      const markers = group
-        .filter((r, i) => i === 0 || r.state !== group[i - 1].state)
-        .map(r => ({ r, t: new Date(r.captured_at).getTime() }));
-
-      const row = document.createElement('div');
-      row.className = 'fh-row';
-      const label = document.createElement('div');
-      label.className = 'fh-label';
-      label.title = 'Elapsed time is between real captured_at observations -- not continuous observation.';
-      row.appendChild(label);
-      const line = document.createElement('div');
-      line.className = 'fh-line';
-      row.appendChild(line);
-
-      markers.forEach((m, i) => {
-        const next = markers[i + 1];
-        const dot = document.createElement('div');
-        dot.className = 'fh-dot';
-        dot.dataset.state = m.r.state;
-        dot.dataset.t = String(m.t);
-        dot.style.left = pctOf(m.t) + '%';
-        dot.title = `${m.r.state} — ${new Date(m.r.captured_at).toLocaleString()}` +
-          (next ? `\nuntil next change: ${fmtInterval(next.t - m.t)} between observations (not continuous observation)` : '');
-        dot.addEventListener('click', (ev) => { ev.stopPropagation(); renderFormationTransitionPanel(m.r, entityA, entityB); });
-        row.appendChild(dot);
-        if (next) {
-          const int = document.createElement('div');
-          int.className = 'fh-int';
-          int.dataset.t = String(next.t);
-          int.style.left = ((pctOf(m.t) + pctOf(next.t)) / 2) + '%';
-          int.textContent = fmtInterval(next.t - m.t);
-          row.appendChild(int);
-        }
-      });
-
-      const newMarker = markers.find(m => m.r.state === 'NEW');
-      fhRowMeta.push({
-        labelEl: label,
-        name: hasPair ? `${entityA} ↔ ${entityB}` : formationId,
-        tNew: newMarker ? newMarker.t : null,
-        changes: markers.length - 1,
-      });
-      fhWrapEl.appendChild(row);
-    }
-    applyScrubTimeFilter(); // paints per-row metadata + respects whatever the scrubber is already set to
+    // Row rendering (line + dots per formation) removed — fhWrapEl stays empty. fhRange/
+    // scrubber-readout above still drive the scrubber control itself, which keeps working.
 
     // KRYL-1334 (2026-09-30) -- root cause of possible panel/scrubber overlap: resize()
     // computes plot.h (and therefore positionPanelDefault()'s safe bottom boundary) by
@@ -708,17 +636,10 @@
   function applyScrubTimeFilter() {
     if (!fhRange) return;
     const cutoff = fhRange.min + currentT * (fhRange.max - fhRange.min);
-    fhWrapEl.querySelectorAll('.fh-dot, .fh-int').forEach(el => {
-      el.classList.toggle('hidden-by-scrub', Number(el.dataset.t) > cutoff);
+    fhWrapEl.querySelectorAll('.fh-dot').forEach(dot => {
+      const t = Number(dot.dataset.t);
+      dot.classList.toggle('hidden-by-scrub', t > cutoff);
     });
-    // KRYL-1350 -- per-formation metadata. Age = scrubber time minus that formation's first NEW
-    // observation; no NEW row says so, and a scrub position before NEW shows no age (not zero).
-    for (const m of fhRowMeta) {
-      const age = m.tNew === null ? 'NO NEW OBSERVED'
-        : fhRange.max === fhRange.min ? 'N/A' // one capture time overall -- no elapsed interval exists
-        : cutoff < m.tNew ? '—' : fmtInterval(cutoff - m.tNew);
-      m.labelEl.textContent = `${m.name} · CHANGES ${m.changes} · FORMATION AGE: ${age}`;
-    }
   }
 
   // Reuses the existing detail panel DOM (panelEyebrow/panelTitle/panelDomain), same as
