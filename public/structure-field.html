@@ -416,8 +416,6 @@
 
   function toPxX(v) { return plot.x + ((v - viewDomain.xMin) / (viewDomain.xMax - viewDomain.xMin)) * plot.w; }
   function toPxY(v) { return plot.y + plot.h - ((v - viewDomain.yMin) / (viewDomain.yMax - viewDomain.yMin)) * plot.h; }
-  function fromPxX(px) { return viewDomain.xMin + ((px - plot.x) / plot.w) * (viewDomain.xMax - viewDomain.xMin); }
-  function fromPxY(py) { return viewDomain.yMin + ((plot.y + plot.h - py) / plot.h) * (viewDomain.yMax - viewDomain.yMin); }
 
   // ---- graph model -----------------------------------------------------
   // KRYL-1287 — real, live formation data only. The previous hardcoded NODES/EDGES demo
@@ -1070,29 +1068,9 @@
     ctx.beginPath(); ctx.moveTo(plot.x, py); ctx.lineTo(plot.x + plot.w, py); ctx.stroke();
     ctx.setLineDash([]);
     ctx.restore();
-
-    const phi = fromPxX(px), phidot = fromPxY(py);
-
-    // value tags on the axes, where the crosshair lines meet them
-    ctx.save();
-    ctx.font = "10px 'IBM Plex Mono', monospace";
-    const xLabel = phi.toFixed(2), yLabel = phidot.toFixed(2);
-    const xTagW = ctx.measureText(xLabel).width + 12;
-    ctx.fillStyle = 'rgba(20,20,22,0.92)';
-    ctx.fillRect(px - xTagW / 2, plot.y + plot.h + 6, xTagW, 16);
-    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1;
-    ctx.strokeRect(px - xTagW / 2, plot.y + plot.h + 6, xTagW, 16);
-    ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-    ctx.fillText(xLabel, px, plot.y + plot.h + 17);
-
-    const yTagW = ctx.measureText(yLabel).width + 12;
-    ctx.fillStyle = 'rgba(20,20,22,0.92)';
-    ctx.fillRect(plot.x - yTagW - 14, py - 8, yTagW, 16);
-    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
-    ctx.strokeRect(plot.x - yTagW - 14, py - 8, yTagW, 16);
-    ctx.fillStyle = '#fff';
-    ctx.fillText(yLabel, plot.x - yTagW / 2 - 14, py + 3);
-    ctx.restore();
+    // No x/y value tags (Founder, 2026-10-04): position is a force-directed layout of the real
+    // admitted edges, so its coordinates have no measured meaning and a number on an axis would
+    // imply one. The dashed crosshair itself stays as a tracing aid.
   }
 
   function draw(t) {
