@@ -791,30 +791,16 @@
     relChipEl.setAttribute('aria-expanded', String(entityPanelOpen));
   }
 
-  // Place the chip where it is farthest from every node (same minimum-distance scoring as
-  // positionPanelDefault(), sized for the chip), and anchor an OPEN panel directly beneath it so
+  // Pin the chip to the plot's bottom-right corner, and anchor an OPEN panel directly beside it so
   // the two never overlap each other. A panel the guest has dragged keeps wherever they put it.
   function positionRelChip() {
     if (!relChipEl.classList.contains('show')) return;
-    const CW = relChipEl.offsetWidth || 220, CH = relChipEl.offsetHeight || 26, GAP = 12, STEPS = 9;
-    const pts = Object.values(nodeById).map(n => { const p = n._pos || lerpPath(n.path, currentT); return { x: toPxX(p.x), y: toPxY(p.y) }; });
-    // Edges count as obstacles too, not just nodes: sample each drawn edge every ~10px so the chip
-    // never lands on a line (a chip over a crossing of edges is the overlap this exists to remove).
-    for (const e of EDGES) {
-      const a = nodeById[e.from], b = nodeById[e.to]; if (!a || !b) continue;
-      const pa = a._pos || lerpPath(a.path, currentT), pb = b._pos || lerpPath(b.path, currentT);
-      const ax = toPxX(pa.x), ay = toPxY(pa.y), bx = toPxX(pb.x), by = toPxY(pb.y);
-      const n = Math.max(2, Math.ceil(Math.hypot(bx - ax, by - ay) / 10));
-      for (let i = 1; i < n; i++) pts.push({ x: ax + (bx - ax) * (i / n), y: ay + (by - ay) * (i / n) });
-    }
+    const CW = relChipEl.offsetWidth || 220, CH = relChipEl.offsetHeight || 26, GAP = 12;
     const minX = plot.x + GAP, minY = plot.y + GAP;
     const maxX = Math.max(minX, plot.x + plot.w - GAP - CW), maxY = Math.max(minY, plot.y + plot.h - GAP - CH);
-    const clr = (x1, y1) => pts.length ? Math.min(...pts.map(p => Math.hypot(Math.max(x1 - p.x, 0, p.x - (x1 + CW)), Math.max(y1 - p.y, 0, p.y - (y1 + CH))))) : 0;
-    let best = { x: minX, y: minY, c: -1 };
-    for (let i = 0; i <= STEPS; i++) for (let j = 0; j <= STEPS; j++) {
-      const x = minX + (maxX - minX) * (i / STEPS), y = minY + (maxY - minY) * (j / STEPS), c = clr(x, y);
-      if (c > best.c) best = { x, y, c };
-    }
+    // Pinned to the plot's bottom-right corner (Founder, 2026-10-04) -- no longer placed by distance
+    // from nodes/edges, which put it somewhere different on every query.
+    const best = { x: maxX, y: maxY };
     relChipEl.style.left = best.x + 'px';
     relChipEl.style.top = best.y + 'px';
     if (entityPanelOpen && !panelUserPositioned) {
