@@ -64,9 +64,9 @@ const LEFT_CLIP = `inset(${LEFT_NAV_TOP_PX}px 0 ${LEFT_NAV_BOTTOM_VH}vh 0)`; // 
 // already treats 'home' and 'surface' as the same case (`name === 'surface' || name === 'home'`)
 // and posts mode:'surface' either way, so this array must match that, not the DOM's own onclick
 // argument spelling.
-const LNAV_MODES = ['surface', 'analysis', 'feeds', 'community', 'history'];
+const LNAV_MODES = ['analysis', 'surface', 'feeds', 'community', 'history'];
 
-export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, navMode, onCat, onProxy }) {
+export default function CampaignFunnel({ signals, records, iframeRef: externalRef, src = '/krylo2-feed.html', restrictToChrome = false, marqueeOverAnalysis = false, navMode, onCat, onProxy }) {
   const internalRef = useRef(null);
   const iframeRef   = externalRef ?? internalRef;
   const leftNavRef  = useRef(null);
@@ -155,7 +155,21 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
     }
     if (records?.length) iframeRef.current.contentWindow.postMessage({ type: 'krylo-records', records }, '*');
     applyActiveNav(iframeRef.current.contentDocument);
+    applyMarqueeOverlay(iframeRef.current.contentDocument);
   };
+
+  // Marquee over Analysis (Founder, 2026-10-05): while Analysis is idle, the Analysis page is
+  // transparent and the rotating headline in iframe #1 shows through it. krylo2-feed.html hides
+  // everything else in the stage under body[data-marquee-overlay]. Same-origin DOM write, same
+  // pattern as applyActiveNav; re-applied on every iframe load (logo reset reloads it).
+  const applyMarqueeOverlay = (doc) => {
+    try {
+      if (!doc?.body) return;
+      if (marqueeOverAnalysis) doc.body.setAttribute('data-marquee-overlay', '1');
+      else doc.body.removeAttribute('data-marquee-overlay');
+    } catch { /* iframe not ready */ }
+  };
+  useEffect(() => { applyMarqueeOverlay(iframeRef.current?.contentDocument); }, [marqueeOverAnalysis]);
 
   const handleLeftNavLoad = () => {
     applyActiveNav(leftNavRef.current?.contentDocument);

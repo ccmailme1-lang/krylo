@@ -549,7 +549,7 @@ function defaultDnaCards() {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function AnalysisIdleField({ activeCones = null, onDomainSelect = null, rawSignals = null }) {
+export default function AnalysisIdleField({ activeCones = null, onDomainSelect = null, rawSignals = null, transparentBg = false }) {
 
   // Store
   const createSession = useAnalysisStore(s => s.createSession);
@@ -1500,7 +1500,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
         .aif-btn-live:hover { background: rgba(102,255,0,0.04); border-color: rgba(102,255,0,0.5); color: ${LIME}; }
       `}</style>
 
-      <div style={{ width: '100%', height: '100%', background: BG, color: '#fff', overflow: 'hidden', fontFamily: MONO, position: 'relative', display: 'flex' }}>
+      <div style={{ width: '100%', height: '100%', background: transparentBg ? 'transparent' : BG, color: '#fff', overflow: 'hidden', fontFamily: MONO, position: 'relative', display: 'flex' }}>
 
         {/* KRYL-1332 (Founder, 2026-09-28) -- gate, LOCALHOST ONLY, not yet approved for prod.
             This aside was claimed hidden in the earlier 8-section pass but never actually was --

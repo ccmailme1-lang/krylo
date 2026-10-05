@@ -1118,6 +1118,7 @@ export default function App() {
       }
       if (ev.data?.type !== 'krylo-nav') return;
       if (ev.data.mode) {
+        setHomeMarquee(false); // any nav click other than the logo hides the marquee
         setNavMode(ev.data.mode);
         setConceptBOpen(true);
         if (ev.data.mode === 'surface') {
@@ -1148,10 +1149,13 @@ export default function App() {
   // mapResetKey forces a full unmount+remount of the Signal Map (Canvas/WebGL/Three scene) —
   // fixes the stale-state error after leaving and returning to the map, without a full page reload.
   const [mapResetKey, setMapResetKey] = useState(0);
+  // Marquee over Analysis: shown ONLY after a logo click (home). Cleared by any other navigation.
+  const [homeMarquee, setHomeMarquee] = useState(false);
   useEffect(() => {
     function onReset(ev) {
       if (ev.data?.type !== 'krylo-reset') return;
-      setNavMode('surface');
+      setNavMode('analysis'); // logo click = home = Analysis (Founder, 2026-10-05)
+      setHomeMarquee(true);
       setSurfaceActivated(false);
       setSurfaceExpanded(false);
       setquery('');
@@ -1481,9 +1485,12 @@ export default function App() {
       {/* ── Analysis Bay ──────────────────────────────────────── */}
 
       {navMode === 'analysis' && (
-        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: '#000000', overflow: 'hidden' }}>
-          <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} activeDomain={activeAnalysisDomain} />
-          <AnalysisIdleField activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} rawSignals={routedSignals} />
+        <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: (homeMarquee && !activeSessionId) ? 'transparent' : '#000000', overflow: 'hidden' }}>
+          {/* Hidden (not unmounted) while Analysis is idle: it was always covered by the idle page's opaque background; the page is now transparent so the marquee shows through. */}
+          <div style={{ display: 'contents', visibility: (homeMarquee && !activeSessionId) ? 'hidden' : 'visible' }}>
+            <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} activeDomain={activeAnalysisDomain} />
+          </div>
+          <AnalysisIdleField transparentBg={homeMarquee && !activeSessionId} activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} rawSignals={routedSignals} />
         </div>
       )}
 
@@ -1580,6 +1587,7 @@ export default function App() {
           // InspectionPanel and other Surface chrome. Clip to the top-chrome-only strip
           // whenever the Surface view is active at all, not only in the expanded/engaged state.
           restrictToChrome={isSurface}
+          marqueeOverAnalysis={homeMarquee && navMode === 'analysis' && !activeSessionId}
           navMode={navMode}
         />
       </div>

@@ -13,7 +13,7 @@ async function navItemState(page, index) {
   return { active: (cls || '').includes('active'), color };
 }
 
-const LNAV_MODES = ['surface', 'analysis', 'feeds', 'community', 'history'];
+const LNAV_MODES = ['analysis', 'surface', 'feeds', 'community', 'history'];
 async function selectNavItem(page, index) {
   // Same postMessage a real nav-rail click sends (relayLeftNav in campaignfunnel.jsx) --
   // used directly here to exercise the identical navMode-update code path without needing
@@ -32,21 +32,21 @@ test('left nav: nothing highlighted on landing, lime on real selection, Home inc
     expect(state.active, `index ${i} should not be active on initial load`).toBe(false);
   }
 
-  // 2. Click Analysis (index 1) — it should light up.
-  await selectNavItem(page, 1);
+  // 2. Click Analysis (index 0) — it should light up.
+  await selectNavItem(page, 0);
   await page.waitForTimeout(300);
-  const analysisState = await navItemState(page, 1);
+  const analysisState = await navItemState(page, 0);
   expect(analysisState.active).toBe(true);
   expect(analysisState.color).toBe('rgb(102, 255, 0)'); // #66FF00
 
-  // 3. Click Home (index 0) — it should light up exactly the same way.
-  await selectNavItem(page, 0);
+  // 3. Click Home (index 1) — it should light up exactly the same way.
+  await selectNavItem(page, 1);
   await page.waitForTimeout(300);
-  const homeState = await navItemState(page, 0);
+  const homeState = await navItemState(page, 1);
   expect(homeState.active, 'Home should become active after an explicit click').toBe(true);
   expect(homeState.color).toBe('rgb(102, 255, 0)');
 
   // 4. Analysis should no longer be active once Home is selected.
-  const analysisAfter = await navItemState(page, 1);
+  const analysisAfter = await navItemState(page, 0);
   expect(analysisAfter.active).toBe(false);
 });
