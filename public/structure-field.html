@@ -16,6 +16,7 @@
     --signal-lime: #66FF00;
     --signal-blue: #007FFF;
     --unicorn-purple: #8A2BE2;
+    --light-gray: #e0e0dc;
     --hairline: rgba(255, 255, 255, 0.08);
     --hairline-strong: rgba(255, 255, 255, 0.22);
     --node-fill: #0A0C0D;
@@ -98,6 +99,7 @@
 
   .scrubber-row {
     display: flex; align-items: center; gap: 14px;
+    padding-bottom: 12px; /* room for the clock-tick labels hanging below the track */
   }
 
   .ctrl {
@@ -122,11 +124,33 @@
   .scrubber { position: relative; height: 28px; cursor: pointer; flex: 1; }
   .scrubber-track { position: absolute; left: 0; right: 0; top: 13px; height: 1px; background: var(--hairline-strong); }
   .scrubber-fill { position: absolute; left: 0; top: 13px; height: 1px; background: rgba(255,255,255,0.5); }
+  /* Timeline change marks + clock ticks (ticket draft 2026-10-05, specs/ticket-draft-timeline-
+     change-marks.md). Ticks replace the old edge-stagger ticks: the line carries only real clock
+     time. Tick label = HUD micro-label, same 9px dim treatment as .fh-label (KRYL-1334). */
   .scrubber-ticks { position: absolute; left: 0; right: 0; top: 13px; height: 1px; pointer-events: none; }
   .scrubber-tick {
     position: absolute; top: -3px; width: 1px; height: 7px;
     background: rgba(255,255,255,0.18);
   }
+  .scrubber-tick-label {
+    position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap;
+    font-size: 9px; letter-spacing: 0.06em; color: var(--text-mono-dim);
+  }
+  .scrubber-tick-label.skipped { visibility: hidden; }
+  .scrubber-marks { position: absolute; left: 0; right: 0; top: 13px; height: 1px; pointer-events: none; }
+  /* Mark shape/color by the change's after-state, same precedent as .fh-dot (KRYL-1350):
+     STRENGTHENING lime, WEAKENING blue, RECONFIGURATION purple diamond; every other state, and a
+     combined mark whose after-states differ, is light gray. */
+  .scrubber-mark {
+    position: absolute; top: -6px; width: 12px; height: 12px; margin-left: -6px;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto; cursor: help;
+  }
+  .scrubber-mark::after { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--light-gray); }
+  .scrubber-mark[data-state="STRENGTHENING"]::after { background: var(--signal-lime); }
+  .scrubber-mark[data-state="WEAKENING"]::after { background: var(--signal-blue); }
+  .scrubber-mark[data-state="RECONFIGURATION"] { transform: rotate(45deg); }
+  .scrubber-mark[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: var(--unicorn-purple); }
   .scrubber-thumb {
     position: absolute; top: 4px; width: 18px; height: 18px; margin-left: -9px;
     border: 1px solid var(--signal-lime); border-radius: 50%; background: #050505;
@@ -271,6 +295,7 @@
       <div class="scrubber-track"></div>
       <div class="scrubber-ticks" id="scrubber-ticks"></div>
       <div class="scrubber-fill" id="scrubber-fill"></div>
+      <div class="scrubber-marks" id="scrubber-marks"></div>
       <div class="scrubber-thumb" id="scrubber-thumb"></div>
     </div>
   </div>
@@ -592,6 +617,7 @@
 
     if (formationHistoryData.length === 0) {
       fhRange = null;
+      renderTimeline(); // clears ticks/marks left from a previous query
       return; // nothing real to show -- leave applyFieldFormation's hide decision as-is
     }
 
@@ -603,6 +629,7 @@
     const scrubberLabelEl = document.getElementById('scrubber-label');
     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
     updateScrubberRangeLabel();
+    renderTimeline();
 
     // Row rendering (line + dots per formation) removed — fhWrapEl stays empty. fhRange/
     // scrubber-readout above still drive the scrubber control itself, which keeps working.
@@ -1385,15 +1412,93 @@
   const thumbEl = document.getElementById('scrubber-thumb');
   const ticksEl = document.getElementById('scrubber-ticks');
 
-  function buildTicks() {
+  const marksEl = document.getElementById('scrubber-marks');
+
+  // Change records: per formation_id, rows ordered by captured_at; a change exists only where a
+  // row's state differs from the immediately preceding row's state for that same formation_id.
+  function stateChanges(rows) {
+    const changes = [];
+    for (const group of groupByFormationId(rows).values()) {
+      for (let i = 1; i < group.length; i++) {
+        const prev = group[i - 1], cur = group[i];
+        if (cur.state !== prev.state) changes.push({ row: cur, before: prev.state, t: new Date(cur.captured_at).getTime() });
+      }
+    }
+    return changes;
+  }
+
+  const HOUR = 3600e3, DAY = 24 * HOUR;
+  // Clock ticks at real local-time boundaries inside [min, max] -- hourly under 1 day, every 12h
+  // for 1-7 days, daily beyond (Founder, 2026-10-05).
+  function clockTicks(min, max) {
+    const span = max - min;
+    const step = span < DAY ? 'hour' : span <= 7 * DAY ? 'half' : 'day';
+    const d = new Date(min);
+    d.setMinutes(0, 0, 0);
+    if (step === 'half') d.setHours(d.getHours() < 12 ? 0 : 12);
+    if (step === 'day') d.setHours(0);
+    const fmt = step === 'hour'
+      ? { hour: 'numeric' }
+      : step === 'half' ? { month: 'short', day: 'numeric', hour: 'numeric' } : { month: 'short', day: 'numeric' };
+    const ticks = [];
+    while (d.getTime() <= max) {
+      if (d.getTime() >= min) ticks.push({ t: d.getTime(), label: d.toLocaleString(undefined, fmt) });
+      if (step === 'hour') d.setHours(d.getHours() + 1);
+      else if (step === 'half') d.setHours(d.getHours() + 12);
+      else d.setDate(d.getDate() + 1);
+    }
+    return ticks;
+  }
+
+  // Ticks + change marks, both positioned by real captured_at mapped linearly against the full
+  // history's earliest..latest. A zero-width range has no defensible position: nothing drawn.
+  function renderTimeline() {
     ticksEl.innerHTML = '';
-    const staggers = [...new Set(EDGES.map(e => e.stagger))].sort((a, b) => a - b);
-    for (const s of staggers) {
+    marksEl.innerHTML = '';
+    if (!fhRange || fhRange.max === fhRange.min) return;
+    const pos = (t) => ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100 + '%';
+
+    for (const tk of clockTicks(fhRange.min, fhRange.max)) {
       const tick = document.createElement('div');
       tick.className = 'scrubber-tick';
-      tick.style.left = (s * 100) + '%';
+      tick.style.left = pos(tk.t);
+      const label = document.createElement('div');
+      label.className = 'scrubber-tick-label';
+      label.textContent = tk.label;
+      tick.appendChild(label);
       ticksEl.appendChild(tick);
     }
+    thinTickLabels();
+
+    const byTime = new Map();
+    for (const c of stateChanges(formationHistoryData)) {
+      if (!byTime.has(c.t)) byTime.set(c.t, []);
+      byTime.get(c.t).push(c);
+    }
+    for (const [t, group] of byTime) {
+      const after = new Set(group.map(c => c.row.state));
+      const mark = document.createElement('div');
+      mark.className = 'scrubber-mark';
+      mark.dataset.state = after.size === 1 ? group[0].row.state : 'MIXED';
+      mark.style.left = pos(t);
+      mark.title = group.map(c =>
+        `${c.row.entity_a} ↔ ${c.row.entity_b} · ${c.row.relationship_type} · ${c.before} → ${c.row.state} · ${new Date(c.row.captured_at).toLocaleString()}`
+      ).join('\n');
+      marksEl.appendChild(mark);
+    }
+  }
+
+  // Every tick stays drawn; a label is hidden when it would overlap the previous shown label or
+  // run past either end of the track.
+  function thinTickLabels() {
+    const track = ticksEl.getBoundingClientRect();
+    let lastRight = -Infinity;
+    ticksEl.querySelectorAll('.scrubber-tick-label').forEach(label => {
+      label.classList.remove('skipped');
+      const r = label.getBoundingClientRect();
+      if (r.left < track.left || r.right > track.right || r.left < lastRight + 6) label.classList.add('skipped');
+      else lastRight = r.right;
+    });
   }
 
   function setT(t, redraw = true) {
@@ -1666,7 +1771,6 @@
   function init() {
     resize();
     buildAmbient();
-    buildTicks();
     positionPanelDefault();
     positionHudBelowAxis();
     // No evidence found (comment, spec, or git rationale) for animating the scrubber to any
@@ -1675,7 +1779,7 @@
     setT(0, false);
     rafId = requestAnimationFrame(loop);
   }
-  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); });
+  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); thinTickLabels(); });
   init();
 })();
 </script>
