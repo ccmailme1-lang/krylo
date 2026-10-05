@@ -352,3 +352,28 @@ This requirement is complete only when a real query can demonstrate all applicab
 with no layer deriving a stronger claim solely from the existence or magnitude of an upstream signal.
 
 The important addition is **"field signal may exist without entity attribution" as a formal product invariant**. That prevents this lesson from getting lost as a one-off UI adjustment.
+
+---
+
+## 17. Terminology Boundary (added 2026-10-05, from the UnitedHealth readout)
+
+> **Field-level structural intensity MUST NOT be represented using terminology that implies entity-level convergence, relationship, or formation when entity attribution has not been established.**
+
+### Observed case (UnitedHealth, 2026-10-05)
+- Field: CAPITAL 102 observations / magnitude 76; LABOR 32 / 61; OWNERSHIP 18 / 49; TECHNOLOGY 11 / 73 (three readings of 85); KNOWLEDGE 3 / 27; MEDIA 2 / 59. 165 of 168 observations sit in four domains.
+- The same readout states: "No dated subject-bound evidence facet resolved for this subject yet", "no CAPITAL evidence identifier-bound to unitedhealth-group", and "fewer than two domains are connected".
+- Yet the top-level status can read HIGH CONVERGENCE next to the company name. A guest can reasonably read that as convergence around UnitedHealth, which the evidence section says is not established.
+- Same pattern seen on Berkshire Hathaway (208 observations, HIGH CONVERGENCE, "No subject resolved"), and in the 11-query run on localhost (2026-10-04) where the label tracked the field's observation count, not the company (`specs/query-run-trends-20261004.md`).
+
+### Required status split
+The top-level status MUST distinguish three separate states and MUST NOT let a single label stand for all three:
+- **FIELD CONCENTRATION:** e.g. high
+- **ENTITY ATTRIBUTION:** e.g. unresolved
+- **RELATIONSHIP FORMATION:** e.g. none established
+
+### AC-11 — Terminology boundary
+With entity attribution unresolved, no top-level label, headline, or status uses convergence, relationship, or formation wording for the subject. Field intensity may be shown, labeled as field-level.
+
+### AC-11 test cases
+- **Unresolved case (UnitedHealth):** strong field -> attribution unresolved -> no relationship -> no formation. The status shows the three separate states above.
+- **Resolved case:** field -> attributed evidence -> admitted relationships -> formation only if earned.
