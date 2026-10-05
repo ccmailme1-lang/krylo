@@ -27,6 +27,7 @@ import { inferFormation }        from '../../engine/formationinference.js';
 import { assembleNarrative }     from '../../engine/narrativeassembly.js';
 import { assembleReconnPayload } from '../../engine/reconnpayload.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
+import { countSubjectObservations, classifySubjectAttribution, SUBJECT_ATTRIBUTION } from '../../engine/subjectattribution.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
 import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
@@ -461,11 +462,10 @@ export default function TargetPacket() {
   // below must not claim "no subject-scoped evidence bound" while this count is > 0; that was
   // the exact contradiction DEF-1301 reports (Formation admitted from real subject-bound
   // observations while PROVENANCE denied any existed).
-  const subjectObservationCount = useMemo(() => {
-    if (subjScope.kind !== 'ENTITY') return 0;
-    try { return buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId }).particles.length; }
-    catch { return 0; }
-  }, [subjScope, refreshTick]);
+  // AC-11 — the count and the PROVENANCE rule now live in subjectattribution.js (shared with the
+  // Analysis header), same logic as before.
+  const subjectObservationCount = useMemo(() => countSubjectObservations(subjScope), [subjScope, refreshTick]);
+  const attributionState = classifySubjectAttribution({ wtResolved, subjectObservationCount });
 
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
   // field the rest of the packet already reads. No new data source.
@@ -1030,10 +1030,10 @@ export default function TargetPacket() {
              record found" copy is removed (that was refinement guidance, not provenance). ── */}
         <PacketSection ordinal="05" title="PROVENANCE">
           <div style={{ marginTop: 12, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#9aa09d' }}>
-            <span style={{ color: wtResolved || subjectObservationCount > 0 ? LIME : ABSENCE }}>
-              {wtResolved
+            <span style={{ color: attributionState !== SUBJECT_ATTRIBUTION.NONE ? LIME : ABSENCE }}>
+              {attributionState === SUBJECT_ATTRIBUTION.TRACE_RESOLVED
                 ? 'STRUCTURAL TRACE RESOLVED'
-                : subjectObservationCount > 0
+                : attributionState === SUBJECT_ATTRIBUTION.SUBJECT_OBSERVATIONS
                 ? `SUBJECT-BOUND OBSERVATIONS PRESENT (${subjectObservationCount})`
                 : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
             </span>

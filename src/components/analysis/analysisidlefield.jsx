@@ -21,6 +21,8 @@ import { LENS_PRESETS }               from '../../registry/lenspresets.js';
 import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
 import { queryChipSubstrate, toDisplayChips } from '../../engine/chipsubstrate.js';
 import { subjectScope } from '../../engine/subjectscope.js';
+import { resolveSubjectAttribution, headerFieldSplit } from '../../engine/subjectattribution.js';
+import { getDisplayEntity } from '../../utils/formatters.js';
 import StructuralField from './structuralfield.jsx';
 import { computeSES } from '../../engine/searchenvironmentstate.js';
 import { getObservations } from '../../engine/runtimeobservablestore.js';
@@ -560,6 +562,24 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const hasSession    = !!activeSession;
   const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession]);
+
+  // AC-11 / KRYL-1358 — subject-level header status (headerFieldSplit, subjectattribution.js).
+  // Attribution = the Target Packet's PROVENANCE rule, read from the same scope/entity inputs the
+  // Target Packet uses, with its same bounded 10 x 2s refresh (KRYL-1220): subject-attributed
+  // connectors land after first render.
+  const [attrTick, setAttrTick] = useState(0);
+  useEffect(() => { setAttrTick(0); }, [activeSession]);
+  useEffect(() => {
+    if (!activeSession || attrTick >= 10) return;
+    const t = setTimeout(() => setAttrTick(n => n + 1), 2000);
+    return () => clearTimeout(t);
+  }, [attrTick, activeSession]);
+  const headerSplit = useMemo(() => {
+    if (!activeSession) return null;
+    const subjScope = subjectScope(activeSession.queryContext ?? activeSession.query ?? '');
+    const { state } = resolveSubjectAttribution({ subjScope, entity: getDisplayEntity(activeSession.query ?? 'Unknown Signal') });
+    return headerFieldSplit(sessionSynthesis, state);
+  }, [activeSession, sessionSynthesis, attrTick]);
 
   // Replay + stream
   const { history, currentIndex, seek, load } = usereplay(true);
@@ -1735,9 +1755,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_MAIN_HDR, textTransform: 'uppercase', letterSpacing: '0.25em' }}>
               <span style={{ color: 'rgba(255,255,255,0.9)' }}>Analysis</span>
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>
-                {hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}
-              </span>
+              {hasSession && headerSplit ? (
+                /* Three stacked lines fit the 64px header -- same stacked 9px/1.8 treatment as the
+                   simulation panel's own header block above. */
+                <div data-header-field-split style={{ fontSize: 9, letterSpacing: '0.12em', lineHeight: '1.8', color: 'rgba(255,255,255,0.3)' }}>
+                  {headerSplit.map(line => <div key={line}>{line}</div>)}
+                </div>
+              ) : (
+                <span style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
               {/* KRYL-1332 (Founder, 2026-09-28) -- LOCALHOST ONLY: New Query replacement, since
