@@ -324,7 +324,7 @@
     <p class="brief-medium" id="brief-state" hidden><i id="brief-state-chip"></i><span id="brief-state-label"></span></p>
     <p class="brief-small" id="brief-sentence"></p>
     <div class="brief-rows" id="brief-rows" hidden>
-      <div class="k">Field</div><div class="v" id="brief-row-field"></div>
+      <div class="k">Field · live</div><div class="v" id="brief-row-field"></div>
       <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
       <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
     </div>
@@ -582,6 +582,23 @@
         .map(([d]) => ({ domain: d, meanMagnitude: 0, unconnected: true }));
       const allVertices = [...formation.graph.vertices, ...unconnected];
       const layout = computeGraphLayout(allVertices, formation.graph.edges);
+      // Edge-less nodes have nothing holding them near the cluster, so the spring layout flings them to
+      // the frame and the connected cluster shrinks into a corner. Pull them in to just outside the
+      // cluster (direction kept). Their position is a layout choice only; it carries no data.
+      const connPts = allVertices.filter(v => !v.unconnected).map(v => layout[v.domain]).filter(Boolean);
+      if (unconnected.length && connPts.length) {
+        const ccx = connPts.reduce((a, q) => a + q.x, 0) / connPts.length;
+        const ccy = connPts.reduce((a, q) => a + q.y, 0) / connPts.length;
+        const clusterR = Math.max(0.15, ...connPts.map(q => Math.hypot(q.x - ccx, q.y - ccy)));
+        const maxD = clusterR * 1.6 + 0.12;
+        unconnected.forEach((u, i) => {
+          const q = layout[u.domain]; if (!q) return;
+          let dx = q.x - ccx, dy = q.y - ccy, d = Math.hypot(dx, dy);
+          if (d < 1e-6) { const ang = (i / unconnected.length) * 2 * Math.PI; dx = Math.cos(ang); dy = Math.sin(ang); d = 1; }
+          const nd = Math.min(d, maxD);
+          layout[u.domain] = { x: ccx + (dx / d) * nd, y: ccy + (dy / d) * nd };
+        });
+      }
       NODES = allVertices.map(v => {
         const { x, y } = layout[v.domain] ?? { x: 0, y: 0 };
         return {
