@@ -65,7 +65,9 @@
      the scrubber sits below the brief. Type sizes follow CLAUDE.md section 7 (report surfaces):
      Large = Georgia 28px / 1.15, Medium = IBM Plex Mono 15px / .04em, Small = IBM Plex Mono 11.5px / 1.6.
      Legend is a HUD micro-label (not governed by section 7). Colors: existing tokens + section 6 state colors. */
-  .brief-block { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--hairline); }
+  /* Top rule + padding: without it the canvas-drawn "STRUCTURAL LAYOUT" caption sat ~16px above the
+     eyebrow and read as part of the brief. */
+  .brief-block { margin-top: 10px; padding-top: 16px; margin-bottom: 16px; padding-bottom: 14px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
   .brief-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: var(--text-mono-dim); }
   .brief-large {
     margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 400;
