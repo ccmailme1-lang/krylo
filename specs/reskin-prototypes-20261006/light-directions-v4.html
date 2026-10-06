@@ -1,0 +1,147 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>KRYLO Light Directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: specimen sheet, one identical MAP + brief per direction so only color/type/surface differs.
+   Single light look by choice: the brief is "no black grounds". */
+:root {
+  color-scheme: light;
+  --page-bg: #F5F5F7; --page-fg: #1A1A1A; --page-dim: #3a3d4a;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--page-bg); color: var(--page-fg); }
+body { margin: 0; padding-inline: 16px; padding-block: 28px 56px; font-family: var(--mono); }
+.wrap { max-width: 1240px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; margin: 0; text-wrap: balance; }
+h2.round { font-size: 15px; letter-spacing: .04em; font-weight: 500; margin: 0; padding-top: 8px; border-top: 1px solid var(--page-dim); }
+.lede, .evidence { margin: 0; font-size: 11.5px; line-height: 1.6; max-width: 76ch; }
+.lede { opacity: .8; }
+.evidence { border: 1px solid var(--page-dim); padding: 12px 14px; }
+.evidence b { font-weight: 600; letter-spacing: .08em; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 6px; opacity: .8; }
+.tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--page-dim); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
+.tag.new { border-color: #007FFF; color: #007FFF; }
+.tag.ok { border-color: #1A1A1A; color: #1A1A1A; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 540px), 1fr)); gap: 40px 32px; }
+.dir { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dir-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; font-size: 15px; letter-spacing: .04em; font-weight: 500; }
+.dir-note { margin: 0; font-size: 11.5px; line-height: 1.6; opacity: .75; max-width: 62ch; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { display: flex; flex-direction: column; gap: 4px; font-size: 9.5px; letter-spacing: .06em; }
+.sw i { display: block; width: 56px; height: 22px; border: 1px solid var(--page-dim); }
+.sw b { font-weight: 400; opacity: .7; }
+
+/* The mock */
+.mock { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; font-family: var(--ui); overflow: hidden; }
+.tabs { display: flex; gap: 26px; padding: 14px 20px 0; border-bottom: 1px solid var(--line); font-size: 12px; letter-spacing: var(--tabtrack); font-weight: 500; background: var(--bar); }
+.tabs span { padding-bottom: 12px; color: var(--dim); }
+.tabs span.on { color: var(--tabtext); border-bottom: 2px solid var(--tab); }
+.body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; background: var(--card); }
+.field-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; font-size: 10px; letter-spacing: .12em; }
+.field-head .t { color: var(--label); font-weight: 600; }
+.field-head .r { color: var(--dim); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.mapbox { border: 1px solid var(--line); border-radius: var(--radius); position: relative; background: var(--map-bg); overflow: hidden; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.chip { position: absolute; right: 8px; bottom: 8px; background: #66FF00; color: #1A1A1A; font-size: 9.5px; letter-spacing: .12em; padding: 4px 8px; font-weight: 600; border-radius: var(--radius); }
+.brief { display: flex; flex-direction: column; gap: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .24em; color: var(--dim); font-weight: 500; }
+.large { font-family: var(--serif); font-size: 28px; line-height: 1.15; margin: 0; font-weight: 400; color: var(--text); }
+.medium { font-size: 15px; letter-spacing: .04em; margin: 0; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 10px; }
+.medium i { width: 12px; height: 12px; background: #66FF00; border: 1px solid #1A1A1A; display: block; flex: none; }
+.small { font-size: 11.5px; line-height: 1.6; margin: 0; color: var(--text); opacity: .88; }
+.states { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 9.5px; letter-spacing: .08em; color: var(--text); }
+.states span { display: inline-flex; align-items: center; gap: 7px; }
+.states i { display: block; width: 10px; height: 10px; border: 1px solid var(--line); }
+
+/* Direction tokens. --ui is the font for labels and body. */
+.d-1 { --bg:#F5F5F7; --bar:#F5F5F7; --card:#F5F5F7; --map-bg:#F5F5F7; --text:#1A1A1A; --dim:#3a3d4a; --line:#e0e0dc; --grid:#e0e0dc; --tab:#1A1A1A; --tabtext:#1A1A1A; --label:#1A1A1A; --node:#1A1A1A; --case:#1A1A1A; --ticks:none; --ui:var(--mono); --tabtrack:.28em; --radius:0; }
+.d-2 { --bg:#FFFFFF; --bar:#FFFFFF; --card:#FFFFFF; --map-bg:#FFFFFF; --text:#1A1A1A; --dim:#5B6270; --line:#D9DCE3; --grid:#EDEFF3; --tab:#1A1A1A; --tabtext:#1A1A1A; --label:#5B6270; --node:#1A1A1A; --case:#1A1A1A; --ticks:none; --ui:var(--sans); --tabtrack:.04em; --radius:0; }
+.d-3 { --bg:#FFFFFF; --bar:#F4F6F9; --card:#FFFFFF; --map-bg:#FBFCFD; --text:#1A2230; --dim:#5A6577; --line:#DCE1E8; --grid:#EEF1F5; --tab:#123A63; --tabtext:#123A63; --label:#123A63; --node:#1A2230; --case:#1A2230; --ticks:none; --ui:var(--sans); --tabtrack:.02em; --radius:6px; }
+.d-4 { --bg:#FFFFFF; --bar:#FFFFFF; --card:#FFFFFF; --map-bg:#F5F5F7; --text:#1A1A1A; --dim:#3a3d4a; --line:#e0e0dc; --grid:#e0e0dc; --tab:#1A1A1A; --tabtext:#1A1A1A; --label:#3a3d4a; --node:#1A1A1A; --case:#1A1A1A; --ticks:block; --ui:var(--sans); --tabtrack:.06em; --radius:2px; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>KRYLO light directions</h1>
+    <p class="lede">A more corporate, approachable surface for the same MAP tab and structural brief. No black grounds. Text is real KRYLO copy; node positions and edges are illustrative, not data. Nothing here is approved, and the locked §6 palette and §7 type contract are what is built today.</p>
+    <p class="evidence"><b>What the references were checked for</b>
+      AlphaSense home page: light ground, dark text, sans-serif, modular card grid, blue and green accents. The page gave no hex values or font names, so none are taken from it. The Yahoo Finance AlphaSpace page is behind a login and has still not been read; a screenshot is needed to build from it. Palantir and Databricks were not checked. No value below comes from any of them. Every value is either already in §6 or marked NEW.</p>
+    <p class="evidence"><b>One constraint the references run into</b>
+      Enterprise products usually use blue as the interface color (links, active tabs, buttons). In KRYLO, #007FFF means TURBULENT CONVERGENCE. Using it for tabs and links would make every screen read as turbulent. Directions 3 and 4 keep blue for state only and use navy or ink for the interface.</p>
+  </header>
+  <div class="grid" id="grid-a"></div>
+  <h2 class="round">Round 2 · corporate and scientific</h2>
+  <div class="grid" id="grid-b"></div>
+</div>
+
+<script>
+const DIRS = [
+  { id:1, round:'a', name:'1 · Oracle light', tag:'ok', tagText:'§6 only',
+    note:'Extends the Layer 2 surface (#F5F5F7 ground, #1A1A1A text, already in §6) to the whole product. Ink is the interface accent, so lime, blue and purple mean state and nothing else. Lime is too faint on a light ground to read as a line, so edges get an ink casing.',
+    sw:[['#F5F5F7','ground'],['#1A1A1A','text + tabs'],['#e0e0dc','line'],['#3a3d4a','secondary'],['#66FF00','state fill']] },
+  { id:2, round:'a', name:'2 · White cards, sans', tag:'new', tagText:'NEW values + §7 change',
+    note:'White surfaces with a cool gray border and a sans-serif for labels and body (IBM Plex Sans, the same family as the current mono). The serif headline stays. The only round 1 direction that changes the §7 text contract.',
+    sw:[['#FFFFFF','surface'],['#1A1A1A','text'],['#5B6270','secondary'],['#D9DCE3','border'],['#EDEFF3','grid']] },
+  { id:3, round:'b', name:'3 · Slate enterprise', tag:'new', tagText:'NEW values + §7 change',
+    note:'The closest to the AlphaSense and Databricks look: white panels, a pale slate tab bar, slate text and a deep navy for tabs and section labels. Small 6px corners. Navy is far enough from #007FFF that it does not read as TURBULENT. Six new values.',
+    sw:[['#FFFFFF','surface'],['#F4F6F9','tab bar'],['#1A2230','text'],['#5A6577','secondary'],['#DCE1E8','border'],['#123A63','interface navy']] },
+  { id:4, round:'b', name:'4 · Instrument white', tag:'new', tagText:'1 NEW value + §7 change',
+    note:'A lab-instrument feel: white panels framing a #F5F5F7 plotting field with a measured scale along its edges, sans labels, mono numerals. Every color is in §6 except white. The scientific cue comes from the scale and the tabular numbers, not from a new color.',
+    sw:[['#FFFFFF','panel'],['#F5F5F7','plot field'],['#1A1A1A','text + tabs'],['#3a3d4a','secondary'],['#e0e0dc','line']] }
+];
+const STATES = [['#3a3d4a','INSUFFICIENT SIGNAL'],['#1a1a1a','LOW SIGNAL YIELD'],['#66FF00','BUILDING CONVERGENCE'],['#007FFF','TURBULENT CONVERGENCE'],['#8A2BE2','HIGH CONVERGENCE']];
+const NODES = [['CAPITAL',100,70],['OWNERSHIP',240,150],['TECHNOLOGY',370,64],['LABOR',190,28]];
+const EDGES = [[0,1,'#66FF00'],[0,2,'#8A2BE2'],[2,1,'#007FFF']];
+
+function map(withScale) {
+  let s = '<svg viewBox="0 0 480 210" role="img" aria-label="Illustrative formation layout">';
+  for (let x=0; x<=480; x+=60) s += `<line x1="${x}" y1="0" x2="${x}" y2="210" stroke="var(--grid)" stroke-width="1"/>`;
+  for (let y=0; y<=210; y+=42) s += `<line x1="0" y1="${y}" x2="480" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+  if (withScale) {
+    // Illustrative edge scale: minor ticks every 12 units, labelled every 60.
+    for (let x=0; x<=480; x+=12) s += `<line x1="${x}" y1="210" x2="${x}" y2="${x%60===0?202:206}" stroke="var(--dim)" stroke-width="1"/>`;
+    for (let y=0; y<=210; y+=14) s += `<line x1="0" y1="${y}" x2="${y%42===0?8:4}" y2="${y}" stroke="var(--dim)" stroke-width="1"/>`;
+    for (let x=60; x<480; x+=60) s += `<text x="${x}" y="198" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7.5" fill="var(--dim)">${x}</text>`;
+  }
+  for (const [a,b,c] of EDGES) {
+    const [x1,y1,x2,y2] = [NODES[a][1],NODES[a][2],NODES[b][1],NODES[b][2]];
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--case)" stroke-width="4.5"/>`;
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2.5"/>`;
+  }
+  for (const [n,x,y] of NODES) s += `<circle cx="${x}" cy="${y}" r="4" fill="var(--node)"/><text x="${x+9}" y="${y+3}" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="1" fill="var(--node)" opacity=".85">${n}</text>`;
+  return s + '</svg>';
+}
+
+function card(d) {
+  return `
+  <section class="dir">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="dir-title"><span>${d.name}</span><span class="tag ${d.tag}">${d.tagText}</span></div>
+      <p class="dir-note">${d.note}</p>
+      <div class="swatches">${d.sw.map(([h,l]) => `<div class="sw"><i style="background:${h}"></i><span>${h}</span><b>${l}</b></div>`).join('')}</div>
+    </div>
+    <div class="mock d-${d.id}">
+      <div class="tabs"><span class="on">MAP</span><span>RECON</span><span>IMPACT</span></div>
+      <div class="body">
+        <div class="field-head"><span class="t">STRUCTURAL RESOLUTION FIELD</span><span class="r">FORMATIONS 3 &nbsp; CO-PRESENCE 3 &nbsp; RESOLVED 3</span></div>
+        <div class="mapbox">${map(d.id===4)}<span class="chip">3 ADMITTED RELATIONSHIPS ▸</span></div>
+        <div class="brief">
+          <div class="eyebrow">STRUCTURAL BRIEF</div>
+          <h2 class="large">NVIDIA</h2>
+          <p class="medium"><i></i>BUILDING CONVERGENCE</p>
+          <p class="small">The structural relationship around NVIDIA spans 6 of 6 domains (CAPITAL, OWNERSHIP, LABOR, TECHNOLOGY, KNOWLEDGE, MEDIA). Separately, 4 canonical relationships admitted for this entity.</p>
+        </div>
+        <div class="states">${STATES.map(([c,l]) => `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
+      </div>
+    </div>
+  </section>`;
+}
+
+document.getElementById('grid-a').innerHTML = DIRS.filter(d => d.round==='a').map(card).join('');
+document.getElementById('grid-b').innerHTML = DIRS.filter(d => d.round==='b').map(card).join('');
+</script>
+
+</body></html>

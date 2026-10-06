@@ -1,0 +1,131 @@
+<title>KRYLO Color Prototypes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: a specimen sheet. Four candidate directions on one identical MAP + brief surface, so only color differs.
+   Page chrome uses the locked baseline (#000000, #e0e0dc). Single dark look by choice: the product is a dark UI. */
+:root {
+  color-scheme: dark;
+  --page-bg: #000000;
+  --page-fg: #e0e0dc;
+  --page-line: #1a1a1a;
+  --page-dim: #3a3d4a;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--page-bg); color: var(--page-fg); }
+body { margin: 0; padding-inline: 16px; padding-block: 28px 56px; font-family: var(--mono); }
+.wrap { max-width: 1180px; margin-inline: auto; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede { margin: 0; font-size: 11.5px; line-height: 1.6; max-width: 72ch; opacity: .75; }
+.key { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.key span { display: inline-flex; align-items: center; gap: 8px; }
+.tag { display: inline-block; padding: 2px 8px; border: 1px solid var(--page-dim); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
+.tag.new { border-color: #007FFF; color: #007FFF; }
+.tag.ok { border-color: #66FF00; color: #66FF00; }
+
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px 32px; }
+@media (max-width: 920px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.dir { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dir-head { display: flex; flex-direction: column; gap: 6px; }
+.dir-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; font-size: 15px; letter-spacing: .04em; font-weight: 500; }
+.dir-note { margin: 0; font-size: 11.5px; line-height: 1.6; opacity: .7; max-width: 62ch; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { display: flex; flex-direction: column; gap: 4px; font-size: 9.5px; letter-spacing: .06em; }
+.sw i { display: block; width: 56px; height: 22px; border: 1px solid var(--page-dim); }
+.sw b { font-weight: 400; opacity: .7; }
+
+/* The mock. Every direction supplies the same tokens. */
+.mock { background: var(--bg); color: var(--text); border: 1px solid var(--line); min-width: 0; }
+.tabs { display: flex; gap: 28px; padding: 14px 20px 0; border-bottom: 1px solid var(--line); font-size: 12px; letter-spacing: .28em; }
+.tabs span { padding-bottom: 12px; opacity: .55; }
+.tabs span.on { color: var(--tab); opacity: 1; border-bottom: 2px solid var(--tab); }
+.body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+.field-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; font-size: 10px; letter-spacing: .14em; }
+.field-head .t { color: var(--label); }
+.field-head .r { opacity: .6; }
+.mapbox { border: 1px solid var(--line); position: relative; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.chip { position: absolute; right: 8px; bottom: 8px; border: 1px solid var(--chip); color: var(--chip); font-size: 9.5px; letter-spacing: .14em; padding: 4px 8px; background: var(--bg); }
+.brief { display: flex; flex-direction: column; gap: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .28em; opacity: .55; }
+.large { font-family: var(--serif); font-size: 28px; line-height: 1.15; margin: 0; font-weight: 400; color: var(--headline); }
+.medium { font-size: 15px; letter-spacing: .04em; margin: 0; font-weight: 500; color: var(--label); }
+.small { font-size: 11.5px; line-height: 1.6; margin: 0; opacity: .85; }
+.states { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 9.5px; letter-spacing: .1em; }
+.states span { display: inline-flex; align-items: center; gap: 7px; opacity: .85; }
+.states i { display: block; width: 10px; height: 10px; border: 1px solid var(--line); }
+
+/* Direction tokens */
+.d-a { --bg:#000000; --text:#e0e0dc; --line:#1a1a1a; --grid:#1a1a1a; --tab:#66FF00; --label:#66FF00; --headline:#e0e0dc; --chip:#66FF00; }
+.d-b { --bg:#000000; --text:#e0e0dc; --line:#1a1a1a; --grid:#1a1a1a; --tab:#66FF00; --label:#e0e0dc; --headline:#e0e0dc; --chip:#66FF00; }
+.d-c { --bg:#000000; --text:#e0e0dc; --line:#2d6b42; --grid:#1a4a2e; --tab:#66FF00; --label:#66FF00; --headline:#e0e0dc; --chip:#66FF00; }
+.d-d { --bg:#05070d; --text:#d7dde8; --line:#1c2433; --grid:#121826; --tab:#66FF00; --label:#66FF00; --headline:#d7dde8; --chip:#66FF00; }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>KRYLO color directions</h1>
+    <p class="lede">Four candidates on the same MAP tab and structural brief, so only color changes. Text is real KRYLO copy; node positions and edges are illustrative, not data. Only A is built today. Nothing here is approved.</p>
+    <div class="key">
+      <span><span class="tag ok">§6 only</span> every value is already in the locked palette</span>
+      <span><span class="tag new">NEW values</span> needs Founder approval before use</span>
+    </div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+const DIRS = [
+  { id:'a', name:'A · Baseline', tag:'ok', tagText:'§6 only',
+    note:'What is built now. Lime on section labels and tabs, white headline, near-black lines. Reference for judging the others.',
+    sw:[['#000000','ground'],['#e0e0dc','text'],['#1a1a1a','line'],['#66FF00','accent']] },
+  { id:'b', name:'B · Accent rationed', tag:'ok', tagText:'§6 only',
+    note:'Same colors, fewer places. Lime is kept for the active tab, the relationship chip and the BUILDING state. Section labels drop to the text gray, so lime means "live" and nothing else.',
+    sw:[['#000000','ground'],['#e0e0dc','text + labels'],['#1a1a1a','line'],['#66FF00','live only']] },
+  { id:'c', name:'C · Forest structure', tag:'ok', tagText:'§6 values, new places',
+    note:'Uses the Layer 0 intro greens (already in §6) for gridlines and borders instead of gray. Panels stay unfilled. The surface reads as one family with the intro layer.',
+    sw:[['#000000','ground'],['#e0e0dc','text'],['#2d6b42','border'],['#1a4a2e','grid'],['#66FF00','accent']] },
+  { id:'d', name:'D · Blue-black ground', tag:'new', tagText:'NEW values',
+    note:'Neutrals shift from neutral gray to a cool blue-black. Lime, blue and purple keep their locked meanings. These four neutrals are not in §6.',
+    sw:[['#05070d','ground'],['#d7dde8','text'],['#1c2433','line'],['#121826','grid'],['#66FF00','accent']] }
+];
+const STATES = [['#3a3d4a','INSUFFICIENT SIGNAL'],['#1a1a1a','LOW SIGNAL YIELD'],['#66FF00','BUILDING CONVERGENCE'],['#007FFF','TURBULENT CONVERGENCE'],['#8A2BE2','HIGH CONVERGENCE']];
+const NODES = [['CAPITAL',100,70],['OWNERSHIP',240,150],['TECHNOLOGY',370,64],['LABOR',190,28]];
+const EDGES = [[0,1,'#66FF00'],[0,2,'#8A2BE2'],[2,1,'#007FFF']];
+
+function map() {
+  let s = '<svg viewBox="0 0 480 210" role="img" aria-label="Illustrative formation layout">';
+  for (let x=0; x<=480; x+=60) s += `<line x1="${x}" y1="0" x2="${x}" y2="210" stroke="var(--grid)" stroke-width="1"/>`;
+  for (let y=0; y<=210; y+=42) s += `<line x1="0" y1="${y}" x2="480" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+  for (const [a,b,c] of EDGES) s += `<line x1="${NODES[a][1]}" y1="${NODES[a][2]}" x2="${NODES[b][1]}" y2="${NODES[b][2]}" stroke="${c}" stroke-width="1.5"/>`;
+  for (const [n,x,y] of NODES) s += `<circle cx="${x}" cy="${y}" r="4" fill="var(--text)"/><text x="${x+9}" y="${y+3}" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="1" fill="var(--text)" opacity=".75">${n}</text>`;
+  return s + '</svg>';
+}
+
+document.getElementById('grid').innerHTML = DIRS.map(d => `
+  <section class="dir">
+    <div class="dir-head">
+      <div class="dir-title"><span>${d.name}</span><span class="tag ${d.tag}">${d.tagText}</span></div>
+      <p class="dir-note">${d.note}</p>
+      <div class="swatches">${d.sw.map(([h,l]) => `<div class="sw"><i style="background:${h}"></i><span>${h}</span><b>${l}</b></div>`).join('')}</div>
+    </div>
+    <div class="mock d-${d.id}">
+      <div class="tabs"><span class="on">MAP</span><span>RECON</span><span>IMPACT</span></div>
+      <div class="body">
+        <div class="field-head"><span class="t">STRUCTURAL RESOLUTION FIELD</span><span class="r">FORMATIONS 3 &nbsp; CO-PRESENCE 3 &nbsp; RESOLVED 3</span></div>
+        <div class="mapbox">${map()}<span class="chip">3 ADMITTED RELATIONSHIPS ▸</span></div>
+        <div class="brief">
+          <div class="eyebrow">STRUCTURAL BRIEF</div>
+          <h2 class="large">NVIDIA</h2>
+          <p class="medium">BUILDING CONVERGENCE</p>
+          <p class="small">The structural relationship around NVIDIA spans 6 of 6 domains (CAPITAL, OWNERSHIP, LABOR, TECHNOLOGY, KNOWLEDGE, MEDIA). Separately, 4 canonical relationships admitted for this entity.</p>
+        </div>
+        <div class="states">${STATES.map(([c,l]) => `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
+      </div>
+    </div>
+  </section>`).join('');
+</script>

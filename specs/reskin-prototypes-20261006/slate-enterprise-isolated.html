@@ -1,0 +1,105 @@
+<title>KRYLO Slate Enterprise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one specimen. Direction 3 from "KRYLO Light Directions" version 4, isolated unchanged except two factual corrections. */
+:root {
+  color-scheme: light;
+  --page-bg: #F5F5F7; --page-fg: #1A1A1A; --page-dim: #3a3d4a;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--page-bg); color: var(--page-fg); }
+body { margin: 0; padding-inline: 16px; padding-block: 28px 56px; font-family: var(--mono); }
+.wrap { max-width: 760px; margin-inline: auto; display: flex; flex-direction: column; gap: 24px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; margin: 0; text-wrap: balance; }
+.lede, .evidence { margin: 0; font-size: 11.5px; line-height: 1.6; max-width: 76ch; }
+.lede { opacity: .8; }
+.evidence { border: 1px solid var(--page-dim); padding: 12px 14px; }
+.evidence b { font-weight: 600; letter-spacing: .08em; font-size: 10px; text-transform: uppercase; display: block; margin-bottom: 6px; opacity: .8; }
+.tag { display: inline-block; padding: 2px 8px; border: 1px solid #007FFF; color: #007FFF; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; }
+.dir { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.dir-title { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; font-size: 15px; letter-spacing: .04em; font-weight: 500; }
+.dir-note { margin: 0; font-size: 11.5px; line-height: 1.6; opacity: .75; max-width: 62ch; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.sw { display: flex; flex-direction: column; gap: 4px; font-size: 9.5px; letter-spacing: .06em; }
+.sw i { display: block; width: 56px; height: 22px; border: 1px solid var(--page-dim); }
+.sw b { font-weight: 400; opacity: .7; }
+
+.mock { --bg:#FFFFFF; --bar:#F4F6F9; --card:#FFFFFF; --map-bg:#FBFCFD; --text:#1A2230; --dim:#5A6577; --line:#DCE1E8; --grid:#EEF1F5; --tab:#123A63; --tabtext:#123A63; --label:#123A63; --node:#1A2230; --case:#1A2230; --radius:6px;
+  background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); min-width: 0; font-family: var(--sans); overflow: hidden; }
+.tabs { display: flex; gap: 26px; padding: 14px 20px 0; border-bottom: 1px solid var(--line); font-size: 12px; letter-spacing: .02em; font-weight: 500; background: var(--bar); }
+.tabs span { padding-bottom: 12px; color: var(--dim); }
+.tabs span.on { color: var(--tabtext); border-bottom: 2px solid var(--tab); }
+.body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 16px; background: var(--card); }
+.field-head { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; font-size: 10px; letter-spacing: .12em; }
+.field-head .t { color: var(--label); font-weight: 600; }
+.field-head .r { color: var(--dim); font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.mapbox { border: 1px solid var(--line); border-radius: var(--radius); position: relative; background: var(--map-bg); overflow: hidden; }
+.mapbox svg { display: block; width: 100%; height: auto; }
+.chip { position: absolute; right: 8px; bottom: 8px; background: #66FF00; color: #1A1A1A; font-size: 9.5px; letter-spacing: .12em; padding: 4px 8px; font-weight: 600; border-radius: var(--radius); }
+.brief { display: flex; flex-direction: column; gap: 8px; }
+.eyebrow { font-size: 10px; letter-spacing: .24em; color: var(--dim); font-weight: 500; }
+.large { font-family: var(--serif); font-size: 28px; line-height: 1.15; margin: 0; font-weight: 400; color: var(--text); }
+.medium { font-size: 15px; letter-spacing: .04em; margin: 0; font-weight: 500; color: var(--text); display: flex; align-items: center; gap: 10px; }
+.medium i { width: 12px; height: 12px; background: #66FF00; border: 1px solid #1A1A1A; display: block; flex: none; }
+.small { font-size: 11.5px; line-height: 1.6; margin: 0; color: var(--text); opacity: .88; }
+.states { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 9.5px; letter-spacing: .08em; color: var(--text); }
+.states span { display: inline-flex; align-items: center; gap: 7px; }
+.states i { display: block; width: 10px; height: 10px; border: 1px solid var(--line); }
+</style>
+
+<div class="wrap">
+  <header style="display:flex;flex-direction:column;gap:12px">
+    <h1>KRYLO slate enterprise</h1>
+    <p class="lede">Direction 3 from "KRYLO Light Directions" version 4, on its own. Text is real KRYLO copy; node positions and edges are illustrative, not data. Nothing here is approved, and the locked §6 palette and §7 type contract are what is built today.</p>
+    <p class="evidence"><b>References</b>
+      The AlphaSense home page gave general traits (light ground, sans-serif, card grid) and no hex values or font names, so no value here comes from it. The Yahoo AlphaSpace page is behind a login and unread. Palantir and Databricks were not checked.</p>
+    <p class="evidence"><b>Blue</b>
+      #007FFF means TURBULENT CONVERGENCE in KRYLO, so it is not used for tabs or labels. Deep navy is the interface color instead.</p>
+  </header>
+  <div id="spec"></div>
+</div>
+
+<script>
+const SW = [['#FFFFFF','surface'],['#F4F6F9','tab bar'],['#1A2230','text'],['#5A6577','secondary'],['#DCE1E8','border'],['#123A63','interface navy'],['#FBFCFD','map ground'],['#EEF1F5','grid']];
+const STATES = [['#3a3d4a','INSUFFICIENT SIGNAL'],['#1a1a1a','LOW SIGNAL YIELD'],['#66FF00','BUILDING CONVERGENCE'],['#007FFF','TURBULENT CONVERGENCE'],['#8A2BE2','HIGH CONVERGENCE']];
+const NODES = [['CAPITAL',100,70],['OWNERSHIP',240,150],['TECHNOLOGY',370,64],['LABOR',190,28]];
+const EDGES = [[0,1,'#66FF00'],[0,2,'#8A2BE2'],[2,1,'#007FFF']];
+function map() {
+  let s = '<svg viewBox="0 0 480 210" role="img" aria-label="Illustrative formation layout">';
+  for (let x=0; x<=480; x+=60) s += `<line x1="${x}" y1="0" x2="${x}" y2="210" stroke="var(--grid)" stroke-width="1"/>`;
+  for (let y=0; y<=210; y+=42) s += `<line x1="0" y1="${y}" x2="480" y2="${y}" stroke="var(--grid)" stroke-width="1"/>`;
+  for (const [a,b,c] of EDGES) {
+    const [x1,y1,x2,y2] = [NODES[a][1],NODES[a][2],NODES[b][1],NODES[b][2]];
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--case)" stroke-width="4.5"/>`;
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="2.5"/>`;
+  }
+  for (const [n,x,y] of NODES) s += `<circle cx="${x}" cy="${y}" r="4" fill="var(--node)"/><text x="${x+9}" y="${y+3}" font-family="IBM Plex Mono, monospace" font-size="9" letter-spacing="1" fill="var(--node)" opacity=".85">${n}</text>`;
+  return s + '</svg>';
+}
+document.getElementById('spec').innerHTML = `
+  <section class="dir">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="dir-title"><span>Slate enterprise</span><span class="tag">8 NEW values + §7 change</span></div>
+      <p class="dir-note">White panels, a pale slate tab bar, slate text and a deep navy for tabs and section labels. Small 6px corners. Navy is far enough from #007FFF that it does not read as TURBULENT. Eight new values.</p>
+      <div class="swatches">${SW.map(([h,l]) => `<div class="sw"><i style="background:${h}"></i><span>${h}</span><b>${l}</b></div>`).join('')}</div>
+    </div>
+    <div class="mock">
+      <div class="tabs"><span class="on">MAP</span><span>RECON</span><span>IMPACT</span></div>
+      <div class="body">
+        <div class="field-head"><span class="t">STRUCTURAL RESOLUTION FIELD</span><span class="r">FORMATIONS 3 &nbsp; CO-PRESENCE 3 &nbsp; RESOLVED 3</span></div>
+        <div class="mapbox">${map()}<span class="chip">3 ADMITTED RELATIONSHIPS ▸</span></div>
+        <div class="brief">
+          <div class="eyebrow">STRUCTURAL BRIEF</div>
+          <h2 class="large">NVIDIA</h2>
+          <p class="medium"><i></i>BUILDING CONVERGENCE</p>
+          <p class="small">The structural relationship around NVIDIA spans 6 of 6 domains (CAPITAL, OWNERSHIP, LABOR, TECHNOLOGY, KNOWLEDGE, MEDIA). Separately, 4 canonical relationships admitted for this entity.</p>
+        </div>
+        <div class="states">${STATES.map(([c,l]) => `<span><i style="background:${c}"></i>${l}</span>`).join('')}</div>
+      </div>
+    </div>
+  </section>`;
+</script>
