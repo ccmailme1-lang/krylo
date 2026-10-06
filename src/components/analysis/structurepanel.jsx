@@ -17,6 +17,7 @@ import { subjectScope } from '../../engine/subjectscope.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
+import { usesurfacerouter } from '../../hooks/usesurfacerouter.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -61,7 +62,18 @@ function FormationMapTab({ query }) {
   // bridge is delivered (BRIEF/Target Packet's own '02 FORMATION' uses it) -- this MAP view
   // was an explicit non-goal of that ticket's scope, not an undelivered dependency. Wiring
   // subject-scoping in here is a real, separate, not-yet-authorized follow-on, not a defect.
-  const domainPressures = useMemo(() => getAllDomainPressures(), [query]);
+  // Live signals land asynchronously after the query is submitted (fireTopicConnectors). A
+  // snapshot taken only at query time never saw them, so the MAP stayed empty until a page
+  // refresh. fieldTick re-reads the pool, debounced after the last routed signal (precedent:
+  // TYPE_DEBOUNCE_MS = 950 in coachwell.jsx). Same router-subscribe hook the rest of the app uses.
+  const [fieldTick, setFieldTick] = useState(0);
+  const fieldTickTimer = useRef(null);
+  usesurfacerouter('structurepanel-map', ['oracle', 'feed', 'analysis'], () => {
+    clearTimeout(fieldTickTimer.current);
+    fieldTickTimer.current = setTimeout(() => setFieldTick(n => n + 1), 950);
+  });
+  useEffect(() => () => clearTimeout(fieldTickTimer.current), []);
+  const domainPressures = useMemo(() => getAllDomainPressures(), [query, fieldTick]);
 
   // Supplier Structural Intelligence (specs/SPEC-external-supplier-structural-intelligence.md) --
   // the "real, separate, not-yet-authorized follow-on" the comment above named is this. Reuses

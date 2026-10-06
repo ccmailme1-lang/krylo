@@ -1,0 +1,484 @@
+From e03a03ab16f2b69d28dbda1f1c2a4bf5036c512e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 5 Oct 2026 11:26:32 +0000
+Subject: [PATCH 1/2] MAP scrubber: timeline change marks + clock ticks (ticket
+ draft 2026-10-05, Founder GO; not yet filed in Jira)
+
+- Change mark where a formation_id's row state differs from its immediately preceding row;
+  position = captured_at mapped linearly against the full history's earliest..latest.
+- Color/shape by after-state (.fh-dot precedent, KRYL-1350): STRENGTHENING lime, WEAKENING blue,
+  RECONFIGURATION purple diamond, all others Light Gray #e0e0dc. Same-timestamp changes combine
+  into one mark (gray when after-states differ); native title hover lists each change with raw
+  entity_a/entity_b, relationship_type, before -> after, captured_at.
+- Clock ticks replace the edge-stagger ticks: hourly < 1 day, 12h for 1-7 days, daily beyond;
+  overlapping labels skipped; zero range draws nothing.
+- Verified headless Chromium, seeded histories (77-relationship case, mixed, zero range, >7 days,
+  empty) at 900/1400/1570 px: no page errors, no label overlap, no horizontal overflow.
+  Live-Dev real-query check still open.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_018Z5upH1AFPHTSemhpXtcai
+---
+ public/structure-field.html                 | 116 +++++++++++++++++++-
+ specs/ticket-draft-timeline-change-marks.md |  42 +++++--
+ 2 files changed, 141 insertions(+), 17 deletions(-)
+
+diff --git a/public/structure-field.html b/public/structure-field.html
+index e57c618..cc265c5 100644
+--- a/public/structure-field.html
++++ b/public/structure-field.html
+@@ -16,6 +16,7 @@
+     --signal-lime: #66FF00;
+     --signal-blue: #007FFF;
+     --unicorn-purple: #8A2BE2;
++    --light-gray: #e0e0dc;
+     --hairline: rgba(255, 255, 255, 0.08);
+     --hairline-strong: rgba(255, 255, 255, 0.22);
+     --node-fill: #0A0C0D;
+@@ -98,6 +99,7 @@
+ 
+   .scrubber-row {
+     display: flex; align-items: center; gap: 14px;
++    padding-bottom: 12px; /* room for the clock-tick labels hanging below the track */
+   }
+ 
+   .ctrl {
+@@ -122,11 +124,33 @@
+   .scrubber { position: relative; height: 28px; cursor: pointer; flex: 1; }
+   .scrubber-track { position: absolute; left: 0; right: 0; top: 13px; height: 1px; background: var(--hairline-strong); }
+   .scrubber-fill { position: absolute; left: 0; top: 13px; height: 1px; background: rgba(255,255,255,0.5); }
++  /* Timeline change marks + clock ticks (ticket draft 2026-10-05, specs/ticket-draft-timeline-
++     change-marks.md). Ticks replace the old edge-stagger ticks: the line carries only real clock
++     time. Tick label = HUD micro-label, same 9px dim treatment as .fh-label (KRYL-1334). */
+   .scrubber-ticks { position: absolute; left: 0; right: 0; top: 13px; height: 1px; pointer-events: none; }
+   .scrubber-tick {
+     position: absolute; top: -3px; width: 1px; height: 7px;
+     background: rgba(255,255,255,0.18);
+   }
++  .scrubber-tick-label {
++    position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap;
++    font-size: 9px; letter-spacing: 0.06em; color: var(--text-mono-dim);
++  }
++  .scrubber-tick-label.skipped { visibility: hidden; }
++  .scrubber-marks { position: absolute; left: 0; right: 0; top: 13px; height: 1px; pointer-events: none; }
++  /* Mark shape/color by the change's after-state, same precedent as .fh-dot (KRYL-1350):
++     STRENGTHENING lime, WEAKENING blue, RECONFIGURATION purple diamond; every other state, and a
++     combined mark whose after-states differ, is light gray. */
++  .scrubber-mark {
++    position: absolute; top: -6px; width: 12px; height: 12px; margin-left: -6px;
++    display: flex; align-items: center; justify-content: center;
++    pointer-events: auto; cursor: help;
++  }
++  .scrubber-mark::after { content: ''; display: block; width: 8px; height: 8px; border-radius: 50%; background: var(--light-gray); }
++  .scrubber-mark[data-state="STRENGTHENING"]::after { background: var(--signal-lime); }
++  .scrubber-mark[data-state="WEAKENING"]::after { background: var(--signal-blue); }
++  .scrubber-mark[data-state="RECONFIGURATION"] { transform: rotate(45deg); }
++  .scrubber-mark[data-state="RECONFIGURATION"]::after { border-radius: 1px; background: var(--unicorn-purple); }
+   .scrubber-thumb {
+     position: absolute; top: 4px; width: 18px; height: 18px; margin-left: -9px;
+     border: 1px solid var(--signal-lime); border-radius: 50%; background: #050505;
+@@ -271,6 +295,7 @@
+       <div class="scrubber-track"></div>
+       <div class="scrubber-ticks" id="scrubber-ticks"></div>
+       <div class="scrubber-fill" id="scrubber-fill"></div>
++      <div class="scrubber-marks" id="scrubber-marks"></div>
+       <div class="scrubber-thumb" id="scrubber-thumb"></div>
+     </div>
+   </div>
+@@ -592,6 +617,7 @@
+ 
+     if (formationHistoryData.length === 0) {
+       fhRange = null;
++      renderTimeline(); // clears ticks/marks left from a previous query
+       return; // nothing real to show -- leave applyFieldFormation's hide decision as-is
+     }
+ 
+@@ -603,6 +629,7 @@
+     const scrubberLabelEl = document.getElementById('scrubber-label');
+     if (scrubberLabelEl) scrubberLabelEl.textContent = 'FORMATION HISTORY';
+     updateScrubberRangeLabel();
++    renderTimeline();
+ 
+     // Row rendering (line + dots per formation) removed — fhWrapEl stays empty. fhRange/
+     // scrubber-readout above still drive the scrubber control itself, which keeps working.
+@@ -1385,15 +1412,93 @@
+   const thumbEl = document.getElementById('scrubber-thumb');
+   const ticksEl = document.getElementById('scrubber-ticks');
+ 
+-  function buildTicks() {
++  const marksEl = document.getElementById('scrubber-marks');
++
++  // Change records: per formation_id, rows ordered by captured_at; a change exists only where a
++  // row's state differs from the immediately preceding row's state for that same formation_id.
++  function stateChanges(rows) {
++    const changes = [];
++    for (const group of groupByFormationId(rows).values()) {
++      for (let i = 1; i < group.length; i++) {
++        const prev = group[i - 1], cur = group[i];
++        if (cur.state !== prev.state) changes.push({ row: cur, before: prev.state, t: new Date(cur.captured_at).getTime() });
++      }
++    }
++    return changes;
++  }
++
++  const HOUR = 3600e3, DAY = 24 * HOUR;
++  // Clock ticks at real local-time boundaries inside [min, max] -- hourly under 1 day, every 12h
++  // for 1-7 days, daily beyond (Founder, 2026-10-05).
++  function clockTicks(min, max) {
++    const span = max - min;
++    const step = span < DAY ? 'hour' : span <= 7 * DAY ? 'half' : 'day';
++    const d = new Date(min);
++    d.setMinutes(0, 0, 0);
++    if (step === 'half') d.setHours(d.getHours() < 12 ? 0 : 12);
++    if (step === 'day') d.setHours(0);
++    const fmt = step === 'hour'
++      ? { hour: 'numeric' }
++      : step === 'half' ? { month: 'short', day: 'numeric', hour: 'numeric' } : { month: 'short', day: 'numeric' };
++    const ticks = [];
++    while (d.getTime() <= max) {
++      if (d.getTime() >= min) ticks.push({ t: d.getTime(), label: d.toLocaleString(undefined, fmt) });
++      if (step === 'hour') d.setHours(d.getHours() + 1);
++      else if (step === 'half') d.setHours(d.getHours() + 12);
++      else d.setDate(d.getDate() + 1);
++    }
++    return ticks;
++  }
++
++  // Ticks + change marks, both positioned by real captured_at mapped linearly against the full
++  // history's earliest..latest. A zero-width range has no defensible position: nothing drawn.
++  function renderTimeline() {
+     ticksEl.innerHTML = '';
+-    const staggers = [...new Set(EDGES.map(e => e.stagger))].sort((a, b) => a - b);
+-    for (const s of staggers) {
++    marksEl.innerHTML = '';
++    if (!fhRange || fhRange.max === fhRange.min) return;
++    const pos = (t) => ((t - fhRange.min) / (fhRange.max - fhRange.min)) * 100 + '%';
++
++    for (const tk of clockTicks(fhRange.min, fhRange.max)) {
+       const tick = document.createElement('div');
+       tick.className = 'scrubber-tick';
+-      tick.style.left = (s * 100) + '%';
++      tick.style.left = pos(tk.t);
++      const label = document.createElement('div');
++      label.className = 'scrubber-tick-label';
++      label.textContent = tk.label;
++      tick.appendChild(label);
+       ticksEl.appendChild(tick);
+     }
++    thinTickLabels();
++
++    const byTime = new Map();
++    for (const c of stateChanges(formationHistoryData)) {
++      if (!byTime.has(c.t)) byTime.set(c.t, []);
++      byTime.get(c.t).push(c);
++    }
++    for (const [t, group] of byTime) {
++      const after = new Set(group.map(c => c.row.state));
++      const mark = document.createElement('div');
++      mark.className = 'scrubber-mark';
++      mark.dataset.state = after.size === 1 ? group[0].row.state : 'MIXED';
++      mark.style.left = pos(t);
++      mark.title = group.map(c =>
++        `${c.row.entity_a} ↔ ${c.row.entity_b} · ${c.row.relationship_type} · ${c.before} → ${c.row.state} · ${new Date(c.row.captured_at).toLocaleString()}`
++      ).join('\n');
++      marksEl.appendChild(mark);
++    }
++  }
++
++  // Every tick stays drawn; a label is hidden when it would overlap the previous shown label or
++  // run past either end of the track.
++  function thinTickLabels() {
++    const track = ticksEl.getBoundingClientRect();
++    let lastRight = -Infinity;
++    ticksEl.querySelectorAll('.scrubber-tick-label').forEach(label => {
++      label.classList.remove('skipped');
++      const r = label.getBoundingClientRect();
++      if (r.left < track.left || r.right > track.right || r.left < lastRight + 6) label.classList.add('skipped');
++      else lastRight = r.right;
++    });
+   }
+ 
+   function setT(t, redraw = true) {
+@@ -1666,7 +1771,6 @@
+   function init() {
+     resize();
+     buildAmbient();
+-    buildTicks();
+     positionPanelDefault();
+     positionHudBelowAxis();
+     // No evidence found (comment, spec, or git rationale) for animating the scrubber to any
+@@ -1675,7 +1779,7 @@
+     setT(0, false);
+     rafId = requestAnimationFrame(loop);
+   }
+-  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); });
++  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); thinTickLabels(); });
+   init();
+ })();
+ </script>
+diff --git a/specs/ticket-draft-timeline-change-marks.md b/specs/ticket-draft-timeline-change-marks.md
+index 0546c8e..461e78b 100644
+--- a/specs/ticket-draft-timeline-change-marks.md
++++ b/specs/ticket-draft-timeline-change-marks.md
+@@ -1,29 +1,49 @@
+ # Ticket draft: Timeline change marks and time ticks on the MAP scrubber
+ 
+-Status: DRAFT, not filed in Jira. Build in Dev only until approved.
++Status: APPROVED for build (Founder GO, 2026-10-05). Not yet filed in Jira — no KRYL number assigned. Build in Dev only until filed.
+ 
+ ## 1. Original intent
+ Show on the MAP scrubber what changed and when: a mark on the scrubber line at each time a relationship's saved state changed, with the change (before -> after state) readable on hover. Add time ticks along the track so a range like "Oct 4 -> Oct 4" reads as real clock time. Purpose (Founder, 2026-10-05): make the record of change visible now, as a deliberate step toward a platform that accumulates and uses its own history.
+ 
+ ## 2. Acceptance criteria
+-- A mark appears on the scrubber line only where the same relationship (`formation_id`) was captured again with a different `state`. Same-state captures draw nothing.
++- Change record: for each `formation_id`, order its saved rows by `captured_at`. A mark exists only when the current row's `state` differs from the immediately preceding row's `state` for that same `formation_id`. Same-state captures draw nothing.
+ - Hover on a mark shows: both entities, the relationship type, `before -> after` state, and the `captured_at` time of the change.
+-- Mark position = `captured_at` mapped linearly between the first and last capture. No interpolation, no invented timestamps.
+-- Time ticks with labels in the viewer's local time: hourly when the range is under 1 day, every 12 hours for 1 to 7 days, daily beyond (Founder to confirm).
++- Mark position = that change's `captured_at`, mapped linearly against the earliest and latest `captured_at` in the complete history dataset displayed by the scrubber. No per-formation normalization, interpolation, or invented timestamps.
++- Time ticks with labels in the viewer's local time: hourly when the range is under 1 day, every 12 hours for 1 to 7 days, daily beyond 7 days.
+ - With no changes, the scrubber shows the ticks and no marks; with no history, the existing dimmed "NO FORMATION HISTORY YET" state is unchanged.
+ - Colors only from the locked palette; no amber or orange.
+ - Verified in Dev with seeded rows (including a 77-relationship case) and one real query; no page errors; layout holds at 900, 1400 and 1570 px.
+ 
+-## 3. Current implementation state
+-Not built. The stacked timeline rows (KRYL-1357) were removed from Dev and Prod. Every saved relationship so far has a single `NEW` row, so no real change exists yet in the data. The scrubber currently shows only the range label and the thumb.
++## 3. Locked design decisions (Founder, 2026-10-05)
++- Mark color/shape by the change's after-state (precedent: `.fh-dot`, KRYL-1350):
++  - STRENGTHENING -> lime `#66FF00`, circle
++  - WEAKENING -> blue `#007FFF`, circle
++  - RECONFIGURATION -> purple `#8A2BE2`, diamond
++  - NEW, DISSOLUTION, and any future state -> Light Gray `#e0e0dc`, circle
++- Multiple changes at the same `captured_at` -> one combined mark; hover lists every change. Color = the shared after-state when all agree, gray when they differ.
++- Zero range (earliest `captured_at` equals latest) -> no marks.
++- Entity names in hover = raw stored `entity_a` / `entity_b`, no name resolution.
++- Every tick is drawn; a tick label that would overlap its neighbor is skipped.
++- Clock ticks replace the old edge-stagger ticks (`buildTicks()`); the line carries only clock time.
++- Hover uses the native `title` tooltip (KRYL-1350 precedent).
+ 
+-## 4. Dependencies
+-- `formation_state` rows (`formation_id`, `state`, `captured_at`) via `/v1/formation-state`.
+-- `structurepanel.jsx` posting `formationHistory` to `public/structure-field.html`.
++## 4. Current implementation state
++Built in `public/structure-field.html` on branch `claude/elegant-ramanujan-gd8d02`. Verified in headless Chromium with seeded `formationHistory` messages at 900/1400/1570 px. The "one real query" check against live Dev is still open. Every saved relationship so far has a single `NEW` row, so no real change exists yet in the data.
++
++## 5. Dependencies
++- `formation_state` rows (`formation_id`, `state`, `captured_at`, `entity_a`, `entity_b`, `relationship_type`) via `/v1/formation-state`.
++- `structurepanel.jsx` posting `formationHistory` to `public/structure-field.html` (unchanged).
+ - Prod's engine stores history in a local file because Postgres is unreachable from the VPS, so Dev and Prod histories differ.
+ 
+-## 5. Superseded by a newer ticket?
++## 6. Files
++- `public/structure-field.html` only.
++
++## 7. Superseded by a newer ticket?
+ No. It replaces the removed stacked-rows approach from KRYL-1357.
+ 
+-## 6. Maps to the current KRYLO product model?
++## 8. Maps to the current KRYLO product model?
+ Yes. It presents already-saved structure and measured time differences; it does not predict or recommend (Formation Is Not a Verdict, section 21).
++
++## 9. Out of scope
++- `src/components/spine/conemap.jsx:20` maps WEAKENING to `#ffaa00` (amber). Noted, untouched.
++- No changes to canonical ρ, formation identity, persistence, or the Stage 1 Formalization.
+-- 
+2.43.0
+
+
+From 1b4409755cc8f5e6b0f1392b588656ff9776c613 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 5 Oct 2026 12:06:14 +0000
+Subject: [PATCH 2/2] KRYL-1358 (AC-11): subject header shows
+ field/attribution/formation states when attribution is unresolved -- Dev
+ only, browser check pending
+
+- New src/engine/subjectattribution.js: Target Packet 05 PROVENANCE attribution rule extracted
+  unchanged (trace resolved / subject-bound observations / none) + headerFieldSplit().
+- targetpacket.jsx: PROVENANCE reads the shared helper; same three outputs, same text.
+- analysisidlefield.jsx: header replaces the single stateLabel with
+  FIELD CONCENTRATION -- <domain> <magnitude>/100 / ENTITY ATTRIBUTION -- UNRESOLVED /
+  RELATIONSHIP FORMATION -- NOT ESTABLISHED when on the canonical path with no subject-bound
+  evidence; otherwise unchanged. stateLabel, deriveState(), classifyConvergenceState() and their
+  consumers untouched.
+- Validated: vite build passes; node test with a field seeded via dispatchBatch(): UnitedHealth ->
+  three states, attributed subject / trace-resolved / withheld / non-canonical -> existing
+  label; old vs new PROVENANCE rule equivalent on all inputs; formationlayer/scenariokernel/
+  kryl1329 suites unchanged (relationship.fixtures 1 failure identical on baseline).
+- NOT yet done: in-browser page-error check (blocked at the access gate).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_018Z5upH1AFPHTSemhpXtcai
+---
+ src/components/analysis/analysisidlefield.jsx | 34 ++++++++++-
+ src/components/analysis/targetpacket.jsx      | 16 +++---
+ src/engine/subjectattribution.js              | 57 +++++++++++++++++++
+ 3 files changed, 96 insertions(+), 11 deletions(-)
+ create mode 100644 src/engine/subjectattribution.js
+
+diff --git a/src/components/analysis/analysisidlefield.jsx b/src/components/analysis/analysisidlefield.jsx
+index ff6dc04..e370b29 100644
+--- a/src/components/analysis/analysisidlefield.jsx
++++ b/src/components/analysis/analysisidlefield.jsx
+@@ -21,6 +21,8 @@ import { LENS_PRESETS }               from '../../registry/lenspresets.js';
+ import { synthesizeQuery, detectDomain } from '../../engine/querysynthesis.js';
+ import { queryChipSubstrate, toDisplayChips } from '../../engine/chipsubstrate.js';
+ import { subjectScope } from '../../engine/subjectscope.js';
++import { resolveSubjectAttribution, headerFieldSplit } from '../../engine/subjectattribution.js';
++import { getDisplayEntity } from '../../utils/formatters.js';
+ import StructuralField from './structuralfield.jsx';
+ import { computeSES } from '../../engine/searchenvironmentstate.js';
+ import { getObservations } from '../../engine/runtimeobservablestore.js';
+@@ -561,6 +563,24 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
+   const hasSession    = !!activeSession;
+   const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession]);
+ 
++  // AC-11 / KRYL-1358 — subject-level header status (headerFieldSplit, subjectattribution.js).
++  // Attribution = the Target Packet's PROVENANCE rule, read from the same scope/entity inputs the
++  // Target Packet uses, with its same bounded 10 x 2s refresh (KRYL-1220): subject-attributed
++  // connectors land after first render.
++  const [attrTick, setAttrTick] = useState(0);
++  useEffect(() => { setAttrTick(0); }, [activeSession]);
++  useEffect(() => {
++    if (!activeSession || attrTick >= 10) return;
++    const t = setTimeout(() => setAttrTick(n => n + 1), 2000);
++    return () => clearTimeout(t);
++  }, [attrTick, activeSession]);
++  const headerSplit = useMemo(() => {
++    if (!activeSession) return null;
++    const subjScope = subjectScope(activeSession.queryContext ?? activeSession.query ?? '');
++    const { state } = resolveSubjectAttribution({ subjScope, entity: getDisplayEntity(activeSession.query ?? 'Unknown Signal') });
++    return headerFieldSplit(sessionSynthesis, state);
++  }, [activeSession, sessionSynthesis, attrTick]);
++
+   // Replay + stream
+   const { history, currentIndex, seek, load } = usereplay(true);
+   const { latest, stats, lagMs }              = useframestream({ enabled: true });
+@@ -1735,9 +1755,17 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
+           }}>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: FS_MAIN_HDR, textTransform: 'uppercase', letterSpacing: '0.25em' }}>
+               <span style={{ color: 'rgba(255,255,255,0.9)' }}>Analysis</span>
+-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>
+-                {hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}
+-              </span>
++              {hasSession && headerSplit ? (
++                /* Three stacked lines fit the 64px header -- same stacked 9px/1.8 treatment as the
++                   simulation panel's own header block above. */
++                <div data-header-field-split style={{ fontSize: 9, letterSpacing: '0.12em', lineHeight: '1.8', color: 'rgba(255,255,255,0.3)' }}>
++                  {headerSplit.map(line => <div key={line}>{line}</div>)}
++                </div>
++              ) : (
++                <span style={{ color: 'rgba(255,255,255,0.3)' }}>
++                  {hasSession ? (sessionSynthesis?.stateLabel ?? 'ACTIVE') : projectedState.label}
++                </span>
++              )}
+             </div>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+               {/* KRYL-1332 (Founder, 2026-09-28) -- LOCALHOST ONLY: New Query replacement, since
+diff --git a/src/components/analysis/targetpacket.jsx b/src/components/analysis/targetpacket.jsx
+index 11a0c24..088964e 100644
+--- a/src/components/analysis/targetpacket.jsx
++++ b/src/components/analysis/targetpacket.jsx
+@@ -27,6 +27,7 @@ import { inferFormation }        from '../../engine/formationinference.js';
+ import { assembleNarrative }     from '../../engine/narrativeassembly.js';
+ import { assembleReconnPayload } from '../../engine/reconnpayload.js';
+ import { buildPerceptionField } from '../../engine/perceptionread.js';
++import { countSubjectObservations, classifySubjectAttribution, SUBJECT_ATTRIBUTION } from '../../engine/subjectattribution.js';
+ import { computeTruthDynamics } from '../../engine/identitydynamics.js';
+ import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
+ import { getLRPrior }          from '../../engine/pathstore.js';
+@@ -461,11 +462,10 @@ export default function TargetPacket() {
+   // below must not claim "no subject-scoped evidence bound" while this count is > 0; that was
+   // the exact contradiction DEF-1301 reports (Formation admitted from real subject-bound
+   // observations while PROVENANCE denied any existed).
+-  const subjectObservationCount = useMemo(() => {
+-    if (subjScope.kind !== 'ENTITY') return 0;
+-    try { return buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId }).particles.length; }
+-    catch { return 0; }
+-  }, [subjScope, refreshTick]);
++  // AC-11 — the count and the PROVENANCE rule now live in subjectattribution.js (shared with the
++  // Analysis header), same logic as before.
++  const subjectObservationCount = useMemo(() => countSubjectObservations(subjScope), [subjScope, refreshTick]);
++  const attributionState = classifySubjectAttribution({ wtResolved, subjectObservationCount });
+ 
+   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
+   // field the rest of the packet already reads. No new data source.
+@@ -1030,10 +1030,10 @@ export default function TargetPacket() {
+              record found" copy is removed (that was refinement guidance, not provenance). ── */}
+         <PacketSection ordinal="05" title="PROVENANCE">
+           <div style={{ marginTop: 12, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#9aa09d' }}>
+-            <span style={{ color: wtResolved || subjectObservationCount > 0 ? LIME : ABSENCE }}>
+-              {wtResolved
++            <span style={{ color: attributionState !== SUBJECT_ATTRIBUTION.NONE ? LIME : ABSENCE }}>
++              {attributionState === SUBJECT_ATTRIBUTION.TRACE_RESOLVED
+                 ? 'STRUCTURAL TRACE RESOLVED'
+-                : subjectObservationCount > 0
++                : attributionState === SUBJECT_ATTRIBUTION.SUBJECT_OBSERVATIONS
+                 ? `SUBJECT-BOUND OBSERVATIONS PRESENT (${subjectObservationCount})`
+                 : 'NO SUBJECT-SCOPED EVIDENCE BOUND'}
+             </span>
+diff --git a/src/engine/subjectattribution.js b/src/engine/subjectattribution.js
+new file mode 100644
+index 0000000..30faf19
+--- /dev/null
++++ b/src/engine/subjectattribution.js
+@@ -0,0 +1,57 @@
++// src/engine/subjectattribution.js — AC-11 (specs/spec-field-signal-vs-entity-attribution.md §17)
++//
++// The one definition of "is evidence bound to this subject?", extracted unchanged from
++// targetpacket.jsx's 05 PROVENANCE (KRYL-1235, DEF-1301) so the Target Packet and the Analysis
++// header read the same rule instead of two copies that can drift. Two real evidence classes
++// establish attribution, checked in PROVENANCE's own order:
++//   1. a resolved EDGAR-8K CanonicalEvent structural trace (whytraceresolver.js)
++//   2. real subject-attributed observations in the domaingravity.js pool — the SAME
++//      buildPerceptionField({ subject }) read fieldFormation uses
++// Neither present -> no subject-scoped evidence bound. A non-ENTITY scope never has class 2.
++
++import { resolveWhyTrace, WT_STATE } from './whytraceresolver.js';
++import { getCanonicalEvents } from './connectors/edgar8kevidence.js';
++import { buildPerceptionField } from './perceptionread.js';
++
++export const SUBJECT_ATTRIBUTION = Object.freeze({
++  TRACE_RESOLVED:       'TRACE_RESOLVED',
++  SUBJECT_OBSERVATIONS: 'SUBJECT_OBSERVATIONS',
++  NONE:                 'NONE',
++});
++
++export function countSubjectObservations(subjScope, now = Date.now()) {
++  if (subjScope?.kind !== 'ENTITY') return 0;
++  try { return buildPerceptionField({ now, subject: subjScope.canonicalId }).particles.length; }
++  catch { return 0; }
++}
++
++export function classifySubjectAttribution({ wtResolved, subjectObservationCount }) {
++  if (wtResolved) return SUBJECT_ATTRIBUTION.TRACE_RESOLVED;
++  if (subjectObservationCount > 0) return SUBJECT_ATTRIBUTION.SUBJECT_OBSERVATIONS;
++  return SUBJECT_ATTRIBUTION.NONE;
++}
++
++// For callers that hold only the session's scope + display entity (the Analysis header). The
++// Target Packet keeps its own whyTrace (it also feeds sciData) and calls the two pieces above.
++export function resolveSubjectAttribution({ subjScope, entity, now = Date.now() }) {
++  const wtResolved = resolveWhyTrace(entity, getCanonicalEvents()).state === WT_STATE.RESOLVED;
++  const subjectObservationCount = countSubjectObservations(subjScope, now);
++  return { state: classifySubjectAttribution({ wtResolved, subjectObservationCount }), wtResolved, subjectObservationCount };
++}
++
++// AC-11 / KRYL-1358 — the Analysis header's subject-level status. On the canonical path the
++// synthesis stateLabel is deriveState() of the primary domain's live FIELD magnitude
++// (canonicalresolution.js), not a statement about the subject. With no subject-bound evidence the
++// header shows three separate states instead of that label; otherwise (or off the canonical path,
++// or withheld) it returns null and the header keeps its existing label. Magnitude = the canonical
++// confidence, which is magnitude/100 (canonicalresolution.js). Display text only — stateLabel and
++// its consumers are untouched.
++export function headerFieldSplit(synthesis, attributionState) {
++  const canon = synthesis?.canonical;
++  if (!canon || canon.withheld || attributionState !== SUBJECT_ATTRIBUTION.NONE) return null;
++  return [
++    `FIELD CONCENTRATION — ${canon.signalDomain} ${Math.round(canon.confidence * 100)}/100`,
++    'ENTITY ATTRIBUTION — UNRESOLVED',
++    'RELATIONSHIP FORMATION — NOT ESTABLISHED',
++  ];
++}
+-- 
+2.43.0
+
