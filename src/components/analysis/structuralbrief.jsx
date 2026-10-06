@@ -96,12 +96,21 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   const failureClause = ownershipFailure
     ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
     : '';
+  // KRYL-1369 (Founder ruling 2026-10-06, spec section 17): the two levels are stated separately. The
+  // field level (domains carrying live signal, domain pairs co-present) is ambient and not bound to the
+  // subject; only the subject level (observations identifier-bound to the subject, canonical
+  // relationships) is about the subject. Wording is a first draft for the Founder to adjust.
+  const subjectBoundCount = isEntity
+    ? domainLines.reduce((n, p) => n + (A(p.domain, subjScope).formationObservations?.length ?? 0), 0)
+    : 0;
+  const subjectLevel = subjectBoundCount > 0
+    ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}.`
+    : ` Subject level: no observations bound to ${subjectLabel} yet.`;
+  const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
-        ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
-          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}${failureClause}`
-        : `No domain formation established around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
-          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}${failureClause}`)
+        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`
+        : `${fieldLevelOpen}but fewer than two domains are connected — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`)
     : structurallyInterpretable
       ? (entityRelPairs.length
           ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
