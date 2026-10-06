@@ -93,7 +93,10 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     event.polarity === POLARITY.ABSENT   ||
     event.convergenceState === 'TURBULENT_CONVERGENCE';
 
-  _pool.get(domain).push({
+  const entry = {
+    // id lets a repeat dispatch of the same observation refresh its entry instead of adding a
+    // second one (count stays the same, ts moves forward). Additive: existing readers ignore it.
+    id:         event.id ?? null,
     confidence: typeof event.confidence === 'number' ? event.confidence : 50,
     polarity:   isFracture ? 'fracture' : 'constructive',
     ts:         event.ts ?? Date.now(),
@@ -114,7 +117,11 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     // from ts (observation/ingestion time, e.g. edgar8ksignal.js's targeted sync). null for
     // every connector that doesn't carry this distinction — not fabricated, not required.
     eventDate: event.meta?.eventDate ?? null,
-  });
+  };
+  const arr = _pool.get(domain);
+  const existing = entry.id != null ? arr.findIndex(s => s.id === entry.id) : -1;
+  if (existing >= 0) arr[existing] = entry;
+  else arr.push(entry);
 
   // Prune entries beyond 2× window to bound memory
   const cutoff = Date.now() - DEFAULT_WINDOW_MS * 2;

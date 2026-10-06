@@ -249,6 +249,11 @@ class SurfaceRouter {
   }
 
   _resolveOp(surfaceId, event) {
+    // Passive observer (domaingravity's pool) needs every dispatch, including a repeat of a known
+    // id, so it can refresh that entry's ts. Tracked-field change detection below is for rendering
+    // surfaces; applied to the pool it dropped every re-poll of the same id (e.g. fred-<series>-<date>),
+    // so those entries aged out of the 5-minute live window and the field emptied.
+    if (surfaceId === '__gravity__') return HYDRATION_OP.APPEND;
     const reg = this._registry.get(surfaceId);
     if (!reg) return HYDRATION_OP.APPEND;
     const id = event.id;
