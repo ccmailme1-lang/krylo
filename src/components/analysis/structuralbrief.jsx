@@ -55,6 +55,68 @@ function Row({ label, children }) {
   );
 }
 
+// KRYL (2026-10-06): the brief headline and summary sentence as one pure function, so the MAP panel
+// (structurepanel.jsx) shows exactly the text this component shows -- one computation, two surfaces.
+export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure }) {
+  const isEntity = subjScope?.kind === 'ENTITY';
+  const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
+  const subjectLabel = isEntity
+    ? subjScope.entity.name
+    : structurallyInterpretable
+      ? `STRUCTURAL PARTICIPANTS: ${structuralQuery.entities.join(', ')}`
+      : 'FIELD SCAN — NO SUBJECT RESOLVED';
+
+  // WHAT THE STRUCTURE SHOWS -- real, per-domain, already-computed pressure data (magnitude,
+  // polarity, signalCount) -- the same values FractureSignalSurface/domainsubstratetabs.jsx read,
+  // not a second computation.
+  const domainLines = (activeDomainPressures ?? []).slice().sort((a, b) => b.signalCount - a.signalCount);
+
+  const edges = fieldFormation?.graph?.edges ?? [];
+  const relationshipCount = edges.length;
+  const observationTotal = domainLines.reduce((s, p) => s + p.signalCount, 0);
+
+  // KRYL-1332 (Founder, 2026-09-28): "What is the structural relationship around one or more
+  // components?" is the anchor every brief opens with -- the sentence leads with the
+  // relationship (or its honest absence), not a generic observation-count summary.
+  const domainList = domainLines.length ? ` (${domainLines.map(p => p.domain).join(', ')})` : '';
+  const entityRelPairs = structuralQuery?.evidence?.relationships ?? [];
+  const entitySupported = entityRelPairs.filter(r => r.state === 'SUPPORTED');
+  // Distinguish genuinely-checked-and-empty from never-resolvable -- collapsing both into
+  // "candidate relationship" let a generic role noun (SUPPLIER, DISTRIBUTOR) read as if it had
+  // been checked against real evidence and come up empty, when nothing was ever resolvable
+  // enough to check. Real defect found live 2026-10-02.
+  const entityUnresolved = entityRelPairs.filter(r => r.state === 'UNRESOLVED');
+  const entityChecked = entityRelPairs.filter(r => r.state !== 'UNRESOLVED');
+  // Canonical-ρ clause appended only when at least one real relationship exists — when
+  // entityCanonicalRelationships is empty, the sentence is byte-identical to before this fix.
+  const canonicalClause = entityCanonicalRelationships.length
+    ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
+      `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
+    : '';
+  const failureClause = ownershipFailure
+    ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
+    : '';
+  const briefSentence = isEntity
+    ? (relationshipCount > 0
+        ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
+          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}${failureClause}`
+        : `No domain formation established around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
+          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}${failureClause}`)
+    : structurallyInterpretable
+      ? (entityRelPairs.length
+          ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
+            (entityUnresolved.length
+              ? `, but ${entityUnresolved.length} of ${entityRelPairs.length} pair${entityRelPairs.length !== 1 ? 's' : ''} involve a term that isn't a resolvable named entity — nothing real to check there.`
+              : '.') +
+            (entityChecked.length
+              ? ` Of the ${entityChecked.length} pair${entityChecked.length !== 1 ? 's' : ''} actually checked: ${entitySupported.length} supported by real evidence — the rest are a stated absence, not a low score.`
+              : '')
+          : `Structural participant recognized (${structuralQuery.entities.join(', ')}), but only one — nothing to relate it to yet.`)
+      : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
+        `across ${domainLines.length} of 6 domains${domainList}.`;
+  return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence };
+}
+
 export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, structuralQuery }) {
   const isEntity = subjScope?.kind === 'ENTITY';
 
@@ -88,17 +150,22 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // of that work ever reached the guest. Additive fix here only -- no new computation, no
   // change to isEntity's existing behavior, reuses the exact structuralQuery shape already
   // built and passed down from targetpacket.jsx's existing `synthesis` object.
-  const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
-  const subjectLabel = isEntity
-    ? subjScope.entity.name
-    : structurallyInterpretable
-      ? `STRUCTURAL PARTICIPANTS: ${structuralQuery.entities.join(', ')}`
-      : 'FIELD SCAN — NO SUBJECT RESOLVED';
+  // Canonical ρ lookup for the resolved entity subject. KRYL-1342 (2026-10-02): was an inline
+  // reimplementation of this exact bridge (nodeId(identifiers.edgar, name)) -- the same
+  // operation reconnpayload.js's relationshipCoverage() already does via the real shared
+  // toTopologyNodeId(canonicalId). Consolidated onto the one shared function so the two
+  // surfaces can't silently drift if the bridge logic ever changes. ρ's own identity
+  // contract (part = nodeId()-derived strings, confirmed against all 3 real producers) is
+  // untouched -- this only removes a duplicate consumer-side path to the same real id.
+  // Independent of `edges` above — never combined into relationshipCount or domainList.
+  const entityCanonicalRelationships = isEntity
+    ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
+    : [];
+  const ownershipFailure = isEntity && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
+  const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
+    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure,
+  });
 
-  // WHAT THE STRUCTURE SHOWS -- real, per-domain, already-computed pressure data (magnitude,
-  // polarity, signalCount) -- the same values FractureSignalSurface/domainsubstratetabs.jsx read,
-  // not a second computation.
-  const domainLines = (activeDomainPressures ?? []).slice().sort((a, b) => b.signalCount - a.signalCount);
 
   // EVIDENCE -- real dated observations, from the SAME domaingravity.js pool fieldFormation
   // itself reads (adsubject.js's A(domain, scope).formationObservations). Only meaningful when
@@ -110,22 +177,6 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         .filter(o => o.eventDate)
         .sort((a, b) => (b.eventDate ?? '').localeCompare(a.eventDate ?? ''))
         .slice(0, 8)
-    : [];
-
-  const edges = fieldFormation?.graph?.edges ?? [];
-  const relationshipCount = edges.length;
-  const observationTotal = domainLines.reduce((s, p) => s + p.signalCount, 0);
-
-  // Canonical ρ lookup for the resolved entity subject. KRYL-1342 (2026-10-02): was an inline
-  // reimplementation of this exact bridge (nodeId(identifiers.edgar, name)) -- the same
-  // operation reconnpayload.js's relationshipCoverage() already does via the real shared
-  // toTopologyNodeId(canonicalId). Consolidated onto the one shared function so the two
-  // surfaces can't silently drift if the bridge logic ever changes. ρ's own identity
-  // contract (part = nodeId()-derived strings, confirmed against all 3 real producers) is
-  // untouched -- this only removes a duplicate consumer-side path to the same real id.
-  // Independent of `edges` above — never combined into relationshipCount or domainList.
-  const entityCanonicalRelationships = isEntity
-    ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
     : [];
 
   // Fix 1/2 (KRYL-1332, Founder-locked 2026-09-28): magnitude averages multiple observations
@@ -142,48 +193,6 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // possibly still have, not an unbounded/fabricated window.
   const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain, DEFAULT_WINDOW_MS * 2)]));
   const evidenceByDomain = evidence.reduce((acc, o) => { (acc[o.domain] ??= []).push(o); return acc; }, {});
-
-  // KRYL-1332 (Founder, 2026-09-28): "What is the structural relationship around one or more
-  // components?" is the anchor every brief opens with -- the sentence leads with the
-  // relationship (or its honest absence), not a generic observation-count summary.
-  const domainList = domainLines.length ? ` (${domainLines.map(p => p.domain).join(', ')})` : '';
-  const entityRelPairs = structuralQuery?.evidence?.relationships ?? [];
-  const entitySupported = entityRelPairs.filter(r => r.state === 'SUPPORTED');
-  // Distinguish genuinely-checked-and-empty from never-resolvable -- collapsing both into
-  // "candidate relationship" let a generic role noun (SUPPLIER, DISTRIBUTOR) read as if it had
-  // been checked against real evidence and come up empty, when nothing was ever resolvable
-  // enough to check. Real defect found live 2026-10-02.
-  const entityUnresolved = entityRelPairs.filter(r => r.state === 'UNRESOLVED');
-  const entityChecked = entityRelPairs.filter(r => r.state !== 'UNRESOLVED');
-  // Canonical-ρ clause appended only when at least one real relationship exists — when
-  // entityCanonicalRelationships is empty, the sentence is byte-identical to before this fix.
-  const canonicalClause = entityCanonicalRelationships.length
-    ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
-      `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
-    : '';
-  // A failed ownership observation is stated, never left looking like "no relationships" (§16).
-  const ownershipFailure = isEntity && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
-  const failureClause = ownershipFailure
-    ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
-    : '';
-  const briefSentence = isEntity
-    ? (relationshipCount > 0
-        ? `The structural relationship around ${subjectLabel} spans ${domainLines.length} of 6 domains${domainList}: ` +
-          `${relationshipCount} admitted cross-domain relationship${relationshipCount !== 1 ? 's' : ''} across ${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}.${canonicalClause}${failureClause}`
-        : `No domain formation established around ${subjectLabel} yet — observable structure spans ${domainLines.length} of 6 domains${domainList}, ` +
-          `${observationTotal} live signal${observationTotal !== 1 ? 's' : ''}, but fewer than two domains are connected.${canonicalClause}${failureClause}`)
-    : structurallyInterpretable
-      ? (entityRelPairs.length
-          ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
-            (entityUnresolved.length
-              ? `, but ${entityUnresolved.length} of ${entityRelPairs.length} pair${entityRelPairs.length !== 1 ? 's' : ''} involve a term that isn't a resolvable named entity — nothing real to check there.`
-              : '.') +
-            (entityChecked.length
-              ? ` Of the ${entityChecked.length} pair${entityChecked.length !== 1 ? 's' : ''} actually checked: ${entitySupported.length} supported by real evidence — the rest are a stated absence, not a low score.`
-              : '')
-          : `Structural participant recognized (${structuralQuery.entities.join(', ')}), but only one — nothing to relate it to yet.`)
-      : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
-        `across ${domainLines.length} of 6 domains${domainList}.`;
 
   return (
     <section style={{ padding: '20px 0 26px', borderBottom: `1px solid ${RULE}` }}>

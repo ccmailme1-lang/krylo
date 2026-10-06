@@ -18,6 +18,9 @@ import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
 import { usesurfacerouter } from '../../hooks/usesurfacerouter.js';
+import { useAnalysisStore } from '../../store/useanalysisstore.js';
+import { synthesizeQuery } from '../../engine/querysynthesis.js';
+import { computeBriefSummary } from './structuralbrief.jsx';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -91,10 +94,14 @@ function FormationMapTab({ query }) {
   // this component reads ρ synchronously at render time, so it renders before admission
   // completes. Listens for the same 'krylo-rho-updated' event, scoped to this subject only.
   const [rhoTick, setRhoTick] = useState(0);
+  // Last ownership-observation outcome for this subject (same shape structuralbrief.jsx keeps), so the
+  // MAP's brief states a failed check the same way the left column does.
+  const [ownershipOutcome, setOwnershipOutcome] = useState(null);
   useEffect(() => {
     if (subjScope.kind !== 'ENTITY') return;
     function onRhoUpdated(e) {
       if (e.detail?.canonicalId !== subjScope.canonicalId) return;
+      setOwnershipOutcome({ id: e.detail.canonicalId, error: e.detail?.error ?? null });
       setRhoTick(n => n + 1);
     }
     window.addEventListener('krylo-rho-updated', onRhoUpdated);
@@ -134,6 +141,28 @@ function FormationMapTab({ query }) {
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures]);
+
+  // Structural brief shown under the map (Founder, 2026-10-06). Same text the left column shows:
+  // computeBriefSummary() is the one computation (structuralbrief.jsx); the session/synthesis are
+  // read the way targetpacket.jsx reads them (the existing accepted local-recompute precedent
+  // noted below for structuralQuery). The state label is passed only when synthesis has one --
+  // targetpacket.jsx's own fallback default is not copied here.
+  const sessions   = useAnalysisStore(s => s.sessions);
+  const activeId   = useAnalysisStore(s => s.activeSessionId);
+  const session    = activeId ? sessions[activeId] : null;
+  const synthesis  = useMemo(() => synthesizeQuery(session), [session]);
+  const brief = useMemo(() => {
+    const activeDomainPressures = Object.values(domainPressures).filter(p => p.signalCount > 0);
+    const entityCanonicalRelationships = subjScope.kind === 'ENTITY'
+      ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
+      : [];
+    const ownershipFailure = subjScope.kind === 'ENTITY' && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
+    const { subjectLabel, briefSentence } = computeBriefSummary({
+      subjScope, activeDomainPressures, fieldFormation,
+      structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure,
+    });
+    return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence };
+  }, [subjScope, domainPressures, fieldFormation, synthesis, ownershipOutcome, rhoTick]);
 
   // KRYL-1332 (Founder, 2026-09-28) -- real bug: switching tabs away from MAP and back remounts
   // this iframe fresh, but `onLoad` (the DOM `load` event) can fire before structure-field.html's
@@ -221,18 +250,20 @@ function FormationMapTab({ query }) {
   useEffect(() => { entityRelationshipsRef.current = entityRelationships; }, [entityRelationships]);
   const entitySubjectLabelRef = useRef(entitySubjectLabel);
   useEffect(() => { entitySubjectLabelRef.current = entitySubjectLabel; }, [entitySubjectLabel]);
+  const briefRef = useRef(brief);
+  useEffect(() => { briefRef.current = brief; }, [brief]);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel }, '*');
-  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief }, '*');
+  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief]);
 
   useEffect(() => {
     function onMapReady(e) {
       if (e.data?.type !== 'krylo-map-ready') return;
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
       iframeReady.current = true;
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current }, '*');
     }
     window.addEventListener('message', onMapReady);
     return () => window.removeEventListener('message', onMapReady);
@@ -241,7 +272,7 @@ function FormationMapTab({ query }) {
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current }, '*');
     }
   };
 

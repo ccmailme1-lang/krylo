@@ -59,6 +59,28 @@
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
 
   .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
+
+  /* Structural brief under the map (Founder, 2026-10-06). Lives inside .scrubber-wrap, above the
+     scrubber, so resize() (which measures that wrap's height) reserves its room automatically and
+     the scrubber sits below the brief. Type sizes follow CLAUDE.md section 7 (report surfaces):
+     Large = Georgia 28px / 1.15, Medium = IBM Plex Mono 15px / .04em, Small = IBM Plex Mono 11.5px / 1.6.
+     Legend is a HUD micro-label (not governed by section 7). Colors: existing tokens + section 6 state colors. */
+  .brief-block { margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--hairline); }
+  .brief-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: var(--text-mono-dim); }
+  .brief-large {
+    margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 400;
+    font-size: 28px; line-height: 1.15; color: var(--light-gray);
+  }
+  .brief-medium {
+    margin: 8px 0 0; font-size: 15px; letter-spacing: 0.04em; font-weight: 500; color: var(--light-gray);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .brief-medium i { display: block; width: 12px; height: 12px; border: 1px solid var(--hairline-strong); flex: none; }
+  .brief-medium[hidden] { display: none; }
+  .brief-small { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-mono); }
+  .brief-legend { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 9.5px; letter-spacing: 0.1em; color: var(--text-mono); }
+  .brief-legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .brief-legend i { display: block; width: 10px; height: 10px; border: 1px solid var(--hairline-strong); }
   /* No real formation history yet for this query -- the control stays visible and labeled,
      never vanished (vanishing reads as "nothing was ever here," not "no data yet"). The
      label/readout (the explanation) stays at full, normal contrast -- dimming the text that
@@ -284,6 +306,19 @@
 </div>
 
 <div class="hud scrubber-wrap no-history">
+  <div class="brief-block" id="brief-block" hidden>
+    <div class="brief-eyebrow">STRUCTURAL BRIEF</div>
+    <h2 class="brief-large" id="brief-subject"></h2>
+    <p class="brief-medium" id="brief-state" hidden><i id="brief-state-chip"></i><span id="brief-state-label"></span></p>
+    <p class="brief-small" id="brief-sentence"></p>
+    <div class="brief-legend" id="brief-legend">
+      <span><i style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
+      <span><i style="background:#1a1a1a"></i>LOW SIGNAL YIELD</span>
+      <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
+      <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
+      <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+    </div>
+  </div>
   <div class="formation-history-wrap" id="formation-history-wrap"></div>
   <div class="scrubber-readout">
     <span id="scrubber-label">NO FORMATION HISTORY YET</span>
@@ -591,8 +626,54 @@
       // never resolves an entity or queries ρ itself, it only renders what the parent already
       // computed.
       applyEntityRelationships(e.data.entityRelationships || [], e.data.entitySubjectLabel || null);
+      // Structural brief under the map -- computed in structurepanel.jsx (computeBriefSummary, the same
+      // function the left column uses); this iframe only renders it, same discipline as above.
+      applyBrief(e.data.brief || null);
     }
   });
+
+  // ---- Structural brief (Founder, 2026-10-06) ----------------------------------
+  const briefBlockEl = document.getElementById('brief-block');
+  const briefSubjectEl = document.getElementById('brief-subject');
+  const briefStateEl = document.getElementById('brief-state');
+  const briefStateChipEl = document.getElementById('brief-state-chip');
+  const briefStateLabelEl = document.getElementById('brief-state-label');
+  const briefSentenceEl = document.getElementById('brief-sentence');
+  // Section 6 convergence-state colors; a label not in this map gets no color chip (never a guessed one).
+  const BRIEF_STATE_COLOR = {
+    'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a', 'BUILDING CONVERGENCE': '#66FF00',
+    'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
+  };
+  let lastBriefKey = null;
+  function applyBrief(brief) {
+    const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence]) : 'none';
+    if (key === lastBriefKey) return; // content unchanged -- skip the relayout (it clears the canvas)
+    lastBriefKey = key;
+    if (!brief) {
+      briefBlockEl.hidden = true;
+    } else {
+      briefSubjectEl.textContent = brief.subjectLabel ?? '';
+      briefSentenceEl.textContent = brief.sentence ?? '';
+      if (brief.stateLabel) {
+        briefStateLabelEl.textContent = brief.stateLabel;
+        const c = BRIEF_STATE_COLOR[brief.stateLabel];
+        briefStateChipEl.style.background = c ?? 'transparent';
+        briefStateChipEl.style.display = c ? 'block' : 'none';
+        briefStateEl.hidden = false;
+      } else {
+        briefStateEl.hidden = true;
+      }
+      briefBlockEl.hidden = false;
+    }
+    // Same measure-then-place sequence applyFormationHistory uses after the scrubber block's height
+    // changes: resize() re-measures the wrap (marginB), then the HUD and panel are re-placed and the
+    // canvas (cleared by resize) is repainted.
+    resize();
+    positionHudBelowAxis();
+    positionPanelDefault();
+    draw(currentT);
+    positionRelChip();
+  }
 
   // ---- KRYL-1334 real formation-history trajectories --------------------
   const fhWrapEl = document.getElementById('formation-history-wrap');
