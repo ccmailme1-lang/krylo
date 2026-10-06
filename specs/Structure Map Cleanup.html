@@ -1,0 +1,217 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Structure Map Cleanup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: single dark KRYLO surface — header strip, map, legend+caption, brief rows, history. Locked palette only (CLAUDE.md §6). */
+  :root {
+    --bg: #000000;
+    --lime: #66FF00;
+    --blue: #007FFF;
+    --purple: #8A2BE2;
+    --insufficient: #3a3d4a;
+    --low: #1A1A1A;
+    --text: #e0e0dc;
+    --text-dim: rgba(224,224,220,0.55);
+    --text-faint: rgba(224,224,220,0.35);
+    --hairline: rgba(224,224,220,0.12);
+    --hairline-strong: rgba(224,224,220,0.28);
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+    --serif: Georgia, 'Times New Roman', serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: var(--mono); margin: 0; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 24px; padding-block: 0 48px; }
+  @media (max-width: 600px) { .wrap { padding-inline: 16px; } }
+
+  /* mockup controls (not part of the surface) */
+  .mock-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 12px 0; border-bottom: 1px dashed var(--hairline-strong); font-size: 11px; color: var(--text-dim); letter-spacing: 0.04em; }
+  .mock-bar strong { color: var(--text); font-weight: 500; }
+  .mock-bar label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+  .mock-bar input { accent-color: var(--lime); }
+
+  .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--hairline); overflow-x: auto; }
+  .tab { padding: 16px 20px 14px; font-size: 13px; letter-spacing: 0.3em; color: var(--text-dim); border-bottom: 3px solid transparent; }
+  .tab.on { color: var(--lime); border-bottom-color: var(--lime); }
+
+  .head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 12px 32px; padding-block: 28px 14px; }
+  .label-md { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .metrics { display: flex; flex-wrap: wrap; gap: 24px; font-size: 11.5px; letter-spacing: 0.06em; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .metrics b { color: var(--text); font-weight: 500; margin-left: 6px; }
+  .metrics .undef { border-bottom: 1px dotted var(--text-faint); cursor: help; }
+
+  .map { position: relative; border: 1px solid var(--hairline-strong); background:
+      linear-gradient(var(--hairline) 1px, transparent 1px) 0 0 / 100% 12.5%,
+      linear-gradient(90deg, var(--hairline) 1px, transparent 1px) 0 0 / 12.5% 100%;
+    aspect-ratio: 1000 / 520; max-width: 100%; }
+  .map svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .map text { font-family: var(--mono); font-size: 15px; letter-spacing: 0.04em; fill: var(--text); }
+  .map text.dim { fill: var(--text-faint); }
+
+  .under { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; padding-block: 12px 0; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 11px; letter-spacing: 0.1em; color: var(--text-dim); }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .sw { width: 11px; height: 11px; display: inline-block; }
+  .sw.outlined { outline: 1px solid var(--hairline-strong); outline-offset: 0; }
+  .caption { font-size: 11.5px; color: var(--text-faint); }
+
+  .brief { border-top: 1px solid var(--hairline); margin-top: 32px; padding-top: 24px; }
+  .eyebrow { font-size: 11px; letter-spacing: 0.3em; color: var(--text-dim); text-transform: uppercase; }
+  .brief h1 { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; margin: 10px 0 8px; letter-spacing: 0.01em; text-wrap: balance; }
+  .rows { display: grid; grid-template-columns: max-content 1fr; gap: 0; margin-top: 18px; border-top: 1px solid var(--hairline); }
+  .rows > div { padding: 12px 0; border-bottom: 1px solid var(--hairline); font-size: 11.5px; line-height: 1.6; min-width: 0; }
+  .rows .k { padding-right: 32px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); }
+  .rows .v b { font-weight: 500; color: var(--text); }
+  .rows .scope { color: var(--text-faint); }
+  .rel-btn { display: inline-block; margin-left: 12px; padding: 4px 10px; border: 1px solid var(--lime); color: var(--lime); font: inherit; font-size: 11px; letter-spacing: 0.14em; background: none; cursor: pointer; }
+  .rel-btn:focus-visible, .play:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+  @media (max-width: 560px) { .rows { grid-template-columns: 1fr; } .rows .k { border-bottom: 0; padding-bottom: 0; } }
+
+  .history { margin-top: 32px; display: grid; grid-template-columns: auto 1fr auto; gap: 16px; align-items: center; }
+  .history .eyebrow { grid-column: 1 / -1; display: flex; justify-content: space-between; }
+  .play { width: 44px; height: 44px; border: 1px solid var(--hairline-strong); background: none; color: var(--text-faint); font-size: 14px; cursor: not-allowed; }
+  .track { position: relative; height: 1px; background: var(--hairline-strong); }
+  .track i { position: absolute; left: 0; top: -6px; width: 13px; height: 13px; border-radius: 50%; background: var(--lime); }
+  .snap { font-size: 11.5px; color: var(--text-dim); white-space: nowrap; }
+
+  /* annotations */
+  .ann { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--text); color: var(--bg); font-size: 10px; font-weight: 500; margin-left: 8px; vertical-align: middle; flex: none; }
+  body.no-ann .ann, body.no-ann .ann-svg { display: none; }
+  .notes { margin-top: 48px; border-top: 1px dashed var(--hairline-strong); padding-top: 20px; font-size: 11.5px; line-height: 1.6; color: var(--text-dim); }
+  .notes ol { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+  .notes .rule { color: var(--text); }
+  body.no-ann .notes { display: none; }
+  .bonly { display: none; }
+  body.b .bonly { display: inline; }
+  body.b g.bonly { display: inline; }
+</style>
+
+<div class="wrap">
+  <div class="mock-bar">
+    <strong>MOCKUP</strong>
+    <label><input type="checkbox" id="t-ann" checked> Show change markers</label>
+    <label><input type="checkbox" id="t-b"> Preview items 3–4 (need your ruling)</label>
+  </div>
+
+  <nav class="tabs"><span class="tab on">MAP</span><span class="tab">RECON</span><span class="tab">IMPACT</span></nav>
+
+  <!-- 1: one-line header, labeled metrics -->
+  <div class="head">
+    <div class="label-md">Structural Resolution Field<span class="ann">1</span></div>
+    <div class="metrics">
+      <span>FORMATIONS<b>3</b></span>
+      <span>CO-PRESENT PAIRS<b>3</b></span>
+      <span class="undef" title="Definition needed before this ships">RESOLVED<b>1.00</b></span>
+    </div>
+  </div>
+
+  <!-- 2: padded map, labels offset off the edges -->
+  <div class="map" role="img" aria-label="Cross-domain co-presence map">
+    <svg viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#66FF00"/>
+        </marker>
+      </defs>
+
+      <!-- field edges (domain ↔ domain co-presence) -->
+      <line x1="771" y1="234" x2="221" y2="117" stroke="#66FF00" stroke-width="1.5" marker-end="url(#arw)"/>
+      <line x1="205" y1="128" x2="292" y2="382" stroke="#66FF00" stroke-width="1.5" marker-end="url(#arw)"/>
+      <line x1="314" y1="389" x2="770" y2="249" stroke="#66FF00" stroke-width="1.5" marker-end="url(#arw)"/>
+
+      <!-- subject edge: solid in A, dashed placeholder in B -->
+      <line id="subj-edge" x1="214" y1="447" x2="286" y2="403" stroke="#66FF00" stroke-width="1.5"/>
+
+      <!-- domain nodes -->
+      <circle cx="200" cy="112" r="7" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/>
+      <text x="186" y="88" text-anchor="end">LABOR</text>
+      <circle cx="790" cy="240" r="7" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/>
+      <text x="808" y="245">CAPITAL</text>
+      <circle cx="300" cy="396" r="7" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/>
+      <text x="318" y="420">OWNERSHIP</text>
+
+      <!-- subject node -->
+      <circle cx="204" cy="454" r="10" fill="#000" stroke="#66FF00" stroke-width="2"/>
+      <text x="224" y="488">META PLATFORMS, INC. (META)</text>
+
+      <!-- B: domains carrying signal with no co-present pair -->
+      <g class="bonly">
+        <circle cx="560" cy="96" r="7" fill="#000" stroke="#3a3d4a" stroke-width="1.5"/>
+        <text class="dim" x="578" y="101">TECHNOLOGY</text>
+        <circle cx="640" cy="440" r="7" fill="#000" stroke="#3a3d4a" stroke-width="1.5"/>
+        <text class="dim" x="658" y="445">KNOWLEDGE</text>
+        <circle cx="880" cy="400" r="7" fill="#000" stroke="#3a3d4a" stroke-width="1.5"/>
+        <text class="dim" x="860" y="430" text-anchor="end">MEDIA</text>
+      </g>
+
+      <!-- markers -->
+      <g class="ann-svg" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="500">
+        <circle cx="300" cy="80" r="10" fill="#e0e0dc"/><text x="300" y="84" text-anchor="middle" fill="#000">2</text>
+        <g class="bonly"><circle cx="250" cy="395" r="10" fill="#e0e0dc"/><text x="250" y="399" text-anchor="middle" fill="#000">3</text>
+        <circle cx="560" cy="66" r="10" fill="#e0e0dc"/><text x="560" y="70" text-anchor="middle" fill="#000">4</text></g>
+      </g>
+    </svg>
+  </div>
+
+  <!-- 6 + 1: legend directly under map, single caption -->
+  <div class="under">
+    <div class="legend">
+      <span><i class="sw" style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
+      <span><i class="sw outlined" style="background:#1A1A1A"></i>LOW SIGNAL YIELD</span>
+      <span><i class="sw" style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
+      <span><i class="sw" style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
+      <span><i class="sw" style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+      <span class="ann">6</span>
+    </div>
+    <div class="caption">Positions derived from the cross-domain co-presence graph.</div>
+  </div>
+
+  <!-- 5: brief split into three scoped rows -->
+  <section class="brief">
+    <div class="eyebrow">Structural Brief</div>
+    <h1>META PLATFORMS</h1>
+    <div class="label-md">Signal Active</div>
+    <div class="rows">
+      <div class="k">Field<span class="ann">5</span></div>
+      <div class="v"><b>6 of 6 domains</b> carry live signal (36 signals); <b>3 domain pairs</b> co-present. <span class="scope">Field-level, not bound to META PLATFORMS.</span></div>
+      <div class="k">Subject</div>
+      <div class="v"><b>4 observations</b> bound to META PLATFORMS.</div>
+      <div class="k">Relationships</div>
+      <div class="v"><b>3 admitted</b> · HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE <button class="rel-btn" type="button">VIEW 3 ▸</button><span class="ann">2</span></div>
+    </div>
+  </section>
+
+  <!-- 7: single-snapshot history -->
+  <section class="history">
+    <div class="eyebrow"><span>Formation History<span class="ann">7</span></span><span>OCT 4</span></div>
+    <button class="play" type="button" disabled aria-label="Play (needs 2+ snapshots)">▶</button>
+    <div class="track"><i></i></div>
+    <div class="snap">1 snapshot</div>
+  </section>
+
+  <div class="notes">
+    <span class="rule">Change markers</span>
+    <ol>
+      <li>Header reduced to one label; the 4-line description is merged into the single caption under the map. "CO-PRESENCE" renamed "CO-PRESENT PAIRS". "RESOLVED 1.00" still needs a definition (dotted underline).</li>
+      <li>Map gets inner padding; every label is offset clear of its node and edges. The relationships button moves from the canvas into the brief's Relationships row.</li>
+      <li><b>Ruling needed.</b> The subject edge is drawn differently from field edges (dashed here as a placeholder only; the style is your call).</li>
+      <li><b>Ruling needed.</b> TECHNOLOGY, KNOWLEDGE and MEDIA carry signal but have no co-present pair, so they're shown as unconnected nodes in #3a3d4a.</li>
+      <li>One paragraph becomes three scoped rows: Field / Subject / Relationships. Font sizes are only the three in §7 (28 / 15 / 11.5).</li>
+      <li>Legend sits directly under the map. LOW SIGNAL YIELD swatch gets an outline so it's visible on black.</li>
+      <li>One snapshot: Play is disabled and labeled "1 snapshot" until there are 2 or more.</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+  const body = document.body;
+  const edge = document.getElementById('subj-edge');
+  document.getElementById('t-ann').addEventListener('change', e => body.classList.toggle('no-ann', !e.target.checked));
+  document.getElementById('t-b').addEventListener('change', e => {
+    body.classList.toggle('b', e.target.checked);
+    if (e.target.checked) edge.setAttribute('stroke-dasharray', '5 5'); else edge.removeAttribute('stroke-dasharray');
+  });
+</script>
+
+</body></html>

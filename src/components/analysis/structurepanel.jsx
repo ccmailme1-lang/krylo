@@ -314,10 +314,10 @@ export default function StructurePanel({ query }) {
               key={t}
               onClick={() => setTab(t)}
               style={{
-                padding: '10px 20px', background: 'transparent', border: 'none',
-                borderBottom: `2px solid ${on ? LIME : 'transparent'}`,
+                padding: '16px 20px 14px', background: 'transparent', border: 'none',
+                borderBottom: `3px solid ${on ? LIME : 'transparent'}`,
                 color: on ? LIME : 'rgba(255,255,255,0.55)',
-                fontFamily: MONO, fontSize: 10, letterSpacing: '0.22em',
+                fontFamily: MONO, fontSize: 13, letterSpacing: '0.3em', // KRYL-1371: tab size per the cleanup mockup (was 10px / .22em / 2px)
                 cursor: 'pointer', textTransform: 'uppercase', marginBottom: -1,
               }}
             >

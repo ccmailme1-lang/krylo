@@ -49,9 +49,10 @@
     display: flex; justify-content: space-between; align-items: flex-start;
   }
 
-  .mark { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-mono); }
+  .mark { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mono); }
 
-  .status { text-align: right; font-size: 11px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
+  .status .undef { border-bottom: 1px dotted var(--text-mono-dim); cursor: help; pointer-events: auto; }
+  .status { text-align: right; font-size: 11.5px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
 
   .scrubber-wrap { left: 32px; right: 32px; bottom: 28px; }
@@ -64,7 +65,7 @@
   /* Top rule + padding: without it the canvas-drawn "STRUCTURAL LAYOUT" caption sat ~16px above the
      eyebrow and read as part of the brief. */
   .brief-block { margin-top: 10px; padding-top: 16px; margin-bottom: 16px; padding-bottom: 14px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
-  .brief-eyebrow { font-size: 10px; letter-spacing: 0.3em; color: var(--text-mono-dim); }
+  .brief-eyebrow { font-size: 11px; letter-spacing: 0.3em; color: var(--text-mono-dim); }
   .brief-large {
     margin: 6px 0 0; font-family: Georgia, 'Times New Roman', serif; font-weight: 400;
     font-size: 28px; line-height: 1.15; color: var(--light-gray);
@@ -77,9 +78,11 @@
   .brief-medium[hidden], .brief-rows[hidden] { display: none; }
   .brief-rows { display: grid; grid-template-columns: max-content 1fr; margin-top: 10px; border-top: 1px solid var(--hairline); }
   .brief-rows > div { padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 11.5px; line-height: 1.6; min-width: 0; color: var(--text-mono); }
+  .brief-rows b { font-weight: 500; color: var(--light-gray); }
   .brief-rows .k { padding-right: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-mono-dim); }
   .brief-small { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-mono); }
-  .brief-legend { margin-top: 2px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 9.5px; letter-spacing: 0.1em; color: var(--text-mono); }
+  .under-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 24px; margin-top: 2px; }
+  .brief-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 11px; letter-spacing: 0.1em; color: var(--text-mono); }
   .brief-legend span { display: inline-flex; align-items: center; gap: 7px; }
   .brief-legend i { display: block; width: 10px; height: 10px; border: 1px solid var(--hairline-strong); }
   /* No real formation history yet for this query -- the control stays visible and labeled,
@@ -126,6 +129,8 @@
   }
 
   .ctrl:disabled { opacity: 0.35; cursor: not-allowed; }
+  #play-btn { width: 44px; height: 44px; }
+  .snap-label { flex: 0 0 auto; font-size: 11.5px; color: var(--text-mono-dim); white-space: nowrap; }
   .ctrl {
     flex: 0 0 auto;
     width: 31px; height: 31px;
@@ -230,10 +235,10 @@
      only on request. Same lime-on-black treatment as .ctrl (locked palette). */
   #rel-chip {
     position: static; display: none; margin-left: 12px; vertical-align: middle;
-    font-family: inherit; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--signal-lime); background: #050505;
+    font-family: inherit; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--signal-lime); background: none;
     border: 1px solid var(--signal-lime); border-radius: 2px;
-    padding: 6px 10px; cursor: pointer; white-space: nowrap;
+    padding: 4px 10px; cursor: pointer; white-space: nowrap;
     transition: border-color 160ms, color 160ms;
   }
   #rel-chip.show { display: inline-block; }
@@ -299,17 +304,19 @@
 <div class="hud hud-top">
   <div class="mark">STRUCTURAL RESOLUTION FIELD</div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; <span class="undef" title="Definition needed before this ships">RESOLVED <b id="integrity">—</b></span>
   </div>
 </div>
 
 <div class="hud scrubber-wrap no-history">
+  <div class="under-row">
   <div class="brief-legend" id="brief-legend">
     <span><i style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
     <span><i style="background:#1a1a1a"></i>LOW SIGNAL YIELD</span>
     <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
     <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
     <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+  </div>
   </div>
   <div class="brief-block" id="brief-block" hidden>
     <div class="brief-eyebrow">STRUCTURAL BRIEF</div>
@@ -336,6 +343,7 @@
       <div class="scrubber-marks" id="scrubber-marks"></div>
       <div class="scrubber-thumb" id="scrubber-thumb"></div>
     </div>
+    <div class="snap-label" id="snap-label" hidden>1 snapshot</div>
   </div>
 </div>
 
@@ -370,6 +378,7 @@
   const nEdgesEl = document.getElementById('n-edges');
   const integrityEl = document.getElementById('integrity');
   const playBtn = document.getElementById('play-btn');
+  const snapLabelEl = document.getElementById('snap-label');
   const scrubberWrapEl = document.querySelector('.scrubber-wrap');
   const hudTopEl = document.querySelector('.hud-top');
 
@@ -377,7 +386,7 @@
   let plot = { x: 0, y: 0, w: 0, h: 0 };
   // Shared by resize() (to reserve marginB) and positionHudBelowAxis() (to place the blocks it
   // reserved room for) — one set of numbers, not two copies that can drift out of sync.
-  const AXIS_LABEL_GAP = 56, HUD_GAP = 24;
+  const AXIS_LABEL_GAP = 20, HUD_GAP = 24; // KRYL-1371: was 56 (room for the canvas caption, now HTML under the map)
 
   function resize() {
     DPR = Math.min(window.devicePixelRatio || 1, 2);
@@ -654,6 +663,15 @@
     'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a', 'BUILDING CONVERGENCE': '#66FF00',
     'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
   };
+  // **bold** markers in a row string become <b>; everything else is plain text (no innerHTML).
+  function setRich(el, str) {
+    el.textContent = '';
+    String(str ?? '').split('**').forEach((part, i) => {
+      if (!part) return;
+      if (i % 2) { const b = document.createElement('b'); b.textContent = part; el.appendChild(b); }
+      else el.appendChild(document.createTextNode(part));
+    });
+  }
   let lastBriefKey = null;
   function applyBrief(brief) {
     const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence, brief.rows ?? null]) : 'none';
@@ -665,9 +683,9 @@
       briefSubjectEl.textContent = brief.subjectLabel ?? '';
       if (brief.rows) {
         // Entity subject: three scoped rows (Field / Subject / Relationships), as in the cleanup mockup.
-        document.getElementById('brief-row-field').textContent = brief.rows.field ?? '';
-        document.getElementById('brief-row-subject').textContent = brief.rows.subject ?? '';
-        document.getElementById('brief-row-rels').textContent = brief.rows.relationships ?? '';
+        setRich(document.getElementById('brief-row-field'), brief.rows.field);
+        setRich(document.getElementById('brief-row-subject'), brief.rows.subject);
+        setRich(document.getElementById('brief-row-rels'), brief.rows.relationships);
         briefRowsEl.hidden = false;
         briefSentenceEl.hidden = true;
       } else {
@@ -718,6 +736,7 @@
     fhWrapEl.innerHTML = '';
 
     if (formationHistoryData.length === 0) {
+      snapLabelEl.hidden = true;
       playBtn.disabled = false; // .no-history already dims and disables the row; clear any single-snapshot state
       fhRange = null;
       renderTimeline(); // clears ticks/marks left from a previous query
@@ -730,6 +749,7 @@
     // KRYL-1371: one snapshot has nothing to play through -- Play stays visible but disabled, labeled.
     const singleSnapshot = new Set(times).size <= 1;
     playBtn.disabled = singleSnapshot;
+    snapLabelEl.hidden = !singleSnapshot;
     playBtn.title = singleSnapshot ? 'Play needs 2 or more snapshots' : 'Play / Pause (Space)';
 
     if (scrubberWrapEl) scrubberWrapEl.classList.remove('no-history'); // real data exists -- re-enable
@@ -761,7 +781,7 @@
     const rangeEl = document.getElementById('scrubber-range');
     if (!rangeEl || !fhRange) return;
     const fmt = (ms) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    rangeEl.textContent = fhRange.min === fhRange.max ? `${fmt(fhRange.min)} · 1 snapshot` : `${fmt(fhRange.min)} → ${fmt(fhRange.max)}`;
+    rangeEl.textContent = fhRange.min === fhRange.max ? fmt(fhRange.min) : `${fmt(fhRange.min)} → ${fmt(fhRange.max)}`;
   }
 
   // Scrubbing reveals/dims real points by their real timestamp -- never moves or interpolates
@@ -918,7 +938,7 @@
 
   function chipLabel() {
     const n = entityRelsData.length;
-    return `${n} ADMITTED RELATIONSHIP${n !== 1 ? 'S' : ''} ${entityPanelOpen ? '▾' : '▸'}`;
+    return `VIEW ${n} ${entityPanelOpen ? '▾' : '▸'}`;
   }
   function syncChipState() {
     relChipEl.textContent = chipLabel();
@@ -1164,7 +1184,6 @@
     // reference frame only; one honest label replaces the two retired metric names.
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('Positions derived from the cross-domain co-presence graph. Ambient field state, not bound to the resolved subject.', plot.x + plot.w / 2, plot.y + plot.h + 40);
     ctx.restore();
   }
 
@@ -1388,7 +1407,7 @@
       // belong to the same node), collected as a single collision candidate rather than
       // drawn immediately. Resolved and drawn in one pass below, after every node and edge
       // label has been collected, so collision resolution sees the whole picture at once.
-      const mainFont = "11.55px 'IBM Plex Mono', monospace"; // +5% label size
+      const mainFont = "15px 'IBM Plex Mono', monospace"; // KRYL-1371: section 7 Medium (mockup); was 11.55px
       ctx.font = mainFont;
       const mainW = ctx.measureText(n.label).width;
       let subText = null, subFont = null, subFillStyle = null, subW = 0, subIsProvenance = false;

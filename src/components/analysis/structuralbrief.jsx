@@ -125,19 +125,20 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
         `across ${domainLines.length} of 6 domains${domainList}.`;
   // KRYL-1371: the same facts as rows for the MAP panel (Field / Subject / Relationships). Entity
   // subjects only; every other case keeps the single sentence. Same numbers as briefSentence above.
-  const canonicalTypes = entityCanonicalRelationships.length
-    ? Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')
-    : null;
+  const typeNames = [...new Set(entityCanonicalRelationships.map(r => r.type))];
   const rows = isEntity ? {
-    field: `${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
+    // **...** marks the key numbers for bold in the MAP panel (structure-field.html parses it; plain text elsewhere).
+    field: `**${domainLines.length} of 6 domains** carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}); ` +
       (relationshipCount > 0
-        ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present. `
-        : 'but fewer than two domains are connected. ') +
+        ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present. `
+        : 'fewer than two domains are connected. ') +
       `Field-level, not bound to ${subjectLabel}.`,
     subject: subjectBoundCount > 0
-      ? `${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}.`
+      ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}.`
       : `No observations bound to ${subjectLabel} yet.`,
-    relationships: (canonicalTypes ? `${canonicalTypes}.` : `No canonical relationships admitted for ${subjectLabel}.`) +
+    relationships: (entityCanonicalRelationships.length
+      ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}`
+      : `No canonical relationships admitted for ${subjectLabel}.`) +
       (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
   } : null;
   return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence, rows };
