@@ -1,0 +1,37 @@
+# Benchmark: J.P. Morgan 2026 Global M&A Mid-Year Outlook -- claims table (pages 1-6)
+
+Status: DRAFT, 2026-10-06. Source: `specs/jpmorgan-2026-global-m-and-a-mid-year-outlook-v3.pdf`, pages 1-6 only. Pages 7 onward are added later, only for genuinely new structural claims.
+
+Method (Founder, 2026-10-06): claims table -> run each claim through KRYLO -> classify -> spec only if the architecture cannot represent it. No speculative spec.
+
+Classification values (fill after each run): **No change** (KRYLO already captures it) / **Defect** (evidence exists, KRYLO fails to establish it) / **Data-source gap** (KRYLO lacks the evidence) / **Spec** (architecture cannot represent the structure).
+
+## Reading notes
+- "Structural relationship implied" and "Domains" are my reading of the report, not the report's words. Domains use only the six locked domains (TECHNOLOGY, CAPITAL, KNOWLEDGE, LABOR, MEDIA, OWNERSHIP); a proposed mapping, for the Founder to correct.
+- The report states market statistics. KRYLO detects structure; it does not predict. A row passes when KRYLO independently surfaces the structure the claim implies, not when it reproduces the report's numbers.
+- Known limit going in: KRYL-1359 / KRYL-1360 (thematic concepts treated as named entities, subject scope lost on analytically phrased queries) can make a thematic query return field-level output only. A field-only result on a thematic row is a finding to classify, not a surprise.
+
+## Claims
+
+| # | Report claim (page) | Structural relationship implied | Domains | What KRYLO would need to independently observe / admit | Candidate KRYLO query |
+|---|---|---|---|---|---|
+| 1 | 1H 2026 global M&A volume $3.2T, up 44% YoY; 2Q the most active quarter on record (p1) | Capital deployment into control transactions rising together | CAPITAL, OWNERSHIP | Dated control-transaction observations (filings, deal announcements) co-present with capital-flow observations in the same window | "What structural relationships are forming between capital deployment and corporate control transactions in 2026, with mega-deal activity at record levels?" |
+| 2 | Large-cap dealmaking led by AI, utilities and financial services; middle market slower on valuation gaps, execution risk, geopolitical uncertainty (p1) | Bifurcation by scale: large-cap activity decoupled from middle-market constraint | CAPITAL, OWNERSHIP | Observations separated by company scale; evidence that the two groups move differently | "How is large-cap deal activity diverging from middle-market deal activity in 2026?" |
+| 3 | Technology and DI drive 50% of overall and mega-deal volume (p1) | Technology sector concentration in control transactions | TECHNOLOGY, OWNERSHIP | Technology-sector deal observations carrying a large share of the ownership-change signal | "What structural relationships link technology-sector acquisitions to capital deployment into AI infrastructure in 2026?" |
+| 4 | Boards pivot from shareholder returns to reinvestment; capex and M&A as paths to growth (p3 force 1, p4) | Capital allocation shifting from returns to capex/M&A | CAPITAL, OWNERSHIP | Buyback/dividend observations declining relative to capex/M&A observations for the same entities | "Are large companies shifting capital from buybacks and dividends toward capex and acquisitions?" |
+| 5 | S&P 500 allocation: capex 31%, M&A 16% (vs 5-yr avg 12%), cash build 15% (vs 8%) (p4) | Elevated M&A share and cash build relative to history | CAPITAL | Entity-level capex, M&A and cash observations with a baseline to compare against | "Where is S&P 500 capital being allocated across capex, M&A and cash in 2026?" |
+| 6 | Valuation premiums for scale near all-time highs (~25% U.S., ~40% Europe) (p4) | Public markets rewarding scale | CAPITAL, OWNERSHIP | Valuation-multiple observations by company size | "Are public markets paying a premium for scale, and is it showing in large-cap valuations?" |
+| 7 | U.S. merger investigations 16 in 2025 (2nd lowest ever), abandonments down 90%, EU investigations 11 (p5) | Easing regulatory friction on control transactions | OWNERSHIP | Regulatory-action observations tied to named transactions; a baseline for comparison. (No domain is dedicated to regulation; mapping to OWNERSHIP is provisional.) | "How is merger review activity changing and what is it doing to deal completion?" |
+| 8 | Cross-border volume up 63% to $820B, a two-decade high; framed around resilience and security alignment (p1, p3 force 3) | Cross-border capital flows tied to supply-chain and security objectives | CAPITAL, OWNERSHIP, TECHNOLOGY | Cross-border transaction observations co-present with sector-resilience observations | "What structural relationships connect cross-border acquisitions to supply-chain security in 2026?" |
+| 9 | Sponsors deploying at scale, drawing on multiple pools of capital; exits selective (p3 force 4) | Multiple capital sources co-funding large control transactions | CAPITAL, OWNERSHIP | Observations of co-investment or multi-source financing on the same transaction | "Which large 2026 deals are being funded from multiple pools of capital, and what links the funders?" |
+| 10 | Record-high public activist campaigns in the U.S. and APAC; emphasis on M&A and corporate clarity (p3 force 5) | Activist ownership stakes preceding structural change | OWNERSHIP | Dated beneficial-ownership disclosures (13D-type) co-present with later structural-change observations | "Where are activist positions accumulating and what structural changes are following?" |
+| 11 | AI moving from narrative to execution; hyperscaler capex pulling the infrastructure stack forward; underwriting bifurcating between defensible software and disruption risk (p3 force 6) | AI capex drives infrastructure demand while splitting software valuation | TECHNOLOGY, CAPITAL | Hyperscaler capex observations co-present with infrastructure-supplier signals and software-sector valuation divergence | "What structural dependencies are forming between hyperscaler capex and AI infrastructure suppliers like NVIDIA?" |
+| 12 | 48 mega-deals ($10B+) totaling $1.3T, 42% of global volume; mix led by Technology, Diversified Industries, Healthcare, Financial Institutions (p1, p5) | Concentration of volume in a small number of very large deals | CAPITAL, OWNERSHIP | Large-transaction observations accounting for a majority share of the ownership-change signal | "How concentrated is 2026 deal volume in the largest transactions, and which sectors are they in?" |
+| 13 | Credit spreads near historic tights; volatility eased from its March peak; equities higher (p2) | Supportive funding conditions co-present with deal activity | CAPITAL | Credit-spread and volatility observations (FRED-type) co-present with deal-volume observations | "How are credit conditions and volatility relating to deal activity in 2026?" |
+| 14 | National security is a lens guiding capital deployment, especially cross-border and in resilience-linked sectors (p5) | Security policy shaping where capital is deployed | OWNERSHIP, TECHNOLOGY, CAPITAL | Observations tying foreign-investment review or security policy to specific transactions in critical sectors | "How is national-security review shaping cross-border investment in semiconductors, AI and critical infrastructure?" |
+
+## Run log (fill in)
+
+| # | Run date | Environment (Dev/Prod) | What KRYLO returned (field-only / subject-bound / canonical rho) | Classification | Notes |
+|---|---|---|---|---|---|
+| 1 | | | | | |
