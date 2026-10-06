@@ -50,10 +50,6 @@
   }
 
   .mark { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-mono); }
-  .mark span {
-    color: var(--text-mono-dim); letter-spacing: 0.04em; text-transform: none;
-    display: block; margin-top: 4px; font-size: 11px; max-width: 420px; line-height: 1.45;
-  }
 
   .status { text-align: right; font-size: 11px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
@@ -78,9 +74,12 @@
     display: flex; align-items: center; gap: 10px;
   }
   .brief-medium i { display: block; width: 12px; height: 12px; border: 1px solid var(--hairline-strong); flex: none; }
-  .brief-medium[hidden] { display: none; }
+  .brief-medium[hidden], .brief-rows[hidden] { display: none; }
+  .brief-rows { display: grid; grid-template-columns: max-content 1fr; margin-top: 10px; border-top: 1px solid var(--hairline); }
+  .brief-rows > div { padding: 8px 0; border-bottom: 1px solid var(--hairline); font-size: 11.5px; line-height: 1.6; min-width: 0; color: var(--text-mono); }
+  .brief-rows .k { padding-right: 28px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-mono-dim); }
   .brief-small { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--text-mono); }
-  .brief-legend { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 9.5px; letter-spacing: 0.1em; color: var(--text-mono); }
+  .brief-legend { margin-top: 2px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 9.5px; letter-spacing: 0.1em; color: var(--text-mono); }
   .brief-legend span { display: inline-flex; align-items: center; gap: 7px; }
   .brief-legend i { display: block; width: 10px; height: 10px; border: 1px solid var(--hairline-strong); }
   /* No real formation history yet for this query -- the control stays visible and labeled,
@@ -126,6 +125,7 @@
     padding-bottom: 12px; /* room for the clock-tick labels hanging below the track */
   }
 
+  .ctrl:disabled { opacity: 0.35; cursor: not-allowed; }
   .ctrl {
     flex: 0 0 auto;
     width: 31px; height: 31px;
@@ -229,14 +229,14 @@
      lists every admitted relationship, so the Map shows structure first and opens the detail list
      only on request. Same lime-on-black treatment as .ctrl (locked palette). */
   #rel-chip {
-    position: fixed; z-index: 3; display: none;
+    position: static; display: none; margin-left: 12px; vertical-align: middle;
     font-family: inherit; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
     color: var(--signal-lime); background: #050505;
     border: 1px solid var(--signal-lime); border-radius: 2px;
     padding: 6px 10px; cursor: pointer; white-space: nowrap;
     transition: border-color 160ms, color 160ms;
   }
-  #rel-chip.show { display: block; }
+  #rel-chip.show { display: inline-block; }
   #rel-chip:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
 
   .panel-eyebrow { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-mono-dim); }
@@ -289,7 +289,6 @@
     #panel { right: 16px; left: 16px; width: auto; top: 100px; }
     .hud-top { flex-direction: column; gap: 14px; }
     .status { text-align: left; }
-    .mark span { max-width: none; }
   }
 </style>
 </head>
@@ -298,27 +297,29 @@
 <canvas id="field"></canvas>
 
 <div class="hud hud-top">
-  <div class="mark">
-    STRUCTURAL RESOLUTION FIELD
-    <span>Live formation field — position derived from the real cross-domain co-presence graph (which domains carry live signal together, not admitted entity relationships). Ambient field state, not bound to the resolved subject.</span>
-  </div>
+  <div class="mark">STRUCTURAL RESOLUTION FIELD</div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENCE <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; RESOLVED <b id="integrity">—</b>
   </div>
 </div>
 
 <div class="hud scrubber-wrap no-history">
+  <div class="brief-legend" id="brief-legend">
+    <span><i style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
+    <span><i style="background:#1a1a1a"></i>LOW SIGNAL YIELD</span>
+    <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
+    <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
+    <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+  </div>
   <div class="brief-block" id="brief-block" hidden>
     <div class="brief-eyebrow">STRUCTURAL BRIEF</div>
     <h2 class="brief-large" id="brief-subject"></h2>
     <p class="brief-medium" id="brief-state" hidden><i id="brief-state-chip"></i><span id="brief-state-label"></span></p>
     <p class="brief-small" id="brief-sentence"></p>
-    <div class="brief-legend" id="brief-legend">
-      <span><i style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
-      <span><i style="background:#1a1a1a"></i>LOW SIGNAL YIELD</span>
-      <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
-      <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
-      <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+    <div class="brief-rows" id="brief-rows" hidden>
+      <div class="k">Field</div><div class="v" id="brief-row-field"></div>
+      <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
+      <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
     </div>
   </div>
   <div class="formation-history-wrap" id="formation-history-wrap"></div>
@@ -337,8 +338,6 @@
     </div>
   </div>
 </div>
-
-<button id="rel-chip" type="button" aria-expanded="false"></button>
 
 <div id="panel">
   <div class="panel-drag-handle" id="panel-drag-handle"></div>
@@ -388,7 +387,7 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const marginL = Math.max(50, Math.min(90, W * 0.08));
     const marginR = Math.max(40, Math.min(60, W * 0.05));
-    const marginT = Math.max(70, Math.min(120, H * 0.10));
+    const marginT = Math.max(56, Math.min(84, H * 0.07)); // KRYL-1371: header is one line now (was 70..120)
     // .hud-top and .scrubber-wrap were both pinned at a fixed 32px CSS left/right, independent
     // of marginL/marginR (and of each other, since marginL != marginR in general). Lock both to
     // the plot's actual left/right edges so the scrubber's width always matches the MAP plot's
@@ -465,7 +464,7 @@
     const xs = NODES.map(n => n.path[0].x), ys = NODES.map(n => n.path[0].y);
     let xMin = Math.min(...xs), xMax = Math.max(...xs);
     let yMin = Math.min(...ys), yMax = Math.max(...ys);
-    const PAD = 0.28; // domain-unit margin so node dots/labels aren't flush against the frame
+    const PAD = 0.38; // domain-unit margin so node dots/labels aren't flush against the frame (KRYL-1371: was 0.28)
     xMin -= PAD; xMax += PAD; yMin -= PAD; yMax += PAD;
     const MIN_SPAN = 0.7; // floor so a tightly-clustered (or single-node) formation doesn't zoom in absurdly tight
     if (xMax - xMin < MIN_SPAN) { const c = (xMin + xMax) / 2; xMin = c - MIN_SPAN / 2; xMax = c + MIN_SPAN / 2; }
@@ -554,7 +553,7 @@
   let realFormation = null;        // the received Formation object, or null (genuine absence)
   let hasReceivedFormation = false; // false until the first postMessage arrives (loading state)
 
-  function applyFieldFormation(formation) {
+  function applyFieldFormation(formation, domainSignalCounts) {
     hasReceivedFormation = true;
     realFormation = formation ?? null;
 
@@ -565,12 +564,20 @@
       // not two independent real metrics on Cartesian axes. Magnitude/strength stays real and
       // available (node.contribution, shown in the detail panel's CONTRIBUTION field) -- it's
       // just not a spatial axis either way.
-      const layout = computeGraphLayout(formation.graph.vertices, formation.graph.edges);
-      NODES = formation.graph.vertices.map(v => {
+      // KRYL-1371 (item 4): domains that carry live signal but have no co-present pair are drawn as dim,
+      // unconnected nodes. They enter the same layout with no edges, so the absence of an edge is the
+      // statement; they are not counted in FORMATIONS / CO-PRESENT PAIRS (those read realFormation).
+      const connectedIds = new Set(formation.graph.vertices.map(v => String(v.domain).toUpperCase()));
+      const unconnected = Object.entries(domainSignalCounts || {})
+        .filter(([d, c]) => c > 0 && !connectedIds.has(String(d).toUpperCase()))
+        .map(([d]) => ({ domain: d, meanMagnitude: 0, unconnected: true }));
+      const allVertices = [...formation.graph.vertices, ...unconnected];
+      const layout = computeGraphLayout(allVertices, formation.graph.edges);
+      NODES = allVertices.map(v => {
         const { x, y } = layout[v.domain] ?? { x: 0, y: 0 };
         return {
           id: v.domain, label: v.domain.toUpperCase(), provenance: null,
-          contribution: v.meanMagnitude,
+          contribution: v.meanMagnitude, unconnected: !!v.unconnected,
           path: [{ x, y }, { x, y }], // static
         };
       });
@@ -615,7 +622,7 @@
 
   window.addEventListener('message', (e) => {
     if (e.data?.type === 'krylo-field-formation') {
-      applyFieldFormation(e.data.formation);
+      applyFieldFormation(e.data.formation, e.data.domainSignalCounts || null);
       // KRYL-1334 (2026-09-30) -- runs AFTER applyFieldFormation's unconditional scrubber-hide
       // above, and un-hides it when real persisted history exists. Two genuinely different
       // absences: applyFieldFormation's hide is about the OLD fake animation (no real
@@ -641,6 +648,7 @@
   const briefStateChipEl = document.getElementById('brief-state-chip');
   const briefStateLabelEl = document.getElementById('brief-state-label');
   const briefSentenceEl = document.getElementById('brief-sentence');
+  const briefRowsEl = document.getElementById('brief-rows');
   // Section 6 convergence-state colors; a label not in this map gets no color chip (never a guessed one).
   const BRIEF_STATE_COLOR = {
     'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a', 'BUILDING CONVERGENCE': '#66FF00',
@@ -648,14 +656,25 @@
   };
   let lastBriefKey = null;
   function applyBrief(brief) {
-    const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence]) : 'none';
+    const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence, brief.rows ?? null]) : 'none';
     if (key === lastBriefKey) return; // content unchanged -- skip the relayout (it clears the canvas)
     lastBriefKey = key;
     if (!brief) {
       briefBlockEl.hidden = true;
     } else {
       briefSubjectEl.textContent = brief.subjectLabel ?? '';
-      briefSentenceEl.textContent = brief.sentence ?? '';
+      if (brief.rows) {
+        // Entity subject: three scoped rows (Field / Subject / Relationships), as in the cleanup mockup.
+        document.getElementById('brief-row-field').textContent = brief.rows.field ?? '';
+        document.getElementById('brief-row-subject').textContent = brief.rows.subject ?? '';
+        document.getElementById('brief-row-rels').textContent = brief.rows.relationships ?? '';
+        briefRowsEl.hidden = false;
+        briefSentenceEl.hidden = true;
+      } else {
+        briefSentenceEl.textContent = brief.sentence ?? '';
+        briefSentenceEl.hidden = false;
+        briefRowsEl.hidden = true;
+      }
       if (brief.stateLabel) {
         briefStateLabelEl.textContent = brief.stateLabel;
         const c = BRIEF_STATE_COLOR[brief.stateLabel];
@@ -699,6 +718,7 @@
     fhWrapEl.innerHTML = '';
 
     if (formationHistoryData.length === 0) {
+      playBtn.disabled = false; // .no-history already dims and disables the row; clear any single-snapshot state
       fhRange = null;
       renderTimeline(); // clears ticks/marks left from a previous query
       return; // nothing real to show -- leave applyFieldFormation's hide decision as-is
@@ -707,6 +727,10 @@
     // Real range only -- no padding, no synthetic extension past the last real timestamp.
     const times = formationHistoryData.map(r => new Date(r.captured_at).getTime());
     fhRange = { min: Math.min(...times), max: Math.max(...times) };
+    // KRYL-1371: one snapshot has nothing to play through -- Play stays visible but disabled, labeled.
+    const singleSnapshot = new Set(times).size <= 1;
+    playBtn.disabled = singleSnapshot;
+    playBtn.title = singleSnapshot ? 'Play needs 2 or more snapshots' : 'Play / Pause (Space)';
 
     if (scrubberWrapEl) scrubberWrapEl.classList.remove('no-history'); // real data exists -- re-enable
     const scrubberLabelEl = document.getElementById('scrubber-label');
@@ -737,7 +761,7 @@
     const rangeEl = document.getElementById('scrubber-range');
     if (!rangeEl || !fhRange) return;
     const fmt = (ms) => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-    rangeEl.textContent = `${fmt(fhRange.min)} → ${fmt(fhRange.max)}`;
+    rangeEl.textContent = fhRange.min === fhRange.max ? `${fmt(fhRange.min)} · 1 snapshot` : `${fmt(fhRange.min)} → ${fmt(fhRange.max)}`;
   }
 
   // Scrubbing reveals/dims real points by their real timestamp -- never moves or interpolates
@@ -905,14 +929,14 @@
   // the two never overlap each other. A panel the guest has dragged keeps wherever they put it.
   function positionRelChip() {
     if (!relChipEl.classList.contains('show')) return;
-    const CW = relChipEl.offsetWidth || 220, CH = relChipEl.offsetHeight || 26, GAP = 12;
+    const CW = 220, CH = relChipEl.offsetHeight || 26, GAP = 12;
     const minX = plot.x + GAP, minY = plot.y + GAP;
     const maxX = Math.max(minX, plot.x + plot.w - GAP - CW), maxY = Math.max(minY, plot.y + plot.h - GAP - CH);
     // Pinned to the plot's bottom-right corner (Founder, 2026-10-04) -- no longer placed by distance
     // from nodes/edges, which put it somewhere different on every query.
+    // KRYL-1371: the chip itself now sits inline in the brief's Relationships row (no longer drawn
+    // over the plot). The open panel is still anchored at the plot's bottom-right corner.
     const best = { x: maxX, y: maxY };
-    relChipEl.style.left = best.x + 'px';
-    relChipEl.style.top = best.y + 'px';
     if (entityPanelOpen && !panelUserPositioned) {
       // Open on whichever side of the chip has room -- below it when it fits, otherwise above --
       // and shrink to that room (the panel already scrolls internally), so the panel can never sit
@@ -1140,7 +1164,7 @@
     // reference frame only; one honest label replaces the two retired metric names.
     ctx.textAlign = 'center';
     ctx.fillStyle = getVar('--text-mono');
-    ctx.fillText('STRUCTURAL LAYOUT — Derived from the real cross-domain co-presence graph', plot.x + plot.w / 2, plot.y + plot.h + 40);
+    ctx.fillText('Positions derived from the cross-domain co-presence graph. Ambient field state, not bound to the resolved subject.', plot.x + plot.w / 2, plot.y + plot.h + 40);
     ctx.restore();
   }
 
@@ -1225,7 +1249,9 @@
       ctx.globalAlpha = (0.22 + r * 0.58) * (related || !hoverId ? 1 : 0.28);
       ctx.strokeStyle = r > 0.85 ? getVar('--signal-lime') : 'rgba(255,255,255,0.5)';
       ctx.lineWidth = weight * (related ? 1.2 : 1);
-      ctx.setLineDash(r > 0.85 ? [] : r > 0.4 ? [6, 4] : [1, 4]);
+      // KRYL-1371: the subject edge (domain -> subject node) is dashed so it reads as a different kind of
+      // edge from the field's co-presence edges. Dashed is the mockup's placeholder; final style is the Founder's.
+      ctx.setLineDash(e.to === ENTITY_NODE_ID ? [5, 5] : r > 0.85 ? [] : r > 0.4 ? [6, 4] : [1, 4]);
       ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(endX, endY); ctx.stroke();
 
       if (r > 0.4) {
@@ -1274,7 +1300,7 @@
       // per-node y through the blue<->lime momentum gradient would visually imply a real,
       // measured momentum reading that doesn't exist, even though it now varies node to node.
       // Neutral, undoctrine-coded color instead, for every real node regardless of position.
-      const color = n.entity ? getVar('--signal-lime') : getVar('--text-mono');
+      const color = n.entity ? getVar('--signal-lime') : n.unconnected ? '#3a3d4a' : getVar('--text-mono');
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
       // Entity (subject) node: fixed ring size -- its contribution is not a measurement, so it
@@ -1380,20 +1406,52 @@
         subW = ctx.measureText(subText).width;
         subFillStyle = 'rgba(255,255,255,0.42)';
       }
-      const mainBaseline = s.py - (n.resolved ? 10 : 4);
-      const subBaseline = subText ? (subIsProvenance ? s.py + (n.resolved ? 10 : 10) : s.py + 12) : mainBaseline;
+      // KRYL-1371 -- label side chosen for clearance: of eight candidate directions (right, left,
+      // up, down, four diagonals) take the one farthest, angularly, from every edge touching this
+      // node, so an edge no longer runs through its own node's label. Position stays a layout
+      // choice only; it carries no data. Ties keep the order right, left, up, down, diagonals.
+      const incident = [];
+      for (const e of EDGES) {
+        const otherId = e.from === n.id ? e.to : e.to === n.id ? e.from : null;
+        const o = otherId == null ? null : nodeById[otherId];
+        if (!o) continue;
+        const os = nodeStateAt(o, t);
+        incident.push(Math.atan2(os.py - s.py, os.px - s.px));
+      }
+      let theta = 0;
+      if (incident.length) {
+        const DIRS = [0, Math.PI, -Math.PI / 2, Math.PI / 2, -Math.PI / 4, Math.PI / 4, -3 * Math.PI / 4, 3 * Math.PI / 4];
+        let bestClear = -1;
+        for (const c of DIRS) {
+          let nearest = Math.PI;
+          for (const a of incident) {
+            let d = Math.abs(c - a) % (2 * Math.PI);
+            if (d > Math.PI) d = 2 * Math.PI - d;
+            if (d < nearest) nearest = d;
+          }
+          if (nearest > bestClear + 1e-6) { bestClear = nearest; theta = c; }
+        }
+      }
+      const GAP = r + 9, cs = Math.cos(theta), sn = Math.sin(theta);
+      const textAlign = cs > 0.35 ? 'left' : cs < -0.35 ? 'right' : 'center';
+      const mainBaseline = sn < -0.35 ? s.py + sn * GAP - 2
+        : sn > 0.35 ? s.py + sn * GAP + 11
+        : s.py - (n.resolved ? 10 : 4);
+      const subBaseline = subText ? (subIsProvenance ? mainBaseline + 14 : mainBaseline + 16) : mainBaseline;
       const boxTop = mainBaseline - 16; // ~font ascent, padded
       const boxBottom = (subText ? subBaseline : mainBaseline) + 8; // ~font descent, padded
-      const textAlign = s.px > plot.x + plot.w * 0.72 ? 'right' : 'left';
-      const lx = s.px + (textAlign === 'right' ? -12 : 12);
       const width = Math.max(mainW, subW);
-      const boxX = textAlign === 'right' ? lx - width : lx;
+      const anchorX = s.px + cs * GAP;
+      let boxX = textAlign === 'right' ? anchorX - width : textAlign === 'center' ? anchorX - width / 2 : anchorX;
+      // keep the label inside the plot's inner padding
+      boxX = Math.max(plot.x + 8, Math.min(plot.x + plot.w - 8 - width, boxX));
+      const lx = textAlign === 'right' ? boxX + width : textAlign === 'center' ? boxX + width / 2 : boxX;
 
       nodeLabelCandidates.push({
         node: true, x: boxX, y: boxTop, width, height: boxBottom - boxTop,
         mainOffsetFromTop: mainBaseline - boxTop, subOffsetFromTop: subText ? subBaseline - boxTop : null,
         mainText: n.label, subText, textAlign, drawX: lx, mainFont, subFont,
-        mainFillStyle: n.resolved ? color : 'rgba(255,255,255,0.82)', subFillStyle,
+        mainFillStyle: n.unconnected ? 'rgba(255,255,255,0.4)' : n.resolved ? color : 'rgba(255,255,255,0.82)', subFillStyle,
         globalAlpha: dim ? 0.35 : 1,
       });
     }
@@ -1647,7 +1705,7 @@
     // clicks but not the Space keybinding below, which calls this directly -- the actual
     // disabled state has to be enforced here, not just visually. fhRange is null exactly when
     // there's no real formation history (same condition driving the .no-history class).
-    if (!fhRange) return;
+    if (!fhRange || playBtn.disabled) return;
     if (playing) {
       stopPlay();
     } else {

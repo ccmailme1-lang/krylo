@@ -123,7 +123,24 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
           : `Structural participant recognized (${structuralQuery.entities.join(', ')}), but only one — nothing to relate it to yet.`)
       : `No subject resolved, so no structural relationship can be attributed to one entity — the live field alone shows structure ` +
         `across ${domainLines.length} of 6 domains${domainList}.`;
-  return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence };
+  // KRYL-1371: the same facts as rows for the MAP panel (Field / Subject / Relationships). Entity
+  // subjects only; every other case keeps the single sentence. Same numbers as briefSentence above.
+  const canonicalTypes = entityCanonicalRelationships.length
+    ? Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')
+    : null;
+  const rows = isEntity ? {
+    field: `${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
+      (relationshipCount > 0
+        ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present. `
+        : 'but fewer than two domains are connected. ') +
+      `Field-level, not bound to ${subjectLabel}.`,
+    subject: subjectBoundCount > 0
+      ? `${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}.`
+      : `No observations bound to ${subjectLabel} yet.`,
+    relationships: (canonicalTypes ? `${canonicalTypes}.` : `No canonical relationships admitted for ${subjectLabel}.`) +
+      (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
+  } : null;
+  return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence, rows };
 }
 
 export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, structuralQuery }) {

@@ -157,11 +157,11 @@ function FormationMapTab({ query }) {
       ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
       : [];
     const ownershipFailure = subjScope.kind === 'ENTITY' && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
-    const { subjectLabel, briefSentence } = computeBriefSummary({
+    const { subjectLabel, briefSentence, rows } = computeBriefSummary({
       subjScope, activeDomainPressures, fieldFormation,
       structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure,
     });
-    return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence };
+    return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows };
   }, [subjScope, domainPressures, fieldFormation, synthesis, ownershipOutcome, rhoTick]);
 
   // KRYL-1332 (Founder, 2026-09-28) -- real bug: switching tabs away from MAP and back remounts
