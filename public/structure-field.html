@@ -442,20 +442,12 @@
     if (typeof a === 'number') return a + (b - a) * localT;
     return { x: a.x + (b.x - a.x) * localT, y: a.y + (b.y - a.y) * localT };
   }
-  function hexToRgb(hex) { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
-  const BLUE = hexToRgb('#007FFF'), LIME = hexToRgb('#66FF00');
-  function momentumColor(m01) {
-    const t = clamp01(m01);
-    return `rgb(${Math.round(BLUE[0] + (LIME[0] - BLUE[0]) * t)},${Math.round(BLUE[1] + (LIME[1] - BLUE[1]) * t)},${Math.round(BLUE[2] + (LIME[2] - BLUE[2]) * t)})`;
-  }
   function getVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
 
   const DOMAIN = { min: -1, max: 1 }; // nominal OBSERVATION-COUNT/CONNECTIVITY plot range
   // (KRYL-1332, both axes' real meaning changed 2026-09-28/29) -- unchanged, still the true
   // meaning of every axis value.
-  // Ambient decorative particles are still generated across this full range (see buildAmbient
-  // below) -- untouched by the viewport fit.
 
   // viewDomain -- KRYL-1287 composition fix (2026-09-09). Real STRENGTH values are unsigned
   // meanMagnitude, always in [0,1] -- never populate the left half of the nominal [-1,1] domain
@@ -637,7 +629,7 @@
       if (rangeEl) rangeEl.textContent = '—';
     }
 
-    // A separate continuous requestAnimationFrame loop (loop(), for ambient particle drift)
+    // A separate continuous requestAnimationFrame loop (loop(), for the edge pulse and the every-frame redraw)
     // calls draw(currentT) every frame regardless of play/pause -- a one-shot draw(1) call
     // here gets immediately overwritten on the very next frame back to whatever currentT
     // already was (0 by default), which silently re-hid every edge (edgeResolution depends
@@ -1065,22 +1057,6 @@
     return smoothstep(local);
   }
 
-  // ---- ambient texture field --------------------------------------------
-  let ambient = [];
-  function buildAmbient() {
-    const rand = mulberry32(778812);
-    ambient = Array.from({ length: 180 }, () => {
-      const [gx, gy] = gaussianPair(rand);
-      return {
-        x: DOMAIN.min + rand() * (DOMAIN.max - DOMAIN.min),
-        y: DOMAIN.min + rand() * (DOMAIN.max - DOMAIN.min),
-        phase: rand() * Math.PI * 2,
-        amp: 0.012 + rand() * 0.02,
-        size: 1.1 + rand() * 0.6,
-      };
-    });
-  }
-
   // KRYL-1283 — deterministic label-collision resolver. Node/edge labels previously drew at
   // their raw computed position with no regard for what else was nearby, so whichever nodes'
   // hardcoded paths happened to converge close together on a given frame (e.g. PRICING PRESSURE
@@ -1236,19 +1212,6 @@
       ctx.restore();
     }
 
-    // ambient — faint unresolved observations with subtle drift
-    const drift = reduceMotion ? 0 : timeMs * 0.00012;
-    for (const p of ambient) {
-      const dx = Math.sin(p.phase + drift) * p.amp;
-      const dy = Math.cos(p.phase * 0.7 + drift * 0.85) * p.amp;
-      const px = toPxX(p.x + dx), py = toPxY(p.y + dy);
-      if (px < plot.x - 4 || px > plot.x + plot.w + 4 || py < plot.y - 4 || py > plot.y + plot.h + 4) continue;
-      ctx.beginPath();
-      ctx.fillStyle = momentumColor((p.y - DOMAIN.min) / 2);
-      ctx.globalAlpha = 0.11 + (p.size - 1.1) * 0.06;
-      ctx.arc(px, py, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.globalAlpha = 1;
 
     // edges
@@ -1331,7 +1294,7 @@
       const s = nodeStateAt(n, t);
       n._px = s.px; n._py = s.py;
       n._pos = s.pos;
-      // KRYL-1287 — momentumColor(m01) is NOT used here: node Y is a deterministic layout
+      // KRYL-1287 — a blue<->lime momentum gradient is NOT used here: node Y is a deterministic layout
       // spread (layoutY), not a momentum measurement (see comment above NODES). Running a
       // per-node y through the blue<->lime momentum gradient would visually imply a real,
       // measured momentum reading that doesn't exist, even though it now varies node to node.
@@ -1755,7 +1718,7 @@
   }
   playBtn.addEventListener('click', togglePlay);
 
-  // ---- continuous time for ambient / pulse ----
+  // ---- continuous time for the edge pulse / redraw ----
   let rafId = null;
   function loop(ts) {
     timeMs = ts;
@@ -1947,7 +1910,6 @@
 
   function init() {
     resize();
-    buildAmbient();
     positionPanelDefault();
     positionHudBelowAxis();
     // No evidence found (comment, spec, or git rationale) for animating the scrubber to any
