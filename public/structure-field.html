@@ -558,6 +558,7 @@
         }
         return n;
       };
+      const orig = Object.fromEntries(ids.map(id => [id, { x: pos[id].x, y: pos[id].y }]));
       let best = crossings();
       for (let pass = 0; pass < 3 && best > 0; pass++) {
         let improved = false;
@@ -576,6 +577,9 @@
         }
         if (!improved) break;
       }
+      // Only a layout with NO crossings is worth keeping: for a graph that cannot be drawn without them (e.g. five
+      // fully connected domains) the partial moves just squash nodes together, so the force layout stands.
+      if (best > 0) for (const id of ids) { pos[id].x = orig[id].x; pos[id].y = orig[id].y; }
     }
 
     const xs = ids.map(id => pos[id].x), ys = ids.map(id => pos[id].y);
