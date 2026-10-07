@@ -225,7 +225,7 @@
 
   .panel-close {
     position: absolute; top: 16px; right: 16px; background: none; border: none;
-    color: var(--text-mono-dim); font-family: inherit; font-size: 9px; letter-spacing: 0.1em;
+    color: var(--text-mono-dim); font-family: inherit; font-size: 9.45px; letter-spacing: 0.1em;
     cursor: pointer; padding: 4px;
   }
   .panel-close:hover { color: var(--text-mono); }
@@ -244,31 +244,31 @@
   #rel-chip.show { display: inline-block; }
   #rel-chip:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
 
-  .panel-eyebrow { font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-mono-dim); }
+  .panel-eyebrow { font-size: 9.45px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-mono-dim); }
   .panel-title {
     font-family: Georgia, 'Times New Roman', serif; color: #fff; line-height: 1.15; margin-top: 3px;
-    font-size: 16px;
+    font-size: 16.8px;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .panel-domain { font-size: 9.5px; letter-spacing: 0.06em; color: var(--text-mono-dim); margin-top: 4px; line-height: 1.4; }
+  .panel-domain { font-size: 9.97px; letter-spacing: 0.06em; color: var(--text-mono-dim); margin-top: 4px; line-height: 1.4; }
 
   .panel-meta {
     display: flex; gap: 14px; margin-top: 6px;
-    font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mono-dim);
+    font-size: 9.45px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-mono-dim);
   }
   .panel-meta b { color: rgba(255,255,255,0.72); font-weight: 500; letter-spacing: 0.01em; }
 
   .panel-canvas-wrap { border: 1px solid var(--hairline); position: relative; }
   #detail-canvas { display: block; width: 100%; height: 110px; }
 
-  .panel-section-title { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mono-dim); margin-bottom: 6px; }
+  .panel-section-title { font-size: 9.45px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-mono-dim); margin-bottom: 6px; }
 
-  .op-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 1px solid var(--hairline); font-size: 10px; }
+  .op-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-top: 1px solid var(--hairline); font-size: 10.5px; }
   .op-row:first-child { border-top: none; }
   .op-name { color: rgba(255,255,255,0.7); letter-spacing: 0.01em; }
-  .op-class { color: var(--text-mono-dim); font-size: 8px; margin-left: 5px; }
+  .op-class { color: var(--text-mono-dim); font-size: 8.4px; margin-left: 5px; }
   .op-pill {
-    font-size: 8px; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px;
+    font-size: 8.4px; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 2px;
     border: 1px solid; text-transform: uppercase;
   }
   .op-pass { color: var(--signal-lime); border-color: rgba(102,255,0,0.4); }
@@ -281,13 +281,13 @@
      footnote size, so it isn't upstaged by the pills. Neutral/dim treatment, same tokens as
      .op-na/.op-not-measured -- this states an absence, not a signal state, so it doesn't borrow
      a reserved convergence color (CLAUDE.md Sec6: --signal-blue means TURBULENT CONVERGENCE). */
-  .panel-disclosure { font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.6; padding: 7px 8px; margin-bottom: 8px; border: 1px solid var(--hairline-strong); border-radius: 2px; }
+  .panel-disclosure { font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mono-dim); line-height: 1.6; padding: 7px 8px; margin-bottom: 8px; border: 1px solid var(--hairline-strong); border-radius: 2px; }
   .panel-disclosure b { color: var(--text-mono); }
 
   .kbd {
     display: inline-block; padding: 1px 5px; margin: 0 1px;
     border: 1px solid rgba(255,255,255,0.18); border-radius: 2px;
-    font-size: 9px; letter-spacing: 0.04em; color: rgba(255,255,255,0.45);
+    font-size: 9.45px; letter-spacing: 0.04em; color: rgba(255,255,255,0.45);
   }
 
   @media (max-width: 900px) {
@@ -1535,10 +1535,10 @@
       // KRYL-1371: 5% larger text (9px -> 9.45px). Long callouts wrap onto more lines (the stack grows
       // downward) instead of running past the frame, and the column's right edge is the plot's right
       // edge, not the iframe's.
-      const CALLOUT_LINE_H = 15;
+      const CALLOUT_LINE_H = 16;
       const CALLOUT_GAP = 9;
       const CALLOUT_RIGHT_MARGIN = 18;
-      const calloutFont = "9.45px 'IBM Plex Mono', monospace";
+      const calloutFont = "9.92px 'IBM Plex Mono', monospace";
       ctx.font = calloutFont;
       const colMax = Math.min(plot.w * 0.45, 360);
       const wrapText = (text) => {
