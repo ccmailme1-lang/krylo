@@ -1532,23 +1532,35 @@
     // with a thin leader line back to its actual edge midpoint. Graph geometry/positions are
     // completely untouched by this -- purely a label-placement layer drawn on top.
     if (calloutStack.length) {
-      const CALLOUT_LINE_H = 22;
+      // KRYL-1371: 5% larger text (9px -> 9.45px). Long callouts wrap onto more lines (the stack grows
+      // downward) instead of running past the frame, and the column's right edge is the plot's right
+      // edge, not the iframe's.
+      const CALLOUT_LINE_H = 15;
+      const CALLOUT_GAP = 9;
       const CALLOUT_RIGHT_MARGIN = 18;
-      const calloutFont = "9px 'IBM Plex Mono', monospace";
+      const calloutFont = "9.45px 'IBM Plex Mono', monospace";
       ctx.font = calloutFont;
-      const baseY = plot.y + 28;
+      const colMax = Math.min(plot.w * 0.45, 360);
+      const wrapText = (text) => {
+        const lines = []; let line = '';
+        for (const word of String(text).split(/\s+/).filter(Boolean)) {
+          const trial = line ? line + ' ' + word : word;
+          if (line && ctx.measureText(trial).width > colMax) { lines.push(line); line = word; } else line = trial;
+        }
+        if (line) lines.push(line);
+        return lines.length ? lines : [''];
+      };
+      let cursorY = plot.y + 28;
       let maxWidth = 0;
-      calloutStack.forEach((c, i) => {
-        c.labelY = baseY + i * CALLOUT_LINE_H;
-        c.width = ctx.measureText(c.text).width;
-        if (c.width > maxWidth) maxWidth = c.width;
+      calloutStack.forEach((c) => {
+        c.lines = wrapText(c.text);
+        c.labelY = cursorY;
+        cursorY += c.lines.length * CALLOUT_LINE_H + CALLOUT_GAP;
+        for (const ln of c.lines) maxWidth = Math.max(maxWidth, ctx.measureText(ln).width);
       });
-      // Left-aligned, evenly -- every line starts at the same X (like the HUD title block:
-      // "STRUCTURAL RESOLUTION FIELD" / subtitle share one left margin), not right-justified
-      // per-line. That shared X is computed backward from the WIDEST current label so the
-      // longest one still ends inside the frame -- shorter labels don't get to sit further
-      // right just because they're shorter.
-      const calloutLeftX = W - CALLOUT_RIGHT_MARGIN - maxWidth;
+      // Left-aligned, evenly -- every line starts at the same X, computed backward from the widest
+      // wrapped line so the column ends inside the plot.
+      const calloutLeftX = plot.x + plot.w - CALLOUT_RIGHT_MARGIN - maxWidth;
       for (const c of calloutStack) {
         // Leader line: edge midpoint -> label's near (left) edge, thin and dim so the callout
         // reads as an annotation pointer, not another relationship line.
@@ -1568,7 +1580,7 @@
         ctx.font = calloutFont;
         ctx.fillStyle = 'rgba(255,255,255,0.82)';
         ctx.textAlign = 'left';
-        ctx.fillText(c.text, calloutLeftX, c.labelY);
+        c.lines.forEach((ln, k) => ctx.fillText(ln, calloutLeftX, c.labelY + k * CALLOUT_LINE_H));
         ctx.restore();
       }
     }
