@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KRYLO Surface Cones Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: the Surface (ConeMap) view from conemap.jsx, six wireframe cones on a ground grid,
+   repainted on #F5F5F7. §6 values only. Single light look by choice. */
+:root {
+  color-scheme: light;
+  --ground: #F5F5F7;
+  --ink:    #1A1A1A;
+  --line:   #e0e0dc;
+  --dim:    #3a3d4a;
+  --lime:   #66FF00;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body { margin: 0; font-family: var(--mono); }
+.note { max-width: 1100px; margin-inline: auto; padding-inline: 16px; padding-block: 16px 0; font-size: 11.5px; line-height: 1.6; color: var(--dim); }
+.frame { max-width: 1100px; margin-block: 12px 40px; margin-inline: max(16px, calc((100% - 1100px) / 2)); border: 1px solid var(--line); position: relative; }
+.bar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 14px 20px; border-bottom: 1px solid var(--line); font-size: 10px; letter-spacing: .24em; }
+.bar .r { color: var(--dim); }
+canvas { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; max-width: 100%; }
+.key { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 12px 20px 16px; border-top: 1px solid var(--line); font-size: 9.5px; letter-spacing: .08em; }
+.key span { display: inline-flex; align-items: center; gap: 7px; }
+.key i { width: 10px; height: 10px; display: block; border: 1px solid var(--ink); }
+</style>
+
+<p class="note">Mockup of the Surface view (navMode 'surface', conemap.jsx) on #F5F5F7. The real view is a rotating 3D scene; this is a 2D drawing of it. Cone heights and states are examples, one per state, not data. Bloom and glow are left out because they don't show on a light ground. §6 colors only. Not built, not approved.</p>
+
+<div class="frame">
+  <div class="bar"><span>STRUCTURAL SURFACE</span><span class="r">6 DOMAINS · EVENT STREAM LIVE</span></div>
+  <canvas id="c" width="1600" height="900" aria-label="Six wireframe cones, one per domain, colored by convergence state"></canvas>
+  <div class="key" id="key"></div>
+</div>
+
+<script>
+const STATES = {
+  INSUFFICIENT: ['#3a3d4a', 'INSUFFICIENT SIGNAL'],
+  LOW:          ['#1a1a1a', 'LOW SIGNAL YIELD'],
+  BUILDING:     ['#66FF00', 'BUILDING CONVERGENCE'],
+  TURBULENT:    ['#007FFF', 'TURBULENT CONVERGENCE'],
+  HIGH:         ['#8A2BE2', 'HIGH CONVERGENCE'],
+};
+// CONE_DISPLAY_ORDER from ontology.js. Heights and states are illustrative.
+const CONES = [
+  ['CAPITAL',    'BUILDING',     0.78],
+  ['OWNERSHIP',  'HIGH',         0.95],
+  ['LABOR',      'INSUFFICIENT', 0.30],
+  ['MEDIA',      'TURBULENT',    0.62],
+  ['TECHNOLOGY', 'BUILDING',     0.70],
+  ['KNOWLEDGE',  'LOW',          0.45],
+];
+const SELECTED = 'OWNERSHIP';
+
+const cv = document.getElementById('c'), g = cv.getContext('2d');
+const W = cv.width, H = cv.height;
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Simple perspective camera looking down at the ground plane.
+function project(x, y, z, rot) {
+  const cx = x * Math.cos(rot) - z * Math.sin(rot);
+  const cz = x * Math.sin(rot) + z * Math.cos(rot);
+  const tilt = 0.42, camY = 6.2, camZ = 13;
+  const y1 = (y - camY) * Math.cos(tilt) - (cz - camZ) * Math.sin(tilt);
+  const z1 = (y - camY) * Math.sin(tilt) + (cz - camZ) * Math.cos(tilt);
+  const f = 950 / -z1;
+  return [W / 2 + cx * f, H * 0.50 - y1 * f, -z1];
+}
+
+function line(a, b, color, w, alpha) {
+  g.globalAlpha = alpha; g.strokeStyle = color; g.lineWidth = w;
+  g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.stroke(); g.globalAlpha = 1;
+}
+
+function drawCone(cx, cz, h, color, rot, selected) {
+  const r = 0.95, seg = 16, rings = 6, H3 = h * 3.4;
+  const apex = project(cx, H3, cz, rot);
+  // Halo rings (INVESTIGATE selection), ink at low opacity instead of white.
+  if (selected) [1.25, 1.55, 1.85].forEach((m, i) => {
+    g.globalAlpha = [0.35, 0.2, 0.1][i]; g.strokeStyle = '#1A1A1A'; g.lineWidth = 1.5; g.beginPath();
+    for (let k = 0; k <= 48; k++) { const a = k / 48 * Math.PI * 2; const p = project(cx + Math.cos(a) * r * m, 0, cz + Math.sin(a) * r * m, rot); k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }
+    g.stroke(); g.globalAlpha = 1;
+  });
+  // Wireframe: rings and spokes in state color, silhouette edges cased in ink so lime reads.
+  for (let j = 1; j <= rings; j++) {
+    const t = j / rings, rr = r * t, y = H3 * (1 - t);
+    g.strokeStyle = color; g.lineWidth = 1.6; g.globalAlpha = 0.85; g.beginPath();
+    for (let k = 0; k <= seg; k++) { const a = k / seg * Math.PI * 2; const p = project(cx + Math.cos(a) * rr, y, cz + Math.sin(a) * rr, rot); k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1]); }
+    g.stroke(); g.globalAlpha = 1;
+  }
+  for (let k = 0; k < seg; k++) {
+    const a = k / seg * Math.PI * 2;
+    line(apex, project(cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r, rot), color, 1.6, 0.85);
+  }
+  // Silhouette: leftmost and rightmost base points in screen space.
+  let L = null, R = null;
+  for (let k = 0; k < 64; k++) { const a = k / 64 * Math.PI * 2; const p = project(cx + Math.cos(a) * r, 0, cz + Math.sin(a) * r, rot); if (!L || p[0] < L[0]) L = p; if (!R || p[0] > R[0]) R = p; }
+  line(apex, L, '#1A1A1A', 1.4, 0.9); line(apex, R, '#1A1A1A', 1.4, 0.9);
+  return apex;
+}
+
+function frame(t) {
+  const rot = reduce ? 0.35 : 0.35 + Math.sin(t / 9000) * 0.25;
+  g.fillStyle = '#F5F5F7'; g.fillRect(0, 0, W, H);
+  // Ground grid.
+  for (let i = -10; i <= 10; i++) {
+    line(project(i, 0, -10, rot), project(i, 0, 10, rot), '#e0e0dc', 1.2, 1);
+    line(project(-10, 0, i, rot), project(10, 0, i, rot), '#e0e0dc', 1.2, 1);
+  }
+  // Two rows of three, sorted back to front.
+  const placed = CONES.map(([name, st, h], i) => {
+    const x = (i % 3 - 1) * 5, z = (Math.floor(i / 3) - 0.5) * 6;
+    return { name, st, h, x, z, depth: project(x, 0, z, rot)[2] };
+  }).sort((a, b) => b.depth - a.depth);
+  for (const c of placed) {
+    const [color, label] = STATES[c.st];
+    const apex = drawCone(c.x, c.z, c.h, color, rot, c.name === SELECTED);
+    // Floating apex label: domain + state, like the live per-cone HUD.
+    g.font = "600 22px 'IBM Plex Mono', monospace"; g.textAlign = 'center'; g.fillStyle = '#1A1A1A';
+    g.fillText(c.name, apex[0], apex[1] - 38);
+    g.font = "18px 'IBM Plex Mono', monospace"; g.fillStyle = '#3a3d4a';
+    g.fillText(label, apex[0], apex[1] - 14);
+  }
+  if (!reduce) requestAnimationFrame(frame);
+}
+document.fonts.ready.then(() => requestAnimationFrame(frame));
+frame(0);
+
+document.getElementById('key').innerHTML = Object.values(STATES)
+  .map(([c, l]) => `<span><i style="background:${c}"></i>${l}</span>`).join('') +
+  '<span><i style="background:transparent;border-radius:50%"></i>SELECTED (HALO)</span>';
+</script>

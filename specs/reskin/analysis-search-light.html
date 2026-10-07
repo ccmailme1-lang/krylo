@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KRYLO Analysis Search Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: the idle Analysis screen from analysisidlefield.jsx (header, centered question box,
+   scope/output rows, telemetry rail), repainted in Direction 1. §6 values only.
+   Single light look by choice. */
+:root {
+  color-scheme: light;
+  --ground: #F5F5F7;   /* --oracle-bg */
+  --ink:    #1A1A1A;   /* --text-dark */
+  --line:   #e0e0dc;   /* Layer 0 light gray */
+  --dim:    #3a3d4a;   /* INSUFFICIENT SIGNAL gray, used as secondary text */
+  --lime:   #66FF00;   /* --signal-lime, fills only */
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body { margin: 0; font-family: var(--mono); }
+.note { max-width: 960px; margin-inline: auto; padding-inline: 16px; padding-block: 16px 0; font-size: 11.5px; line-height: 1.6; color: var(--dim); }
+.frame { max-width: 960px; margin: 12px auto 40px; border: 1px solid var(--line); display: flex; flex-direction: column; min-height: 620px; margin-inline: max(16px, calc((100% - 960px) / 2)); }
+header { height: 64px; border-bottom: 1px solid var(--line); padding-inline: 32px; display: flex; align-items: center; gap: 24px; text-transform: uppercase; letter-spacing: .25em; font-size: 11px; }
+header .state { color: var(--dim); }
+main { flex: 1; display: flex; flex-direction: column; align-items: center; padding-block: 56px 40px; padding-inline: 24px; gap: 28px; }
+.hero { text-align: center; display: flex; flex-direction: column; gap: 10px; }
+.hero h1 { font-family: var(--serif); font-weight: 400; font-size: 24px; letter-spacing: .06em; margin: 0; }
+.hero h1 .edge { box-shadow: inset 0 -0.35em 0 var(--lime); padding-inline: 2px; }
+.hero p { margin: 0; font-size: 11px; letter-spacing: .22em; color: var(--dim); }
+.search { width: min(600px, 100%); display: flex; flex-direction: column; gap: 12px; }
+.ask { text-align: center; display: flex; flex-direction: column; gap: 6px; text-transform: uppercase; }
+.ask b { font-weight: 500; font-size: 10px; letter-spacing: .32em; }
+.ask span { font-size: 8px; letter-spacing: .24em; color: var(--dim); }
+.box { border: 1px solid var(--ink); border-radius: 20px; background: var(--ground); overflow: hidden; }
+.box textarea { display: block; width: 100%; box-sizing: border-box; min-height: 92px; resize: none; border: 0; outline: 0; background: transparent; padding: 18px 20px 6px; font: 13px/1.6 var(--mono); color: var(--ink); }
+.box textarea::placeholder { color: var(--dim); opacity: .75; }
+.box textarea:focus-visible { outline: none; }
+.box:focus-within { box-shadow: 0 0 0 3px var(--line); }
+.assist { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 20px 0; }
+.assist button { background: transparent; border: 1px solid var(--line); border-radius: 2px; padding: 2px 6px; font: 8.8px var(--mono); letter-spacing: .18em; color: var(--ink); cursor: pointer; }
+.assist button::before { content: '+ '; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 14px; }
+.plus { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim); font-size: 16px; line-height: 1; cursor: pointer; }
+.right { display: flex; align-items: center; gap: 8px; }
+.mic { width: 30px; height: 30px; border: 0; background: transparent; color: var(--dim); cursor: pointer; display: grid; place-items: center; }
+.go { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--ink); background: var(--lime); cursor: pointer; display: grid; place-items: center; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; }
+.row .k { font-size: 7px; letter-spacing: .28em; color: var(--dim); margin-right: 4px; }
+.pill { font: 8px var(--mono); letter-spacing: .12em; padding: 4px 11px; border-radius: 999px; background: transparent; border: 1px solid var(--line); color: var(--dim); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid currentColor; display: block; }
+.pill.on { border-color: var(--ink); color: var(--ink); }
+.pill.on i { background: var(--lime); border-color: var(--ink); }
+.check { display: inline-flex; align-items: center; gap: 4px; font-size: 8px; letter-spacing: .1em; color: var(--dim); }
+.check input { accent-color: var(--ink); width: 10px; height: 10px; margin: 0; }
+.check.on { color: var(--ink); }
+.rail { height: 52px; border-top: 1px solid var(--line); padding-inline: 32px; display: flex; align-items: center; flex-wrap: wrap; gap: 0 24px; font-size: 8px; letter-spacing: .4em; text-transform: uppercase; color: var(--dim); }
+.rail .live { color: var(--ink); }
+.rail .live::before { content: ''; display: inline-block; width: 7px; height: 7px; background: var(--lime); border: 1px solid var(--ink); margin-right: 8px; vertical-align: -1px; }
+@media (max-width: 560px) { header, .rail { padding-inline: 16px; } .hero h1 { font-size: 20px; } }
+</style>
+
+<p class="note">Mockup of the Analysis search screen (navMode 'analysis', idle state) in Direction 1. Layout and copy follow analysisidlefield.jsx; the localhost-only simulation panel is left out. §6 colors only: #F5F5F7, #1A1A1A, #e0e0dc, #3a3d4a, and lime as a fill, never as text. The suggestion chip and telemetry values are examples. Not built, not approved.</p>
+
+<div class="frame">
+  <header><span>Analysis</span><span class="state">Insufficient signal</span></header>
+  <main>
+    <div class="hero">
+      <h1>WHAT'S YOUR <span class="edge">EDGE?</span></h1>
+      <p>Map structural relationships across entities</p>
+    </div>
+    <div class="search">
+      <div class="ask"><b>Bring a Question</b><span>Subject + Context + Scope</span></div>
+      <div class="box">
+        <label for="q" hidden>Question</label>
+        <textarea id="q" placeholder="e.g. Amazon — automation's impact on warehouse labor — next 3 years"></textarea>
+        <div class="assist"><button type="button">NEXT 3 YEARS</button></div>
+        <div class="toolbar">
+          <button class="plus" type="button" aria-label="Attach">+</button>
+          <div class="right">
+            <button class="mic" type="button" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+            <button class="go" type="button" aria-label="Run query"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="k">SIGNAL SCOPE</span>
+        <button class="pill on" type="button"><i></i>LIVE</button>
+        <button class="pill" type="button"><i></i>HISTORICAL</button>
+      </div>
+      <div class="row">
+        <span class="k">OUTPUT</span>
+        <label class="check on"><input id="o1" type="checkbox" checked>PRECURSORS</label>
+        <label class="check on"><input id="o2" type="checkbox" checked>RISKS</label>
+        <label class="check on"><input id="o3" type="checkbox" checked>OPPORTUNITIES</label>
+        <label class="check on"><input id="o4" type="checkbox" checked>CONTRADICTIONS</label>
+      </div>
+    </div>
+  </main>
+  <div class="rail"><span class="live">Event stream LIVE</span><span>Insufficient signal</span></div>
+</div>
+
+<script>
+// Pills toggle like the real SIGNAL SCOPE control; checkboxes recolor their label.
+document.querySelectorAll('.pill').forEach(p => p.addEventListener('click', () => {
+  document.querySelectorAll('.pill').forEach(x => x.classList.toggle('on', x === p));
+}));
+document.querySelectorAll('.check input').forEach(c => c.addEventListener('change', () => {
+  c.parentElement.classList.toggle('on', c.checked);
+}));
+</script>
