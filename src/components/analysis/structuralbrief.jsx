@@ -140,6 +140,16 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}`
       : `No canonical relationships admitted for ${subjectLabel}.`) +
       (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
+  } : (!isEntity && !structurallyInterpretable) ? {
+    // No subject resolved and no structural participants: the field alone, stated as rows.
+    field: domainLines.length
+      ? `**${domainLines.length} of 6 domains** carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}); ` +
+        (relationshipCount > 0
+          ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present. `
+          : 'fewer than two domains are connected. ') + 'Field-level.'
+      : 'No domain shows active signal for this field yet.',
+    subject: 'No subject resolved.',
+    relationships: 'None, because no subject was resolved.',
   } : null;
   return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence, rows };
 }

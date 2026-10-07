@@ -51,7 +51,6 @@
 
   .mark { font-size: 15px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-mono); }
 
-  .status .undef { border-bottom: 1px dotted var(--text-mono-dim); cursor: help; pointer-events: auto; }
   .status { text-align: right; font-size: 11.5px; letter-spacing: 0.06em; color: var(--text-mono-dim); line-height: 1.7; }
   .status b { color: rgba(255,255,255,0.78); font-weight: 500; }
 
@@ -92,6 +91,7 @@
      Only the now-meaningless play button and scrub track are dimmed/disabled -- same
      dim+disable precedent as .fh-dot.hidden-by-scrub, scoped to what's actually inert. */
   .scrubber-wrap.no-history .scrubber-row { opacity: 0.35; pointer-events: none; }
+  .scrubber-wrap.no-history .scrubber { visibility: hidden; }
 
   /* KRYL-1334 (2026-09-30) — real persisted formation trajectories. One row per formation_id;
      X = real time (captured_at, linear-mapped into the real min..max range, never a synthetic
@@ -304,7 +304,7 @@
 <div class="hud hud-top">
   <div class="mark">STRUCTURAL RESOLUTION FIELD</div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; <span class="undef" title="Definition needed before this ships">RESOLVED <b id="integrity">—</b></span>
+    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; FORMATION INTEGRITY <b id="integrity">—</b>
   </div>
 </div>
 
@@ -410,7 +410,10 @@
     // so it's knowable up front.
     const BOTTOM_BUFFER = 16;
     const marginB = Math.max(90, AXIS_LABEL_GAP + scrubberWrapEl.offsetHeight + BOTTOM_BUFFER);
-    plot = { x: marginL, y: marginT, w: W - marginL - marginR, h: H - marginT - marginB };
+    // KRYL-1371: the plot is wide and short (1000:520, as in the mockup), never taller than the room left.
+    const plotW = W - marginL - marginR;
+    plot = { x: marginL, y: marginT, w: plotW, h: Math.min(H - marginT - marginB, plotW * 0.52) };
+    fitViewToNodes();
   }
 
   // ---- reusable primitives ------------------------------------------------
@@ -463,17 +466,17 @@
   function fitViewToNodes() {
     if (!NODES.some(n => !n.entity)) { viewDomain = { xMin: -1, xMax: 1, yMin: -1, yMax: 1 }; return; } // no formation nodes (the subject node alone doesn't set the view)
     const xs = NODES.map(n => n.path[0].x), ys = NODES.map(n => n.path[0].y);
-    let xMin = Math.min(...xs), xMax = Math.max(...xs);
-    let yMin = Math.min(...ys), yMax = Math.max(...ys);
-    const PAD = 0.38; // domain-unit margin so node dots/labels aren't flush against the frame (KRYL-1371: was 0.28)
-    xMin -= PAD; xMax += PAD; yMin -= PAD; yMax += PAD;
-    const MIN_SPAN = 0.7; // floor so a tightly-clustered (or single-node) formation doesn't zoom in absurdly tight
-    if (xMax - xMin < MIN_SPAN) { const c = (xMin + xMax) / 2; xMin = c - MIN_SPAN / 2; xMax = c + MIN_SPAN / 2; }
-    if (yMax - yMin < MIN_SPAN) { const c = (yMin + yMax) / 2; yMin = c - MIN_SPAN / 2; yMax = c + MIN_SPAN / 2; }
-    // Never show a viewport extending beyond what the axes actually mean ([-1,1]).
-    xMin = Math.max(-1, xMin); xMax = Math.min(1, xMax);
-    yMin = Math.max(-1, yMin); yMax = Math.min(1, yMax);
-    viewDomain = { xMin, xMax, yMin, yMax };
+    const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
+    // KRYL-1371: the formation fills the frame. One uniform scale (no stretching of the layout), padded by
+    // ~8% of the plot on every side plus room for the 15px node labels. MIN_SPAN keeps a one- or two-node
+    // formation from zooming in absurdly tight.
+    const MIN_SPAN = 0.7;
+    const spanX = Math.max(xMax - xMin, MIN_SPAN), spanY = Math.max(yMax - yMin, MIN_SPAN);
+    const padX = plot.w * 0.08 + 110, padY = plot.h * 0.08 + 28;
+    const scale = Math.max(1, Math.min((plot.w - 2 * padX) / spanX, (plot.h - 2 * padY) / spanY)); // px per layout unit
+    const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+    const halfW = plot.w / 2 / scale, halfH = plot.h / 2 / scale;
+    viewDomain = { xMin: cx - halfW, xMax: cx + halfW, yMin: cy - halfH, yMax: cy + halfH };
   }
 
   function toPxX(v) { return plot.x + ((v - viewDomain.xMin) / (viewDomain.xMax - viewDomain.xMin)) * plot.w; }
@@ -538,6 +541,43 @@
       for (const id of ids) { pos[id].x += disp[id].x * DAMP; pos[id].y += disp[id].y * DAMP; }
     }
 
+    // KRYL-1371: the spring layout does not try to avoid crossings (a fully connected 4-node graph comes out
+    // as a square with two crossing diagonals although it can be drawn with none). Count crossings and try
+    // moving each node to the centroid of its neighbours (and four small offsets from it); keep a move only if
+    // it strictly reduces crossings. Which edges exist never changes; only where nodes sit.
+    {
+      const segs = edges.filter(e => pos[e.a] && pos[e.b]);
+      const ccw = (a, b, c) => (c.y - a.y) * (b.x - a.x) > (b.y - a.y) * (c.x - a.x);
+      const hit = (a, b, c, d) => ccw(a, c, d) !== ccw(b, c, d) && ccw(a, b, c) !== ccw(a, b, d);
+      const crossings = () => {
+        let n = 0;
+        for (let i = 0; i < segs.length; i++) for (let j = i + 1; j < segs.length; j++) {
+          const A = segs[i], B = segs[j];
+          if (A.a === B.a || A.a === B.b || A.b === B.a || A.b === B.b) continue;
+          if (hit(pos[A.a], pos[A.b], pos[B.a], pos[B.b])) n++;
+        }
+        return n;
+      };
+      let best = crossings();
+      for (let pass = 0; pass < 3 && best > 0; pass++) {
+        let improved = false;
+        for (const id of ids) {
+          const nb = segs.filter(e => e.a === id || e.b === id).map(e => (e.a === id ? e.b : e.a));
+          if (!nb.length) continue;
+          const cx0 = nb.reduce((t, k) => t + pos[k].x, 0) / nb.length, cy0 = nb.reduce((t, k) => t + pos[k].y, 0) / nb.length;
+          const keep = { x: pos[id].x, y: pos[id].y };
+          for (const [ox, oy] of [[0, 0], [0.12, 0], [-0.12, 0], [0, 0.12], [0, -0.12]]) {
+            pos[id].x = cx0 + ox; pos[id].y = cy0 + oy;
+            const c = crossings();
+            if (c < best) { best = c; improved = true; keep.x = pos[id].x; keep.y = pos[id].y; }
+          }
+          pos[id].x = keep.x; pos[id].y = keep.y;
+          if (best === 0) break;
+        }
+        if (!improved) break;
+      }
+    }
+
     const xs = ids.map(id => pos[id].x), ys = ids.map(id => pos[id].y);
     const minX = Math.min(...xs), maxX = Math.max(...xs);
     const minY = Math.min(...ys), maxY = Math.max(...ys);
@@ -582,7 +622,7 @@
         const ccx = connPts.reduce((a, q) => a + q.x, 0) / connPts.length;
         const ccy = connPts.reduce((a, q) => a + q.y, 0) / connPts.length;
         const clusterR = Math.max(0.15, ...connPts.map(q => Math.hypot(q.x - ccx, q.y - ccy)));
-        const maxD = clusterR * 1.6 + 0.12;
+        const maxD = clusterR * 1.3 + 0.08;
         unconnected.forEach((u, i) => {
           const q = layout[u.domain]; if (!q) return;
           let dx = q.x - ccx, dy = q.y - ccy, d = Math.hypot(dx, dy);
@@ -626,7 +666,7 @@
       const labelEl = document.getElementById('scrubber-label');
       if (labelEl) labelEl.textContent = 'NO FORMATION HISTORY YET';
       const rangeEl = document.getElementById('scrubber-range');
-      if (rangeEl) rangeEl.textContent = '—';
+      if (rangeEl) rangeEl.textContent = '0 snapshots';
     }
 
     // A separate continuous requestAnimationFrame loop (loop(), for the edge pulse and the every-frame redraw)
@@ -877,7 +917,7 @@
   // means no entity node: a stated absence, not a guess at where it would go.
   const ENTITY_NODE_ID = '__entity_subject__';
   const ENTITY_TYPE_DOMAIN = { HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE: 'OWNERSHIP' };
-  const ENTITY_NODE_OFFSET = 0.6; // layout units outward from the formation centre, past the anchor
+  const ENTITY_NODE_OFFSET = 0.4; // KRYL-1371: was 0.6; closer so the formation is not shrunk by a distant subject node // layout units outward from the formation centre, past the anchor
   function syncEntityNode(relationships, subjectLabel) {
     NODES = NODES.filter(n => n.id !== ENTITY_NODE_ID);
     EDGES = EDGES.filter(e => e.to !== ENTITY_NODE_ID);
@@ -1156,18 +1196,13 @@
 
   function drawAxes() {
     ctx.save();
-    // KRYL-1287 composition fix — viewDomain can now be a zoomed-in subrange of the nominal
-    // [-1,1] domain (see fitViewToNodes above). A gridline/tick for a v outside the CURRENT
-    // viewDomain would compute a pixel position outside the plot rect (canvas has no implicit
-    // clip) -- skipped rather than letting it spill onto surrounding UI. Every gridline/label
-    // that IS drawn still shows its true value (a visible "0.5" is still really STRENGTH=0.5);
-    // this only controls which of them are in view, never what they say.
-    const inViewX = (v) => v >= viewDomain.xMin && v <= viewDomain.xMax;
-    const inViewY = (v) => v >= viewDomain.yMin && v <= viewDomain.yMax;
-    for (let v = -1; v <= 1.0001; v += 0.25) {
-      ctx.strokeStyle = getVar('--hairline'); ctx.lineWidth = 1;
-      if (inViewX(v)) { ctx.beginPath(); ctx.moveTo(toPxX(v), plot.y); ctx.lineTo(toPxX(v), plot.y + plot.h); ctx.stroke(); }
-      if (inViewY(v)) { ctx.beginPath(); ctx.moveTo(plot.x, toPxY(v)); ctx.lineTo(plot.x + plot.w, toPxY(v)); ctx.stroke(); }
+    // KRYL-1371: an even 8x8 reference grid spaced from the plot box itself (the old lines were placed at
+    // layout values, so spacing was uneven and the last row came out short). Neutral frame only; no values.
+    ctx.strokeStyle = getVar('--hairline'); ctx.lineWidth = 1;
+    for (let i = 1; i < 8; i++) {
+      const gx = Math.round(plot.x + (plot.w * i) / 8) + 0.5, gy = Math.round(plot.y + (plot.h * i) / 8) + 0.5;
+      ctx.beginPath(); ctx.moveTo(gx, plot.y); ctx.lineTo(gx, plot.y + plot.h); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(plot.x, gy); ctx.lineTo(plot.x + plot.w, gy); ctx.stroke();
     }
     ctx.font = "10px 'IBM Plex Mono', monospace";
     // Founder decision 2026-10-01 -- position is graph-derived (computeGraphLayout), not two
@@ -1241,7 +1276,7 @@
       // sized for the demo's varying 0.35-0.85 strength range; every real edge carries a flat
       // strength:1 (admitted vs not is binary, see KRYL-1287), so that formula always produced
       // the same oversized ~2.6px regardless. Flat, thin weight for real data instead.
-      const weight = 1.4;
+      const weight = 1.5;
       const related = hoverId && (hoverId === e.from || hoverId === e.to);
 
       ctx.save();
@@ -1290,6 +1325,8 @@
 
     // nodes
     let formationIntegrity = 0;
+    const lcStates = NODES.map(nn => nodeStateAt(nn, t));
+    const lcx = lcStates.reduce((a, q) => a + q.px, 0) / (lcStates.length || 1), lcy = lcStates.reduce((a, q) => a + q.py, 0) / (lcStates.length || 1);
     for (const n of NODES) {
       const s = nodeStateAt(n, t);
       n._px = s.px; n._py = s.py;
@@ -1304,9 +1341,8 @@
       const dim = hoverId && !isHover;
       // Entity (subject) node: fixed ring size -- its contribution is not a measurement, so it
       // must not drive the radius the way a domain node's real meanMagnitude does.
-      const r = n.entity
-        ? 6.5 * (isHover ? 1.18 : 1)
-        : (2.6 + n.contribution * (n.resolved ? 4.5 : 2.4)) * (isHover ? 1.18 : 1) * 1.05; // +5% sphere size
+      // KRYL-1371: fixed ring sizes as in the mockup (7px domain, 10px subject); radius no longer varies with magnitude.
+      const r = (n.entity ? 10 : 7) * (isHover ? 1.18 : 1);
 
       // KRYL-1337 (2026-10-01) -- real CONTRIBUTION/PROVENANCE/pos (the old click-card's data,
       // now gone) surfaced on hover instead, same calloutStack mechanism edge-relationship text
@@ -1377,7 +1413,7 @@
       ctx.fillStyle = getVar('--node-fill');
       ctx.arc(s.px, s.py, r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.lineWidth = isHover ? 1.8 : 1.4;
+      ctx.lineWidth = isHover ? 1.8 : (n.entity ? 2 : 1.5);
       ctx.strokeStyle = color;
       ctx.globalAlpha = dim ? 0.4 : 1;
       ctx.stroke();
@@ -1417,21 +1453,19 @@
         const os = nodeStateAt(o, t);
         incident.push(Math.atan2(os.py - s.py, os.px - s.px));
       }
+      const angDist = (x, y) => { const d = Math.abs(x - y) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; };
+      const clearance = (c) => incident.reduce((m, a) => Math.min(m, angDist(c, a)), Math.PI);
+      const outward = Math.atan2(s.py - lcy, s.px - lcx);
+      const hasOutward = Math.hypot(s.px - lcx, s.py - lcy) > 1;
       let theta = 0;
-      if (incident.length) {
+      if (!incident.length) theta = hasOutward ? outward : 0;
+      else if (hasOutward && clearance(outward) >= 0.5) theta = outward; // radially outward when no edge is in the way
+      else {
         const DIRS = [0, Math.PI, -Math.PI / 2, Math.PI / 2, -Math.PI / 4, Math.PI / 4, -3 * Math.PI / 4, 3 * Math.PI / 4];
         let bestClear = -1;
-        for (const c of DIRS) {
-          let nearest = Math.PI;
-          for (const a of incident) {
-            let d = Math.abs(c - a) % (2 * Math.PI);
-            if (d > Math.PI) d = 2 * Math.PI - d;
-            if (d < nearest) nearest = d;
-          }
-          if (nearest > bestClear + 1e-6) { bestClear = nearest; theta = c; }
-        }
+        for (const c of DIRS) { const k = clearance(c); if (k > bestClear + 1e-6) { bestClear = k; theta = c; } }
       }
-      const GAP = r + 9, cs = Math.cos(theta), sn = Math.sin(theta);
+      const GAP = Math.max(18, r + 11), cs = Math.cos(theta), sn = Math.sin(theta);
       const textAlign = cs > 0.35 ? 'left' : cs < -0.35 ? 'right' : 'center';
       const mainBaseline = sn < -0.35 ? s.py + sn * GAP - 2
         : sn > 0.35 ? s.py + sn * GAP + 11
