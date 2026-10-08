@@ -8,7 +8,9 @@ import ReconDashboard from './recondashboard.jsx';
 import CausalImpactView from './causalimpactview.jsx';
 import { inferFormation } from '../../engine/formationinference.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
-import { getAllDomainPressures, MAP_FIELD_WINDOW_MS } from '../../engine/domaingravity.js';
+import { getAllDomainPressures, getDomainSignals, MAP_FIELD_WINDOW_MS } from '../../engine/domaingravity.js';
+import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import { A as adSubjectFor } from '../../engine/adsubject.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
 import { formationIdFor } from '../../engine/formationsnapshot.js';
@@ -164,6 +166,43 @@ function FormationMapTab({ query }) {
     return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows };
   }, [subjScope, domainPressures, fieldFormation, synthesis, ownershipOutcome, rhoTick]);
 
+  // KRYL-1378 -- what the MAP draws beyond the formation graph, all from data that already exists:
+  //  * states: classifyConvergenceState() per domain, the same classifier the cones and the report use, with
+  //    the cones' placeholder constants (T 0.7, confidence 0.8, see DEF-1373); V is the spread of the domain's
+  //    own signal confidences (0 for a single reading), D = A = magnitude / 100.
+  //  * polarity: the domain pressure's own polarity.
+  //  * bound: observations bound to the subject per domain (A(domain, subject).formationObservations).
+  //  * counterparties: the other party of each admitted canonical relationship, with its filing date.
+  const mapExtras = useMemo(() => {
+    const states = {}, polarity = {}, bound = {};
+    for (const [dom, p] of Object.entries(domainPressures)) {
+      polarity[dom] = p.polarity === 'fracture' ? 'fracture' : 'constructive';
+      if (!p.signalCount) { states[dom] = 'INSUFFICIENT SIGNAL'; }
+      else {
+        const vals = getDomainSignals(dom, MAP_FIELD_WINDOW_MS).map(x => (x.confidence ?? 0) / 100);
+        const mean = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
+        const V = vals.length > 1 ? Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) : 0;
+        const mag = (p.magnitude ?? 0) / 100;
+        states[dom] = classifyConvergenceState({ D: mag, V, A: mag, T: 0.7 }, 0.8).label;
+      }
+      if (subjScope.kind === 'ENTITY') {
+        try { bound[dom] = adSubjectFor(dom, subjScope).formationObservations?.length ?? 0; } catch { bound[dom] = 0; }
+      }
+    }
+    const strip = (l) => String(l ?? '').replace(/\s*\(CIK\s*\d+\)\s*$/, '');
+    const subj = (entitySubjectLabel ?? '').toLowerCase();
+    const seen = new Set(), counterparties = [];
+    for (const r of entityRelationships) {
+      for (const part of r.part ?? []) {
+        const name = strip(part);
+        if (!name || name.toLowerCase().startsWith(subj) || subj.startsWith(name.toLowerCase()) || seen.has(name.toLowerCase())) continue;
+        seen.add(name.toLowerCase());
+        counterparties.push({ name: name.toUpperCase(), detail: [r.evidence?.form, r.evidence?.filingDate].filter(Boolean).join(' · ') || 'date n/a' });
+      }
+    }
+    return { states, polarity, bound, counterparties };
+  }, [domainPressures, subjScope, entityRelationships, entitySubjectLabel]);
+
   // KRYL-1332 (Founder, 2026-09-28) -- real bug: switching tabs away from MAP and back remounts
   // this iframe fresh, but `onLoad` (the DOM `load` event) can fire before structure-field.html's
   // own script has finished executing far enough to register its message listener -- a genuine
@@ -252,18 +291,20 @@ function FormationMapTab({ query }) {
   useEffect(() => { entitySubjectLabelRef.current = entitySubjectLabel; }, [entitySubjectLabel]);
   const briefRef = useRef(brief);
   useEffect(() => { briefRef.current = brief; }, [brief]);
+  const extrasRef = useRef(mapExtras);
+  useEffect(() => { extrasRef.current = mapExtras; }, [mapExtras]);
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief }, '*');
-  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras }, '*');
+  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras]);
 
   useEffect(() => {
     function onMapReady(e) {
       if (e.data?.type !== 'krylo-map-ready') return;
       if (!iframeRef.current || e.source !== iframeRef.current.contentWindow) return;
       iframeReady.current = true;
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current, mapExtras: extrasRef.current }, '*');
     }
     window.addEventListener('message', onMapReady);
     return () => window.removeEventListener('message', onMapReady);
@@ -272,7 +313,7 @@ function FormationMapTab({ query }) {
   const handleLoad = () => {
     iframeReady.current = true;
     if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current }, '*');
+      iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormationRef.current, domainSignalCounts: domainSignalCountsRef.current, formationHistory: formationHistoryRef.current, entityRelationships: entityRelationshipsRef.current, entitySubjectLabel: entitySubjectLabelRef.current, brief: briefRef.current, mapExtras: extrasRef.current }, '*');
     }
   };
 

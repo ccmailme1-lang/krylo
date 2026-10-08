@@ -84,6 +84,8 @@
   .brief-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 11px; letter-spacing: 0.1em; color: var(--text-mono); }
   .brief-legend span { display: inline-flex; align-items: center; gap: 7px; }
   .brief-legend i { display: block; width: 10px; height: 10px; border: 1px solid var(--hairline-strong); }
+  .map-key { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 11px; letter-spacing: 0.06em; color: var(--text-mono); }
+  .map-key span { display: inline-flex; align-items: center; gap: 8px; }
   /* No real formation history yet for this query -- the control stays visible and labeled,
      never vanished (vanishing reads as "nothing was ever here," not "no data yet"). The
      label/readout (the explanation) stays at full, normal contrast -- dimming the text that
@@ -310,13 +312,21 @@
 
 <div class="hud scrubber-wrap no-history">
   <div class="under-row">
-  <div class="brief-legend" id="brief-legend">
-    <span><i style="background:#3a3d4a"></i>INSUFFICIENT SIGNAL</span>
-    <span><i style="background:#1a1a1a"></i>LOW SIGNAL YIELD</span>
-    <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
-    <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
-    <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+    <div class="brief-legend" id="brief-legend">
+      <span style="color:var(--light-gray)">FIELD STATE</span>
+      <span><i style="background:none;outline:1.5px solid #3a3d4a;outline-offset:-1.5px"></i>INSUFFICIENT SIGNAL</span>
+      <span><i style="background:#1A1A1A"></i>LOW SIGNAL YIELD</span>
+      <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
+      <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
+      <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
+    </div>
   </div>
+  <div class="map-key" id="map-key">
+    <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="#66FF00" stroke-width="1.5"/></svg>Co-present domain pair</span>
+    <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="#e0e0dc" stroke-width="1.5" stroke-dasharray="4 4"/></svg>Subject relationship</span>
+    <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/></svg>Ring: field state of the domain</span>
+    <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/><circle cx="9" cy="9" r="4" fill="#e0e0dc"/></svg>Core: observations bound to the subject</span>
+    <span>▲ constructive &nbsp;▼ fracture</span>
   </div>
   <div class="brief-block" id="brief-block" hidden>
     <div class="brief-eyebrow">STRUCTURAL BRIEF</div>
@@ -595,6 +605,10 @@
   let NODES = [];
   let EDGES = [];
   let nodeById = {};
+  // KRYL-1378: per-domain classifier state, polarity, subject-bound counts and counterparties, computed in
+  // structurepanel.jsx from existing data and drawn here (this file never classifies or resolves anything).
+  const STATE_COLOR = { 'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1A1A1A', 'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2' };
+  let mapExtras = { states: {}, polarity: {}, bound: {}, counterparties: [] };
   let realFormation = null;        // the received Formation object, or null (genuine absence)
   let hasReceivedFormation = false; // false until the first postMessage arrives (loading state)
 
@@ -700,6 +714,7 @@
       // Structural brief under the map -- computed in structurepanel.jsx (computeBriefSummary, the same
       // function the left column uses); this iframe only renders it, same discipline as above.
       applyBrief(e.data.brief || null);
+      mapExtras = e.data.mapExtras || { states: {}, polarity: {}, bound: {}, counterparties: [] };
     }
   });
 
@@ -1285,25 +1300,14 @@
 
       ctx.save();
       ctx.globalAlpha = (0.22 + r * 0.58) * (related || !hoverId ? 1 : 0.28);
-      ctx.strokeStyle = r > 0.85 ? getVar('--signal-lime') : 'rgba(255,255,255,0.5)';
+      ctx.strokeStyle = e.to === ENTITY_NODE_ID ? '#e0e0dc' : (r > 0.85 ? getVar('--signal-lime') : 'rgba(255,255,255,0.5)');
       ctx.lineWidth = weight * (related ? 1.2 : 1);
       // KRYL-1371: the subject edge (domain -> subject node) is dashed so it reads as a different kind of
       // edge from the field's co-presence edges. Dashed is the mockup's placeholder; final style is the Founder's.
       ctx.setLineDash(e.to === ENTITY_NODE_ID ? [5, 5] : r > 0.85 ? [] : r > 0.4 ? [6, 4] : [1, 4]);
       ctx.beginPath(); ctx.moveTo(a.px, a.py); ctx.lineTo(endX, endY); ctx.stroke();
 
-      if (r > 0.4) {
-        ctx.setLineDash([]);
-        ctx.globalAlpha = clamp01((r - 0.4) / 0.3) * (0.25 + r * 0.55) * (related || !hoverId ? 1 : 0.28);
-        const ah = 5 + weight * 0.6;
-        ctx.beginPath();
-        ctx.moveTo(endX, endY);
-        ctx.lineTo(endX - Math.cos(angle - 0.4) * ah, endY - Math.sin(angle - 0.4) * ah);
-        ctx.lineTo(endX - Math.cos(angle + 0.4) * ah, endY - Math.sin(angle + 0.4) * ah);
-        ctx.closePath();
-        ctx.fillStyle = ctx.strokeStyle;
-        ctx.fill();
-      }
+      // KRYL-1378: no arrowheads. Co-presence between two domains has no direction.
       ctx.restore();
 
       // KRYL-1287/1283 combination, round 2 (2026-09-09) -- structure first, relationship
@@ -1331,6 +1335,36 @@
     let formationIntegrity = 0;
     const lcStates = NODES.map(nn => nodeStateAt(nn, t));
     const lcx = lcStates.reduce((a, q) => a + q.px, 0) / (lcStates.length || 1), lcy = lcStates.reduce((a, q) => a + q.py, 0) / (lcStates.length || 1);
+    // KRYL-1378: named counterparties of the subject's admitted canonical relationships, with their filing dates.
+    // Positions are a layout choice (spread away from the formation); they carry no data.
+    const entN = NODES.find(nn => nn.entity);
+    if (entN && mapExtras.counterparties && mapExtras.counterparties.length) {
+      const es = nodeStateAt(entN, t);
+      const list = mapExtras.counterparties.slice(0, 5);
+      const out0 = Math.atan2(es.py - lcy, es.px - lcx);
+      ctx.save();
+      list.forEach((c, i) => {
+        const ang = out0 + (i - (list.length - 1) / 2) * 0.62, R = 96 + (i % 2) * 22;
+        const px = Math.max(plot.x + 72, Math.min(plot.x + plot.w - 72, es.px + Math.cos(ang) * R));
+        const py = Math.max(plot.y + 34, Math.min(plot.y + plot.h - 34, es.py + Math.sin(ang) * R));
+        ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(224,224,220,0.45)';
+        ctx.beginPath(); ctx.moveTo(es.px, es.py); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.fillStyle = getVar('--node-fill'); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = 1.2; ctx.strokeStyle = '#e0e0dc'; ctx.stroke();
+        const above = py < es.py;
+        ctx.textAlign = 'center';
+        ctx.font = "11px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.9)';
+        ctx.fillText(c.name, px, above ? py - 12 : py + 18);
+        ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
+        ctx.fillText(c.detail, px, above ? py - 24 : py + 30);
+      });
+      if (mapExtras.counterparties.length > list.length) {
+        ctx.textAlign = 'left'; ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
+        ctx.fillText('+' + (mapExtras.counterparties.length - list.length) + ' more in the relationships list', es.px + 16, es.py + 22);
+      }
+      ctx.restore();
+    }
+
     for (const n of NODES) {
       const s = nodeStateAt(n, t);
       n._px = s.px; n._py = s.py;
@@ -1340,13 +1374,15 @@
       // per-node y through the blue<->lime momentum gradient would visually imply a real,
       // measured momentum reading that doesn't exist, even though it now varies node to node.
       // Neutral, undoctrine-coded color instead, for every real node regardless of position.
-      const color = n.entity ? getVar('--signal-lime') : n.unconnected ? '#3a3d4a' : getVar('--text-mono');
+      const stateLabel = n.entity ? null : (mapExtras.states[n.id] ?? null);
+      const color = n.entity ? '#e0e0dc' : (STATE_COLOR[stateLabel] ?? getVar('--text-mono'));
+      const isLow = stateLabel === 'LOW SIGNAL YIELD';
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
       // Entity (subject) node: fixed ring size -- its contribution is not a measurement, so it
       // must not drive the radius the way a domain node's real meanMagnitude does.
       // KRYL-1371: fixed ring sizes as in the mockup (7px domain, 10px subject); radius no longer varies with magnitude.
-      const r = (n.entity ? 10 : 7) * (isHover ? 1.18 : 1);
+      const r = (n.entity ? 10 : 9) * (isHover ? 1.18 : 1); // KRYL-1378: domain rings 9px (mockup)
 
       // KRYL-1337 (2026-10-01) -- real CONTRIBUTION/PROVENANCE/pos (the old click-card's data,
       // now gone) surfaced on hover instead, same calloutStack mechanism edge-relationship text
@@ -1376,7 +1412,7 @@
       const haloAlpha = (0.10 + n.contribution * 0.10) * (dim ? 0.35 : 1);
       for (const o of n._haloOffsets) {
         ctx.beginPath();
-        ctx.fillStyle = color;
+        ctx.fillStyle = isLow ? '#3a3d4a' : color;
         ctx.globalAlpha = haloAlpha;
         ctx.arc(s.px + o.x * haloRadius, s.py + o.y * haloRadius, 1, 0, Math.PI * 2);
         ctx.fill();
@@ -1413,15 +1449,35 @@
         ctx.restore();
       }
 
+      // KRYL-1378: section 6 motion per state (still when the guest prefers reduced motion).
+      let ringAlpha = 1, ringScale = 1, ox = 0, oy = 0, glow = null;
+      if (!n.entity) {
+        const tt = timeMs, TAU = Math.PI * 2;
+        if (stateLabel === 'BUILDING CONVERGENCE') { if (!reduceMotion) ringAlpha = 0.65 + 0.35 * (0.5 + 0.5 * Math.sin(tt * TAU / 2400)); glow = ['rgba(102,255,0,0.55)', 4]; }
+        else if (stateLabel === 'HIGH CONVERGENCE') { if (!reduceMotion) ringScale = 1 - 0.14 * (0.5 + 0.5 * Math.sin(tt * TAU / 3200)); glow = ['rgba(138,43,226,0.5)', 3]; }
+        else if (stateLabel === 'TURBULENT CONVERGENCE' && !reduceMotion) { const J = [[0, 0], [1.5, -1], [-1, 1.5], [1, 1], [-1.5, -0.5], [0, 0]][Math.floor(tt / 150) % 6]; ox = J[0]; oy = J[1]; } // irregular jitter, no glow
+        else if (isLow && !reduceMotion) { ox = 2 * Math.sin(tt * TAU / 9000); oy = -1.5 * Math.sin(tt * TAU / 9000); }
+      }
+      const bx = s.px + ox, by = s.py + oy, rr = r * ringScale;
+      ctx.save();
+      if (glow) { ctx.shadowColor = glow[0]; ctx.shadowBlur = glow[1]; }
       ctx.beginPath();
-      ctx.fillStyle = getVar('--node-fill');
-      ctx.arc(s.px, s.py, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.lineWidth = isHover ? 1.8 : (n.entity ? 2 : 1.5);
-      ctx.strokeStyle = color;
-      ctx.globalAlpha = dim ? 0.4 : 1;
-      ctx.stroke();
-      ctx.globalAlpha = 1;
+      ctx.arc(bx, by, rr, 0, Math.PI * 2);
+      if (isLow) {
+        // #1A1A1A is invisible as a stroke on black: a filled disc with a hairline edge
+        ctx.fillStyle = '#1A1A1A'; ctx.fill();
+        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(224,224,220,0.28)'; ctx.globalAlpha = dim ? 0.4 : 1; ctx.stroke();
+      } else {
+        ctx.fillStyle = getVar('--node-fill'); ctx.fill();
+        ctx.lineWidth = isHover ? 2.4 : (n.entity ? 2.5 : 2); ctx.strokeStyle = color;
+        ctx.globalAlpha = (dim ? 0.4 : 1) * ringAlpha; ctx.stroke();
+      }
+      ctx.restore();
+      // filled core: observations bound to the subject, in the ring's own state color
+      const bound = n.entity ? 0 : (mapExtras.bound[n.id] ?? 0);
+      n._bound = bound;
+      if (bound > 0) { ctx.beginPath(); ctx.fillStyle = color; ctx.globalAlpha = dim ? 0.4 : 1; ctx.arc(bx, by, Math.min(2 + Math.sqrt(bound) * 1.1, 6.5), 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+      if (n.entity) { ctx.beginPath(); ctx.fillStyle = '#e0e0dc'; ctx.arc(bx, by, 4, 0, Math.PI * 2); ctx.fill(); }
 
       // KRYL-1283 -- main label + its provenance/EMERGING subline move as one unit (they
       // belong to the same node), collected as a single collision candidate rather than
@@ -1429,7 +1485,9 @@
       // label has been collected, so collision resolution sees the whole picture at once.
       const mainFont = "15px 'IBM Plex Mono', monospace"; // KRYL-1371: section 7 Medium (mockup); was 11.55px
       ctx.font = mainFont;
-      const mainW = ctx.measureText(n.label).width;
+      const polGlyph = (!n.entity && mapExtras.polarity[n.id]) ? (mapExtras.polarity[n.id] === 'fracture' ? ' ▼' : ' ▲') : '';
+      const labelText = n.label + polGlyph;
+      const mainW = ctx.measureText(labelText).width;
       let subText = null, subFont = null, subFillStyle = null, subW = 0, subIsProvenance = false;
       if (n.provenance) {
         subFont = "8.4px 'IBM Plex Mono', monospace"; // +5% label size
@@ -1438,6 +1496,12 @@
         subW = ctx.measureText(subText).width;
         subFillStyle = 'rgba(255,255,255,0.24)';
         subIsProvenance = true;
+      } else if (n._bound > 0) {
+        subFont = "10.5px 'IBM Plex Mono', monospace";
+        ctx.font = subFont;
+        subText = `${n._bound} bound`;
+        subW = ctx.measureText(subText).width;
+        subFillStyle = 'rgba(255,255,255,0.5)';
       } else if (n.resolved) {
         subFont = "10.5px 'IBM Plex Mono', monospace"; // +5% label size
         ctx.font = subFont;
@@ -1487,8 +1551,8 @@
       nodeLabelCandidates.push({
         node: true, x: boxX, y: boxTop, width, height: boxBottom - boxTop,
         mainOffsetFromTop: mainBaseline - boxTop, subOffsetFromTop: subText ? subBaseline - boxTop : null,
-        mainText: n.label, subText, textAlign, drawX: lx, mainFont, subFont,
-        mainFillStyle: n.unconnected ? 'rgba(255,255,255,0.4)' : n.resolved ? color : 'rgba(255,255,255,0.82)', subFillStyle,
+        mainText: labelText, subText, textAlign, drawX: lx, mainFont, subFont,
+        mainFillStyle: n.resolved ? color : 'rgba(255,255,255,0.82)', subFillStyle,
         globalAlpha: dim ? 0.35 : 1,
       });
     }
