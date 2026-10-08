@@ -16,6 +16,9 @@ import { subjectScope } from '../../engine/subjectscope.js';
 import { frameHeadline } from '../../engine/frameclassify.js';
 import { A as adSubject } from '../../engine/adsubject.js';
 
+// DEF-1374: possessive of a display name ("NVIDIA’s", "Meta Platforms’"); the old line used the lowercase slug ("nvidia's", "meta-platforms's").
+const possessive = (name) => (/s$/i.test(String(name)) ? `${name}’` : `${name}’s`);
+
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
 const BLUE = '#007FFF';
@@ -252,7 +255,7 @@ function DomainScroll({ domain, scope, pressure }) {
         )}
         {fc && fc.signalCount > 0 && (
           <span style={{ fontFamily: MONO, fontSize: 8, color: LBL, letterSpacing: '0.06em', lineHeight: 1.6, marginTop: 4 }}>
-            field context — {domain} pressure {Number(fc.magnitude).toFixed(0)} ({fc.polarity === 'fracture' ? 'fracture' : 'constructive'}), {fc.signalCount} signal{fc.signalCount === 1 ? '' : 's'}. FIELD SCOPE — not {scoped ? `${ad.subject}'s` : 'the subject’s'} answer.
+            field context — {domain} pressure {Number(fc.magnitude).toFixed(0)} ({fc.polarity === 'fracture' ? 'fracture' : 'constructive'}), {fc.signalCount} signal{fc.signalCount === 1 ? '' : 's'}. FIELD SCOPE — not {scoped ? possessive(scope?.entity?.name ?? ad.subject) : 'the subject’s'} answer.
           </span>
         )}
       </Panel>

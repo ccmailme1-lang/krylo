@@ -5,14 +5,14 @@ Jira is the record (project KRYL). Two flavors: requests are `KRYL-xxxx` (Task);
 | # | Ticket | Type | What it is | State | Why this rank | Needs from the Founder |
 |---|---|---|---|---|---|---|
 | 0 | (action) | Action | Push local `main` to GitHub | 17+ local commits | Claude Web works from stale `main` and its drafts are wrong because of it | "push" |
-| 1 | KRYL-1372 | Request | Query Contract (wrong subject on four production fixtures) | v1 built on Dev, Backlog | A guest is shown the wrong subject; blocks KRYL-1370 results | Validate in the live app; name the deal-evaluation objective; re-save spec (full text is in `specs/`) |
-| 2 | DEF-1375 | Defect | Pool: repeat ids dropped, 5-min window < 15-min EDGAR poll | refresh fix built on Dev; window value open; not on Prod | The MAP empties on Prod after about 5 minutes | Window value (30 min proposed) and a Deploy-to-Prod ticket path |
-| 3 | KRYL-1371 | Request | MAP cleanup per mockup | built on Dev, Backlog | Largest guest-visible change; ready to validate | Validate on localhost; then status moves |
-| 4 | DEF-1369 | Defect | Brief sentence: field level vs subject level | built on Dev, Backlog | Spec section 17 divergence, fixed | Validate; status move |
+| 1 | KRYL-1372 | Request | Query Contract (wrong subject on four production fixtures) | v1 built on Dev, Review | A guest is shown the wrong subject; blocks KRYL-1370 results | Validate in the live app; name the deal-evaluation objective; re-save spec (full text is in `specs/`) |
+| 2 | DEF-1375 | Defect | Pool: repeat ids dropped, 5-min window < 15-min EDGAR poll | built on Dev (30-min map window proposed), Review; not on Prod | The MAP empties on Prod after about 5 minutes | Window value (30 min proposed) and a Deploy-to-Prod ticket path |
+| 3 | KRYL-1371 | Request | MAP cleanup per mockup | built on Dev, Review | Largest guest-visible change; ready to validate | Validate on localhost; then status moves |
+| 4 | DEF-1369 | Defect | Brief sentence: field level vs subject level | built on Dev, Review | Spec section 17 divergence, fixed | Validate; status move |
 | 5 | KRYL-1368 | Request | MAP brief/legend/scrubber layout | built on Dev (overlaps 1371), Backlog | Reconcile with 1371 so Jira matches the code | Say whether to close as covered by 1371 |
 | 6 | DEF-1373 | Defect | Classifier placeholders, TURBULENT unreachable, MAP legend | not started | Legend currently shows states the MAP cannot draw | Define T (temporal alignment) |
 | 7 | KRYL-1370 (Spike) | Spike | JPMorgan benchmark classification | 14 queries run, provisional | Informs 1372 and 1373 | Go on reviewing per-domain evidence |
-| 8 | DEF-1374 | Defect | Possessive grammar ("nvidia's") | not started, Lightweight | Quick, no decisions | Go |
+| 8 | DEF-1374 | Defect | Possessive grammar ("nvidia's") | built on Dev, Review (Lightweight) | Quick, no decisions | Go |
 | 9 | KRYL-1376 | Request | MAP 0.72 scale vs section 7 text sizes | not started | Contract question on screen sizes | Choose (a) or (b) |
 | 10 | KRYL-1377 (Spike) | Spike | Header state label beside unresolved subject | investigation | Possible section 17 mismatch | Go |
 | 11 | KRYL-1365 | Request | Scrubber change marks | on Prod since 10-05, browser check open | Verification only | Prod check |

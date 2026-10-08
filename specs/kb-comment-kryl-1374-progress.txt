@@ -1,0 +1,1 @@
+Built on Dev (localhost) 2026-10-08. domainsubstratetabs.jsx now builds the possessive from the entity's display name (scope.entity.name, falling back to the slug): 'not NVIDIA’s answer', 'not Meta Platforms’ answer', 'not SpaceX’s answer'; the unscoped wording 'the subject’s' is unchanged. Presentation only (Lightweight tier). qa_adsubject 52/52. Not deployed; no Prod change.
