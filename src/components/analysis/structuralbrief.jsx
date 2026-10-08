@@ -58,7 +58,7 @@ function Row({ label, children }) {
 
 // KRYL (2026-10-06): the brief headline and summary sentence as one pure function, so the MAP panel
 // (structurepanel.jsx) shows exactly the text this component shows -- one computation, two surfaces.
-export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false }) {
+export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false, ambientFormation = null }) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
   // KRYL-1372: a subject the Query Contract selected but the registry could not resolve stays the subject.
@@ -78,7 +78,11 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   const domainLines = (activeDomainPressures ?? []).slice().sort((a, b) => b.signalCount - a.signalCount);
 
   const edges = fieldFormation?.graph?.edges ?? [];
-  const relationshipCount = edges.length;
+  // DEF (2026-10-08): `fieldFormation` is subject-scoped for an ENTITY (only that subject's particles); the
+  // field-level pair count must come from the whole-field formation (`ambientFormation`) when one is given, or
+  // the field-level sentence reports the subject's pairs and disagrees with the MAP.
+  const subjectEdgeCount = edges.length;
+  const relationshipCount = ambientFormation ? (ambientFormation.graph?.edges?.length ?? 0) : edges.length;
   const observationTotal = domainLines.reduce((s, p) => s + p.signalCount, 0);
 
   // KRYL-1332 (Founder, 2026-09-28): "What is the structural relationship around one or more
@@ -110,7 +114,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     ? domainLines.reduce((n, p) => n + (A(p.domain, subjScope).formationObservations?.length ?? 0), 0)
     : 0;
   const subjectLevel = subjectBoundCount > 0
-    ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}.`
+    ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
     : ` Subject level: no observations bound to ${subjectLabel} yet.`;
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
@@ -144,7 +148,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
         : 'fewer than two domains are connected. ') +
       `Field-level, not bound to ${subjectLabel}.`,
     subject: subjectBoundCount > 0
-      ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}.`
+      ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
       : `No observations bound to ${subjectLabel} yet.`,
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}`
@@ -166,7 +170,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence, rows };
 }
 
-export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, structuralQuery }) {
+export default function StructuralBrief({ subjScope, question, domainPressures, activeDomainPressures, fieldFormation, ambientFormation = null, structuralQuery }) {
   const isEntity = subjScope?.kind === 'ENTITY';
 
   // Real bug found live 2026-10-03 (confirmed twice: JPMorgan Chase, then Goldman Sachs): this
@@ -200,7 +204,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
     : [];
   const ownershipFailure = isEntity ? lookup.error : null;
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
-    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
+    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation,
   });
 
 

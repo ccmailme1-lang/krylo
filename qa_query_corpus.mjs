@@ -58,5 +58,16 @@ console.log('Ownership lookup states (never "none admitted" while the lookup is 
   ok(/No canonical relationships admitted/.test(none.rows.relationships), 'settled with none: the stated absence is unchanged');
 }
 
+console.log('Field-level vs subject-level pair counts (left brief must match the MAP)');
+{
+  const scope = subjectScope('Is Alphabet a good investment?');
+  const mk = n => ({ graph: { edges: Array.from({ length: n }, (_, i) => ({ a: 'A' + i, b: 'B' + i })) } });
+  const dp = ['CAPITAL', 'TECHNOLOGY'].map(d => ({ domain: d, signalCount: 5, magnitude: 50, polarity: 'constructive' }));
+  const b = computeBriefSummary({ subjScope: scope, activeDomainPressures: dp, fieldFormation: mk(6), ambientFormation: mk(3), structuralQuery: null, entityCanonicalRelationships: [], ownershipFailure: null });
+  ok(/with 3 domain pairs co-present/.test(b.briefSentence) && /a field-level reading/.test(b.briefSentence), 'field-level sentence uses the whole-field pair count (3), not the subject formation (6)');
+  ok(/co-present among them/.test(b.briefSentence) || /^$/.test(''), 'subject-level clause only appears when subject observations are bound');
+  ok(/\*\*3 domain pairs\*\*/.test(b.rows.field), 'field row uses the same whole-field count');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

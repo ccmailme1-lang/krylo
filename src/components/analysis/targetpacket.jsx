@@ -429,6 +429,14 @@ export default function TargetPacket() {
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures, subjScope, refreshTick]);
+  // DEF (2026-10-08): the whole-field formation (no subject, the MAP's 30-min window), for the brief's field-level
+  // pair count. fieldFormation above is subject-scoped for an ENTITY, so it cannot be the field-level number.
+  const ambientFormation = useMemo(() => {
+    try {
+      const field = buildPerceptionField({ now: Date.now(), windowMs: MAP_FIELD_WINDOW_MS });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures, refreshTick]);
   // RECONN canonical payload (KRYL-1311 Category A, commit 4d76b96) — the architecture diagram's
   // SUBSTRATE -> RECONN step, computed explicitly before Narrative Assembly consumes it.
   const reconnPayload = useMemo(
@@ -600,6 +608,7 @@ export default function TargetPacket() {
           domainPressures={domainPressures}
           activeDomainPressures={activeDomainPressures}
           fieldFormation={fieldFormation}
+          ambientFormation={ambientFormation}
           structuralQuery={synthesis?.structuralQuery}
         />
 

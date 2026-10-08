@@ -133,6 +133,15 @@ function FormationMapTab({ query }) {
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures]);
+  // The same subject-scoped formation the left brief reads (only this subject's particles), so the two briefs state
+  // the same subject-level pair count. The plot itself keeps the whole-field fieldFormation above.
+  const subjectFormation = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return null;
+    try {
+      const field = buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId });
+      return field.particles.length ? inferFormation(field.particles) : null;
+    } catch { return null; }
+  }, [domainPressures, subjScope, rhoTick]);
 
   // Structural brief shown under the map (Founder, 2026-10-06). Same text the left column shows:
   // computeBriefSummary() is the one computation (structuralbrief.jsx); the session/synthesis are
@@ -150,12 +159,12 @@ function FormationMapTab({ query }) {
       : [];
     const ownershipFailure = subjScope.kind === 'ENTITY' ? lookup.error : null;
     const { subjectLabel, briefSentence, rows } = computeBriefSummary({
-      subjScope, activeDomainPressures, fieldFormation,
+      subjScope, activeDomainPressures, fieldFormation: subjScope.kind === 'ENTITY' ? subjectFormation : fieldFormation, ambientFormation: fieldFormation,
       structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
     });
     const attribution = subjScope?.contract?.subject?.attribution ?? null;
     return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows, attribution };
-  }, [subjScope, domainPressures, fieldFormation, synthesis, lookup.error, lookup.pending, rhoTick]);
+  }, [subjScope, domainPressures, fieldFormation, subjectFormation, synthesis, lookup.error, lookup.pending, rhoTick]);
 
   // KRYL-1378 -- what the MAP draws beyond the formation graph, all from data that already exists:
   //  * states: classifyConvergenceState() per domain, the same classifier the cones and the report use, with
