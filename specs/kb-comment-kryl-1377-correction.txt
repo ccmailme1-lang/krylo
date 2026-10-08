@@ -1,0 +1,1 @@
+Correction to the description: the stateLabel 'NEGOTIATION OPEN' is in src/engine/querysynthesis.js (around line 808), a per-query-type label found by search. The phrase 'querycontract-independent code at' in the description is a typo and means nothing.
