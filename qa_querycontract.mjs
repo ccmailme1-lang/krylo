@@ -121,6 +121,25 @@ console.log('Resolved subject displaced by a longer-named resolved mention (Goog
   ok(subjectScope('Is Google a good investment?').canonicalId === 'alphabet', 'short form unchanged (ENTITY alphabet)');
 }
 
+console.log('Article-shaped inputs (stress test findings)');
+{
+  const c = buildQueryContract('Is this a good investment? Anthropic Raises $5 Billion Series F Led By Lightspeed, Valuing The AI Lab At $180 Billion. Google and Amazon are existing backers.');
+  ok(c.subject.text === 'Anthropic' && c.subject.attribution === 'RESOLVED', 'headline: "Anthropic Raises ..." -> subject Anthropic (headline verb trimmed, resolves)');
+  ok(c.mentions.every(m => m.text.split(' ').length <= 3) && c.mentions.some(m => m.text === 'Google'), 'headline junk is not a mention; Google is');
+}
+{
+  const c = buildQueryContract('Is this a good investment? The company, a Delaware corporation founded in 2019, builds battery recycling plants. Tesla is a customer.');
+  ok(c.subject.attribution === 'NONE', '"The company ..." has no named lead -> NONE (not Delaware, not Tesla)');
+}
+{
+  const c = buildQueryContract('Is this a good deal? Capital, Client opportunity Kenya sought to refinance its 2028 Eurobond. JPMorgan led the exchange offer.');
+  ok(c.subject.text === 'Kenya' && c.subject.attribution === 'UNRESOLVED' && c.objective === OBJECTIVES.DEAL_EVALUATION, 'sovereign (Kenya): subject kept, deal evaluation');
+}
+{
+  const c = buildQueryContract('Good merger? Salesforce / Slack Salesforce announced the $27.7B acquisition of Slack.');
+  ok(c.subject.text === 'Salesforce / Slack', 'combined "A / B" subject still kept whole after the prefix refinement');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';

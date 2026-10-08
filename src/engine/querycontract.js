@@ -48,6 +48,12 @@ const COMPARE_BEFORE = /(?:\bvs\.?|\bthan|\bversus|\bsuperior to|\bcompared (?:t
 
 const NOISE_MENTIONS = new Set(['AI', 'US', 'UK', 'EU', 'CEO', 'CFO', 'CTO', 'IPO', 'USD', 'ETF', 'LLC', 'Inc', 'Ltd']);
 
+// Headline verbs that ride along in a Title-Case headline run ("Anthropic Raises ..."): trimmed off a subject.
+const HEADLINE_VERBS = new Set(['raises','raised','announces','announced','acquires','acquired','launches','launched','reports','reported',
+  'names','named','plans','planned','says','said','files','filed','secures','secured','hits','gets','cuts','buys','sells','signs','signed',
+  'wins','faces','posts','sees','eyes','targets','lifts','boosts','tops','beats','misses','unveils','expands','leads','led','joins','lands',
+  'closes','exits','enters','partners','backs','bets','seeks','sought','weighs','explores','nears','reaches','hires','appoints']);
+
 const stripPoss = (w) => w.replace(/['’]s$/i, '');
 const isCapToken = (w) => /^[A-Z][A-Za-z0-9.'’&-]*$/.test(w);
 const isConnector = (w) => w === '/' || w === '&' || /^(?:of|de|von|van|and)$/i.test(w);
@@ -120,6 +126,38 @@ function splitAnd(runs) {
   return out;
 }
 
+// A lead run may carry headline words: prefer the longest prefix that resolves to a registry entity
+// ("Anthropic Raises" -> "Anthropic"); otherwise trim trailing headline verbs. Combined subjects ("A / B") are kept whole.
+function refineRun(run) {
+  if (!run.includes('/')) {
+    for (let k = run.length; k >= 1; k--) {
+      const cand = run.slice(0, k), txt = runText(cand);
+      if (resolve(txt) || resolve(txt.replace(/^the\s+/i, ''))) return cand;
+    }
+  }
+  const r = run.slice();
+  while (r.length > 1 && HEADLINE_VERBS.has(stripPoss(r[r.length - 1]).toLowerCase())) r.pop();
+  return r;
+}
+
+// A long Title-Case run (a headline) is not one name: keep only the sub-phrases the registry resolves.
+function expandLongRuns(runs) {
+  const out = [];
+  for (const run of runs) {
+    const inner = run.slice(1);
+    const nameLike = run.length <= 4 && !inner.some(w => (STEMS.has(stripPoss(w).toLowerCase()) && !/^(?:of|de|von|van|and)$/i.test(w)) || HEADLINE_VERBS.has(stripPoss(w).toLowerCase()));
+    if (nameLike || resolve(runText(run))) { out.push(run); continue; }
+    for (let i = 0; i < run.length; ) {
+      let hit = 0;
+      for (let k = Math.min(3, run.length - i); k >= 1; k--) {
+        if (resolve(runText(run.slice(i, i + k)))) { out.push(run.slice(i, i + k)); hit = k; break; }
+      }
+      i += hit || 1;
+    }
+  }
+  return out;
+}
+
 function leadTitle(run) {
   const first = stripPoss(run[0]);
   for (let k = 1; k < run.length; k++) {
@@ -179,10 +217,11 @@ export function buildQueryContract(input) {
     subjectRun = qRuns[0]; rule = 'EXPLICIT_IN_QUESTION';
   } else if (cRuns.length) {
     // The supplied content's own lead phrase, only when it is at the very start of the content.
-    const startsWithName = /^(?:The\s+)?[A-Z]/.test(body);
+    const firstRaw = namedRuns(body)[0];
+    const startsWithName = !!firstRaw && !isNoise(firstRaw) && body.startsWith(firstRaw[0]);
     if (startsWithName) {
       const lt = leadTitle(cRuns[0]);
-      subjectRun = lt.run;
+      subjectRun = refineRun(lt.run);
       rule = lt.repeated ? 'TITLE_REPEAT' : 'LEAD_NAME';
     } else if (all.length === 1) {
       subjectRun = all[0]; rule = 'SINGLE_ENTITY';
@@ -204,10 +243,10 @@ export function buildQueryContract(input) {
 
   // Every other named phrase is a mention, never the subject. COMPARISON when it follows a comparison cue.
   const seen = new Set([subjText.toLowerCase(), ...subjectRun.map(w => stripPoss(w).toLowerCase())]);
-  for (const run of all) {
+  for (const run of expandLongRuns(all)) {
     const t = runText(run).replace(/['’]s$/i, '');
     const key = t.toLowerCase();
-    if (seen.has(key) || run.every(w => seen.has(stripPoss(w).toLowerCase()))) continue;
+    if (seen.has(key) || key.startsWith(subjText.toLowerCase() + ' ') || run.every(w => seen.has(stripPoss(w).toLowerCase()))) continue;
     seen.add(key);
     if (run.length === 1 && NOISE_MENTIONS.has(run[0])) continue;
     const at = queryText.indexOf(run[0]);
