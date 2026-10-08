@@ -251,6 +251,15 @@ answer these six questions for entire ticket clusters (e.g. KRYL-1158–1170 Flo
 chain, KRYL-1193/1197/1199 VALIDATE cluster) — the clusters were visible, but not resolvable to
 intent or current state without opening each ticket individually.*
 
+**Ticket naming (LOCKED, Founder 2026-10-08).** Two flavors, one numbering authority (Jira):
+- **Request:** `KRYL-xxxx`, issue type Task, plain summary.
+- **Defect:** issue type Bug, summary prefixed `DEF-xxxx:` with the SAME number as its KRYL key
+  (KRYL-1359 = "DEF-1359: ..."). `DEF-xxxx` is the standard; `(Defect)` suffixes are not used.
+- **Any other flavor** (technical spike, research, tech debt) stays a Task and is noted in the name:
+  `KRYL-xxxx (Spike): <summary>`.
+The number is only known after creation, so create the ticket, then rename the summary in the same step
+(`scripts/jira-update-summary.mjs`).
+
 ## 11. Agent Behavioral Constraints
 
 **Explicit go required.** State what will change and what won't; wait for explicit "go" before
