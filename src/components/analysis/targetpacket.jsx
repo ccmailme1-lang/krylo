@@ -425,7 +425,7 @@ export default function TargetPacket() {
   const fieldFormation = useMemo(() => {
     try {
       const subject = subjScope.kind === 'ENTITY' ? subjScope.canonicalId : undefined;
-      const field = buildPerceptionField({ now: Date.now(), subject });
+      const field = buildPerceptionField({ now: Date.now(), subject, windowMs: MAP_FIELD_WINDOW_MS }); // one window everywhere (DEF-1383)
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures, subjScope, refreshTick]);

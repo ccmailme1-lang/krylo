@@ -138,7 +138,7 @@ function FormationMapTab({ query }) {
   const subjectFormation = useMemo(() => {
     if (subjScope.kind !== 'ENTITY') return null;
     try {
-      const field = buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId });
+      const field = buildPerceptionField({ now: Date.now(), subject: subjScope.canonicalId, windowMs: MAP_FIELD_WINDOW_MS });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures, subjScope, rhoTick]);
