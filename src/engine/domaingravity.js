@@ -16,6 +16,17 @@ import { POLARITY }       from './signalconstants.js';
 
 export const DEFAULT_WINDOW_MS = 300_000; // 5 min — matches surfacerouter oracle TTL
 
+// DEF-1375: the MAP's own field window. DEFAULT_WINDOW_MS (5 min) is shorter than the slowest feed's polling
+// interval (EDGAR Form D polls every 15 min, useedgarsignals.js), so EDGAR-sourced entries were visible for
+// 5 of every 15 minutes and the map emptied between polls. 30 min = 2x the slowest poll, the same 2x ratio
+// this module already prunes at. Value is the Founder's to change; used by structurepanel.jsx only.
+export const MAP_FIELD_WINDOW_MS = 1_800_000;
+
+// How long an entry is kept in the pool (memory bound only: every read filters by its own window, so keeping
+// entries longer changes no reader's result). Must cover MAP_FIELD_WINDOW_MS plus a margin; it was
+// DEFAULT_WINDOW_MS * 2 (10 min), which deleted entries before a 30-min read could see them.
+export const POOL_RETENTION_MS = 2_100_000; // 35 min
+
 // 40%+ fracture signals in window → domain polarity = 'fracture'
 export const FRACTURE_POLARITY_THRESHOLD = 0.40;
 
@@ -124,7 +135,7 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
   else arr.push(entry);
 
   // Prune entries beyond 2× window to bound memory
-  const cutoff = Date.now() - DEFAULT_WINDOW_MS * 2;
+  const cutoff = Date.now() - POOL_RETENTION_MS;
   _pool.set(domain, _pool.get(domain).filter(s => s.ts >= cutoff));
 });
 

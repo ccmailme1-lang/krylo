@@ -8,7 +8,7 @@ import ReconDashboard from './recondashboard.jsx';
 import CausalImpactView from './causalimpactview.jsx';
 import { inferFormation } from '../../engine/formationinference.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
-import { getAllDomainPressures } from '../../engine/domaingravity.js';
+import { getAllDomainPressures, MAP_FIELD_WINDOW_MS } from '../../engine/domaingravity.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
 import { formationIdFor } from '../../engine/formationsnapshot.js';
@@ -76,7 +76,7 @@ function FormationMapTab({ query }) {
     fieldTickTimer.current = setTimeout(() => setFieldTick(n => n + 1), 950);
   });
   useEffect(() => () => clearTimeout(fieldTickTimer.current), []);
-  const domainPressures = useMemo(() => getAllDomainPressures(), [query, fieldTick]);
+  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [query, fieldTick]); // DEF-1375: map-only 30-min window
 
   // Supplier Structural Intelligence (specs/SPEC-external-supplier-structural-intelligence.md) --
   // the "real, separate, not-yet-authorized follow-on" the comment above named is this. Reuses
@@ -137,7 +137,7 @@ function FormationMapTab({ query }) {
   }, [subjScope, rhoTick]); // rhoTick: NODE_LABELS is filled by the same async admission
   const fieldFormation = useMemo(() => {
     try {
-      const field = buildPerceptionField({ now: Date.now() });
+      const field = buildPerceptionField({ now: Date.now(), windowMs: MAP_FIELD_WINDOW_MS });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
   }, [domainPressures]);
