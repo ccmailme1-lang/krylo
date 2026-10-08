@@ -707,7 +707,7 @@ export default function App() {
   const { state: prismState } = usePrism();
   const viewportLens = prismState?.activeLens ?? 'NAV_SURFACE'; // KRYL-1034/KRYL-1165/KRYL-1171 — lens must reach the cone map pre-activation too; NAV_SURFACE is the safe landing default, OBSERVE is now an explicit choice
 
-  const [navMode, setNavMode]           = useState('surface');
+  const [navMode, setNavMode]           = useState('analysis'); // DEF-1379: home = Analysis on a fresh load too (Founder 2026-10-05), same state as a logo click
   const [surfaceExpanded, setSurfaceExpanded] = useState(false);
   const [surfaceActivated, setSurfaceActivated] = useState(false);
 
@@ -1150,7 +1150,7 @@ export default function App() {
   // fixes the stale-state error after leaving and returning to the map, without a full page reload.
   const [mapResetKey, setMapResetKey] = useState(0);
   // Marquee over Analysis: shown ONLY after a logo click (home). Cleared by any other navigation.
-  const [homeMarquee, setHomeMarquee] = useState(false);
+  const [homeMarquee, setHomeMarquee] = useState(true); // DEF-1379: initial landing = logo-click landing
   useEffect(() => {
     function onReset(ev) {
       if (ev.data?.type !== 'krylo-reset') return;
