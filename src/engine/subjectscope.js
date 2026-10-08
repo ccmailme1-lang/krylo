@@ -84,6 +84,24 @@ export function subjectScope(input) {
     };
   }
 
+  // A selected subject that DOES resolve is returned as the ENTITY. Without this, the legacy scan below
+  // picks the resolvable mention with the longest name anywhere in the text, so "Is Google a good
+  // investment? ... Alphabet owns a stake in Anthropic ..." came back as ENTITY anthropic (the longer name
+  // won the tie). The selected subject, not the longest mention, is the subject.
+  if (selected.attribution === 'RESOLVED' && selected.canonicalId) {
+    const e = resolve(selected.text) ?? resolve(selected.text.replace(/^the\s+/i, ''));
+    if (e && e.canonicalId === selected.canonicalId) {
+      return {
+        kind: 'ENTITY',
+        canonicalId: e.canonicalId,
+        entity: { canonicalId: e.canonicalId, name: e.canonicalName, identifiers: e.identifiers ?? {}, domainTags: e.domainTags ?? [] },
+        matchedOn: selected.text,
+        confidence: e.confidence,
+        contract,
+      };
+    }
+  }
+
   // 1. ENTITY — the strongest binding. Try every candidate, keep the best match.
   let best = null;
   for (const cand of nameCandidates(text)) {

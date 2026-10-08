@@ -110,6 +110,17 @@ console.log('Phrasing matrix (trailing question, buy/sell, multiple names, compa
   ok(c.subject.text === 'Salesforce / Slack' && c.objective === OBJECTIVES.DEAL_EVALUATION, 'combined-entity subject kept whole');
 }
 
+console.log('Resolved subject displaced by a longer-named resolved mention (Google / Anthropic)');
+{
+  const g = "Is Google a good investment? Google (GOOG) (GOOGL) is a name I've been bullish on for years, as it was actually one of the first individual stocks I ever bought. Alphabet owns a large stake in Anthropic, and Anthropic's valuation keeps rising.";
+  const c = buildQueryContract(g);
+  ok(c.subject.text === 'Google' && c.subject.attribution === 'RESOLVED' && c.subject.canonicalId === 'alphabet', 'contract: subject = Google (alphabet)');
+  const s = subjectScope(g);
+  ok(s.kind === 'ENTITY' && s.canonicalId === 'alphabet', 'subjectScope: ENTITY alphabet, not anthropic (the longest mention no longer wins)');
+  ok(c.mentions.some(m => m.text === 'Anthropic' && m.role === 'CONTEXT'), 'Anthropic is a CONTEXT mention');
+  ok(subjectScope('Is Google a good investment?').canonicalId === 'alphabet', 'short form unchanged (ENTITY alphabet)');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';
