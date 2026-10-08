@@ -1,6 +1,6 @@
 # DEF-1373 — Temporal Alignment & Classifier Reachability, reconciled to the five locked states
 
-Version: v0.5-DRAFT · 2026-10-08 · Founder rulings 1-5 applied (2026-10-08). For review. Not approved. No code until approved.
+Version: v0.5-DRAFT · 2026-10-08 · Founder rulings 1-6 applied (2026-10-08). For review. Not approved. No code until approved.
 
 Supersedes, as a draft only, `spec-def-1373-temporal-alignment-classifier-v0.3.4-M-20261008.md`. Per the Founder's ruling (2026-10-08): the new T and V' feed the **existing five-state model**; the five locked states and colors of CLAUDE.md section 6 are unchanged; no MEDIUM or UNCERTAIN product state; HIGH CONVERGENCE keeps its meaning; INSUFFICIENT SIGNAL covers missing or invalid evidence.
 
@@ -41,9 +41,9 @@ Motion and bloom per state: unchanged (CLAUDE.md section 6; MAP motion per KRYL-
 4. TURBULENT: **no magnitude gate**.
 5. D and A: **kept separate**.
 
-### Left open (a question, not decided)
+6. HIGH CONVERGENCE temporal threshold: **T >= 0.65** (Founder, 2026-10-08; the original classifier used 0.6).
 
-- HIGH's temporal threshold: the original classifier used `T >= 0.6`; v0.3.4-M's approved threshold is 0.65. This draft uses 0.65. Keep 0.65 or return to 0.6?
+Nothing is left open in this section.
 
 ## 6. Callers to change (after approval)
 
