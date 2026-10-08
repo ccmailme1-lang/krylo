@@ -1076,7 +1076,14 @@
   }
   relChipEl.addEventListener('click', () => setEntityPanelOpen(!entityPanelOpen));
 
+  let lastEntitySubject = null;
   function applyEntityRelationships(relationships, subjectLabel) {
+    // A new subject (a new query) starts with the list closed: an open panel from the previous query would sit
+    // over this query's plot uninvited. The guest re-opens it with the chip.
+    if (subjectLabel !== lastEntitySubject) {
+      lastEntitySubject = subjectLabel;
+      if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
+    }
     syncEntityNode(relationships, subjectLabel);
     entityRelsData = relationships || [];
     if (entityRelsData.length === 0) {
