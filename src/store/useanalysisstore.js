@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import { loadProfile } from '../engine/userprofile.js';
 import { buildQueryContext } from '../engine/querycontext.js';
 import { buildAnalysisIntent } from '../engine/analysisintent.js';
+import { buildQueryContract } from '../engine/querycontract.js';
 
 // Stable action skeleton — IDs assigned at session construction, never at render.
 function buildActionSkeleton() {
@@ -57,6 +58,9 @@ export const useAnalysisStore = create((set) => ({
           lens: resolvedLens,
           query,
           queryContext,
+          // KRYL-1372: the one Query Contract for this analysis, built once from the submitted input here.
+          // Additive: subjectScope() derives from the same pure function; consumers migrate to read this.
+          queryContract: (typeof query === 'string' && query.trim()) ? buildQueryContract(query) : null,
           tensor: sessionTensor,
           targets:    [],
           signals:    [],

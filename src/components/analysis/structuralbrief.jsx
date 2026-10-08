@@ -60,9 +60,14 @@ function Row({ label, children }) {
 export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure }) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
+  // KRYL-1372: a subject the Query Contract selected but the registry could not resolve stays the subject.
+  const selectedSubject = !isEntity ? (subjScope?.subject?.text ?? null) : null;
+  const selectedObjective = !isEntity ? (subjScope?.subject?.objective ?? null) : null;
   const subjectLabel = isEntity
     ? subjScope.entity.name
-    : structurallyInterpretable
+    : selectedSubject
+      ? selectedSubject
+      : structurallyInterpretable
       ? `STRUCTURAL PARTICIPANTS: ${structuralQuery.entities.join(', ')}`
       : 'FIELD SCAN — NO SUBJECT RESOLVED';
 
@@ -111,6 +116,10 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     ? (relationshipCount > 0
         ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`
         : `${fieldLevelOpen}but fewer than two domains are connected — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`)
+    : selectedSubject
+      ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it. ` +
+        `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
+        `${relationshipCount > 0 ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present` : 'but fewer than two domains are connected'} — a field-level reading, not bound to ${selectedSubject}.`
     : structurallyInterpretable
       ? (entityRelPairs.length
           ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
@@ -148,8 +157,10 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
           ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present. `
           : 'fewer than two domains are connected. ') + 'Field-level.'
       : 'No domain shows active signal for this field yet.',
-    subject: 'No subject resolved.',
-    relationships: 'None, because no subject was resolved.',
+    subject: selectedSubject
+      ? `**${selectedSubject}** selected${selectedObjective ? `; objective ${selectedObjective}` : ''}; entity not resolved.`
+      : 'No subject resolved.',
+    relationships: selectedSubject ? 'None, because the subject entity is not resolved.' : 'None, because no subject was resolved.',
   } : null;
   return { isEntity, structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence, rows };
 }

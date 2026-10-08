@@ -20,6 +20,7 @@
 
 import { resolve } from './entityresolution.js';
 import { classifyFrame } from './frameclassify.js';
+import { buildQueryContract } from './querycontract.js';
 
 const TRIM_WORDS = new Set([
   // question / auxiliary stems
@@ -67,6 +68,22 @@ export function subjectScope(input) {
 
   if (!text) return { kind: 'UNRESOLVED', reason: 'empty query' };
 
+  // 0. QUERY CONTRACT (KRYL-1372) -- the subject is SELECTED first, then resolved. A subject the contract
+  // selected but the registry cannot resolve stays the subject (attribution UNRESOLVED); it is not
+  // replaced by a different entity that merely appears in the text (a contextual mention).
+  const { builtAt, ...contract } = buildQueryContract(text); // builtAt omitted here so subjectScope() stays deterministic
+  const selected = contract.subject;
+  const strongRule = contract.selectionRule === 'TITLE_REPEAT' || contract.selectionRule === 'LEAD_NAME'
+    || contract.selectionRule === 'EXPLICIT_IN_QUESTION';
+  if (selected.attribution === 'UNRESOLVED' && selected.text && strongRule) {
+    return {
+      kind: 'UNRESOLVED',
+      reason: 'subject selected but not resolved to a registry entity',
+      subject: { text: selected.text, attribution: 'UNRESOLVED', selectionRule: contract.selectionRule, objective: contract.objective },
+      contract,
+    };
+  }
+
   // 1. ENTITY — the strongest binding. Try every candidate, keep the best match.
   let best = null;
   for (const cand of nameCandidates(text)) {
@@ -89,6 +106,7 @@ export function subjectScope(input) {
       },
       matchedOn: best.matchedOn,
       confidence: best.confidence,
+      contract,
     };
   }
 
