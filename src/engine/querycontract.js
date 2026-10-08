@@ -193,7 +193,16 @@ export function buildQueryContract(input) {
   const base = { subject: { text: '', canonicalId: null, attribution: 'NONE' }, objective: null, mentions: [], selectionRule: 'NONE', queryText, builtAt: Date.now() };
   if (!queryText) return base;
 
-  const { question, content } = splitQuestion(queryText);
+  // Pasted prompts often arrive as markdown ("**Question:** ... **Target:** ## Name ..."). The emphasis marks, heading
+  // hashes and the Question/Target labels are formatting, not content: strip them before selecting, or the first
+  // named run is "Question" / "Target" and the real subject is lost (KRYL-1372 live case, Integrated Biosciences).
+  const parseText = queryText
+    .replace(/\*\*|__/g, '')
+    .replace(/^[ \t]*#{1,6}[ \t]*/gm, '')
+    .replace(/(^|\s)#{1,6}\s+/g, '$1')
+    .replace(/\b(?:question|target|subject|company|entity)\s*:\s*/gi, ' ')
+    .replace(/[ \t]+/g, ' ').trim();
+  const { question, content } = splitQuestion(parseText);
   base.objective = selectObjective(question, queryText);
 
   const qRuns = splitAnd(namedRuns(question).filter(r => !isNoise(r)));

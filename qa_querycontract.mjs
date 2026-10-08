@@ -146,6 +146,16 @@ console.log('Fallback scan (no subject selected): earliest mention wins, not the
   ok(s.kind === 'ENTITY' && s.canonicalId === 'alphabet', 'earliest resolvable mention (Alphabet) beats the longer, later one (Anthropic)');
 }
 
+console.log('Markdown-formatted prompts (live: Integrated Biosciences, 2026-10-08)');
+{
+  const body = 'Integrated Biosciences is using AI to discover drugs for age-related diseases, a shot at the ~$2T pharmaceutical industry.';
+  const c = buildQueryContract('**Question:** Is this a good investment? **Target:** ## Integrated Biosciences\n' + body);
+  ok(c.subject.text === 'Integrated Biosciences', 'markdown labels/emphasis/heading hashes are not content: subject is Integrated Biosciences, got "' + c.subject.text + '"');
+  ok(c.objective === 'INVESTMENT', 'objective still INVESTMENT');
+  const g = subjectScope('**Question:** Is this a good investment? **Target:** ## Google\nGoogle is using AI.');
+  ok(g.kind === 'ENTITY' && g.canonicalId === 'alphabet', 'markdown-labeled Google prompt resolves to ALPHABET (Google is Alphabet)');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';
