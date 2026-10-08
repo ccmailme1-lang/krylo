@@ -163,7 +163,8 @@ function FormationMapTab({ query }) {
       subjScope, activeDomainPressures, fieldFormation,
       structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure,
     });
-    return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows };
+    const attribution = subjScope?.contract?.subject?.attribution ?? null;
+    return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows, attribution };
   }, [subjScope, domainPressures, fieldFormation, synthesis, ownershipOutcome, rhoTick]);
 
   // KRYL-1378 -- what the MAP draws beyond the formation graph, all from data that already exists:

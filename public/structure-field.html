@@ -44,6 +44,9 @@
   .hud { position: fixed; z-index: 2; pointer-events: none; }
   .hud a, .hud button, .hud .scrubber, .hud .ctrl { pointer-events: auto; }
 
+  .brief-top { top: 14px; left: 32px; right: 32px; }
+  .brief-top .brief-block { margin-top: 0; margin-bottom: 0; border-top: none; }
+  .attr-pill { margin-left: 14px; padding: 1px 8px; border: 1px solid var(--hairline-strong); border-radius: 9px; font-size: 10px; letter-spacing: 0.12em; color: var(--text-mono); }
   .hud-top {
     top: 26px; left: 32px; right: 32px;
     display: flex; justify-content: space-between; align-items: flex-start;
@@ -303,6 +306,20 @@
 
 <canvas id="field"></canvas>
 
+<div class="hud brief-top" id="brief-top">
+  <div class="brief-block" id="brief-block" hidden>
+    <div class="brief-eyebrow">STRUCTURAL BRIEF<span class="attr-pill" id="brief-attr" hidden></span></div>
+    <h2 class="brief-large" id="brief-subject"></h2>
+    <p class="brief-medium" id="brief-state" hidden><i id="brief-state-chip"></i><span id="brief-state-label"></span></p>
+    <p class="brief-small" id="brief-sentence"></p>
+    <div class="brief-rows" id="brief-rows" hidden>
+      <div class="k">Field · live</div><div class="v" id="brief-row-field"></div>
+      <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
+      <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
+    </div>
+  </div>
+</div>
+
 <div class="hud hud-top">
   <div class="mark">STRUCTURAL RESOLUTION FIELD</div>
   <div class="status">
@@ -327,17 +344,6 @@
     <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/></svg>Ring: field state of the domain</span>
     <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/><circle cx="9" cy="9" r="4" fill="#e0e0dc"/></svg>Core: observations bound to the subject</span>
     <span>▲ constructive &nbsp;▼ fracture</span>
-  </div>
-  <div class="brief-block" id="brief-block" hidden>
-    <div class="brief-eyebrow">STRUCTURAL BRIEF</div>
-    <h2 class="brief-large" id="brief-subject"></h2>
-    <p class="brief-medium" id="brief-state" hidden><i id="brief-state-chip"></i><span id="brief-state-label"></span></p>
-    <p class="brief-small" id="brief-sentence"></p>
-    <div class="brief-rows" id="brief-rows" hidden>
-      <div class="k">Field · live</div><div class="v" id="brief-row-field"></div>
-      <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
-      <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
-    </div>
   </div>
   <div class="formation-history-wrap" id="formation-history-wrap"></div>
   <div class="scrubber-readout">
@@ -391,6 +397,7 @@
   const snapLabelEl = document.getElementById('snap-label');
   const scrubberWrapEl = document.querySelector('.scrubber-wrap');
   const hudTopEl = document.querySelector('.hud-top');
+  const briefTopEl = document.getElementById('brief-top');
 
   let W = 0, H = 0, DPR = 1;
   let plot = { x: 0, y: 0, w: 0, h: 0 };
@@ -406,7 +413,7 @@
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const marginL = Math.max(50, Math.min(90, W * 0.08));
     const marginR = Math.max(40, Math.min(60, W * 0.05));
-    const marginT = Math.max(56, Math.min(84, H * 0.07)); // KRYL-1371: header is one line now (was 70..120)
+    let marginT = 0; // set below from the brief + header heights (KRYL-1378)
     // .hud-top and .scrubber-wrap were both pinned at a fixed 32px CSS left/right, independent
     // of marginL/marginR (and of each other, since marginL != marginR in general). Lock both to
     // the plot's actual left/right edges so the scrubber's width always matches the MAP plot's
@@ -415,6 +422,13 @@
     hudTopEl.style.right = marginR + 'px';
     scrubberWrapEl.style.left = marginL + 'px';
     scrubberWrapEl.style.right = marginR + 'px';
+    briefTopEl.style.left = marginL + 'px';
+    briefTopEl.style.right = marginR + 'px';
+    // KRYL-1378: brief sits above the map; header/metrics sit directly over the plot, below the brief.
+    const briefH = briefBlockEl.hidden ? 0 : briefTopEl.offsetHeight;
+    const hudTop = 14 + briefH + (briefH ? 14 : 12);
+    hudTopEl.style.top = hudTop + 'px';
+    marginT = hudTop + 34;
     // Bottom margin fits 2 stacked blocks below the plot: axis label + scrubber row. Measure the
     // real element instead of guessing a function of H -- its height doesn't depend on `plot`,
     // so it's knowable up front.
@@ -742,13 +756,17 @@
   }
   let lastBriefKey = null;
   function applyBrief(brief) {
-    const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence, brief.rows ?? null]) : 'none';
+    const key = brief ? JSON.stringify([brief.subjectLabel, brief.stateLabel, brief.sentence, brief.rows ?? null, brief.attribution ?? null]) : 'none';
     if (key === lastBriefKey) return; // content unchanged -- skip the relayout (it clears the canvas)
     lastBriefKey = key;
     if (!brief) {
       briefBlockEl.hidden = true;
     } else {
       briefSubjectEl.textContent = brief.subjectLabel ?? '';
+      const attrEl = document.getElementById('brief-attr');
+      const attr = brief.attribution;
+      attrEl.textContent = attr === 'RESOLVED' ? 'SUBJECT · RESOLVED' : attr === 'UNRESOLVED' ? 'SUBJECT · UNRESOLVED' : attr === 'AMBIGUOUS' ? 'SUBJECT · AMBIGUOUS' : '';
+      attrEl.hidden = !attrEl.textContent;
       if (brief.rows) {
         // Entity subject: three scoped rows (Field / Subject / Relationships), as in the cleanup mockup.
         setRich(document.getElementById('brief-row-field'), brief.rows.field);
