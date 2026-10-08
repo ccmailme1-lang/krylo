@@ -140,6 +140,12 @@ console.log('Article-shaped inputs (stress test findings)');
   ok(c.subject.text === 'Salesforce / Slack', 'combined "A / B" subject still kept whole after the prefix refinement');
 }
 
+console.log('Fallback scan (no subject selected): earliest mention wins, not the longest name');
+{
+  const s = subjectScope('the company says Alphabet owns a large stake in Anthropic');
+  ok(s.kind === 'ENTITY' && s.canonicalId === 'alphabet', 'earliest resolvable mention (Alphabet) beats the longer, later one (Anthropic)');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';

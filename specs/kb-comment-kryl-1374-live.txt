@@ -1,0 +1,1 @@
+Live validation 2026-10-08 (Founder, localhost): the field-context line now reads 'FIELD SCOPE — not ALPHABET’s answer' (display name, correct possessive).

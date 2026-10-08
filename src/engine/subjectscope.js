@@ -107,8 +107,12 @@ export function subjectScope(input) {
   for (const cand of nameCandidates(text)) {
     const e = resolve(cand);
     if (!e) continue;
+    // Tie on confidence: the EARLIEST mention in the text wins, then the longer name. (It used to be the longer
+    // name alone, so "Anthropic" (9 letters) beat "Google" (6) and "Alphabet" (8) wherever it appeared.)
+    const at = (c) => { const i = text.toLowerCase().indexOf(c.toLowerCase()); return i < 0 ? Infinity : i; };
     const better = !best || e.confidence > best.confidence ||
-      (e.confidence === best.confidence && cand.length > best.matchedOn.length);
+      (e.confidence === best.confidence && (at(cand) < at(best.matchedOn) ||
+        (at(cand) === at(best.matchedOn) && cand.length > best.matchedOn.length)));
     if (better) best = { entity: e, matchedOn: cand, confidence: e.confidence };
   }
   if (best) {
