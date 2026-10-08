@@ -84,6 +84,32 @@ console.log('subjectScope() reads the contract (one authority)');
   ok(n.kind === 'ENTITY' && n.canonicalId === 'nvidia', 'single-entity query still ENTITY');
 }
 
+console.log('Phrasing matrix (trailing question, buy/sell, multiple names, comparative)');
+{
+  const c = buildQueryContract('Daytona Daytona gives every AI agent its own sandbox. Backed by Meta. Is this a good investment?');
+  ok(c.subject.text === 'Daytona' && c.subject.attribution === 'UNRESOLVED' && c.objective === OBJECTIVES.INVESTMENT, 'trailing question: subject Daytona, INVESTMENT');
+  ok(c.mentions.length === 1 && c.mentions[0].text === 'Meta', 'mentions: only Meta (no "AI" / "Backed" noise)');
+}
+{
+  const c = buildQueryContract('Should I buy Tesla stock?');
+  ok(c.subject.text === 'Tesla' && c.objective === OBJECTIVES.INVESTMENT, 'buy/stock wording reads as INVESTMENT');
+}
+{
+  const c = buildQueryContract('How are NVIDIA and TSMC connected?');
+  ok(c.subject.attribution === 'AMBIGUOUS' && c.selectionRule === 'MULTIPLE_NAMED', 'two names, no cue -> AMBIGUOUS (never one merged fake entity)');
+  ok(subjectScope('How are NVIDIA and TSMC connected?').kind === 'ENTITY', 'subjectScope keeps its previous behavior for it (ENTITY via best mention)');
+  { const m = subjectScope('What is the structural relationship between Microsoft and OpenAI?'); ok(m.kind === 'ENTITY' && m.canonicalId === 'microsoft', 'Microsoft + OpenAI: multiple names do not override the legacy result (ENTITY microsoft)'); }
+}
+{
+  const c = buildQueryContract('Is Nvidia a better investment than AMD?');
+  ok(c.subject.text === 'Nvidia' && c.subject.attribution === 'RESOLVED' && c.selectionRule === 'COMPARATIVE', 'comparative: Nvidia is the subject');
+  ok(c.mentions.find(m => m.text === 'AMD')?.role === 'COMPARISON', 'AMD = COMPARISON');
+}
+{
+  const c = buildQueryContract('Good merger? Salesforce / Slack Salesforce announced the $27.7B acquisition of Slack.');
+  ok(c.subject.text === 'Salesforce / Slack' && c.objective === OBJECTIVES.DEAL_EVALUATION, 'combined-entity subject kept whole');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';

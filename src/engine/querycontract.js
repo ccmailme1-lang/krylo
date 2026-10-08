@@ -44,7 +44,9 @@ const AMOUNT = /^\$[\d.,]+\s*(?:bn|b|mm|m|k|million|billion|trillion)?\b/i;
 const CLIENT_TAG = /^client\s+opportunity\b/i;
 // "Media & Entertainment" style sector tag: Title-Case words joined by '&', followed by an amount or a comma.
 const SECTOR_TAG = /^[A-Z][A-Za-z]+(?:\s*&\s*[A-Z][A-Za-z]+)+(?=\s+\$|\s*[,;])/;
-const COMPARE_BEFORE = /(?:\bvs\.?|\bversus|\bsuperior to|\bcompared (?:to|with)|\bagainst|\brather than|\binstead of|\bover)\s+(?:an?\s+|the\s+)?(?:\w+\s+){0,2}$/i;
+const COMPARE_BEFORE = /(?:\bvs\.?|\bthan|\bversus|\bsuperior to|\bcompared (?:to|with)|\bagainst|\brather than|\binstead of|\bover)\s+(?:an?\s+|the\s+)?(?:\w+\s+){0,2}$/i;
+
+const NOISE_MENTIONS = new Set(['AI', 'US', 'UK', 'EU', 'CEO', 'CFO', 'CTO', 'IPO', 'USD', 'ETF', 'LLC', 'Inc', 'Ltd']);
 
 const stripPoss = (w) => w.replace(/['’]s$/i, '');
 const isCapToken = (w) => /^[A-Z][A-Za-z0-9.'’&-]*$/.test(w);
@@ -105,6 +107,19 @@ const runText = (run) => run.join(' ').replace(/\s*\/\s*/g, ' / ').replace(/\s+&
 const isNoise = (run) => run.every(w => STEMS.has(stripPoss(w).toLowerCase()) || DOMAIN_TAGS.test(w));
 
 // A content run is "X X ..." (title repeated) or "X Xs ..." (first token repeated, possibly possessive).
+function splitAnd(runs) {
+  const out = [];
+  for (const run of runs) {
+    if (!run.some(w => w.toLowerCase() === 'and') || resolve(runText(run))) { out.push(run); continue; }
+    let cur = [];
+    for (const w of run) {
+      if (w.toLowerCase() === 'and') { if (cur.length) out.push(cur); cur = []; } else cur.push(w);
+    }
+    if (cur.length) out.push(cur);
+  }
+  return out;
+}
+
 function leadTitle(run) {
   const first = stripPoss(run[0]);
   for (let k = 1; k < run.length; k++) {
@@ -121,6 +136,7 @@ function selectObjective(question, text) {
   if (/\b(?:deal|merger|mergers|merge|buy ?back|buyout|buy out)\b/.test(probe)) return OBJECTIVES.DEAL_EVALUATION;
   if (/\bacqui(?:re|res|sition|sitions|ring)\b|\btakeover\b/.test(probe)) return OBJECTIVES.ACQUISITION;
   if (/\bstructural\b|\brelationships?\b|\bdependenc|\bforming\b|\bco-?presence\b/.test(probe)) return OBJECTIVES.STRUCTURAL_READ;
+  if (/\b(?:buy|sell|stock|stocks|shares?)\b/.test(probe)) return OBJECTIVES.INVESTMENT;
   if (/\b(?:should i|should we|decide|decision|which option|best plan)\b/.test(probe)) return OBJECTIVES.DECISION_FRAME;
   return null;
 }
@@ -142,17 +158,23 @@ export function buildQueryContract(input) {
   const { question, content } = splitQuestion(queryText);
   base.objective = selectObjective(question, queryText);
 
-  const qRuns = namedRuns(question).filter(r => !isNoise(r));
+  const qRuns = splitAnd(namedRuns(question).filter(r => !isNoise(r)));
   const body = stripLeadingLabels(content);
-  const cRuns = namedRuns(body).filter(r => !isNoise(r));
+  const cRuns = splitAnd(namedRuns(body).filter(r => !isNoise(r)));
   const all = [...qRuns, ...cRuns];
 
   let subjectRun = null, rule = 'NONE', ambiguous = null;
 
   // COMPETING: two named phrases joined by "or" / "vs" in the question.
+  let ambiguousRole = 'COMPARISON';
   if (qRuns.length >= 2 && /\b(?:or|vs\.?|versus|compared (?:to|with))\b/i.test(question)) {
     ambiguous = qRuns.slice(0, 2);
     rule = 'COMPETING';
+  } else if (qRuns.length >= 2 && /\bthan\b/i.test(question) && /\b(?:better|worse|more|less|higher|lower|cheaper|stronger|weaker)\b/i.test(question)) {
+    subjectRun = qRuns[0]; rule = 'COMPARATIVE'; // "Is X a better investment than Y?": X is the subject, Y the comparison
+  } else if (qRuns.length >= 2) {
+    ambiguous = qRuns.slice(0, 2);
+    rule = 'MULTIPLE_NAMED'; ambiguousRole = 'OTHER'; // several names, no cue says which is asked about: do not guess
   } else if (qRuns.length >= 1) {
     subjectRun = qRuns[0]; rule = 'EXPLICIT_IN_QUESTION';
   } else if (cRuns.length) {
@@ -170,7 +192,7 @@ export function buildQueryContract(input) {
   if (ambiguous) {
     base.subject = { text: ambiguous.map(runText).join(' / '), canonicalId: null, attribution: 'AMBIGUOUS' };
     base.selectionRule = rule;
-    base.mentions = ambiguous.map(r => ({ text: runText(r), canonicalId: resolve(runText(r))?.canonicalId ?? null, role: 'COMPARISON' }));
+    base.mentions = ambiguous.map(r => ({ text: runText(r), canonicalId: resolve(runText(r))?.canonicalId ?? null, role: ambiguousRole }));
     return base;
   }
   if (!subjectRun) return base;
@@ -187,7 +209,9 @@ export function buildQueryContract(input) {
     const key = t.toLowerCase();
     if (seen.has(key) || run.every(w => seen.has(stripPoss(w).toLowerCase()))) continue;
     seen.add(key);
+    if (run.length === 1 && NOISE_MENTIONS.has(run[0])) continue;
     const at = queryText.indexOf(run[0]);
+    if (run.length === 1 && !resolve(t) && (at <= 0 || /[.!?]\s*$/.test(queryText.slice(Math.max(0, at - 3), at)))) continue;
     const before = at > 0 ? queryText.slice(Math.max(0, at - 40), at) : '';
     base.mentions.push({ text: t, canonicalId: resolve(t)?.canonicalId ?? null, role: COMPARE_BEFORE.test(before) ? 'COMPARISON' : 'CONTEXT' });
   }
