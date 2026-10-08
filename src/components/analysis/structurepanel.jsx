@@ -23,6 +23,7 @@ import { usesurfacerouter } from '../../hooks/usesurfacerouter.js';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeBriefSummary } from './structuralbrief.jsx';
+import { useOwnershipLookup } from './useownershiplookup.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -95,20 +96,9 @@ function FormationMapTab({ query }) {
   // Same real bug/fix as structuralbrief.jsx (2026-10-03): the live EDGAR observation is async,
   // this component reads ρ synchronously at render time, so it renders before admission
   // completes. Listens for the same 'krylo-rho-updated' event, scoped to this subject only.
-  const [rhoTick, setRhoTick] = useState(0);
-  // Last ownership-observation outcome for this subject (same shape structuralbrief.jsx keeps), so the
-  // MAP's brief states a failed check the same way the left column does.
-  const [ownershipOutcome, setOwnershipOutcome] = useState(null);
-  useEffect(() => {
-    if (subjScope.kind !== 'ENTITY') return;
-    function onRhoUpdated(e) {
-      if (e.detail?.canonicalId !== subjScope.canonicalId) return;
-      setOwnershipOutcome({ id: e.detail.canonicalId, error: e.detail?.error ?? null });
-      setRhoTick(n => n + 1);
-    }
-    window.addEventListener('krylo-rho-updated', onRhoUpdated);
-    return () => window.removeEventListener('krylo-rho-updated', onRhoUpdated);
-  }, [subjScope]);
+  // DEF (2026-10-08): pending / failure / re-read tick from the one shared hook (same state the left brief reads).
+  const lookup = useOwnershipLookup(subjScope, () => (subjScope.kind === 'ENTITY' ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).length : 0));
+  const rhoTick = lookup.tick;
 
   const entityRelationships = useMemo(() => {
     if (subjScope.kind !== 'ENTITY') return [];
@@ -158,14 +148,14 @@ function FormationMapTab({ query }) {
     const entityCanonicalRelationships = subjScope.kind === 'ENTITY'
       ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
       : [];
-    const ownershipFailure = subjScope.kind === 'ENTITY' && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
+    const ownershipFailure = subjScope.kind === 'ENTITY' ? lookup.error : null;
     const { subjectLabel, briefSentence, rows } = computeBriefSummary({
       subjScope, activeDomainPressures, fieldFormation,
-      structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure,
+      structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
     });
     const attribution = subjScope?.contract?.subject?.attribution ?? null;
     return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows, attribution };
-  }, [subjScope, domainPressures, fieldFormation, synthesis, ownershipOutcome, rhoTick]);
+  }, [subjScope, domainPressures, fieldFormation, synthesis, lookup.error, lookup.pending, rhoTick]);
 
   // KRYL-1378 -- what the MAP draws beyond the formation graph, all from data that already exists:
   //  * states: classifyConvergenceState() per domain, the same classifier the cones and the report use, with

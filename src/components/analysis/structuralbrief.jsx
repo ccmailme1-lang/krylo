@@ -20,6 +20,7 @@ import { A } from '../../engine/adsubject.js';
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
 // individual signals that produced an average was always possible, just never rendered.
+import { useOwnershipLookup } from './useownershiplookup.js';
 import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../engine/domaingravity.js';
 // KRYL-1341 fix (2026-10-01, live validation finding) — the isEntity branch checked domain
 // co-presence (fieldFormation.graph.edges) but never checked canonical ρ (real, admitted
@@ -57,7 +58,7 @@ function Row({ label, children }) {
 
 // KRYL (2026-10-06): the brief headline and summary sentence as one pure function, so the MAP panel
 // (structurepanel.jsx) shows exactly the text this component shows -- one computation, two surfaces.
-export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure }) {
+export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false }) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
   // KRYL-1372: a subject the Query Contract selected but the registry could not resolve stays the subject.
@@ -100,7 +101,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     : '';
   const failureClause = ownershipFailure
     ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
-    : '';
+    : (ownershipPending ? ' Checking SEC ownership filings — canonical relationships are not known yet.' : '');
   // KRYL-1369 (Founder ruling 2026-10-06, spec section 17): the two levels are stated separately. The
   // field level (domains carrying live signal, domain pairs co-present) is ambient and not bound to the
   // subject; only the subject level (observations identifier-bound to the subject, canonical
@@ -147,7 +148,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       : `No observations bound to ${subjectLabel} yet.`,
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}`
-      : `No canonical relationships admitted for ${subjectLabel}.`) +
+      : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${subjectLabel}.`)) +
       (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
   } : (!isEntity && !structurallyInterpretable) ? {
     // No subject resolved and no structural participants: the field alone, stated as rows.
@@ -176,20 +177,8 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // topicconnectors.js now dispatches once admission genuinely settles, and force one re-render.
   // Scoped to this subject only (ignores the event for a different canonicalId) so switching
   // queries doesn't cause a stale re-render from a prior subject's late-arriving observation.
-  const [, forceRhoRefresh] = useState(0);
-  // KRYL-1353: the last ownership-observation outcome, keyed by subject so a failure for one
-  // entity can never be shown against another. error is null on success.
-  const [ownershipOutcome, setOwnershipOutcome] = useState(null);
-  useEffect(() => {
-    if (!isEntity) return;
-    function onRhoUpdated(e) {
-      if (e.detail?.canonicalId !== subjScope.canonicalId) return;
-      setOwnershipOutcome({ id: e.detail.canonicalId, error: e.detail?.error ?? null });
-      forceRhoRefresh(n => n + 1);
-    }
-    window.addEventListener('krylo-rho-updated', onRhoUpdated);
-    return () => window.removeEventListener('krylo-rho-updated', onRhoUpdated);
-  }, [isEntity, subjScope?.canonicalId]);
+  // DEF (2026-10-08): the lookup's state (pending / failure / re-read tick) comes from one hook shared with the MAP panel.
+  const lookup = useOwnershipLookup(subjScope, () => (isEntity ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).length : 0));
   // KRYL-1336 fix (2026-09-30): KRYL-1335/1336's real entity/relationship recognition +
   // evidence check (querysynthesis.js's structuralQuery, computed for every query) was wired
   // into intelligencebrief.jsx's buildBrief() -- a DIFFERENT component from this one, which is
@@ -209,9 +198,9 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const entityCanonicalRelationships = isEntity
     ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
     : [];
-  const ownershipFailure = isEntity && ownershipOutcome?.id === subjScope.canonicalId ? ownershipOutcome.error : null;
+  const ownershipFailure = isEntity ? lookup.error : null;
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
-    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure,
+    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
   });
 
 

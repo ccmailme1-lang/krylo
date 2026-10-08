@@ -53,7 +53,7 @@ function admitIfUnknown(cik, name, accession) {
 // 429/5xx previously made a whole targeted observation fail silently (the Brief then looked
 // identical to "no relationships exist"). Live: production returned HTTP 500 on both entity-scoped
 // EDGAR calls at 19:51 UTC 2026-10-03 and succeeded on the next attempt.
-const FETCH_RETRIES  = 1;
+const FETCH_RETRIES  = 3; // was 1: SEC 503/429 bursts outlast one retry (2026-10-08)
 const RETRY_DELAY_MS = 1500;
 
 async function searchOwnershipFilings(startdt, enddt, entityName) {

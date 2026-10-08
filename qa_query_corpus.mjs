@@ -45,5 +45,18 @@ for (const [q, want, kind] of CORPUS) {
   ok(b.subjectLabel.toLowerCase().includes(headWant.toLowerCase()), `${label} brief headline is the selected subject (got "${b.subjectLabel}")`);
 }
 
+console.log('Ownership lookup states (never "none admitted" while the lookup is pending)');
+{
+  const scope = subjectScope('Is Alphabet a good investment?');
+  const base = { subjScope: scope, activeDomainPressures: [], fieldFormation: null, structuralQuery: null, entityCanonicalRelationships: [], ownershipFailure: null };
+  const pend = computeBriefSummary({ ...base, ownershipPending: true });
+  ok(/Checking SEC ownership filings/.test(pend.rows.relationships) && !/No canonical relationships admitted/.test(pend.rows.relationships), 'pending: row says checking, not "none admitted"');
+  ok(/Checking SEC ownership filings/.test(pend.briefSentence), 'pending: sentence says relationships are not known yet');
+  const fail = computeBriefSummary({ ...base, ownershipFailure: 'the SEC ownership lookup did not respond' });
+  ok(/failed|did not respond/.test(fail.rows.relationships), 'failure: stated plainly');
+  const none = computeBriefSummary({ ...base });
+  ok(/No canonical relationships admitted/.test(none.rows.relationships), 'settled with none: the stated absence is unchanged');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
