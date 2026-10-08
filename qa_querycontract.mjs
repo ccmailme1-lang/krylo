@@ -156,6 +156,24 @@ console.log('Markdown-formatted prompts (live: Integrated Biosciences, 2026-10-0
   ok(g.kind === 'ENTITY' && g.canonicalId === 'alphabet', 'markdown-labeled Google prompt resolves to ALPHABET (Google is Alphabet)');
 }
 
+console.log('Prompt formatting must not change the subject');
+{
+  const cases = [
+    ['Question: Is Nvidia a good buy?', 'Nvidia'],
+    ['Target: Daytona\nQuestion: should we invest?', 'Daytona'],
+    ['QUESTION: Is this a good investment?\nTARGET: Subcritical\nSubcritical builds AI chips.', 'Subcritical'],
+    ['Is this a good investment? (Company: Daytona) Daytona runs sandboxes', 'Daytona'],
+    ['Is this a good investment?\r\n\r\n## Daytona\r\nDaytona runs sandboxes', 'Daytona'],
+    ['Target: SpaceX - Is it worth investing?', 'SpaceX'],
+    ['Evaluate this deal: Paramount acquiring Warner Bros. Discovery', 'Paramount'],
+    ['> Is this a good investment?\n> Target: Daytona', 'Daytona'],
+    ['1. Question: is this a good investment 2. Target: Daytona', 'Daytona'],
+    ['- Question: should I invest?\n- Company: Daytona\nDaytona gives every AI agent its own sandbox.', 'Daytona'],
+    ['Is this a good investment? Target: Integrated Biosciences Integrated Biosciences is using AI to discover drugs.', 'Integrated Biosciences'],
+  ];
+  for (const [q, want] of cases) ok(buildQueryContract(q).subject.text === want, JSON.stringify(q.slice(0, 48)) + ' -> ' + want);
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';

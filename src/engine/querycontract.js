@@ -37,6 +37,8 @@ const STEMS = new Set([
   'how', 'what', 'when', 'where', 'why', 'which', 'who', 'whom', 'whose', 'good', 'bad', 'great', 'worth', 'worthwhile',
   'this', 'that', 'it', 'a', 'an', 'the', 'and', 'or', 'but', 'with', 'for', 'on', 'of', 'to', 'in', 'at', 'by', 'as',
   'i', 'we', 'you', 'my', 'our', 'your', 'if', 'then',
+  // imperative request verbs that open a prompt ("Evaluate this deal: ...") are not names
+  'evaluate', 'assess', 'analyze', 'analyse', 'review', 'compare', 'check', 'explain', 'tell', 'show', 'give', 'summarize', 'summarise',
 ]);
 
 const DOMAIN_TAGS = /^(?:capital|ownership|technology|knowledge|labor|labour|media)\b/i;
@@ -199,9 +201,12 @@ export function buildQueryContract(input) {
   const parseText = queryText
     .replace(/\*\*|__/g, '')
     .replace(/^[ \t]*#{1,6}[ \t]*/gm, '')
+    .replace(/^[ \t]*[-*\u2022]\s+/gm, '')
     .replace(/(^|\s)#{1,6}\s+/g, '$1')
-    .replace(/\b(?:question|target|subject|company|entity)\s*:\s*/gi, ' ')
-    .replace(/[ \t]+/g, ' ').trim();
+    .replace(/\b(?:question|query|prompt|ask|target|subject|company|entity|organization|organisation|asset|deal|investment|topic|name|about|context|background|overview|description|summary|notes?|objective|goal|thesis)\s*:\s*/gi, ' ')
+    .replace(/[ \t]+/g, ' ').replace(/^\s+/gm, '')
+    .replace(/^(?:evaluate|assess|analy[sz]e|review|compare|check|explain|summari[sz]e|tell me about|show me)\b\s*(?:(?:this|the|a|an)\s+)?(?:(?:deal|company|investment|merger)\s*)?/i, '')
+    .trim();
   const { question, content } = splitQuestion(parseText);
   base.objective = selectObjective(question, queryText);
 
@@ -245,7 +250,8 @@ export function buildQueryContract(input) {
   }
   if (!subjectRun) return base;
 
-  const subjText = runText(subjectRun).replace(/['’]s$/i, '');
+  let subjText = runText(subjectRun).replace(/['’]s$/i, '');
+  { const w = subjText.split(' '); const h = w.length / 2; if (w.length % 2 === 0 && w.slice(0, h).join(' ') === w.slice(h).join(' ')) subjText = w.slice(0, h).join(' '); } // "Daytona Daytona" (name repeated across a bracket/label) is one name
   const { canonicalId, attribution } = attributionFor(subjText);
   base.subject = { text: subjText, canonicalId, attribution };
   base.selectionRule = rule;
