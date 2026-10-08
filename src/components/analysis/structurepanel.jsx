@@ -184,7 +184,8 @@ function FormationMapTab({ query }) {
         const mean = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
         const V = vals.length > 1 ? Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) : 0;
         const mag = (p.magnitude ?? 0) / 100;
-        states[dom] = classifyConvergenceState({ D: mag, V, A: mag, T: 0.7 }, 0.8).label;
+        const lbl = classifyConvergenceState({ D: mag, V, A: mag, T: 0.7 }, 0.8).label;
+        states[dom] = lbl === 'LOW SIGNAL YIELD' ? 'INSUFFICIENT SIGNAL' : lbl; // Founder 2026-10-08: LOW is the same as INSUFFICIENT on the MAP
       }
       if (subjScope.kind === 'ENTITY') {
         try { bound[dom] = adSubjectFor(dom, subjScope).formationObservations?.length ?? 0; } catch { bound[dom] = 0; }

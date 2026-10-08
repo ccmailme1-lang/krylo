@@ -332,7 +332,6 @@
     <div class="brief-legend" id="brief-legend">
       <span style="color:var(--light-gray)">FIELD STATE</span>
       <span><i style="background:none;outline:1.5px solid #3a3d4a;outline-offset:-1.5px"></i>INSUFFICIENT SIGNAL</span>
-      <span><i style="background:#1A1A1A"></i>LOW SIGNAL YIELD</span>
       <span><i style="background:#66FF00"></i>BUILDING CONVERGENCE</span>
       <span><i style="background:#007FFF"></i>TURBULENT CONVERGENCE</span>
       <span><i style="background:#8A2BE2"></i>HIGH CONVERGENCE</span>
@@ -621,7 +620,7 @@
   let nodeById = {};
   // KRYL-1378: per-domain classifier state, polarity, subject-bound counts and counterparties, computed in
   // structurepanel.jsx from existing data and drawn here (this file never classifies or resolves anything).
-  const STATE_COLOR = { 'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1A1A1A', 'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2' };
+  const STATE_COLOR = { 'INSUFFICIENT SIGNAL': '#3a3d4a', 'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2' };
   let mapExtras = { states: {}, polarity: {}, bound: {}, counterparties: [] };
   let realFormation = null;        // the received Formation object, or null (genuine absence)
   let hasReceivedFormation = false; // false until the first postMessage arrives (loading state)
@@ -742,7 +741,7 @@
   const briefRowsEl = document.getElementById('brief-rows');
   // Section 6 convergence-state colors; a label not in this map gets no color chip (never a guessed one).
   const BRIEF_STATE_COLOR = {
-    'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a', 'BUILDING CONVERGENCE': '#66FF00',
+    'INSUFFICIENT SIGNAL': '#3a3d4a', 'BUILDING CONVERGENCE': '#66FF00',
     'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
   };
   // **bold** markers in a row string become <b>; everything else is plain text (no innerHTML).
@@ -1394,7 +1393,6 @@
       // Neutral, undoctrine-coded color instead, for every real node regardless of position.
       const stateLabel = n.entity ? null : (mapExtras.states[n.id] ?? null);
       const color = n.entity ? '#e0e0dc' : (STATE_COLOR[stateLabel] ?? getVar('--text-mono'));
-      const isLow = stateLabel === 'LOW SIGNAL YIELD';
       const isHover = hoverId === n.id;
       const dim = hoverId && !isHover;
       // Entity (subject) node: fixed ring size -- its contribution is not a measurement, so it
@@ -1430,7 +1428,7 @@
       const haloAlpha = (0.10 + n.contribution * 0.10) * (dim ? 0.35 : 1);
       for (const o of n._haloOffsets) {
         ctx.beginPath();
-        ctx.fillStyle = isLow ? '#3a3d4a' : color;
+        ctx.fillStyle = color;
         ctx.globalAlpha = haloAlpha;
         ctx.arc(s.px + o.x * haloRadius, s.py + o.y * haloRadius, 1, 0, Math.PI * 2);
         ctx.fill();
@@ -1474,22 +1472,15 @@
         if (stateLabel === 'BUILDING CONVERGENCE') { if (!reduceMotion) ringAlpha = 0.65 + 0.35 * (0.5 + 0.5 * Math.sin(tt * TAU / 2400)); glow = ['rgba(102,255,0,0.55)', 4]; }
         else if (stateLabel === 'HIGH CONVERGENCE') { if (!reduceMotion) ringScale = 1 - 0.14 * (0.5 + 0.5 * Math.sin(tt * TAU / 3200)); glow = ['rgba(138,43,226,0.5)', 3]; }
         else if (stateLabel === 'TURBULENT CONVERGENCE' && !reduceMotion) { const J = [[0, 0], [1.5, -1], [-1, 1.5], [1, 1], [-1.5, -0.5], [0, 0]][Math.floor(tt / 150) % 6]; ox = J[0]; oy = J[1]; } // irregular jitter, no glow
-        else if (isLow && !reduceMotion) { ox = 2 * Math.sin(tt * TAU / 9000); oy = -1.5 * Math.sin(tt * TAU / 9000); }
       }
       const bx = s.px + ox, by = s.py + oy, rr = r * ringScale;
       ctx.save();
       if (glow) { ctx.shadowColor = glow[0]; ctx.shadowBlur = glow[1]; }
       ctx.beginPath();
       ctx.arc(bx, by, rr, 0, Math.PI * 2);
-      if (isLow) {
-        // #1A1A1A is invisible as a stroke on black: a filled disc with a hairline edge
-        ctx.fillStyle = '#1A1A1A'; ctx.fill();
-        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(224,224,220,0.28)'; ctx.globalAlpha = dim ? 0.4 : 1; ctx.stroke();
-      } else {
-        ctx.fillStyle = getVar('--node-fill'); ctx.fill();
-        ctx.lineWidth = isHover ? 2.4 : (n.entity ? 2.5 : 2); ctx.strokeStyle = color;
-        ctx.globalAlpha = (dim ? 0.4 : 1) * ringAlpha; ctx.stroke();
-      }
+      ctx.fillStyle = getVar('--node-fill'); ctx.fill();
+      ctx.lineWidth = isHover ? 2.4 : (n.entity ? 2.5 : 2); ctx.strokeStyle = color;
+      ctx.globalAlpha = (dim ? 0.4 : 1) * ringAlpha; ctx.stroke();
       ctx.restore();
       // filled core: observations bound to the subject, in the ring's own state color
       const bound = n.entity ? 0 : (mapExtras.bound[n.id] ?? 0);
