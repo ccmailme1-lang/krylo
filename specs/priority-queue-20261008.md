@@ -11,10 +11,10 @@ Jira is the record (project KRYL). Two flavors: requests are `KRYL-xxxx` (Task);
 | 4 | DEF-1369 | Defect | Brief sentence: field level vs subject level | built on Dev, Backlog | Spec section 17 divergence, fixed | Validate; status move |
 | 5 | KRYL-1368 | Request | MAP brief/legend/scrubber layout | built on Dev (overlaps 1371), Backlog | Reconcile with 1371 so Jira matches the code | Say whether to close as covered by 1371 |
 | 6 | DEF-1373 | Defect | Classifier placeholders, TURBULENT unreachable, MAP legend | not started | Legend currently shows states the MAP cannot draw | Define T (temporal alignment) |
-| 7 | KRYL-1370 | Request | JPMorgan benchmark classification | 14 queries run, provisional | Informs 1372 and 1373 | Go on reviewing per-domain evidence |
+| 7 | KRYL-1370 (Spike) | Spike | JPMorgan benchmark classification | 14 queries run, provisional | Informs 1372 and 1373 | Go on reviewing per-domain evidence |
 | 8 | DEF-1374 | Defect | Possessive grammar ("nvidia's") | not started, Lightweight | Quick, no decisions | Go |
 | 9 | KRYL-1376 | Request | MAP 0.72 scale vs section 7 text sizes | not started | Contract question on screen sizes | Choose (a) or (b) |
-| 10 | KRYL-1377 | Request | Header state label beside unresolved subject | investigation | Possible section 17 mismatch | Go |
+| 10 | KRYL-1377 (Spike) | Spike | Header state label beside unresolved subject | investigation | Possible section 17 mismatch | Go |
 | 11 | KRYL-1365 | Request | Scrubber change marks | on Prod since 10-05, browser check open | Verification only | Prod check |
 | 12 | DEF-1366 | Defect | Chip placement | superseded in practice by 1371 (chip moved into the brief row) | Housekeeping | Close as superseded? |
 | 13 | KRYL-1367 | Request | Reskin exploration | approval gate | Waiting on palette decisions | Palette and type decisions |
