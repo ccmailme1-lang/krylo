@@ -167,9 +167,12 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
       if (!doc?.body) return;
       if (marqueeOverAnalysis) doc.body.setAttribute('data-marquee-overlay', '1');
       else doc.body.removeAttribute('data-marquee-overlay');
+      // DEF-1379 (Founder 2026-10-08): the hero headline is the marquee; Surface shows no marquee content.
+      if (restrictToChrome) doc.body.setAttribute('data-surface-no-hero', '1');
+      else doc.body.removeAttribute('data-surface-no-hero');
     } catch { /* iframe not ready */ }
   };
-  useEffect(() => { applyMarqueeOverlay(iframeRef.current?.contentDocument); }, [marqueeOverAnalysis]);
+  useEffect(() => { applyMarqueeOverlay(iframeRef.current?.contentDocument); }, [marqueeOverAnalysis, restrictToChrome]);
 
   const handleLeftNavLoad = () => {
     applyActiveNav(leftNavRef.current?.contentDocument);
