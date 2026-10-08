@@ -46,6 +46,10 @@
 
   .brief-top { top: 14px; left: 32px; right: 32px; }
   .brief-top .brief-block { margin-top: 0; margin-bottom: 0; border-top: none; }
+  .rel-expand { margin-top: 8px; padding-left: 0; display: flex; flex-direction: column; gap: 10px; max-height: 38vh; overflow-y: auto; pointer-events: auto; }
+  .rel-expand .rel-row { padding: 8px 0 0; border-top: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 3px; }
+  .rel-expand .rel-main { font-size: 11.5px; line-height: 1.6; color: #f4f6f2; }
+  .rel-expand .rel-meta { font-size: 10px; letter-spacing: 0.04em; color: var(--text-mono-dim); line-height: 1.5; }
   .attr-pill { margin-left: 14px; padding: 1px 8px; border: 1px solid var(--hairline-strong); border-radius: 9px; font-size: 10px; letter-spacing: 0.12em; color: var(--text-mono); }
   .hud-top {
     top: 26px; left: 32px; right: 32px;
@@ -317,6 +321,7 @@
       <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
       <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
     </div>
+    <div class="rel-expand" id="rel-expand" hidden></div>
   </div>
 </div>
 
@@ -905,7 +910,7 @@
     panel.classList.add('open');
     // Ownership handoff: the scrubber now owns the panel's open content, not the entity-
     // relationships feature below -- a later NO_EVIDENCE query must not close THIS content.
-    entityPanelOpen = false;
+    if (entityPanelOpen) { relExpandEl.hidden = true; entityPanelOpen = false; relayoutForBrief(); }
     syncChipState(); // the chip's caret/aria must reflect that the entity list is no longer the open one
   }
 
@@ -1042,37 +1047,31 @@
     // KRYL-1371: the chip itself now sits inline in the brief's Relationships row (no longer drawn
     // over the plot). The open panel is still anchored at the plot's bottom-right corner.
     const best = { x: maxX, y: maxY };
-    if (entityPanelOpen && !panelUserPositioned) {
-      // Open on whichever side of the chip has room -- below it when it fits, otherwise above --
-      // and shrink to that room (the panel already scrolls internally), so the panel can never sit
-      // on top of the chip: the guest must always be able to click the chip to close it.
-      const PH_MAX = 460, MIN_H = 140;
-      const roomBelow = plot.y + plot.h - GAP - (best.y + CH + 6);
-      const roomAbove = best.y - 6 - (plot.y + GAP);
-      const useBelow = roomBelow >= PH_MAX || roomBelow >= roomAbove;
-      const H = Math.max(MIN_H, Math.min(PH_MAX, useBelow ? roomBelow : roomAbove));
-      panel.style.right = panel.style.bottom = 'auto';
-      panel.style.maxHeight = H + 'px';
-      // The panel's real width, not an assumed 300px: in narrow frames (<=900px) the existing CSS
-      // lets it grow to its content, so measure after a provisional left, then clamp the right edge.
-      panel.style.left = Math.max(plot.x + GAP, best.x) + 'px';
-      const PW = panel.offsetWidth || 300;
-      panel.style.left = Math.max(plot.x + GAP, Math.min(best.x, plot.x + plot.w - GAP - PW)) + 'px';
-      panel.style.top = (useBelow ? best.y + CH + 6 : best.y - 6 - H) + 'px';
-    }
   }
 
+  // KRYL-1378 (Founder, 2026-10-08): the relationship list expands in rows under the brief's Relationships row,
+  // not in a floating panel over the plot. The brief grows, so the plot is re-laid out below it.
+  const relExpandEl = document.getElementById('rel-expand');
+  function fillRelExpand(relationships) {
+    relExpandEl.innerHTML = relationships.map(r => `
+      <div class="rel-row">
+        <span class="rel-main">${relationshipSentence(r)}</span>
+        <span class="rel-meta">${evidenceText(r)}</span>
+        <span class="rel-meta">${r.type}</span>
+      </div>`).join('');
+  }
+  function relayoutForBrief() { resize(); positionHudBelowAxis(); positionPanelDefault(); draw(currentT); positionRelChip(); }
   function setEntityPanelOpen(open) {
     if (open) {
-      fillEntityPanel(entityRelsData);
-      panel.classList.add('open');
+      fillRelExpand(entityRelsData);
+      relExpandEl.hidden = false;
       entityPanelOpen = true;
     } else if (entityPanelOpen) {
-      panel.classList.remove('open');
+      relExpandEl.hidden = true;
       entityPanelOpen = false;
     }
     syncChipState();
-    positionRelChip();
+    relayoutForBrief();
   }
   relChipEl.addEventListener('click', () => setEntityPanelOpen(!entityPanelOpen));
 
@@ -1082,42 +1081,21 @@
     // over this query's plot uninvited. The guest re-opens it with the chip.
     if (subjectLabel !== lastEntitySubject) {
       lastEntitySubject = subjectLabel;
-      if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
+      if (entityPanelOpen) { relExpandEl.hidden = true; entityPanelOpen = false; }
     }
     syncEntityNode(relationships, subjectLabel);
     entityRelsData = relationships || [];
     if (entityRelsData.length === 0) {
       relChipEl.classList.remove('show');
-      if (entityPanelOpen) { panel.classList.remove('open'); entityPanelOpen = false; }
+      if (entityPanelOpen) { relExpandEl.hidden = true; entityPanelOpen = false; }
       return; // NO_EVIDENCE: no edge on the plot, no chip, no panel -- nothing invented to fill space
     }
     // The detail panel is NOT opened here: a compact chip is shown instead, and the guest opens the
     // list on request. If they already have it open, refresh its content in place.
     relChipEl.classList.add('show');
     syncChipState();
-    if (entityPanelOpen) fillEntityPanel(entityRelsData);
+    if (entityPanelOpen) fillRelExpand(entityRelsData);
     positionRelChip();
-  }
-
-  function fillEntityPanel(relationships) {
-    panelEyebrow.textContent = 'EVIDENCED RELATIONSHIP (canonical ρ)';
-    panelTitle.textContent = relationships.length === 1 ? relationships[0].type : `${relationships.length} ADMITTED RELATIONSHIPS`;
-    // Brighter than the shared .panel-domain class (--text-mono-dim, 0.32 alpha -- too low-
-    // contrast for primary content); reset explicitly in renderFormationTransitionPanel above so
-    // this override never leaks into its own, unrelated use of the same element.
-    panelDomain.style.color = '#f4f6f2';
-    panelDomain.textContent = relationships.length === 1
-      ? relationshipSentence(relationships[0]) + (relationships[0].evidence?.filingDate ? ` observed ${relationships[0].evidence.filingDate}` : '')
-      : '';
-    panelContrib.textContent = '—';
-    panelPhi.textContent = '—';
-    panelPhidot.textContent = '—';
-    opRows.innerHTML = relationships.map(r => `
-      <div class="op-row" style="flex-direction:column; align-items:flex-start; gap:4px;">
-        <span class="op-name" style="white-space:normal; line-height:1.5; color:#f4f6f2;">${relationshipSentence(r)}</span>
-        <span class="op-class">${evidenceText(r)}</span>
-        <span class="op-class">${r.type}</span>
-      </div>`).join('');
   }
 
   // KRYL-1332 (Founder, 2026-09-28) — real bug: switching tabs away from MAP and back remounts
