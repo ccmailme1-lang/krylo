@@ -282,7 +282,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                 distinction -- a guest could misread domain co-presence as an admitted fact
                 about named entities. Same question split already enforced in KRYL-1341's fix;
                 this closes the remaining asymmetry (one block had a header, the other didn't). */}
-            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>CROSS-DOMAIN CO-PRESENCE (not admitted ρ)</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>{isEntity ? `CROSS-DOMAIN CO-PRESENCE · SUPPORTED BY ${String(subjectLabel).toUpperCase()}'S OWN OBSERVATIONS (not admitted ρ)` : 'CROSS-DOMAIN CO-PRESENCE (not admitted ρ)'}</div>
             {edges.map((e, i) => {
               // Fix 2: admittedType is a fixed category per domain-pair (real, but the same
               // label every time those two domains co-occur) -- attach the actual dated
