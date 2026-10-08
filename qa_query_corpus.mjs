@@ -22,6 +22,7 @@ const CORPUS = [
   ['Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.', 'Daytona', 'UNRESOLVED'],
   ['Is this a good investment? Subcritical Systems builds AI chips for inference.', 'Subcritical Systems', 'UNRESOLVED'],
   ['Evaluate this deal: Paramount acquiring Warner Bros. Discovery', 'Paramount', 'UNRESOLVED'],
+  ['Is there market for these types of products?\n\nPraetorian Aeronautics\nPraetorian sells an end-to-end counter-drone system, pairing proprietary AI battle management software with two interceptors.\nKey Investors\n\nTidal Ventures · Paspalis', 'Praetorian Aeronautics', 'UNRESOLVED'],
   ['Is Google a good investment given its AI capex?', 'Google', 'ENTITY'],
   ['**Question:** Is this a good investment? **Target:** ## Google\nGoogle is using AI.', 'Google', 'ENTITY'],
   ['Is Nvidia better than AMD', 'Nvidia', 'ENTITY'],
