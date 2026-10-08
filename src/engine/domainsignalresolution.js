@@ -168,6 +168,9 @@ export function getDomainEvidenceFacets(domain, { subject = null } = {}) {
         if (!r.bound) continue;                       // identifier containment — no fuzzy fallback
         out.push({ ...f, sourceId: s.id, boundVia: r.via });
       } else {
+        // Field scope shows field-scoped facets only. A facet whose provenance names a subject (the hand-entered
+        // Alphabet/Sysco seeds) is that entity's evidence: shown on another subject's page it reads as that subject's.
+        if (f.provenance?.subject?.canonicalId) continue;
         out.push({ ...f, sourceId: s.id });
       }
     }
