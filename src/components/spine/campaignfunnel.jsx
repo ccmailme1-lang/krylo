@@ -24,7 +24,7 @@
 // Chrome markup / CSS / animation are untouched — only the compositing + hit-test
 // boundary changes.
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px },
 // .opportunity-ribbon { top:49px }, .hero-copy-wrap (rotating headline/quotes -- 3 rotating
@@ -116,14 +116,23 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
   // never changed value between the two calls. A value-comparison is correct in both dev and
   // production regardless of how many times React chooses to invoke the effect.
   const prevNavModeRef = useRef(navMode);
+  // DEF-1379: the landing view is now Analysis, so a real click on Analysis does not change navMode and the
+  // value comparison below never saw it. Count real krylo-nav messages too (they come only from nav clicks).
+  const [navClicks, setNavClicks] = useState(0);
   useEffect(() => {
+    const onNav = (ev) => { if (ev.data?.type === 'krylo-nav' && ev.data.mode) setNavClicks(n => n + 1); };
+    window.addEventListener('message', onNav);
+    return () => window.removeEventListener('message', onNav);
+  }, []);
+  useEffect(() => {
+    if (navClicks > 0) hasNavigatedRef.current = true;
     if (navMode !== prevNavModeRef.current) {
       hasNavigatedRef.current = true;
       prevNavModeRef.current = navMode;
     }
     applyActiveNav(iframeRef.current?.contentDocument);
     applyActiveNav(leftNavRef.current?.contentDocument);
-  }, [navMode, restrictToChrome]);
+  }, [navMode, restrictToChrome, navClicks]);
 
   // Logo tap (krylo-reset) sets navMode back to 'surface' as one part of app.jsx's own full
   // state wipe (same message, separate listener there) -- that should read as "back to the

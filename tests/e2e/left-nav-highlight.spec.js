@@ -23,7 +23,7 @@ async function selectNavItem(page, index) {
 
 test('left nav: nothing highlighted on landing, lime on real selection, Home included', async ({ page }) => {
   await page.goto('/');
-  await page.waitForSelector('iframe[title="KRYLO left nav"]', { timeout: 20000 });
+  await page.waitForSelector('iframe[title="KRYLO Campaign"]', { timeout: 20000 }); // DEF-1379: landing is Analysis now, so the Surface-only left-nav clone is not mounted
   await page.waitForTimeout(1500); // let both iframes finish their own load handlers
 
   // 1. Untouched landing view — nothing should be active.
