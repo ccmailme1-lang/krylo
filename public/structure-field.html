@@ -1606,7 +1606,8 @@
       const colMax = Math.min(plot.w * 0.45, 360);
       const wrapText = (text) => {
         const lines = []; let line = '';
-        for (const word of String(text).split(/\s+/).filter(Boolean)) {
+        // Annotations are all caps like the rest of the map (Founder, 2026-10-08); the math symbols phi and rho keep their case (a capital Phi is a different quantity).
+        for (const word of String(text).replace(/[^φρ]+/g, m => m.toUpperCase()).split(/\s+/).filter(Boolean)) {
           const trial = line ? line + ' ' + word : word;
           if (line && ctx.measureText(trial).width > colMax) { lines.push(line); line = word; } else line = trial;
         }
