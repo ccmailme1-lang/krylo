@@ -46,6 +46,7 @@
 
   .brief-top { top: 14px; left: 32px; right: 32px; }
   .brief-top .brief-block { margin-top: 0; margin-bottom: 0; border-top: none; }
+  .rel-expand[hidden] { display: none; } /* display:flex below would otherwise override the hidden attribute (collapse looked broken) */
   .rel-expand { margin-top: 8px; padding-left: 0; display: flex; flex-direction: column; gap: 10px; max-height: 38vh; overflow-y: auto; pointer-events: auto; }
   .rel-expand .rel-row { padding: 8px 0 0; border-top: 1px solid var(--hairline); display: flex; flex-direction: column; gap: 3px; }
   .rel-expand .rel-main { font-size: 11.5px; line-height: 1.6; color: #f4f6f2; }
@@ -1343,26 +1344,30 @@
     if (entN && mapExtras.counterparties && mapExtras.counterparties.length) {
       const es = nodeStateAt(entN, t);
       const list = mapExtras.counterparties.slice(0, 5);
-      const out0 = Math.atan2(es.py - lcy, es.px - lcx);
+      // A single column beside the subject, one row per counterparty, so labels never overlap each other or sit on
+      // the plot edge (a fan around a subject near the edge stacked them on one line). Side with more room, below
+      // the subject when it fits, else above.
+      const dirX = (plot.x + plot.w - es.px) >= (es.px - plot.x) ? 1 : -1;
+      const ROW = 44, N = list.length;
+      const below = es.py + 40 + (N - 1) * ROW <= plot.y + plot.h - 24;
       ctx.save();
       list.forEach((c, i) => {
-        const ang = out0 + (i - (list.length - 1) / 2) * 0.62, R = 96 + (i % 2) * 22;
-        const px = Math.max(plot.x + 72, Math.min(plot.x + plot.w - 72, es.px + Math.cos(ang) * R));
-        const py = Math.max(plot.y + 34, Math.min(plot.y + plot.h - 34, es.py + Math.sin(ang) * R));
+        const px = es.px + dirX * 78;
+        const py = below ? es.py + 40 + i * ROW : es.py - 40 - i * ROW;
         ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(224,224,220,0.45)';
         ctx.beginPath(); ctx.moveTo(es.px, es.py); ctx.lineTo(px, py); ctx.stroke(); ctx.setLineDash([]);
         ctx.beginPath(); ctx.fillStyle = getVar('--node-fill'); ctx.arc(px, py, 4.5, 0, Math.PI * 2); ctx.fill();
         ctx.lineWidth = 1.2; ctx.strokeStyle = '#e0e0dc'; ctx.stroke();
-        const above = py < es.py;
-        ctx.textAlign = 'center';
+        ctx.textAlign = dirX > 0 ? 'left' : 'right';
+        const tx = px + dirX * 12;
         ctx.font = "11px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.9)';
-        ctx.fillText(c.name, px, above ? py - 12 : py + 18);
+        ctx.fillText(c.name, tx, py + 1);
         ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
-        ctx.fillText(c.detail, px, above ? py - 24 : py + 30);
+        ctx.fillText(c.detail, tx, py + 14);
       });
       if (mapExtras.counterparties.length > list.length) {
-        ctx.textAlign = 'left'; ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
-        ctx.fillText('+' + (mapExtras.counterparties.length - list.length) + ' more in the relationships list', es.px + 16, es.py + 22);
+        ctx.textAlign = dirX > 0 ? 'left' : 'right'; ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
+        ctx.fillText('+' + (mapExtras.counterparties.length - list.length) + ' more in the relationships list', es.px + dirX * 90, below ? es.py + 40 + N * ROW : es.py - 40 - N * ROW);
       }
       ctx.restore();
     }
