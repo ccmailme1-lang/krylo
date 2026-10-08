@@ -29,7 +29,7 @@ import { assembleReconnPayload } from '../../engine/reconnpayload.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { countSubjectObservations, classifySubjectAttribution, SUBJECT_ATTRIBUTION } from '../../engine/subjectattribution.js';
 import { computeTruthDynamics } from '../../engine/identitydynamics.js';
-import { getAllDomainPressures, getQueryDomainPressure } from '../../engine/domaingravity.js';
+import { getAllDomainPressures, getQueryDomainPressure, MAP_FIELD_WINDOW_MS } from '../../engine/domaingravity.js';
 import { getLRPrior }          from '../../engine/pathstore.js';
 import { STATE_TYPE, normalizeToProjectionLanguage } from '../../engine/statecontract.js';
 import { findCheapestFuel, findAverageFuel, findNearbyStations, isPetroQuery, petroType } from '../../engine/petrolocator.js';
@@ -382,7 +382,7 @@ export default function TargetPacket() {
   }, [synthesis?.queryDomain, metrics]);
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   // WO-1880: full 6-domain pressure field — §20 both directions always
-  const domainPressures = useMemo(() => getAllDomainPressures(), [synthesis]);
+  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [synthesis]);
 
   // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
   // DIC / synthesis routing / 5B are untouched (forensic recovery: those are

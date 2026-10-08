@@ -20,7 +20,7 @@ import { A } from '../../engine/adsubject.js';
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
 // individual signals that produced an average was always possible, just never rendered.
-import { getDomainSignals, DEFAULT_WINDOW_MS } from '../../engine/domaingravity.js';
+import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../engine/domaingravity.js';
 // KRYL-1341 fix (2026-10-01, live validation finding) — the isEntity branch checked domain
 // co-presence (fieldFormation.graph.edges) but never checked canonical ρ (real, admitted
 // entity-to-entity relationships, e.g. Sysco ACQUIRED Restaurant Depot) for the resolved
@@ -239,7 +239,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // widening -- it's the exact real ceiling domaingravity.js's own pool prunes to (see its
   // "Prune entries beyond 2x window" comment), so this asks for everything the pool could
   // possibly still have, not an unbounded/fabricated window.
-  const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain, DEFAULT_WINDOW_MS * 2)]));
+  const signalsByDomain = Object.fromEntries(domainLines.map(p => [p.domain, getDomainSignals(p.domain, POOL_RETENTION_MS)]));
   const evidenceByDomain = evidence.reduce((acc, o) => { (acc[o.domain] ??= []).push(o); return acc; }, {});
 
   return (

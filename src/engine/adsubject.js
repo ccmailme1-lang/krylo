@@ -32,7 +32,7 @@
 
 import { domainIntelligence } from './domainintelligence.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from './domainsignalresolution.js';
-import { computeDomainPressure, getAllSignals } from './domaingravity.js';
+import { computeDomainPressure, getAllSignals, MAP_FIELD_WINDOW_MS } from './domaingravity.js'; // DEF-1382-window: one window for every reader of the pool
 import { isScopable } from './subjectscope.js';
 import { ANALYSIS_DOMAIN_ORDER } from './ontology.js';
 
@@ -104,7 +104,7 @@ export function A(domain, scope) {
   // (targetpacket.jsx/intelligencebrief.jsx) and inferFormation() already use. This is not a
   // new resolution path: it is the existing KRYL-1220 pipeline, surfaced here so this panel
   // stops contradicting the FORMATION section that reads the identical underlying data.
-  const formationObservations = getAllSignals()
+  const formationObservations = getAllSignals(MAP_FIELD_WINDOW_MS)
     .filter(s => s.canonicalId === subject && s.domain === D)
     .map(s => ({
       kind: 'formation',
@@ -137,5 +137,5 @@ export function allDomains(scope) {
 }
 
 function safePressure(domain) {
-  try { return computeDomainPressure(domain); } catch { return null; }
+  try { return computeDomainPressure(domain, MAP_FIELD_WINDOW_MS); } catch { return null; }
 }

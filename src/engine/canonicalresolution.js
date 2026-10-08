@@ -18,7 +18,7 @@
 // No static confidence. No mock momentum. No Math.random. If it isn't measured, it withholds.
 
 import { CANONICAL_DOMAINS, isCanonicalDomain } from './ontology.js';
-import { getAllDomainPressures, getQueryDomainPressure } from './domaingravity.js';
+import { getAllDomainPressures, getQueryDomainPressure, MAP_FIELD_WINDOW_MS } from './domaingravity.js';
 
 // ── Canonical domain vocabulary ───────────────────────────────────────────────
 // Institutional term → canonical domain. Grounded in each domain's actual meaning, not
@@ -131,7 +131,7 @@ export function synthCanonical(query, domainOverride = null) {
   const cls = classifyCanonicalDomain(query, domainOverride);
   if (!cls.resolved) return { withheld: true, reason: 'NO_DOMAIN_EVIDENCE' };
 
-  const field = getAllDomainPressures();                 // live 6-domain pressure
+  const field = getAllDomainPressures(MAP_FIELD_WINDOW_MS);                 // live 6-domain pressure
   const signalDomain = QUERY_TO_SIGNAL[cls.primary] ?? cls.primary;
   const p = field[signalDomain] ?? getQueryDomainPressure(cls.primary);
 
@@ -207,7 +207,7 @@ export function groundSignalMetrics(query, domainOverride = null) {
              reason: 'NO_DOMAIN_EVIDENCE' };
   }
 
-  const field = getAllDomainPressures();
+  const field = getAllDomainPressures(MAP_FIELD_WINDOW_MS);
   const signalDomain = QUERY_TO_SIGNAL[cls.primary] ?? cls.primary;
 
   // Boundary invariant (canonicalization guard): a classified canonical domain MUST resolve to a
