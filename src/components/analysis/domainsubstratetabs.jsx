@@ -229,7 +229,7 @@ function DomainScroll({ domain, scope, pressure }) {
 
       <Panel ordinal="02" title="SIGNAL">
         <span style={{ fontFamily: MONO, fontSize: 8, color: scoped ? LIME : LBL, letterSpacing: '0.14em' }}>
-          {scoped ? `A(${domain}, ${ad.subject})` : `${domain} · NOT SCOPED TO A SUBJECT`}
+          {scoped ? `A(${domain}, ${ad.subject})` : (scope?.kind === 'UNRESOLVED' && scope.subject?.text ? `${domain} · ${scope.subject.text} · ENTITY UNRESOLVED` : `${domain} · NOT SCOPED TO A SUBJECT`)}
         </span>
         {!scoped && ad.absence?.reason && (
           <Absent reason={ad.absence.reason} />
@@ -316,7 +316,9 @@ export default function DomainSubstrateTabs({ subject = null, domainPressures = 
         ? <>This query is a <b style={{ color: BRT }}>decision frame</b>, not a resolvable subject. Subjecthood for decision frames is unsettled (unit-of-analysis). The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
         : (scope.kind === 'PORTFOLIO_FRAME' || scope.kind === 'MARKET_THEME' || scope.kind === 'DECISION_SITUATION')
           ? <>This query is a <b style={{ color: BRT }}>{(frameHeadline(scope.classification) ?? scope.kind.replace(/_/g, ' ')).toLowerCase()}</b>, not a resolvable subject. The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
-          : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
+          : (scope.kind === 'UNRESOLVED' && scope.subject?.text)
+            ? <>Subject selected: <b style={{ color: BRT }}>{scope.subject.text}</b>. Its entity is not resolved, so the six domains render classified absence for it; the field-level observations are not bound to it.</>
+            : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
 
   return (
     <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 18 }}>

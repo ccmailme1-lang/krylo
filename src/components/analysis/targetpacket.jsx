@@ -642,7 +642,9 @@ export default function TargetPacket() {
                 ? `${recognizedFrame} frame recognized. Subject not established — this is a field-level structural observation, not a subject-bound one. The six domains below are the observational read around this frame; they are not a recommendation.`
                 : subjScope.kind === 'DECISION_FRAME'
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
-                  : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
+                  : (subjScope.kind === 'UNRESOLVED' && subjScope.subject?.text)
+                    ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no structure is attributed to it; the six domains below show the field and its honest absence.`
+                    : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
           {/* KRYL — synthesis.recommendedAction already carries an honest, specific explanation
               from canonicalresolution.js's synthCanonical() when the classified domain has no

@@ -384,7 +384,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         ) : (
           <span style={{ color: ABSENCE }}>
-            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : 'No subject resolved — evidence is not identifier-bound to a field-level scan.'}
+            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : (subjScope?.subject?.text ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no evidence is identifier-bound to it — the observations above are field-level.` : 'No subject resolved — evidence is not identifier-bound to a field-level scan.')}
           </span>
         )}
       </Row>
