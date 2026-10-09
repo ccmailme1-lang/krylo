@@ -1,6 +1,6 @@
-# SPEC (v1.0, review-ready) — KRYL-1386: source-dated relationship change
+# SPEC (v1.1, review-ready) — KRYL-1386: source-dated relationship change
 
-Date: 2026-10-09 · Status: **review-ready specification. No implementation is authorized by this document.** Supersedes the working draft `SPEC-kryl1386-source-dated-relationship-change-v0.1-DRAFT-20261009.md` (c72e009), which is kept in the repository unchanged.
+Date: 2026-10-09 · Status: **review-ready specification. No implementation is authorized by this document.** v1.1 = v1.0 (f8b988a) plus the probe results of Appendix A, which corrected the held and termination rules (sections 3, 5, 10, 12). Supersedes the working draft `SPEC-kryl1386-source-dated-relationship-change-v0.1-DRAFT-20261009.md` (c72e009), which is kept in the repository unchanged.
 
 Authority and contract:
 - Settled decisions: `specs/rubric-alphabet-10of10-20261009.md` (all recorded; none reopened here).
@@ -23,7 +23,7 @@ Per relationship, compare **two adjacent 12-month periods** on **source event/ef
 - **Observation:** one SEC Schedule 13G or 13D filing (original or amendment) for a unit, with: accession, form, filing date, event date, reporting-person CIK and name, issuer CIK, CUSIP, class title, percent of class, aggregate shares, sole/shared voting power, sole/shared dispositive power, direct/indirect flags where present, the ownership-5-percent-or-less flag, document locator, and the raw values.
 - **Date rule:** the **event date** is the filing's own `eventDateRequiresFilingThisStatement` (new-format filings) or the "Date of Event Which Requires Filing" stated in the document (legacy). If absent, the **filing date** is used and the observation is labeled `dateBasis: filing`. Ingestion or retrieval time is never used. Dates are calendar dates (UTC, no time of day); period bounds are inclusive.
 - **Analysis time T** = the snapshot generation time (the freeze point). **P1** = (T − 12 months, T]; **P0** = (T − 24 months, T − 12 months]; **E1** = T; **E0** = T − 12 months.
-- **Held as of E:** the latest observation with event date ≤ E and ≥ E − L, reporting percent > 0 and `classOwnership5PercentOrLess` not true. **L = 24 months** (recommended default; rationale: annual-amendment cadence with one missed cycle; Alphabet holders filed 2024-02 and 2026-02 with nothing between [V5]).
+- **Held as of E:** the latest observation with event date ≤ E and ≥ E − L, reporting **percent > 0**. A filing that reports 5 percent or less but more than 0 (`classOwnership5PercentOrLess = Y` with percent > 0) is still held [V9]; it is not termination. **L = 24 months** (recommended default; rationale: annual-amendment cadence with one missed cycle; Alphabet holders filed 2024-02 and 2026-02 with nothing between [V5]).
 - **Latest observation** among several for one unit: greatest event date; ties by latest filing date, then greatest accession. See section 7 for revised or conflicting filings.
 
 ## 4. Retrieval requirement (approximately 48 months)
@@ -49,7 +49,7 @@ elif O1 and not H0 and C0:                                  NEW
 else:                                                       INDETERMINATE (reason below)
 ```
 
-- **Termination evidence X1 (positive, closed list):** (a) new-format filing with `classOwnership5PercentOrLess = Y` **or** `classPercent = 0` **[V8: both present in the Vanguard Group 2026-03-26 filing]**; (b) legacy filing stating that the filer has ceased to be the beneficial owner of more than five percent of the class, or reporting 0 percent **[parsing UNVERIFIED]**; (c) an explicit termination or amendment document for 13D. Disappearance, no filing, or a lower percent that is still above 0 is not termination.
+- **Termination evidence X1 (positive, closed list, corrected by V9):** (a) a new-format filing reporting `classPercent = 0` (zero percent and zero shares) for that unit **[V8: Vanguard Group 2026-03-26; both filings also carry `classOwnership5PercentOrLess = Y`]**; (b) a legacy filing whose percent-of-class row reads 0 **[parsing now verified for the percent row, section 10; a zero-percent legacy filing has not been observed, so this case is [UNVERIFIED]]**; (c) an explicit termination or withdrawal document for 13D. **`classOwnership5PercentOrLess = Y` alone is not termination**: Schmidt's 2025-08-14 filing sets it with 0.83 percent [V9]. A dropped-below-5-percent filing is a held position and a magnitude change. Disappearance, no filing, or any percent above 0 is not termination. **Reading of a zero:** the unit's reporting person reports zero ownership; this is the termination of that reporting relationship. It does not state that the holder sold, and it is not evidence that economic ownership left the issuer (the same shares may be reported by a related filer, as with Vanguard Group to Vanguard Capital Management); the output says exactly that and nothing more.
 - **Reason codes:** `H0` and no `O1` and no `X1`: `NO_CURRENT_OBSERVATION`. `O1` and not `H0` and not `C0`: `COVERAGE_INCOMPLETE`. Neither `H0` nor `O1`: not a relationship in scope, nothing is classified. Conflicting evidence (section 7): `INCOMPATIBLE_OBSERVATIONS`.
 - Continuity: the unit key (CIK, CUSIP) is the continuity test. A different CIK is a different unit; the link between the two is a **participant change** (section 7), not continuity.
 
@@ -114,9 +114,10 @@ else:                                                       INDETERMINATE (reaso
 
 ## 10. Legacy filings (before December 2024)
 
-**Verified [V4]:** `SC 13G/A` filings exist for Alphabet in 2023 and 2024 (12 returned); their main documents are HTML text, fetchable through the document proxy. A text-pattern read recovered aggregate shares and CUSIP for two of three sampled filings (Vanguard Group 2024-02-13: 410,957,639 shares, CUSIP 02079K107; 493,782,758 shares, CUSIP 02079K305); it did **not** recover the percent of class reliably (the pattern captured an item number) and found no CUSIP in the Brin filing (51,772 characters).
-**Conservative fallback (until the procedure below closes):** a legacy observation can establish that a filing exists and its filer and date, but **cannot** establish `held` (percent > 0 unconfirmed) or magnitude; legacy-only evidence yields `INDETERMINATE (SOURCE_LIMIT)`.
-**Closing procedure:** (1) draw 15 legacy `SC 13G/A` and `SC 13D/A` filings across at least 5 different filers and 3 different filing agents; (2) a person reads percent of class, shares, CUSIP, event date and ceased-ownership statements from the SEC pages; (3) the extractor must match all five values on at least 14 of 15; (4) any miss is documented and that filing pattern stays `SOURCE_LIMIT`. Failure condition: fewer than 14 of 15 matches.
+**Verified [V4][V10]:** `SC 13G/A` filings exist for Alphabet in 2023 and 2024 (12 returned); the documents are fetchable through the document proxy and are HTML (`.htm`) or plain text (`.txt`). **Tested parser behavior (5 sampled filings, simple text patterns anchored on the form's row labels, Appendix A):** the percent-of-class row was recovered in **5 of 5** (1.03, 7.18, 8.34, 6.16, 6.2 percent); aggregate shares in **3 of 5**; CUSIP in **3 of 5** (not found in the Schmidt and Brin filings); the document formats differ (HTML entities as separators, table splits, `.txt`). The "five percent or less" wording matched the **template item heading** in every filing, so it is **not** a termination signal in legacy filings.
+**Rules from these results:** (1) the legacy percent row is usable; (2) a legacy observation without a recovered CUSIP cannot be matched to a share class: it yields `INDETERMINATE (SOURCE_LIMIT)` for magnitude and configuration, though it still evidences that the holder filed; (3) legacy filings establish `held` only when the percent row parsed and is > 0; (4) **a legacy termination signal is not established**: legacy-only evidence never yields `DISSOLVED`, it stays `INDETERMINATE` unless the percent row parsed as 0.
+**Conservative fallback in force until the closing procedure passes at its threshold:** the rules above.
+**Closing procedure (for the CUSIP, shares and zero-percent cases that the 5-sample test did not establish):** (1) draw 15 legacy `SC 13G/A` and `SC 13D/A` filings across at least 5 different filers and 3 different filing agents; (2) a person reads percent of class, shares, CUSIP, event date and ceased-ownership statements from the SEC pages; (3) the extractor must match all five values on at least 14 of 15; (4) any miss is documented and that filing pattern stays `SOURCE_LIMIT`. Failure condition: fewer than 14 of 15 matches.
 
 ## 11. Fields and provenance (every output)
 
@@ -132,6 +133,8 @@ Per relationship: unit key; periods and bounds; the three classifications with s
 - **V5** Holders file annually (Brin 2024-02-12 then 2026-02-17; Vanguard Group 2024-02-13 then 2026-03-26); BlackRock filed in 2024 and has no 2025 or 2026 filing in the search results.
 - **V6** 8-K history over two periods exists (Alphabet 13 and 16; Oracle 13 and 11; Sysco 10 and 26).
 - **V7** Bursts return empty or HTTP 500; spaced requests return data; the proxy does not cache failures and caches successes 15 minutes (search) and 30 days (documents).
+- **V9** The flag `classOwnership5PercentOrLess = Y` also appears on a filing reporting 0.83 percent (Schmidt 2025-08-14, accession 0000950170-25-109161); it means "5 percent or less", not zero ownership. The flag is `undefined` (absent) on the 5.81, 7.48 and 6.41 percent filings, and the Item 5 `notApplicableFlag` is `N` or `Y` independently.
+- **V10** Legacy parser results above (percent 5 of 5, shares 3 of 5, CUSIP 3 of 5); template wording is not a termination signal.
 - **V8** The Vanguard Group 2026-03-26 filing carries `classOwnership5PercentOrLess = Y`, `classPercent = 0` and the `notApplicable` flag `N`.
 
 **Still to verify (each has a procedure and a conservative fallback above):** legacy-document extraction (section 10); the search proxy's paging (not needed by the split method); the field mapping for documented affiliation or group members in 13G (section 7); the prior-period values for Brin and the Vanguard entities (2024 filings, read by the closing procedure); whether any 13D/A pair exists for the sample companies.
@@ -153,11 +156,11 @@ Fixtures F1 to F6 are the real Alphabet filings in section 12; T = 2026-10-09, E
 
 | # | Case | Expected |
 |---|---|---|
-| F1 | Vanguard Group, both classes: held as of E0 (2024-02-13 filings), P1 filing 2026-03-26 with 0% and the 5-percent-or-less flag | `DISSOLVED` / n.a. / n.a. |
+| F1 | Vanguard Group, both classes: held as of E0 (2024-02-13 filings: 8.34% class A 0001104659-24-020000, 7.18% class C 0001104659-24-020001), P1 filings 2026-03-26 with 0% (0000102909-26-000584, -000583) | `DISSOLVED` / n.a. / n.a. (the reporting person reports zero; no claim that the holder sold) |
 | F2 | Vanguard Capital Management, each class: no observation as of E0, P1 filings 2026-04-29 | `NEW` if coverage complete, else `INDETERMINATE (COVERAGE_INCOMPLETE)` / n.a. / n.a.; the two classes are never compared with each other |
 | F3 | Vanguard Group to Vanguard Capital Management, no affiliation document in the extracted fields | configuration `INDETERMINATE (PARTICIPANT_CHANGE_UNVERIFIED)`; becomes `RECONFIGURED (participants)` only when affiliation is documented |
-| F4 | Sergey Brin: as-of E0 2024-02-12 (within 24 months of E0), P1 filing 2026-02-17 5.81% | `PERSISTING`; magnitude per the 2024 value (read by the closing procedure): `|delta| >= 1.0` strengthening or weakening, else `NO MATERIAL CHANGE` if section 8 holds; until the legacy parse closes: `INDETERMINATE (SOURCE_LIMIT)` |
-| F5 | Eric Schmidt: only P0 observations (0.97 then 0.83); none in P1 | `INDETERMINATE (NO_CURRENT_OBSERVATION)`; the −0.14 point change lies inside P0 and is not classified as P0-to-P1 change |
+| F4 | Sergey Brin: as-of E0 2024-02-12 (0001193125-24-032286, percent row 6.16, CUSIP not recovered), P1 filing 2026-02-17 5.81% (0001193125-26-055590) | existence `PERSISTING`; magnitude: the class cannot be matched (no CUSIP recovered), so `INDETERMINATE (SOURCE_LIMIT)`; if the class were matched, delta = 5.81 − 6.16 = −0.35 point = `NO MATERIAL CHANGE` (section 8 permitting) |
+| F5 | Eric Schmidt: only P0 observations (0.97 on 2025-02-18, 0.83 on 2025-08-14 with the 5-percent-or-less flag); none in P1 | `INDETERMINATE (NO_CURRENT_OBSERVATION)`; the −0.14 point change lies inside P0 and is not classified as P0-to-P1 change; the flag does not make this a termination (V9) |
 | F6 | BlackRock: held as of E0, nothing since, no termination evidence | `INDETERMINATE (NO_CURRENT_OBSERVATION)`; never `DISSOLVED` |
 
 Boundary and construction cases (expected, **not yet run**):
@@ -181,7 +184,9 @@ Boundary and construction cases (expected, **not yet run**):
 | B15 | News report states an ownership change; no filing | not established; shown as corroboration only |
 | B16 | Held as of E0 outside L (filing older than 24 months before E0) | not held; with `O1` present: `NEW` if coverage complete else `INDETERMINATE` |
 | B17 | Entity with no 13D/13G filings in the window | nothing classified |
-| B18 | Legacy filing, percent not recoverable | `INDETERMINATE (SOURCE_LIMIT)` |
+| B18 | Legacy filing, percent row not recoverable | `INDETERMINATE (SOURCE_LIMIT)` |
+| B19 | New-format filing with 0.83% and `classOwnership5PercentOrLess = Y` | held (percent > 0); not `DISSOLVED`; magnitude per the delta |
+| B20 | Legacy filing, no CUSIP recovered | no class match: `INDETERMINATE (SOURCE_LIMIT)` for magnitude and configuration; existence evidence only |
 
 ## 15. Acceptance checklist (specification review)
 
@@ -201,3 +206,38 @@ The exercise **ends** when all of the following are true:
 4. **Validation fixtures captured:** F1 to F6 and B1 to B18 exist as stored fixtures with expected outputs (so the later implementation is tested against this specification, not against itself).
 
 Nothing in this specification authorizes implementation, a connector change, the XBRL route, deployment, or any change to a locked contract.
+
+
+---
+
+## Appendix A — Probe records (read-only, local engine, 2026-10-09)
+
+Three kinds of statement are kept apart: **verified SEC behavior** (what the SEC returned), **tested parser behavior** (what a simple text or tag read recovered), **proposed classification** (the rule this spec derives).
+
+**A1. New-format filings (Alphabet, issuer CIK 0001652044): structured fields read from `primary_doc.xml`**
+
+| Accession | Form | Filing date | Filer | classPercent | classOwnership5PercentOrLess | Item 5 notApplicable | Amendment no. | Proposed classification |
+|---|---|---|---|---|---|---|---|---|
+| 0002100119-26-000161 | SCHEDULE 13G | 2026-04-29 | Vanguard Capital Management | 7.48 | absent | N | none | held (class CUSIP 02079K305) |
+| 0002100119-26-000137 | SCHEDULE 13G | 2026-04-29 | Vanguard Capital Management | 6.41 | absent | N | none | held (CUSIP 02079K107) |
+| 0000102909-26-000584 | SCHEDULE 13G/A | 2026-03-26 | Vanguard Group | 0 | Y | N | 9 | termination evidence (zero percent) |
+| 0000102909-26-000583 | SCHEDULE 13G/A | 2026-03-26 | Vanguard Group | 0 | Y | N | 9 | termination evidence (zero percent) |
+| 0001193125-26-055590 | SCHEDULE 13G/A | 2026-02-17 | Sergey Brin | 5.81 | absent | N | 19 | held |
+| 0000950170-25-109161 | SCHEDULE 13G/A | 2025-08-14 | Eric Schmidt | 0.83 | Y | Y | 21 | **held** (below 5 percent, not zero) |
+| 0000950170-25-022699 | SCHEDULE 13G/A | 2025-02-18 | Eric Schmidt | 0.97 | absent | Y | 20 | held |
+
+Result: the flag `classOwnership5PercentOrLess = Y` does **not** discriminate termination (it appears with 0.83 percent); `classPercent = 0` does. This corrected v1.0, which treated the flag as termination evidence.
+
+**A2. Legacy filings (`SC 13G/A`, Alphabet): parser read**
+
+| Accession | Filing date | Filer | Document | Percent row | Shares | CUSIP | Event date | Template wording only |
+|---|---|---|---|---|---|---|---|---|
+| 0001193125-24-036532 | 2024-02-14 | Eric Schmidt | `d585199dsc13ga.htm` (164,309 chars) | 1.03 | not recovered | not recovered | label found, value not read | "Five Percent or Less of a Class Not applicable" |
+| 0001104659-24-020001 | 2024-02-13 | Vanguard Group | `tv0009-alphabetincclassc.htm` | 7.18 | 410,957,639 | 02079K107 | label found | template heading |
+| 0001104659-24-020000 | 2024-02-13 | Vanguard Group | `tv0008-alphabetincclassa.htm` | 8.34 | 493,782,758 | 02079K305 | label found | template heading |
+| 0001193125-24-032286 | 2024-02-12 | Sergey Brin | `d931712dsc13ga.htm` (51,772 chars) | 6.16 | not recovered | not recovered | label found | none |
+| 0001086364-24-006965 | 2024-02-12 | BlackRock | `us02079k1079_021224.txt` | 6.2 | 356,934,964 | 02079K107 | label found | none |
+
+Result: percent 5 of 5, shares 3 of 5, CUSIP 3 of 5; the event date value was not read in this probe (only the label); the termination wording is boilerplate. These results justify the rules in section 10 and nothing more; the 15-filing closing procedure remains required before legacy CUSIP, shares, event date or zero-percent cases are relied on.
+
+**A3. What these probes did not establish (kept as `INDETERMINATE` or conservative):** a legacy termination signal; legacy event-date extraction; legacy CUSIP in documents that list the class by title only; any 13D or 13D/A filing.
