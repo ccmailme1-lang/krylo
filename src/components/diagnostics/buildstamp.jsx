@@ -73,9 +73,10 @@ export default function BuildStamp() {
       aria-hidden="true"
       title={warnings.length ? warnings.join(' | ') : `build ${base}`}
       style={{
-        position: 'fixed', right: 6, bottom: 3, zIndex: 2147483000, pointerEvents: 'none', // above every full-screen layer (the Analysis panel is opaque at z-index 15)
-        fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.06em',
-        color: warnings.length ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.34)', textAlign: 'right', lineHeight: 1.3,
+        position: 'fixed', right: 10, bottom: 8, zIndex: 2147483000, pointerEvents: 'none', // above every full-screen layer (the Analysis panel is opaque at z-index 15)
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: '0.06em', lineHeight: 1.3, textAlign: 'right',
+        padding: '2px 7px', background: 'rgba(0,0,0,0.78)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 3,
+        color: warnings.length ? '#ffffff' : 'rgba(255,255,255,0.72)',
       }}
     >
       {warnings.length ? `⚠ ${warnings[0]}` : base}
