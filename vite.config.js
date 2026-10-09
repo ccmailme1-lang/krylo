@@ -15,9 +15,32 @@ function gitCommitSha() {
   catch { return 'unknown'; }
 }
 
+// KRYL-1390 -- the live identity of the working tree, for the page version stamp: HEAD commit, whether tracked
+// files are modified, and the HEAD commit time. Read on every request (not frozen at server start) so a page
+// can tell whether it was loaded before a later commit.
+function gitDirty() {
+  try { return execSync('git status --porcelain --untracked-files=no').toString().trim().length > 0; }
+  catch { return false; }
+}
+function gitHeadTime() {
+  try { return execSync('git log -1 --format=%cI').toString().trim(); }
+  catch { return null; }
+}
+const buildEndpoint = () => ({
+  name: 'krylo-build-endpoint',
+  configureServer(server) {
+    server.middlewares.use('/__build.json', (req, res) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Cache-Control', 'no-store');
+      res.end(JSON.stringify({ commit: gitCommitSha(), dirty: gitDirty(), time: gitHeadTime() }));
+    });
+  },
+});
+
 export default defineConfig({
-  plugins: [tailwindcss(), react()],
+  plugins: [tailwindcss(), react(), buildEndpoint()],
   define: {
+    __KRYLO_DIRTY__: JSON.stringify(gitDirty()),
     __KRYLO_COMMIT_SHA__: JSON.stringify(gitCommitSha()),
     __KRYLO_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
   },

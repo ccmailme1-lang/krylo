@@ -52,6 +52,7 @@ import { runMaerskSync }           from './engine/connectors/maerskconnector.js'
 import { runUsaspendingSync }        from './engine/connectors/usaspendingconnector.js';
 // WO-2046 — Capital Realization Connector (entity-level, query-gated)
 import { fireTopicConnectors } from './engine/topicconnectors.js';
+import BuildStamp from './components/diagnostics/buildstamp.jsx'; // KRYL-1390
 import { runFredSync } from './engine/connectors/fredconnector.js';
 // WO-2039 — Federal Signal Trio (data.gov)
 import { runFdaSync }              from './engine/connectors/fdaconnector.js';
@@ -1592,6 +1593,7 @@ export default function App() {
         />
       </div>
 
+      <BuildStamp />
     </ecosystemcontext.Provider>
   );
 }

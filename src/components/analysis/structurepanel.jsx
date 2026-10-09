@@ -25,6 +25,7 @@ import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeBriefSummary } from './structuralbrief.jsx';
 import { useOwnershipLookup } from './useownershiplookup.js';
+import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -326,7 +327,7 @@ function FormationMapTab({ query }) {
       {size.w > 0 && (
         <iframe
           ref={iframeRef}
-          src="/structure-field.html"
+          src={`/structure-field.html?v=${PAGE_LOAD_ID}`}
           title="Formation Map"
           onLoad={handleLoad}
           style={{

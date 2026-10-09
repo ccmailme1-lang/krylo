@@ -25,6 +25,7 @@
 // boundary changes.
 
 import React, { useEffect, useRef, useState } from 'react';
+import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390: iframe cache-busting id, one per page load
 
 // Matches public/krylo2-feed.html: .krylo-nav { height:48px }, .left-nav { width:80px },
 // .opportunity-ribbon { top:49px }, .hero-copy-wrap (rotating headline/quotes -- 3 rotating
@@ -295,7 +296,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           view, RECTANGULAR-clipped to the top strip (nav + ribbon). No shaped clip. */}
       <iframe
         ref={iframeRef}
-        src={`${src}?v=20260917`}
+        src={`${src}?v=${PAGE_LOAD_ID}`}
         title="KRYLO Campaign"
         onLoad={handleLoad}
         scrolling="no"
@@ -319,7 +320,7 @@ export default function CampaignFunnel({ signals, records, iframeRef: externalRe
           established, just applied here too. */}
       <iframe
         ref={leftNavRef}
-        src={`${src}?v=20260917`}
+        src={`${src}?v=${PAGE_LOAD_ID}`}
         title="KRYLO left nav"
         onLoad={handleLeftNavLoad}
         scrolling="no"

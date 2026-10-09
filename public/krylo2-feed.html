@@ -3058,5 +3058,14 @@ function handleConsoleKey(e) {
         </div>
     </div>
 </div>
+
+<script>
+  // KRYL-1390: report which build this iframe page loaded with, so the parent can warn on a mismatch.
+  (function () {
+    fetch('/__build.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (b) {
+      if (b && b.commit) window.parent.postMessage({ type: 'krylo-version', page: 'krylo2-feed.html', commit: b.commit }, '*');
+    }).catch(function () {});
+  })();
+</script>
 </body>
 </html>
