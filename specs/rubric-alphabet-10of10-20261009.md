@@ -33,7 +33,9 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 
 **Decision (Founder, 2026-10-09): multidimensional change model.** Existence (NEW, PERSISTING, DISSOLVED, INDETERMINATE), Magnitude (STRENGTHENING, WEAKENING, NO MATERIAL CHANGE, INDETERMINATE), Configuration (RECONFIGURED, NO MATERIAL CHANGE, INDETERMINATE), each assessed independently against dated, comparable evidence; DISSOLVED needs positive evidence of termination; NO MATERIAL CHANGE needs adequate evidence in both periods; no causation claims. Recorded on KRYL-1386.
 
-**Still to define (Founder).** The comparison window (24 months as two adjacent 12-month periods proposed; today's entity SEC syncs look back 365 days); what counts as material for magnitude and what counts as a configuration change; the minimum evidence per dimension; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
+**Decision (2026-10-09): comparison window = two adjacent 12-month periods.** Current period: the most recent 12 months. Prior period: the immediately preceding 12 months. Dates are source event or effective dates, not ingestion dates. Insufficient history is INDETERMINATE for the affected dimension, never "no change". Dependency: the entity-scoped SEC 8-K and ownership syncs must be extended from 365 to 730 days and the historical coverage verified before the comparison is relied on; until then the prior period is treated as insufficiently observed, not as evidence of no change.
+
+**Still to define (Founder).** What counts as material for magnitude and what counts as a configuration change; the minimum evidence per dimension; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
 
 **Superseded wording (kept for the record).** The comparison window; what counts as strengthening or weakening for an ownership disclosure versus a capital event (for example a change in stake size versus a new filing); the minimum evidence for each state; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
 
@@ -172,7 +174,7 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 | # | Work | Blocked on |
 |---|---|---|
 | 1 | Snapshot: one immutable analytical result per query rendered by every surface, timestamped, explicit atomic refresh, frozen at subject-lookup settlement | Spec and reconciliation with the current brief, MAP and header contract |
-| 2 | KRYL-1386 spec: dimension-specific evidence thresholds, materiality, comparison window, insufficient-history wording; change vocabulary in `relationalchange.js` and snapshot rows; SEC lookback extension (365 to 730 days) investigation | Founder definitions of thresholds and window |
+| 2 | KRYL-1386 spec: dimension-specific evidence thresholds, materiality, insufficient-history wording (window decided: two adjacent 12-month periods); change vocabulary in `relationalchange.js` and snapshot rows; SEC lookback extension (365 to 730 days) investigation | Founder definitions of thresholds and window |
 | 3 | Ownership record: extract the position fields from 13D/13G filings (feasibility not yet checked); schema; five counterparty match outcomes; matching by identifier | Connector feasibility; schema spec |
 | 4 | Capital measures: required fields, evidence thresholds, missing-data treatment, authorized sources, calculation rules, comparability; reconcile with the narrower authored measure texts | Step 2 spec; source authorization |
 | 5 | Divergence: reproducible materiality threshold, evidence criteria per ladder level, terminology; show the observations behind a fracture without a toggle; reconcile with the classification contract | Threshold and criteria definitions |
