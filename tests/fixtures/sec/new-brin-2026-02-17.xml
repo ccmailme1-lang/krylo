@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?><edgarSubmission xmlns="http://www.sec.gov/edgar/schedule13g" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <headerData>
+    <submissionType>SCHEDULE 13G/A</submissionType>
+    <filerInfo>
+      <filer>
+        <filerCredentials>
+          <cik>0001295032</cik>
+          <ccc>XXXXXXXX</ccc>
+        </filerCredentials>
+      </filer>
+      <liveTestFlag>LIVE</liveTestFlag>
+
+
+
+    </filerInfo>
+  </headerData>
+  <formData>
+    <coverPageHeader>
+      <amendmentNo>19</amendmentNo>
+      <securitiesClassTitle>Class A Common Stock, Class B Common Stock</securitiesClassTitle>
+      <eventDateRequiresFilingThisStatement>12/31/2025</eventDateRequiresFilingThisStatement>
+      <issuerInfo>
+        <issuerCik>0001652044</issuerCik>
+        <issuerName>Alphabet Inc.</issuerName>
+        <issuerCusip>02079K305</issuerCusip>
+        <issuerPrincipalExecutiveOfficeAddress>
+          <street1 xmlns="http://www.sec.gov/edgar/common">1600 Amphitheatre Parkway</street1>
+          <city xmlns="http://www.sec.gov/edgar/common">Mountain View</city>
+          <stateOrCountry xmlns="http://www.sec.gov/edgar/common">CA</stateOrCountry>
+          <zipCode xmlns="http://www.sec.gov/edgar/common">94043</zipCode>
+        </issuerPrincipalExecutiveOfficeAddress>
+      </issuerInfo>
+      <designateRulesPursuantThisScheduleFiled>
+        <designateRulePursuantThisScheduleFiled>Rule 13d-1(d)</designateRulePursuantThisScheduleFiled>
+      </designateRulesPursuantThisScheduleFiled>
+    </coverPageHeader>
+    <coverPageHeaderReportingPersonDetails>
+
+
+      <reportingPersonName>Sergey Brin </reportingPersonName>
+      <citizenshipOrOrganization>X1</citizenshipOrOrganization>
+      <reportingPersonBeneficiallyOwnedNumberOfShares>
+        <soleVotingPower>359414947</soleVotingPower>
+        <sharedVotingPower>0</sharedVotingPower>
+        <soleDispositivePower>359414947</soleDispositivePower>
+        <sharedDispositivePower>0</sharedDispositivePower>
+      </reportingPersonBeneficiallyOwnedNumberOfShares>
+      <reportingPersonBeneficiallyOwnedAggregateNumberOfShares>359414947</reportingPersonBeneficiallyOwnedAggregateNumberOfShares>
+      <aggregateAmountExcludesCertainSharesFlag>N</aggregateAmountExcludesCertainSharesFlag>
+      <classPercent>5.81</classPercent>
+      <typeOfReportingPerson>IN</typeOfReportingPerson>
+      <comments>Ownership comprises (i) 474,969 shares of Class A Common Stock held directly by Mr. Brin; (ii) 358,594,578 shares of Class B Common Stock held directly by Mr. Brin; (iii) 172,700 shares of Class B Common Stock held by SMB Pacific 2021 Charitable Remainder Unitrust I of which Mr. Brin is the sole trustee; and (iv) 172,700 shares of Class B Common Stock held by SMB Pacific 2021 Charitable Remainder Unitrust II, of which Mr. Brin is the sole trustee. Ownership of Class A Common Stock assumes conversion of all such reporting person's shares of Class B Common Stock into shares of Class A Common Stock. Each share of Class B Common Stock is convertible at the option of the holder into one share of Class A Common Stock. Each share of Class B Common Stock is entitled to ten votes per share, whereas each share of Class A Common Stock is entitled to one vote per share. All other rights of the holders of Class A Common Stock and Class B Common Stock are identical. The ownership percentages set forth above are based on 5,822,013,593 shares of Class A Common Stock and 837,430,561 shares of Class B Common Stock of Alphabet Inc. outstanding at December 31, 2025. The CUSIP for Class B Common Stock is 02079K 206.</comments>
+    </coverPageHeaderReportingPersonDetails>
+    <items>
+      <item1>
+        <issuerName>Alphabet Inc.</issuerName>
+        <issuerPrincipalExecutiveOfficeAddress>c/o Alphabet Inc., 1600 Amphitheatre Parkway, Mountain View, CA 94043</issuerPrincipalExecutiveOfficeAddress>
+      </item1>
+      <item2>
+        <filingPersonName>Sergey Brin</filingPersonName>
+        <principalBusinessOfficeOrResidenceAddress>c/o Alphabet Inc., 1600 Amphitheatre Parkway, Mountain View, CA 94043</principalBusinessOfficeOrResidenceAddress>
+        <citizenship>United States of America</citizenship>
+      </item2>
+      <item3>
+        <notApplicableFlag>N</notApplicableFlag>
+      </item3>
+      <item4>
+        <amountBeneficiallyOwned>359,414,947 - Class A Common Stock
+358,939,978 - Class B Common Stock
+
+Pursuant to Rule 13d-3(d)(1), all shares of Class B Common Stock (which are convertible into shares of Class A Common Stock) held by the Reporting Person were deemed to be converted for the purposes of (i) determining the aggregate amount of shares of Class A Common Stock beneficially owned by the Reporting Person and (ii) calculating the percentages of the Class A Common Stock owned by the Reporting Person.  Consequently, all Class A Common Stock amounts and percentages are inclusive of the Class B Common Stock amounts and percentages set forth herein.  The percentages of ownership set forth below are based on  5,822,013,593 shares of Class A Common Stock and 837,430,561 shares of Class B Common Stock of Alphabet Inc. outstanding at December 31, 2025.</amountBeneficiallyOwned>
+        <classPercent>5.81% - Class A Common Stock
+42.86% - Class B Common Stock</classPercent>
+        <numberOfSharesPersonHas>
+          <solePowerOrDirectToVote>359,414,947 - Class A Common Stock
+358,939,978 - Class B Common Stock</solePowerOrDirectToVote>
+          <sharedPowerOrDirectToVote>0
+0</sharedPowerOrDirectToVote>
+          <solePowerOrDirectToDispose>359,414,947 - Class A Common Stock
+358,939,978 - Class B Common Stock</solePowerOrDirectToDispose>
+          <sharedPowerOrDirectToDispose>0
+0</sharedPowerOrDirectToDispose>
+        </numberOfSharesPersonHas>
+      </item4>
+      <item5>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item5>
+      <item6>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item6>
+      <item7>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item7>
+      <item8>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item8>
+      <item9>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item9>
+      <item10>
+        <notApplicableFlag>Y</notApplicableFlag>
+      </item10>
+    </items>
+    <exhibitInfo>3. Pursuant to a power of attorney dated as of October 2, 2015, which was filed with the Securities and Exchange Commission as an attachment to a Schedule 13G/A filed with respect to Mr. Brin on February 11, 2016, File No. 005-89274.</exhibitInfo>
+    <signatureInformation>
+      <reportingPersonName>Sergey Brin</reportingPersonName>
+      <signatureDetails>
+        <signature>/s/ Kent Walker</signature>
+        <title>Kent Walker as Attorney-in-Fact for Sergey Brin</title>
+        <date>02/17/2025</date>
+      </signatureDetails>
+    </signatureInformation>
+  </formData>
+</edgarSubmission>

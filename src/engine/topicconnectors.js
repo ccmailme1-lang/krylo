@@ -17,6 +17,7 @@ import { subjectScope }              from './subjectscope.js';
 import { toTopologyNodeId }          from './entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
+import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 
 export function fireTopicConnectors(q) {
   runGithubSync(q).catch(() => {});
@@ -68,6 +69,12 @@ export function fireTopicConnectors(q) {
       // (after the connector's retry), or null on success. The Brief states a failure plainly
       // instead of looking identical to "no relationships exist" (§16: no silent absence).
       window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: result?.error ?? null } }));
+      // KRYL-1386 -- the source-dated comparison runs AFTER the targeted observation settles, so the two never hit SEC
+      // together (bursts return empty or 500). Skipped when a run for this entity is in flight or finished within 10 minutes.
+      const prior = getRelationshipChange(scope.canonicalId);
+      if (!(prior && (prior.state === 'running' || (prior.finishedAt && Date.now() - prior.finishedAt < 600_000)))) {
+        runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId }).catch(() => {});
+      }
       // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
       // capture time and decides what is a material change), THEN tell readers it landed so the
       // scrubber reads history that includes it. Separate event so the Brief above never waits.

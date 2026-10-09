@@ -21,6 +21,7 @@ import { A } from '../../engine/adsubject.js';
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
 // individual signals that produced an average was always possible, just never rendered.
 import { useOwnershipLookup } from './useownershiplookup.js';
+import RelationshipChangeBlock, { useRelationshipChange, temporalStatement } from './relationshipchangeblock.jsx';
 import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../engine/domaingravity.js';
 // KRYL-1341 fix (2026-10-01, live validation finding) — the isEntity branch checked domain
 // co-presence (fieldFormation.graph.edges) but never checked canonical ρ (real, admitted
@@ -209,6 +210,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   // Scoped to this subject only (ignores the event for a different canonicalId) so switching
   // queries doesn't cause a stale re-render from a prior subject's late-arriving observation.
   // DEF (2026-10-08): the lookup's state (pending / failure / re-read tick) comes from one hook shared with the MAP panel.
+  const changeEntry = useRelationshipChange(isEntity ? subjScope.canonicalId : null); // KRYL-1386
   const lookup = useOwnershipLookup(subjScope, () => (isEntity ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)).length : 0));
   // KRYL-1336 fix (2026-09-30): KRYL-1335/1336's real entity/relationship recognition +
   // evidence check (querysynthesis.js's structuralQuery, computed for every query) was wired
@@ -414,10 +416,20 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         )}
       </Row>
 
+      {isEntity && changeEntry?.state === 'done' && changeEntry.result && (
+        <Row label="RELATIONSHIP CHANGE">
+          <RelationshipChangeBlock entry={changeEntry} ABSENCE={ABSENCE} LBL={LBL} BRT={BRT} />
+        </Row>
+      )}
+
       <Row label="UNRESOLVED">
         <span style={{ color: ABSENCE }}>
-          Temporal deltas (current vs. prior period) are not yet computed — a stated absence, not filled with an
-          estimate. This briefing describes observable structure; it does not determine suitability for a
+          {isEntity && temporalStatement(changeEntry)
+            ? temporalStatement(changeEntry)
+            : isEntity && changeEntry?.state === 'done'
+              ? 'Temporal change is reported above from source-dated filings in two adjacent 12-month periods.'
+              : 'Temporal deltas (current vs. prior period) are not yet computed — a stated absence, not filled with an estimate.'}
+          {' '}This briefing describes observable structure; it does not determine suitability for a
           particular investor or decision.
         </span>
       </Row>
