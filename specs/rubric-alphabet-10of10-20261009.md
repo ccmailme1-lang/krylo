@@ -31,7 +31,11 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - A relationship absent from a later snapshot is reported as dissolved without evidence that the source was checked.
 - A single snapshot is presented as a trend.
 
-**Decision required (Founder).** The comparison window; what counts as strengthening or weakening for an ownership disclosure versus a capital event (for example a change in stake size versus a new filing); the minimum evidence for each state; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
+**Decision (Founder, 2026-10-09): multidimensional change model.** Existence (NEW, PERSISTING, DISSOLVED, INDETERMINATE), Magnitude (STRENGTHENING, WEAKENING, NO MATERIAL CHANGE, INDETERMINATE), Configuration (RECONFIGURED, NO MATERIAL CHANGE, INDETERMINATE), each assessed independently against dated, comparable evidence; DISSOLVED needs positive evidence of termination; NO MATERIAL CHANGE needs adequate evidence in both periods; no causation claims. Recorded on KRYL-1386.
+
+**Still to define (Founder).** The comparison window (24 months as two adjacent 12-month periods proposed; today's entity SEC syncs look back 365 days); what counts as material for magnitude and what counts as a configuration change; the minimum evidence per dimension; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
+
+**Superseded wording (kept for the record).** The comparison window; what counts as strengthening or weakening for an ownership disclosure versus a capital event (for example a change in stake size versus a new filing); the minimum evidence for each state; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
 
 ---
 
