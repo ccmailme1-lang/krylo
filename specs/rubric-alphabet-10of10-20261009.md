@@ -102,7 +102,14 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - Co-presence is worded as a cause.
 - Field-level context stands in for Alphabet-specific evidence in the requested domains.
 
-**Decision required (Founder).** Whether divergence needs its own explicit section and wording; which observation fields explain a fracture classification; the line between a lead and an established relationship for display.
+**Decision (2026-10-09): cross-domain divergence, starting product semantics.**
+- **Fracture** is an evidence-backed, materially significant divergence between domains that have a justified basis for comparison. Required to show: the exact domains compared; why they are compared and what alignment is under examination (no automatic assumption that domains move together; co-presence on one entity is not enough); dated observations from each side with source and direct access to the supporting material; the nature of the divergence (direction, timing, scale, structural connection); an explicit, reproducible materiality rule (why it exceeds ordinary variation, measurement noise or incomparable units); coverage and limitations (missing domains, stale sources, incomparable measures, insufficient history). A mere unusual pattern or possible mismatch is a lead, not a fracture. The classification describes observed structure; it claims no failure, distress, intent or causation.
+- **Evidence ladder:** Lead (co-occurrence, timing proximity, name similarity or other plausible but unverified link) -> Supported connection (evidence links the entities or observations, scope incomplete, limits stated) -> Established relationship (reliable evidence explicitly establishes the specific relationship, within the source's scope and time) -> Established structural change (comparable dated evidence shows a change in the established relationship or its configuration). Entity identity, existence of a relationship and change in that relationship are three separate questions.
+- **Admission rules (all mandatory):** a lead is never displayed or labeled as an established relationship and shows the evidence gap that would resolve it; a fracture shows observations, dates, sources, comparison rule and materiality basis; cross-domain alignment is justified; relationship evidence does not prove causation; insufficient coverage limits the conclusion (missing evidence is neither a fracture nor proof of alignment).
+- **Still unresolved:** the reproducible materiality threshold; exact evidence criteria for each ladder level; final terminology; mapping to authorized sources and to the existing classification contract.
+- **Work sequence:** define the fracture threshold, formalize the evidence ladder, map fields and thresholds to sources, test representative cases, then reconcile with the current contract.
+
+**Superseded question (kept for the record).** Whether divergence needs its own explicit section and wording; which observation fields explain a fracture classification; the line between a lead and an established relationship for display.
 
 ---
 
@@ -158,4 +165,14 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
 3. **Ownership and counterparty matching (item 3): DECIDED 2026-10-09** (record fields, five match outcomes, admission rule; see item 3).
 4. **Capital measures (item 2): DECIDED 2026-10-09** (semantics of the three measures and the work sequence; see item 2). Fields, sources and formulas follow.
-5. **Cross-domain divergence (item 4):** the evidence shown for a fracture classification, and the boundary between a lead and an established relationship.
+5. **Cross-domain divergence (item 4): DECIDED 2026-10-09** (fracture requirements, evidence ladder, admission rules; thresholds and criteria still to define).
+
+## Derived work (from the five decisions; specs first, no build before a spec exists)
+
+| # | Work | Blocked on |
+|---|---|---|
+| 1 | Snapshot: one immutable analytical result per query rendered by every surface, timestamped, explicit atomic refresh | The freeze point (when a query counts as completed); deferred by the Founder |
+| 2 | KRYL-1386 spec: dimension-specific evidence thresholds, materiality, comparison window, insufficient-history wording; change vocabulary in `relationalchange.js` and snapshot rows; SEC lookback extension (365 to 730 days) investigation | Founder definitions of thresholds and window |
+| 3 | Ownership record: extract the position fields from 13D/13G filings (feasibility not yet checked); schema; five counterparty match outcomes; matching by identifier | Connector feasibility; schema spec |
+| 4 | Capital measures: required fields, evidence thresholds, missing-data treatment, authorized sources, calculation rules, comparability; reconcile with the narrower authored measure texts | Step 2 spec; source authorization |
+| 5 | Divergence: reproducible materiality threshold, evidence criteria per ladder level, terminology; show the observations behind a fracture without a toggle; reconcile with the classification contract | Threshold and criteria definitions |
