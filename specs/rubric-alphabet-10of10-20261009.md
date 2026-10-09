@@ -1,0 +1,126 @@
+# Alphabet 10/10 acceptance rubric (DRAFT for Founder edit)
+
+Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first; specifications and implementation are derived from it afterwards, not before.
+
+**Test case (fixed):** "What structural relationships are forming around Alphabet across ownership and capital?"
+
+**Scale:** the 1 to 10 payload scale (memory: project-product-quality-scale-1-to-10). A 10 means an MD could use the output to understand the situation, identify what matters, challenge assumptions and inform a decision. Current rating on this query: 6.5 (GPT) and 7 (assistant).
+
+**Rules that apply to every item below**
+- KRYLO presents substantiated structure; it does not convert it into a verdict, prediction or recommendation (CLAUDE.md section 21). A 10 is reached by more substantiated structure and clearer scope, never by adding judgment.
+- Nothing is estimated or filled in. Where evidence does not exist, the result states the absence and its class (section 1, Absence-Is-Signal). An honest stated absence is allowed in a 10 only where the evidence genuinely does not exist; an absence caused by KRYLO not having looked is not.
+- Every claim is attributable to a dated source the guest can open.
+- Technical completeness (tests pass, spec followed) is not a score input. Only what the guest can understand or determine is.
+
+---
+
+## 1. Temporal change: what is forming (KRYL-1386)
+
+**10/10 acceptance criterion.** The guest can say, for each Alphabet relationship and each co-present domain pair, whether it is new, strengthening, weakening, reconfigured, dissolved or persisting, and since when, and can tell which of those statements were observed and which are unknown.
+
+**Required evidence.**
+- At least two dated observations or snapshots per relationship over a stated comparison window, with the snapshots and filing dates cited.
+- For ownership: the successive disclosures for the same holder (for example Vanguard Group's 13G then 13G/A) with the dates, so a change or no change between them is visible.
+- For capital: dated financing and capital events in order.
+- A stated difference between "no change observed" and "not checked in this window".
+
+**Failure condition (stays below 10).**
+- The brief still says temporal deltas are not computed.
+- A relationship absent from a later snapshot is reported as dissolved without evidence that the source was checked.
+- A single snapshot is presented as a trend.
+
+**Decision required (Founder).** The comparison window; what counts as strengthening or weakening for an ownership disclosure versus a capital event (for example a change in stake size versus a new filing); the minimum evidence for each state; the wording when history cannot support a conclusion. (Spec for KRYL-1386.)
+
+---
+
+## 2. Capital: what the capital structure actually shows
+
+**10/10 acceptance criterion.** The guest can see how much capital Alphabet raised or committed, from whom or by what instrument, and what is known about where it went, each tied to a source, and can see which capital measures are available and which are not and why.
+
+**Required evidence.**
+- The financing events with amounts, instruments, counterparties and dates from primary sources (SEC filings, the company's own releases), shown with source links (today: the $80B equity offering, with the 8-K).
+- Committed versus deployed shown only where both exist; otherwise the gap is stated and named (stated purpose versus actual deployment is already an UNRESOLVED line).
+- The three subject measures (concentration, deployment velocity, capital-intensity change) each either computed from a named source or shown as unavailable with the exact source that would supply it.
+- Capital observations related to the other requested domain (ownership) where a source links them (for example the Berkshire Hathaway private placement as an ownership consequence of the raise), with the link evidenced, not inferred.
+
+**Failure condition (stays below 10).**
+- All three capital measures read DATA UNAVAILABLE and no source for them is being pursued.
+- Announced amounts are presented as deployed outcomes.
+- Capital activity is listed as a count of 8-Ks without the events they report.
+
+**Decision required (Founder).** Which sources are authorized to supply the three measures (13F, Form D, fund filings, financial statements for capital employed and output); who authors the remaining per-domain capital measures (currently UNAUTHORED); whether announced-but-undeployed capital is shown as a distinct class.
+
+---
+
+## 3. Ownership: who holds and how it is connected to capital
+
+**10/10 acceptance criterion.** The guest can see who discloses beneficial ownership of Alphabet, how large each position is, what rights it carries where disclosed, and how those holders connect to the capital events, with each statement dated and sourced.
+
+**Required evidence.**
+- Each admitted holder with the disclosure's date, form, and the reported position (shares and percentage) where the filing states them; voting versus economic position kept separate (the capital measure text already distinguishes economic share from control).
+- Changes between successive filings by the same holder (links to item 1).
+- Holders that appear in capital events (placement counterparties) matched to the ownership record by identifier, or stated as not matched.
+
+**Failure condition (stays below 10).**
+- Ownership is a list of disclosure links with no quantity.
+- Three disclosures are presented as three forming relationships without evidence they are new.
+- A counterparty in a capital event is silently omitted from the ownership view or matched by name only.
+
+**Decision required (Founder).** Whether position size and percentage become part of the admitted relationship record; which filing fields are authoritative; the rule for matching a capital counterparty to an ownership holder (identifier containment, as the subject binding rule already requires).
+
+---
+
+## 4. Cross-domain structure, including divergence
+
+**10/10 acceptance criterion.** The guest can see how capital and ownership relate to technology, labor and knowledge for Alphabet, with the evidence for each pair, and can see where the domains diverge (for example KNOWLEDGE in fracture polarity) and why that is shown.
+
+**Required evidence.**
+- For each co-present pair, the dated Alphabet-bound observations supporting it (shown today for CAPITAL and LABOR), and a statement of what is not yet shown (a co-presence is a lead, not a mechanism).
+- For each domain in fracture polarity, the specific observations that make it fracture, readable without opening a toggle.
+- Technology, labor and knowledge shown as Alphabet-bound evidence where it exists, not only as field context.
+
+**Failure condition (stays below 10).**
+- A divergent domain is a number with no evidence behind it.
+- Co-presence is worded as a cause.
+- Field-level context stands in for Alphabet-specific evidence in the requested domains.
+
+**Decision required (Founder).** Whether divergence needs its own explicit section and wording; which observation fields explain a fracture classification; the line between a lead and an established relationship for display.
+
+---
+
+## 5. Consistency: one analytical snapshot (separate requirement)
+
+**10/10 acceptance criterion.** The left brief and the MAP represent the same analytical snapshot: every count, polarity, state and relationship the guest sees on one surface matches the other, or the page says the data refreshed and shows when.
+
+**Required evidence.**
+- One computed snapshot (with its capture time) feeds the brief, the MAP, the header state and the rings.
+- Signal counts, per-domain polarity, pair counts, bound counts and states agree across surfaces for the same moment.
+- If the guest re-reads live data, that is an explicit, labeled refresh that replaces the snapshot on both surfaces together.
+
+**Failure condition (stays below 10).**
+- Counts differ between surfaces (for example 171 and 201 signals).
+- A domain is fracture on one surface and constructive on the other.
+- The header state and the MAP ring colors disagree.
+
+**Decision required (Founder).** Whether the snapshot is taken at query time and frozen, or refreshes live on both surfaces together (and then whether the guest sees a refresh timestamp).
+
+---
+
+## Scoring sheet (fill per run)
+
+| Item | Met (Y / partial / N) | Evidence in the payload | Score impact |
+|---|---|---|---|
+| 1 Temporal change | | | |
+| 2 Capital structure | | | |
+| 3 Ownership detail | | | |
+| 4 Cross-domain and divergence | | | |
+| 5 One snapshot | | | |
+
+**Proposed reading of the scale against this sheet (for the Founder to edit):** all five met = 10; items 2 to 4 met with item 1 stated honestly as unavailable = 8 or 9; only item 5 met with the current evidence = 7; item 5 unmet = 6 or lower.
+
+## Open decisions, in the order they unblock work
+1. Snapshot rule (item 5): smallest change, no new data needed.
+2. Ownership record content (item 3) and capital counterparty matching.
+3. Temporal comparison spec (item 1, KRYL-1386).
+4. Capital measure sources (item 2).
+5. Divergence presentation (item 4).
