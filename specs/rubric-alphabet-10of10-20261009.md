@@ -72,7 +72,12 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - Three disclosures are presented as three forming relationships without evidence they are new.
 - A counterparty in a capital event is silently omitted from the ownership view or matched by name only.
 
-**Decision required (Founder).** Whether position size and percentage become part of the admitted relationship record; which filing fields are authoritative; the rule for matching a capital counterparty to an ownership holder (identifier containment, as the subject binding rule already requires).
+**Decision (2026-10-09): ownership record and counterparty matching.**
+- **Record fields**, retained where the source states them; a missing value stays explicitly unknown, never inferred as zero; reported and calculated values are distinguishable: Identity (holder name and identifier, issuer name and identifier); Position (security class or type, shares or units, reported ownership percentage); Ownership rights (sole or shared voting power, sole or shared dispositive power, direct or indirect ownership); Timing (position effective date, reporting-period end, filing date); Provenance (source document, source date, document locator, supporting passage or table); Qualification (reported versus derived value, denominator and calculation basis, unresolved ambiguity). Beneficial-ownership disclosures (13D/13G) and Form 13F holdings are related but different evidence types and are kept distinct.
+- **Counterparty match outcomes** (not a binary flag): Same entity confirmed (reliable shared identifier or authoritative documentation); Affiliation confirmed (source documents the relationship, such as fund-manager or parent-subsidiary); Transaction link confirmed (source explicitly connects the capital event to the holder or position); Candidate match (name similarity or indirect context, needs verification); Unresolved (insufficient or conflicting evidence). The outcomes are not interchangeable: confirming the same entity does not establish that a capital event created or changed the position.
+- **Admission rule:** admit a relationship only at the level the evidence supports; the ownership position, the capital event and the link between them are distinct assertions, each with its own provenance and dates.
+
+**Superseded question (kept for the record).** Whether position size and percentage become part of the admitted relationship record; which filing fields are authoritative; the rule for matching a capital counterparty to an ownership holder (identifier containment, as the subject binding rule already requires).
 
 ---
 
@@ -144,6 +149,6 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 ## Open decisions, in the order that unblocks work
 1. **Snapshot rule (item 5): DECIDED 2026-10-09 (frozen at query time, timestamp shown, explicit atomic refresh).** Open sub-decision: the completion point for the freeze (see item 5).
 2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
-3. **Ownership and counterparty matching (item 3):** which position fields belong in the admitted relationship record; how a capital counterparty is matched to a holder.
+3. **Ownership and counterparty matching (item 3): DECIDED 2026-10-09** (record fields, five match outcomes, admission rule; see item 3).
 4. **Capital measures (item 2):** define the meaning of concentration, deployment velocity and capital-intensity change before choosing authorized sources and calculation rules.
 5. **Cross-domain divergence (item 4):** the evidence shown for a fracture classification, and the boundary between a lead and an established relationship.
