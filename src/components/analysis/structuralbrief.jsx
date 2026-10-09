@@ -132,7 +132,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     : '';
   const failureClause = ownershipFailure
     ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
-    : (ownershipPending ? ' Checking SEC ownership filings — canonical relationships are not known yet.' : '');
+    : (ownershipPending ? (entityCanonicalRelationships.length ? ' Checking SEC ownership filings — more relationships may follow.' : ' Checking SEC ownership filings — canonical relationships are not known yet.') : '');
   // KRYL-1369 (Founder ruling 2026-10-06, spec section 17): the two levels are stated separately. The
   // field level (domains carrying live signal, domain pairs co-present) is ambient and not bound to the
   // subject; only the subject level (observations identifier-bound to the subject, canonical
