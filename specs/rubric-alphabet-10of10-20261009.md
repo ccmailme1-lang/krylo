@@ -1,6 +1,6 @@
-# Alphabet 10/10 acceptance rubric (DRAFT for Founder edit)
+# Alphabet 10/10 acceptance rubric (DRAFT v0.2 for Founder edit)
 
-Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first; specifications and implementation are derived from it afterwards, not before.
+Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absence classes, consistency gate, decision order). Editable checklist. Defines the target first; specifications and implementation are derived from it afterwards, not before.
 
 **Test case (fixed):** "What structural relationships are forming around Alphabet across ownership and capital?"
 
@@ -11,6 +11,8 @@ Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first;
 - Nothing is estimated or filled in. Where evidence does not exist, the result states the absence and its class (section 1, Absence-Is-Signal). An honest stated absence is allowed in a 10 only where the evidence genuinely does not exist; an absence caused by KRYLO not having looked is not.
 - Every claim is attributable to a dated source the guest can open.
 - Technical completeness (tests pass, spec followed) is not a score input. Only what the guest can understand or determine is.
+- **Absence has four classes and each statement of absence names which one it is.** (a) The source information does not exist. (b) It exists but KRYLO has not obtained it. (c) It was obtained but is insufficient to compute the measure. (d) The measure itself is not yet defined or authored. Only (a) and (c) are facts about Alphabet; (b) and (d) are limits of KRYLO and are never worded as facts about Alphabet. `DATA UNAVAILABLE` alone does not say which.
+- **Evidence must support the relationship, not merely the observations.** A financing event and an ownership disclosure are not automatically a relationship; two successive filings do not establish strengthening or weakening until the reported quantities and rights are compared; a fracture classification names the observations behind it and why they classify that way; co-presence is a lead, not a mechanism.
 
 ---
 
@@ -39,7 +41,7 @@ Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first;
 
 **Required evidence.**
 - The financing events with amounts, instruments, counterparties and dates from primary sources (SEC filings, the company's own releases), shown with source links (today: the $80B equity offering, with the 8-K).
-- Committed versus deployed shown only where both exist; otherwise the gap is stated and named (stated purpose versus actual deployment is already an UNRESOLVED line).
+- Raised, committed, allocated and deployed capital kept as four separate quantities, each shown only where a source reports it; the others are stated absent with their absence class (stated purpose versus actual deployment is already an UNRESOLVED line).
 - The three subject measures (concentration, deployment velocity, capital-intensity change) each either computed from a named source or shown as unavailable with the exact source that would supply it.
 - Capital observations related to the other requested domain (ownership) where a source links them (for example the Berkshire Hathaway private placement as an ownership consequence of the raise), with the link evidenced, not inferred.
 
@@ -57,7 +59,7 @@ Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first;
 **10/10 acceptance criterion.** The guest can see who discloses beneficial ownership of Alphabet, how large each position is, what rights it carries where disclosed, and how those holders connect to the capital events, with each statement dated and sourced.
 
 **Required evidence.**
-- Each admitted holder with the disclosure's date, form, and the reported position (shares and percentage) where the filing states them; voting versus economic position kept separate (the capital measure text already distinguishes economic share from control).
+- Each admitted holder with the disclosure's date, form, and the reported position (shares and percentage) where the filing states them, plus voting and economic rights where disclosed; voting versus economic position kept separate (the capital measure text already distinguishes economic share from control).
 - Changes between successive filings by the same holder (links to item 1).
 - Holders that appear in capital events (placement counterparties) matched to the ownership record by identifier, or stated as not matched.
 
@@ -106,21 +108,36 @@ Date: 2026-10-09 · Status: DRAFT. Editable checklist. Defines the target first;
 
 ---
 
-## Scoring sheet (fill per run)
+## Scoring (replaces the earlier proposed reading)
 
-| Item | Met (Y / partial / N) | Evidence in the payload | Score impact |
+**Two parts, scored separately.**
+
+**A. Consistency gate (item 5).** Not a unit of analytical achievement. It decides whether the guest can trust that the surfaces show the same analysis. If the brief, MAP, header and rings contradict one another, the overall rating is **capped at 6** whatever the analysis quality.
+
+**B. Analytical criteria (items 1 to 4).** Each is scored Met / Partly / Not met, with the absence class named wherever something is absent.
+
+| Item | Result | Evidence in the payload | Absence class if absent |
 |---|---|---|---|
-| 1 Temporal change | | | |
-| 2 Capital structure | | | |
-| 3 Ownership detail | | | |
-| 4 Cross-domain and divergence | | | |
-| 5 One snapshot | | | |
+| 1 Temporal change | | | a / b / c / d |
+| 2 Capital structure | | | a / b / c / d |
+| 3 Ownership detail | | | a / b / c / d |
+| 4 Cross-domain and divergence | | | a / b / c / d |
+| Gate: one snapshot | pass / fail | | |
 
-**Proposed reading of the scale against this sheet (for the Founder to edit):** all five met = 10; items 2 to 4 met with item 1 stated honestly as unavailable = 8 or 9; only item 5 met with the current evidence = 7; item 5 unmet = 6 or lower.
+**Three situations, never scored alike**
+- Evidence exists and KRYLO establishes the change or relationship: criterion met.
+- The evidence genuinely does not exist or cannot support a conclusion (classes a, c): the limitation is reported accurately and the analytical objective is still only partly met.
+- The evidence exists but KRYLO has not sourced or examined it (class b), or the measure is undefined (class d): incomplete analytical coverage. This is a KRYLO limit, not an Alphabet fact.
 
-## Open decisions, in the order they unblock work
-1. Snapshot rule (item 5): smallest change, no new data needed.
-2. Ownership record content (item 3) and capital counterparty matching.
-3. Temporal comparison spec (item 1, KRYL-1386).
-4. Capital measure sources (item 2).
-5. Divergence presentation (item 4).
+**Proposed bands (for the Founder to edit; not final):**
+- **10:** items 1 to 4 met and the gate passed.
+- **8 to 9:** strong, decision-useful analysis; remaining gaps do not stop the guest from understanding the principal structural changes.
+- **6 to 7:** credible structural inventory, but a material part of the requested analysis (above all temporal change) is unresolved. An honestly disclosed missing answer to "what is forming" stays here: honesty is mandatory but is not a substitute for answering the question.
+- **Below 6:** material deficiencies in subject attribution, supporting evidence, cross-domain analysis or reliability.
+
+## Open decisions, in the order that unblocks work
+1. **Snapshot rule (item 5):** frozen at query time, or refreshed atomically on every surface together (and whether a refresh time is shown). Smallest self-contained decision; it does not displace item 2 below as the main analytical priority.
+2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
+3. **Ownership and counterparty matching (item 3):** which position fields belong in the admitted relationship record; how a capital counterparty is matched to a holder.
+4. **Capital measures (item 2):** define the meaning of concentration, deployment velocity and capital-intensity change before choosing authorized sources and calculation rules.
+5. **Cross-domain divergence (item 4):** the evidence shown for a fracture classification, and the boundary between a lead and an established relationship.
