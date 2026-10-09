@@ -18,7 +18,9 @@
 // No static confidence. No mock momentum. No Math.random. If it isn't measured, it withholds.
 
 import { CANONICAL_DOMAINS, isCanonicalDomain } from './ontology.js';
-import { getAllDomainPressures, getQueryDomainPressure, MAP_FIELD_WINDOW_MS } from './domaingravity.js';
+import { getAllDomainPressures, getQueryDomainPressure, getDomainSignals, MAP_FIELD_WINDOW_MS } from './domaingravity.js';
+import { classifyConvergenceStateMeasured } from './convergenceclassifier.js';
+import { measuredInputsFromSignals } from './convergenceinputs.js';
 
 // ── Canonical domain vocabulary ───────────────────────────────────────────────
 // Institutional term → canonical domain. Grounded in each domain's actual meaning, not
@@ -156,7 +158,7 @@ export function synthCanonical(query, domainOverride = null) {
 
   const confidence = parseFloat((p.magnitude / 100).toFixed(3));
   const direction  = p.polarity;                         // constructive | fracture
-  const stateLabel = deriveState(p.magnitude, p.polarity);
+  const stateLabel = deriveState(p.magnitude, p.polarity, signalDomain);
 
   // KRYL-1218 (canonical boundary): the canonical path must satisfy the same
   // recommendedAction contract every SYNTH_MAP synthesizer does. Pure perception —
@@ -243,13 +245,13 @@ export function groundSignalMetrics(query, domainOverride = null) {
   };
 }
 
-// State band — pure function of measured magnitude + polarity. No hidden classifier, no mock.
-function deriveState(magnitude, polarity) {
+// State band. Fracture polarity keeps its own two bands (section 16: fracture is first-class, not a convergence
+// state). A constructive domain takes the SAME measured classifier the MAP rings use (DEF-1373: T from event
+// dates, V' dispersion, magnitude through the declared scale), so the header and the MAP cannot disagree.
+function deriveState(magnitude, polarity, signalDomain) {
   if (polarity === 'fracture') return magnitude >= 60 ? 'ACTIVE FRACTURE' : 'FRACTURE FORMING';
-  if (magnitude >= 75) return 'HIGH CONVERGENCE';
-  if (magnitude >= 45) return 'BUILDING CONVERGENCE';
-  if (magnitude >= 20) return 'LOW SIGNAL YIELD';
-  return 'INSUFFICIENT SIGNAL';
+  const signals = getDomainSignals(signalDomain, MAP_FIELD_WINDOW_MS);
+  return classifyConvergenceStateMeasured(measuredInputsFromSignals(signals, magnitude), 0.8).label;
 }
 
 // Canonical query-domain → signal-domain. The live pressure field (getAllDomainPressures) is keyed
