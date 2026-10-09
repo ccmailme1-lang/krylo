@@ -55,6 +55,12 @@ export default function BuildStamp() {
     return () => window.removeEventListener('message', onMsg);
   }, []);
 
+  // The commit also goes in the browser tab title (the usual place for a version tag), readable without finding the corner label.
+  useEffect(() => {
+    const base = 'KRYLO MONOLITH';
+    document.title = `${base} · ${loaded.commit}${loaded.dirty ? '-dirty' : ''}`;
+  }, [loaded.commit, loaded.dirty]);
+
   const warnings = [];
   if (served && served.commit !== loaded.commit) warnings.push(`newer build served: ${served.commit} (this page loaded ${loaded.commit}): reload`);
   for (const [page, commit] of Object.entries(frames)) {
@@ -67,9 +73,9 @@ export default function BuildStamp() {
       aria-hidden="true"
       title={warnings.length ? warnings.join(' | ') : `build ${base}`}
       style={{
-        position: 'fixed', right: 6, bottom: 3, zIndex: 3, pointerEvents: 'none',
+        position: 'fixed', right: 6, bottom: 3, zIndex: 2147483000, pointerEvents: 'none', // above every full-screen layer (the Analysis panel is opaque at z-index 15)
         fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.06em',
-        color: warnings.length ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.22)', textAlign: 'right', lineHeight: 1.3,
+        color: warnings.length ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.34)', textAlign: 'right', lineHeight: 1.3,
       }}
     >
       {warnings.length ? `⚠ ${warnings[0]}` : base}
