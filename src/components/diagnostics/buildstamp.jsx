@@ -61,6 +61,14 @@ export default function BuildStamp() {
     document.title = `${base} · ${loaded.commit}${loaded.dirty ? '-dirty' : ''}`;
   }, [loaded.commit, loaded.dirty]);
 
+  // Machine-readable identity for any agent or script: a data attribute on <html>, a global, the tab title above,
+  // and the dev server's /__build.json. {commit, dirty, time, pageLoadId, served, frames}.
+  useEffect(() => {
+    const id = { commit: loaded.commit, dirty: !!loaded.dirty, time: loaded.time ?? null, pageLoadId: PAGE_LOAD_ID, servedCommit: served?.commit ?? null, frames };
+    document.documentElement.setAttribute('data-krylo-build', JSON.stringify(id));
+    window.__KRYLO_BUILD__ = id;
+  }, [loaded, served, frames]);
+
   const warnings = [];
   if (served && served.commit !== loaded.commit) warnings.push(`newer build served: ${served.commit} (this page loaded ${loaded.commit}): reload`);
   for (const [page, commit] of Object.entries(frames)) {
@@ -73,10 +81,9 @@ export default function BuildStamp() {
       aria-hidden="true"
       title={warnings.length ? warnings.join(' | ') : `build ${base}`}
       style={{
-        position: 'fixed', right: 10, bottom: 8, zIndex: 2147483000, pointerEvents: 'none', // above every full-screen layer (the Analysis panel is opaque at z-index 15)
-        fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: '0.06em', lineHeight: 1.3, textAlign: 'right',
-        padding: '2px 7px', background: 'rgba(0,0,0,0.78)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 3,
-        color: warnings.length ? '#ffffff' : 'rgba(255,255,255,0.72)',
+        position: 'fixed', right: 6, bottom: 3, zIndex: 2147483000, pointerEvents: 'none', // above every full-screen layer (the Analysis panel is opaque at z-index 15)
+        fontFamily: "'IBM Plex Mono', monospace", fontSize: 8, letterSpacing: '0.06em', lineHeight: 1.3, textAlign: 'right',
+        color: warnings.length ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.3)',
       }}
     >
       {warnings.length ? `⚠ ${warnings[0]}` : base}
