@@ -54,7 +54,14 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - Announced amounts are presented as deployed outcomes.
 - Capital activity is listed as a count of 8-Ks without the events they report.
 
-**Decision required (Founder).** Which sources are authorized to supply the three measures (13F, Form D, fund filings, financial statements for capital employed and output); who authors the remaining per-domain capital measures (currently UNAUTHORED); whether announced-but-undeployed capital is shown as a distinct class.
+**Decision (2026-10-09): capital measure semantics** (economic definition first, then fields, sources and formulas):
+- **Capital concentration:** the distribution of capital across identified providers, instruments, recipients or funding events within a stated scope and period. It does not imply fragility, dependency or risk. A figure computed on a partly observed population is an observed-scope figure only and states its scope; it is never presented as complete concentration.
+- **Deployment velocity:** the rate at which committed or available capital is actually moved into use over time, distinguishing announced, committed, closed and disbursed. An announcement or commitment is not cash deployed. If the evidence supports only commitment dates, the measure is labeled commitment velocity, not deployment velocity.
+- **Capital-intensity change:** the change in capital relative to a defined scale of activity (revenue, assets, capacity or another stated denominator). Numerator, denominator and ratio are reported together; a ratio alone does not show whether capital rose, the denominator fell, or both; a larger absolute amount is not higher intensity.
+- **Work sequence:** (1) definitions (done); (2) required fields, evidence thresholds and missing-data treatment per measure; (3) authorized sources that can supply those fields; (4) calculation rules, comparability (currency, period, cancellations and reversals) and reporting limits; (5) test against representative KRYLO cases before locking contract language.
+- **Reconcile at step 2:** the authored measure texts shown in the domain panel today are narrower (concentration is top-holder share of holder-level holdings; deployment velocity is a committed-to-deployed conversion rate; capital-intensity change is a percent change in capital employed over output). The step 2 specification reconciles these with the definitions above.
+
+**Superseded question (kept for the record).** Which sources are authorized to supply the three measures (13F, Form D, fund filings, financial statements for capital employed and output); who authors the remaining per-domain capital measures (currently UNAUTHORED); whether announced-but-undeployed capital is shown as a distinct class.
 
 ---
 
@@ -150,5 +157,5 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 1. **Snapshot rule (item 5): DECIDED 2026-10-09 (frozen at query time, timestamp shown, explicit atomic refresh).** Open sub-decision: the completion point for the freeze (see item 5).
 2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
 3. **Ownership and counterparty matching (item 3): DECIDED 2026-10-09** (record fields, five match outcomes, admission rule; see item 3).
-4. **Capital measures (item 2):** define the meaning of concentration, deployment velocity and capital-intensity change before choosing authorized sources and calculation rules.
+4. **Capital measures (item 2): DECIDED 2026-10-09** (semantics of the three measures and the work sequence; see item 2). Fields, sources and formulas follow.
 5. **Cross-domain divergence (item 4):** the evidence shown for a fracture classification, and the boundary between a lead and an established relationship.
