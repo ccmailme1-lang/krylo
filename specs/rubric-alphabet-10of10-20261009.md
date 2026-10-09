@@ -104,7 +104,9 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - A domain is fracture on one surface and constructive on the other.
 - The header state and the MAP ring colors disagree.
 
-**Decision required (Founder).** Whether the snapshot is taken at query time and frozen, or refreshes live on both surfaces together (and then whether the guest sees a refresh timestamp).
+**Decision (Founder, 2026-10-09): freeze the analytical snapshot at query time.** One identifiable, immutable snapshot per completed query run. Every surface (brief, MAP, header state, rings, counts, polarities, relationships, evidence references) renders from that snapshot. The snapshot records its generation timestamp ("Analysis snapshot: date, time, time zone") and preserves source-level event dates and retrieval times separately (a snapshot timestamp does not imply every source was current at that moment). Refresh is an explicit user action that creates a new snapshot and replaces the displayed result on all surfaces atomically; the prior run stays identifiable. No surface refreshes independently. Acceptance test: if the pool changes after the query completes, the existing brief and MAP stay consistent; a refresh produces a new, internally consistent run.
+
+**Still to define (Founder): what "completed" means** for the freeze point, because the subject evidence (SEC lookups) arrives seconds after submit. Options on the table: (1) complete when the subject lookups settle (success, failure or the 45-second timeout), with "Checking..." until then; (2) freeze at submit and bring subject evidence only through an explicit refresh; (3) freeze in stages (field level at submit, subject part when it settles).
 
 ---
 
@@ -136,7 +138,7 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - **Below 6:** material deficiencies in subject attribution, supporting evidence, cross-domain analysis or reliability.
 
 ## Open decisions, in the order that unblocks work
-1. **Snapshot rule (item 5):** frozen at query time, or refreshed atomically on every surface together (and whether a refresh time is shown). Smallest self-contained decision; it does not displace item 2 below as the main analytical priority.
+1. **Snapshot rule (item 5): DECIDED 2026-10-09 (frozen at query time, timestamp shown, explicit atomic refresh).** Open sub-decision: the completion point for the freeze (see item 5).
 2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
 3. **Ownership and counterparty matching (item 3):** which position fields belong in the admitted relationship record; how a capital counterparty is matched to a holder.
 4. **Capital measures (item 2):** define the meaning of concentration, deployment velocity and capital-intensity change before choosing authorized sources and calculation rules.
