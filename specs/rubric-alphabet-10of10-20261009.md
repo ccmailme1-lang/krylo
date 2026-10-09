@@ -129,7 +129,7 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 
 **Decision (Founder, 2026-10-09): freeze the analytical snapshot at query time.** One identifiable, immutable snapshot per completed query run. Every surface (brief, MAP, header state, rings, counts, polarities, relationships, evidence references) renders from that snapshot. The snapshot records its generation timestamp ("Analysis snapshot: date, time, time zone") and preserves source-level event dates and retrieval times separately (a snapshot timestamp does not imply every source was current at that moment). Refresh is an explicit user action that creates a new snapshot and replaces the displayed result on all surfaces atomically; the prior run stays identifiable. No surface refreshes independently. Acceptance test: if the pool changes after the query completes, the existing brief and MAP stay consistent; a refresh produces a new, internally consistent run.
 
-**Still to define (Founder): what "completed" means** for the freeze point, because the subject evidence (SEC lookups) arrives seconds after submit. Options on the table: (1) complete when the subject lookups settle (success, failure or the 45-second timeout), with "Checking..." until then; (2) freeze at submit and bring subject evidence only through an explicit refresh; (3) freeze in stages (field level at submit, subject part when it settles).
+**Decision (2026-10-09): freeze point = subject-lookup settlement.** The snapshot is taken once the subject lookups reach a terminal state: success, failure, or the 45-second timeout. Until then the page shows "Checking...". The snapshot holds the field-level results plus whatever subject evidence was available when the lookup phase settled. A failed or timed-out lookup is represented explicitly as unavailable, never as evidence of absence (absence class b: not obtained). To reconcile before implementation: the existing brief, MAP and header contract and the "Checking SEC ownership filings" state of DEF-1384.
 
 ---
 
@@ -161,7 +161,7 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 - **Below 6:** material deficiencies in subject attribution, supporting evidence, cross-domain analysis or reliability.
 
 ## Open decisions, in the order that unblocks work
-1. **Snapshot rule (item 5): DECIDED 2026-10-09 (frozen at query time, timestamp shown, explicit atomic refresh).** Open sub-decision: the completion point for the freeze (see item 5).
+1. **Snapshot rule (item 5): DECIDED 2026-10-09** (frozen once the subject lookups settle, timestamp shown, explicit atomic refresh).
 2. **Temporal change, KRYL-1386 (item 1):** the six states, evidence thresholds, comparison window, and the treatment of insufficient history. Highest analytical priority: it answers the word "forming".
 3. **Ownership and counterparty matching (item 3): DECIDED 2026-10-09** (record fields, five match outcomes, admission rule; see item 3).
 4. **Capital measures (item 2): DECIDED 2026-10-09** (semantics of the three measures and the work sequence; see item 2). Fields, sources and formulas follow.
@@ -171,7 +171,7 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 
 | # | Work | Blocked on |
 |---|---|---|
-| 1 | Snapshot: one immutable analytical result per query rendered by every surface, timestamped, explicit atomic refresh | The freeze point (when a query counts as completed); deferred by the Founder |
+| 1 | Snapshot: one immutable analytical result per query rendered by every surface, timestamped, explicit atomic refresh, frozen at subject-lookup settlement | Spec and reconciliation with the current brief, MAP and header contract |
 | 2 | KRYL-1386 spec: dimension-specific evidence thresholds, materiality, comparison window, insufficient-history wording; change vocabulary in `relationalchange.js` and snapshot rows; SEC lookback extension (365 to 730 days) investigation | Founder definitions of thresholds and window |
 | 3 | Ownership record: extract the position fields from 13D/13G filings (feasibility not yet checked); schema; five counterparty match outcomes; matching by identifier | Connector feasibility; schema spec |
 | 4 | Capital measures: required fields, evidence thresholds, missing-data treatment, authorized sources, calculation rules, comparability; reconcile with the narrower authored measure texts | Step 2 spec; source authorization |
