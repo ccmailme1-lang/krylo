@@ -9,7 +9,8 @@ import CausalImpactView from './causalimpactview.jsx';
 import { inferFormation } from '../../engine/formationinference.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
 import { getAllDomainPressures, getDomainSignals, MAP_FIELD_WINDOW_MS } from '../../engine/domaingravity.js';
-import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import { classifyConvergenceStateMeasured } from '../../engine/convergenceclassifier.js';
+import { measuredInputsFromSignals } from '../../engine/convergenceinputs.js';
 import { A as adSubjectFor } from '../../engine/adsubject.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
@@ -179,11 +180,10 @@ function FormationMapTab({ query }) {
       polarity[dom] = p.polarity === 'fracture' ? 'fracture' : 'constructive';
       if (!p.signalCount) { states[dom] = 'INSUFFICIENT SIGNAL'; }
       else {
-        const vals = getDomainSignals(dom, MAP_FIELD_WINDOW_MS).map(x => (x.confidence ?? 0) / 100);
-        const mean = vals.reduce((a, b) => a + b, 0) / (vals.length || 1);
-        const V = vals.length > 1 ? Math.sqrt(vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length) : 0;
-        const mag = (p.magnitude ?? 0) / 100;
-        const lbl = classifyConvergenceState({ D: mag, V, A: mag, T: 0.7 }, 0.8).label;
+        // DEF-1373 (spec v0.5): measured T from the real event dates of this domain's signals (null when fewer than
+        // two are dated), V' = confidence dispersion on 0..1, magnitude through the declared scale.
+        const lbl = classifyConvergenceStateMeasured(
+          measuredInputsFromSignals(getDomainSignals(dom, MAP_FIELD_WINDOW_MS), p.magnitude), 0.8).label;
         states[dom] = lbl === 'LOW SIGNAL YIELD' ? 'INSUFFICIENT SIGNAL' : lbl; // Founder 2026-10-08: LOW is the same as INSUFFICIENT on the MAP
       }
       if (subjScope.kind === 'ENTITY') {

@@ -39,6 +39,36 @@ export function classifyConvergenceState(vector, telemetryConfidence) {
   return { classifierVersion: '1126A.v2', stateId, label, theme, stateType: STATE_TYPE.PROJECTION };
 }
 
+// ── MEASURED CLASSIFIER (DEF-1373, spec v0.5) ───────────────────────────────
+// Same five states, colors and themes as above. Inputs are the measured ones from convergenceinputs.js:
+//   D, A  magnitude inputs on 0..1 (kept as two inputs; identical in today's callers)
+//   V     V' = min(1, sigma_c / 0.5), confidence dispersion on 0..1 (not the raw standard deviation)
+//   T     temporal alignment on 0..1 from real event dates, or null when fewer than two dated events exist
+// T = null (valid D, A, V) can reach at most BUILDING; it never reaches TURBULENT or HIGH, and it is not a
+// measurement of alignment (Founder ruling 1). Invalid or missing D, A or V (and a non-null invalid T) is
+// INSUFFICIENT SIGNAL. Boundaries: LOW d<0.4; TURBULENT T<0.50 and V'>=0.80; HIGH D,A>=0.75 and T>=0.65 and V'<=0.60.
+const isUnit = (x) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1;
+
+export function classifyConvergenceStateMeasured(vector, telemetryConfidence) {
+  const { D, V, A, T } = vector ?? {};
+  let stateId, label, theme;
+  const invalid = !isUnit(D) || !isUnit(A) || !isUnit(V) || (T !== null && T !== undefined && !isUnit(T));
+  const tKnown = T !== null && T !== undefined;
+
+  if (invalid || !(telemetryConfidence >= 0.50) || (D < 0.1 && A < 0.1)) {
+    [stateId, label, theme] = [0, 'INSUFFICIENT SIGNAL', 'void_gray'];
+  } else if (D < 0.4 && A < 0.4) {
+    [stateId, label, theme] = [1, 'LOW SIGNAL YIELD', 'muted_slate'];
+  } else if (tKnown && T < 0.50 && V >= 0.80) {
+    [stateId, label, theme] = [3, 'TURBULENT CONVERGENCE', 'signal_blue'];
+  } else if (D >= 0.75 && A >= 0.75 && tKnown && T >= 0.65 && V <= 0.60) {
+    [stateId, label, theme] = [4, 'HIGH CONVERGENCE', 'unicorn_purple'];
+  } else {
+    [stateId, label, theme] = [2, 'BUILDING CONVERGENCE', 'signal_lime'];
+  }
+  return { classifierVersion: '1373.v0.5', stateId, label, theme, stateType: STATE_TYPE.PROJECTION };
+}
+
 // ── HYSTERESIS BUFFER ────────────────────────────────────────────────────────
 // Prevents frame-to-frame UI toggling by requiring state persistence.
 

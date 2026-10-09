@@ -10,11 +10,11 @@
 // passed-in constant. The full [M,C,E,R] vector + learned weighting matrix W is Research Math,
 // deferred until Evidence Depth and Connector Strength have real substrates behind them too.
 
-import { getDomainPressure } from '../engine/domaingravity.js';
-import { classifyConvergenceState, applyTransitionPolicy } from '../engine/convergenceclassifier.js';
+import { getDomainPressure, getDomainSignals } from '../engine/domaingravity.js';
+import { classifyConvergenceStateMeasured, applyTransitionPolicy } from '../engine/convergenceclassifier.js';
+import { measuredInputsFromSignals } from '../engine/convergenceinputs.js';
 import { buildFormation, FORMATION_STATE } from './formationschema.js';
 
-const CONE_VECTOR_T = 0.7;             // same placeholder constant conemap.jsx uses
 const CONE_TELEMETRY_CONFIDENCE = 0.8; // same constant conemap.jsx uses
 
 // Mirrors conemap.jsx's coneConvergenceVector() exactly — one source of truth for this shape
@@ -23,9 +23,11 @@ const CONE_TELEMETRY_CONFIDENCE = 0.8; // same constant conemap.jsx uses
 // Note: this `inputVolatility` is the classifier's own telemetry-choppiness input (feeds
 // classifyConvergenceState's TURBULENT detection) — a different concept from the Formation's
 // own V_f velocity below, which measures the formation's rate of change over time, not input noise.
-function convergenceVector(magnitude, inputVolatility) {
-  const leverageN = (magnitude ?? 0) / 100;
-  return { D: leverageN, V: inputVolatility ?? 0.5, A: leverageN, T: CONE_VECTOR_T };
+// DEF-1373 (spec v0.5): T is measured from the real event dates of the domain's signals (null when fewer than two
+// are dated) and V' is the domain's confidence dispersion on 0..1; the old constant T and the caller-supplied
+// volatility no longer feed the classifier. `inputVolatility` stays in the signature for callers and is unused.
+function convergenceVector(domain, magnitude) {
+  return measuredInputsFromSignals(getDomainSignals(domain), magnitude);
 }
 
 // State-vector history per domain, F_t = [M_t, C_t] with timestamp — module-level, in-memory.
@@ -77,8 +79,8 @@ export function adaptDomainToFormation(domain, inputVolatility = 0.5) {
   const pressure = getDomainPressure(domain);
   if (pressure.signalCount === 0) return null;
 
-  const vector = convergenceVector(pressure.magnitude, inputVolatility);
-  const raw    = classifyConvergenceState(vector, CONE_TELEMETRY_CONFIDENCE);
+  const vector = convergenceVector(domain, pressure.magnitude);
+  const raw    = classifyConvergenceStateMeasured(vector, CONE_TELEMETRY_CONFIDENCE);
   const locked = applyTransitionPolicy(raw);
 
   // Hysteresis-confirmed (raw matches the locked/persisted state) -> stable.

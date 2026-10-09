@@ -7,7 +7,8 @@ import { usePrism } from '../../context/PrismContext.jsx';
 import { buildLiveProspectus } from '../../engine/formationprospectusproducer.js';
 import { CANONICAL_DOMAINS } from '../../engine/ontology.js';
 import { getDomainSignals } from '../../engine/domaingravity.js';
-import { classifyConvergenceState } from '../../engine/convergenceclassifier.js';
+import { classifyConvergenceStateMeasured } from '../../engine/convergenceclassifier.js';
+import { computeT, computeVPrime } from '../../engine/convergenceinputs.js';
 import { computeVesselPressure } from '../../engine/pressurevessel.js';
 import { computeDomainFlow } from '../../engine/domainflow.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
@@ -831,7 +832,7 @@ function AnalysisField({
   if (viewportLens === 'CONVERGENCE') {
     const cDomainStats = opp?.domainStats ?? {};
     const CINK = '#F5F5F7', CDIM = 'rgba(245,245,247,0.60)', CFAINT = 'rgba(245,245,247,0.34)';
-    const CONE_T = 0.5, CONE_CONF = 0.7; // matches conemap.jsx pin (scoutingreportproducer.js CONE_VECTOR_T / CONE_TELEMETRY_CONFIDENCE)
+    const CONE_CONF = 0.7; // matches conemap.jsx pin (CONE_TELEMETRY_CONFIDENCE); T is measured now (DEF-1373), no constant
     const STATE_COLOR = { // §6 CONVERGENCE STATE COLOR + MOTION SEMANTICS — locked tokens, not new paint
       'INSUFFICIENT SIGNAL': '#3a3d4a', 'LOW SIGNAL YIELD': '#1a1a1a',
       'BUILDING CONVERGENCE': '#66FF00', 'TURBULENT CONVERGENCE': '#007FFF', 'HIGH CONVERGENCE': '#8A2BE2',
@@ -865,9 +866,11 @@ function AnalysisField({
         ? Math.sqrt(vals.reduce((s2, v) => s2 + (v - meanV) ** 2, 0) / vals.length)
         : 0; // single reading → zero observed volatility, not invented
       const D = st.mag, A = st.mag; // matches coneConvergenceVector's own D=A=leverageN simplification
-      const cls = classifyConvergenceState({ D, V: volatility, A, T: CONE_T }, CONE_CONF);
+      // DEF-1373 (spec v0.5): T from the real event dates of this domain's signals (null when fewer than two), V' on 0..1.
+      const measuredT = computeT(sigs.map((x) => x.eventDate)).T;
+      const cls = classifyConvergenceStateMeasured({ D, V: computeVPrime(vals), A, T: measuredT }, CONE_CONF);
       const debouncedLabel = debounce(name, cls.label); // S_w — what the report displays
-      return { name, count: st.count, mag: st.mag, volatility, ...cls, rawLabel: cls.label, label: debouncedLabel };
+      return { name, count: st.count, mag: st.mag, volatility, T: measuredT, ...cls, rawLabel: cls.label, label: debouncedLabel };
     });
     const cReporting = cRows.filter((r) => r.count > 0);
     const cStateCounts = {};
@@ -876,6 +879,8 @@ function AnalysisField({
     const cContributors = cReporting.filter((r) => r.label === cDominant).map((r) => r.name);
     const cFieldD = cReporting.length ? cReporting.reduce((s, r) => s + r.mag, 0) / cReporting.length : 0;
     const cFieldV = cReporting.length ? cReporting.reduce((s, r) => s + r.volatility, 0) / cReporting.length : 0;
+    const cTs = cReporting.map((r) => r.T).filter((t) => t !== null && t !== undefined);
+    const cFieldT = cTs.length ? cTs.reduce((a, b) => a + b, 0) / cTs.length : null; // average of the domains whose T could be computed
     const CSecLabel = ({ num, title }) => (
       <>
         <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.2em', color: CFAINT }}>{num}</div>
@@ -978,8 +983,10 @@ function AnalysisField({
                 <CBar v={cFieldD} />
               </div>
               <div>
-                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>TEMPORAL (pinned)</div>
-                <CBar v={CONE_T} />
+                <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT, marginBottom: 8 }}>TEMPORAL (field avg, dated events)</div>
+                {cFieldT === null
+                  ? <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.06em', color: CFAINT }}>not computed: fewer than two dated observations in any domain</div>
+                  : <CBar v={cFieldT} />}
               </div>
             </div>
             <div style={{ fontFamily: MONO, fontSize: 9, letterSpacing: '0.08em', color: CFAINT, marginTop: 12 }}>stateType: PROJECTION (DEF-1863)</div>
