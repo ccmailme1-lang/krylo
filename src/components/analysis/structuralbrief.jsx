@@ -58,6 +58,23 @@ function Row({ label, children }) {
 
 // KRYL (2026-10-06): the brief headline and summary sentence as one pure function, so the MAP panel
 // (structurepanel.jsx) shows exactly the text this component shows -- one computation, two surfaces.
+// DEF-1387: evidence for one co-present pair is chosen PER SIDE before any display limit, so a domain with
+// older filings is never crowded out by the other domain's newer ones. Each side keeps its own newest
+// `perSide` dated, subject-bound observations; a side with none makes the pair an incomplete lead
+// (never presented as corroborated). Pure; evidenceByDomain maps domain -> [{ domain, source, eventDate }].
+export function selectPairSupport(evidenceByDomain, a, b, perSide = 2) {
+  const pick = (d) => (evidenceByDomain?.[d] ?? [])
+    .filter(o => o && o.eventDate)
+    .slice()
+    .sort((x, y) => String(y.eventDate).localeCompare(String(x.eventDate)))
+    .slice(0, perSide);
+  const sideA = pick(a), sideB = pick(b);
+  const missing = [];
+  if (sideA.length === 0) missing.push(a);
+  if (sideB.length === 0) missing.push(b);
+  return { sideA, sideB, missing, complete: missing.length === 0 };
+}
+
 export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false, ambientFormation = null }) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
@@ -287,14 +304,19 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
               // Fix 2: admittedType is a fixed category per domain-pair (real, but the same
               // label every time those two domains co-occur) -- attach the actual dated
               // evidence from each side of the pair instead of leaving it a bare category.
-              const support = [...(evidenceByDomain[e.a] ?? []), ...(evidenceByDomain[e.b] ?? [])]
-                .sort((x, y) => (y.eventDate ?? '').localeCompare(x.eventDate ?? '')).slice(0, 3);
+              const sup = selectPairSupport(evidenceByDomain, e.a, e.b);
+              const cite = (list) => list.map(o => `${o.domain} ${o.source} ${o.eventDate}`).join(' · ');
               return (
                 <div key={i}>
                   <div>{e.a} ↔ {e.b} — {e.admittedType}</div>
-                  {support.length > 0 && (
+                  {isEntity && sup.complete && (
                     <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
-                      supported by: {support.map(s => `${s.domain} ${s.source} ${s.eventDate}`).join(' · ')}
+                      {subjectLabel}-bound evidence · {e.a}: {cite(sup.sideA)} · {e.b}: {cite(sup.sideB)}
+                    </div>
+                  )}
+                  {isEntity && !sup.complete && (
+                    <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
+                      INCOMPLETE LEAD — no dated {subjectLabel}-bound evidence in {sup.missing.join(' and ')}{sup.sideA.length || sup.sideB.length ? ` (available: ${cite([...sup.sideA, ...sup.sideB])})` : ''}
                     </div>
                   )}
                 </div>

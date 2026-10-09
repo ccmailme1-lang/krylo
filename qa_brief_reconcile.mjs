@@ -21,7 +21,7 @@ const keepEngineExternal = { name: 'engine-external', setup(b) {
   });
 } };
 await build({ entryPoints: ['src/components/analysis/structuralbrief.jsx'], bundle: true, format: 'esm', platform: 'node', outfile: out, loader: { '.jsx': 'jsx' }, jsx: 'automatic', logLevel: 'silent', external: ['react', 'react-dom', 'react/jsx-runtime'], plugins: [keepEngineExternal] });
-const { computeBriefSummary } = await import(pathToFileURL(out).href);
+const { computeBriefSummary, selectPairSupport } = await import(pathToFileURL(out).href);
 
 let pass = 0, fail = 0;
 const ok = (c, l) => { if (c) { pass++; console.log('  ✓ ' + l); } else { fail++; console.log('  ✗ ' + l); } };
@@ -53,6 +53,21 @@ console.log('  sentence:', left.briefSentence);
 ok(nSub > 0 ? new RegExp(`with ${nSub} domain pair[s]? co-present among them`).test(left.briefSentence) : true, `subject level states its own count (${nSub}) and says "among them"`);
 ok(subjectF && subjectF.graph.vertices.every(v => ['CAPITAL', 'TECHNOLOGY', 'LABOR', 'OWNERSHIP'].includes(String(v.domain).toUpperCase())), 'subject formation contains only domains where Sysco-attributed signals exist (no ambient-only domain)');
 ok(ambient && ambient.graph.vertices.length >= subjectF.graph.vertices.length, 'whole-field formation covers at least the subject formation domains');
+
+console.log('Pair support: both sides before any display limit (DEF-1387)');
+{
+  const ev = (d, src, dates) => dates.map(x => ({ domain: d, source: src, eventDate: x }));
+  const crowd = { CAPITAL: ev('CAPITAL', 'EDGAR_8K', ['2026-10-06', '2026-09-25', '2026-09-24', '2026-09-16', '2026-09-14']), OWNERSHIP: ev('OWNERSHIP', 'EDGAR_13G', ['2026-03-26']) };
+  const c = selectPairSupport(crowd, 'CAPITAL', 'OWNERSHIP');
+  ok(c.complete && c.sideA.length === 2 && c.sideB.length === 1, 'crowd-out: five newer CAPITAL filings do not push out the single older OWNERSHIP filing');
+  ok(c.sideA[0].eventDate === '2026-10-06' && c.sideB[0].domain === 'OWNERSHIP' && c.sideB[0].source === 'EDGAR_13G', 'each citation keeps its domain, source and date');
+  const one = selectPairSupport({ CAPITAL: ev('CAPITAL', 'EDGAR_8K', ['2026-10-06']) }, 'CAPITAL', 'LABOR');
+  ok(!one.complete && one.missing.join() === 'LABOR' && one.sideA.length === 1, 'one side without evidence: incomplete, names the missing domain, keeps the available side');
+  const none = selectPairSupport({}, 'LABOR', 'OWNERSHIP');
+  ok(!none.complete && none.missing.join() === 'LABOR,OWNERSHIP' && none.sideA.length === 0 && none.sideB.length === 0, 'neither side has evidence: incomplete lead naming both domains (selection cannot fix a data gap)');
+  const undated = selectPairSupport({ CAPITAL: [{ domain: 'CAPITAL', source: 'X', eventDate: null }], LABOR: ev('LABOR', 'EDGAR_8K', ['2026-01-02']) }, 'CAPITAL', 'LABOR');
+  ok(!undated.complete && undated.missing.join() === 'CAPITAL', 'an undated observation is not dated evidence');
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
