@@ -180,3 +180,14 @@ Date: 2026-10-09 · Status: DRAFT v0.2 (GPT review applied: scoring model, absen
 | 3 | Ownership record: extract the position fields from 13D/13G filings (feasibility not yet checked); schema; five counterparty match outcomes; matching by identifier | Connector feasibility; schema spec |
 | 4 | Capital measures: required fields, evidence thresholds, missing-data treatment, authorized sources, calculation rules, comparability; reconcile with the narrower authored measure texts | Step 2 spec; source authorization |
 | 5 | Divergence: reproducible materiality threshold, evidence criteria per ladder level, terminology; show the observations behind a fracture without a toggle; reconcile with the classification contract | Threshold and criteria definitions |
+
+## Decisions recorded 2026-10-09 from the decision package (`specs/decision-package-alphabet-rubric-20261009.md`)
+
+1. **Ownership magnitude threshold:** 1.0 percentage point change in reported ownership percentage, compared within the same share class (same CUSIP) and reporting person. At or above 1.0 point: STRENGTHENING or WEAKENING. Below 1.0 point: NO MATERIAL CHANGE only when the evidence is sufficient and comparable; otherwise INDETERMINATE.
+2. **KRYL-1334 amendment authorized:** the locked relational-change spec may be amended to permit a source-dated 12-month comparison alongside persisted snapshots. Snapshot semantics are preserved; the comparison method and compatibility requirements are documented (Amendment A in `SPEC-relational-change-temporal-axis.md`).
+3. **Capital-event magnitude:** INDETERMINATE in the first version, until reliable, comparable magnitude evidence and calculation rules exist.
+4. **XBRL source:** investigation and specification of a `data.sec.gov` XBRL route for capital intensity is authorized. This authorizes the data-source work only; it does not assume the required fields are available and does not authorize deployment.
+5. **Cross-domain fracture, first version:** a lead only; not an established structural relationship and not a causal conclusion. Per-domain fracture polarity stays as a field fact with its observations shown.
+6. **Configuration (RECONFIGURED):** covers both documented rights changes and verified participant changes, recorded as two distinct subtypes. A filer-name change alone is insufficient.
+
+The remaining defaults in the decision package (D2 existence rules including the 36-month as-of lookback, D3 extraction and schema, D4 capital sources other than XBRL, D6 lookback and form-type families) stand as the working defaults for the specifications; they are not recorded as separate rulings.

@@ -128,3 +128,16 @@ implementation code itself is not authorized until that planning step is done an
 
 **The current static X/Y reassignment on MAP (Observation Count × Relationship Connectivity)
 remains halted — not pushed to production — until this capability lands.**
+
+
+---
+
+### AMENDMENT A — Founder authorization 2026-10-09 (KRYL-1386)
+
+Authorized by the Founder: this specification is amended to permit a **source-dated 12-month comparison alongside persisted snapshots**. Nothing above is removed.
+
+- **Preserved (unchanged):** the persistence layer, the snapshot diff between two comparable persisted Formation states for identical subject + field + formation scope, the 90-day snapshot retention, the invariant that persistence captures state and does not manufacture it, and the rule that `observation_count` delta is never relational change.
+- **Added (second, separately labeled evidence basis):** for named-entity relationships (ownership and capital), change may also be assessed by comparing **source-dated evidence** (filings by their event or effective dates) across two adjacent 12-month periods. The result is labeled with its basis (snapshot diff versus source-dated comparison) and the two are never merged into one figure.
+- **Vocabulary:** the source-dated comparison uses the multidimensional model (Existence, Magnitude, Configuration, each with INDETERMINATE) recorded in `specs/rubric-alphabet-10of10-20261009.md` and on KRYL-1386; the snapshot diff keeps the five states in `relationalchange.js` until a separate decision reconciles them. DISSOLVED in the source-dated comparison requires positive evidence of termination.
+- **Compatibility requirements to specify before implementation:** comparison window (two adjacent 12-month periods), as-of position rule for holders without a filing in the period, form-type families (`SC 13D/13G` before December 2024 and `SCHEDULE 13D/13G` after), same-CUSIP comparison, the 730-day SEC lookback and request spacing, and that insufficient history is INDETERMINATE, never "no change".
+- **Not authorized by this amendment:** implementation or deployment. A specification of the method and thresholds is still required first.
