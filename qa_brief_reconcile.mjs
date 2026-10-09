@@ -21,7 +21,7 @@ const keepEngineExternal = { name: 'engine-external', setup(b) {
   });
 } };
 await build({ entryPoints: ['src/components/analysis/structuralbrief.jsx'], bundle: true, format: 'esm', platform: 'node', outfile: out, loader: { '.jsx': 'jsx' }, jsx: 'automatic', logLevel: 'silent', external: ['react', 'react-dom', 'react/jsx-runtime'], plugins: [keepEngineExternal] });
-const { computeBriefSummary, selectPairSupport } = await import(pathToFileURL(out).href);
+const { computeBriefSummary, selectPairSupport, canonicalRelationshipSentence } = await import(pathToFileURL(out).href);
 
 let pass = 0, fail = 0;
 const ok = (c, l) => { if (c) { pass++; console.log('  ✓ ' + l); } else { fail++; console.log('  ✗ ' + l); } };
@@ -67,6 +67,18 @@ console.log('Pair support: both sides before any display limit (DEF-1387)');
   ok(!none.complete && none.missing.join() === 'LABOR,OWNERSHIP' && none.sideA.length === 0 && none.sideB.length === 0, 'neither side has evidence: incomplete lead naming both domains (selection cannot fix a data gap)');
   const undated = selectPairSupport({ CAPITAL: [{ domain: 'CAPITAL', source: 'X', eventDate: null }], LABOR: ev('LABOR', 'EDGAR_8K', ['2026-01-02']) }, 'CAPITAL', 'LABOR');
   ok(!undated.complete && undated.missing.join() === 'CAPITAL', 'an undated observation is not dated evidence');
+}
+
+console.log('Ownership direction in words (DEF-1391)');
+{
+  // parts are [issuer, filer]: the filer is the holder
+  const asIssuer = canonicalRelationshipSentence('HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', 'NVIDIA CORP', 'VANGUARD GROUP INC');
+  const asHolder = canonicalRelationshipSentence('HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', 'Nebius Group N.V.', 'NVIDIA CORP');
+  ok(asIssuer === 'VANGUARD GROUP INC has disclosed beneficial ownership in NVIDIA CORP', 'NVIDIA as issuer: the holder is named first');
+  ok(asHolder === 'NVIDIA CORP has disclosed beneficial ownership in Nebius Group N.V.', 'NVIDIA as holder: NVIDIA is the one that disclosed');
+  ok(asIssuer !== asHolder, 'the two directions no longer read the same');
+  ok(canonicalRelationshipSentence('ACQUIRED', 'Sysco', 'Restaurant Depot') === 'Sysco acquired Restaurant Depot', 'ACQUIRED reads as a sentence');
+  ok(canonicalRelationshipSentence('SOMETHING_NEW', 'A', 'B') === 'A ↔ B', 'an unknown type falls back to the plain pair, never an invented direction');
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);

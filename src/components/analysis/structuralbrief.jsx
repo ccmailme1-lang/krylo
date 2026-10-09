@@ -58,6 +58,16 @@ function Row({ label, children }) {
 
 // KRYL (2026-10-06): the brief headline and summary sentence as one pure function, so the MAP panel
 // (structurepanel.jsx) shows exactly the text this component shows -- one computation, two surfaces.
+// DEF-1391: the direction of a canonical relationship in words, the same sentences the MAP panel uses
+// (structure-field.html relationshipSentence): for HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE the parts are
+// [issuer, filer], so the filer is the holder; the subject may be either, and the wording says which.
+export function canonicalRelationshipSentence(type, a, b) {
+  if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
+  if (type === 'ACQUIRED') return `${a} acquired ${b}`;
+  if (type === 'SHARED_PATENT_ASSIGNMENT') return `${a} and ${b} share a patent assignment`;
+  return `${a} ↔ ${b}`;
+}
+
 // DEF-1387: evidence for one co-present pair is chosen PER SIDE before any display limit, so a domain with
 // older filings is never crowded out by the other domain's newer ones. Each side keeps its own newest
 // `perSide` dated, subject-bound observations; a side with none makes the pair an incomplete lead
@@ -132,7 +142,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     : 0;
   const subjectLevel = subjectBoundCount > 0
     ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
-    : ` Subject level: no observations bound to ${subjectLabel} yet.`;
+    : (ownershipPending ? ` Subject level: checking SEC filings for observations bound to ${subjectLabel}.` : ` Subject level: no observations bound to ${subjectLabel} yet.`);
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
@@ -166,9 +176,9 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       `Field-level, not bound to ${subjectLabel}.`,
     subject: subjectBoundCount > 0
       ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
-      : `No observations bound to ${subjectLabel} yet.`,
+      : (ownershipPending ? `Checking SEC filings for observations bound to ${subjectLabel}…` : `No observations bound to ${subjectLabel} yet.`),
     relationships: (entityCanonicalRelationships.length
-      ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}`
+      ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
       : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${subjectLabel}.`)) +
       (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
   } : (!isEntity && !structurallyInterpretable) ? {
@@ -335,7 +345,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
             {entityCanonicalRelationships.map((r, i) => (
               <div key={`canonical-${i}`}>
                 <div>
-                  {r.part.map(id => NODE_LABELS[id] ?? id).join(r.phiClass === 'Semantic' ? ' → ' : ' ↔ ')} — {r.type}
+                  {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id))} — {r.type}
                 </div>
                 {Object.keys(r.nuState ?? {}).length > 0 && (
                   <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>

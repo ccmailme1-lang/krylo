@@ -54,6 +54,14 @@ console.log('Ownership lookup states (never "none admitted" while the lookup is 
   ok(/Checking SEC ownership filings/.test(pend.briefSentence), 'pending: sentence says relationships are not known yet');
   const fail = computeBriefSummary({ ...base, ownershipFailure: 'the SEC ownership lookup did not respond' });
   ok(/failed|did not respond/.test(fail.rows.relationships), 'failure: stated plainly');
+  // DEF-1392: pending is independent of how many relationships are already admitted
+  const acq = [{ type: 'ACQUIRED' }];
+  const pendAdm = computeBriefSummary({ ...base, entityCanonicalRelationships: acq, ownershipPending: true });
+  ok(/1 admitted/.test(pendAdm.rows.relationships) && /checking SEC ownership filings for more/.test(pendAdm.rows.relationships), 'pending with one relationship already admitted: the row says 1 admitted and that more are being checked');
+  ok(/Checking SEC filings for observations bound to/.test(pendAdm.rows.subject) && !/No observations bound/.test(pendAdm.rows.subject), 'pending: the subject row says checking, not "No observations bound yet"');
+  ok(/checking SEC filings for observations bound to/.test(pendAdm.briefSentence), 'pending: the sentence says checking for subject observations');
+  const setAdm = computeBriefSummary({ ...base, entityCanonicalRelationships: acq, ownershipPending: false });
+  ok(!/checking/i.test(setAdm.rows.relationships) && /No observations bound to/.test(setAdm.rows.subject), 'settled: the normal text (no checking, "No observations bound ... yet")');
   const none = computeBriefSummary({ ...base });
   ok(/No canonical relationships admitted/.test(none.rows.relationships), 'settled with none: the stated absence is unchanged');
 }

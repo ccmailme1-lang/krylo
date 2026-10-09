@@ -16,7 +16,6 @@ export function useOwnershipLookup(subjScope, countAdmitted) {
   const [outcome, setOutcome] = useState(null);
   const [tick, setTick] = useState(0);
   const [timedOutFor, setTimedOutFor] = useState(null);
-  const admitted = isEntity ? countAdmitted() : 0;
   const settled = outcome?.id === id;
 
   useEffect(() => {
@@ -31,16 +30,16 @@ export function useOwnershipLookup(subjScope, countAdmitted) {
   }, [isEntity, id]);
 
   useEffect(() => {
-    if (!hasCik || settled || admitted > 0) return;
+    if (!hasCik || settled) return;
     const t = setTimeout(() => setTimedOutFor(id), OWNERSHIP_LOOKUP_TIMEOUT_MS);
     return () => clearTimeout(t);
-  }, [hasCik, settled, admitted, id]);
+  }, [hasCik, settled, id]);
 
   const timedOut = timedOutFor === id && !settled;
   return {
     outcome,
     tick,
-    pending: hasCik && !settled && !timedOut && admitted === 0,
+    pending: hasCik && !settled && !timedOut, // DEF-1392: independent of how many relationships are already admitted
     error: settled ? outcome.error : (timedOut ? 'the SEC ownership lookup did not respond' : null),
   };
 }
