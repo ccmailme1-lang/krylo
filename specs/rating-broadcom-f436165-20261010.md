@@ -32,3 +32,7 @@ Date: 2026-10-10 · Rubric: `specs/rubric-alphabet-10of10-20261009.md` · Commit
 ## Finding
 
 Four of the eight evidence rows are `UNKNOWN_MATERIAL_EVENT` (Item 8.01, "Other Events"). Step B reads only filings carrying 1.01, 2.01, 2.03 or 3.02, so these are not read. Filings reported under 8.01 can state financings; whether these do is not known. Extending the read to 8.01 filings is outside KRYL-1399 as defined and needs a decision.
+
+## Reviewer score on the same page
+
+GPT: 4/10 (product-quality view). Points taken: the answer is mostly co-presence; the three subject-bound pairs are not admitted relationships; the only admitted relationships are ownership disclosures; 76/100 and 74/100 are field context; 198 field observations against 17 subject-bound observations and 2 admitted relationships are different levels of evidence; the relationship-change section is more rigorous than the core answer. One point checked: extracted capital-event fields are not in this EVIDENCE section because none of this subject's shown filings carries a capital-event item (see Finding). The differences between the 6 (rubric) and the 4 (product view) are the same breaks listed in `decision-record-evidence-to-formation-build-order-20261010.md`: break 2 (one relationship type), break 3 (temporal result separate from relationships), break 4 (formation is co-presence). Workstreams 3 and 4 of that record address them and need Founder rulings first.
