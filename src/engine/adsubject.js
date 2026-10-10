@@ -38,6 +38,12 @@ import { ANALYSIS_DOMAIN_ORDER } from './ontology.js';
 
 export const AD_SUBJECT_VERSION = '5b-2';
 
+// KRYL-1399 step A: one label for a subject-bound observation, used by every surface that lists them. Class and accession
+// are shown only where the connector carried them; nothing is inferred.
+export function observationLabel(o, { accession = true } = {}) {
+  return [o.source, o.eventClass, o.eventDate, accession ? o.accession : null].filter(Boolean).join(' · ');
+}
+
 export const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function authoredMeasureKeys(domain) {
@@ -113,6 +119,8 @@ export function A(domain, scope) {
       signal: s.signal,
       confidence: s.confidence,
       eventDate: s.eventDate ?? null,
+      eventClass: s.eventClass ?? null,   // KRYL-1399 step A
+      accession: s.accession ?? null,
       ts: s.ts,
     }));
 

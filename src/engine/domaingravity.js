@@ -128,6 +128,10 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     // from ts (observation/ingestion time, e.g. edgar8ksignal.js's targeted sync). null for
     // every connector that doesn't carry this distinction — not fabricated, not required.
     eventDate: event.meta?.eventDate ?? null,
+    // KRYL-1399 step A -- the 8-K item-code event class and the filing accession, when the connector carries them
+    // (edgar8ksignal.js). Additive and informational: no reader's magnitude, polarity or domain logic uses them.
+    eventClass: event.eventClass ?? null,
+    accession: event.meta?.accession ?? null,
   };
   const arr = _pool.get(domain);
   const existing = entry.id != null ? arr.findIndex(s => s.id === entry.id) : -1;

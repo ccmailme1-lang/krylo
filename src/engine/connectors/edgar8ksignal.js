@@ -67,7 +67,7 @@ function buildSignals(eventMeta) {
   // getProcessedEvents() unchanged; this function simply never read it. domaingravity.js
   // (97ea479) reads event.meta?.canonicalId — attaching it here is the only missing step,
   // no new resolution, no new field, no new connector invocation.
-  const { realityObjectId, eventClass, materiality, groundedness, entityName, canonicalId, eventDate, ts } = eventMeta;
+  const { realityObjectId, eventClass, materiality, groundedness, entityName, canonicalId, eventDate, accession, ts } = eventMeta;
 
   const ro          = getById(realityObjectId);
   const stability   = ro?.truthStability ?? 1.0;
@@ -105,7 +105,8 @@ function buildSignals(eventMeta) {
       realityObjectId,
       // eventDate = the real historical filing/event date, kept as provenance/event time,
       // separate from ts (observation time). Neither field fabricates the other's meaning.
-      meta: { canonicalId: canonicalId ?? null, eventDate: eventDate ?? null },
+      // KRYL-1399 step A: the filing's accession travels with the observation (domaingravity.js keeps it with eventClass).
+      meta: { canonicalId: canonicalId ?? null, eventDate: eventDate ?? null, accession: accession ?? null },
     };
     if (isFracture) packet.polarity = POLARITY.NEGATIVE;
     return packet;
@@ -196,6 +197,7 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
     const signals = buildSignals({
       realityObjectId: `edgar8k-targeted-${accNo}`,
       eventDate: filingDate,
+      accession: src.adsh ?? (String(accNo).split(':')[0] || null),
       eventClass,
       materiality,
       groundedness,
@@ -211,4 +213,4 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
   return { dispatched: batch.length, matched: matches.length, total: hits.length };
 }
 
-export { EVENT_DOMAIN_MAP, FRACTURE_EVENT_CLASSES };
+export { EVENT_DOMAIN_MAP, FRACTURE_EVENT_CLASSES, buildSignals };

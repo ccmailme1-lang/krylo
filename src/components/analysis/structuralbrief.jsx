@@ -15,7 +15,7 @@
 // structure is never hidden here for lack of a resolved subject.
 
 import { useState, useEffect } from 'react';
-import { A } from '../../engine/adsubject.js';
+import { A, observationLabel } from '../../engine/adsubject.js';
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
@@ -333,7 +333,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
               // label every time those two domains co-occur) -- attach the actual dated
               // evidence from each side of the pair instead of leaving it a bare category.
               const sup = selectPairSupport(evidenceByDomain, e.a, e.b);
-              const cite = (list) => list.map(o => `${o.domain} ${o.source} ${o.eventDate}`).join(' · ');
+              const cite = (list) => list.map(o => `${o.domain} ${observationLabel(o, { accession: false }).replaceAll(' · ', ' ')}`).join(' · ');
               return (
                 <div key={i}>
                   <div>{e.a} ↔ {e.b} — {e.admittedType}</div>
@@ -423,7 +423,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         {evidence.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {evidence.map((o, i) => (
-              <div key={i}><span style={{ color: LIME }}>{o.domain}</span> — {o.source} · {o.eventDate}</div>
+              <div key={i}><span style={{ color: LIME }}>{o.domain}</span> — {observationLabel(o)}</div>
             ))}
           </div>
         ) : (

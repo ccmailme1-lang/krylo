@@ -15,7 +15,7 @@ import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/doma
 import { subjectScope } from '../../engine/subjectscope.js';
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 import { frameHeadline } from '../../engine/frameclassify.js';
-import { A as adSubject } from '../../engine/adsubject.js';
+import { A as adSubject, observationLabel } from '../../engine/adsubject.js';
 
 // DEF-1374: possessive of a display name ("NVIDIA’s", "Meta Platforms’"); the old line used the lowercase slug ("nvidia's", "meta-platforms's").
 const possessive = (name) => (/s$/i.test(String(name)) ? `${name}’` : `${name}’s`);
@@ -194,7 +194,7 @@ function DomainScroll({ domain, scope, pressure }) {
             </span>
             {ad.formationObservations.map((o, i) => (
               <span key={i} style={{ fontFamily: MONO, fontSize: 8, color: DIM, letterSpacing: '0.04em', lineHeight: 1.6 }}>
-                observed · {o.source}{o.eventDate ? ` · ${o.eventDate}` : ''}
+                observed · {observationLabel(o)}
               </span>
             ))}
           </div>
