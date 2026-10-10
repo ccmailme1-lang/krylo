@@ -418,7 +418,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
 
       {isEntity && changeEntry?.state === 'done' && changeEntry.result && (
         <Row label="RELATIONSHIP CHANGE">
-          <RelationshipChangeBlock entry={changeEntry} ABSENCE={ABSENCE} LBL={LBL} BRT={BRT} />
+          <RelationshipChangeBlock entry={changeEntry} ABSENCE={ABSENCE} LBL={LBL} BRT={BRIGHT} />
         </Row>
       )}
 
