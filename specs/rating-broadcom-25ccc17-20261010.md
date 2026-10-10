@@ -45,3 +45,9 @@ Date: 2026-10-10 · Query: "What structural relationships are forming around Bro
 
 - KRYL-1396 / DEF-1396 and KRYL-1397 / DEF-1397: built, tested, committed locally, in Review. Not moved further; only the Founder moves a ticket to Deploy to Prod.
 - Open: criterion 5 run; KRYL-1389 build; capital-event wiring; technology evidence binding; DEF-1394.
+
+## Second query, same tab (stamp a6cc65f, 11:21)
+
+- Criterion 5: not decidable from the pasted end state. No failure notice appeared and the RELATIONSHIP CHANGE section was already present. The comparison run is skipped when one for the entity finished within 10 minutes (`topicconnectors.js`), so the section and its retrieval basis are the cached record of the earlier run in this page session (identical counts: 2 of 2 windows, 15 filings, 0 failures). Whether "checking" showed for the lookup in between needs the transient, not the final page.
+- Gate evidence, same page: the brief reads CAPITAL 97 observations, magnitude 77, and 173 signals; the By Domain panel on the same page reads "CAPITAL pressure 78 (constructive), 109 signals". Three runs of the same query: pairs 1, 3, 1; CAPITAL magnitude 74, 78, 77; signals 191, 192, 173; bound observations 17 each time. One page disagreeing with itself fails the one-snapshot gate. Cause not traced; KRYL-1389 (snapshot freeze) is spec only.
+- Observation: the retrieval basis is labelled "this browser run" but carries no retrieval time, so a cached record up to 10 minutes old reads as current. Not yet a ticket.
