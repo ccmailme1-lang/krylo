@@ -16,12 +16,16 @@ import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
 import { subjectScope }              from './subjectscope.js';
 import { admitPublicFiler }          from './secfileradmission.js';
 import { toTopologyNodeId }          from './entityresolution.js';
-import { findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
+import { findAdmittedRelationshipsForLive, latestEvidenceForLive } from './canonicalrelationshipprojection.js';
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 import { markStarted } from './ownershiplookupstore.js';
+import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
 
-export function fireTopicConnectors(q) {
+export function fireTopicConnectors(q, { refresh = false } = {}) {
+  // KRYL-1398: every submit opens one analysis run; the snapshot freezes when its subject lookups settle (or at 45 s).
+  // A refresh re-runs the lookups for the displayed query and swaps the snapshot only when they have settled.
+  if (beginAnalysis(q, { refresh }) == null && refresh) return;
   runGithubSync(q).catch(() => {});
   runArxivSync(q).catch(() => {});
   runNpmSync(q).catch(() => {});
@@ -33,13 +37,16 @@ export function fireTopicConnectors(q) {
   // The entity-scoped connectors need a resolved entity. A subject the Query Contract selected but the registry cannot
   // resolve is first offered to the SEC-filer admission path (KRYL-1380: verified public filer, CIK identity, identity
   // only); on success the entity-scoped connectors run for the now-resolved entity. Otherwise the subject stays unresolved.
-  fireEntityScoped(q);
+  fireEntityScoped(q, { refresh });
   const pre = subjectScope(q);
   if (pre.kind === 'UNRESOLVED' && pre.subject?.text) {
+    expectLookup('admission');
     admitPublicFiler(pre.subject.text, { searchFn: secSearch }).then((r) => {
-      if (r.outcome === 'ADMITTED') fireEntityScoped(q);
-    }).catch(() => {});
+      if (r.outcome === 'ADMITTED') fireEntityScoped(q, { refresh });   // registers the entity lookups before 'admission' settles
+      settleLookup('admission', r.outcome === 'LOOKUP_FAILED' ? 'the SEC filer lookup failed' : null);
+    }).catch((e) => { settleLookup('admission', String(e?.message ?? e)); });
   }
+  armSettlement();
 }
 
 // Search binding for the admission path (the engine's /api/edgar proxy).
@@ -52,17 +59,21 @@ async function secSearch(p) {
 
 // The entity-scoped part of the query connectors. Safe to call twice for one query (once before and once after an
 // admission): each connector re-resolves the subject itself and returns when there is no resolved entity.
-function fireEntityScoped(q) {
+function fireEntityScoped(q, { refresh = false } = {}) {
+  const scope = subjectScope(q);
   // WO-2046 — entity capital realization (fires only when query resolves a known entity)
-  runCapitalRealizationSync(q).catch(() => {});
+  // KRYL-1398: a lookup of the snapshot's settlement for a resolved entity (terminal OK or FAILED; late results change nothing).
+  if (scope.kind === 'ENTITY') expectLookup('capital', { canonicalId: scope.canonicalId });
+  runCapitalRealizationSync(q).then(() => settleLookup('capital')).catch((e) => settleLookup('capital', String(e?.message ?? e)));
   // KRYL-1220 — second entity-attributed domain (OWNERSHIP), same trigger point as CAPITAL
   // above. Reuses the same subjectScope() resolution capitalrealizationconnector.js now uses
   // internally (no new resolution mechanism) — resolved once here since
   // runTargetedOwnershipObservation() needs the CIK, which subjectScope()'s entity already
   // carries (entity.identifiers.edgar), not just the canonicalId. Fires only when the query
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
-  const scope = subjectScope(q);
   if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
+    expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId });
+    if (refresh) expectLookup('change', { canonicalId: scope.canonicalId });
     markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
     const ownershipObservation = runTargetedOwnershipObservation({
       entityCik:   scope.entity.identifiers.edgar,
@@ -78,7 +89,7 @@ function fireEntityScoped(q) {
       canonicalId: scope.canonicalId,
       entityName:  scope.entity.name,
       from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // matches OWNERSHIP's real 365-day window
-    }).catch(() => {});
+    }).then((r) => settleLookup('8k', r?.error ?? null)).catch((e) => settleLookup('8k', String(e?.message ?? e)));
 
     // Supplier Structural Intelligence -- real bug found live 2026-10-03: structuralbrief.jsx
     // and structurepanel.jsx both read canonical ρ synchronously at render time, but this
@@ -95,19 +106,25 @@ function fireEntityScoped(q) {
       // (after the connector's retry), or null on success. The Brief states a failure plainly
       // instead of looking identical to "no relationships exist" (§16: no silent absence).
       window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: result?.error ?? null } }));
+      // KRYL-1398: the ownership lookup is terminal; a refresh waits for its own forced relationship-change run below.
+      settleLookup('ownership', result?.error ?? null);
       // KRYL-1386 -- the source-dated comparison runs AFTER the targeted observation settles, so the two never hit SEC
       // together (bursts return empty or 500). Skipped when a run for this entity is in flight or finished within 10 minutes.
+      // A refresh always runs it again (KRYL-1398: the replacement snapshot pins a result retrieved by that refresh).
       const prior = getRelationshipChange(scope.canonicalId);
-      if (!(prior && (prior.state === 'running' || (prior.finishedAt && Date.now() - prior.finishedAt < 600_000)))) {
-        runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId }).catch(() => {});
+      const fresh = prior && (prior.state === 'running' || (prior.finishedAt && Date.now() - prior.finishedAt < 600_000));
+      if (refresh || !fresh) {
+        const chg = runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId });
+        chg.then((e) => { if (refresh) settleLookup('change', e?.state === 'failed' ? e.error : null); }).catch((e) => { if (refresh) settleLookup('change', String(e?.message ?? e)); });
       }
       // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
       // capture time and decides what is a material change), THEN tell readers it landed so the
       // scrubber reads history that includes it. Separate event so the Brief above never waits.
+      // (Writer path: reads the live store, because a late admission after a freeze must still be captured.)
       captureCanonicalFormationSnapshots(
         scope.canonicalId,
-        findAdmittedRelationshipsFor(toTopologyNodeId(scope.canonicalId)),
-        latestEvidenceFor,
+        findAdmittedRelationshipsForLive(toTopologyNodeId(scope.canonicalId)),
+        latestEvidenceForLive,
       ).then(() => {
         window.dispatchEvent(new CustomEvent('krylo-formation-captured', { detail: { canonicalId: scope.canonicalId } }));
       }).catch(() => {});

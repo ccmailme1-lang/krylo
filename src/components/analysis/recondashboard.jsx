@@ -2,6 +2,7 @@
 // Read-only surface for Signal Candidate Packages, blind spots, active hypotheses.
 // No write access to any production system.
 
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
 import React, { useState, useEffect, useMemo } from 'react';
 import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js';
@@ -27,7 +28,8 @@ export default function ReconDashboard() {
   // no domain-state input to run on now, honestly, not as a bug -- it never had a real
   // one before either (that data was always the mock oscillator's output).
 
-  const synthesis = useMemo(() => session ? synthesizeQuery(session) : null, [session]);
+  const snapKey = useAnalyticalSnapshot().snapKey; // KRYL-1398
+  const synthesis = useMemo(() => session ? synthesizeQuery(session) : null, [session, snapKey]);
 
   const [result,   setResult]   = useState(null);
   const [scps,     setScps]     = useState([]);

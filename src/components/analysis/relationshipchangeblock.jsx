@@ -1,20 +1,22 @@
 // relationshipchangeblock.jsx -- KRYL-1386. Renders the source-dated relationship change for the resolved subject, or the stated
 // absence when it is running, failed or unavailable. Reads relationshipchangeservice.js (in memory) and re-renders on its event.
 import { useEffect, useState } from 'react';
-import { getRelationshipChange } from '../../engine/relationshipchangeservice.js';
+import { getPinnedChange } from '../../engine/analyticalsnapshot.js'; // KRYL-1398: the result pinned to the displayed snapshot
+import { useAnalyticalSnapshot, formatSnapshotTime } from '../../hooks/useanalyticalsnapshot.js';
 import { describeChange, describeRetrievalBasis, orderRelationships } from '../../engine/relationshipchangetext.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 
 export function useRelationshipChange(canonicalId) {
   const [, tick] = useState(0);
+  useAnalyticalSnapshot(); // re-render when the displayed snapshot changes
   useEffect(() => {
     if (!canonicalId) return;
     const on = (e) => { if (e.detail?.canonicalId === canonicalId) tick(n => n + 1); };
     window.addEventListener('krylo-change-updated', on);
     return () => window.removeEventListener('krylo-change-updated', on);
   }, [canonicalId]);
-  return canonicalId ? getRelationshipChange(canonicalId) : null;
+  return canonicalId ? getPinnedChange(canonicalId) : null;
 }
 
 // The line that replaces the old "not yet computed" statement for a resolved subject.
@@ -39,6 +41,11 @@ export default function RelationshipChangeBlock({ entry, ABSENCE, LBL, BRT }) {
       <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL, fontFamily: MONO }}>
         SOURCE-DATED, TWO 12-MONTH PERIODS · PRIOR {periods.P0.from} TO {periods.P0.to} · CURRENT {periods.P1.from} TO {periods.P1.to} (event dates, not retrieval dates)
       </div>
+      {entry.finishedAt && (
+        <div style={{ fontSize: 10, color: ABSENCE, fontFamily: MONO }}>
+          Retrieved {formatSnapshotTime(entry.finishedAt)} · fixed for this analysis snapshot until it is refreshed
+        </div>
+      )}
       {shown.map((r, i) => {
         const d = describeChange(r);
         return (

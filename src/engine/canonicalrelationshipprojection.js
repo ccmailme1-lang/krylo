@@ -36,6 +36,19 @@ function existingFor(type) {
   return _admittedByType.get(type);
 }
 
+// KRYL-1398 frozen view. While an analytical snapshot is frozen, the READERS below (findAdmittedRelationshipsFor,
+// findAdmittedRelationshipsBetween, latestEvidenceFor) read a copy taken at freeze time, so a late-arriving admission cannot
+// change what is displayed. Writes (admitAndProject) always go to the live store. One frozen view at a time; freezeRho()
+// replaces the previous one in a single synchronous step.
+let _frozenRho = null; // { id, byType: Map(type -> rho[]), evidence: Map(id -> evidence) }
+export function freezeRho(id) {
+  const byType = new Map();
+  for (const [t, arr] of _admittedByType) byType.set(t, [...arr]);
+  _frozenRho = { id, byType, evidence: new Map(_latestEvidenceById) };
+}
+export function unfreezeRho() { _frozenRho = null; }
+const admittedFor = (type) => (_frozenRho ? (_frozenRho.byType.get(type) ?? []) : existingFor(type));
+
 // Per-type projection config: how a canonical ρ (once admitted) becomes a registerTypedEdge()
 // call. `typedEdgeType` may introduce a new RELATION_TYPES entry (informational-only vocabulary,
 // confirmed non-gating) or reuse an existing one when the real-world label already matches.
@@ -143,7 +156,7 @@ export function admitAndProject(assertion, meta) {
 // predicate } as produced by that relationship's most recent admission, or null when none was
 // recorded -- a stated absence, never a default.
 export function latestEvidenceFor(relationshipId) {
-  return _latestEvidenceById.get(relationshipId) ?? null;
+  return (_frozenRho ? _frozenRho.evidence : _latestEvidenceById).get(relationshipId) ?? null;
 }
 
 // Exposed for tests / inspection only -- not a public persistence API.
@@ -158,18 +171,27 @@ export function _admittedRelationshipsFor(type) {
 export function findAdmittedRelationshipsBetween(idA, idB) {
   const found = [];
   for (const type of registeredTypeNames()) {
-    for (const rho of existingFor(type)) {
+    for (const rho of admittedFor(type)) {
       if (rho.part.includes(idA) && rho.part.includes(idB)) found.push(rho);
     }
   }
   return found;
 }
 
+// KRYL-1398: the LIVE store, for writers (formation snapshot capture) that must see an admission made after a freeze.
+// Display code never uses these: it reads the frozen view through the functions above.
+export function findAdmittedRelationshipsForLive(id) {
+  const found = [];
+  for (const type of registeredTypeNames()) for (const rho of existingFor(type)) if (rho.part.includes(id)) found.push(rho);
+  return found;
+}
+export const latestEvidenceForLive = (relationshipId) => _latestEvidenceById.get(relationshipId) ?? null;
+
 // Any admitted relationship (any ratified type) touching this one real identity, on either side.
 export function findAdmittedRelationshipsFor(id) {
   const found = [];
   for (const type of registeredTypeNames()) {
-    for (const rho of existingFor(type)) {
+    for (const rho of admittedFor(type)) {
       if (rho.part.includes(id)) found.push(rho);
     }
   }

@@ -39,6 +39,7 @@ import { useDomainMetrics } from '../../hooks/useDomainMetrics.js';
 // depends on one of these (capital, technology, knowledge in particular) never populated for
 // that entry point. Wiring the same real calls here, not fabricating fallback data.
 import { fireTopicConnectors } from '../../engine/topicconnectors.js';
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
@@ -562,7 +563,8 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   const clearDomainResetRequest = useAnalysisStore(s => s.clearDomainResetRequest);
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const hasSession    = !!activeSession;
-  const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession]);
+  const snapKey = useAnalyticalSnapshot().snapKey; // KRYL-1398: header state re-reads the frozen pool once per snapshot
+  const sessionSynthesis = useMemo(() => synthesizeQuery(activeSession), [activeSession, snapKey]);
 
   // AC-11 / KRYL-1358 — subject-level header status (headerFieldSplit, subjectattribution.js).
   // Attribution = the Target Packet's PROVENANCE rule, read from the same scope/entity inputs the

@@ -10,6 +10,8 @@ import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
 import { useEntitySignal, ENTITY_SIGNAL_STATUS } from '../../hooks/useEntitySignal.js';
 import { synthesizeQuery }   from '../../engine/querysynthesis.js';
+import { useAnalyticalSnapshot, formatSnapshotTime } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
+import { fireTopicConnectors } from '../../engine/topicconnectors.js';
 import { syncGuestState }    from '../../engine/gueststatesync.js';
 import { captureFormationSnapshots } from '../../engine/formationsnapshotclient.js';
 import { emitTelemetry }    from '../../engine/telemetry.js';
@@ -289,7 +291,11 @@ export default function TargetPacket() {
   // on its presence and renders nothing for those (no fabricated empty box).
   const analysisIntent = session?.tensor?.analysisIntent ?? null;
 
-  const synthesis = useMemo(() => synthesizeQuery(session), [session]);
+  // KRYL-1398: the displayed analytical snapshot. snapKey changes exactly when the displayed generation changes, so every memo
+  // that reads the pool or canonical rho re-reads once from the frozen copy and never again until the next explicit refresh.
+  const snap = useAnalyticalSnapshot();
+  const snapKey = snap.snapKey;
+  const synthesis = useMemo(() => synthesizeQuery(session), [session, snapKey]);
 
   // KRYL-1334 — automatic capture trigger (material_change side of the hybrid sampling
   // policy; the clock-driven baseline side is separate, unbuilt infrastructure). Fires once
@@ -384,7 +390,7 @@ export default function TargetPacket() {
   }, [synthesis?.queryDomain, metrics]);
   const dynamics        = useMemo(() => computeTruthDynamics(synthesis?.canonicalId ?? null), [synthesis?.canonicalId]);
   // WO-1880: full 6-domain pressure field — §20 both directions always
-  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [synthesis]);
+  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [synthesis, snapKey]);
 
   // KRYL-1235 — the guest packet's reading of the EXISTING synthesis state.
   // DIC / synthesis routing / 5B are untouched (forensic recovery: those are
@@ -431,7 +437,7 @@ export default function TargetPacket() {
       const field = buildPerceptionField({ now: Date.now(), subject, windowMs: MAP_FIELD_WINDOW_MS }); // one window everywhere (DEF-1383)
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
-  }, [domainPressures, subjScope, refreshTick]);
+  }, [domainPressures, subjScope, refreshTick, snapKey]);
   // DEF (2026-10-08): the whole-field formation (no subject, the MAP's 30-min window), for the brief's field-level
   // pair count. fieldFormation above is subject-scoped for an ENTITY, so it cannot be the field-level number.
   const ambientFormation = useMemo(() => {
@@ -439,7 +445,7 @@ export default function TargetPacket() {
       const field = buildPerceptionField({ now: Date.now(), windowMs: MAP_FIELD_WINDOW_MS });
       return field.particles.length ? inferFormation(field.particles) : null;
     } catch { return null; }
-  }, [domainPressures, refreshTick]);
+  }, [domainPressures, refreshTick, snapKey]);
   // RECONN canonical payload (KRYL-1311 Category A, commit 4d76b96) — the architecture diagram's
   // SUBSTRATE -> RECONN step, computed explicitly before Narrative Assembly consumes it.
   const reconnPayload = useMemo(
@@ -475,7 +481,7 @@ export default function TargetPacket() {
   // observations while PROVENANCE denied any existed).
   // AC-11 — the count and the PROVENANCE rule now live in subjectattribution.js (shared with the
   // Analysis header), same logic as before.
-  const subjectObservationCount = useMemo(() => countSubjectObservations(subjScope), [subjScope, refreshTick]);
+  const subjectObservationCount = useMemo(() => countSubjectObservations(subjScope), [subjScope, refreshTick, snapKey]);
   const attributionState = classifySubjectAttribution({ wtResolved, subjectObservationCount });
 
   // KRYL-1220 UI port — identity-line derivations, from the same domain-pressure
@@ -531,6 +537,16 @@ export default function TargetPacket() {
         <span style={{ fontFamily: MONO, fontSize: 10, color: DIM, letterSpacing: '0.4em', textTransform: 'uppercase' }}>
           Awaiting Signal
         </span>
+      </div>
+    );
+  }
+
+  // KRYL-1398: until the subject lookups settle there is no snapshot, and the page shows one state, not partial numbers.
+  if (snap.status === 'checking') {
+    return (
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'center', justifyContent: 'center', background: PKT_BG }}>
+        <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.4em', textTransform: 'uppercase' }}>Checking…</span>
+        <span style={{ fontFamily: MONO, fontSize: 10, color: LBL, letterSpacing: '0.06em' }}>Retrieving SEC filings and entity evidence; the analysis is frozen when the lookups settle.</span>
       </div>
     );
   }
@@ -598,6 +614,20 @@ export default function TargetPacket() {
             <div style={{ marginTop: 9, fontFamily: MONO, fontSize: 11, letterSpacing: '0.06em', color: '#767d7a' }}>
               {identitySubline}
             </div>
+            {snap.active && (
+              <div style={{ marginTop: 7, fontFamily: MONO, fontSize: 10, letterSpacing: '0.06em', color: LBL }}>
+                Analysis snapshot: {formatSnapshotTime(snap.active.generatedAt)}
+                <button
+                  type="button"
+                  disabled={snap.refresh.running}
+                  onClick={() => fireTopicConnectors(snap.active.query, { refresh: true })}
+                  style={{ marginLeft: 12, padding: 0, background: 'transparent', border: 'none', borderBottom: `1px solid ${snap.refresh.running ? LBL : LIME}`, color: snap.refresh.running ? LBL : LIME, fontFamily: MONO, fontSize: 10, letterSpacing: '0.1em', cursor: snap.refresh.running ? 'default' : 'pointer' }}
+                >
+                  {snap.refresh.running ? 'Refreshing…' : 'Refresh analysis'}
+                </button>
+                {snap.refresh.error && <div style={{ marginTop: 4, whiteSpace: 'normal', maxWidth: 360, color: LBL }}>Refresh did not replace the analysis: {snap.refresh.error}</div>}
+              </div>
+            )}
           </div>
           <div style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
             <div style={{ fontFamily: MONO, fontSize: 10, letterSpacing: '0.3em', color: LIME }}>ANALYSIS</div>

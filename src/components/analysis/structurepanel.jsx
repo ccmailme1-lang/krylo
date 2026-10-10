@@ -25,6 +25,7 @@ import { useAnalysisStore } from '../../store/useanalysisstore.js';
 import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeBriefSummary } from './structuralbrief.jsx';
 import { useOwnershipLookup } from './useownershiplookup.js';
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
 import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
@@ -82,7 +83,9 @@ function FormationMapTab({ query }) {
     fieldTickTimer.current = setTimeout(() => setFieldTick(n => n + 1), 950);
   });
   useEffect(() => () => clearTimeout(fieldTickTimer.current), []);
-  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [query, fieldTick]); // DEF-1375: map-only 30-min window
+  const snap = useAnalyticalSnapshot(); // KRYL-1398: the displayed snapshot; snapKey re-reads the (frozen) pool once per generation
+  const snapKey = snap.snapKey;
+  const domainPressures = useMemo(() => getAllDomainPressures(MAP_FIELD_WINDOW_MS), [query, fieldTick, snapKey]); // DEF-1375: map-only 30-min window
 
   // Supplier Structural Intelligence (specs/SPEC-external-supplier-structural-intelligence.md) --
   // the "real, separate, not-yet-authorized follow-on" the comment above named is this. Reuses
@@ -122,7 +125,7 @@ function FormationMapTab({ query }) {
         } : null,
       };
     });
-  }, [subjScope, rhoTick]);
+  }, [subjScope, rhoTick, snapKey]);
   // Label for the subject's node on the Map plot -- the same NODE_LABELS entry ρ's own part ids
   // already resolve through above (EDGAR display name), falling back to the registry name.
   const entitySubjectLabel = useMemo(() => {
@@ -130,7 +133,7 @@ function FormationMapTab({ query }) {
     const raw = NODE_LABELS[toTopologyNodeId(subjScope.canonicalId)] ?? subjScope.entity?.name ?? null;
     // NODE_LABELS entries carry a trailing "(CIK ##########)" -- identifier text, not the name.
     return raw ? raw.replace(/\s*\(CIK\s*\d+\)\s*$/, '') : null;
-  }, [subjScope, rhoTick]); // rhoTick: NODE_LABELS is filled by the same async admission
+  }, [subjScope, rhoTick, snapKey]); // rhoTick: NODE_LABELS is filled by the same async admission
   const fieldFormation = useMemo(() => {
     try {
       const field = buildPerceptionField({ now: Date.now(), windowMs: MAP_FIELD_WINDOW_MS });
@@ -155,7 +158,7 @@ function FormationMapTab({ query }) {
   const sessions   = useAnalysisStore(s => s.sessions);
   const activeId   = useAnalysisStore(s => s.activeSessionId);
   const session    = activeId ? sessions[activeId] : null;
-  const synthesis  = useMemo(() => synthesizeQuery(session), [session]);
+  const synthesis  = useMemo(() => synthesizeQuery(session), [session, snapKey]);
   const brief = useMemo(() => {
     const activeDomainPressures = Object.values(domainPressures).filter(p => p.signalCount > 0);
     const entityCanonicalRelationships = subjScope.kind === 'ENTITY'
@@ -326,6 +329,11 @@ function FormationMapTab({ query }) {
 
   return (
     <div ref={wrapRef} style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative' }}>
+      {snap.status === 'checking' && (
+        <div style={{ position: 'absolute', inset: 0, zIndex: 3, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <span style={{ fontFamily: MONO, fontSize: 10, color: LIME, letterSpacing: '0.4em', textTransform: 'uppercase' }}>Checking…</span>
+        </div>
+      )}
       {size.w > 0 && (
         <iframe
           ref={iframeRef}

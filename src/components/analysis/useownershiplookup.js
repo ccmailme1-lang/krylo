@@ -11,10 +11,13 @@
 // relationships already in rho is separate (latestEvidenceFor).
 import { useEffect, useState } from 'react';
 import { getOutcome } from '../../engine/ownershiplookupstore.js';
+import { frozenLookup } from '../../engine/analyticalsnapshot.js';
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';
 
 export const OWNERSHIP_LOOKUP_TIMEOUT_MS = 45_000;
 
 export function useOwnershipLookup(subjScope, countAdmitted) {
+  useAnalyticalSnapshot(); // KRYL-1398: re-render when the displayed snapshot changes
   const isEntity = subjScope?.kind === 'ENTITY';
   const id = isEntity ? subjScope.canonicalId : null;
   const hasCik = isEntity && !!subjScope.entity?.identifiers?.edgar;
@@ -41,6 +44,17 @@ export function useOwnershipLookup(subjScope, countAdmitted) {
   }, [hasCik, settled, id, startedAt]);
 
   const timedOut = !settled && timedOutFor === `${id}:${startedAt ?? 0}`;
+  // KRYL-1398: once a snapshot is frozen for this subject, the lookup's status IS the one recorded at the freeze (a result that
+  // arrives later is not shown until the next explicit refresh); the live record above is the pre-freeze state only.
+  const frozen = isEntity ? frozenLookup(id, 'ownership') : null;
+  if (frozen) {
+    return {
+      outcome: { id, error: frozen.state === 'FAILED' ? frozen.error : null },
+      tick,
+      pending: false,
+      error: frozen.state === 'FAILED' ? frozen.error : (frozen.state === 'TIMEOUT' ? 'the SEC ownership lookup did not respond' : null),
+    };
+  }
   return {
     outcome: settled ? { id, error: rec.error } : null,
     tick,

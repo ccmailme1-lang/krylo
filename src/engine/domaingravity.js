@@ -143,12 +143,30 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
   _pool.set(domain, _pool.get(domain).filter(s => s.ts >= cutoff));
 });
 
+// ── Frozen view (KRYL-1398) ─────────────────────────────────────────────────────
+// While a snapshot is frozen, every reader of this pool (computeDomainPressure, getDomainSignals, getAllSignals and
+// so everything built on them) reads a copy taken at freeze time, with every window measured from the freeze instant
+// instead of the clock. Live writes keep landing in _pool and are invisible to readers until the next freeze. One
+// frozen view at a time: freezePool() replaces the previous one in a single synchronous step (atomic refresh).
+let _frozen = null; // { id, at, entries: Map(domain -> entries[]) }
+const _view = () => (_frozen ? _frozen.entries : _pool);
+const _now  = () => (_frozen ? _frozen.at : Date.now());
+
+export function freezePool(id, at = Date.now()) {
+  const entries = new Map();
+  for (const [d, arr] of _pool) entries.set(d, arr.filter(s => s.ts <= at).map(s => ({ ...s })));
+  _frozen = { id, at, entries };
+  return { id, at, count: [...entries.values()].reduce((n, a) => n + a.length, 0) };
+}
+export function unfreezePool() { _frozen = null; }
+export const getFrozenPoolInfo = () => (_frozen ? { id: _frozen.id, at: _frozen.at } : null);
+
 // ── Core computation ───────────────────────────────────────────────────────────
 
 export function computeDomainPressure(domain, windowMs = DEFAULT_WINDOW_MS) {
   const d      = (domain ?? '').toUpperCase();
-  const pool   = _pool.get(d) ?? [];
-  const cutoff = Date.now() - windowMs;
+  const pool   = _view().get(d) ?? [];
+  const cutoff = _now() - windowMs;
   const active = pool.filter(s => s.ts >= cutoff);
 
   if (active.length === 0) {
@@ -201,14 +219,14 @@ export function getAllDomainPressures(windowMs = DEFAULT_WINDOW_MS) {
 // untouched; existing consumers are unaffected. No mutation path: _pool objects never escape by reference.
 export function getDomainSignals(domain, windowMs = DEFAULT_WINDOW_MS) {
   const d      = (domain ?? '').toUpperCase();
-  const cutoff = Date.now() - windowMs;
-  return (_pool.get(d) ?? []).filter(s => s.ts >= cutoff).map(s => ({ domain: d, ...s }));
+  const cutoff = _now() - windowMs;
+  return (_view().get(d) ?? []).filter(s => s.ts >= cutoff).map(s => ({ domain: d, ...s }));
 }
 
 export function getAllSignals(windowMs = DEFAULT_WINDOW_MS) {
-  const cutoff = Date.now() - windowMs;
+  const cutoff = _now() - windowMs;
   const out = [];
-  for (const [d, arr] of _pool) {
+  for (const [d, arr] of _view()) {
     for (const s of arr) if (s.ts >= cutoff) out.push({ domain: d, ...s });
   }
   return out;
