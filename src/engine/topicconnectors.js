@@ -14,6 +14,7 @@ import { runRedditSync }             from './connectors/redditconnector.js';
 import { runTargetedOwnershipObservation } from './connectors/secownershipconnector.js';
 import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
 import { subjectScope }              from './subjectscope.js';
+import { admitPublicFiler }          from './secfileradmission.js';
 import { toTopologyNodeId }          from './entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
@@ -28,6 +29,29 @@ export function fireTopicConnectors(q) {
   runUsajobsSync(q).catch(() => {});
   runGdeltSync(q).catch(() => {});
   runRedditSync(q).catch(() => {});
+  // The entity-scoped connectors need a resolved entity. A subject the Query Contract selected but the registry cannot
+  // resolve is first offered to the SEC-filer admission path (KRYL-1380: verified public filer, CIK identity, identity
+  // only); on success the entity-scoped connectors run for the now-resolved entity. Otherwise the subject stays unresolved.
+  fireEntityScoped(q);
+  const pre = subjectScope(q);
+  if (pre.kind === 'UNRESOLVED' && pre.subject?.text) {
+    admitPublicFiler(pre.subject.text, { searchFn: secSearch }).then((r) => {
+      if (r.outcome === 'ADMITTED') fireEntityScoped(q);
+    }).catch(() => {});
+  }
+}
+
+// Search binding for the admission path (the engine's /api/edgar proxy).
+async function secSearch(p) {
+  const r = await fetch('/api/edgar?' + new URLSearchParams({ forms: p.forms, dateRange: 'custom', startdt: p.startdt, enddt: p.enddt, hits: p.hits, entityName: p.entityName ?? '' }));
+  if (!r.ok) return { ok: false, status: r.status, hits: [] };
+  const j = await r.json().catch(() => null);
+  return j?.hits ? { ok: true, status: 200, hits: j.hits.hits ?? [] } : { ok: false, status: 200, hits: [] };
+}
+
+// The entity-scoped part of the query connectors. Safe to call twice for one query (once before and once after an
+// admission): each connector re-resolves the subject itself and returns when there is no resolved entity.
+function fireEntityScoped(q) {
   // WO-2046 — entity capital realization (fires only when query resolves a known entity)
   runCapitalRealizationSync(q).catch(() => {});
   // KRYL-1220 — second entity-attributed domain (OWNERSHIP), same trigger point as CAPITAL

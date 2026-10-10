@@ -13,6 +13,7 @@ import { domainIntelligence, relationshipsFor } from '../../engine/domainintelli
 import { ANALYSIS_DOMAIN_ORDER } from '../../engine/ontology.js';
 import { resolveClassEMeasure, getDomainEvidenceFacets } from '../../engine/domainsignalresolution.js';
 import { subjectScope } from '../../engine/subjectscope.js';
+import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 import { frameHeadline } from '../../engine/frameclassify.js';
 import { A as adSubject } from '../../engine/adsubject.js';
 
@@ -299,9 +300,10 @@ export default function DomainSubstrateTabs({ subject = null, domainPressures = 
   const pressure = domainPressures[active] ?? null;
 
   // WO-5B — establish THE subject once, before any domain analysis.
+  const admissionTick = useEntityAdmissionTick(); // KRYL-1380: a subject string is re-scoped after a runtime admission
   const scope = useMemo(
     () => (subject && typeof subject === 'object' && subject.kind) ? subject : subjectScope(subject),
-    [subject],
+    [subject, admissionTick],
   );
 
   // KRYL — T1, 2026-09-23: PORTFOLIO_FRAME/MARKET_THEME/DECISION_SITUATION added — same

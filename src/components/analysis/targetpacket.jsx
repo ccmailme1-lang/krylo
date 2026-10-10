@@ -24,6 +24,8 @@ import { useHappyPathEngine } from '../../engine/happypathdisplacementengine.js'
 import { computeMetrics }        from '../../engine/metricsengine.js';
 import { recordMetricsSnapshot } from '../../engine/domainmetricsstore.js';
 import { inferFormation }        from '../../engine/formationinference.js';
+import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
+import ErrorBoundary from '../errorboundary.jsx';
 import { assembleNarrative }     from '../../engine/narrativeassembly.js';
 import { assembleReconnPayload } from '../../engine/reconnpayload.js';
 import { buildPerceptionField } from '../../engine/perceptionread.js';
@@ -393,9 +395,10 @@ export default function TargetPacket() {
   // Moved above fieldFormation (KRYL-1220) so its already-computed canonicalId can be
   // threaded into buildPerceptionField() below without a second, redundant subjectScope()
   // call (subjectScope() is not cheap for a long pasted query — see PERF note elsewhere).
+  const admissionTick = useEntityAdmissionTick(); // KRYL-1380: re-scope after a runtime admission
   const subjScope = useMemo(
     () => subjectScope(session?.queryContext ?? session?.query ?? ''),
-    [session?.queryContext, session?.query],
+    [session?.queryContext, session?.query, admissionTick],
   );
 
   // §21 (FORMATION IS NOT A VERDICT) — the FORMATION section must state
@@ -602,15 +605,17 @@ export default function TargetPacket() {
           </div>
         </header>
 
-        <StructuralBrief
-          subjScope={subjScope}
-          question={session?.query}
-          domainPressures={domainPressures}
-          activeDomainPressures={activeDomainPressures}
-          fieldFormation={fieldFormation}
-          ambientFormation={ambientFormation}
-          structuralQuery={synthesis?.structuralQuery}
-        />
+        <ErrorBoundary label="Structural brief">
+          <StructuralBrief
+            subjScope={subjScope}
+            question={session?.query}
+            domainPressures={domainPressures}
+            activeDomainPressures={activeDomainPressures}
+            fieldFormation={fieldFormation}
+            ambientFormation={ambientFormation}
+            structuralQuery={synthesis?.structuralQuery}
+          />
+        </ErrorBoundary>
 
         {/* ── 01 ANALYSIS — the subject through the six domain primitives (WO-5A). Moved up
              (Founder, 2026-09-28) to sit right after StructuralBrief -- was previously below

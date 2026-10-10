@@ -39,6 +39,7 @@ import { useDomainMetrics } from '../../hooks/useDomainMetrics.js';
 // depends on one of these (capital, technology, knowledge in particular) never populated for
 // that entry point. Wiring the same real calls here, not fabricating fallback data.
 import { fireTopicConnectors } from '../../engine/topicconnectors.js';
+import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
 const MONO         = "'IBM Plex Mono', monospace";
 const LIME         = '#66FF00';
@@ -568,6 +569,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
   // Target Packet uses, with its same bounded 10 x 2s refresh (KRYL-1220): subject-attributed
   // connectors land after first render.
   const [attrTick, setAttrTick] = useState(0);
+  const admissionTick = useEntityAdmissionTick(); // KRYL-1380: re-scope the header after a runtime admission
   useEffect(() => { setAttrTick(0); }, [activeSession]);
   useEffect(() => {
     if (!activeSession || attrTick >= 10) return;
@@ -579,7 +581,7 @@ export default function AnalysisIdleField({ activeCones = null, onDomainSelect =
     const subjScope = subjectScope(activeSession.queryContext ?? activeSession.query ?? '');
     const { state } = resolveSubjectAttribution({ subjScope, entity: getDisplayEntity(activeSession.query ?? 'Unknown Signal') });
     return headerFieldSplit(sessionSynthesis, state);
-  }, [activeSession, sessionSynthesis, attrTick]);
+  }, [activeSession, sessionSynthesis, attrTick, admissionTick]);
 
   // Replay + stream
   const { history, currentIndex, seek, load } = usereplay(true);

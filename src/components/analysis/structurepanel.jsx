@@ -26,6 +26,7 @@ import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeBriefSummary } from './structuralbrief.jsx';
 import { useOwnershipLookup } from './useownershiplookup.js';
 import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390
+import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 const LIME = '#66FF00';
@@ -93,7 +94,8 @@ function FormationMapTab({ query }) {
   // already holds by the time this renders -- same pattern structuralbrief.jsx's
   // entityCanonicalRelationships already uses, proven live against JPMorgan Chase (64 real
   // admitted relationships) during this ticket's verification.
-  const subjScope = useMemo(() => subjectScope(query), [query]);
+  const admissionTick = useEntityAdmissionTick(); // KRYL-1380
+  const subjScope = useMemo(() => subjectScope(query), [query, admissionTick]);
 
   // Same real bug/fix as structuralbrief.jsx (2026-10-03): the live EDGAR observation is async,
   // this component reads ρ synchronously at render time, so it renders before admission

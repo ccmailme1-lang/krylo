@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "predev": "node scripts/verify-proxy-routes.mjs",
+    "predev": "node scripts/verify-proxy-routes.mjs && node scripts/check-undef.mjs --warn",
     "dev:ablinq": "yarn workspace @krylo/ablinq-audit-desk dev",
     "dev:nooma": "yarn workspace @krylo/nooma-engine dev",
     "dev:root": "vite",
@@ -17,6 +17,9 @@
     "engine": "cd as-diff && node engine.js",
     "check:ontology": "node scripts/check-domain-ontology.mjs",
     "check:proxy-routes": "node scripts/verify-proxy-routes.mjs",
+    "check:undef": "node scripts/check-undef.mjs",
+    "dev:check": "node scripts/dev-health.mjs",
+    "qa:journeys": "node qa_journeys.mjs",
     "prebuild": "node scripts/check-domain-ontology.mjs",
     "build": "vite build",
     "preview": "vite preview",

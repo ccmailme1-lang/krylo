@@ -30,8 +30,9 @@ const ENTITY_PATTERNS = [
   ['COMPANY',     /\bcompan(?:y|ies)\b/],
   ['LOCATION',    /\blocations?\b/],
   ['MARKET',      /\bmarkets?\b/],
-  ['TECHNOLOGY',  /\btechnology\b/],
-  ['OWNERSHIP',   /\bownership\b/],
+  // TECHNOLOGY and OWNERSHIP were listed here as participants; they are two of the six locked DOMAINS, not named
+  // entities or structural-role nouns (DEF-1393, Founder 2026-10-10). A question that says "across ownership, technology,
+  // and capital" names domains; it must never yield a participant pair built from domain words.
   ['PARTNER',     /\bpartners?\b/],
   ['COMPETITOR',  /\bcompetitors?\b/],
   ['INVESTMENT',  /\b(?:investment|investor)s?\b/],
@@ -55,6 +56,9 @@ const RELATIONSHIP_INTENT_PATTERNS = [
   ['WATCHING',        /\bwatch(?:ing)?\b/],
 ];
 
+// The six locked domains (CLAUDE.md section 13) are never participants, whatever the pattern list says.
+const DOMAIN_LABELS = new Set(['TECHNOLOGY', 'CAPITAL', 'KNOWLEDGE', 'LABOR', 'MEDIA', 'OWNERSHIP']);
+
 function findMatches(q, patterns) {
   const out = [];
   for (const [label, re] of patterns) if (re.test(q)) out.push(label);
@@ -69,7 +73,7 @@ function findMatches(q, patterns) {
  */
 export function interpretStructuralQuery(query) {
   const q = (query ?? '').toLowerCase();
-  const entities = findMatches(q, ENTITY_PATTERNS);
+  const entities = findMatches(q, ENTITY_PATTERNS).filter(label => !DOMAIN_LABELS.has(label));
   const relationshipIntent = findMatches(q, RELATIONSHIP_INTENT_PATTERNS);
 
   // INTERPRETABLE requires both a structural participant AND relationship/change language --
