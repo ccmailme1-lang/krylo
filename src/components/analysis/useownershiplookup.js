@@ -4,8 +4,13 @@
 // place both StructuralBrief and the MAP panel read that state from:
 //   pending  -- the lookup was started but has not reported (show "checking", never "none admitted")
 //   error    -- the lookup's failure text, or a no-response notice after TIMEOUT_MS (never silent, section 16)
-//   tick     -- increments when the lookup reports, so readers re-read rho
+//   tick     -- increments when the lookup starts or reports, so readers re-read rho
+// DEF-1396: the status is read from engine/ownershiplookupstore.js (recorded at module level for every subject), not
+// from an event this hook may have been unmounted for. A reader mounting after the event recovers the outcome of the
+// LAST lookup run for the subject; a new run resets it to pending. The status is the lookup's only; the provenance of
+// relationships already in rho is separate (latestEvidenceFor).
 import { useEffect, useState } from 'react';
+import { getOutcome } from '../../engine/ownershiplookupstore.js';
 
 export const OWNERSHIP_LOOKUP_TIMEOUT_MS = 45_000;
 
@@ -13,33 +18,33 @@ export function useOwnershipLookup(subjScope, countAdmitted) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const id = isEntity ? subjScope.canonicalId : null;
   const hasCik = isEntity && !!subjScope.entity?.identifiers?.edgar;
-  const [outcome, setOutcome] = useState(null);
   const [tick, setTick] = useState(0);
   const [timedOutFor, setTimedOutFor] = useState(null);
-  const settled = outcome?.id === id;
+  const rec = isEntity ? getOutcome(id) : null;
+  const settled = !!rec?.settledAt;
 
   useEffect(() => {
     if (!isEntity) return;
-    function onRhoUpdated(e) {
-      if (e.detail?.canonicalId !== id) return;
-      setOutcome({ id, error: e.detail?.error ?? null });
-      setTick(n => n + 1);
-    }
-    window.addEventListener('krylo-rho-updated', onRhoUpdated);
-    return () => window.removeEventListener('krylo-rho-updated', onRhoUpdated);
+    const bump = (e) => { if (e.detail?.canonicalId === id) setTick(n => n + 1); };
+    window.addEventListener('krylo-rho-updated', bump);
+    window.addEventListener('krylo-rho-started', bump);
+    return () => { window.removeEventListener('krylo-rho-updated', bump); window.removeEventListener('krylo-rho-started', bump); };
   }, [isEntity, id]);
 
+  // The 45 s clock runs from the lookup's start when one is recorded, otherwise from this mount.
+  const startedAt = rec?.startedAt ?? null;
   useEffect(() => {
     if (!hasCik || settled) return;
-    const t = setTimeout(() => setTimedOutFor(id), OWNERSHIP_LOOKUP_TIMEOUT_MS);
+    const left = startedAt ? Math.max(0, OWNERSHIP_LOOKUP_TIMEOUT_MS - (Date.now() - startedAt)) : OWNERSHIP_LOOKUP_TIMEOUT_MS;
+    const t = setTimeout(() => setTimedOutFor(`${id}:${startedAt ?? 0}`), left);
     return () => clearTimeout(t);
-  }, [hasCik, settled, id]);
+  }, [hasCik, settled, id, startedAt]);
 
-  const timedOut = timedOutFor === id && !settled;
+  const timedOut = !settled && timedOutFor === `${id}:${startedAt ?? 0}`;
   return {
-    outcome,
+    outcome: settled ? { id, error: rec.error } : null,
     tick,
     pending: hasCik && !settled && !timedOut, // DEF-1392: independent of how many relationships are already admitted
-    error: settled ? outcome.error : (timedOut ? 'the SEC ownership lookup did not respond' : null),
+    error: settled ? rec.error : (timedOut ? 'the SEC ownership lookup did not respond' : null),
   };
 }

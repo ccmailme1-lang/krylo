@@ -19,6 +19,7 @@ import { toTopologyNodeId }          from './entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
+import { markStarted } from './ownershiplookupstore.js';
 
 export function fireTopicConnectors(q) {
   runGithubSync(q).catch(() => {});
@@ -62,6 +63,7 @@ function fireEntityScoped(q) {
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
   const scope = subjectScope(q);
   if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
+    markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
     const ownershipObservation = runTargetedOwnershipObservation({
       entityCik:   scope.entity.identifiers.edgar,
       canonicalId: scope.canonicalId,

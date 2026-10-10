@@ -32,7 +32,7 @@ import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../
 // two are never merged into one list or one count (see render block below).
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
-import { findAdmittedRelationshipsFor } from '../../engine/canonicalrelationshipprojection.js';
+import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 
 const MONO   = "'IBM Plex Mono', monospace";
 const HELV   = "'Helvetica Neue', Helvetica, Arial, sans-serif";
@@ -62,6 +62,22 @@ function Row({ label, children }) {
 // DEF-1391: the direction of a canonical relationship in words, the same sentences the MAP panel uses
 // (structure-field.html relationshipSentence): for HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE the parts are
 // [issuer, filer], so the filer is the holder; the subject may be either, and the wording says which.
+// DEF-1396: the filing behind an admitted relationship, from its admission evidence. Null fields stay out of the line;
+// no evidence at all is a stated absence, never a default.
+export function canonicalProvenanceLine(ev) {
+  const p = ev?.provenance;
+  if (!p || (!p.accession && !p.filingDate)) return 'filing not recorded for this admission';
+  return [p.form, p.filingDate ? `filed ${p.filingDate}` : null, p.accession ? `accession ${p.accession}` : null].filter(Boolean).join(' · ');
+}
+
+// DEF-1396: when this query's ownership lookup has not reported, relationships already in rho are named for what they are:
+// admitted in this page session from the cited filings, not confirmed by a lookup that reported for this query.
+export function ownershipFailureNotice(reason, admittedCount) {
+  return admittedCount > 0
+    ? `Ownership lookup for this query: ${reason}. The ${admittedCount} canonical relationship${admittedCount !== 1 ? 's' : ''} listed ${admittedCount !== 1 ? 'were' : 'was'} admitted in this page session from the filings cited with ${admittedCount !== 1 ? 'them' : 'it'}; no lookup that reported confirms ${admittedCount !== 1 ? 'them' : 'it'} for this query, and others may exist — their absence is not evidence that none exist.`
+    : `Ownership observation failed (${reason}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`;
+}
+
 export function canonicalRelationshipSentence(type, a, b) {
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
   if (type === 'ACQUIRED') return `${a} acquired ${b}`;
@@ -132,7 +148,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
     : '';
   const failureClause = ownershipFailure
-    ? ` Ownership observation failed (${ownershipFailure}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`
+    ? ` ${ownershipFailureNotice(ownershipFailure, entityCanonicalRelationships.length)}`
     : (ownershipPending ? (entityCanonicalRelationships.length ? ' Checking SEC ownership filings — more relationships may follow.' : ' Checking SEC ownership filings — canonical relationships are not known yet.') : '');
   // KRYL-1369 (Founder ruling 2026-10-06, spec section 17): the two levels are stated separately. The
   // field level (domains carrying live signal, domain pairs co-present) is ambient and not bound to the
@@ -181,7 +197,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
       : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${subjectLabel}.`)) +
-      (ownershipFailure ? ` Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.` : ''),
+      (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : ''),
   } : (!isEntity && !structurallyInterpretable) ? {
     // No subject resolved and no structural participants: the field alone, stated as rows.
     field: domainLines.length
@@ -349,6 +365,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                 <div>
                   {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id))} — {r.type}
                 </div>
+                <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>{canonicalProvenanceLine(latestEvidenceFor(r.id))}</div>
                 {Object.keys(r.nuState ?? {}).length > 0 && (
                   <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
                     {Object.entries(r.nuState).map(([k, v]) => `${k}: ${v}`).join(' · ')}
