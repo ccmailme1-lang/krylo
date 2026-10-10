@@ -44,6 +44,25 @@ export function observationLabel(o, { accession = true } = {}) {
   return [o.source, o.eventClass, o.eventDate, accession ? o.accession : null].filter(Boolean).join(' · ');
 }
 
+// KRYL-1399 step B: what the filing states, as lines for the guest. Every line quotes the filing; an unstated field is shown absent
+// with its class. Nothing is computed from an amount (capital-event magnitude is INDETERMINATE in this version).
+const money = (a) => `${a.raw}${a.wording ? ` (${a.wording})` : ''}`;
+const quote = (p) => `"${String(p ?? '').length > 170 ? String(p).slice(0, 167).trimEnd() + '…' : String(p ?? '')}"`;
+export function observationDetailLines(o) {
+  const ev = o?.capitalEvent;
+  if (!ev || !ev.attempted) return [];
+  const lines = [];
+  const more = (n, shown) => (n > shown ? ` (+${n - shown} more in the filing text)` : '');
+  const absentOf = (f) => ev.absent.find(a => a.field === f);
+  if (ev.amounts.length) lines.push(`amount: ${ev.amounts.slice(0, 2).map(money).join(' · ')}${more(ev.amounts.length, 2)} — ${quote(ev.amounts[0].passage)}`);
+  else if (absentOf('amount')) lines.push(`amount: not stated (absence class ${absentOf('amount').absenceClass}: ${absentOf('amount').reason})`);
+  if (ev.instruments.length) lines.push(`instrument: ${ev.instruments.slice(0, 3).map(i => i.text).join(' · ')}${more(ev.instruments.length, 3)} — ${quote(ev.instruments[0].passage)}`);
+  else if (absentOf('instrument')) lines.push(`instrument: not stated (absence class ${absentOf('instrument').absenceClass}: ${absentOf('instrument').reason})`);
+  if (ev.counterparties.length) lines.push(`named in the filing: ${ev.counterparties.slice(0, 3).map(c => c.name + (c.role ? ` ${c.role}` : '')).join(' · ')}${more(ev.counterparties.length, 3)} — ${quote(ev.counterparties[0].passage)}`);
+  else if (absentOf('counterparty')) lines.push(`counterparty: not stated (absence class ${absentOf('counterparty').absenceClass}: ${absentOf('counterparty').reason})`);
+  return lines;
+}
+
 export const CANON_DOMAINS = ANALYSIS_DOMAIN_ORDER; // KRYL-1065 — sourced from ontology
 
 function authoredMeasureKeys(domain) {
@@ -121,6 +140,7 @@ export function A(domain, scope) {
       eventDate: s.eventDate ?? null,
       eventClass: s.eventClass ?? null,   // KRYL-1399 step A
       accession: s.accession ?? null,
+      capitalEvent: s.capitalEvent ?? null,
       ts: s.ts,
     }));
 

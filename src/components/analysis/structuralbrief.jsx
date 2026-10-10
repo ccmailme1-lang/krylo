@@ -15,7 +15,7 @@
 // structure is never hidden here for lack of a resolved subject.
 
 import { useState, useEffect } from 'react';
-import { A, observationLabel } from '../../engine/adsubject.js';
+import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
@@ -423,8 +423,14 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         {evidence.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {evidence.map((o, i) => (
-              <div key={i}><span style={{ color: LIME }}>{o.domain}</span> — {observationLabel(o)}</div>
+              <div key={i}>
+                <div><span style={{ color: LIME }}>{o.domain}</span> — {observationLabel(o)}</div>
+                {observationDetailLines(o).map((l, k) => <div key={k} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>{l}</div>)}
+              </div>
             ))}
+            {evidence.some(o => observationDetailLines(o).length > 0) && (
+              <div style={{ marginTop: 4, fontSize: 10, color: ABSENCE }}>Amounts, instruments and names are quoted from the filing text; nothing is computed from them (capital-event magnitude is INDETERMINATE).</div>
+            )}
           </div>
         ) : (
           <span style={{ color: ABSENCE }}>

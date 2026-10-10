@@ -16,6 +16,7 @@ import {
   computeMateriality, computeGroundedness,
 } from './edgar8kconnector.js';
 import { getById } from '../rkmstore.js';
+import { fetchCapitalEvent, CAPITAL_EVENT_ITEMS } from './edgar8kcontent.js'; // KRYL-1399 step B
 import { materializeSignal, attenuateSecondary } from '../rkmaterializer.js';
 
 // ── Event class → domain(s) map (locked) ─────────────────────────────────────
@@ -57,6 +58,9 @@ const FRACTURE_EVENT_CLASSES = new Set([
   'CONTRACT_TERMINATION',
 ]);
 
+const CAPITAL_DOC_LIMIT = 8;      // the newest capital-event filings whose text is read per lookup (the brief lists 8)
+const CAPITAL_DOC_GAP_MS = 400;    // spacing between document requests (SEC fair access; the engine proxy also spaces)
+
 // ── Session dedup ─────────────────────────────────────────────────────────────
 const _dispatched = new Set();
 
@@ -67,7 +71,7 @@ function buildSignals(eventMeta) {
   // getProcessedEvents() unchanged; this function simply never read it. domaingravity.js
   // (97ea479) reads event.meta?.canonicalId — attaching it here is the only missing step,
   // no new resolution, no new field, no new connector invocation.
-  const { realityObjectId, eventClass, materiality, groundedness, entityName, canonicalId, eventDate, accession, ts } = eventMeta;
+  const { realityObjectId, eventClass, materiality, groundedness, entityName, canonicalId, eventDate, accession, capitalEvent, ts } = eventMeta;
 
   const ro          = getById(realityObjectId);
   const stability   = ro?.truthStability ?? 1.0;
@@ -106,7 +110,7 @@ function buildSignals(eventMeta) {
       // eventDate = the real historical filing/event date, kept as provenance/event time,
       // separate from ts (observation time). Neither field fabricates the other's meaning.
       // KRYL-1399 step A: the filing's accession travels with the observation (domaingravity.js keeps it with eventClass).
-      meta: { canonicalId: canonicalId ?? null, eventDate: eventDate ?? null, accession: accession ?? null },
+      meta: { canonicalId: canonicalId ?? null, eventDate: eventDate ?? null, accession: accession ?? null, capitalEvent: capitalEvent ?? null },
     };
     if (isFracture) packet.polarity = POLARITY.NEGATIVE;
     return packet;
@@ -170,6 +174,20 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
     return ciks.includes(String(entityCik));
   });
 
+  // KRYL-1399 step B: for the newest filings that carry a capital-event item, read the Item text and quote the amount, instrument
+  // and counterparties it states (edgar8kcontent.js). Sequential and spaced (SEC rate limits); a document that cannot be obtained is
+  // recorded as NOT_OBTAINED, never as an empty event. Only the newest CAPITAL_DOC_LIMIT are read: the rest stay date and class only.
+  const capitalEvents = new Map();
+  const fileDate = (h) => String(h._source?.file_date ?? '');
+  const toRead = [...matches].sort((a, b) => fileDate(b).localeCompare(fileDate(a)))
+    .filter(h => parseItems(h._source?.items ?? '').some(i => CAPITAL_EVENT_ITEMS.includes(i))).slice(0, CAPITAL_DOC_LIMIT);
+  for (const hit of toRead) {
+    const src = hit._source ?? {};
+    const file = String(hit._id ?? '').split(':')[1] ?? null;
+    capitalEvents.set(hit._id, await fetchCapitalEvent({ cik: entityCik, accession: src.adsh, file, items: parseItems(src.items ?? ''), registrant: entityName ?? src.display_names?.[0] ?? '' }));
+    await new Promise(r => setTimeout(r, CAPITAL_DOC_GAP_MS));
+  }
+
   const batch = [];
   for (const hit of matches) {
     const src        = hit._source ?? {};
@@ -198,6 +216,7 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
       realityObjectId: `edgar8k-targeted-${accNo}`,
       eventDate: filingDate,
       accession: src.adsh ?? (String(accNo).split(':')[0] || null),
+      capitalEvent: capitalEvents.get(hit._id) ?? null,
       eventClass,
       materiality,
       groundedness,
