@@ -15,6 +15,7 @@ export function describeChange(r) {
   const e = r.existence, m = r.magnitude, c = r.configuration;
   const lines = [];
   lines.push(`Existence: ${e.state}${e.reason ? ` (${e.reason}: ${e.note ?? 'insufficient evidence'}; absence class ${e.absenceClass})` : e.basis ? ` (${e.basis})` : ''}`);
+  if (e.state === 'DISSOLVED') lines.push('Reading: the reporting person now reports zero ownership of this class. That ends this filer\'s own reporting; it does not show the shares were sold, and a related filer may report them.');
   if (m.state !== 'NOT_ASSESSED') {
     const d = m.deltaPoints != null ? ` ${m.deltaPoints > 0 ? '+' : ''}${m.deltaPoints} points${m.from != null ? ` (${m.from}% to ${m.to}%)` : ''}` : '';
     lines.push(`Magnitude: ${m.state}${d}${m.reason ? ` (${m.reason}: ${m.note ?? ''}; absence class ${m.absenceClass})` : ''}`);

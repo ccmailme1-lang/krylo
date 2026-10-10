@@ -37,6 +37,7 @@ ok(/Configuration: RECONFIGURED \(participants\).*34-39538/.test(text), 'partici
 ok(/VANGUARD CAPITAL MANAGEMENT LLC · class CUSIP 02079K305 — RECONFIGURED/.test(text) && /Existence: NEW/.test(text), 'Vanguard Capital Management: NEW and RECONFIGURED');
 ok(/SCHMIDT ERIC E.*INDETERMINATE/.test(text) && /NO_CURRENT_OBSERVATION/.test(text) && /absence class a or b/.test(text), 'Schmidt: INDETERMINATE with reason code and absence class');
 ok(/rule: EXIST-DISSOLVED:zero-percent-in-P1/.test(text), 'the rule id that triggered the classification is shown');
+ok(/does not show the shares were sold, and a related filer may report them/.test(text), 'DISSOLVED carries the reading limit: zero reported is not evidence of a sale');
 ok(/do not establish why a position changed/.test(text), 'the no-causation limitation is stated');
 ok(!/\b(because|caused by|funded by|driven by|led to)\b/i.test(text), 'no causal wording in the generated text');
 ok(html.indexOf('DISSOLVED') < html.indexOf('INDETERMINATE'), 'evidenced changes are listed before the indeterminate ones');
