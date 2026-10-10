@@ -32,3 +32,31 @@ export function describeChange(r) {
   if (r.evidence.conflicts?.length) evidence.push(`conflicting filings: ${r.evidence.conflicts.map(x => `${x.eventDate} ${x.accessions.join(' vs ')}`).join('; ')}`);
   return { headline: `${r.holderName ?? 'holder'} · ${cls} — ${r.summary}`, lines, evidence, rules: r.rules };
 }
+
+// DEF-1397: the retrieval basis behind a NEW or DISSOLVED classification, built only from the stored record of the run that
+// produced it (relationshipchangeservice.js: retrieval = { excluded, coverage, observationCount }). Pure; no rule or threshold
+// of KRYL-1386 is touched. A completed search and an incomplete or capped search read differently. Returns [] for any other
+// existence state, and a stated absence when the run left no record.
+export function describeRetrievalBasis(retrieval, record) {
+  const st = record?.existence?.state;
+  if (st !== 'NEW' && st !== 'DISSOLVED') return [];
+  const cov = retrieval?.coverage;
+  if (!cov || !Array.isArray(cov.windows)) return ['Retrieval basis: no retrieval record is available for this run, so the extent of the search is not shown.'];
+  const win = cov.windows;
+  const from = win.map(w => w.from).sort()[0], to = win.map(w => w.to).sort().slice(-1)[0];
+  const answered = win.filter(w => w.status === 'ok').length;
+  const returned = win.reduce((n, w) => n + (w.status === 'ok' ? (w.count ?? 0) : 0), 0);
+  const failedWin = cov.failedWindows ?? [], failedDocs = cov.failedDocs ?? [];
+  const capped = failedWin.filter(w => w.reason === 'AT_CAP').length, notAnswered = failedWin.length - capped;
+  const complete = cov.complete === true;
+  const lines = [];
+  lines.push(`Retrieval basis (this browser run): ${complete ? 'search complete' : 'SEARCH INCOMPLETE'} · SEC filings dated ${from} to ${to} · form families: SCHEDULE 13D/13G (filed from December 2024) and SC 13D/13G (earlier).`);
+  lines.push(`Search windows answered ${answered} of ${win.length} · filings returned ${returned} · observations built ${retrieval.observationCount ?? 'not recorded'} · set aside ${(retrieval.excluded ?? []).length} · requests ${cov.requests?.search ?? 0} search, ${cov.requests?.doc ?? 0} document.`);
+  if (!failedWin.length && !failedDocs.length && !(cov.reasons ?? []).length) lines.push('Not obtained: 0 search windows, 0 documents.');
+  else lines.push(`Not obtained: ${notAnswered} search window(s), ${capped} window(s) at the 100-result cap, ${failedDocs.length} document(s)${(cov.reasons ?? []).length ? ` (${cov.reasons.join('; ')})` : ''}.`);
+  if (complete) {
+    if (st === 'NEW') lines.push(`No filing by this holder for this class was returned dated on or before ${record.periods?.E0}.`);
+    lines.push('Completeness applies to this name-narrowed SEC search; it is not proof that no other filing exists.');
+  } else lines.push('Retrieval was incomplete, so the absence of a filing is not established by this search.');
+  return lines;
+}

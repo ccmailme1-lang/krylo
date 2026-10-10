@@ -34,7 +34,7 @@ export async function runRelationshipChange({ issuerCik, issuerName, canonicalId
       new Promise((_, rej) => setTimeout(() => rej(new Error('relationship-change retrieval timed out')), timeoutMs)),
     ]);
     const result = classifyOwnershipChange({ observations: fetched.observations, T, coverage: fetched.coverage, issuerName });
-    _results.set(canonicalId, { state: 'done', startedAt: _results.get(canonicalId)?.startedAt, finishedAt: Date.now(), result, retrieval: { excluded: fetched.excluded, coverage: fetched.coverage } });
+    _results.set(canonicalId, { state: 'done', startedAt: _results.get(canonicalId)?.startedAt, finishedAt: Date.now(), result, retrieval: { excluded: fetched.excluded, coverage: fetched.coverage, observationCount: fetched.observations.length } });
   } catch (e) {
     _results.set(canonicalId, { state: 'failed', startedAt: _results.get(canonicalId)?.startedAt, finishedAt: Date.now(), error: String(e?.message ?? e) });
   }

@@ -2,7 +2,7 @@
 // absence when it is running, failed or unavailable. Reads relationshipchangeservice.js (in memory) and re-renders on its event.
 import { useEffect, useState } from 'react';
 import { getRelationshipChange } from '../../engine/relationshipchangeservice.js';
-import { describeChange, orderRelationships } from '../../engine/relationshipchangetext.js';
+import { describeChange, describeRetrievalBasis, orderRelationships } from '../../engine/relationshipchangetext.js';
 
 const MONO = "'IBM Plex Mono', monospace";
 
@@ -46,6 +46,7 @@ export default function RelationshipChangeBlock({ entry, ABSENCE, LBL, BRT }) {
             <div style={{ color: BRT }}>{d.headline}</div>
             {d.lines.map((l, k) => <div key={k} style={{ marginLeft: 14, fontSize: 11 }}>{l}</div>)}
             {d.evidence.map((l, k) => <div key={`e${k}`} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>{l}</div>)}
+            {describeRetrievalBasis(entry.retrieval, r).map((l, k) => <div key={`rb${k}`} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>{l}</div>)}
             <div style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>rule: {d.rules.join(', ')}</div>
           </div>
         );
