@@ -50,5 +50,11 @@ ok('"the best plan for my 3 kids" → not ENTITY (no false proper-noun match)',
 // 8. Determinism.
 ok('deterministic', JSON.stringify(subjectScope('Is Anduril a good acquisition target?')) === JSON.stringify(a));
 
+// 9. KRYL-1406: a sentence-opening word is not the subject (benchmark C07, C11).
+ok('C07: "Across all six domains..." resolves Oracle', (() => { const r = subjectScope('Across all six domains, what formation exists around Oracle?'); return r.kind === 'ENTITY' && r.canonicalId === 'oracle'; })());
+ok('C11: "Across all six domains..." resolves Tesla', (() => { const r = subjectScope('Across all six domains, what formation exists around Tesla?'); return r.kind === 'ENTITY' && r.canonicalId === 'tesla'; })());
+ok('"Given the filings, ..." never selects "Given"', subjectScope('Given the filings, what is forming around Netflix?').subject?.text !== 'Given');
+ok('an unregistered name after an opener is the selected subject (offered to SEC admission)', (() => { const r = subjectScope('Across all six domains, what formation exists around Intel?'); return r.kind === 'UNRESOLVED' && r.subject?.text === 'Intel'; })());
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

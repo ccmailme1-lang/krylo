@@ -75,7 +75,11 @@ function stripLeadingLabels(content) {
 // interrogative / "Good investment?" stem up to '?', '+', ':' or a line break; or a trailing "...?" sentence.
 function splitQuestion(text) {
   const t = text.trim();
-  const lead = t.match(/^(?:is|are|was|were|should|would|could|can|does|do|did|will|how|what|why|which|who|good|bad|great|worth)\b/i);
+  const STEM_RE = '(?:is|are|was|were|should|would|could|can|does|do|did|will|how|what|why|which|who)';
+  // A question may open with a fronted scope phrase ("Across all six domains, what formation exists around Oracle?"): it is still the question.
+  const fronted = !/^(?:is|are|was|were|should|would|could|can|does|do|did|will|how|what|why|which|who|good|bad|great|worth)\b/i.test(t) && t.search(/\?/) > 0
+    && new RegExp(`^[^?.!\\n]{1,120},\\s*${STEM_RE}\\b[^?]*\\?`, 'i').test(t);
+  const lead = fronted || t.match(/^(?:is|are|was|were|should|would|could|can|does|do|did|will|how|what|why|which|who|good|bad|great|worth)\b/i);
   if (lead) {
     const idx = t.search(/[?+:\n]/);
     const cut = idx === -1 ? Math.min(t.length, 80) : idx;
@@ -85,6 +89,17 @@ function splitQuestion(text) {
   if (tail && tail.index > 0 && tail[1].length <= 140) return { question: tail[1].trim(), content: t.slice(0, tail.index).trim() };
   return { question: '', content: t };
 }
+
+// A capital letter carried only by POSITION (the first word of a sentence) is not evidence of a name (KRYL-1406). Closed-class words that open a
+// sentence are never a name by themselves: FRAMING words introduce a scope or a premise ("Across all six domains, ...", "Between ownership and capital, ...",
+// "Given the filings, ...") and are dropped even when a name follows directly ("Across Apple" -> Apple); the others are dropped only when no Title-Case
+// word follows ("Overall, ..."), because "First Solar" / "Under Armour" begin with a word that is also a name.
+const FRAMING_OPENERS = new Set(['across', 'between', 'within', 'among', 'amongst', 'throughout', 'regarding', 'concerning', 'given', 'around', 'beyond',
+  'despite', 'during', 'including', 'excluding', 'per', 'via', 'from', 'into', 'toward', 'towards', 'after', 'before', 'since', 'until', 'while', 'because',
+  'although', 'though', 'considering', 'based', 'according']);
+const LONE_OPENERS = new Set(['overall', 'however', 'also', 'then', 'so', 'currently', 'recently', 'today', 'here', 'there', 'these', 'those', 'some', 'any',
+  'all', 'each', 'every', 'both', 'no', 'not', 'yes', 'please', 'next', 'first', 'last', 'under', 'over', 'up', 'out', 'off', 'now', 'still', 'again', 'together',
+  'both', 'either', 'neither', 'other', 'another', 'such', 'many', 'most', 'several', 'few', 'more', 'less']);
 
 // Named phrases: runs of Title-Case tokens, allowing "of / and / & / /" inside and a leading "The".
 function namedRuns(text) {
@@ -99,8 +114,16 @@ function namedRuns(text) {
     if (cur.length) runs.push(cur.slice());
     cur = [];
   };
-  for (const raw of tokens) {
+  let sentenceStart = true;
+  for (let ti = 0; ti < tokens.length; ti++) {
+    const raw = tokens[ti];
     const w = raw.replace(/^[("“'‘\[]+|[)"”,;:.!?\]]+$/g, '');
+    const atStart = sentenceStart; sentenceStart = /[.!?:]$/.test(raw) && !/^[A-Z]\.$/.test(raw);
+    if (atStart && w && !cur.length) {                                     // capital by position only
+      const lw = w.toLowerCase();
+      const nextCap = tokens[ti + 1] ? isCapToken(tokens[ti + 1].replace(/^[("“'‘\[]+|[)"”,;:.!?\]]+$/g, '')) : false;
+      if (FRAMING_OPENERS.has(lw) || (LONE_OPENERS.has(lw) && !nextCap)) { if (/[,;:.!?]$/.test(raw)) flush(); continue; }
+    }
     const endsClause = /[,;:.!?]$/.test(raw) && !/^[A-Z]\.$/.test(raw);
     if (!w) { flush(); continue; }
     if (isCapToken(w) || (cur.length && isConnector(w))) cur.push(w);

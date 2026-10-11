@@ -174,6 +174,29 @@ console.log('Prompt formatting must not change the subject');
   for (const [q, want] of cases) ok(buildQueryContract(q).subject.text === want, JSON.stringify(q.slice(0, 48)) + ' -> ' + want);
 }
 
+console.log('Sentence openers are not names (KRYL-1406)');
+{
+  const cases = [
+    ['Across all six domains, what formation exists around Oracle?', 'Oracle'],
+    ['Across all six domains, what formation exists around Intel?', 'Intel'],
+    ['Across ownership, technology, and capital, what structure surrounds Ford?', 'Ford'],
+    ['Within the last year, what changed around Verizon?', 'Verizon'],
+    ['Overall, what relationships exist around Intel?', 'Intel'],
+    ['Given the filings, what is forming around Netflix?', 'Netflix'],
+    ['Across Apple Inc, what changed?', 'Apple Inc'],
+    ['Between ownership and capital, how is Boeing connected?', 'Boeing'],
+    ['What is forming around Boston Scientific across ownership and capital?', 'Boston Scientific'],
+    // names that begin with a word that is also an opener keep it
+    ['First Solar raised capital.', 'First Solar'],
+    ['Under Armour reports earnings', 'Under Armour'],
+    ['Is Anduril a good acquisition target?', 'Anduril'],
+  ];
+  for (const [q, want] of cases) ok(buildQueryContract(q).subject.text === want, JSON.stringify(q.slice(0, 56)) + ' -> ' + want);
+  ok(buildQueryContract('Across all six domains, what formation exists?').subject.attribution === 'NONE', 'an opener-only question names no subject');
+  ok(buildQueryContract('Between Apple and Google, how is capital connected?').subject.attribution === 'AMBIGUOUS', 'two names after an opener stay ambiguous (opener not a third name)');
+  ok(buildQueryContract('Across all six domains, what formation exists around Oracle?').selectionRule === 'EXPLICIT_IN_QUESTION', 'a fronted scope phrase does not stop the sentence being the question');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';
