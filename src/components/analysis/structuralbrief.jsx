@@ -78,7 +78,23 @@ export function ownershipFailureNotice(reason, admittedCount) {
     : `Ownership observation failed (${reason}) — canonical relationships could not be checked this time, so their absence here is not evidence that none exist.`;
 }
 
-export function canonicalRelationshipSentence(type, a, b) {
+// KRYL-1401: what the filing states about a capital-event relationship, as lines under it. The matching outcome is shown exactly as returned;
+// an unnamed affiliate is never described as the named entity.
+export function canonicalDetailLines(ev) {
+  const p = ev?.provenance;
+  if (!p || p.source !== 'SEC_8K_CAPITAL_EVENT') return [];
+  const m = p.counterpartyMatch ?? {};
+  const lines = [];
+  if (p.instrument) lines.push(`instrument: ${p.instrument}${p.amounts?.length ? ` · ${p.amounts.slice(0, 2).map(a => `${a.raw}${a.wording ? ` (${a.wording})` : ''}`).join(' · ')} as stated; no magnitude is derived (INDETERMINATE)` : ''}`);
+  lines.push(m.outcome === 'AFFILIATION_CONFIRMED' && m.partyIsNamed === false
+    ? `counterparty: the filing names "an affiliate of ${p.counterpartyName}"; the party itself is not named (affiliation documented in the filing; ${m.canonicalName} SEC CIK ${m.identifier?.value})`
+    : `counterparty: ${m.outcome} · SEC CIK ${m.identifier?.value} (${m.canonicalName})${p.counterpartyRole ? ` · ${p.counterpartyRole}` : ''}`);
+  if (p.passage) lines.push(`"${String(p.passage).length > 190 ? String(p.passage).slice(0, 187).trimEnd() + '…' : p.passage}"`);
+  return lines;
+}
+
+export function canonicalRelationshipSentence(type, a, b, nuId = null) {
+  if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
   if (type === 'ACQUIRED') return `${a} acquired ${b}`;
   if (type === 'SHARED_PATENT_ASSIGNMENT') return `${a} and ${b} share a patent assignment`;
@@ -363,9 +379,10 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
             {entityCanonicalRelationships.map((r, i) => (
               <div key={`canonical-${i}`}>
                 <div>
-                  {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id))} — {r.type}
+                  {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id), r.nuId)} — {r.type}
                 </div>
                 <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>{canonicalProvenanceLine(latestEvidenceFor(r.id))}</div>
+                {canonicalDetailLines(latestEvidenceFor(r.id)).map((l, k) => <div key={`d${k}`} style={{ marginLeft: 14, marginTop: 1, fontSize: 10, color: ABSENCE }}>{l}</div>)}
                 {Object.keys(r.nuState ?? {}).length > 0 && (
                   <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>
                     {Object.entries(r.nuState).map(([k, v]) => `${k}: ${v}`).join(' · ')}

@@ -76,6 +76,16 @@ const PROJECTIONS = {
       source: meta.source,
     }),
   },
+  CAPITAL_EVENT_INVOLVES: {
+    // KRYL-1401: part = [filer, counterparty], ordered; the typed edge reads filer -> counterparty. Vocabulary entry added in entitytopologyregistry.js.
+    typedEdgeType: RELATION_TYPES.CAPITAL_EVENT_INVOLVES,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.filerName, to: meta.counterpartyName,
+      fromCik: meta.filerCik ?? null, toCik: meta.counterpartyCik ?? null,
+      fromLabel: meta.filerName, toLabel: meta.counterpartyLabel ?? meta.counterpartyName,
+      source: meta.source ?? 'SEC_8K_CAPITAL_EVENT',
+    }),
+  },
   SHARED_PATENT_ASSIGNMENT: {
     // New vocabulary entry -- RELATION_TYPES is confirmed informational/non-gating (its own
     // comment: "does NOT gate registerTypedEdge"), so adding one is additive, same precedent as

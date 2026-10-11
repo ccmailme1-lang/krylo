@@ -56,6 +56,7 @@ async function lookupRegistrants(name, { searchFn, now, sleep, gapMs }) {
         else if (wantHead && (n === wantHead || n.startsWith(wantHead + ' ') || want.startsWith(n + ' '))) { if (!similar.has(p.cik)) similar.set(p.cik, ev); }
       }
     }
+    if (forms === ANNUAL_FORMS && exact.size === 1) break;   // one listed issuer found among annual-report filers: no need for the all-forms search
   }
   // The search returns at most 100 hits; a common name can fill them with other registrants. If nothing matched and a search was full, ask once
   // more with the name as written (a phrase search that is narrower for names with a legal suffix in the registered form).

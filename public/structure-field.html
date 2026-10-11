@@ -933,6 +933,7 @@
     if (r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}.`;
     if (r.type === 'ACQUIRED') return `${a} acquired ${b}.`;
     if (r.type === 'SHARED_PATENT_ASSIGNMENT') return `${a} and ${b} share a patent assignment.`;
+    if (r.type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${r.qualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}.`;
     return `${a} ↔ ${b} — ${r.type}.`;
   }
 

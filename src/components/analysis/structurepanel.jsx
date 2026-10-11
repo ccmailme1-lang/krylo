@@ -115,6 +115,7 @@ function FormationMapTab({ query }) {
         id: r.id,
         type: r.type,
         phiClass: r.phiClass,
+        qualifier: r.nuId?.partyQualifier ?? null,   // KRYL-1401: an unnamed affiliate is worded as one
         part: r.part.map(id => NODE_LABELS[id] ?? id),
         // Real admission evidence (null fields stay null -- the panel shows a stated absence).
         evidence: ev ? {

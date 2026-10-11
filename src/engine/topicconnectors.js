@@ -20,6 +20,7 @@ import { findAdmittedRelationshipsForLive, latestEvidenceForLive } from './canon
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 import { markStarted } from './ownershiplookupstore.js';
+import { admitCapitalEvents } from './capitaleventadmission.js';
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
 
 export function fireTopicConnectors(q, { refresh = false } = {}) {
@@ -72,7 +73,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   // carries (entity.identifiers.edgar), not just the canonicalId. Fires only when the query
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
   if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
-    expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId });
+    expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId }); expectLookup('counterparty', { canonicalId: scope.canonicalId });
     if (refresh) expectLookup('change', { canonicalId: scope.canonicalId });
     markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
     const ownershipObservation = runTargetedOwnershipObservation({
@@ -89,7 +90,15 @@ function fireEntityScoped(q, { refresh = false } = {}) {
       canonicalId: scope.canonicalId,
       entityName:  scope.entity.name,
       from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), // matches OWNERSHIP's real 365-day window
-    }).then((r) => settleLookup('8k', r?.error ?? null)).catch((e) => settleLookup('8k', String(e?.message ?? e)));
+    }).then((r) => {
+      settleLookup('8k', r?.error ?? null);
+      // KRYL-1401: match the named counterparties of the extracted capital events and admit the confirmed ones (a lookup of the snapshot's
+      // settlement; if it does not finish in time it is recorded TIMEOUT, the admission continues live and appears at the next Refresh).
+      const filer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+      admitCapitalEvents({ filer, events: r?.capitalEvents ?? [], searchFn: secSearch })
+        .then((res) => settleLookup('counterparty', res.admitted.length === 0 && res.rejected.some(x => x.outcome === 'LOOKUP_FAILED') ? 'counterparty lookups failed' : null))
+        .catch((e) => settleLookup('counterparty', String(e?.message ?? e)));
+    }).catch((e) => { settleLookup('8k', String(e?.message ?? e)); settleLookup('counterparty', 'the 8-K lookup failed'); });
 
     // Supplier Structural Intelligence -- real bug found live 2026-10-03: structuralbrief.jsx
     // and structurepanel.jsx both read canonical ρ synchronously at render time, but this

@@ -151,3 +151,47 @@ registerRelationshipType('ACQUIRED', {
     return 'PERSISTENT';
   },
 });
+
+// CAPITAL_EVENT_INVOLVES -- ratified by the Founder 2026-10-11 under Decision Record section 3 (decision-record-structural-analysis-FINAL-20261011.md).
+// Canonical meaning: a capital event reported in a Form 8-K (a Capital-event Item 1.01, 2.01, 2.03 or 3.02) names a counterparty whose identity is
+// confirmed. Records the EXISTENCE of that involvement as the filing states it. It does not assert the size of the event (magnitude is INDETERMINATE
+// in this version), the purpose, the outcome, or anything about the counterparty's other relationships.
+//
+// part = (filer entity, counterparty entity), ORDERED -- the filer reports the event; the counterparty is named in it.
+// nu_id = { event, partyQualifier } -- event is the filing accession (a different filing is a different event, so repeat business with the same bank
+// stays distinct events); partyQualifier is 'UNNAMED_AFFILIATE_OF' when the filing says the party is "an affiliate of <named entity>" (the
+// relationship is then to an unnamed affiliate, never to the named entity itself) and 'NONE' otherwise. The qualifier is part of identity, so the two
+// are never merged.
+// nu_state = {} -- no mutable state property is defined; a repeat of the same event is more evidence, never a state change.
+//
+// Admission rule (all required): the source is a Form 8-K with a capital-event item; the event date; at least one instrument (or equivalent); the
+// supporting passage; the counterparty matching outcome is SAME_ENTITY_CONFIRMED or AFFILIATION_CONFIRMED (a candidate match, an unresolved name or a
+// failed lookup is never admitted); evidence-ladder step at least SUPPORTED_CONNECTION; magnitude recorded INDETERMINATE.
+const CAPITAL_ITEMS = ['1.01', '2.01', '2.03', '3.02'];
+const LADDER_OK = new Set(['SUPPORTED_CONNECTION', 'ESTABLISHED_RELATIONSHIP', 'ESTABLISHED_STRUCTURAL_CHANGE']);
+registerRelationshipType('CAPITAL_EVENT_INVOLVES', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [filerId, partyId] = assertion.part ?? [];
+    if (!filerId || !partyId || filerId === partyId) return { admitted: false, reason: 'filer and counterparty must be two distinct identified entities' };
+    const nuId = assertion.nuId ?? {};
+    if (!nuId.event) return { admitted: false, reason: 'the event (filing accession) is required in nu_id: identity is filer + counterparty + the specific event' };
+    if (!['NONE', 'UNNAMED_AFFILIATE_OF'].includes(nuId.partyQualifier)) return { admitted: false, reason: 'partyQualifier must be NONE or UNNAMED_AFFILIATE_OF (the filing\'s own wording is preserved)' };
+    const p = assertion.evidence?.provenance ?? {};
+    if (!/^8-K/i.test(String(p.form ?? ''))) return { admitted: false, reason: 'the source must be a Form 8-K' };
+    if (!(p.items ?? []).some(i => CAPITAL_ITEMS.includes(String(i)))) return { admitted: false, reason: 'the 8-K must carry a capital-event item (1.01, 2.01, 2.03 or 3.02)' };
+    if (!p.accession || !p.filingDate) return { admitted: false, reason: 'accession and event date are required' };
+    if (!p.instrument) return { admitted: false, reason: 'at least one instrument (or equivalent) stated in the filing is required' };
+    if (!p.passage || !String(p.passage).includes(p.counterpartyName ?? '\u0000')) return { admitted: false, reason: 'the supporting passage must contain the counterparty name as the filing states it' };
+    const m = p.counterpartyMatch ?? {};
+    if (m.outcome !== 'SAME_ENTITY_CONFIRMED' && m.outcome !== 'AFFILIATION_CONFIRMED') return { admitted: false, reason: `counterparty matching outcome "${m.outcome ?? 'none'}" is not a confirmed outcome (same entity confirmed or affiliation confirmed required)` };
+    if (!m.identifier?.value || !m.evidence?.accession) return { admitted: false, reason: 'a confirmed match must carry its identifier and its evidence' };
+    if ((nuId.partyQualifier === 'UNNAMED_AFFILIATE_OF') !== (m.outcome === 'AFFILIATION_CONFIRMED' && m.partyIsNamed === false)) return { admitted: false, reason: 'the unnamed-affiliate qualifier and the matching outcome must agree (an unnamed affiliate is AFFILIATION_CONFIRMED with partyIsNamed false)' };
+    if (!LADDER_OK.has(p.ladderStep)) return { admitted: false, reason: 'evidence-ladder step must be at least SUPPORTED_CONNECTION' };
+    if (p.magnitude !== 'INDETERMINATE') return { admitted: false, reason: 'magnitude must be recorded INDETERMINATE in this version' };
+    return { admitted: true };
+  },
+  nuIdKeys: ['event', 'partyQualifier'],
+  nuStateKeys: [],
+  classifyChange: () => 'PERSISTENT',
+});

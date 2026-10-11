@@ -68,6 +68,9 @@ export const RELATION_TYPES = Object.freeze({
   // patents assigned to two organizations -- co-occurrence only, no direction, no migration
   // claim (see ratifiedrelationshiptypes.js's own header for why COUPLED_WITH was retired).
   SHARED_PATENT_ASSIGNMENT: 'SHARED_PATENT_ASSIGNMENT',
+  // KRYL-1401 (2026-10-11) -- added for the ratified CAPITAL_EVENT_INVOLVES canonical relationship type: a capital event reported in an 8-K names a
+  // counterparty whose identity is confirmed (counterpartymatch.js). Informational vocabulary only, same precedent as ACQUIRED.
+  CAPITAL_EVENT_INVOLVES: 'CAPITAL_EVENT_INVOLVES',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

@@ -229,7 +229,10 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
 
   if (batch.length > 0) surfaceRouter.dispatchBatch(batch);
 
-  return { dispatched: batch.length, matched: matches.length, total: hits.length };
+  // KRYL-1401: the extracted capital events, for counterparty matching and admission (capitaleventadmission.js)
+  const capitalEventList = toRead.map(h => { const src = h._source ?? {}; const items = parseItems(src.items ?? ''); return { accession: src.adsh, filingDate: src.file_date ?? null, form: '8-K', items, eventClass: classifyEventClass(items), capital: capitalEvents.get(h._id) ?? null }; })
+    .filter(e => e.capital?.attempted && e.accession);
+  return { dispatched: batch.length, matched: matches.length, total: hits.length, capitalEvents: capitalEventList };
 }
 
 export { EVENT_DOMAIN_MAP, FRACTURE_EVENT_CLASSES, buildSignals };
