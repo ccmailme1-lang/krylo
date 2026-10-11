@@ -28,10 +28,10 @@ for (const [id, q, expect] of CASES) {
   const [kind, val] = [expect.split(':')[0], expect.slice(expect.indexOf(':') + 1)];
   let pass = s.ready && errs.length === 0;
   if (kind === 'bind') pass = pass && s.cid === 'ford-motor' && rels.length === 2 && rels.every(r => r.includes('CIK:' + val)) && !subj && !!formationLine && (probe?.relationships === 2) && mapText.includes('2 admitted');
-  if (kind === 'unbound') pass = pass && !s.cid && rels.length === 0 && !!subj && subj.includes(`Closest listed registrant: ${val}, not assumed.`) && !/admitted relationships \(/.test(text.split('\n').filter(l => /connect \d+ domains/.test(l)).join(' '));
+  if (kind === 'unbound') pass = pass && !s.cid && rels.length === 0 && !!subj && subj.includes(`Closest listed registrant: ${val}, not assumed.`) && !formationLine && (probe?.relationships ?? 0) === 0;
   if (kind === 'registry') pass = pass && s.cid === val && !subj && rels.length > 0 && !/Subject selected: Across/.test(text);
   if (!pass) bad++;
-  console.log(`${pass ? 'PASS' : 'FAIL'} ${id} "${q.replace(/^What structural relationships are forming around /, '').replace(/ across ownership.*/, '')}" entity=${s.cid ?? 'none'} relationships=${rels.length} ${rels.length ? 'anchor=' + [...new Set(rels.map(r => r.split('>').find(p => /0000037996|0000037996/.test(p)) ?? '-'))].join(',') : ''} errors=${errs.length}`);
+  console.log(`${pass ? 'PASS' : 'FAIL'} ${id} "${q.replace(/^What structural relationships are forming around /, '').replace(/ across ownership.*/, '')}" entity=${s.cid ?? 'none'} relationships=${rels.length} ${rels.length ? 'anchor=' + [...new Set(rels.map(r => r.split('>').find(p => p.startsWith('CIK:0000037996')) ?? '-'))].join(',') : ''} errors=${errs.length}`);
   console.log(`     formation: ${(formationLine ?? probe?.analysisSentence ?? '(none)').slice(0, 170)}`);
   if (subj) console.log(`     subject line: ${subj.slice(0, 260)}`);
   console.log(`     MAP: ${(mapText.match(/RELATIONSHIPS\n[^\n]*/) ?? ['(no relationships row)'])[0].replace(/\n/g, ' ').slice(0, 120)}`);
