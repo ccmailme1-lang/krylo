@@ -51,7 +51,7 @@ export function buildCapitalEventAssertion({ filer, event, counterparty, match }
  * (matching is spaced SEC requests; results are cached per name for the page session, so a later call continues where this one stopped).
  * @returns {{ admitted: object[], rejected: object[], matched: number, deferred: number }}
  */
-export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs, now = Date.now(), maxNames = 12 }) {
+export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs, now = Date.now(), maxNames = 12, registryCache = null }) {
   const admitted = [], rejected = []; const seen = new Set(); let matched = 0, deferred = 0;
   const ordered = [...(events ?? [])].sort((a, b) => String(b.filingDate).localeCompare(String(a.filingDate)));
   for (const event of ordered) {
@@ -63,7 +63,7 @@ export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs
         if (seen.size >= maxNames) { deferred++; continue; }
         seen.add(key); matched++;
       }
-      const match = await matchCounterparty({ name: cp.name, registrant: filer.name, passage: cp.passage, searchFn, now, sleep, gapMs });
+      const match = await matchCounterparty({ name: cp.name, registrant: filer.name, passage: cp.passage, searchFn, now, sleep, gapMs, registryCache });
       const built = buildCapitalEventAssertion({ filer, event, counterparty: cp, match });
       if (built.skip) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: built.skip }); continue; }
       if (!built.assertion.evidence.provenance.instrument) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: 'no instrument stated in the filing: not admitted' }); continue; }

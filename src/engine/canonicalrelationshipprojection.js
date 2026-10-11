@@ -15,8 +15,8 @@
 // after a restart re-observes prior real filings as NEW, not PERSISTENT, until a real
 // persistence ticket exists for this path. Not hidden; this is the honest current state.
 
-import { admitRelationship, registeredTypeNames } from './canonicalrelationship.js';
-import { registerTypedEdge, RELATION_TYPES, nodeId } from './entitytopologyregistry.js';
+import { admitRelationship, registeredTypeNames, sameRelationship } from './canonicalrelationship.js';
+import { registerTypedEdge, RELATION_TYPES, nodeId, NODE_LABELS } from './entitytopologyregistry.js';
 // Side-effect import: registers every ratified type before admitAndProject() can possibly be
 // called by anyone. Without this, admitAndProject() silently depends on whichever caller
 // happens to import ratifiedrelationshiptypes.js first -- a fragile ordering bug (found by
@@ -108,6 +108,44 @@ const PROJECTIONS = {
   },
 };
 
+// ── Durable store hooks (decision record 2026-10-11, step 4) ────────────────────
+// admitAndProject is the single write path. After a successful in-memory admission it hands the admission to the registered sink (the client of
+// the durable Canonical Relationship Store), which persists it as an immutable version. restoreAdmitted() is the reverse: it loads stored
+// relationships into this in-memory store with their STABLE ids, so a later admission of the same relationship is recognised as the same one
+// (PERSISTENT) instead of a new one. The in-memory store is a cache of the durable store, never a second source of truth.
+let _admissionSink = null;
+// Tests only: drop the in-memory store (a new page session) so restoreAdmitted() can be exercised.
+export function _clearAdmittedForTests() { _admittedByType.clear(); _latestEvidenceById.clear(); _restored.clear(); }
+export const setAdmissionSink = (fn) => { _admissionSink = typeof fn === 'function' ? fn : null; };
+const _restored = new Set();
+
+/** @param {{ relationship_id:string, type:string, phi_class:string, part:string[], nu_id:object, versions:object[] }[]} records */
+export function restoreAdmitted(records) {
+  let n = 0;
+  for (const rec of records ?? []) {
+    if (!rec?.relationship_id || !rec.versions?.length) continue;
+    const last = rec.versions[rec.versions.length - 1];
+    const rho = Object.freeze({ id: rec.relationship_id, part: rec.part, type: rec.type, phiClass: rec.phi_class, nuId: Object.freeze({ ...(rec.nu_id ?? {}) }), nuState: Object.freeze({ ...(last.nu_state ?? {}) }) });
+    const arr = existingFor(rec.type);
+    const idx = arr.findIndex(x => sameRelationship(x, rho));
+    if (idx >= 0) { if (arr[idx].id !== rho.id) arr[idx] = rho; }         // the stored id is the stable one
+    else arr.push(rho);
+    // latest evidence = the most recently observed (largest ts), as admitAndProject keeps it
+    const withTs = rec.versions.map(v => ({ ...v.evidence, predicate: v.predicate, nuState: v.nu_state, ts: v.evidence?.ts ?? (v.event_ts ? Date.parse(v.event_ts) : 0) }));
+    const latest = withTs.reduce((a, b) => ((b.ts ?? 0) > (a.ts ?? 0) ? b : a), withTs[0]);
+    const held = _latestEvidenceById.get(rho.id);
+    if (!held || (latest.ts ?? 0) > (held.ts ?? 0)) _latestEvidenceById.set(rho.id, latest);
+    for (const [id, label] of Object.entries(last.labels ?? {})) if (label && !NODE_LABELS[id]) NODE_LABELS[id] = label;
+    if (!_restored.has(rho.id)) {
+      _restored.add(rho.id);
+      const projection = PROJECTIONS[rec.type];
+      if (projection && last.meta) { try { registerTypedEdge({ ...projection.toEdgeArgs(rho, last.meta), type: projection.typedEdgeType }); } catch { /* a restored edge is a cache, never fatal */ } }
+    }
+    n++;
+  }
+  return n;
+}
+
 /**
  * admitAndProject — admits a real assertion against its ratified type, and if admitted,
  * projects it into the typed-edge registry (TYPED_EDGES + entityTopologyRegistry, both updated
@@ -157,6 +195,14 @@ export function admitAndProject(assertion, meta) {
   // would create duplicate edges for one relationship -- confirmed as a real bug, fixed here.
   if (result.predicate === 'NEW' || result.predicate === 'RECONFIGURED' || result.predicate === 'DISSOLVED') {
     registerTypedEdge({ ...projection.toEdgeArgs(result.relationship, meta ?? {}), type: projection.typedEdgeType });
+  }
+
+  if (_admissionSink) {
+    try {
+      const rho = result.relationship;
+      const labels = {}; for (const id of rho.part) if (NODE_LABELS[id]) labels[id] = NODE_LABELS[id];
+      _admissionSink({ rho, predicate: result.predicate, historyEntry: result.historyEntry, labels, meta: meta ?? null });
+    } catch { /* persistence is best effort and never blocks or alters an admission */ }
   }
 
   return result;

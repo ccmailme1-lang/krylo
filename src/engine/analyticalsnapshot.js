@@ -10,7 +10,9 @@
 //
 // Surfaces call getSnapshotState() / useAnalyticalSnapshot(); before the freeze status is 'checking' and they show only that.
 import { freezePool, unfreezePool } from './domaingravity.js';
-import { freezeRho, unfreezeRho } from './canonicalrelationshipprojection.js';
+import { freezeRho, unfreezeRho, findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
+import { toTopologyNodeId } from './entityresolution.js';
+import { persistSnapshot } from './canonicalstoreclient.js';
 import { getRelationshipChange } from './relationshipchangeservice.js';
 
 export const SETTLE_TIMEOUT_MS = 45_000;       // decided contract (rubric item 5)
@@ -88,6 +90,14 @@ function onTimeout(run) {
   freezeRun(run);
 }
 
+// The durable record of a snapshot: its lookups, the relationship set it froze (id, type, the evidence that stood latest) and the pinned temporal result.
+function persist(snap) {
+  try {
+    const refs = snap.canonicalId ? findAdmittedRelationshipsFor(toTopologyNodeId(snap.canonicalId)).map(r => ({ id: r.id, type: r.type, nuId: r.nuId, accession: latestEvidenceFor(r.id)?.provenance?.accession ?? null, predicate: latestEvidenceFor(r.id)?.predicate ?? null })) : [];
+    persistSnapshot(snap, refs);
+  } catch { /* persistence is best effort */ }
+}
+
 function copyChange(e) { return e ? { ...e, pinnedAt: Date.now() } : null; }
 const isTerminal = (e) => !!e && (e.state === 'done' || e.state === 'failed');
 
@@ -113,7 +123,7 @@ function freezeRun(run) {
     const pinned = isTerminal(change) && (!run.refresh || run.lookups.get('change')?.state === 'OK' || run.lookups.get('change')?.state === 'FAILED') ? copyChange(change) : null;
     freezePool(run.id, at); freezeRho(run.id);                                   // one synchronous swap: pool, rho and the active snapshot
     const snap = { id: run.id, generatedAt: at, query: run.query, canonicalId: run.canonicalId, lookups, change: pinned, refreshOf: run.refresh ? (_active?.id ?? null) : null };
-    _active = snap; _status = 'ready';
+    _active = snap; _status = 'ready'; persist(snap);
     _history = [..._history, { id: snap.id, generatedAt: at, query: run.query, canonicalId: run.canonicalId, lookups }];
     _refresh = { running: false, error: null };
   } catch (e) {
@@ -131,7 +141,7 @@ export function getPinnedChange(canonicalId) {
   if (_status !== 'ready' || !_active || !canonicalId || _active.canonicalId !== canonicalId) return canonicalId ? getRelationshipChange(canonicalId) : null;
   if (_active.change) return _active.change;
   const e = getRelationshipChange(canonicalId);
-  if (isTerminal(e)) { _active.change = copyChange(e); return _active.change; }   // first retrieved result, pinned with its retrieval time
+  if (isTerminal(e)) { _active.change = copyChange(e); persist(_active); return _active.change; }   // first retrieved result, pinned with its retrieval time
   return e;                                                                       // still running: stated as running
 }
 

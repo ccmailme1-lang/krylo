@@ -13,6 +13,7 @@ import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
+import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch } from './canonicalstore.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -614,6 +615,54 @@ async function handleFormationStateRead(req, res) {
     console.error('[formation-state] read failed:', err.message);
     send(res, 500, { status: 'DB_READ_FAILED', error: err.message });
   }
+}
+
+// ── Canonical Relationship Store (decision record 2026-10-11, step 4) ───────────
+// Durable, versioned canonical relationships, analytical snapshots and the counterparty match cache (canonicalstore.js: DB first, file fallback).
+// Writes are idempotent appends; nothing is updated or deleted. Reads are never cacheable.
+const CANON_BATCH_MAX = 100;
+async function handleCanonicalAdmissions(req, res) {
+  let body; try { body = await parseBody(req); } catch { return send(res, 400, { status: 'STORE_WRITE_FAILED', error: 'Invalid JSON body' }); }
+  const items = body?.items;
+  if (!Array.isArray(items) || !items.length) return send(res, 422, { status: 'STORE_WRITE_FAILED', error: 'items must be a non-empty array' });
+  if (items.length > CANON_BATCH_MAX) return send(res, 422, { status: 'STORE_WRITE_FAILED', error: `${items.length} items exceeds the batch ceiling of ${CANON_BATCH_MAX}` });
+  const results = [];
+  for (const item of items) {            // sequential: two admissions of one relationship in a batch must see each other's version
+    try { results.push({ identity_key: item?.identity_key ?? null, status: 'STORE_WRITE_SUCCESS', ...(await writeAdmission(item)) }); }
+    catch (err) { results.push({ identity_key: item?.identity_key ?? null, status: 'STORE_WRITE_FAILED', error: err.message }); }
+  }
+  send(res, 200, { status: 'BATCH_COMPLETE', received: results.length, written: results.filter(r => r.written).length, failed: results.filter(r => r.status === 'STORE_WRITE_FAILED').length, results });
+}
+async function handleCanonicalRelationships(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const nodes = new URL(req.url, 'http://localhost').searchParams.getAll('node');
+  if (!nodes.length) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'node required' });
+  try { send(res, 200, { status: 'STORE_READ_SUCCESS', relationships: await relationshipsForNodes(nodes) }); }
+  catch (err) { console.error('[canonical-store] read failed:', err.message); send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
+}
+async function handleCanonicalSnapshotWrite(req, res) {
+  let body; try { body = await parseBody(req); } catch { return send(res, 400, { status: 'STORE_WRITE_FAILED', error: 'Invalid JSON body' }); }
+  try { send(res, 200, { status: 'STORE_WRITE_SUCCESS', ...(await writeSnapshot(body?.snapshot)) }); }
+  catch (err) { send(res, 422, { status: 'STORE_WRITE_FAILED', error: err.message }); }
+}
+async function handleCanonicalSnapshots(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const u = new URL(req.url, 'http://localhost'); const cid = u.searchParams.get('canonicalId');
+  if (!cid) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'canonicalId required' });
+  try { send(res, 200, { status: 'STORE_READ_SUCCESS', snapshots: await snapshotsFor(cid, Math.min(200, Number(u.searchParams.get('limit') ?? 50))) }); }
+  catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
+}
+async function handleCanonicalMatchWrite(req, res) {
+  let body; try { body = await parseBody(req); } catch { return send(res, 400, { status: 'STORE_WRITE_FAILED', error: 'Invalid JSON body' }); }
+  try { send(res, 200, { status: 'STORE_WRITE_SUCCESS', ...(await writeMatch(body?.name_key, body?.outcome)) }); }
+  catch (err) { send(res, 422, { status: 'STORE_WRITE_FAILED', error: err.message }); }
+}
+async function handleCanonicalMatchRead(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const nameKey = new URL(req.url, 'http://localhost').searchParams.get('name_key');
+  if (!nameKey) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'name_key required' });
+  try { send(res, 200, { status: 'STORE_READ_SUCCESS', match: await readMatch(nameKey) }); }
+  catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
 }
 
 // ── WO-1721: Kalshi Live Feed ─────────────────────────────────────────────────
@@ -1877,6 +1926,12 @@ function routeRequest(req, res) {
   if (req.method === 'POST' && url === '/v1/formation-state')                return handleFormationStateWrite(req, res);
   if (req.method === 'POST' && url === '/v1/formation-state/batch')          return handleFormationStateBatchWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/formation-state')                return handleFormationStateRead(req, res);
+  if (req.method === 'POST' && url === '/v1/canonical-store/admissions')     return handleCanonicalAdmissions(req, res);
+  if (req.method === 'GET'  && url === '/v1/canonical-store/relationships')  return handleCanonicalRelationships(req, res);
+  if (req.method === 'POST' && url === '/v1/canonical-store/snapshot')       return handleCanonicalSnapshotWrite(req, res);
+  if (req.method === 'GET'  && url === '/v1/canonical-store/snapshots')      return handleCanonicalSnapshots(req, res);
+  if (req.method === 'POST' && url === '/v1/canonical-store/match')          return handleCanonicalMatchWrite(req, res);
+  if (req.method === 'GET'  && url === '/v1/canonical-store/match')          return handleCanonicalMatchRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);

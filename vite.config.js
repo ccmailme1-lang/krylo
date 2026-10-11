@@ -122,6 +122,7 @@ export default defineConfig({
       '/api/vendor-portfolio': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/v1/timing-proxy':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/v1/formation-state':  { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/v1/canonical-store':  { target: 'http://localhost:4000', changeOrigin: true, secure: false },   // decision record step 4: durable canonical relationship store
       '/compare':             { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/stream': {
         target: 'https://krylo.org',

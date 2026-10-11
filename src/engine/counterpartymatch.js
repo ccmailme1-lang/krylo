@@ -34,9 +34,11 @@ const _cache = new Map();                       // exact name -> registrant look
 export const _clearCounterpartyCache = () => _cache.clear();
 
 /** Registrants whose name equals `name` (normalized), plus similar ones, from SEC search over annual-report filings and over all forms. */
-async function lookupRegistrants(name, { searchFn, now, sleep, gapMs }) {
+async function lookupRegistrants(name, { searchFn, now, sleep, gapMs, registryCache = null }) {
   const key = normalizeEntityName(name);
   if (_cache.has(key)) return _cache.get(key);
+  const stored = registryCache ? await registryCache.get(key).catch(() => null) : null;       // a durable, event-independent result with its retrieval time
+  if (stored && !stored.failed) { _cache.set(key, stored); return stored; }
   const term = searchTerm(name); const want = key;
   const exact = new Map(), similar = new Map(); let failed = false, answered = 0, capped = false;
   const wantHead = want.split(' ').slice(0, 2).join(' ');
@@ -69,7 +71,7 @@ async function lookupRegistrants(name, { searchFn, now, sleep, gapMs }) {
     }
   }
   const out = { failed, capped, answered, exact: [...exact.values()], similar: [...similar.values()] };
-  if (!failed) _cache.set(key, out);
+  if (!failed) { _cache.set(key, out); if (registryCache) registryCache.put(key, out).catch(() => {}); }
   return out;
 }
 
@@ -79,11 +81,11 @@ const evidenceOf = (m, now, rule) => ({ source: 'SEC EDGAR full-text search (fil
  * @param {{ name:string, registrant?:string, passage?:string, searchFn:Function, now?:number, sleep?:Function, gapMs?:number }} p
  *   searchFn({forms,startdt,enddt,hits,entityName}) -> { ok, status, hits }   (the engine /api/edgar binding)
  */
-export async function matchCounterparty({ name, registrant = '', passage = '', searchFn, now = Date.now(), sleep = (ms) => new Promise(r => setTimeout(r, ms)), gapMs = 1500 }) {
+export async function matchCounterparty({ name, registrant = '', passage = '', searchFn, now = Date.now(), sleep = (ms) => new Promise(r => setTimeout(r, ms)), gapMs = 1500, registryCache = null }) {
   const base = { name, outcome: null, identifier: null, canonicalName: null, partyIsNamed: true, evidence: null, candidates: [], reason: null };
   if (!name || !searchFn) return { ...base, outcome: 'LOOKUP_FAILED', absenceClass: 'b', reason: 'no name or no search binding' };
   if (registrant && firstTok(name) && firstTok(name) === firstTok(registrant)) return { ...base, outcome: 'SELF', reason: 'the filer or one of its subsidiaries' };
-  const opts = { searchFn, now, sleep, gapMs };
+  const opts = { searchFn, now, sleep, gapMs, registryCache };
 
   // How the filing words the party: "an affiliate of <name>" (the party is an unnamed affiliate) or "<name> ... a wholly owned subsidiary of <parent>".
   const at = passage.indexOf(name);
