@@ -83,9 +83,11 @@ Each ticket names the break it closes. A fix that leaves the answer unchanged do
 
 Code changes, probes, pushing, deployment, XBRL route build, or moving any ticket to Deploy to Prod.
 
-## Amendment A (2026-10-11): the interpretation layer and the quality measure are in scope
+## Amendment A (2026-10-11) - PROPOSAL UNDER DISCUSSION, NOT ADOPTED: the interpretation layer and the quality measure
 
-Source: Founder-provided review. The build order above (workstreams 1 to 4) is the structural foundation; it stops when formation consumes admitted relationships. The objective is consistent analytical quality across subjects and queries, so these are added as workstreams, not follow-on enhancements:
+Status: a proposal from a review the Founder is discussing with the team. It is not a decision and authorizes nothing; the workstreams below are not planned or ticketed until the Founder adopts them.
+
+Source: Founder-provided review. The build order above (workstreams 1 to 4) is the structural foundation; it stops when formation consumes admitted relationships. The objective is consistent analytical quality across subjects and queries, so these would be added as workstreams, not follow-on enhancements:
 
 | # | Workstream | Closes |
 |---|---|---|
