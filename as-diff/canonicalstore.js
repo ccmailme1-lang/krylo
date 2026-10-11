@@ -51,6 +51,7 @@ async function ensureTables() {
         id TEXT PRIMARY KEY, query TEXT, canonical_id TEXT, generated_at TIMESTAMPTZ, lookups JSONB, relationship_refs JSONB,
         change JSONB, refresh_of TEXT, captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      CREATE TABLE IF NOT EXISTS store_kv (k TEXT PRIMARY KEY, v JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS counterparty_match (
         name_key TEXT PRIMARY KEY, outcome JSONB NOT NULL, retrieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );`).then(() => true).catch((err) => { logFallback('create tables', err); return false; });
@@ -71,9 +72,11 @@ function appendFile(row) {
 }
 
 // ── relationships ──────────────────────────────────────────────────────────────
-const sameEvidence = (a, b) => JSON.stringify(a?.provenance?.accession ?? null) === JSON.stringify(b?.provenance?.accession ?? null)
-  && JSON.stringify(a?.provenance?.observation?.cusip ?? null) === JSON.stringify(b?.provenance?.observation?.cusip ?? null)
-  && JSON.stringify(a?.provenance?.nuIdEvent ?? null) === JSON.stringify(b?.provenance?.nuIdEvent ?? null);
+// The same evidence = the same filing (accession). A version that records the filing WITHOUT its parsed observation is superseded by one that carries it
+// (the richer record is appended as a new version); a version that already carries the observation answers any repeat.
+const sameEvidence = (have, incoming) => JSON.stringify(have?.provenance?.accession ?? null) === JSON.stringify(incoming?.provenance?.accession ?? null)
+  && (!!have?.provenance?.observation || !incoming?.provenance?.observation)
+  && (!have?.provenance?.observation || JSON.stringify(have.provenance.observation.cusip ?? null) === JSON.stringify(incoming?.provenance?.observation?.cusip ?? null));
 
 /** All stored relationship rows and versions, merged from the DB and the file. */
 async function loadAll({ nodes = null } = {}) {
@@ -187,5 +190,25 @@ export async function readMatch(nameKey) {
     catch (err) { logFallback('match read', err); }
   }
   for (const row of fileRows()) if (row._t === 'match' && row.name_key === nameKey && (!best || String(row.retrieved_at) > String(best.retrieved_at))) best = { outcome: row.outcome, retrieved_at: row.retrieved_at };
+  return best;
+}
+
+// ── small keyed records (for example the temporal retrieval record per issuer: what has been retrieved through which date) ──
+export async function writeKv(key, value) {
+  if (!key || value === undefined) throw new Error('key and value required');
+  if (await ensureTables()) {
+    try { await q('INSERT INTO store_kv (k, v) VALUES ($1,$2) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v, updated_at = NOW()', [key, JSON.stringify(value)]); return { persisted_in: 'db' }; }
+    catch (err) { logFallback('kv write', err); }
+  }
+  appendFile({ _t: 'kv', k: key, v: value, updated_at: new Date().toISOString() });
+  return { persisted_in: 'file' };
+}
+export async function readKv(key) {
+  let best = null;
+  if (await ensureTables()) {
+    try { const r = await q('SELECT v, updated_at FROM store_kv WHERE k = $1', [key]); if (r.rows[0]) best = { value: r.rows[0].v, updated_at: r.rows[0].updated_at?.toISOString?.() ?? r.rows[0].updated_at }; }
+    catch (err) { logFallback('kv read', err); }
+  }
+  for (const row of fileRows()) if (row._t === 'kv' && row.k === key && (!best || String(row.updated_at) > String(best.updated_at))) best = { value: row.v, updated_at: row.updated_at };
   return best;
 }

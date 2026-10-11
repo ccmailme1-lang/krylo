@@ -55,18 +55,34 @@ export function installStoreSink() {
 }
 
 // ── hydrate ───────────────────────────────────────────────────────────────────
-/** Load the stored relationships touching these node ids into the in-memory store. Returns { restored, error }. */
-export async function hydrateFor(nodeIds, { timeoutMs = 3000 } = {}) {
-  if (!_enabled() || !nodeIds?.length) return { restored: 0, error: null };
+/** The stored relationship records (with every version) touching these node ids, or { error }. */
+export async function fetchRelationships(nodeIds, { timeoutMs = 3000 } = {}) {
+  if (!_enabled() || !nodeIds?.length) return { records: [], error: null };
   try {
     const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null; const t = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
     const r = await _fetch(`${_base}/v1/canonical-store/relationships?` + nodeIds.map(n => 'node=' + encodeURIComponent(n)).join('&'), { cache: 'no-store', signal: ctl?.signal });
     if (t) clearTimeout(t);
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    const j = await r.json();
-    return { restored: restoreAdmitted(j.relationships ?? []), error: null };
-  } catch (e) { return { restored: 0, error: String(e?.message ?? e).slice(0, 80) }; }
+    return { records: (await r.json()).relationships ?? [], error: null };
+  } catch (e) { return { records: [], error: String(e?.message ?? e).slice(0, 80) }; }
 }
+/** Load the stored relationships touching these node ids into the in-memory store. Returns { restored, error }. */
+export async function hydrateFor(nodeIds, opts) {
+  const { records, error } = await fetchRelationships(nodeIds, opts);
+  return { restored: error ? 0 : restoreAdmitted(records), error };
+}
+
+// ── keyed records ─────────────────────────────────────────────────────────────
+export const kv = {
+  async get(key) {
+    if (!_enabled()) return null;
+    try { const r = await _fetch(`${_base}/v1/canonical-store/kv?key=${encodeURIComponent(key)}`, { cache: 'no-store' }); if (!r.ok) return null; return (await r.json()).record ?? null; } catch { return null; }
+  },
+  async put(key, value) {
+    if (!_enabled()) return false;
+    try { const r = await _fetch(`${_base}/v1/canonical-store/kv`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, value }) }); return r.ok; } catch { return false; }
+  },
+};
 
 // ── snapshots ─────────────────────────────────────────────────────────────────
 export function persistSnapshot(snapshot, relationshipRefs = []) {

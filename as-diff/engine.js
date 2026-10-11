@@ -13,7 +13,7 @@ import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
-import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch } from './canonicalstore.js';
+import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv } from './canonicalstore.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -662,6 +662,19 @@ async function handleCanonicalMatchRead(req, res) {
   const nameKey = new URL(req.url, 'http://localhost').searchParams.get('name_key');
   if (!nameKey) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'name_key required' });
   try { send(res, 200, { status: 'STORE_READ_SUCCESS', match: await readMatch(nameKey) }); }
+  catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
+}
+
+async function handleCanonicalKvWrite(req, res) {
+  let body; try { body = await parseBody(req); } catch { return send(res, 400, { status: 'STORE_WRITE_FAILED', error: 'Invalid JSON body' }); }
+  try { send(res, 200, { status: 'STORE_WRITE_SUCCESS', ...(await writeKv(body?.key, body?.value)) }); }
+  catch (err) { send(res, 422, { status: 'STORE_WRITE_FAILED', error: err.message }); }
+}
+async function handleCanonicalKvRead(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const key = new URL(req.url, 'http://localhost').searchParams.get('key');
+  if (!key) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'key required' });
+  try { send(res, 200, { status: 'STORE_READ_SUCCESS', record: await readKv(key) }); }
   catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
 }
 
@@ -1932,6 +1945,8 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/v1/canonical-store/snapshots')      return handleCanonicalSnapshots(req, res);
   if (req.method === 'POST' && url === '/v1/canonical-store/match')          return handleCanonicalMatchWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/canonical-store/match')          return handleCanonicalMatchRead(req, res);
+  if (req.method === 'POST' && url === '/v1/canonical-store/kv')             return handleCanonicalKvWrite(req, res);
+  if (req.method === 'GET'  && url === '/v1/canonical-store/kv')             return handleCanonicalKvRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);
   if (req.method === 'GET'  && url === '/api/kalshi/signals')                return handleKalshiSignals(req, res);
   if (req.method === 'GET'  && url === '/api/eia')                           return handleEiaProxy(req, res);

@@ -51,6 +51,12 @@ export function describeRetrievalBasis(retrieval, record) {
   const complete = cov.complete === true;
   const lines = [];
   lines.push(`Retrieval basis (this browser run): ${complete ? 'search complete' : 'SEARCH INCOMPLETE'} · SEC filings dated ${from} to ${to} · form families: SCHEDULE 13D/13G (filed from December 2024) and SC 13D/13G (earlier).`);
+  const ss = retrieval.store;
+  if (ss) {
+    if (ss.storeError) lines.push(`The durable store was not reachable (${ss.storeError}); this comparison used only what was retrieved in this run.`);
+    else if (ss.incremental) lines.push(`History from the durable store: ${ss.storedFilings} filing observation${ss.storedFilings !== 1 ? 's' : ''} (searched completely through ${ss.previousThrough}); this run searched SEC only for filings dated ${ss.searchedFrom} to ${ss.searchedTo} and found ${ss.newFilings} new.`);
+    else lines.push(`No stored history was used (first retrieval for this issuer, or the stored retrieval was incomplete); ${ss.newFilings} filing observation${ss.newFilings !== 1 ? 's were' : ' was'} retrieved and stored.`);
+  }
   lines.push(`Search windows answered ${answered} of ${win.length} · filings returned ${returned} · observations built ${retrieval.observationCount ?? 'not recorded'} · set aside ${(retrieval.excluded ?? []).length} · requests ${cov.requests?.search ?? 0} search, ${cov.requests?.doc ?? 0} document.`);
   if (!failedWin.length && !failedDocs.length && !(cov.reasons ?? []).length) lines.push('Not obtained: 0 search windows, 0 documents.');
   else lines.push(`Not obtained: ${notAnswered} search window(s), ${capped} window(s) at the 100-result cap, ${failedDocs.length} document(s)${(cov.reasons ?? []).length ? ` (${cov.reasons.join('; ')})` : ''}.`);

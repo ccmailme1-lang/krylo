@@ -80,6 +80,8 @@ function fireEntityScoped(q, { refresh = false } = {}) {
     // Decision record step 4: the subject's stored relationships (with their stable ids and history) are loaded into the in-memory store BEFORE the
     // SEC lookups run, so admissions below are recognised as the same relationships (PERSISTENT) and the first view already holds earlier sessions' work.
     expectLookup('store', { canonicalId: scope.canonicalId });
+    // The comparison's SEC retrieval starts after the counterparty matching has finished (both search SEC; together they burst, and a burst can come back empty).
+    let cpDone; const cpPromise = new Promise((r) => { cpDone = r; });
     const launchLookups = () => {
       markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
       const ownershipObservation = runTargetedOwnershipObservation({
@@ -103,8 +105,9 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         const filer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
         admitCapitalEvents({ filer, events: r?.capitalEvents ?? [], searchFn: secSearch, registryCache })
           .then((res) => settleLookup('counterparty', res.admitted.length === 0 && res.rejected.some(x => x.outcome === 'LOOKUP_FAILED') ? 'counterparty lookups failed' : null))
-          .catch((e) => settleLookup('counterparty', String(e?.message ?? e)));
-      }).catch((e) => { settleLookup('8k', String(e?.message ?? e)); settleLookup('counterparty', 'the 8-K lookup failed'); });
+          .catch((e) => settleLookup('counterparty', String(e?.message ?? e)))
+          .finally(() => cpDone());
+      }).catch((e) => { settleLookup('8k', String(e?.message ?? e)); settleLookup('counterparty', 'the 8-K lookup failed'); cpDone(); });
 
       // Supplier Structural Intelligence -- real bug found live 2026-10-03: structuralbrief.jsx
       // and structurepanel.jsx both read canonical ρ synchronously at render time, but this
@@ -129,7 +132,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         const prior = getRelationshipChange(scope.canonicalId);
         const fresh = prior && (prior.state === 'running' || (prior.finishedAt && Date.now() - prior.finishedAt < 600_000));
         if (refresh || !fresh) {
-          const chg = runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId });
+          const chg = Promise.race([cpPromise, new Promise((r) => setTimeout(r, 90_000))]).then(() => runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId }));
           chg.then((e) => { if (refresh) settleLookup('change', e?.state === 'failed' ? e.error : (e?.result?.coverage && e.result.coverage.complete === false ? 'the relationship-change retrieval was incomplete' : null)); }).catch((e) => { if (refresh) settleLookup('change', String(e?.message ?? e)); });
         }
         // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
