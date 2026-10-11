@@ -35,6 +35,7 @@ import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../
 // two are never merged into one list or one count (see render block below).
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
 import { nameResolutionNote } from '../../engine/secfileradmission.js';
+import { endSentence } from '../../engine/sentenceend.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 
@@ -143,16 +144,16 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     : 0;
   const subjectLevel = subjectBoundCount > 0
     ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them (contextual leads)` : ''}.`
-    : (ownershipPending ? ` Subject level: checking SEC filings for observations bound to ${subjectLabel}.` : ` Subject level: no observations bound to ${subjectLabel} yet.`);
+    : (ownershipPending ? ` Subject level: checking SEC filings for observations bound to ${endSentence(subjectLabel)}` : ` Subject level: no observations bound to ${subjectLabel} yet.`);
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
-        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`
-        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`)
+        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`
+        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`)
     : selectedSubject
       ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it.${nameResolutionNote(selectedSubject)} ` +
         `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
-        `${relationshipCount > 0 ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present` : 'but fewer than two domains are connected'} — a field-level reading, not bound to ${selectedSubject}.`
+        `${relationshipCount > 0 ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present` : 'but fewer than two domains are connected'} — a field-level reading, not bound to ${endSentence(selectedSubject)}`
     : structurallyInterpretable
       ? (entityRelPairs.length
           ? `No canonical domain matched. ${structuralQuery.entities.length} structural participant${structuralQuery.entities.length !== 1 ? 's were' : ' was'} named in the query` +
@@ -174,13 +175,13 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       (relationshipCount > 0
         ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present (contextual leads, not admitted relationships). `
         : 'fewer than two domains are co-present. ') +
-      `Field-level, not bound to ${subjectLabel}.`,
+      `Field-level, not bound to ${endSentence(subjectLabel)}`,
     subject: subjectBoundCount > 0
       ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them (contextual leads)` : ''}.`
       : (ownershipPending ? `Checking SEC filings for observations bound to ${subjectLabel}…` : `No observations bound to ${subjectLabel} yet.`),
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
-      : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${subjectLabel}.`)) +
+      : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${endSentence(subjectLabel)}`)) +
       (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : ''),
     formation: admittedSentence,                 // Step 5: the admitted-relationship formation (or why none is established)
   } : (!isEntity && !structurallyInterpretable) ? {
@@ -465,7 +466,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         ) : (
           <span style={{ color: ABSENCE }}>
-            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : (subjScope?.subject?.text ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no evidence is identifier-bound to it — the observations above are field-level.${nameResolutionNote(subjScope.subject.text)}` : 'No subject resolved — evidence is not identifier-bound to a field-level scan.')}
+            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : (subjScope?.subject?.text ? `Subject selected: ${endSentence(subjScope.subject.text)} Its entity is not resolved, so no evidence is identifier-bound to it — the observations above are field-level.${nameResolutionNote(subjScope.subject.text)}` : 'No subject resolved — evidence is not identifier-bound to a field-level scan.')}
           </span>
         )}
       </Row>

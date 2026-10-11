@@ -323,7 +323,7 @@ export default function DomainSubstrateTabs({ subject = null, domainPressures = 
         : (scope.kind === 'PORTFOLIO_FRAME' || scope.kind === 'MARKET_THEME' || scope.kind === 'DECISION_SITUATION')
           ? <>This query is a <b style={{ color: BRT }}>{(frameHeadline(scope.classification) ?? scope.kind.replace(/_/g, ' ')).toLowerCase()}</b>, not a resolvable subject. The six domains render classified absence — a decision verdict is withheld, the domain observations are still owed.</>
           : (scope.kind === 'UNRESOLVED' && scope.subject?.text)
-            ? <>Subject selected: <b style={{ color: BRT }}>{scope.subject.text}</b>. Its entity is not resolved, so the six domains render classified absence for it; the field-level observations are not bound to it.{nameResolutionNote(scope.subject.text)}</>
+            ? <>Subject selected: <b style={{ color: BRT }}>{scope.subject.text}</b>{/\.$/.test(scope.subject.text) ? '' : '.'} Its entity is not resolved, so the six domains render classified absence for it; the field-level observations are not bound to it.{nameResolutionNote(scope.subject.text)}</>
             : <>No resolvable subject in this query. Enter a company (or other resolvable entity) to see it through the six domains. The panels below show each domain's authored structure and honest absence.</>;
 
   return (

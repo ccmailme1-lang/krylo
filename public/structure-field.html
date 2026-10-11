@@ -1081,6 +1081,12 @@
   relChipEl.addEventListener('click', () => setEntityPanelOpen(!entityPanelOpen));
 
   let lastEntitySubject = null;
+  // ADMITTED RELATIONSHIPS readout: the formation's own relationship count when a formation exists; otherwise the subject's admitted relationships (a subject
+  // with admitted relationships and no formation still has them), '—' only when nothing has been received or the subject has none.
+  function integrityText() {
+    if (realFormation) return typeof realFormation.existence === 'number' ? realFormation.existence.toFixed(2) : String(realFormation.relationships?.length ?? '—');
+    return hasReceivedFormation && entityRelsData.length ? String(entityRelsData.length) : '—';
+  }
   function applyEntityRelationships(relationships, subjectLabel) {
     // A new subject (a new query) starts with the list closed: an open panel from the previous query would sit
     // over this query's plot uninvited. The guest re-opens it with the chip.
@@ -1090,6 +1096,7 @@
     }
     syncEntityNode(relationships, subjectLabel);
     entityRelsData = relationships || [];
+    if (typeof integrityEl !== 'undefined' && integrityEl) integrityEl.textContent = integrityText();
     if (entityRelsData.length === 0) {
       relChipEl.classList.remove('show');
       if (entityPanelOpen) { relExpandEl.hidden = true; entityPanelOpen = false; }
@@ -1256,7 +1263,15 @@
     // an intentional, explained absence -- the same failure mode the BRIEF packet already
     // avoids with its prominent "No formation established" paragraph. Mirror that treatment
     // here, centered in the plot, once a real (non-loading) empty result has actually arrived.
-    if (hasReceivedFormation && NODES.every(n => n.entity)) { // real formation nodes only -- the subject node is not formation evidence
+    if (hasReceivedFormation && NODES.every(n => n.entity) && entityRelsData.length) { // the subject has admitted relationships (drawn in the plot) but no formation: a short stated absence at the top, not the centred paragraph that would print over them
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = getVar('--text-mono-dim');
+      ctx.font = "600 11px 'IBM Plex Mono', monospace";
+      ctx.fillText('NO FORMATION ESTABLISHED · the admitted relationships connect no two domains', plot.x + plot.w / 2, plot.y + 18);
+      ctx.restore();
+    } else if (hasReceivedFormation && NODES.every(n => n.entity)) { // real formation nodes only -- the subject node is not formation evidence
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -1678,7 +1693,7 @@
     // (per BRIEF's own doctrine: NO_FORMATION_ESTABLISHED is a stated absence, not a low score,
     // so '0.00' would misrepresent it) -- but node/edge COUNTS are real, meaningful zeros once
     // a message has actually arrived, distinct from '—' meaning "no message received yet".
-    integrityEl.textContent = realFormation ? (typeof realFormation.existence === 'number' ? realFormation.existence.toFixed(2) : String(realFormation.relationships?.length ?? '—')) : '—';
+    integrityEl.textContent = integrityText();
     nEdgesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.graph.edges.length : 0) : '—';
     nNodesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.participatingDomains.length : 0) : '—';
   }
