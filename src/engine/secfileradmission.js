@@ -16,8 +16,9 @@
 import { createEntity, resolve, resolveByIdentifier } from './entityresolution.js';
 
 export const ANNUAL_FORMS = '10-K,10-K405,20-F,40-F';
-const LEGAL = /\b(incorporated|inc|corporation|corp|company|co|limited|ltd|plc|n\.?v|s\.?a|ag|se|llc|lp|l\.p|holdings?|group|the)\b\.?/g;
-const base = (s) => String(s ?? '').toLowerCase().replace(/&/g, ' and ').replace(LEGAL, ' ').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+export const LEGAL_SUFFIXES = /\b(national association|incorporated|inc|corporation|corp|company|co|limited|ltd|plc|n\.?v|n\.?a|s\.?a|ag|se|llc|lp|l\.p|acb|holdings?|group|the)\b\.?/g;
+const LEGAL = LEGAL_SUFFIXES;
+export const normalizeEntityName = (s) => String(s ?? '').toLowerCase().replace(/&/g, ' and ').replace(LEGAL_SUFFIXES, ' ').replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 const _log = [];                                   // provenance of every verification attempt, newest last
 export const getAdmissionLog = () => [..._log];
@@ -41,7 +42,7 @@ export async function verifyPublicFiler(name, { searchFn, now = Date.now() } = {
   catch (e) { return out({ verified: false, reason: 'LOOKUP_FAILED', detail: String(e?.message ?? e) }); }
   if (!res?.ok) return out({ verified: false, reason: 'LOOKUP_FAILED', detail: `HTTP ${res?.status ?? 0}` });
 
-  const want = base(query);
+  const want = normalizeEntityName(query);
   if (!want) return out({ verified: false, reason: 'NO_MATCH' });
   const byCik = new Map();                           // cik -> { name, tickers, filings[] }
   for (const h of res.hits ?? []) {
@@ -56,9 +57,9 @@ export async function verifyPublicFiler(name, { searchFn, now = Date.now() } = {
     byCik.set(issuer.cik, row);
   }
   const rows = [...byCik.values()];
-  let matches = rows.filter(r => base(r.name) === want);
+  let matches = rows.filter(r => normalizeEntityName(r.name) === want);
   let rule = 'exact-base-name';
-  if (!matches.length) { matches = rows.filter(r => want.length >= 5 && base(r.name).startsWith(want + ' ')); rule = 'unique-prefix'; }
+  if (!matches.length) { matches = rows.filter(r => want.length >= 5 && normalizeEntityName(r.name).startsWith(want + ' ')); rule = 'unique-prefix'; }
   if (!matches.length) return out({ verified: false, reason: 'NO_MATCH', candidates: rows.map(r => r.name).slice(0, 5) });
   if (matches.length > 1) return out({ verified: false, reason: 'AMBIGUOUS', candidates: matches.map(r => `${r.name} (CIK ${r.cik})`) });
   const m = matches[0];
