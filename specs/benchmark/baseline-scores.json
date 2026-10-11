@@ -1,0 +1,841 @@
+[
+  {
+    "case": "C01",
+    "subject": "Sysco",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 37,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE",
+        "ACQUIRED"
+      ],
+      "changeShown": true,
+      "accessionLines": 46
+    }
+  },
+  {
+    "case": "C02",
+    "subject": "Sysco",
+    "q": 3,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 41,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE",
+        "ACQUIRED"
+      ],
+      "changeShown": true,
+      "accessionLines": 46
+    }
+  },
+  {
+    "case": "C03",
+    "subject": "Sysco",
+    "q": 7,
+    "c1": 2,
+    "c2": 2,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 7.5,
+    "scale": 8,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 45,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE",
+        "ACQUIRED"
+      ],
+      "changeShown": true,
+      "accessionLines": 46
+    }
+  },
+  {
+    "case": "C04",
+    "subject": "Oracle",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 17,
+      "admittedLines": 1,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 23
+    }
+  },
+  {
+    "case": "C05",
+    "subject": "Oracle",
+    "q": 5,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 19,
+      "admittedLines": 1,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 23
+    }
+  },
+  {
+    "case": "C06",
+    "subject": "Oracle",
+    "q": 8,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 21,
+      "admittedLines": 1,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 23
+    }
+  },
+  {
+    "case": "C07",
+    "subject": "Oracle",
+    "q": 11,
+    "c1": 0,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 0,
+    "c6": 0,
+    "c7": 0,
+    "raw": 0,
+    "scale": 1,
+    "features": {
+      "unresolved": true,
+      "subjectBound": 0,
+      "admittedLines": 0,
+      "types": [],
+      "changeShown": false,
+      "accessionLines": 0
+    }
+  },
+  {
+    "case": "C08",
+    "subject": "Tesla",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 17,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C09",
+    "subject": "Tesla",
+    "q": 6,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 23,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C10",
+    "subject": "Tesla",
+    "q": 9,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 29,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C11",
+    "subject": "Tesla",
+    "q": 11,
+    "c1": 0,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 0,
+    "c6": 0,
+    "c7": 0,
+    "raw": 0,
+    "scale": 1,
+    "features": {
+      "unresolved": true,
+      "subjectBound": 0,
+      "admittedLines": 0,
+      "types": [],
+      "changeShown": false,
+      "accessionLines": 0
+    }
+  },
+  {
+    "case": "C12",
+    "subject": "Costco",
+    "q": 6,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 12,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 24
+    }
+  },
+  {
+    "case": "C23",
+    "subject": "Costco",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 14,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 24
+    }
+  },
+  {
+    "case": "C24",
+    "subject": "Costco",
+    "q": 10,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 16,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 24
+    }
+  },
+  {
+    "case": "C13",
+    "subject": "Boeing",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 18,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C14",
+    "subject": "Boeing",
+    "q": 3,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 24,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C15",
+    "subject": "Boeing",
+    "q": 4,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 30,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C16",
+    "subject": "Boeing",
+    "q": 12,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 36,
+      "admittedLines": 4,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C17",
+    "subject": "Verizon",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 9,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 26
+    }
+  },
+  {
+    "case": "C18",
+    "subject": "Verizon",
+    "q": 2,
+    "c1": 2,
+    "c2": 2,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 7.5,
+    "scale": 8,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 40,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  },
+  {
+    "case": "C19",
+    "subject": "Verizon",
+    "q": 10,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 44,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  },
+  {
+    "case": "C20",
+    "subject": "Intel",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 25,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 31
+    }
+  },
+  {
+    "case": "C21",
+    "subject": "Intel",
+    "q": 3,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 30,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 31
+    }
+  },
+  {
+    "case": "C22",
+    "subject": "Intel",
+    "q": 4,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 35,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 31
+    }
+  },
+  {
+    "case": "C25",
+    "subject": "Broadcom",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 17,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C26",
+    "subject": "Broadcom",
+    "q": 2,
+    "c1": 2,
+    "c2": 2,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 7.5,
+    "scale": 8,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 20,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C27",
+    "subject": "Broadcom",
+    "q": 5,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 23,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C28",
+    "subject": "Broadcom",
+    "q": 12,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 26,
+      "admittedLines": 2,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 30
+    }
+  },
+  {
+    "case": "C29",
+    "subject": "Netflix",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 21,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C30",
+    "subject": "Netflix",
+    "q": 8,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 24,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C31",
+    "subject": "Netflix",
+    "q": 9,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 27,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 33
+    }
+  },
+  {
+    "case": "C32",
+    "subject": "Boston Scientific",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 33,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  },
+  {
+    "case": "C33",
+    "subject": "Boston Scientific",
+    "q": 3,
+    "c1": 2,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 4.5,
+    "scale": 5,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 38,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  },
+  {
+    "case": "C34",
+    "subject": "Boston Scientific",
+    "q": 7,
+    "c1": 2,
+    "c2": 2,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 7.5,
+    "scale": 8,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 43,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  },
+  {
+    "case": "C35",
+    "subject": "Boston Scientific",
+    "q": 10,
+    "c1": 2,
+    "c2": 1,
+    "c3": 0,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 0.5,
+    "raw": 6.5,
+    "scale": 7,
+    "features": {
+      "unresolved": false,
+      "subjectBound": 48,
+      "admittedLines": 3,
+      "types": [
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE"
+      ],
+      "changeShown": true,
+      "accessionLines": 41
+    }
+  }
+]

@@ -112,6 +112,8 @@ Note: the table above is ordered for reading; each case's subject and question n
 3. Cases are run in the order C01 to C35, one at a time, with the lookups allowed to settle (snapshot frozen) before capture.
 4. A case that errors or shows no analysis is recorded as it appeared and scored on what was delivered; it is not re-run.
 
+**Run-rule amendment 1 (2026-10-11, Founder: reuse data to reduce the processing window):** rule 1 is amended so that a subject's cases run in order within one page session instead of one fresh page per case. Each case still starts its own analysis and gets its own snapshot; filing documents already read and the relationship-change result for that subject are reused within the session. Cases remain one run each, in the order of the matrix, with no re-runs. Capture tool: `scripts/benchmark-capture.mjs`; output: `specs/benchmark/baseline/`. Effect on comparability: every case in the baseline and in later milestone runs is captured the same way.
+
 **Scoring rules (frozen):** the rubric in A4 applied to the delivered analysis only, as written. Raw total 0 to 10 maps to the 1 to 10 scale (0 reports as 1). The History half of the consistency criterion scores 0 for every case at baseline and is preserved, not retroactively rescored. One scorer scores all 35; a second, independent reviewer scores eight designated cases without seeing the first scorer's scores: C01, C04, C08, C13, C17, C20, C25 and C29 (the Question 1 case of each of eight subjects). Scorer and reviewer scores are both kept; disagreements of 2 or more points on a case are listed, not averaged away. Re-scoring after implementation happens at milestones only.
 
 ## B. CAPITAL_EVENT_INVOLVES: counterparty matching as an explicit prerequisite

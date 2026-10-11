@@ -1,0 +1,633 @@
+[
+  {
+    "case": "C01",
+    "subject": "Sysco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Sysco across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 16.1,
+    "capturedAt": "2026-10-11T10:38:24.635Z"
+  },
+  {
+    "case": "C02",
+    "subject": "Sysco",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Sysco in the last 12 months?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.6,
+    "capturedAt": "2026-10-11T10:38:29.248Z"
+  },
+  {
+    "case": "C03",
+    "subject": "Sysco",
+    "question": 7,
+    "questionText": "Which relationships around Sysco dissolved or are indeterminate, and why?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.6,
+    "capturedAt": "2026-10-11T10:38:33.841Z"
+  },
+  {
+    "case": "C04",
+    "subject": "Oracle",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Oracle across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 11.9,
+    "capturedAt": "2026-10-11T10:38:50.706Z"
+  },
+  {
+    "case": "C05",
+    "subject": "Oracle",
+    "question": 5,
+    "questionText": "What technology relationships connect Oracle to other participants?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.1,
+    "capturedAt": "2026-10-11T10:38:53.788Z"
+  },
+  {
+    "case": "C06",
+    "subject": "Oracle",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Oracle?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.1,
+    "capturedAt": "2026-10-11T10:38:56.872Z"
+  },
+  {
+    "case": "C07",
+    "subject": "Oracle",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Oracle?",
+    "build": "57a2309",
+    "snapshotId": "snap-4",
+    "snapshotReady": true,
+    "relationshipChange": "n/a",
+    "lookups": [
+      "admission:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 1.6,
+    "capturedAt": "2026-10-11T10:38:58.466Z"
+  },
+  {
+    "case": "C08",
+    "subject": "Tesla",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Tesla across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 23.4,
+    "capturedAt": "2026-10-11T10:39:27.080Z"
+  },
+  {
+    "case": "C09",
+    "subject": "Tesla",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Tesla show, and what connects them?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.7,
+    "capturedAt": "2026-10-11T10:39:30.826Z"
+  },
+  {
+    "case": "C10",
+    "subject": "Tesla",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Tesla?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 9.4,
+    "capturedAt": "2026-10-11T10:39:40.179Z"
+  },
+  {
+    "case": "C11",
+    "subject": "Tesla",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Tesla?",
+    "build": "57a2309",
+    "snapshotId": "snap-4",
+    "snapshotReady": true,
+    "relationshipChange": "n/a",
+    "lookups": [
+      "admission:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 38.2,
+    "capturedAt": "2026-10-11T10:40:18.390Z"
+  },
+  {
+    "case": "C12",
+    "subject": "Costco",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Costco show, and what connects them?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 24.6,
+    "capturedAt": "2026-10-11T10:40:55.480Z"
+  },
+  {
+    "case": "C23",
+    "subject": "Costco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Costco across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.9,
+    "capturedAt": "2026-10-11T10:40:58.420Z"
+  },
+  {
+    "case": "C24",
+    "subject": "Costco",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Costco?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.5,
+    "capturedAt": "2026-10-11T10:41:00.940Z"
+  },
+  {
+    "case": "C13",
+    "subject": "Boeing",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boeing across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 17.6,
+    "capturedAt": "2026-10-11T10:41:23.853Z"
+  },
+  {
+    "case": "C14",
+    "subject": "Boeing",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boeing in the last 12 months?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.8,
+    "capturedAt": "2026-10-11T10:41:26.659Z"
+  },
+  {
+    "case": "C15",
+    "subject": "Boeing",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Boeing connected?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.6,
+    "capturedAt": "2026-10-11T10:41:29.263Z"
+  },
+  {
+    "case": "C16",
+    "subject": "Boeing",
+    "question": 12,
+    "questionText": "Where do domains diverge around Boeing, and on what evidence?",
+    "build": "57a2309",
+    "snapshotId": "snap-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.3,
+    "capturedAt": "2026-10-11T10:41:32.581Z"
+  },
+  {
+    "case": "C17",
+    "subject": "Verizon",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Verizon across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 15.4,
+    "capturedAt": "2026-10-11T10:41:53.007Z"
+  },
+  {
+    "case": "C18",
+    "subject": "Verizon",
+    "question": 2,
+    "questionText": "Which ownership relationships around Verizon changed in the last 12 months, and what is the coverage behind that?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.6,
+    "capturedAt": "2026-10-11T10:41:55.618Z"
+  },
+  {
+    "case": "C19",
+    "subject": "Verizon",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Verizon?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.1,
+    "capturedAt": "2026-10-11T10:41:57.739Z"
+  },
+  {
+    "case": "C20",
+    "subject": "Intel",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Intel across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 13,
+    "capturedAt": "2026-10-11T10:42:16.066Z"
+  },
+  {
+    "case": "C21",
+    "subject": "Intel",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Intel in the last 12 months?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.9,
+    "capturedAt": "2026-10-11T10:42:19.005Z"
+  },
+  {
+    "case": "C22",
+    "subject": "Intel",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Intel connected?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.5,
+    "capturedAt": "2026-10-11T10:42:22.536Z"
+  },
+  {
+    "case": "C25",
+    "subject": "Broadcom",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Broadcom across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 87.3,
+    "capturedAt": "2026-10-11T10:43:56.226Z"
+  },
+  {
+    "case": "C26",
+    "subject": "Broadcom",
+    "question": 2,
+    "questionText": "Which ownership relationships around Broadcom changed in the last 12 months, and what is the coverage behind that?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.3,
+    "capturedAt": "2026-10-11T10:43:58.491Z"
+  },
+  {
+    "case": "C27",
+    "subject": "Broadcom",
+    "question": 5,
+    "questionText": "What technology relationships connect Broadcom to other participants?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.5,
+    "capturedAt": "2026-10-11T10:44:00.945Z"
+  },
+  {
+    "case": "C28",
+    "subject": "Broadcom",
+    "question": 12,
+    "questionText": "Where do domains diverge around Broadcom, and on what evidence?",
+    "build": "57a2309",
+    "snapshotId": "snap-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.8,
+    "capturedAt": "2026-10-11T10:44:03.774Z"
+  },
+  {
+    "case": "C29",
+    "subject": "Netflix",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Netflix across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 17,
+    "capturedAt": "2026-10-11T10:44:26.052Z"
+  },
+  {
+    "case": "C30",
+    "subject": "Netflix",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Netflix?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.9,
+    "capturedAt": "2026-10-11T10:44:29.957Z"
+  },
+  {
+    "case": "C31",
+    "subject": "Netflix",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Netflix?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.7,
+    "capturedAt": "2026-10-11T10:44:33.695Z"
+  },
+  {
+    "case": "C32",
+    "subject": "Boston Scientific",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boston Scientific across ownership, technology, and capital?",
+    "build": "57a2309",
+    "snapshotId": "snap-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 19.4,
+    "capturedAt": "2026-10-11T10:44:58.118Z"
+  },
+  {
+    "case": "C33",
+    "subject": "Boston Scientific",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boston Scientific in the last 12 months?",
+    "build": "57a2309",
+    "snapshotId": "snap-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.4,
+    "capturedAt": "2026-10-11T10:45:01.552Z"
+  },
+  {
+    "case": "C34",
+    "subject": "Boston Scientific",
+    "question": 7,
+    "questionText": "Which relationships around Boston Scientific dissolved or are indeterminate, and why?",
+    "build": "57a2309",
+    "snapshotId": "snap-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.1,
+    "capturedAt": "2026-10-11T10:45:04.685Z"
+  },
+  {
+    "case": "C35",
+    "subject": "Boston Scientific",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Boston Scientific?",
+    "build": "57a2309",
+    "snapshotId": "snap-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.7,
+    "capturedAt": "2026-10-11T10:45:08.406Z"
+  }
+]
