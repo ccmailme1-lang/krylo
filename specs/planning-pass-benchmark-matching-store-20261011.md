@@ -1,6 +1,6 @@
 # Planning pass: benchmark, counterparty matching prerequisite, durable store, snapshot gate
 
-Date: 2026-10-11 · Governed by `decision-record-structural-analysis-FINAL-20261011.md` (architecture closed; nothing here reopens it) · Status: DRAFT for approval · No implementation tickets are opened by this document. Basis labels: V = verified in the repository this week, D = from documentation or memory, not re-verified.
+Date: 2026-10-11 · Governed by `decision-record-structural-analysis-FINAL-20261011.md` (architecture closed; nothing here reopens it) · Status: benchmark section A FROZEN v1 on 2026-10-11 (approved by the Founder); other sections as marked · No implementation tickets are opened by this document. Basis labels: V = verified in the repository this week, D = from documentation or memory, not re-verified.
 
 ## A. Representative benchmark (one-pass approval)
 
@@ -80,6 +80,39 @@ Baseline rule: the History half of the consistency criterion cannot be met befor
 | Freeze | Scores are recorded and never altered | — |
 
 Re-scoring after implementation happens at milestones only (Founder: keep the rubric light), not per ticket. Ownership of the benchmark: product.
+
+### A6. FROZEN v1 (2026-10-11): exact case matrix, classifications and scoring rules
+
+Approved by the Founder 2026-10-11. The 10 subjects, 12 questions and 35 cases below are the reference for measuring improvement. Later expansion is additive only; nothing here is edited or removed. Baseline scores, once recorded, are never altered.
+
+**Classification check against the running environment (2026-10-11, V):** the five registry subjects resolve from the registry (Sysco CIK 0000096021, Oracle 0001341439, Boeing 0000012927, Verizon 0000732712, Tesla 0001318605). The five runtime subjects are not in the registry and were admitted by the SEC-filer path with outcome ADMITTED (Intel 0000050863, Broadcom 0001730168, Netflix 0001065280, Boston Scientific 0000885725, Costco 0000909832). Classifications confirmed.
+
+**Case matrix (35 cases; ID = subject number, question number):**
+
+| Case | Subject | Q | Case | Subject | Q | Case | Subject | Q |
+|---|---|---|---|---|---|---|---|---|
+| C01 | Sysco | 1 | C13 | Boeing | 1 | C25 | Broadcom | 1 |
+| C02 | Sysco | 3 | C14 | Boeing | 3 | C26 | Broadcom | 2 |
+| C03 | Sysco | 7 | C15 | Boeing | 4 | C27 | Broadcom | 5 |
+| C04 | Oracle | 1 | C16 | Boeing | 12 | C28 | Broadcom | 12 |
+| C05 | Oracle | 5 | C17 | Verizon | 1 | C29 | Netflix | 1 |
+| C06 | Oracle | 8 | C18 | Verizon | 2 | C30 | Netflix | 8 |
+| C07 | Oracle | 11 | C19 | Verizon | 10 | C31 | Netflix | 9 |
+| C08 | Tesla | 1 | C20 | Intel | 1 | C32 | Boston Scientific | 1 |
+| C09 | Tesla | 6 | C21 | Intel | 3 | C33 | Boston Scientific | 3 |
+| C10 | Tesla | 9 | C22 | Intel | 4 | C34 | Boston Scientific | 7 |
+| C11 | Tesla | 11 | C23 | Costco | 1 | C35 | Boston Scientific | 10 |
+| C12 | Costco | 6 | C24 | Costco | 10 | | | |
+
+Note: the table above is ordered for reading; each case's subject and question number are the reference (35 rows: Sysco 3, Oracle 4, Tesla 4, Costco 3, Boeing 4, Verizon 3, Intel 3, Broadcom 4, Netflix 3, Boston Scientific 4).
+
+**Run rules (frozen):**
+1. One run per case on the current system, from a fresh page load, using the question text in A2 with the subject name substituted; no refresh, no re-run, no edits.
+2. For each run record: case id, build identifier, snapshot id, run start time, and the delivered analysis text (Analysis surface; the MAP brief text where present).
+3. Cases are run in the order C01 to C35, one at a time, with the lookups allowed to settle (snapshot frozen) before capture.
+4. A case that errors or shows no analysis is recorded as it appeared and scored on what was delivered; it is not re-run.
+
+**Scoring rules (frozen):** the rubric in A4 applied to the delivered analysis only, as written. Raw total 0 to 10 maps to the 1 to 10 scale (0 reports as 1). The History half of the consistency criterion scores 0 for every case at baseline and is preserved, not retroactively rescored. One scorer scores all 35; a second, independent reviewer scores eight designated cases without seeing the first scorer's scores: C01, C04, C08, C13, C17, C20, C25 and C29 (the Question 1 case of each of eight subjects). Scorer and reviewer scores are both kept; disagreements of 2 or more points on a case are listed, not averaged away. Re-scoring after implementation happens at milestones only.
 
 ## B. CAPITAL_EVENT_INVOLVES: counterparty matching as an explicit prerequisite
 
