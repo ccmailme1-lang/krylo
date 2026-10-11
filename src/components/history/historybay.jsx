@@ -7,6 +7,7 @@ import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { getTelemetryLog }   from '../../engine/telemetry.js';
 import { shouldPersist }     from '../../engine/persistencepolicy.js';
 import { getDriftLog }       from '../../engine/driftmonitor.js';
+import AnalysisHistory       from './analysishistory.jsx';   // Step 8: analyses rebuilt from the durable store and persisted snapshots
 
 const MONO   = "'IBM Plex Mono', monospace";
 const SERIF  = "Georgia, 'Playfair Display', serif";
@@ -704,6 +705,9 @@ export default function HistoryBay({ onRerunNavigate }) {
               ))}
             </div>
           )}
+
+          {/* Analysis History -- decision record step 8: read from the durable canonical store and persisted snapshots */}
+          <AnalysisHistory inRangeFn={(ts) => inRange(ts, rangeKey, customRange)} />
 
           {/* Transaction History */}
           <div style={{ marginTop: 32, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>

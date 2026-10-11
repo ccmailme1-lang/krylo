@@ -8,6 +8,7 @@
 //     once and not on every analysis.
 // Best effort by design: a failed write never blocks or alters an analysis; a failed read leaves the in-memory store as it was.
 import { setAdmissionSink, restoreAdmitted } from './canonicalrelationshipprojection.js';
+import { formationRowsFromRecords } from './historyview.js';
 
 let _base = '';
 let _fetch = (typeof fetch !== 'undefined' ? fetch : null);
@@ -26,7 +27,7 @@ export const _storeStats = { sent: 0, failed: 0 };
 
 function itemFrom({ rho, predicate, historyEntry, labels, meta }) {
   return {
-    identity_key: identityKeyOf(rho), type: rho.type, phi_class: rho.phiClass, part: rho.part, nu_id: rho.nuId ?? {},
+    identity_key: identityKeyOf(rho), relationship_id: rho.id, type: rho.type, phi_class: rho.phiClass, part: rho.part, nu_id: rho.nuId ?? {},
     predicate, nu_state: historyEntry?.nuState ?? rho.nuState ?? {},
     evidence: { provenance: historyEntry?.provenance ?? null, ts: historyEntry?.ts ?? null },
     labels, meta, event_ts: historyEntry?.ts ? new Date(historyEntry.ts).toISOString() : null,
@@ -72,6 +73,37 @@ export async function hydrateFor(nodeIds, opts) {
   return { restored: error ? 0 : restoreAdmitted(records), error };
 }
 
+// ── history ───────────────────────────────────────────────────────────────────
+/** A subject's persisted snapshots and stored relationships (with all versions): { snapshots, relationships, error }. */
+export async function fetchHistory(canonicalId, node = null, { timeoutMs = 4000 } = {}) {
+  if (!_enabled() || !canonicalId) return { snapshots: [], relationships: [], error: null };
+  try {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null; const t = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    const r = await _fetch(`${_base}/v1/canonical-store/history?canonicalId=${encodeURIComponent(canonicalId)}${node ? '&node=' + encodeURIComponent(node) : ''}`, { cache: 'no-store', signal: ctl?.signal });
+    if (t) clearTimeout(t);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const j = await r.json(); return { snapshots: j.snapshots ?? [], relationships: j.relationships ?? [], error: null };
+  } catch (e) { return { snapshots: [], relationships: [], error: String(e?.message ?? e).slice(0, 80) }; }
+}
+
+/** Formation-history rows for a subject node, derived from the stored relationship versions (the scrubber's source). */
+export async function fetchStoredFormationRows(nodeId) {
+  const { records, error } = await fetchRelationships([nodeId]);
+  return error ? [] : formationRowsFromRecords(records, nodeId);
+}
+
+/** The most recent snapshots across subjects: { snapshots, error }. */
+export async function fetchRecentSnapshots(limit = 50, { timeoutMs = 4000 } = {}) {
+  if (!_enabled()) return { snapshots: [], error: 'the durable store is not available here' };
+  try {
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null; const t = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+    const r = await _fetch(`${_base}/v1/canonical-store/snapshots?recent=1&limit=${limit}`, { cache: 'no-store', signal: ctl?.signal });
+    if (t) clearTimeout(t);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return { snapshots: (await r.json()).snapshots ?? [], error: null };
+  } catch (e) { return { snapshots: [], error: String(e?.message ?? e).slice(0, 80) }; }
+}
+
 // ── keyed records ─────────────────────────────────────────────────────────────
 export const kv = {
   async get(key) {
@@ -87,7 +119,7 @@ export const kv = {
 // ── snapshots ─────────────────────────────────────────────────────────────────
 export function persistSnapshot(snapshot, relationshipRefs = []) {
   if (!_enabled() || !snapshot?.id) return Promise.resolve(false);
-  const row = { id: snapshot.id, query: snapshot.query, canonical_id: snapshot.canonicalId, generated_at: new Date(snapshot.generatedAt).toISOString(), lookups: snapshot.lookups, relationship_refs: relationshipRefs, change: snapshot.change ?? null, refresh_of: snapshot.refreshOf ?? null };
+  const row = { id: snapshot.id, query: snapshot.query, canonical_id: snapshot.canonicalId, subject_node: snapshot.subjectNode ?? null, generated_at: new Date(snapshot.generatedAt).toISOString(), lookups: snapshot.lookups, relationship_refs: relationshipRefs, change: snapshot.change ?? null, refresh_of: snapshot.refreshOf ?? null };
   return _fetch(`${_base}/v1/canonical-store/snapshot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot: row }) })
     .then(r => r.ok).catch(() => false);
 }

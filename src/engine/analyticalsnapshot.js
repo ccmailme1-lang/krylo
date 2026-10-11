@@ -45,7 +45,7 @@ export const getSnapshotState = () => _view;
 export function beginAnalysis(query, { refresh = false, timeoutMs } = {}) {
   if (refresh && (_status !== 'ready' || _refresh.running)) return null;           // nothing to refresh, or one already running
   if (_run) { clearTimeout(_run.timer); _run.dead = true; }
-  const run = { id: `snap-${++_seq}`, query, startedAt: Date.now(), refresh, lookups: new Map(), armed: false, frozen: false, dead: false, canonicalId: null, timer: null };
+  const run = { id: `snap-${Date.now().toString(36)}-${++_seq}`, query, startedAt: Date.now(), refresh, lookups: new Map(), armed: false, frozen: false, dead: false, canonicalId: null, timer: null };
   run.timer = setTimeout(() => onTimeout(run), timeoutMs ?? (refresh ? REFRESH_TIMEOUT_MS : SETTLE_TIMEOUT_MS));
   _run = run;
   if (refresh) _refresh = { running: true, error: null };
@@ -95,7 +95,7 @@ function onTimeout(run) {
 function persist(snap) {
   try {
     const refs = snap.canonicalId ? findAdmittedRelationshipsFor(toTopologyNodeId(snap.canonicalId)).map(r => ({ id: r.id, type: r.type, nuId: r.nuId, accession: latestEvidenceFor(r.id)?.provenance?.accession ?? null, predicate: latestEvidenceFor(r.id)?.predicate ?? null })) : [];
-    persistSnapshot(snap, refs);
+    persistSnapshot({ ...snap, subjectNode: snap.canonicalId ? toTopologyNodeId(snap.canonicalId) : null }, refs);
   } catch { /* persistence is best effort */ }
 }
 

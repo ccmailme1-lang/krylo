@@ -13,7 +13,7 @@ import { compareSignals } from '../src/engine/asdiff.js';
 import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
-import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv } from './canonicalstore.js';
+import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv, historyFor, recentSnapshots } from './canonicalstore.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -648,6 +648,10 @@ async function handleCanonicalSnapshotWrite(req, res) {
 async function handleCanonicalSnapshots(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   const u = new URL(req.url, 'http://localhost'); const cid = u.searchParams.get('canonicalId');
+  if (!cid && u.searchParams.get('recent')) {
+    try { return send(res, 200, { status: 'STORE_READ_SUCCESS', snapshots: await recentSnapshots(Math.min(200, Number(u.searchParams.get('limit') ?? 50))) }); }
+    catch (err) { return send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
+  }
   if (!cid) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'canonicalId required' });
   try { send(res, 200, { status: 'STORE_READ_SUCCESS', snapshots: await snapshotsFor(cid, Math.min(200, Number(u.searchParams.get('limit') ?? 50))) }); }
   catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
@@ -665,6 +669,13 @@ async function handleCanonicalMatchRead(req, res) {
   catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
 }
 
+async function handleCanonicalHistory(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  const u = new URL(req.url, 'http://localhost'); const cid = u.searchParams.get('canonicalId'); const node = u.searchParams.get('node');
+  if (!cid) return send(res, 422, { status: 'STORE_READ_FAILED', error: 'canonicalId required' });
+  try { send(res, 200, { status: 'STORE_READ_SUCCESS', ...(await historyFor(cid, node, Math.min(100, Number(u.searchParams.get('limit') ?? 30)))) }); }
+  catch (err) { send(res, 500, { status: 'STORE_READ_FAILED', error: err.message }); }
+}
 async function handleCanonicalKvWrite(req, res) {
   let body; try { body = await parseBody(req); } catch { return send(res, 400, { status: 'STORE_WRITE_FAILED', error: 'Invalid JSON body' }); }
   try { send(res, 200, { status: 'STORE_WRITE_SUCCESS', ...(await writeKv(body?.key, body?.value)) }); }
@@ -1945,6 +1956,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/v1/canonical-store/snapshots')      return handleCanonicalSnapshots(req, res);
   if (req.method === 'POST' && url === '/v1/canonical-store/match')          return handleCanonicalMatchWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/canonical-store/match')          return handleCanonicalMatchRead(req, res);
+  if (req.method === 'GET'  && url === '/v1/canonical-store/history')        return handleCanonicalHistory(req, res);
   if (req.method === 'POST' && url === '/v1/canonical-store/kv')             return handleCanonicalKvWrite(req, res);
   if (req.method === 'GET'  && url === '/v1/canonical-store/kv')             return handleCanonicalKvRead(req, res);
   if (req.method === 'GET'  && url === '/health')                            return handleHealth(req, res);

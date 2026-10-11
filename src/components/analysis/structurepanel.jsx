@@ -15,7 +15,7 @@ import { A as adSubjectFor } from '../../engine/adsubject.js';
 import { interpretStructuralQuery } from '../../engine/structuralqueryinterpreter.js';
 import { synthStructuralEntity } from '../../engine/structuralentitysynthesis.js';
 import { formationIdFor } from '../../engine/formationsnapshot.js';
-import { fetchSubjectFormationHistory } from '../../engine/formationsnapshotclient.js';
+import { fetchStoredFormationRows } from '../../engine/canonicalstoreclient.js';   // step 8: the scrubber's rows for an entity come from the durable store (the legacy formation_state read is superseded)
 import { subjectScope } from '../../engine/subjectscope.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
@@ -289,7 +289,7 @@ function FormationMapTab({ query }) {
             .catch(() => [])
         ));
         // KRYL-1350 (route B): a resolved entity subject's canonical-ρ history, one request.
-        const canonicalRows = subjScope.kind === 'ENTITY' ? await fetchSubjectFormationHistory(subjScope.canonicalId) : [];
+        const canonicalRows = subjScope.kind === 'ENTITY' ? await fetchStoredFormationRows(toTopologyNodeId(subjScope.canonicalId)) : [];
         if (!cancelled) setFormationHistory([...results.flat(), ...canonicalRows]);
       } catch { if (!cancelled) setFormationHistory([]); }
     }

@@ -10,7 +10,7 @@
 //   counterparty_match              the last matching outcome per counterparty name (a cache with its retrieval time)
 //
 // captured_at is always capture time (when KRYLO observed it), never a filing date; event_ts carries the source's own date.
-import { readFileSync, appendFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, appendFileSync, existsSync, mkdirSync, statSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -48,9 +48,10 @@ async function ensureTables() {
       CREATE INDEX IF NOT EXISTS idx_canonical_version_rel ON canonical_relationship_version (relationship_id, version DESC);
       CREATE INDEX IF NOT EXISTS idx_canonical_relationship_part ON canonical_relationship USING GIN (part);
       CREATE TABLE IF NOT EXISTS analytical_snapshot (
-        id TEXT PRIMARY KEY, query TEXT, canonical_id TEXT, generated_at TIMESTAMPTZ, lookups JSONB, relationship_refs JSONB,
+        id TEXT PRIMARY KEY, query TEXT, canonical_id TEXT, subject_node TEXT, generated_at TIMESTAMPTZ, lookups JSONB, relationship_refs JSONB,
         change JSONB, refresh_of TEXT, captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+      ALTER TABLE analytical_snapshot ADD COLUMN IF NOT EXISTS subject_node TEXT;
       CREATE TABLE IF NOT EXISTS store_kv (k TEXT PRIMARY KEY, v JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS counterparty_match (
         name_key TEXT PRIMARY KEY, outcome JSONB NOT NULL, retrieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -60,15 +61,22 @@ async function ensureTables() {
 }
 
 // ── file fallback ──────────────────────────────────────────────────────────────
+// The file is parsed once and kept; a size check invalidates it if anything else wrote to the file, and an append updates it in place.
+let _fileCache = { path: null, size: -1, rows: [] };
 function fileRows() {
   if (!existsSync(FILE)) return [];
+  const st = statSync(FILE);
+  if (_fileCache.path === FILE && _fileCache.size === st.size) return _fileCache.rows;
   const out = [];
   for (const line of readFileSync(FILE, 'utf8').split('\n')) { if (!line) continue; try { out.push(JSON.parse(line)); } catch { /* a torn line is skipped */ } }
+  _fileCache = { path: FILE, size: st.size, rows: out };
   return out;
 }
 function appendFile(row) {
   const dir = dirname(FILE); if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const rows = fileRows();                                  // current before the append (also primes the cache)
   appendFileSync(FILE, JSON.stringify(row) + '\n');
+  if (_fileCache.path === FILE) { rows.push(JSON.parse(JSON.stringify(row))); _fileCache.size = statSync(FILE).size; }
 }
 
 // ── relationships ──────────────────────────────────────────────────────────────
@@ -110,7 +118,7 @@ export async function writeAdmission(item) {
   if (!item?.identity_key || !item.type || !Array.isArray(item.part) || !item.evidence) throw new Error('identity_key, type, part and evidence are required');
   const { rels, vers } = await loadAll({ nodes: item.part });
   let rel = rels.get(item.identity_key); let created = false; let where = 'file';
-  if (!rel) { rel = { identity_key: item.identity_key, relationship_id: randomUUID(), type: item.type, phi_class: item.phi_class, part: item.part, nu_id: item.nu_id ?? {} }; created = true; }
+  if (!rel) { rel = { identity_key: item.identity_key, relationship_id: item.relationship_id ?? randomUUID(), type: item.type, phi_class: item.phi_class, part: item.part, nu_id: item.nu_id ?? {} }; created = true; }
   const mine = vers.filter(v => v.relationship_id === rel.relationship_id).sort((a, b) => a.version - b.version);
   const last = mine[mine.length - 1];
   // Idempotent on the EVIDENCE: a version that already records this evidence (same filing, same observation, same state) is the answer, whatever
@@ -151,12 +159,12 @@ export async function relationshipsForNodes(nodes) {
 // ── snapshots ──────────────────────────────────────────────────────────────────
 export async function writeSnapshot(s) {
   if (!s?.id) throw new Error('snapshot id required');
-  const row = { id: s.id, query: s.query ?? null, canonical_id: s.canonical_id ?? null, generated_at: s.generated_at ?? null, lookups: s.lookups ?? [], relationship_refs: s.relationship_refs ?? [], change: s.change ?? null, refresh_of: s.refresh_of ?? null };
+  const row = { id: s.id, query: s.query ?? null, canonical_id: s.canonical_id ?? null, subject_node: s.subject_node ?? null, generated_at: s.generated_at ?? null, lookups: s.lookups ?? [], relationship_refs: s.relationship_refs ?? [], change: s.change ?? null, refresh_of: s.refresh_of ?? null };
   if (await ensureTables()) {
     try {
-      await q(`INSERT INTO analytical_snapshot (id, query, canonical_id, generated_at, lookups, relationship_refs, change, refresh_of) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      await q(`INSERT INTO analytical_snapshot (id, query, canonical_id, subject_node, generated_at, lookups, relationship_refs, change, refresh_of) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         ON CONFLICT (id) DO UPDATE SET change = EXCLUDED.change, lookups = EXCLUDED.lookups, relationship_refs = EXCLUDED.relationship_refs, updated_at = NOW()`,
-        [row.id, row.query, row.canonical_id, row.generated_at, JSON.stringify(row.lookups), JSON.stringify(row.relationship_refs), JSON.stringify(row.change), row.refresh_of]);
+        [row.id, row.query, row.canonical_id, row.subject_node, row.generated_at, JSON.stringify(row.lookups), JSON.stringify(row.relationship_refs), JSON.stringify(row.change), row.refresh_of]);
       return { persisted_in: 'db' };
     } catch (err) { logFallback('snapshot write', err); }
   }
@@ -211,4 +219,24 @@ export async function readKv(key) {
   }
   for (const row of fileRows()) if (row._t === 'kv' && row.k === key && (!best || String(row.updated_at) > String(best.updated_at))) best = { value: row.v, updated_at: row.updated_at };
   return best;
+}
+
+// ── History (decision record step 8): a subject's persisted analytical snapshots and the stored relationships with every version, so a past analysis
+// can be rebuilt as of its own time with the same builders the live analysis uses. Reads only; nothing is derived or summarised here.
+export async function historyFor(canonicalId, node, limit = 30) {
+  const snapshots = await snapshotsFor(canonicalId, limit);
+  const nodes = [node, ...snapshots.map(s => s.subject_node)].filter(Boolean);
+  const relationships = nodes.length ? await relationshipsForNodes([...new Set(nodes)]) : [];
+  return { snapshots, relationships };
+}
+
+/** The most recent snapshots across all subjects (the History view's list). */
+export async function recentSnapshots(limit = 50) {
+  const out = new Map();
+  if (await ensureTables()) {
+    try { const r = await q('SELECT * FROM analytical_snapshot ORDER BY generated_at DESC LIMIT $1', [limit]); for (const x of r.rows) out.set(x.id, { ...x, generated_at: x.generated_at?.toISOString?.() ?? x.generated_at }); }
+    catch (err) { logFallback('recent snapshots', err); }
+  }
+  for (const row of fileRows()) if (row._t === 'snap') out.set(row.id, { ...(out.get(row.id) ?? {}), ...row });
+  return [...out.values()].sort((a, b) => String(b.generated_at).localeCompare(String(a.generated_at))).slice(0, limit);
 }
