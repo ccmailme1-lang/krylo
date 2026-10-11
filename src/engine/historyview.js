@@ -8,12 +8,15 @@ import { canonicalRelationshipSentence, canonicalProvenanceLine, canonicalDetail
 /** @param {object} snapshot a stored snapshot row  @param {object[]} records stored relationships with versions (the store's /history response) */
 export function reconstructSnapshot(snapshot, records) {
   const byId = new Map((records ?? []).map(r => [r.relationship_id, r]));
+  // The store keeps the id it first gave an identity; a snapshot taken by a session that minted another id for the same relationship still finds it by identity.
+  const nuKey = (n) => Object.keys(n ?? {}).sort().map(k => `${k}=${JSON.stringify(n[k])}`).join('|');
+  const byIdentity = new Map((records ?? []).map(r => [`${[...(r.part ?? [])].sort().join('|')}#${r.type}#${r.phi_class}#${nuKey(r.nu_id)}`, r]));
   const labels = {};
   for (const r of records ?? []) for (const v of r.versions ?? []) Object.assign(labels, v.labels ?? {});
   const labelOf = (id) => String(labels[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, '');
   const rels = [], evidence = new Map(), missing = [];
   for (const ref of snapshot.relationship_refs ?? []) {
-    const rec = byId.get(ref.id); const vs = rec?.versions ?? [];
+    const rec = byId.get(ref.id) ?? (ref.identityKey ? byIdentity.get(ref.identityKey) : undefined); const vs = rec?.versions ?? [];
     // the version whose evidence stood latest when the snapshot froze (matched by the filing's accession), else the last stored one
     const v = (ref.accession ? [...vs].reverse().find(x => x.evidence?.provenance?.accession === ref.accession) : null) ?? vs[vs.length - 1];
     if (!rec || !v) { missing.push(ref.id); continue; }

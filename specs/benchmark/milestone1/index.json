@@ -1,0 +1,1876 @@
+[
+ {
+  "case": "C01",
+  "subject": "Sysco",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Sysco across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43hoqg-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 10.1,
+  "capturedAt": "2026-10-11T17:26:40.072Z",
+  "probe": {
+   "snapshotId": "snap-mv43hoqg-1",
+   "canonicalId": "sysco",
+   "subject": "SYSCO",
+   "relationships": 13,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "ACQUIRED": 1,
+    "CAPITAL_EVENT_INVOLVES": 5
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historySentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historyRelationships": 13,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 5,
+    "INFERRED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 14,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 5,
+    "rejected": 15,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C02",
+  "subject": "Sysco",
+  "question": 3,
+  "questionText": "What capital events involving named counterparties were reported for Sysco in the last 12 months?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43hvlp-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 4.4,
+  "capturedAt": "2026-10-11T17:26:44.493Z",
+  "probe": {
+   "snapshotId": "snap-mv43hvlp-2",
+   "canonicalId": "sysco",
+   "subject": "SYSCO",
+   "relationships": 13,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "ACQUIRED": 1,
+    "CAPITAL_EVENT_INVOLVES": 5
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historySentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historyRelationships": 13,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 5,
+    "INFERRED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 14,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 5,
+    "rejected": 15,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C03",
+  "subject": "Sysco",
+  "question": 7,
+  "questionText": "Which relationships around Sysco dissolved or are indeterminate, and why?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43hz1p-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 5.5,
+  "capturedAt": "2026-10-11T17:26:49.984Z",
+  "probe": {
+   "snapshotId": "snap-mv43hz1p-3",
+   "canonicalId": "sysco",
+   "subject": "SYSCO",
+   "relationships": 13,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "ACQUIRED": 1,
+    "CAPITAL_EVENT_INVOLVES": 5
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historySentence": "13 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through SYSCO).",
+   "historyRelationships": 13,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 5,
+    "INFERRED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 14,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 5,
+    "rejected": 15,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C04",
+  "subject": "Oracle",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Oracle across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43id6z-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 15,
+  "capturedAt": "2026-10-11T17:27:10.633Z",
+  "probe": {
+   "snapshotId": "snap-mv43id6z-1",
+   "canonicalId": "oracle",
+   "subject": "ORACLE",
+   "relationships": 10,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+    "CAPITAL_EVENT_INVOLVES": 8
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historySentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historyRelationships": 10,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 6,
+    "INFERRED": 3,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 17,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 8,
+    "rejected": 6,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C05",
+  "subject": "Oracle",
+  "question": 5,
+  "questionText": "What technology relationships connect Oracle to other participants?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43ij9o-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.4,
+  "capturedAt": "2026-10-11T17:27:14.052Z",
+  "probe": {
+   "snapshotId": "snap-mv43ij9o-2",
+   "canonicalId": "oracle",
+   "subject": "ORACLE",
+   "relationships": 10,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+    "CAPITAL_EVENT_INVOLVES": 8
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historySentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historyRelationships": 10,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 6,
+    "INFERRED": 3,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 17,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 8,
+    "rejected": 6,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C06",
+  "subject": "Oracle",
+  "question": 8,
+  "questionText": "What structure is forming across knowledge, technology and capital around Oracle?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43ilwu-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.6,
+  "capturedAt": "2026-10-11T17:27:17.622Z",
+  "probe": {
+   "snapshotId": "snap-mv43ilwu-3",
+   "canonicalId": "oracle",
+   "subject": "ORACLE",
+   "relationships": 10,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+    "CAPITAL_EVENT_INVOLVES": 8
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historySentence": "10 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through ORACLE).",
+   "historyRelationships": 10,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 5,
+    "DOCUMENTED": 6,
+    "INFERRED": 3,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 17,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 8,
+    "rejected": 6,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C07",
+  "subject": "Oracle",
+  "question": 11,
+  "questionText": "Across all six domains, what formation exists around Oracle?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43iol3-4",
+  "snapshotReady": true,
+  "relationshipChange": "n/a",
+  "lookups": [
+   "admission:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 1.2,
+  "capturedAt": "2026-10-11T17:27:18.779Z",
+  "probe": {
+   "snapshotId": "snap-mv43iol3-4",
+   "unresolved": true
+  }
+ },
+ {
+  "case": "C08",
+  "subject": "Tesla",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Tesla across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43j7fa-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 23.7,
+  "capturedAt": "2026-10-11T17:27:49.307Z",
+  "probe": {
+   "snapshotId": "snap-mv43j7fa-1",
+   "canonicalId": "tesla",
+   "subject": "TESLA",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C09",
+  "subject": "Tesla",
+  "question": 6,
+  "questionText": "What do labor and capital activity around Tesla show, and what connects them?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43jd0n-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 2.2,
+  "capturedAt": "2026-10-11T17:27:51.531Z",
+  "probe": {
+   "snapshotId": "snap-mv43jd0n-2",
+   "canonicalId": "tesla",
+   "subject": "TESLA",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C10",
+  "subject": "Tesla",
+  "question": 9,
+  "questionText": "What relationships exist between media attention and capital events around Tesla?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43jer3-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 2.7,
+  "capturedAt": "2026-10-11T17:27:54.242Z",
+  "probe": {
+   "snapshotId": "snap-mv43jer3-3",
+   "canonicalId": "tesla",
+   "subject": "TESLA",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through TESLA).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C11",
+  "subject": "Tesla",
+  "question": 11,
+  "questionText": "Across all six domains, what formation exists around Tesla?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43jgti-4",
+  "snapshotReady": true,
+  "relationshipChange": "n/a",
+  "lookups": [
+   "admission:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 0.6,
+  "capturedAt": "2026-10-11T17:27:54.883Z",
+  "probe": {
+   "snapshotId": "snap-mv43jgti-4",
+   "unresolved": true
+  }
+ },
+ {
+  "case": "C12",
+  "subject": "Costco",
+  "question": 6,
+  "questionText": "What do labor and capital activity around Costco show, and what connects them?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43jqri-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "admission:OK",
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 11.7,
+  "capturedAt": "2026-10-11T17:28:12.588Z",
+  "probe": {
+   "snapshotId": "snap-mv43jqri-1",
+   "canonicalId": "costco-wholesale",
+   "subject": "COSTCO WHOLESALE CORP",
+   "relationships": 3,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 3,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C23",
+  "subject": "Costco",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Costco across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43juz5-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 2.5,
+  "capturedAt": "2026-10-11T17:28:15.107Z",
+  "probe": {
+   "snapshotId": "snap-mv43juz5-2",
+   "canonicalId": "costco-wholesale",
+   "subject": "COSTCO WHOLESALE CORP",
+   "relationships": 3,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 3,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C24",
+  "subject": "Costco",
+  "question": 10,
+  "questionText": "What does the evidence not establish about the ownership and capital structure of Costco?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43jwxd-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 2.2,
+  "capturedAt": "2026-10-11T17:28:17.283Z",
+  "probe": {
+   "snapshotId": "snap-mv43jwxd-3",
+   "canonicalId": "costco-wholesale",
+   "subject": "COSTCO WHOLESALE CORP",
+   "relationships": 3,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 3,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C13",
+  "subject": "Boeing",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Boeing across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43katg-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 16.9,
+  "capturedAt": "2026-10-11T17:28:40.313Z",
+  "probe": {
+   "snapshotId": "snap-mv43katg-1",
+   "canonicalId": "boeing",
+   "subject": "BOEING",
+   "relationships": 9,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historySentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historyRelationships": 9,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 8,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C14",
+  "subject": "Boeing",
+  "question": 3,
+  "questionText": "What capital events involving named counterparties were reported for Boeing in the last 12 months?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43kgfo-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.1,
+  "capturedAt": "2026-10-11T17:28:43.429Z",
+  "probe": {
+   "snapshotId": "snap-mv43kgfo-2",
+   "canonicalId": "boeing",
+   "subject": "BOEING",
+   "relationships": 9,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historySentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historyRelationships": 9,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 8,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C15",
+  "subject": "Boeing",
+  "question": 4,
+  "questionText": "How are the capital and ownership structures around Boeing connected?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43kiv1-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.5,
+  "capturedAt": "2026-10-11T17:28:46.910Z",
+  "probe": {
+   "snapshotId": "snap-mv43kiv1-3",
+   "canonicalId": "boeing",
+   "subject": "BOEING",
+   "relationships": 9,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historySentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historyRelationships": 9,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 8,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C16",
+  "subject": "Boeing",
+  "question": 12,
+  "questionText": "Where do domains diverge around Boeing, and on what evidence?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43klkf-4",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 4.3,
+  "capturedAt": "2026-10-11T17:28:51.183Z",
+  "probe": {
+   "snapshotId": "snap-mv43klkf-4",
+   "canonicalId": "boeing",
+   "subject": "BOEING",
+   "relationships": 9,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historySentence": "9 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOEING).",
+   "historyRelationships": 9,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 8,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 1,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C17",
+  "subject": "Verizon",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Verizon across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43l6o4-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 39.8,
+  "capturedAt": "2026-10-11T17:29:39.259Z",
+  "probe": {
+   "snapshotId": "snap-mv43l6o4-1",
+   "canonicalId": "verizon",
+   "subject": "VERIZON",
+   "relationships": 4,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 4,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C18",
+  "subject": "Verizon",
+  "question": 2,
+  "questionText": "Which ownership relationships around Verizon changed in the last 12 months, and what is the coverage behind that?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43lpx4-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 5.4,
+  "capturedAt": "2026-10-11T17:29:44.693Z",
+  "probe": {
+   "snapshotId": "snap-mv43lpx4-2",
+   "canonicalId": "verizon",
+   "subject": "VERIZON",
+   "relationships": 4,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 4,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C19",
+  "subject": "Verizon",
+  "question": 10,
+  "questionText": "What does the evidence not establish about the ownership and capital structure of Verizon?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43lu59-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.2,
+  "capturedAt": "2026-10-11T17:29:47.866Z",
+  "probe": {
+   "snapshotId": "snap-mv43lu59-3",
+   "canonicalId": "verizon",
+   "subject": "VERIZON",
+   "relationships": 4,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 4 admitted relationships (4 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 4,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C20",
+  "subject": "Intel",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Intel across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv44lrtq-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "admission:OK",
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 13,
+  "capturedAt": "2026-10-11T17:57:51.512Z",
+  "probe": {
+   "snapshotId": "snap-mv44lrtq-1",
+   "canonicalId": "intel",
+   "subject": "INTEL CORP",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 2
+   },
+   "synthesisValidation": {
+    "statements": 6,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C21",
+  "subject": "Intel",
+  "question": 3,
+  "questionText": "What capital events involving named counterparties were reported for Intel in the last 12 months?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43nqzo-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 10.7,
+  "capturedAt": "2026-10-11T17:31:24.611Z",
+  "probe": {
+   "snapshotId": "snap-mv43nqzo-2",
+   "canonicalId": "intel",
+   "subject": "INTEL CORP",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 2
+   },
+   "synthesisValidation": {
+    "statements": 6,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C22",
+  "subject": "Intel",
+  "question": 4,
+  "questionText": "How are the capital and ownership structures around Intel connected?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43o1pr-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 16.9,
+  "capturedAt": "2026-10-11T17:31:41.503Z",
+  "probe": {
+   "snapshotId": "snap-mv43o1pr-3",
+   "canonicalId": "intel",
+   "subject": "INTEL CORP",
+   "relationships": 5,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historySentence": "5 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed).",
+   "historyRelationships": 5,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 2
+   },
+   "synthesisValidation": {
+    "statements": 6,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C25",
+  "subject": "Broadcom",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Broadcom across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43oola-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "admission:OK",
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 39.4,
+  "capturedAt": "2026-10-11T17:32:33.205Z",
+  "probe": {
+   "snapshotId": "snap-mv43oola-1",
+   "canonicalId": "broadcom",
+   "subject": "Broadcom Inc.",
+   "relationships": 6,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 6,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C26",
+  "subject": "Broadcom",
+  "question": 2,
+  "questionText": "Which ownership relationships around Broadcom changed in the last 12 months, and what is the coverage behind that?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43pg4l-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.9,
+  "capturedAt": "2026-10-11T17:32:37.118Z",
+  "probe": {
+   "snapshotId": "snap-mv43pg4l-2",
+   "canonicalId": "broadcom",
+   "subject": "Broadcom Inc.",
+   "relationships": 6,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 6,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C27",
+  "subject": "Broadcom",
+  "question": 5,
+  "questionText": "What technology relationships connect Broadcom to other participants?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43pj4x-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3,
+  "capturedAt": "2026-10-11T17:32:40.144Z",
+  "probe": {
+   "snapshotId": "snap-mv43pj4x-3",
+   "canonicalId": "broadcom",
+   "subject": "Broadcom Inc.",
+   "relationships": 6,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 6,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C28",
+  "subject": "Broadcom",
+  "question": 12,
+  "questionText": "Where do domains diverge around Broadcom, and on what evidence?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43plg7-4",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.3,
+  "capturedAt": "2026-10-11T17:32:43.454Z",
+  "probe": {
+   "snapshotId": "snap-mv43plg7-4",
+   "canonicalId": "broadcom",
+   "subject": "Broadcom Inc.",
+   "relationships": 6,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6
+   },
+   "admittedDomains": [
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [],
+   "links": 0,
+   "analysisSentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historySentence": "No formation established: the 6 admitted relationships (6 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+   "historyRelationships": 6,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "UNRESOLVED": 1
+   },
+   "synthesisValidation": {
+    "statements": 4,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 0,
+    "rejected": 0,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C29",
+  "subject": "Netflix",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Netflix across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43px9w-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "admission:OK",
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:TIMEOUT",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 76,
+  "capturedAt": "2026-10-11T17:34:07.732Z",
+  "probe": {
+   "snapshotId": "snap-mv43px9w-1",
+   "canonicalId": "netflix",
+   "subject": "NETFLIX INC",
+   "relationships": 7,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+    "CAPITAL_EVENT_INVOLVES": 2
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historySentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historyRelationships": 7,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 2,
+    "INFERRED": 1,
+    "UNRESOLVED": 2
+   },
+   "synthesisValidation": {
+    "statements": 9,
+    "problems": []
+   },
+   "admission": null
+  }
+ },
+ {
+  "case": "C30",
+  "subject": "Netflix",
+  "question": 8,
+  "questionText": "What structure is forming across knowledge, technology and capital around Netflix?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43rh4t-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 4.7,
+  "capturedAt": "2026-10-11T17:34:12.472Z",
+  "probe": {
+   "snapshotId": "snap-mv43rh4t-2",
+   "canonicalId": "netflix",
+   "subject": "NETFLIX INC",
+   "relationships": 7,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+    "CAPITAL_EVENT_INVOLVES": 2
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historySentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historyRelationships": 7,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 2,
+    "INFERRED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 10,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 2,
+    "rejected": 16,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C31",
+  "subject": "Netflix",
+  "question": 9,
+  "questionText": "What relationships exist between media attention and capital events around Netflix?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43rkro-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.8,
+  "capturedAt": "2026-10-11T17:34:16.234Z",
+  "probe": {
+   "snapshotId": "snap-mv43rkro-3",
+   "canonicalId": "netflix",
+   "subject": "NETFLIX INC",
+   "relationships": 7,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+    "CAPITAL_EVENT_INVOLVES": 2
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historySentence": "7 admitted relationships (5 beneficial-ownership disclosures, 2 capital-event relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through NETFLIX INC).",
+   "historyRelationships": 7,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 4,
+    "DOCUMENTED": 2,
+    "INFERRED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 10,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 2,
+    "rejected": 16,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C32",
+  "subject": "Boston Scientific",
+  "question": 1,
+  "questionText": "What structural relationships are forming around Boston Scientific across ownership, technology, and capital?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43rxw8-1",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "admission:OK",
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 20,
+  "capturedAt": "2026-10-11T17:34:42.685Z",
+  "probe": {
+   "snapshotId": "snap-mv43rxw8-1",
+   "canonicalId": "boston-scientific",
+   "subject": "BOSTON SCIENTIFIC CORP",
+   "relationships": 8,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historySentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historyRelationships": 8,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 2,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C33",
+  "subject": "Boston Scientific",
+  "question": 3,
+  "questionText": "What capital events involving named counterparties were reported for Boston Scientific in the last 12 months?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43s7zs-2",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.2,
+  "capturedAt": "2026-10-11T17:34:45.932Z",
+  "probe": {
+   "snapshotId": "snap-mv43s7zs-2",
+   "canonicalId": "boston-scientific",
+   "subject": "BOSTON SCIENTIFIC CORP",
+   "relationships": 8,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historySentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historyRelationships": 8,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 2,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C34",
+  "subject": "Boston Scientific",
+  "question": 7,
+  "questionText": "Which relationships around Boston Scientific dissolved or are indeterminate, and why?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43sahy-3",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 3.4,
+  "capturedAt": "2026-10-11T17:34:49.354Z",
+  "probe": {
+   "snapshotId": "snap-mv43sahy-3",
+   "canonicalId": "boston-scientific",
+   "subject": "BOSTON SCIENTIFIC CORP",
+   "relationships": 8,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historySentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historyRelationships": 8,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 2,
+    "deferred": 0
+   }
+  }
+ },
+ {
+  "case": "C35",
+  "subject": "Boston Scientific",
+  "question": 10,
+  "questionText": "What does the evidence not establish about the ownership and capital structure of Boston Scientific?",
+  "build": "4288072",
+  "snapshotId": "snap-mv43sd53-4",
+  "snapshotReady": true,
+  "relationshipChange": "done",
+  "lookups": [
+   "capital:OK",
+   "ownership:OK",
+   "8k:OK",
+   "counterparty:OK",
+   "store:OK"
+  ],
+  "pageErrors": [],
+  "seconds": 4,
+  "capturedAt": "2026-10-11T17:34:53.352Z",
+  "probe": {
+   "snapshotId": "snap-mv43sd53-4",
+   "canonicalId": "boston-scientific",
+   "subject": "BOSTON SCIENTIFIC CORP",
+   "relationships": 8,
+   "byType": {
+    "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+    "CAPITAL_EVENT_INVOLVES": 1
+   },
+   "admittedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "linkedDomains": [
+    "CAPITAL",
+    "OWNERSHIP"
+   ],
+   "links": 1,
+   "analysisSentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historySentence": "8 admitted relationships (7 beneficial-ownership disclosures, 1 capital-event relationship) connect 2 domains: CAPITAL ↔ OWNERSHIP (financing of control / control financed · through BOSTON SCIENTIFIC CORP).",
+   "historyRelationships": 8,
+   "historyError": null,
+   "synthesisCounts": {
+    "SUPPORTED": 3,
+    "DOCUMENTED": 1,
+    "UNRESOLVED": 3
+   },
+   "synthesisValidation": {
+    "statements": 7,
+    "problems": []
+   },
+   "admission": {
+    "admitted": 1,
+    "rejected": 2,
+    "deferred": 0
+   }
+  }
+ }
+]

@@ -12,7 +12,7 @@
 import { freezePool, unfreezePool } from './domaingravity.js';
 import { freezeRho, unfreezeRho, findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
 import { toTopologyNodeId } from './entityresolution.js';
-import { persistSnapshot } from './canonicalstoreclient.js';
+import { persistSnapshot, identityKeyOf } from './canonicalstoreclient.js';
 import { getAdmissionReport } from './admissionreport.js';
 import { getRelationshipChange } from './relationshipchangeservice.js';
 
@@ -94,7 +94,7 @@ function onTimeout(run) {
 // The durable record of a snapshot: its lookups, the relationship set it froze (id, type, the evidence that stood latest) and the pinned temporal result.
 function persist(snap) {
   try {
-    const refs = snap.canonicalId ? findAdmittedRelationshipsFor(toTopologyNodeId(snap.canonicalId)).map(r => ({ id: r.id, type: r.type, nuId: r.nuId, accession: latestEvidenceFor(r.id)?.provenance?.accession ?? null, predicate: latestEvidenceFor(r.id)?.predicate ?? null })) : [];
+    const refs = snap.canonicalId ? findAdmittedRelationshipsFor(toTopologyNodeId(snap.canonicalId)).map(r => ({ id: r.id, identityKey: identityKeyOf(r), type: r.type, nuId: r.nuId, accession: latestEvidenceFor(r.id)?.provenance?.accession ?? null, predicate: latestEvidenceFor(r.id)?.predicate ?? null })) : [];
     persistSnapshot({ ...snap, subjectNode: snap.canonicalId ? toTopologyNodeId(snap.canonicalId) : null }, refs);
   } catch { /* persistence is best effort */ }
 }

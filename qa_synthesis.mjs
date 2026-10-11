@@ -75,5 +75,11 @@ ok(vg && /DISSOLVED/.test(vg.text) && /8\.34% in SC 13G\/A 0001104659-24-020000 
 ok(S2.statements.some(s => /VANGUARD CAPITAL MANAGEMENT LLC/.test(s.text) && /NEW/.test(s.text)), 'a NEW holder is stated with its filing');
 ok(S2.statements.some(s => s.status === 'UNRESOLVED' && /J\.P\. Morgan Securities LLC/.test(s.text) && /Morgan Stanley/.test(s.text)), 'unresolved counterparties (ambiguous and search-limit) are named');
 
+console.log('A statement is never SUPPORTED without relationships behind it (found by the milestone-1 validator)');
+const oneDomain = buildSynthesis({ subject: 'X', relationships: [{ id: 'r1', type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', part: ['CIK:1', 'CIK:2'], nuId: {} }], evidenceFor: () => ({ provenance: { accession: 'A-1' } }), labelOf: (i) => i, formation: buildAdmittedFormation({ relationships: [{ id: 'r1', type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', part: ['CIK:1', 'CIK:2'], nuId: {} }], evidenceFor: () => ({ provenance: { accession: 'A-1' } }) }) });
+ok(oneDomain.statements[0].status === 'SUPPORTED' && oneDomain.statements[0].evidence[0].relationshipId === 'r1' && /one domain only \(OWNERSHIP\)/.test(oneDomain.statements[0].text), 'relationships in one domain only: "no formation established" is SUPPORTED by those relationships and lists them');
+const none = buildSynthesis({ subject: 'X', relationships: [], formation: buildAdmittedFormation({ relationships: [] }) });
+ok(none.statements[0].status === 'UNRESOLVED' && none.statements[0].evidence.length === 0, 'no admitted relationship at all: the statement is an absence, labelled UNRESOLVED');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

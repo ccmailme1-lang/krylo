@@ -1,0 +1,19 @@
+# Benchmark v1: operational scoring rules for milestone 1 (scorer 1)
+
+Same rubric, same 35 cases, same one-scorer method as the baseline (`scoring-rules.md`). The baseline rules, captures and scores are unchanged. The rules below apply to the delivered analysis of the complete architecture; they read the captured page text and a probe of the displayed snapshot (`src/engine/benchmarkprobe.js`). Raw total 0 to 10; the 1 to 10 scale value is the raw total rounded (0 reports as 1).
+
+| # | Criterion (points) | Rule at milestone 1 |
+|---|---|---|
+| 1 | Subject alignment (2) | As at baseline: 0 unresolved subject; 1 resolved with no subject-bound observation; 2 resolved with observations |
+| 2 | Relationship coverage and admission (2) | Domains the question concerns (same table as the baseline) that have an admitted relationship in the displayed snapshot: 0 none (or unresolved); 2 all of them; 1 some. Admission correctness holds by construction (single write path, ratified rules) |
+| 3 | Formation integrity (1) | 1 when the formation shown is built from admitted relationships only (the formation block and sentence are, for every resolved subject, including "No formation established"); 0 for an unresolved subject |
+| 4 | Structural depth and synthesis (2) | 0 when there is no SYNTHESIS, any statement's label is not supported by its evidence, or (R2) no needed domain is covered; 2 when every needed domain is covered, the needed domains are linked (several domains) or a SUPPORTED statement exists (one domain), and (R2) the synthesis connects relationships (a formation link, a recurring counterparty, a holder who is also a counterparty, or an inference); otherwise 1 |
+| 5 | Evidence attribution and traceability (1) | 1 when every synthesis statement passes the validator (below) and at least three filing accessions are shown |
+| 6 | Temporal correctness and coverage honesty (1) | As at baseline: the source-dated change section with its retrieval basis (or "nothing to compare") is shown |
+| 7 | Consistency across Analysis, MAP and History (1) | 0.5 when the MAP's Formation row equals the Analysis formation sentence on a frozen snapshot with no page errors; 0.5 when History, rebuilt from the durable store for that snapshot, shows the same formation sentence and relationship count |
+
+**Validator (criterion 5 and the synthesis check).** For every statement: it carries one of the four statuses; any statement that asserts something has evidence; a DOCUMENTED statement's accession and quoted passage match the admitted relationship's own evidence and the passage contains the counterparty name as the filing states it; a count statement ("named as a counterparty in N of M") equals the count over the admitted relationships; an INFERRED statement names what it rests on, lists relationships that exist in the frozen set and is worded as an inference; an UNRESOLVED statement about unmatched counterparties lists only counterparties in the admission report; every relationship it cites is in the frozen set.
+
+**Rules R1 and R2.** R1 is the first version (run 1). After run 1 the validator found a label/evidence defect (fixed in the product) and the scoring showed that R1 credited depth to a synthesis that did not touch the question's domains; R2 (final run) adds the coverage guard on depth and requires a connecting statement for full depth. The change from R1 to R2 was made after seeing run 1 and is disclosed in the report.
+
+**Limits.** Scorer 1 is mechanical. It judges whether labels are supported by evidence and whether the delivered structure covers and connects what the question asks; it cannot judge the quality of reasoning beyond that. The independent reviewer's scores of the eight designated cases (C01, C04, C08, C13, C17, C20, C25, C29) are kept separate and are outstanding.

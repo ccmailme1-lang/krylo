@@ -1,0 +1,48 @@
+{
+ "case": "C20",
+ "subject": "Intel",
+ "question": 1,
+ "questionText": "What structural relationships are forming around Intel across ownership, technology, and capital?",
+ "build": "4288072",
+ "snapshotId": "snap-mv43m956-1",
+ "snapshotReady": true,
+ "relationshipChange": "done",
+ "lookups": [
+  "admission:OK",
+  "capital:OK",
+  "ownership:OK",
+  "8k:TIMEOUT",
+  "counterparty:TIMEOUT",
+  "store:FAILED"
+ ],
+ "pageErrors": [],
+ "seconds": 72.4,
+ "capturedAt": "2026-10-11T17:31:13.860Z",
+ "probe": {
+  "snapshotId": "snap-mv43m956-1",
+  "canonicalId": "intel",
+  "subject": "INTEL CORP",
+  "relationships": 3,
+  "byType": {
+   "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3
+  },
+  "admittedDomains": [
+   "OWNERSHIP"
+  ],
+  "linkedDomains": [],
+  "links": 0,
+  "analysisSentence": "No formation established: the 3 admitted relationships (3 beneficial-ownership disclosures) speak to one domain only (OWNERSHIP).",
+  "historySentence": "No formation established: no admitted relationship is on record for INTEL CORP yet.",
+  "historyRelationships": 0,
+  "historyError": null,
+  "synthesisCounts": {
+   "SUPPORTED": 3,
+   "UNRESOLVED": 1
+  },
+  "synthesisValidation": {
+   "statements": 4,
+   "problems": []
+  },
+  "admission": null
+ }
+}

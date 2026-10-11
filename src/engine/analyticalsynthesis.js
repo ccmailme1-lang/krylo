@@ -25,7 +25,12 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
     .sort((a, b) => String(b.ev.filingDate).localeCompare(String(a.ev.filingDate)));
 
   // 1. The formation the admitted relationships establish (or why none).
-  if (formation) add(STATUS.SUPPORTED, admittedFormationSentence(formation, subject), (formation.formation?.relationships ?? []).slice(0, 20).map(id => ({ relationshipId: id })), { basis: 'admitted relationships' });
+  // Found by the milestone-1 validator: a statement may not be SUPPORTED without relationships behind it. With relationships but no link, the statement stands on
+  // those relationships (they speak to one domain only); with none admitted it is an absence, so it is UNRESOLVED and says so.
+  if (formation) {
+    const ids = (formation.formation ? formation.formation.relationships : relationships.map(r => r.id)).slice(0, 20).map(id => ({ relationshipId: id }));
+    add(formation.structure.relationships ? STATUS.SUPPORTED : STATUS.UNRESOLVED, admittedFormationSentence(formation, subject), formation.structure.relationships ? ids : [], { basis: 'admitted relationships' });
+  }
 
   // 2. Capital events, as the filings state them.
   for (const { r, ev } of cap.slice(0, 6)) {

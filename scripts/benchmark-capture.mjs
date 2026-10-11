@@ -57,8 +57,10 @@ for (const [subject, cases] of bySubject) {
     const text = await pg.evaluate(() => document.body.innerText);
     const mapText = (await Promise.all(pg.frames().filter(f => /structure-field/.test(f.url())).map(f => f.evaluate(() => document.body.innerText).catch(() => '')))).join('\n');
     const build = await pg.evaluate(() => window.__KRYLO_BUILD__ ?? null);
+    // measurement of the same displayed snapshot: synthesis labels against evidence, admitted structure, Analysis vs History formation (src/engine/benchmarkprobe.js)
+    const probe = state?.ready ? await pg.evaluate(async () => { const m = await import('/src/engine/benchmarkprobe.js'); return await m.probeActiveAnalysis(); }).catch(e => ({ error: String(e?.message ?? e) })) : null;
     const secs = Math.round((Date.now() - t0) / 100) / 10;
-    const rec = { case: id, subject, question: qn, questionText: q, build: build?.commit ?? build ?? null, snapshotId: state?.id ?? null, snapshotReady: !!state?.ready, relationshipChange: change, lookups: (state?.lookups ?? []).map(l => `${l.kind}:${l.state}`), pageErrors: [...errs], seconds: secs, capturedAt: new Date().toISOString() };
+    const rec = { case: id, subject, question: qn, questionText: q, build: build?.commit ?? build ?? null, snapshotId: state?.id ?? null, snapshotReady: !!state?.ready, relationshipChange: change, lookups: (state?.lookups ?? []).map(l => `${l.kind}:${l.state}`), pageErrors: [...errs], seconds: secs, capturedAt: new Date().toISOString(), probe };
     index.push(rec);
     fs.writeFileSync(`${OUT}/${id}.md`, `# ${id} · ${subject} · Q${qn}\n\n${JSON.stringify(rec, null, 2)}\n\n## Delivered analysis (page text)\n\n${text}\n\n## MAP brief text\n\n${mapText}\n`);
     console.log(`${id} ${subject.padEnd(18)} Q${String(qn).padEnd(2)} snapshot ${state?.ready ? 'ready' : 'NOT READY'} change ${change} errors ${errs.length} ${secs}s`);
