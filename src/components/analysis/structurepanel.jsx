@@ -26,6 +26,7 @@ import { synthesizeQuery } from '../../engine/querysynthesis.js';
 import { computeBriefSummary } from './structuralbrief.jsx';
 import { useOwnershipLookup } from './useownershiplookup.js';
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
+import { buildAdmittedFormation } from '../../engine/admittedformation.js';   // Step 5
 import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
@@ -160,6 +161,13 @@ function FormationMapTab({ query }) {
   const activeId   = useAnalysisStore(s => s.activeSessionId);
   const session    = activeId ? sessions[activeId] : null;
   const synthesis  = useMemo(() => synthesizeQuery(session), [session, snapKey]);
+  // Step 5: the MAP's formation is the one built from the ADMITTED relationships in the displayed snapshot; the pool's co-presence is not drawn as a formation.
+  const admittedFormation = useMemo(() => {
+    if (subjScope.kind !== 'ENTITY') return null;
+    const mags = Object.fromEntries(Object.entries(domainPressures).map(([d, p]) => [d, p.magnitude]));
+    return buildAdmittedFormation({ relationships: findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId)), evidenceFor: latestEvidenceFor, labelOf: (id) => String(NODE_LABELS[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, ''), domainMagnitudes: mags });
+  }, [subjScope, domainPressures, rhoTick, snapKey]);
+  const formationForMap = admittedFormation?.formation ?? null;
   const brief = useMemo(() => {
     const activeDomainPressures = Object.values(domainPressures).filter(p => p.signalCount > 0);
     const entityCanonicalRelationships = subjScope.kind === 'ENTITY'
@@ -167,12 +175,12 @@ function FormationMapTab({ query }) {
       : [];
     const ownershipFailure = subjScope.kind === 'ENTITY' ? lookup.error : null;
     const { subjectLabel, briefSentence, rows } = computeBriefSummary({
-      subjScope, activeDomainPressures, fieldFormation: subjScope.kind === 'ENTITY' ? subjectFormation : fieldFormation, ambientFormation: fieldFormation,
+      subjScope, activeDomainPressures, fieldFormation: subjScope.kind === 'ENTITY' ? subjectFormation : fieldFormation, ambientFormation: fieldFormation, admittedFormation,
       structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
     });
     const attribution = subjScope?.contract?.subject?.attribution ?? null;
     return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows, attribution };
-  }, [subjScope, domainPressures, fieldFormation, subjectFormation, synthesis, lookup.error, lookup.pending, rhoTick]);
+  }, [subjScope, domainPressures, fieldFormation, subjectFormation, synthesis, lookup.error, lookup.pending, rhoTick, admittedFormation]);
 
   // KRYL-1378 -- what the MAP draws beyond the formation graph, all from data that already exists:
   //  * states: classifyConvergenceState() per domain, the same classifier the cones and the report use, with
@@ -287,11 +295,11 @@ function FormationMapTab({ query }) {
     return () => { cancelled = true; console.log('[KRYL-1334-DIAG] effect cleanup ran (cancelled=true) -- component unmounted or query changed again'); };
   }, [query, captureTick]);
 
-  const fieldFormationRef = useRef(fieldFormation);
+  const fieldFormationRef = useRef(formationForMap);
   const domainSignalCountsRef = useRef(domainSignalCounts);
   const formationHistoryRef = useRef(formationHistory);
   const entityRelationshipsRef = useRef(entityRelationships);
-  useEffect(() => { fieldFormationRef.current = fieldFormation; }, [fieldFormation]);
+  useEffect(() => { fieldFormationRef.current = formationForMap; }, [formationForMap]);
   useEffect(() => { domainSignalCountsRef.current = domainSignalCounts; }, [domainSignalCounts]);
   useEffect(() => { formationHistoryRef.current = formationHistory; }, [formationHistory]);
   useEffect(() => { entityRelationshipsRef.current = entityRelationships; }, [entityRelationships]);
@@ -304,8 +312,8 @@ function FormationMapTab({ query }) {
 
   useEffect(() => {
     if (!iframeReady.current || !iframeRef.current) return;
-    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras }, '*');
-  }, [fieldFormation, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras]);
+    iframeRef.current.contentWindow.postMessage({ type: 'krylo-field-formation', formation: formationForMap, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras }, '*');
+  }, [formationForMap, domainSignalCounts, formationHistory, entityRelationships, entitySubjectLabel, brief, mapExtras]);
 
   useEffect(() => {
     function onMapReady(e) {

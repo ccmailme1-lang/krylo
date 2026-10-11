@@ -21,30 +21,7 @@ import { materializeSignal, attenuateSecondary } from '../rkmaterializer.js';
 
 // ── Event class → domain(s) map (locked) ─────────────────────────────────────
 // Each event class maps to 1-2 domains. Multi-domain events emit one signal per domain.
-const EVENT_DOMAIN_MAP = {
-  EXECUTIVE_CHANGE:      ['capital', 'labor'],
-  BANKRUPTCY:            ['capital', 'ownership'],
-  BANKRUPTCY_TRIGGER:    ['capital', 'ownership'],
-  ACQUISITION:           ['capital', 'ownership'],
-  DEBT_ISSUANCE:         ['capital'],
-  EQUITY_OFFERING:       ['capital', 'ownership'],
-  EARNINGS_ANNOUNCEMENT: ['capital'],
-  DELISTING_NOTICE:      ['capital', 'ownership'],
-  AUDITOR_CHANGE:        ['capital'],
-  FINANCIAL_RESTATEMENT: ['capital'],
-  MATERIAL_CONTRACT:     ['capital'],
-  CHANGE_IN_CONTROL:     ['ownership', 'capital'],
-  OPERATIONAL_SHUTDOWN:  ['labor', 'capital'],
-  REGULATORY_ACTION:     ['technology', 'capital'],
-  CONTRACT_TERMINATION:  ['capital'],
-  CHARTER_AMENDMENT:     ['ownership'],
-  SHAREHOLDER_VOTE:      ['ownership'],
-  ASSET_IMPAIRMENT:      ['capital'],
-  SECURITY_MODIFICATION: ['capital', 'ownership'],
-  ABS_UPDATE:            ['capital'],
-  MINE_SAFETY:           ['labor'],
-  UNKNOWN_MATERIAL_EVENT:['capital'],
-};
+import { EVENT_DOMAIN_MAP } from '../eventdomains.js';   // moved to its own module; re-exported below
 
 // Fracture events per §20 Direction Honesty Principle — polarity = POLARITY.NEGATIVE.
 const FRACTURE_EVENT_CLASSES = new Set([

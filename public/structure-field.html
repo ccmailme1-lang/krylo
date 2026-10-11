@@ -321,6 +321,7 @@
       <div class="k">Field · live</div><div class="v" id="brief-row-field"></div>
       <div class="k">Subject</div><div class="v" id="brief-row-subject"></div>
       <div class="k">Relationships</div><div class="v"><span id="brief-row-rels"></span><button id="rel-chip" type="button" aria-expanded="false"></button></div>
+      <div class="k">Formation</div><div class="v" id="brief-row-formation"></div>
     </div>
     <div class="rel-expand" id="rel-expand" hidden></div>
   </div>
@@ -329,7 +330,7 @@
 <div class="hud hud-top">
   <div class="mark">STRUCTURAL RESOLUTION FIELD</div>
   <div class="status">
-    FORMATIONS <b id="n-nodes">—</b> &nbsp; CO-PRESENT PAIRS <b id="n-edges">—</b> &nbsp; FORMATION INTEGRITY <b id="integrity">—</b>
+    DOMAINS LINKED <b id="n-nodes">—</b> &nbsp; ADMITTED LINKS <b id="n-edges">—</b> &nbsp; ADMITTED RELATIONSHIPS <b id="integrity">—</b>
   </div>
 </div>
 
@@ -344,7 +345,7 @@
     </div>
   </div>
   <div class="map-key" id="map-key">
-    <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="#66FF00" stroke-width="1.5"/></svg>Co-present domain pair</span>
+    <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="#66FF00" stroke-width="1.5"/></svg>Domain link through admitted relationships</span>
     <span><svg width="22" height="10" aria-hidden="true"><line x1="0" y1="5" x2="22" y2="5" stroke="#e0e0dc" stroke-width="1.5" stroke-dasharray="4 4"/></svg>Subject relationship</span>
     <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/></svg>Ring: field state of the domain</span>
     <span><svg width="18" height="18" aria-hidden="true"><circle cx="9" cy="9" r="7.5" fill="#000" stroke="#e0e0dc" stroke-width="1.5"/><circle cx="9" cy="9" r="4" fill="#e0e0dc"/></svg>Core: observations bound to the subject</span>
@@ -777,6 +778,7 @@
         setRich(document.getElementById('brief-row-field'), brief.rows.field);
         setRich(document.getElementById('brief-row-subject'), brief.rows.subject);
         setRich(document.getElementById('brief-row-rels'), brief.rows.relationships);
+        setRich(document.getElementById('brief-row-formation'), brief.rows.formation ?? '');
         briefRowsEl.hidden = false;
         briefSentenceEl.hidden = true;
       } else {
@@ -1675,7 +1677,7 @@
     // (per BRIEF's own doctrine: NO_FORMATION_ESTABLISHED is a stated absence, not a low score,
     // so '0.00' would misrepresent it) -- but node/edge COUNTS are real, meaningful zeros once
     // a message has actually arrived, distinct from '—' meaning "no message received yet".
-    integrityEl.textContent = realFormation ? realFormation.existence.toFixed(2) : '—';
+    integrityEl.textContent = realFormation ? (typeof realFormation.existence === 'number' ? realFormation.existence.toFixed(2) : String(realFormation.relationships?.length ?? '—')) : '—';
     nEdgesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.graph.edges.length : 0) : '—';
     nNodesEl.textContent    = hasReceivedFormation ? String(realFormation ? realFormation.participatingDomains.length : 0) : '—';
   }

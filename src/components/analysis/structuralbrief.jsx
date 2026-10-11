@@ -16,6 +16,7 @@
 
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
+import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';   // Step 5: formation from admitted relationships only
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
@@ -118,7 +119,7 @@ export function selectPairSupport(evidenceByDomain, a, b, perSide = 2) {
   return { sideA, sideB, missing, complete: missing.length === 0 };
 }
 
-export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false, ambientFormation = null }) {
+export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending = false, ambientFormation = null, admittedFormation = null }) {
   const isEntity = subjScope?.kind === 'ENTITY';
   const structurallyInterpretable = !isEntity && structuralQuery?.state === 'INTERPRETABLE';
   // KRYL-1372: a subject the Query Contract selected but the registry could not resolve stays the subject.
@@ -163,6 +164,9 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     ? ` Separately, ${entityCanonicalRelationships.length} canonical relationship${entityCanonicalRelationships.length !== 1 ? 's' : ''} ` +
       `admitted for this entity: ${Object.entries(entityCanonicalRelationships.reduce((acc, r) => { acc[r.type] = (acc[r.type] ?? 0) + 1; return acc; }, {})).map(([type, n]) => `${n} ${type}`).join(', ')}.`
     : '';
+  // Step 5: what the ADMITTED relationships establish (formation) is stated on its own; the pool's co-presence below is a contextual lead and says so.
+  const admittedSentence = isEntity && admittedFormation ? admittedFormationSentence(admittedFormation, subjScope.entity.name) : null;
+  const admittedClause = admittedSentence ? ` Formation (admitted relationships only): ${admittedSentence}` : '';
   const failureClause = ownershipFailure
     ? ` ${ownershipFailureNotice(ownershipFailure, entityCanonicalRelationships.length)}`
     : (ownershipPending ? (entityCanonicalRelationships.length ? ' Checking SEC ownership filings — more relationships may follow.' : ' Checking SEC ownership filings — canonical relationships are not known yet.') : '');
@@ -174,13 +178,13 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     ? domainLines.reduce((n, p) => n + (A(p.domain, subjScope).formationObservations?.length ?? 0), 0)
     : 0;
   const subjectLevel = subjectBoundCount > 0
-    ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
+    ? ` Subject level: ${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''} bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them (contextual leads)` : ''}.`
     : (ownershipPending ? ` Subject level: checking SEC filings for observations bound to ${subjectLabel}.` : ` Subject level: no observations bound to ${subjectLabel} yet.`);
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
-        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`
-        : `${fieldLevelOpen}but fewer than two domains are connected — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${failureClause}`)
+        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`
+        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`)
     : selectedSubject
       ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it. ` +
         `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
@@ -204,16 +208,17 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     // **...** marks the key numbers for bold in the MAP panel (structure-field.html parses it; plain text elsewhere).
     field: `**${domainLines.length} of 6 domains** carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}); ` +
       (relationshipCount > 0
-        ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present. `
-        : 'fewer than two domains are connected. ') +
+        ? `**${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''}** co-present (contextual leads, not admitted relationships). `
+        : 'fewer than two domains are co-present. ') +
       `Field-level, not bound to ${subjectLabel}.`,
     subject: subjectBoundCount > 0
-      ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them` : ''}.`
+      ? `**${subjectBoundCount} observation${subjectBoundCount !== 1 ? 's' : ''}** bound to ${subjectLabel}${ambientFormation && subjectEdgeCount > 0 ? `, with ${subjectEdgeCount} domain pair${subjectEdgeCount !== 1 ? 's' : ''} co-present among them (contextual leads)` : ''}.`
       : (ownershipPending ? `Checking SEC filings for observations bound to ${subjectLabel}…` : `No observations bound to ${subjectLabel} yet.`),
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
       : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${subjectLabel}.`)) +
       (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : ''),
+    formation: admittedSentence,                 // Step 5: the admitted-relationship formation (or why none is established)
   } : (!isEntity && !structurallyInterpretable) ? {
     // No subject resolved and no structural participants: the field alone, stated as rows.
     field: domainLines.length
@@ -264,8 +269,12 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
     ? findAdmittedRelationshipsFor(toTopologyNodeId(subjScope.canonicalId))
     : [];
   const ownershipFailure = isEntity ? lookup.error : null;
+  // Step 5: the formation is built from the ADMITTED relationships in the displayed snapshot (the frozen view), never from the pool's co-presence.
+  const admittedFormation = isEntity
+    ? buildAdmittedFormation({ relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: (id) => String(NODE_LABELS[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, ''), domainMagnitudes: Object.fromEntries((activeDomainPressures ?? []).map(p => [p.domain, p.magnitude])) })
+    : null;
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
-    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation,
+    subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation, admittedFormation,
   });
 
 
@@ -315,6 +324,17 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           components" is the anchor question, so the answer sits right under it, not three
           sections down. */}
       <Row label="RELATIONSHIPS">
+        {isEntity && admittedFormation && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>FORMATION · FROM ADMITTED RELATIONSHIPS ONLY</div>
+            <div>{admittedFormationSentence(admittedFormation, subjectLabel)}</div>
+            {admittedFormation.formation?.links.map((l, i) => (
+              <div key={`af${i}`} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>
+                {l.a} ↔ {l.b} — {l.pairType} · {l.basis === 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' ? 'one admitted relationship speaks to both' : `connected through ${l.via.map(v => v.label).slice(0, 3).join(', ')}`} · {l.relationshipIds.length} admitted relationship{l.relationshipIds.length !== 1 ? 's' : ''} (listed below with their filings)
+              </div>
+            ))}
+          </div>
+        )}
         {structurallyInterpretable && entityRelPairs.length ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: edges.length ? 14 : 0 }}>
             {entityRelPairs.map((r, i) => (
@@ -343,7 +363,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                 distinction -- a guest could misread domain co-presence as an admitted fact
                 about named entities. Same question split already enforced in KRYL-1341's fix;
                 this closes the remaining asymmetry (one block had a header, the other didn't). */}
-            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>{isEntity ? `CROSS-DOMAIN CO-PRESENCE · SUPPORTED BY ${String(subjectLabel).toUpperCase()}'S OWN OBSERVATIONS (not admitted ρ)` : 'CROSS-DOMAIN CO-PRESENCE (not admitted ρ)'}</div>
+            <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>{isEntity ? `CROSS-DOMAIN CO-PRESENCE · SUPPORTED BY ${String(subjectLabel).toUpperCase()}'S OWN OBSERVATIONS (contextual leads: not admitted ρ, not a formation)` : 'CROSS-DOMAIN CO-PRESENCE (contextual leads: not admitted ρ, not a formation)'}</div>
             {edges.map((e, i) => {
               // Fix 2: admittedType is a fixed category per domain-pair (real, but the same
               // label every time those two domains co-occur) -- attach the actual dated
