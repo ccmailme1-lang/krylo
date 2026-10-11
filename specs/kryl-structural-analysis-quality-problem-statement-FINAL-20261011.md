@@ -1,6 +1,6 @@
 # KRYLO — Structural Analysis Quality Problem Statement
 
-Version: FINAL for architects · Date: 2026-10-11 · Sections 1 to 7 are the Founder's problem statement, unchanged. Sections 8 to 12 are added context taken from the repository and the work done to date; they describe the current state and the constraints on the design, and they do not prescribe the solution.
+Version: FINAL for architects · Date: 2026-10-11 · Sections 1 to 7 are the Founder's problem statement, unchanged. Sections 8 to 13 are added context taken from the repository and the work done to date; they describe the current state and the constraints on the design, and they do not prescribe the solution. Each added claim carries a basis label: V = verified this week by reading the code or observing a running development build; D = taken from project documentation or earlier records and not re-verified.
 
 ## 1. Problem
 
@@ -124,26 +124,26 @@ Return one integrated architectural proposal containing:
 
 ---
 
-## 8. Current state of the pipeline (verified in the repository, 2026-10-11)
+## 8. Current state of the pipeline (basis: V verified this week, D documentation, not re-verified)
 
-How an analysis is produced today, source to screen. Items marked (verified) were read in code or observed in a running build this week; the rest are stated from documentation and were not re-verified.
+How an analysis is produced today, source to screen.
 
-| Stage | What exists | Observed limit |
-|---|---|---|
-| Entity resolution | A 59-entry registry plus runtime admission of verified SEC filers by CIK (identity only). (verified) | Names SEC lists differently stay unresolved. Runtime admission is in memory per page session. |
-| Observation | Connectors dispatch signals into one shared pool (`domaingravity.js`): domain, confidence, polarity, source, entity id, event date. 8-K filings now also carry the event class, accession, and, for filings with capital-event items, a quoted amount, instrument and named counterparties. (verified) | Most pool entries are source, class and date only. The pool is a 30-minute window of signals, not a store of relationships. |
-| Canonical relationships | Admission engine with a closed set of ratified types; entity-scoped admission through `admitAndProject`. Only the ownership-disclosure type (Schedule 13D/13G) is produced from live filings. (verified) | One relationship type is produced from live evidence. Canonical relationships live in memory per runtime; no persistence for this path. |
-| Temporal comparison | Source-dated comparison of two adjacent 12-month periods for ownership: existence (new, persisting, dissolved, indeterminate), magnitude, configuration, with explicit coverage rules. (verified) | It runs on its own retrieval path and result store. It does not read canonical relationships and does not feed formation. |
-| Formation | Inference over the pool: domains co-present with enough pressure form edges; formation existence is a deterministic product of cohesion, pressure coherence and groundedness. (verified) | Its input is the signal pool, not admitted relationships. Cross-domain lines in the brief are co-presence and are labelled "not admitted". |
-| Delivery | Analysis brief, MAP (iframe), domain tabs, header state, relationship-change block, and a persisted formation-history scrubber (a separate server-side record). | The scrubber's persisted snapshots (KRYL-1334) are a different object from the analytical snapshot below and are not merged. |
-| Reproducibility | An analytical snapshot freezes the pool and the canonical relationships at lookup settlement; one explicit atomic refresh replaces it; the relationship-change result is pinned to it (KRYL-1398, in Review). (verified in a running build) | It makes the answer repeatable. It does not add analytical depth. |
+| Stage | What exists | Observed limit | Basis |
+|---|---|---|---|
+| Entity resolution | A fixed registry (documented as 59 entries) plus runtime admission of verified SEC filers by CIK, identity only. | Names SEC lists differently stay unresolved. Runtime admission is in memory per page session. | Runtime admission and its limits V; registry size D |
+| Observation | Connectors dispatch signals into one shared pool (`domaingravity.js`): domain, confidence, polarity, source, entity id, event date. 8-K signals also carry the event class and accession; for filings with capital-event items, a quoted amount, instrument and named counterparties. | Most pool entries are source, class and date only. The pool is a 30-minute window of signals, not a store of relationships. | V |
+| Canonical relationships | Admission engine with a closed set of ratified types; entity-scoped admission through `admitAndProject`. Only the ownership-disclosure type (Schedule 13D/13G) is produced from live filings. | One relationship type is produced from live evidence. Canonical relationships live in memory per runtime; no persistence for this path. | V (the in-memory store and the single live producer were read in code this week) |
+| Temporal comparison | Source-dated comparison of two adjacent 12-month periods for ownership: existence (new, persisting, dissolved, indeterminate), magnitude, configuration, with explicit coverage rules. | It runs on its own retrieval path and result store. It does not read canonical relationships and does not feed formation. | V |
+| Formation | Inference over the pool: domains co-present with enough pressure form edges; formation existence is a deterministic product of cohesion, pressure coherence and groundedness. | Its input is the signal pool, not admitted relationships. Cross-domain lines in the brief are co-presence and are labelled "not admitted". | V |
+| Delivery | Analysis brief, MAP (iframe), domain tabs, header state, relationship-change block. A persisted formation-history scrubber is fed by a separate server-side record (KRYL-1334). | The scrubber's persisted snapshots are a different object from the analytical snapshot below and are not merged. | Brief, MAP, tabs, header V; the server-side scrubber record D (only the client fetch was seen in code) |
+| Reproducibility | An analytical snapshot freezes the pool and the canonical relationships at lookup settlement; one explicit atomic refresh replaces it; the relationship-change result is pinned to it (KRYL-1398, in Review). | It makes the answer repeatable. It does not add analytical depth. | V in a running development build; awaiting the Founder's on-screen check |
 
-## 9. Existing contracts that bind the design
+## 9. Existing contracts that bind the design (basis: D, from the project's governing documents; not re-checked against code)
 
 These are already ratified or locked in the product; the architecture should work inside them or propose a recorded change.
 
 * **Six canonical domains only:** TECHNOLOGY, CAPITAL, KNOWLEDGE, LABOR, MEDIA, OWNERSHIP.
-* **Formation is not a verdict (constitutional).** KRYLO presents substantiated structure; the guest derives meaning, prediction and decision. The Non-Inference Boundary bars converting observed structure into an unsupported conclusion, prediction, recommendation, risk judgment, prioritization or prescribed action. It is a boundary on conversion, not on presentation: structure that satisfies the admission and formation contracts is shown. **Design tension to resolve explicitly:** this statement asks for "structural significance" and "analytical implications". The architecture must define where evidence-grounded significance (what the structure shows about dependencies, concentration, control or change) ends and unsupported inference begins.
+* **Formation is not a verdict (constitutional).** KRYLO presents substantiated structure; the guest derives meaning, prediction and decision. The Non-Inference Boundary bars converting observed structure into an unsupported conclusion, prediction, recommendation, risk judgment, prioritization or prescribed action. It is a boundary on conversion, not on presentation: structure that satisfies the admission and formation contracts is shown. **Design tension (see section 13):** this statement asks for "structural significance" and "analytical implications".
 * **Direction honesty:** every domain pressure carries magnitude and polarity (constructive or fracture); suppressing a fracture signal is treated as fabrication by omission.
 * **Route, don't aggregate:** routing operates on atomic or minimally normalized inputs; aggregation only after routing.
 * **Orthogonal axes:** scoring axes must be independent unless declared dependent.
@@ -151,7 +151,7 @@ These are already ratified or locked in the product; the architecture should wor
 * **Signal ingestion:** normalize to 0 to 100, tag source, domain, signal, confidence and time, dispatch through the router; no single source dominates.
 * **Closed-loop principle:** a decision is complete when its outcome is observed, attributed and incorporated; attribution is the highest-risk layer; ranking should weight earliness and non-consensus, not only past leverage.
 
-## 10. Decisions already made (not reopened by this statement)
+## 10. Decisions already made (not reopened by this statement; basis: D, from the recorded specifications)
 
 * Temporal comparison: two adjacent 12-month periods; dates are source event dates.
 * Ownership magnitude: 1.0 percentage point on the same share class and reporting person.
@@ -162,22 +162,30 @@ These are already ratified or locked in the product; the architecture should wor
 * Evidence ladder for relationships: lead, supported connection, established relationship, established structural change; entity identity, relationship existence and change are separate questions.
 * Counterparty matching outcomes: same entity confirmed, affiliation confirmed, transaction link confirmed, candidate match, unresolved.
 
-## 11. Evidence of the gap
+## 11. Evidence of the gap (basis: V unless marked)
 
-* Reviewer scores on delivered analyses of tested subjects have been in the 3 to 7 range on the 1 to 10 scale; a single subject scored 6 on the working rubric and 4 from an independent reviewer on the same page after the evidence work. The consistent reading: more auditable, not yet structurally deeper.
-* A fixed, representative benchmark does not exist. The query corpus (57) tests query parsing, not analytical quality; one benchmark run exists from 2026-10-06.
+Scores are not directly comparable across rows: they were given to different outputs, by different scorers, on different measures.
+
+| Score | Output scored | Scorer and measure |
+|---|---|---|
+| 6/10 | One delivered analysis page of a tested subject (subject unnamed), build of 2026-10-10 | The engineering assistant, using the working rubric: four analytical items plus a snapshot-consistency gate |
+| 4/10 | The same page | An independent reviewer, product-quality view of the structural answer to the question asked |
+| 3 to 7 | Earlier pages of other tested subjects and builds | Founder and reviewers, 1 to 10 product-quality scale; recorded in earlier reviews (D) |
+
+What the two scores on the same page show together: the evidence handling was judged sound and the structural answer was judged weak. They measure different things and should not be averaged or ranked against each other.
+
+* A fixed, representative benchmark does not exist. The query corpus (57 queries) tests query parsing, not analytical quality; one benchmark run exists from 2026-10-06 (D).
 * Engineering evidence is strong and does not move the analytical score: unit and live suites pass for the classifier, retrieval, extraction, snapshot and render paths; about 120 test suites run, with 21 long-standing failures unchanged by recent work.
-* Capital-event extraction works on filings that carry capital-event items (amount, instrument and named counterparties are quoted with the supporting passage) and correctly shows nothing for subjects whose filings do not. Filings reported under Item 8.01 ("Other Events") are not read.
+* Capital-event extraction works on filings that carry capital-event items (amount, instrument and named counterparties are quoted with the supporting passage) and correctly shows nothing for subjects whose filings do not.
 
 ## 12. Open decisions, risks and known limits
 
-Open (Founder):
+Open decisions on the core problem (Founder):
 1. Which additional relationship types to ratify; the set is closed.
 2. Whether formation should consume only admitted relationships, with co-presence retained only as labelled contextual leads (replacing the current mechanism), or run alongside it.
 3. Whether the temporal comparison moves onto the canonical relationship substrate.
-4. Whether capital-event extraction should read Item 8.01 filings.
-5. Persistence of canonical relationships across sessions and runtimes (currently none for the live path).
-6. The shape and size of the representative benchmark; it must stay light enough not to delay delivery.
+4. Persistence of canonical relationships across sessions and runtimes (currently none for the live path).
+5. The shape and size of the representative benchmark; it must stay light enough not to delay delivery.
 
 Risks and limits to carry into the proposal:
 * A replacement of an existing mechanism (formation input) must be declared as a replacement, not added beside it.
@@ -185,3 +193,15 @@ Risks and limits to carry into the proposal:
 * Rule-based extraction from filing text is conservative and incomplete by design (amounts without a currency symbol and counterparties without a legal suffix are not extracted); other relationship types will need their own source-grounded admission rules.
 * Reproducibility mechanisms must not freeze incorrect or incomplete analysis into a stable result.
 * Environment: all work to date is on a development machine; nothing described here is deployed to production.
+
+Bounded enhancement, separate from the core problem (not for the architects to solve): whether capital-event extraction should also read filings reported under Item 8.01 ("Other Events"). It is a narrow extension of an existing extractor, to be decided on its own, and should not shape the architecture.
+
+## 13. Question for the architects (added): significance versus inference
+
+Section 2 asks for structural significance. The product's constitutional rule is that formation is not a verdict. The architects should define how KRYLO can explain what an evidence-supported structure means without turning formation into a verdict.
+
+The distinction to make explicit:
+* **Structural significance:** what the admitted relationships and their evidence establish about the structure, for example a concentration of ownership or a documented dependency.
+* **Inference:** what the structure might imply beyond what the evidence establishes, for example future behavior, strategic intent, or an unproven causal effect.
+
+The architecture should allow meaningful interpretation without treating every interpretation as established fact. It should make the evidentiary boundary explicit, not eliminate interpretation altogether: every statement of significance should be traceable to the relationships and sources that establish it, and anything beyond them should be shown as outside what the evidence supports.
