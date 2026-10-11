@@ -96,9 +96,15 @@ function freezeRun(run) {
   if (_run === run) _run = null;
   const lookups = [...run.lookups.values()].map(l => ({ kind: l.kind, state: l.state, error: l.error, finishedAt: l.finishedAt }));
   if (run.refresh) {
-    // A refresh with nothing newly obtained (every lookup failed or timed out) is a failed refresh: keep the last valid snapshot.
+    // A refresh may not replace a good analysis with a worse one: if any lookup that was OK in the current snapshot is not OK now
+    // (failed or timed out), or nothing was obtained at all, the refresh fails and the last valid snapshot stays.
+    const was = new Map((_active?.lookups ?? []).map(l => [l.kind, l.state]));
+    const worse = lookups.filter(l => was.get(l.kind) === 'OK' && l.state !== 'OK').map(l => `${l.kind} ${l.state === 'TIMEOUT' ? 'timed out' : 'failed'}`);
     const obtained = lookups.some(l => l.state === 'OK');
-    if (lookups.length && !obtained) { _refresh = { running: false, error: 'the refresh obtained nothing new (every lookup failed or timed out); the previous analysis is unchanged' }; emit(); return; }
+    if (worse.length || (lookups.length && !obtained)) {
+      _refresh = { running: false, error: `${worse.length ? worse.join(', ') : 'every lookup failed or timed out'}; the previous analysis is unchanged` };
+      emit(); return;
+    }
   }
   try {
     const at = Date.now();

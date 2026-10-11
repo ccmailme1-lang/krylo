@@ -87,7 +87,25 @@ ok(second.id === rid && second.id !== first.id && !same(firstSurf, surfaces()), 
 ok(getSnapshotState().history.length === 2 && getSnapshotState().history[0].id === first.id, 'the previous run stays identifiable in the session history');
 const keep = surfaces();
 beginAnalysis('q four', { refresh: true }); expectLookup('ownership', { canonicalId: CID }); armSettlement(); settleLookup('ownership', 'HTTP 500');
-ok(getSnapshotState().active.id === second.id && same(keep, surfaces()) && /obtained nothing new/.test(getSnapshotState().refresh.error ?? ''), 'a refresh in which every lookup fails keeps the last valid snapshot and states why');
+ok(getSnapshotState().active.id === second.id && same(keep, surfaces()) && /ownership failed.*previous analysis is unchanged/.test(getSnapshotState().refresh.error ?? ''), 'a refresh in which every lookup fails keeps the last valid snapshot and states why');
+
+{
+  // a refresh in which one earlier-OK lookup fails (others OK) is also a failed refresh: never replace a good analysis with a worse one
+  _resetSnapshots();
+  beginAnalysis('q six'); expectLookup('ownership', { canonicalId: CID }); expectLookup('8k', { canonicalId: CID }); expectLookup('capital', { canonicalId: CID }); armSettlement();
+  settleLookup('ownership'); settleLookup('8k'); settleLookup('capital');
+  const good = getSnapshotState().active.id; const goodSurf = surfaces();
+  push('CAPITAL', 95);
+  beginAnalysis('q six', { refresh: true }); expectLookup('ownership', { canonicalId: CID }); expectLookup('8k', { canonicalId: CID }); expectLookup('capital', { canonicalId: CID }); armSettlement();
+  settleLookup('ownership', 'HTTP 503'); settleLookup('8k', 'HTTP 503'); settleLookup('capital');
+  ok(getSnapshotState().active.id === good && same(goodSurf, surfaces()) && /ownership failed, 8k failed/.test(getSnapshotState().refresh.error ?? ''), 'a refresh where earlier-OK lookups fail (capital still OK) keeps the last valid snapshot and names what failed');
+  // the same lookups failing is acceptable when they had already failed in the current snapshot
+  _resetSnapshots();
+  beginAnalysis('q seven'); expectLookup('ownership', { canonicalId: CID }); armSettlement(); settleLookup('ownership', 'HTTP 503');
+  const first = getSnapshotState().active.id;
+  beginAnalysis('q seven', { refresh: true }); expectLookup('ownership', { canonicalId: CID }); expectLookup('8k', { canonicalId: CID }); armSettlement(); settleLookup('ownership', 'HTTP 503'); settleLookup('8k');
+  ok(getSnapshotState().active.id !== first, 'a refresh is accepted when nothing got worse than the current snapshot (a lookup that was already failed may fail again)');
+}
 
 console.log('Pinned relationship-change result');
 _resetSnapshots();

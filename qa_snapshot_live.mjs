@@ -109,6 +109,9 @@ for (const [kind, q] of ENTITIES) {
   ok(retr(after.text) && retr(after.text) !== retr(before.text), `the pinned relationship-change result was replaced together with the snapshot (retrieved ${retr(before.text)} then ${retr(after.text)})`);
   const sumAfter = Object.values(after.dom).reduce((n, v) => n + (v ? Number(String(v).split('/')[0]) : 0), 0);
   ok(sumAfter === Number(after.briefFieldSignals) && (after.headerObs == null || after.headerObs === after.briefFieldSignals), 'after the refresh the surfaces agree with each other again (no mixed generation)');
+  const capA = after.dom.CAPITAL ? String(after.dom.CAPITAL).split('/') : null, tabA = after.tabCapital ? after.tabCapital.split('/') : null;
+  ok(!capA || !tabA || (capA[1] === tabA[0] && capA[0] === tabA[2]), `after the refresh the By Domain panel CAPITAL (${after.tabCapital}) = brief CAPITAL (${after.dom.CAPITAL})`);
+  ok(after.tabCapital !== before.tabCapital || before.snap.id !== after.snap.id, 'the By Domain panel was re-read for the new snapshot');
   await pg.waitForTimeout(8000); const a2 = await surfaces(pg);
   ok(keyOf(after) === keyOf(a2), 'the new snapshot is stable after the swap');
   // deterministic pre-freeze gate: open a run that cannot settle yet, look at the page, then let it settle

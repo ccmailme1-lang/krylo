@@ -115,7 +115,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
       const fresh = prior && (prior.state === 'running' || (prior.finishedAt && Date.now() - prior.finishedAt < 600_000));
       if (refresh || !fresh) {
         const chg = runRelationshipChange({ issuerCik: scope.entity.identifiers.edgar, issuerName: scope.entity.name, canonicalId: scope.canonicalId });
-        chg.then((e) => { if (refresh) settleLookup('change', e?.state === 'failed' ? e.error : null); }).catch((e) => { if (refresh) settleLookup('change', String(e?.message ?? e)); });
+        chg.then((e) => { if (refresh) settleLookup('change', e?.state === 'failed' ? e.error : (e?.result?.coverage && e.result.coverage.complete === false ? 'the relationship-change retrieval was incomplete' : null)); }).catch((e) => { if (refresh) settleLookup('change', String(e?.message ?? e)); });
       }
       // KRYL-1350 -- capture this admission as formation snapshots (one batch; the server stamps
       // capture time and decides what is a material change), THEN tell readers it landed so the

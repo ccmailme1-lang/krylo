@@ -16,6 +16,7 @@ import { subjectScope } from '../../engine/subjectscope.js';
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 import { frameHeadline } from '../../engine/frameclassify.js';
 import { A as adSubject, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
 
 // DEF-1374: possessive of a display name ("NVIDIA’s", "Meta Platforms’"); the old line used the lowercase slug ("nvidia's", "meta-platforms's").
 const possessive = (name) => (/s$/i.test(String(name)) ? `${name}’` : `${name}’s`);
@@ -156,7 +157,8 @@ function DomainScroll({ domain, scope, pressure }) {
   }, [refreshTick, domain, scope]);
   useEffect(() => { setRefreshTick(0); }, [domain, scope]);
 
-  const ad = useMemo(() => adSubject(domain, scope), [domain, scope, refreshTick]);
+  const snapKey = useAnalyticalSnapshot().snapKey; // KRYL-1398: re-read the (frozen) pool once per snapshot, including after a Refresh
+  const ad = useMemo(() => adSubject(domain, scope), [domain, scope, refreshTick, snapKey]);
   if (!di) return <Absent reason={`No I_d primitive for ${domain}.`} />;
 
   const rels = relationshipsFor(domain);
