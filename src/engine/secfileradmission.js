@@ -23,6 +23,22 @@ export const normalizeEntityName = (s) => String(s ?? '').toLowerCase().replace(
 const _log = [];                                   // provenance of every verification attempt, newest last
 export const getAdmissionLog = () => [..._log];
 
+// KRYL-1407: what the canonical name source said about a name that did NOT resolve (a suggestion or a list of candidates; never an identity).
+const _resolution = new Map();
+const keyOf = (t) => String(t ?? '').trim().toLowerCase();
+export const getNameResolution = (text) => _resolution.get(keyOf(text)) ?? null;
+/** The sentence appended to "its entity is not resolved": the closest listed registrant, explicitly not assumed. '' when there is nothing to say. */
+export function nameResolutionNote(text) {
+  const r = getNameResolution(text); if (!r?.candidates?.length) return '';
+  const names = r.candidates.slice(0, 4).map(c => c.name).join('; ');
+  if (r.tier === 'NEAR') return ` Closest listed registrant: ${names}, not assumed.`;
+  if (r.tier === 'AMBIGUOUS') return ` Several listed registrants match: ${names}. None is assumed.`;
+  if (r.tier === 'UNVERIFIED') return ` Listed registrant: ${names}; its annual filings could not be confirmed, so it is not assumed.`;
+  return '';
+}
+export const _clearNameResolutionForTests = () => _resolution.clear();
+const noteResolution = (text, r) => { _resolution.set(keyOf(text), r); try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('krylo-name-resolution', { detail: { text } })); } catch { /* no window */ } };
+
 // "Broadcom Inc.  (AVGO)  (CIK 0001730168)" -> { name:'Broadcom Inc.', tickers:['AVGO'], cik:'0001730168' }
 export function parseDisplayName(dn) {
   const m = String(dn ?? '').match(/^(.*?)\s*(?:\(([A-Z0-9.,\-\s]+)\)\s*)?\(CIK\s*(\d{1,10})\)\s*$/);
@@ -33,16 +49,31 @@ export function parseDisplayName(dn) {
 
 const threeYearsAgo = (now) => { const d = new Date(now); d.setUTCFullYear(d.getUTCFullYear() - 3); return d.toISOString().slice(0, 10); };
 
-export async function verifyPublicFiler(name, { searchFn, now = Date.now() } = {}) {
+export async function verifyPublicFiler(name, { searchFn, nameFn = null, now = Date.now() } = {}) {
   const query = String(name ?? '').trim();
   const out = (r) => { _log.push({ query, at: new Date(now).toISOString(), ...r }); return r; };
   if (query.length < 3 || !searchFn) return out({ verified: false, reason: 'NO_QUERY_OR_SEARCH' });
+  // KRYL-1407: the canonical name source decides what the typed name may mean. EXACT / UNIQUE_PREFIX give one CANDIDATE CIK that the filing-index check below
+  // must confirm by that CIK; NEAR and AMBIGUOUS never bind; NONE or an unavailable source leaves the original name-based check in force.
+  let want = null, byCikOnly = null, nameTier = null;
+  if (nameFn) {
+    let nm = null;
+    try { nm = await nameFn(query); } catch { nm = null; }
+    if (nm && !nm.error && nm.tier) {
+      nameTier = nm.tier;
+      if (nm.tier === 'NEAR' || nm.tier === 'AMBIGUOUS') {
+        noteResolution(query, { tier: nm.tier, candidates: nm.candidates ?? [], asOf: nm.asOf ?? null });
+        return out({ verified: false, reason: nm.tier === 'NEAR' ? 'NEAR_MATCH' : 'AMBIGUOUS', candidates: (nm.candidates ?? []).map(c => `${c.name} (CIK ${c.cik})`), nameTier });
+      }
+      if (nm.tier === 'EXACT' || nm.tier === 'UNIQUE_PREFIX') byCikOnly = nm.candidates[0];
+    }
+  }
   let res;
-  try { res = await searchFn({ forms: ANNUAL_FORMS, startdt: threeYearsAgo(now), enddt: new Date(now).toISOString().slice(0, 10), hits: '100', entityName: query }); }
+  try { res = await searchFn({ forms: ANNUAL_FORMS, startdt: threeYearsAgo(now), enddt: new Date(now).toISOString().slice(0, 10), hits: '100', entityName: byCikOnly ? byCikOnly.name : query }); }
   catch (e) { return out({ verified: false, reason: 'LOOKUP_FAILED', detail: String(e?.message ?? e) }); }
   if (!res?.ok) return out({ verified: false, reason: 'LOOKUP_FAILED', detail: `HTTP ${res?.status ?? 0}` });
 
-  const want = normalizeEntityName(query);
+  want = normalizeEntityName(query);
   if (!want) return out({ verified: false, reason: 'NO_MATCH' });
   const byCik = new Map();                           // cik -> { name, tickers, filings[] }
   for (const h of res.hits ?? []) {
@@ -57,6 +88,17 @@ export async function verifyPublicFiler(name, { searchFn, now = Date.now() } = {
     byCik.set(issuer.cik, row);
   }
   const rows = [...byCik.values()];
+  if (byCikOnly) {
+    // Verification BY CIK: only the filing-index record of the candidate's own CIK can confirm it; the name never does.
+    const m = rows.find(r => r.cik === byCikOnly.cik);
+    if (!m) { noteResolution(query, { tier: 'UNVERIFIED', candidates: [byCikOnly] }); return out({ verified: false, reason: 'NOT_VERIFIED', cik: byCikOnly.cik, candidates: [byCikOnly.name], nameTier }); }
+    const tickers = new Set([...m.tickers, ...(byCikOnly.tickers ?? [])]);
+    const latest = [...m.filings].sort((a, b) => String(b.filingDate).localeCompare(String(a.filingDate)))[0];
+    return out({
+      verified: true, cik: m.cik, canonicalName: m.name.replace(/\s*\/[A-Z]{2,4}\/?\s*$/, '').replace(/\s+/g, ' ').trim(), ticker: [...tickers][0], rule: nameTier === 'EXACT' ? 'listed-name-exact+cik' : 'listed-name-unique-prefix+cik', nameTier,
+      evidence: { accession: latest.accession, form: latest.form, filingDate: latest.filingDate, annualFilingsSeen: m.filings.length, retrievedAt: new Date(now).toISOString(), source: 'SEC EDGAR filing index; name from SEC company_tickers.json' },
+    });
+  }
   let matches = rows.filter(r => normalizeEntityName(r.name) === want);
   let rule = 'exact-base-name';
   if (!matches.length) { matches = rows.filter(r => want.length >= 5 && normalizeEntityName(r.name).startsWith(want + ' ')); rule = 'unique-prefix'; }

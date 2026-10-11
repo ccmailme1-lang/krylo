@@ -7,7 +7,8 @@ export function useEntityAdmissionTick() {
   useEffect(() => {
     const on = () => setTick(n => n + 1);
     window.addEventListener('krylo-entity-admitted', on);
-    return () => window.removeEventListener('krylo-entity-admitted', on);
+    window.addEventListener('krylo-name-resolution', on);          // KRYL-1407: a suggestion / candidate list is available for an unresolved subject
+    return () => { window.removeEventListener('krylo-entity-admitted', on); window.removeEventListener('krylo-name-resolution', on); };
   }, []);
   return tick;
 }

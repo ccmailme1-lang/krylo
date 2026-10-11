@@ -34,6 +34,7 @@ import { getDomainSignals, MAP_FIELD_WINDOW_MS, POOL_RETENTION_MS } from '../../
 // "is there a real, evidenced relationship between this entity and another named entity" — the
 // two are never merged into one list or one count (see render block below).
 import { NODE_LABELS } from '../../engine/entitytopologyregistry.js';
+import { nameResolutionNote } from '../../engine/secfileradmission.js';
 import { toTopologyNodeId } from '../../engine/entityresolution.js';
 import { findAdmittedRelationshipsFor, latestEvidenceFor } from '../../engine/canonicalrelationshipprojection.js';
 
@@ -149,7 +150,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
         ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`
         : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${subjectLabel}.${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`)
     : selectedSubject
-      ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it. ` +
+      ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it.${nameResolutionNote(selectedSubject)} ` +
         `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
         `${relationshipCount > 0 ? `with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present` : 'but fewer than two domains are connected'} — a field-level reading, not bound to ${selectedSubject}.`
     : structurallyInterpretable
@@ -464,7 +465,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         ) : (
           <span style={{ color: ABSENCE }}>
-            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : (subjScope?.subject?.text ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no evidence is identifier-bound to it — the observations above are field-level.` : 'No subject resolved — evidence is not identifier-bound to a field-level scan.')}
+            {isEntity ? 'No dated subject-bound evidence facet resolved for this subject yet — a separate, narrower class of evidence than the domain observations above.' : (subjScope?.subject?.text ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no evidence is identifier-bound to it — the observations above are field-level.${nameResolutionNote(subjScope.subject.text)}` : 'No subject resolved — evidence is not identifier-bound to a field-level scan.')}
           </span>
         )}
       </Row>

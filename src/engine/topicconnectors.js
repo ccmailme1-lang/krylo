@@ -45,12 +45,22 @@ export function fireTopicConnectors(q, { refresh = false } = {}) {
   const pre = subjectScope(q);
   if (pre.kind === 'UNRESOLVED' && pre.subject?.text) {
     expectLookup('admission');
-    admitPublicFiler(pre.subject.text, { searchFn: secSearch }).then((r) => {
+    admitPublicFiler(pre.subject.text, { searchFn: secSearch, nameFn: secNameLookup }).then((r) => {
       if (r.outcome === 'ADMITTED') fireEntityScoped(q, { refresh });   // registers the entity lookups before 'admission' settles
       settleLookup('admission', r.outcome === 'LOOKUP_FAILED' ? 'the SEC filer lookup failed' : null);
     }).catch((e) => { settleLookup('admission', String(e?.message ?? e)); });
   }
   armSettlement();
+}
+
+// Canonical name source binding (KRYL-1407; the engine's /api/sec-names): what a typed name may mean. An unavailable route returns an error object and the
+// admission path falls back to its name-based check.
+async function secNameLookup(text) {
+  try {
+    const r = await fetch('/api/sec-names?' + new URLSearchParams({ name: text }));
+    if (!r.ok) return { error: 'HTTP ' + r.status };
+    return await r.json();
+  } catch (e) { return { error: String(e?.message ?? e) }; }
 }
 
 // Search binding for the admission path (the engine's /api/edgar proxy).

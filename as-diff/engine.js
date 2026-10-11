@@ -14,6 +14,7 @@ import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv, historyFor, recentSnapshots } from './canonicalstore.js';
+import { secNames } from './secnames.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1284,6 +1285,14 @@ function handleEdgarProxy(req, res) {
   proxy.end();
 }
 
+// ── KRYL-1407: canonical name resolution (SEC listed-company file, cached daily on the server) ──
+async function handleSecNames(req, res) {
+  const name = new URL(req.url, 'http://localhost').searchParams.get('name') ?? '';
+  const r = await secNames(name);
+  if (r.error) return send(res, r.error.startsWith('name required') ? 400 : 502, { error: r.error });
+  send(res, 200, r);
+}
+
 // ── WO-2019: Service API proxy handlers ──────────────────────────────────────
 
 
@@ -1968,6 +1977,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/fred')                          return handleFredProxy(req, res);
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
+  if (req.method === 'GET'  && url === '/api/sec-names')                     return handleSecNames(req, res);
   if (req.method === 'POST' && url === '/api/patentsview')                   return handlePatentsViewProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   // WO-2019 — Service API connectors

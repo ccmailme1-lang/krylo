@@ -5,6 +5,7 @@
 // Live data flow, engine wiring, and lens-brief logic are UNCHANGED. No closed-loop
 // bridge, no computeMetrics/querysynthesis/domainSignal changes, no fabricated
 // section content. Sections with no source today render an explicit absence state.
+import { nameResolutionNote } from '../../engine/secfileradmission.js';
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAnalysisStore }  from '../../store/useanalysisstore.js';
 import { useBayStore, DOMAIN_REGISTRY } from '../../store/usebaystore.js';
@@ -687,7 +688,7 @@ export default function TargetPacket() {
                 : subjScope.kind === 'DECISION_FRAME'
                   ? `Decision frame — no resolvable subject and no recognized domain. The six domains below show what is and isn't observable; a decision verdict is not what this packet produces.`
                   : (subjScope.kind === 'UNRESOLVED' && subjScope.subject?.text)
-                    ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no structure is attributed to it; the six domains below show the field and its honest absence.`
+                    ? `Subject selected: ${subjScope.subject.text}. Its entity is not resolved, so no structure is attributed to it; the six domains below show the field and its honest absence.${nameResolutionNote(subjScope.subject.text)}`
                     : `No resolvable subject in this query. The six domains below show each domain's structure and its honest absence.`}
           </p>
           {/* KRYL — synthesis.recommendedAction already carries an honest, specific explanation
