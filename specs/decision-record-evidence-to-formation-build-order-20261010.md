@@ -82,3 +82,16 @@ Each ticket names the break it closes. A fix that leaves the answer unchanged do
 ## 10. Not authorized by this record
 
 Code changes, probes, pushing, deployment, XBRL route build, or moving any ticket to Deploy to Prod.
+
+## Amendment A (2026-10-11): the interpretation layer and the quality measure are in scope
+
+Source: Founder-provided review. The build order above (workstreams 1 to 4) is the structural foundation; it stops when formation consumes admitted relationships. The objective is consistent analytical quality across subjects and queries, so these are added as workstreams, not follow-on enhancements:
+
+| # | Workstream | Closes |
+|---|---|---|
+| 5 | Relationship discovery coverage: admit meaningful relationship types across all six domains, not ownership disclosures alone (extends workstream 3) | A: coverage |
+| 6 | Structural synthesis: connect admitted relationships into one explanation of the ecosystem, with every material claim linked to the relationships and source evidence behind it | B: synthesis, traceability |
+| 7 | Structural significance: state what a supported structure shows about participants, dependencies, concentration, control or change, only where evidence supports it; otherwise say so | B: significance |
+| 8 | Quality measure: a small fixed benchmark (subjects and questions across industries, fixed 1 to 10 rubric, before and after scores), built alongside the work and scored once per milestone | C: measurement |
+
+Boundaries: formation is not a verdict (CLAUDE.md section 21); KRYLO must not invent significance to raise a score, and "evidence does not support a structural conclusion" is a valid, rigorous result. The benchmark stays small and light (Founder, 2026-10-11): no per-ticket re-scoring. Target for routine supported queries: 8/10 or higher; repeated 4 to 6 means the system has not met the objective. Sequence and tickets for workstreams 5 to 8 need the Founder's rulings on workstreams 3 and 4 first. Settled temporal rules stay settled.
