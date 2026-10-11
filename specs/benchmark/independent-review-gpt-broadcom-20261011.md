@@ -15,3 +15,21 @@ Recorded 2026-10-11 as received from the Founder. Kept separate from scorer 1 (s
 Reviewer's verdict: a credible, evidence-backed ownership analysis, but not yet strong structural intelligence. The system correctly refuses to invent a cross-domain formation; its next challenge is admitting more valid relationship types and synthesizing the resulting structure.
 
 For reference only (scorer 1, same page, my own rating, rubric-based): about 7 / 10; milestone-1 mechanical score for C25: 8.0.
+
+---
+
+## Second review (GPT), same question, after DEF-1408 (build dd660fc), page text only
+
+**Overall: 7 / 10**
+
+| Criterion (reviewer's) | Score | Reviewer's note |
+|---|---|---|
+| Display fixes | 9 | all three reported defects appear fixed on Analysis; MAP confirmation remains outstanding |
+| Evidence integrity | 9 | ownership relationships and temporal uncertainty are represented honestly |
+| Relationship coverage | 4 | six admitted relationships, all ownership disclosures; no admitted technology or capital relationships for Broadcom |
+| Structural synthesis | 5 | accurate inventory, but limited cross-domain interpretation |
+| Presentation | 7 | improved readability, but the broader analysis still contains excessive raw detail |
+
+Reviewer's verdict: the display fixes are successful at the reported scope; the broader product still falls short of the 8/10 target because it cannot yet establish and explain enough evidence-backed cross-domain structure.
+
+Notes: the reviewer saw only the Analysis text. The MAP was checked separately on the live page on 2026-10-11 (header "ADMITTED RELATIONSHIPS 6", the no-formation statement as one line at the top of the plot, no overlap with the relationship labels, no page errors). The two GPT scores use different criteria and are not comparable like for like. Scorer 1 and the product rating (about 7.2 after the fixes) are separate.
