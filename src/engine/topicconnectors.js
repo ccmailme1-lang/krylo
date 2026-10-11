@@ -21,6 +21,7 @@ import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 import { markStarted } from './ownershiplookupstore.js';
 import { admitCapitalEvents } from './capitaleventadmission.js';
+import { setAdmissionReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -104,7 +105,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         // settlement; if it does not finish in time it is recorded TIMEOUT, the admission continues live and appears at the next Refresh).
         const filer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
         admitCapitalEvents({ filer, events: r?.capitalEvents ?? [], searchFn: secSearch, registryCache })
-          .then((res) => settleLookup('counterparty', res.admitted.length === 0 && res.rejected.some(x => x.outcome === 'LOOKUP_FAILED') ? 'counterparty lookups failed' : null))
+          .then((res) => { setAdmissionReport(scope.canonicalId, res); return settleLookup('counterparty', res.admitted.length === 0 && res.rejected.some(x => x.outcome === 'LOOKUP_FAILED') ? 'counterparty lookups failed' : null); })
           .catch((e) => settleLookup('counterparty', String(e?.message ?? e)))
           .finally(() => cpDone());
       }).catch((e) => { settleLookup('8k', String(e?.message ?? e)); settleLookup('counterparty', 'the 8-K lookup failed'); cpDone(); });

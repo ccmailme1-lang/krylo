@@ -27,6 +27,7 @@ import { computeBriefSummary } from './structuralbrief.jsx';
 import { useOwnershipLookup } from './useownershiplookup.js';
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js'; // KRYL-1398
 import { buildAdmittedFormation } from '../../engine/admittedformation.js';   // Step 5
+import { canonicalDetailLines } from './structuralbrief.jsx';   // Step 7: the same evidence lines as the brief
 import { PAGE_LOAD_ID } from '../diagnostics/buildstamp.jsx'; // KRYL-1390
 import { useEntityAdmissionTick } from '../../hooks/useentityadmissiontick.js';
 
@@ -119,6 +120,7 @@ function FormationMapTab({ query }) {
         qualifier: r.nuId?.partyQualifier ?? null,   // KRYL-1401: an unnamed affiliate is worded as one
         part: r.part.map(id => NODE_LABELS[id] ?? id),
         // Real admission evidence (null fields stay null -- the panel shows a stated absence).
+        detail: canonicalDetailLines(ev),               // Step 7: instrument, matching outcome (an unnamed affiliate stays one) and the quoted passage, as on Analysis
         evidence: ev ? {
           filingDate: ev.provenance?.filingDate ?? null,
           form: ev.provenance?.form ?? null,

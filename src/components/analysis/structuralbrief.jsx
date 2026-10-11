@@ -16,7 +16,9 @@
 
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
-import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';   // Step 5: formation from admitted relationships only
+import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';
+import { buildSynthesis } from '../../engine/analyticalsynthesis.js';   // Step 6: statements with an evidentiary status and their evidence
+import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';   // Step 5: formation from admitted relationships only
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
 // shallow-copied particles. Does NOT collapse magnitude or vote on polarity"). Surfacing the
@@ -273,6 +275,11 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const admittedFormation = isEntity
     ? buildAdmittedFormation({ relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: (id) => String(NODE_LABELS[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, ''), domainMagnitudes: Object.fromEntries((activeDomainPressures ?? []).map(p => [p.domain, p.magnitude])) })
     : null;
+  const snapNow = useAnalyticalSnapshot();
+  const labelOfId = (id) => String(NODE_LABELS[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, '');
+  const synthesis = isEntity
+    ? buildSynthesis({ subject: subjScope.entity.name, relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: labelOfId, formation: admittedFormation, change: changeEntry?.result ?? null, admissionReport: snapNow.active?.reports?.capitalAdmission ?? null })
+    : null;
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
     subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation, admittedFormation,
   });
@@ -413,6 +420,31 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </div>
         )}
       </Row>
+
+      {isEntity && synthesis && synthesis.statements.length > 0 && (
+        <Row label="SYNTHESIS">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 10, color: ABSENCE }}>Each statement carries one evidentiary status: DOCUMENTED (stated in the source), SUPPORTED (licensed by the admitted relationships and their evidence), INFERRED (a reasonable implication beyond what is documented; it names what it rests on) or UNRESOLVED (evidence is missing, insufficient or not obtained).</div>
+            {synthesis.statements.map((st) => (
+              <div key={st.id}>
+                <div><span style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL, marginRight: 10 }}>{st.status}</span>{' '}{st.text}</div>
+                {st.rests_on && <div style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>rests on: {st.rests_on.join('; ')}</div>}
+                {st.evidence.length > 0 && (
+                  <details style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>
+                    <summary style={{ cursor: 'pointer' }}>evidence ({st.evidence.length})</summary>
+                    {st.evidence.map((e, k) => (
+                      <div key={k} style={{ marginTop: 2 }}>
+                        {[e.form, e.filingDate && `filed ${String(e.filingDate).slice(0, 10)}`, e.accession && `accession ${e.accession}`, e.match && `counterparty ${e.match}`, e.counterparty && `named: ${e.counterparty}`, e.holder && `holder ${e.holder}`, e.cusip && `CUSIP ${e.cusip}`, e.relationshipId && `relationship ${String(e.relationshipId).slice(0, 8)}`].filter(Boolean).join(' · ')}
+                        {e.passage ? <div style={{ marginLeft: 10 }}>"{String(e.passage).length > 220 ? String(e.passage).slice(0, 217).trimEnd() + '…' : e.passage}"</div> : null}
+                      </div>
+                    ))}
+                  </details>
+                )}
+              </div>
+            ))}
+          </div>
+        </Row>
+      )}
 
       <Row label="WHAT THE STRUCTURE SHOWS">
         {domainLines.length ? (

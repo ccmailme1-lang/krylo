@@ -1061,6 +1061,7 @@
       <div class="rel-row">
         <span class="rel-main">${relationshipSentence(r)}</span>
         <span class="rel-meta">${evidenceText(r)}</span>
+        ${(r.detail ?? []).map(l => `<span class="rel-meta">${String(l).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</span>`).join('')}
         <span class="rel-meta">${r.type}</span>
       </div>`).join('');
   }
