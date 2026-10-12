@@ -59,12 +59,6 @@ export default function AnalysisHistory({ inRangeFn = () => true, loader = { rec
               {detail?.past && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   <div style={{ color: DIM, fontSize: 9 }}>Rebuilt from the durable store as of {when(detail.past.generatedAt)} · lookups: {(detail.past.lookups ?? []).map(l => `${l.kind} ${l.state}`).join(' · ') || 'none'}{detail.past.refreshOf ? ` · a refresh of ${detail.past.refreshOf}` : ''}</div>
-                  {(detail.past.findings ?? []).length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ fontSize: 9, letterSpacing: '0.2em', color: DIM }}>KEY FINDINGS (rebuilt from the stored snapshot)</div>
-                      {detail.past.findings.map(f => <div key={f.id}><span style={{ fontSize: 9, letterSpacing: '0.2em', color: DIM, marginRight: 8 }}>{f.strength}</span>{f.headline}</div>)}
-                    </div>
-                  )}
                   <div>FORMATION (admitted relationships only): {detail.past.formationSentence}</div>
                   {detail.past.relationships.map(r => (
                     <div key={r.id}>

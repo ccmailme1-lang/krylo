@@ -17,8 +17,7 @@
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
 import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';
-import { buildSynthesis } from '../../engine/analyticalsynthesis.js';
-import { buildFindings, questionDomainsFrom } from '../../engine/analyticalfindings.js';   // findings-first synthesis: what the admitted structure, its change and its limits say about THIS question   // Step 6: statements with an evidentiary status and their evidence
+import { buildSynthesis } from '../../engine/analyticalsynthesis.js';   // Step 6: statements with an evidentiary status and their evidence
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';   // Step 5: formation from admitted relationships only
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
@@ -244,9 +243,6 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const synthesis = isEntity
     ? buildSynthesis({ subject: subjScope.entity.name, relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: labelOfId, formation: admittedFormation, change: changeEntry?.result ?? null, admissionReport: snapNow.active?.reports?.capitalAdmission ?? null })
     : null;
-  const { findings } = isEntity
-    ? buildFindings({ subject: subjScope.entity.name, relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: labelOfId, formation: admittedFormation, change: changeEntry?.result ?? null, admissionReport: snapNow.active?.reports?.capitalAdmission ?? null, questionDomains: questionDomainsFrom(question) })
-    : { findings: [] };
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
     subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation, admittedFormation,
   });
@@ -289,26 +285,6 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: LBL }}>
           QUESTION: {truncate(question, 160)}
         </div>
-      )}
-
-      {isEntity && findings.length > 0 && (
-        <Row label="KEY FINDINGS">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {findings.map((f) => (
-              <div key={f.id}>
-                <div><span style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL, marginRight: 10 }}>{f.strength}</span>{f.headline}</div>
-                <div style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>{f.significance}</div>
-                <details style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>
-                  <summary style={{ cursor: 'pointer' }}>basis, time and what stays open</summary>
-                  <div style={{ marginTop: 3 }}>supporting: {f.supporting.length ? `${f.supporting.length} admitted relationship${f.supporting.length !== 1 ? 's' : ''} (listed below with their filings)` : 'none admitted'}{f.participants.length ? ` · participants: ${f.participants.join(', ')}` : ''}</div>
-                  {f.temporal && <div>time basis: {f.temporal}</div>}
-                  {f.alternatives.map((a, i) => <div key={i}>open: {a}</div>)}
-                  {f.evidence.slice(0, 6).map((e, i) => <div key={`e${i}`}>{[e.holder, e.counterparty, e.state, e.filingDate && `filed ${String(e.filingDate).slice(0, 10)}`, e.accession && `accession ${e.accession}`].filter(Boolean).join(' · ')}</div>)}
-                </details>
-              </div>
-            ))}
-          </div>
-        </Row>
       )}
 
       <Row label="STRUCTURAL BRIEF">{briefSentence}</Row>

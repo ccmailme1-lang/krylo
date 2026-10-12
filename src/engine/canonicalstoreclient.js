@@ -119,7 +119,7 @@ export const kv = {
 // ── snapshots ─────────────────────────────────────────────────────────────────
 export function persistSnapshot(snapshot, relationshipRefs = []) {
   if (!_enabled() || !snapshot?.id) return Promise.resolve(false);
-  const row = { id: snapshot.id, query: snapshot.query, canonical_id: snapshot.canonicalId, subject_node: snapshot.subjectNode ?? null, generated_at: new Date(snapshot.generatedAt).toISOString(), lookups: snapshot.lookups, relationship_refs: relationshipRefs, change: snapshot.change ?? null, refresh_of: snapshot.refreshOf ?? null, reports: snapshot.reports ?? null };
+  const row = { id: snapshot.id, query: snapshot.query, canonical_id: snapshot.canonicalId, subject_node: snapshot.subjectNode ?? null, generated_at: new Date(snapshot.generatedAt).toISOString(), lookups: snapshot.lookups, relationship_refs: relationshipRefs, change: snapshot.change ?? null, refresh_of: snapshot.refreshOf ?? null };
   return _fetch(`${_base}/v1/canonical-store/snapshot`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot: row }) })
     .then(r => r.ok).catch(() => false);
 }

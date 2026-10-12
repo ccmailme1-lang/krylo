@@ -3,7 +3,6 @@
 // that stood latest) and the stored relationship versions, then passed through the SAME builders the live analysis uses (admitted formation, relationship
 // text, evidence lines), so History cannot present a different interpretation of the same state. Pure.
 import { buildAdmittedFormation, admittedFormationSentence } from './admittedformation.js';
-import { buildFindings, questionDomainsFrom } from './analyticalfindings.js';
 import { canonicalRelationshipSentence, canonicalProvenanceLine, canonicalDetailLines } from './canonicalrelationshiptext.js';
 
 /** @param {object} snapshot a stored snapshot row  @param {object[]} records stored relationships with versions (the store's /history response) */
@@ -34,8 +33,6 @@ export function reconstructSnapshot(snapshot, records) {
     refreshOf: snapshot.refresh_of ?? null,
     relationships: rels.map(r => ({ id: r.id, type: r.type, sentence: canonicalRelationshipSentence(r.type, labelOf(r.part[0]), labelOf(r.part[1]), r.nuId, r.nuState?.dealStatus ?? null), provenance: canonicalProvenanceLine(evidenceFor(r.id)), detail: canonicalDetailLines(evidenceFor(r.id)) })),
     formation, formationSentence: admittedFormationSentence(formation, subject),
-    // the same findings builder as Analysis, over the stored relationships, the stored change result and the stored admission report
-    findings: buildFindings({ subject, relationships: rels, evidenceFor, labelOf, formation, change: snapshot.change?.result ?? null, admissionReport: snapshot.reports?.capitalAdmission ?? null, questionDomains: questionDomainsFrom(snapshot.query) }).findings,
     change: snapshot.change ? { retrievedAt: snapshot.change.finishedAt ?? null, pinnedAt: snapshot.change.pinnedAt ?? null, units: chg.length, byExistence: states } : null,
     missing,
   };

@@ -52,7 +52,6 @@ async function ensureTables() {
         change JSONB, refresh_of TEXT, captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
       ALTER TABLE analytical_snapshot ADD COLUMN IF NOT EXISTS subject_node TEXT;
-      ALTER TABLE analytical_snapshot ADD COLUMN IF NOT EXISTS reports JSONB;
       CREATE TABLE IF NOT EXISTS store_kv (k TEXT PRIMARY KEY, v JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS counterparty_match (
         name_key TEXT PRIMARY KEY, outcome JSONB NOT NULL, retrieved_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -160,12 +159,12 @@ export async function relationshipsForNodes(nodes) {
 // ── snapshots ──────────────────────────────────────────────────────────────────
 export async function writeSnapshot(s) {
   if (!s?.id) throw new Error('snapshot id required');
-  const row = { id: s.id, query: s.query ?? null, canonical_id: s.canonical_id ?? null, subject_node: s.subject_node ?? null, generated_at: s.generated_at ?? null, lookups: s.lookups ?? [], relationship_refs: s.relationship_refs ?? [], reports: s.reports ?? null, change: s.change ?? null, refresh_of: s.refresh_of ?? null };
+  const row = { id: s.id, query: s.query ?? null, canonical_id: s.canonical_id ?? null, subject_node: s.subject_node ?? null, generated_at: s.generated_at ?? null, lookups: s.lookups ?? [], relationship_refs: s.relationship_refs ?? [], change: s.change ?? null, refresh_of: s.refresh_of ?? null };
   if (await ensureTables()) {
     try {
-      await q(`INSERT INTO analytical_snapshot (id, query, canonical_id, subject_node, generated_at, lookups, relationship_refs, change, refresh_of, reports) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-        ON CONFLICT (id) DO UPDATE SET change = EXCLUDED.change, lookups = EXCLUDED.lookups, relationship_refs = EXCLUDED.relationship_refs, reports = EXCLUDED.reports, updated_at = NOW()`,
-        [row.id, row.query, row.canonical_id, row.subject_node, row.generated_at, JSON.stringify(row.lookups), JSON.stringify(row.relationship_refs), JSON.stringify(row.change), row.refresh_of, JSON.stringify(row.reports)]);
+      await q(`INSERT INTO analytical_snapshot (id, query, canonical_id, subject_node, generated_at, lookups, relationship_refs, change, refresh_of) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (id) DO UPDATE SET change = EXCLUDED.change, lookups = EXCLUDED.lookups, relationship_refs = EXCLUDED.relationship_refs, updated_at = NOW()`,
+        [row.id, row.query, row.canonical_id, row.subject_node, row.generated_at, JSON.stringify(row.lookups), JSON.stringify(row.relationship_refs), JSON.stringify(row.change), row.refresh_of]);
       return { persisted_in: 'db' };
     } catch (err) { logFallback('snapshot write', err); }
   }
