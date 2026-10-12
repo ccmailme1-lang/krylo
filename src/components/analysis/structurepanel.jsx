@@ -118,7 +118,8 @@ function FormationMapTab({ query }) {
         type: r.type,
         phiClass: r.phiClass,
         qualifier: r.nuId?.partyQualifier ?? null,   // KRYL-1401: an unnamed affiliate is worded as one
-        dealStatus: r.nuState?.dealStatus ?? null,   // KRYL-1409: an ACQUIRED relationship is worded by its deal status
+        dealStatus: r.nuState?.dealStatus ?? null,
+        role: r.nuId?.role ?? null,                  // KRYL-1411: DIRECTOR or OFFICER   // KRYL-1409: an ACQUIRED relationship is worded by its deal status
         part: r.part.map(id => NODE_LABELS[id] ?? id),
         // Real admission evidence (null fields stay null -- the panel shows a stated absence).
         detail: canonicalDetailLines(ev),               // Step 7: instrument, matching outcome (an unnamed affiliate stays one) and the quoted passage, as on Analysis

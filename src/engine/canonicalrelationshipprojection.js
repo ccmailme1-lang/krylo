@@ -86,6 +86,16 @@ const PROJECTIONS = {
       source: meta.source ?? 'SEC_8K_CAPITAL_EVENT',
     }),
   },
+  HAS_OFFICER_OR_DIRECTOR_DISCLOSURE: {
+    // KRYL-1411: part = [issuer, person], ordered; the typed edge reads person -> issuer.
+    typedEdgeType: RELATION_TYPES.OFFICER_OR_DIRECTOR_OF,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.personName, to: meta.issuerName,
+      fromCik: meta.personCik ?? null, toCik: meta.issuerCik ?? null,
+      fromLabel: meta.personName, toLabel: meta.issuerName,
+      source: meta.source ?? 'SEC_FORM_3_4_5',
+    }),
+  },
   SHARED_PATENT_ASSIGNMENT: {
     // New vocabulary entry -- RELATION_TYPES is confirmed informational/non-gating (its own
     // comment: "does NOT gate registerTypedEdge"), so adding one is additive, same precedent as

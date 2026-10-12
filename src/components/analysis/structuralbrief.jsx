@@ -241,7 +241,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
   const snapNow = useAnalyticalSnapshot();
   const labelOfId = (id) => String(NODE_LABELS[id] ?? id).replace(/\s*\(CIK\s*\d+\)\s*$/, '');
   const synthesis = isEntity
-    ? buildSynthesis({ subject: subjScope.entity.name, relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: labelOfId, formation: admittedFormation, change: changeEntry?.result ?? null, admissionReport: snapNow.active?.reports?.capitalAdmission ?? null })
+    ? buildSynthesis({ subject: subjScope.entity.name, relationships: entityCanonicalRelationships, evidenceFor: latestEvidenceFor, labelOf: labelOfId, formation: admittedFormation, change: changeEntry?.result ?? null, admissionReport: snapNow.active?.reports?.capitalAdmission ?? null, laborReport: snapNow.active?.reports?.labor ?? null })
     : null;
   const { structurallyInterpretable, subjectLabel, domainLines, edges, entityRelPairs, briefSentence } = computeBriefSummary({
     subjScope, activeDomainPressures, fieldFormation, structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending, ambientFormation, admittedFormation,

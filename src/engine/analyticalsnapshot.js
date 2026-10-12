@@ -13,7 +13,7 @@ import { freezePool, unfreezePool } from './domaingravity.js';
 import { freezeRho, unfreezeRho, findAdmittedRelationshipsFor, latestEvidenceFor } from './canonicalrelationshipprojection.js';
 import { toTopologyNodeId } from './entityresolution.js';
 import { persistSnapshot, identityKeyOf } from './canonicalstoreclient.js';
-import { getAdmissionReport } from './admissionreport.js';
+import { getAdmissionReport, getLaborReport } from './admissionreport.js';
 import { getRelationshipChange } from './relationshipchangeservice.js';
 
 export const SETTLE_TIMEOUT_MS = 45_000;       // decided contract (rubric item 5)
@@ -123,7 +123,7 @@ function freezeRun(run) {
     // The pin: a refresh pins the result its own forced run produced; a first run pins whatever terminal result exists now, else on first retrieval.
     const pinned = isTerminal(change) && (!run.refresh || run.lookups.get('change')?.state === 'OK' || run.lookups.get('change')?.state === 'FAILED') ? copyChange(change) : null;
     freezePool(run.id, at); freezeRho(run.id);                                   // one synchronous swap: pool, rho and the active snapshot
-    const snap = { id: run.id, generatedAt: at, query: run.query, canonicalId: run.canonicalId, lookups, change: pinned, reports: { capitalAdmission: run.canonicalId ? getAdmissionReport(run.canonicalId) : null }, refreshOf: run.refresh ? (_active?.id ?? null) : null };
+    const snap = { id: run.id, generatedAt: at, query: run.query, canonicalId: run.canonicalId, lookups, change: pinned, reports: { capitalAdmission: run.canonicalId ? getAdmissionReport(run.canonicalId) : null, labor: run.canonicalId ? getLaborReport(run.canonicalId) : null }, refreshOf: run.refresh ? (_active?.id ?? null) : null };
     _active = snap; _status = 'ready'; persist(snap);
     _history = [..._history, { id: snap.id, generatedAt: at, query: run.query, canonicalId: run.canonicalId, lookups }];
     _refresh = { running: false, error: null };

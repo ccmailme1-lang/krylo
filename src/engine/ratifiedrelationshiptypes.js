@@ -195,3 +195,31 @@ registerRelationshipType('CAPITAL_EVENT_INVOLVES', {
   nuStateKeys: [],
   classifyChange: () => 'PERSISTENT',
 });
+
+// HAS_OFFICER_OR_DIRECTOR_DISCLOSURE -- ratified by the Founder 2026-10-12 (KRYL-1411, Decision Record section 3). LABOR.
+// Canonical meaning: an SEC Form 3, 4 or 5 states that a reporting person is an officer or a director of the issuer. It records the role as the FILING states it,
+// as of that filing. It does not assert that the role continues (a Form 4 does not state that a role ended), the person's holdings (ownership is a different
+// relationship), compensation, tenure or anything about the person's other roles. That someone filed an insider form is not the relationship: a ten-percent owner or
+// an "other" reporting person who states neither isDirector nor isOfficer is NOT admitted.
+// part = (issuer, person), ORDERED, both identified by SEC CIK (never by name). nu_id = { role } (DIRECTOR or OFFICER: one person holding both is two relationships).
+// nu_state = { title } (the officer title as written, null for a director). A different title stated later is RECONFIGURED; a repeat is PERSISTENT.
+// Admission rule (all required): the source is Form 3, 4 or 5 (or an amendment); both CIKs present and equal to the filing's own issuer and reporting-owner ids; the filing's own
+// flag for the role is true (roleStated); a citable accession and filing date; the period of report recorded.
+const INSIDER_FORMS_OK = new Set(['Form 3', 'Form 4', 'Form 5', 'Form 3/A', 'Form 4/A', 'Form 5/A']);
+registerRelationshipType('HAS_OFFICER_OR_DIRECTOR_DISCLOSURE', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [issuerId, personId] = assertion.part ?? [];
+    if (!issuerId || !personId || issuerId === personId) return { admitted: false, reason: 'issuer and person must be two distinct identified entities' };
+    const p = assertion.evidence?.provenance ?? {};
+    if (!['DIRECTOR', 'OFFICER'].includes(assertion.nuId?.role)) return { admitted: false, reason: 'role must be DIRECTOR or OFFICER, as the filing states it' };
+    if (p.source !== 'SEC_FORM_3_4_5' || !INSIDER_FORMS_OK.has(String(p.form ?? ''))) return { admitted: false, reason: 'the source must be an SEC Form 3, 4 or 5' };
+    if (p.roleStated !== true) return { admitted: false, reason: 'the filing itself must state the role (isDirector or isOfficer); an insider form alone is not the relationship' };
+    if (!p.issuerCik || !p.personCik || issuerId !== `CIK:${String(p.issuerCik).padStart(10, '0')}` || personId !== `CIK:${String(p.personCik).padStart(10, '0')}`) return { admitted: false, reason: 'both parties must be identified by the SEC CIKs the filing states' };
+    if (!p.accession || !p.filingDate || !p.periodOfReport) return { admitted: false, reason: 'accession, filing date and period of report are required' };
+    return { admitted: true };
+  },
+  nuIdKeys: ['role'],
+  nuStateKeys: ['title'],
+  classifyChange: ({ prior, incoming }) => ((prior.nuState?.title ?? null) !== (incoming.nuState?.title ?? null) ? 'RECONFIGURED' : 'PERSISTENT'),
+});

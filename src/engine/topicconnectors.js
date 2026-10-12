@@ -21,7 +21,9 @@ import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 import { markStarted } from './ownershiplookupstore.js';
 import { admitCapitalEvents, admitAcquisitions } from './capitaleventadmission.js';
-import { setAdmissionReport } from './admissionreport.js';
+import { fetchInsiderRoles } from './connectors/insiderroles.js';
+import { admitInsiderRoles } from './insiderroleadmission.js';
+import { setAdmissionReport, setLaborReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -86,7 +88,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   // carries (entity.identifiers.edgar), not just the canonicalId. Fires only when the query
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
   if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
-    expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId }); expectLookup('counterparty', { canonicalId: scope.canonicalId });
+    expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId }); expectLookup('counterparty', { canonicalId: scope.canonicalId }); expectLookup('labor', { canonicalId: scope.canonicalId });
     if (refresh) expectLookup('change', { canonicalId: scope.canonicalId });
     // Decision record step 4: the subject's stored relationships (with their stable ids and history) are loaded into the in-memory store BEFORE the
     // SEC lookups run, so admissions below are recognised as the same relationships (PERSISTENT) and the first view already holds earlier sessions' work.
@@ -126,6 +128,17 @@ function fireEntityScoped(q, { refresh = false } = {}) {
           .catch((e) => settleLookup('counterparty', String(e?.message ?? e)))
           .finally(() => cpDone());
       }).catch((e) => { settleLookup('8k', String(e?.message ?? e)); settleLookup('counterparty', 'the 8-K lookup failed'); cpDone(); });
+
+      // KRYL-1411: officers and directors the issuer's SEC Forms 3, 4 and 5 state (both parties by SEC CIK; role as the filing states it), admitted through the single write path.
+      { const issuer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+        fetchInsiderRoles({ issuer, from: new Date(Date.now() - 365 * 86_400_000).toISOString().slice(0, 10), searchFn: secSearch })
+          .then((r) => {
+            if (r.failed) { setLaborReport(scope.canonicalId, { failed: r.failed }); return settleLookup('labor', `the SEC insider-form lookup failed (${r.failed})`); }
+            const res = admitInsiderRoles({ issuer, roles: r.roles });
+            setLaborReport(scope.canonicalId, { personsSeen: r.personsSeen, personsRead: r.personsRead, capped: r.capped, searchCapped: r.searchCapped, failedDocs: r.failedDocs, admitted: res.admitted.length, rejected: res.rejected.length });
+            return settleLookup('labor', r.failedDocs > 0 && res.admitted.length === 0 ? 'the insider documents could not be read' : null);
+          })
+          .catch((e) => settleLookup('labor', String(e?.message ?? e))); }
 
       // Supplier Structural Intelligence -- real bug found live 2026-10-03: structuralbrief.jsx
       // and structurepanel.jsx both read canonical ρ synchronously at render time, but this

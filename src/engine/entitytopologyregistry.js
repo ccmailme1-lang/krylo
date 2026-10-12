@@ -71,6 +71,8 @@ export const RELATION_TYPES = Object.freeze({
   // KRYL-1401 (2026-10-11) -- added for the ratified CAPITAL_EVENT_INVOLVES canonical relationship type: a capital event reported in an 8-K names a
   // counterparty whose identity is confirmed (counterpartymatch.js). Informational vocabulary only, same precedent as ACQUIRED.
   CAPITAL_EVENT_INVOLVES: 'CAPITAL_EVENT_INVOLVES',
+  // KRYL-1411 (2026-10-12) -- added for the ratified HAS_OFFICER_OR_DIRECTOR_DISCLOSURE canonical relationship type (LABOR): an SEC Form 3, 4 or 5 states a person is an officer or director of the issuer.
+  OFFICER_OR_DIRECTOR_OF: 'OFFICER_OR_DIRECTOR_OF',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

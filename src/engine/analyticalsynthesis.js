@@ -18,7 +18,7 @@ export const STATUS = Object.freeze({ DOCUMENTED: 'DOCUMENTED', SUPPORTED: 'SUPP
 const money = (a) => `${a.raw}${a.wording ? ` (${a.wording})` : ''}`;
 const day = (iso) => String(iso ?? '').slice(0, 10);
 
-export function buildSynthesis({ subject = 'the subject', relationships = [], evidenceFor = () => null, labelOf = (id) => id, formation = null, change = null, admissionReport = null } = {}) {
+export function buildSynthesis({ subject = 'the subject', relationships = [], evidenceFor = () => null, labelOf = (id) => id, formation = null, change = null, admissionReport = null, laborReport = null } = {}) {
   const out = []; let n = 0;
   const add = (status, text, evidence = [], extra = {}) => { out.push({ id: `s${++n}`, status, text, evidence, ...extra }); return out[out.length - 1]; };
   const cap = relationships.filter(r => r.type === 'CAPITAL_EVENT_INVOLVES').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev)
@@ -50,6 +50,25 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
     add(STATUS.DOCUMENTED, `${day(ev.filingDate)}: ${what}; the filing is the source of the deal status and no value or outcome is derived.`,
       [{ relationshipId: r.id, accession: ev.accession, form: ev.form, filingDate: ev.filingDate, passage: ev.passage, match: ev.counterpartyMatch?.outcome }]);
   }
+
+  // 2c. Officers and directors (KRYL-1411), as SEC Forms 3, 4 and 5 state them. A role is "as of" its filing; no end of a role is stated by these forms.
+  const lab = relationships.filter(r => r.type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'SEC_FORM_3_4_5');
+  if (lab.length) {
+    const people = new Set(lab.map(x => x.r.part[1]));
+    const dirs = lab.filter(x => x.r.nuId?.role === 'DIRECTOR').length, offs = lab.filter(x => x.r.nuId?.role === 'OFFICER').length;
+    const titles = [...new Set(lab.filter(x => x.r.nuId?.role === 'OFFICER').map(x => x.ev.officerTitle).filter(Boolean))].slice(0, 3);
+    add(STATUS.SUPPORTED, `${people.size} ${people.size === 1 ? 'person is' : 'people are'} disclosed as officers or directors of ${subject} in SEC Forms 3, 4 and 5 (${dirs} director role${dirs !== 1 ? 's' : ''}, ${offs} officer role${offs !== 1 ? 's' : ''}${titles.length ? `; titles as written include ${titles.join('; ')}` : ''}); each role is stated as of its own filing and no end of a role is stated by these forms.`,
+      lab.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.accession, form: x.ev.form, filingDate: x.ev.filingDate })));
+    const holderRels = relationships.filter(r => r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE');
+    let shown = 0;
+    for (const person of people) {
+      const h = holderRels.find(r => r.part[1] === person); if (!h || shown >= 3) continue; shown++;
+      const l = lab.find(x => x.r.part[1] === person);
+      add(STATUS.SUPPORTED, `${labelOf(person)} is disclosed both as ${lab.filter(x => x.r.part[1] === person).map(x => x.r.nuId?.role === 'DIRECTOR' ? 'a director' : 'an officer').join(' and ')} of ${subject} and as a beneficial-ownership filer in ${subject}; the filings document each role separately.`,
+        [{ relationshipId: h.id, accession: evidenceFor(h.id)?.provenance?.accession }, { relationshipId: l.r.id, accession: l.ev.accession }]);
+    }
+  }
+  if (laborReport?.capped) add(STATUS.UNRESOLVED, `${laborReport.personsSeen - laborReport.personsRead} further reporting person${laborReport.personsSeen - laborReport.personsRead !== 1 ? 's' : ''} in the insider forms searched ${laborReport.personsSeen - laborReport.personsRead !== 1 ? 'were' : 'was'} not read in this analysis (the newest ${laborReport.personsRead} are read per analysis), so their roles are not shown.`, []);
 
   // 3. Ownership change over two 12-month periods, as the dated filings classify it.
   for (const rec of (change?.relationships ?? []).filter(x => ['NEW', 'DISSOLVED'].includes(x.existence?.state) || x.configuration?.state === 'RECONFIGURED')) {

@@ -52,7 +52,7 @@ export async function probeActiveAnalysis() {
   const analysisSentence = admittedFormationSentence(formation, subject);
   const change = getPinnedChange(snap.canonicalId);
   const report = snap.reports?.capitalAdmission ?? null;
-  const syn = buildSynthesis({ subject, relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation, change: change?.result ?? null, admissionReport: report });
+  const syn = buildSynthesis({ subject, relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation, change: change?.result ?? null, admissionReport: report, laborReport: snap.reports?.labor ?? null });
   const validation = validateSynthesis(syn, rels, latestEvidenceFor, report);
   let past = null, historyError = null;
   for (let i = 0; i < 8 && !past; i++) {                                   // the snapshot record is written a moment after the freeze
