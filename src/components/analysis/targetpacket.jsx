@@ -493,7 +493,7 @@ export default function TargetPacket() {
   const observationCount = activeDomainPressures.reduce((s, p) => s + p.signalCount, 0);
   const activeDomainCount = activeDomainPressures.length;
   const identitySubline = observationCount > 0
-    ? `Structural analysis · ${packetDate} · ${observationCount} observation${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}`
+    ? `Structural analysis · ${packetDate} · ${observationCount} field signal${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}`
     : `Structural analysis · ${packetDate} · no domain signal recorded`;
 
   // WO-1876: write DNA entry to localStorage after synthesis resolves
@@ -1006,7 +1006,7 @@ export default function TargetPacket() {
               ? `${arbitration.passed ?? 0} of ${arbitration.total} candidate path${arbitration.total !== 1 ? 's' : ''} admitted by arbitration.`
               : 'No arbitration record for this session.'}
             {observationCount > 0
-              ? ` ${observationCount} observation${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}.`
+              ? ` ${observationCount} field signal${observationCount !== 1 ? 's' : ''} across ${activeDomainCount} domain${activeDomainCount !== 1 ? 's' : ''}.`
               : ' No domain signal recorded.'}
           </p>
           {activeDomainPressures.length > 0 && (
