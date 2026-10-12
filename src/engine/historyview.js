@@ -20,7 +20,7 @@ export function reconstructSnapshot(snapshot, records) {
     // the version whose evidence stood latest when the snapshot froze (matched by the filing's accession), else the last stored one
     const v = (ref.accession ? [...vs].reverse().find(x => x.evidence?.provenance?.accession === ref.accession) : null) ?? vs[vs.length - 1];
     if (!rec || !v) { missing.push(ref.id); continue; }
-    rels.push({ id: rec.relationship_id, type: rec.type, part: rec.part, nuId: rec.nu_id ?? {} });
+    rels.push({ id: rec.relationship_id, type: rec.type, part: rec.part, nuId: rec.nu_id ?? {}, nuState: v.nu_state ?? {} });
     evidence.set(rec.relationship_id, { provenance: v.evidence?.provenance ?? null, predicate: v.predicate, nuState: v.nu_state, ts: v.evidence?.ts ?? null });
   }
   const evidenceFor = (id) => evidence.get(id) ?? null;
@@ -31,7 +31,7 @@ export function reconstructSnapshot(snapshot, records) {
   return {
     id: snapshot.id, generatedAt: snapshot.generated_at, query: snapshot.query, subject, lookups: snapshot.lookups ?? [],
     refreshOf: snapshot.refresh_of ?? null,
-    relationships: rels.map(r => ({ id: r.id, type: r.type, sentence: canonicalRelationshipSentence(r.type, labelOf(r.part[0]), labelOf(r.part[1]), r.nuId), provenance: canonicalProvenanceLine(evidenceFor(r.id)), detail: canonicalDetailLines(evidenceFor(r.id)) })),
+    relationships: rels.map(r => ({ id: r.id, type: r.type, sentence: canonicalRelationshipSentence(r.type, labelOf(r.part[0]), labelOf(r.part[1]), r.nuId, r.nuState?.dealStatus ?? null), provenance: canonicalProvenanceLine(evidenceFor(r.id)), detail: canonicalDetailLines(evidenceFor(r.id)) })),
     formation, formationSentence: admittedFormationSentence(formation, subject),
     change: snapshot.change ? { retrievedAt: snapshot.change.finishedAt ?? null, pinnedAt: snapshot.change.pinnedAt ?? null, units: chg.length, byExistence: states } : null,
     missing,

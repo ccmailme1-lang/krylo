@@ -13,6 +13,8 @@
 // Euro ...") are not extracted; a counterparty without a legal suffix (a government department) is not extracted; the Item text is
 // read as plain text, so tables are flattened.
 
+import { extractAcquisitions } from './edgar8kacquisition.js';   // KRYL-1409: read from the same document text
+
 export const CAPITAL_EVENT_ITEMS = ['1.01', '2.01', '2.03', '3.02'];
 const BODY_ITEMS = ['1.01', '2.01', '2.03', '3.02', '8.01'];
 const TITLES = {
@@ -170,10 +172,10 @@ const absent = (field, absenceClass, reason) => ({ field, state: 'ABSENT', absen
 export function extractCapitalEvent({ html, items, registrant, accession, obtained = true, status = 200 }) {
   const itemList = (items ?? []).map(String);
   const relevant = itemList.filter(i => CAPITAL_EVENT_ITEMS.includes(i));
-  if (!relevant.length) return { attempted: false, status: 'NOT_ATTEMPTED', accession, items: itemList, amounts: [], instruments: [], counterparties: [], absent: [], note: 'the filing carries no capital-event item (1.01, 2.01, 2.03, 3.02)' };
+  if (!relevant.length) return { attempted: false, status: 'NOT_ATTEMPTED', accession, items: itemList, acquisition: { candidates: [], skipped: [] }, amounts: [], instruments: [], counterparties: [], absent: [], note: 'the filing carries no capital-event item (1.01, 2.01, 2.03, 3.02)' };
   if (!obtained) {
     const why = `the filing document was not obtained (HTTP ${status})`;
-    return { attempted: true, status: 'NOT_OBTAINED', accession, items: itemList, amounts: [], instruments: [], counterparties: [], absent: ['amount', 'instrument', 'counterparty'].map(f => absent(f, 'b', why)) };
+    return { attempted: true, status: 'NOT_OBTAINED', accession, items: itemList, acquisition: { candidates: [], skipped: [{ item: relevant.join(','), reason: 'NOT_OBTAINED' }] }, amounts: [], instruments: [], counterparties: [], absent: ['amount', 'instrument', 'counterparty'].map(f => absent(f, 'b', why)) };
   }
   const text = htmlToText(html);
   const bodies = itemBodies(text);
@@ -191,7 +193,7 @@ export function extractCapitalEvent({ html, items, registrant, accession, obtain
   if (!A.length) abs.push(absent('amount', 'c', joined.length ? 'the Item text states no currency amount of at least 1,000,000' : none));
   if (!I.length) abs.push(absent('instrument', 'c', none));
   if (!C.length) abs.push(absent('counterparty', 'c', joined.length ? 'the Item text names no counterparty with a legal or financial suffix' : none));
-  return { attempted: true, status: abs.length === 3 ? 'NOTHING_STATED' : (abs.length ? 'PARTIAL' : 'EXTRACTED'), accession, items: itemList, amounts: A, instruments: I, counterparties: C, absent: abs };
+  return { attempted: true, status: abs.length === 3 ? 'NOTHING_STATED' : (abs.length ? 'PARTIAL' : 'EXTRACTED'), accession, items: itemList, acquisition: extractAcquisitions({ bodies, registrant, accession }), amounts: A, instruments: I, counterparties: C, absent: abs };
 }
 
 // Documents are immutable, so a successful extraction is kept for the page session (a refresh or a new query does not refetch).

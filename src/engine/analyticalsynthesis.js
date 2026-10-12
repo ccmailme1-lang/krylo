@@ -41,6 +41,16 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
       [{ relationshipId: r.id, accession: ev.accession, form: ev.form, filingDate: ev.filingDate, passage: ev.passage, match: ev.counterpartyMatch?.outcome }]);
   }
 
+  // 2b. Acquisitions (KRYL-1409), as the filing states them: an agreement (Item 1.01, pending) or a completion (Item 2.01). The deal status is the filing's own.
+  const acq = relationships.filter(r => r.type === 'ACQUIRED').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'SEC_8K_ACQUISITION')
+    .sort((a, b) => String(b.ev.filingDate).localeCompare(String(a.ev.filingDate)));
+  for (const { r, ev } of acq.slice(0, 6)) {
+    const a = labelOf(r.part[0]), b = labelOf(r.part[1]);
+    const what = ev.dealStatus === 'CLOSED' ? `${a} completed its acquisition of ${b} (Item ${ev.item})` : `${a} entered an agreement to acquire ${b}${ev.agreement ? ` (${ev.agreement}, Item ${ev.item}; pending)` : ' (pending)'}`;
+    add(STATUS.DOCUMENTED, `${day(ev.filingDate)}: ${what}; the filing is the source of the deal status and no value or outcome is derived.`,
+      [{ relationshipId: r.id, accession: ev.accession, form: ev.form, filingDate: ev.filingDate, passage: ev.passage, match: ev.counterpartyMatch?.outcome }]);
+  }
+
   // 3. Ownership change over two 12-month periods, as the dated filings classify it.
   for (const rec of (change?.relationships ?? []).filter(x => ['NEW', 'DISSOLVED'].includes(x.existence?.state) || x.configuration?.state === 'RECONFIGURED')) {
     const e0 = rec.evidence?.asOfE0, p1 = (rec.evidence?.inP1 ?? []).slice(-1)[0];
@@ -70,8 +80,10 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
   const unres = (admissionReport?.rejected ?? []).filter(x => x.outcome !== 'SELF');
   if (unres.length) {
     const names = [...new Set(unres.map(x => `${x.counterparty} (${x.outcome === 'UNRESOLVED' ? 'unresolved' : String(x.outcome).toLowerCase().replace(/_/g, ' ')})`))];
-    add(STATUS.UNRESOLVED, `${names.length} counterpart${names.length !== 1 ? 'ies' : 'y'} named in the capital-event filings could not be matched to an identified entity and ${names.length !== 1 ? 'are' : 'is'} not admitted: ${names.slice(0, 6).join('; ')}${names.length > 6 ? `; +${names.length - 6} more` : ''}. The filing text names them; their identity is not confirmed.`, unres.slice(0, 6).map(x => ({ accession: x.accession, counterparty: x.counterparty })));
+    add(STATUS.UNRESOLVED, `${names.length} counterpart${names.length !== 1 ? 'ies' : 'y'} named in the capital-event and acquisition filings could not be matched to an identified entity and ${names.length !== 1 ? 'are' : 'is'} not admitted: ${names.slice(0, 6).join('; ')}${names.length > 6 ? `; +${names.length - 6} more` : ''}. The filing text names them; their identity is not confirmed.`, unres.slice(0, 6).map(x => ({ accession: x.accession, counterparty: x.counterparty })));
   }
+  const amb = admissionReport?.acquisitionAmbiguous ?? [];
+  if (amb.length) add(STATUS.UNRESOLVED, `${amb.length} acquisition filing${amb.length !== 1 ? 's name' : ' names'} more than one possible counterparty or leave${amb.length !== 1 ? '' : 's'} the direction of the acquisition unstated, so no acquisition is admitted from ${amb.length !== 1 ? 'them' : 'it'}.`, amb.slice(0, 6).map(x => ({ accession: x.accession })));
   if (admissionReport?.deferred) add(STATUS.UNRESOLVED, `${admissionReport.deferred} further counterparty mention${admissionReport.deferred !== 1 ? 's were' : ' was'} not matched in this analysis (matching is limited per analysis); a refresh continues where this one stopped.`, []);
   const indet = (change?.relationships ?? []).filter(x => x.existence?.state === 'INDETERMINATE');
   if (indet.length) add(STATUS.UNRESOLVED, `${indet.length} ownership position${indet.length !== 1 ? 's are' : ' is'} INDETERMINATE over the two periods (${[...new Set(indet.map(x => x.existence.reason))].join(', ')}): the retrieved filings do not support a conclusion about whether the position persists.`, indet.slice(0, 6).map(x => ({ holder: x.holderName, cusip: x.cusip })));

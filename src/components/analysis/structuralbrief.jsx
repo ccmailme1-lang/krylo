@@ -369,7 +369,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
             {entityCanonicalRelationships.map((r, i) => (
               <div key={`canonical-${i}`}>
                 <div>
-                  {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id), r.nuId)} — {r.type}
+                  {canonicalRelationshipSentence(r.type, ...r.part.map(id => NODE_LABELS[id] ?? id), r.nuId, r.nuState?.dealStatus ?? null)} — {r.type}
                 </div>
                 <div style={{ marginLeft: 14, marginTop: 2, fontSize: 10, color: ABSENCE }}>{canonicalProvenanceLine(latestEvidenceFor(r.id))}</div>
                 {canonicalDetailLines(latestEvidenceFor(r.id)).map((l, k) => <div key={`d${k}`} style={{ marginLeft: 14, marginTop: 1, fontSize: 10, color: ABSENCE }}>{l}</div>)}

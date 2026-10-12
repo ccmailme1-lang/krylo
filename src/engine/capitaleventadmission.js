@@ -74,3 +74,56 @@ export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs
   }
   return { admitted, rejected, matched, deferred };
 }
+
+// ── KRYL-1409: acquisitions (ACQUIRED), through the same matching and the same single write path ──────────────────────────────────────────────
+// A candidate (edgar8kacquisition.js) names the OTHER principal; it is admitted only when that name matches exactly ONE identified registrant
+// (SAME_ENTITY_CONFIRMED: an acquisition is of the entity itself, never of "an affiliate of" it) and the ratified ACQUIRED rule passes. Private targets,
+// unresolved, candidate and failed matches are reported and never admitted. part = (acquirer, target), ordered; dealStatus PENDING (Item 1.01) or CLOSED (2.01).
+export function buildAcquisitionAssertion({ filer, event, candidate, match }) {
+  if (match?.outcome !== 'SAME_ENTITY_CONFIRMED') return { skip: `the other party "${candidate?.otherParty?.name}" is ${match?.outcome ?? 'unmatched'}: not admitted` };
+  const filerNode = nodeId(filer.cik, filer.name), otherNode = nodeId(match.identifier.value, match.canonicalName);
+  const filerIsAcquirer = candidate.filerRole === 'ACQUIRER';
+  const acquirer = filerIsAcquirer ? { cik: filer.cik, name: filer.name } : { cik: match.identifier.value, name: match.canonicalName };
+  const target = filerIsAcquirer ? { cik: match.identifier.value, name: match.canonicalName } : { cik: filer.cik, name: filer.name };
+  return {
+    assertion: {
+      part: filerIsAcquirer ? [filerNode, otherNode] : [otherNode, filerNode],
+      type: 'ACQUIRED',
+      nuId: {},
+      nuState: { dealStatus: candidate.dealStatus },
+      evidence: {
+        ts: Date.parse(event.filingDate) || Date.now(),
+        provenance: {
+          source: 'SEC_8K_ACQUISITION', accession: event.accession, form: event.form ?? '8-K', filingDate: event.filingDate, items: [candidate.item], item: candidate.item,
+          agreement: candidate.agreement ?? null, dealStatus: candidate.dealStatus, filerRole: candidate.filerRole,
+          passage: candidate.otherParty.passage, counterpartyName: candidate.otherParty.name, counterpartyMatch: match,
+          ladderStep: 'ESTABLISHED_RELATIONSHIP',
+        },
+      },
+    },
+    meta: { acquirerName: acquirer.name, acquirerCik: acquirer.cik, targetName: target.name, targetCik: target.cik, source: 'SEC_8K_ACQUISITION' },
+  };
+}
+
+/**
+ * Match and admit the other principals of the given acquisition events (oldest first, so a completion follows its agreement).
+ * @param {{ filer:{cik:string,name:string}, events:object[] }} p  events: edgar8ksignal.js `acquisitionEvents`
+ * @returns {{ admitted:object[], rejected:object[], matched:number, deferred:number }}
+ */
+export async function admitAcquisitions({ filer, events, searchFn, sleep, gapMs, now = Date.now(), maxNames = 6, registryCache = null }) {
+  const admitted = [], rejected = []; const seen = new Set(); let matched = 0, deferred = 0;
+  const ordered = [...(events ?? [])].sort((a, b) => String(a.filingDate).localeCompare(String(b.filingDate)));
+  for (const event of ordered) {
+    for (const candidate of event.acquisition?.candidates ?? []) {
+      const key = candidate.otherParty.name.toLowerCase();
+      if (!seen.has(key)) { if (seen.size >= maxNames) { deferred++; continue; } seen.add(key); matched++; }
+      const match = await matchCounterparty({ name: candidate.otherParty.name, registrant: filer.name, passage: candidate.otherParty.passage, searchFn, now, sleep, gapMs, registryCache });
+      const built = buildAcquisitionAssertion({ filer, event, candidate, match });
+      if (built.skip) { rejected.push({ kind: 'ACQUISITION', accession: event.accession, counterparty: candidate.otherParty.name, outcome: match.outcome, reason: built.skip }); continue; }
+      const res = admitAndProject(built.assertion, built.meta);
+      if (res.admitted) admitted.push({ kind: 'ACQUISITION', accession: event.accession, counterparty: candidate.otherParty.name, outcome: match.outcome, predicate: res.predicate, relationship: res.relationship });
+      else rejected.push({ kind: 'ACQUISITION', accession: event.accession, counterparty: candidate.otherParty.name, outcome: match.outcome, reason: res.reason });
+    }
+  }
+  return { admitted, rejected, matched, deferred };
+}

@@ -35,6 +35,7 @@ const FRACTURE_EVENT_CLASSES = new Set([
   'CONTRACT_TERMINATION',
 ]);
 
+const ACQUISITION_EXTRA_DOCS = 4;  // KRYL-1409: further Item 1.01 / 2.01 filings read for acquisitions only (their capital-event content is not surfaced), so frequent credit and indenture filings do not crowd an acquisition out
 const CAPITAL_DOC_LIMIT = 8;      // the newest capital-event filings whose text is read per lookup (the brief lists 8)
 const CAPITAL_DOC_GAP_MS = 400;    // spacing between document requests (SEC fair access; the engine proxy also spaces)
 
@@ -165,6 +166,18 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
     await new Promise(r => setTimeout(r, CAPITAL_DOC_GAP_MS));
   }
 
+  // KRYL-1409: acquisition candidates come from the SAME document reads (extractCapitalEvent computes them from the same Item text). Filings beyond the
+  // newest CAPITAL_DOC_LIMIT that carry Item 1.01 or 2.01 are read too, for acquisitions only.
+  const acqOnly = new Map();
+  const extras = [...matches].sort((a, b) => fileDate(b).localeCompare(fileDate(a)))
+    .filter(h => !capitalEvents.has(h._id) && parseItems(h._source?.items ?? '').some(i => i === '1.01' || i === '2.01')).slice(0, ACQUISITION_EXTRA_DOCS);
+  for (const hit of extras) {
+    const src = hit._source ?? {};
+    const file = String(hit._id ?? '').split(':')[1] ?? null;
+    acqOnly.set(hit._id, await fetchCapitalEvent({ cik: entityCik, accession: src.adsh, file, items: parseItems(src.items ?? ''), registrant: entityName ?? src.display_names?.[0] ?? '' }));
+    await new Promise(r => setTimeout(r, CAPITAL_DOC_GAP_MS));
+  }
+
   const batch = [];
   for (const hit of matches) {
     const src        = hit._source ?? {};
@@ -209,7 +222,9 @@ export async function runTargetedEdgar8KSignalSync({ entityCik, canonicalId, ent
   // KRYL-1401: the extracted capital events, for counterparty matching and admission (capitaleventadmission.js)
   const capitalEventList = toRead.map(h => { const src = h._source ?? {}; const items = parseItems(src.items ?? ''); return { accession: src.adsh, filingDate: src.file_date ?? null, form: '8-K', items, eventClass: classifyEventClass(items), capital: capitalEvents.get(h._id) ?? null }; })
     .filter(e => e.capital?.attempted && e.accession);
-  return { dispatched: batch.length, matched: matches.length, total: hits.length, capitalEvents: capitalEventList };
+  const acquisitionEvents = [...toRead, ...extras].map(h => { const src = h._source ?? {}; const items = parseItems(src.items ?? ''); const ev = capitalEvents.get(h._id) ?? acqOnly.get(h._id); return { accession: src.adsh, filingDate: src.file_date ?? null, form: '8-K', items, acquisition: ev?.acquisition ?? { candidates: [], skipped: [] } }; })
+    .filter(e => e.accession && (e.acquisition.candidates.length || e.acquisition.skipped.some(x => /^AMBIGUOUS/.test(x.reason))));
+  return { dispatched: batch.length, matched: matches.length, total: hits.length, capitalEvents: capitalEventList, acquisitionEvents };
 }
 
 export { EVENT_DOMAIN_MAP, FRACTURE_EVENT_CLASSES, buildSignals };

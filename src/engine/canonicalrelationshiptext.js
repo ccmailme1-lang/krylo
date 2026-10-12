@@ -24,6 +24,13 @@ export function ownershipFailureNotice(reason, admittedCount) {
 // an unnamed affiliate is never described as the named entity.
 export function canonicalDetailLines(ev) {
   const p = ev?.provenance;
+  if (p?.source === 'SEC_8K_ACQUISITION') {                // KRYL-1409: what the filing states about an acquisition, with the matching outcome as returned
+    const m = p.counterpartyMatch ?? {};
+    const out = [`${p.agreement ?? 'agreement'} · Item ${p.item} · deal status as the filing states it: ${p.dealStatus}${p.filerRole === 'TARGET' ? ' · the filer is the target' : ''}`,
+      `other party: ${m.outcome} · SEC CIK ${m.identifier?.value} (${m.canonicalName})`];
+    if (p.passage) out.push(`"${String(p.passage).length > 190 ? String(p.passage).slice(0, 187).trimEnd() + '…' : p.passage}"`);
+    return out;
+  }
   if (!p || p.source !== 'SEC_8K_CAPITAL_EVENT') return [];
   const m = p.counterpartyMatch ?? {};
   const lines = [];
@@ -35,10 +42,10 @@ export function canonicalDetailLines(ev) {
   return lines;
 }
 
-export function canonicalRelationshipSentence(type, a, b, nuId = null) {
+export function canonicalRelationshipSentence(type, a, b, nuId = null, dealStatus = null) {
   if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
-  if (type === 'ACQUIRED') return `${a} acquired ${b}`;
+  if (type === 'ACQUIRED') return dealStatus === 'PENDING' ? `${a} entered an agreement to acquire ${b} (pending)` : (dealStatus === 'CLOSED' ? `${a} completed its acquisition of ${b}` : (dealStatus === 'TERMINATED' ? `${a}'s agreement to acquire ${b} was terminated` : `${a} acquired ${b}`));
   if (type === 'SHARED_PATENT_ASSIGNMENT') return `${a} and ${b} share a patent assignment`;
   return `${a} ↔ ${b}`;
 }

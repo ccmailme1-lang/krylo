@@ -20,7 +20,7 @@ import { findAdmittedRelationshipsForLive, latestEvidenceForLive } from './canon
 import { captureCanonicalFormationSnapshots } from './formationsnapshotclient.js';
 import { runRelationshipChange, getRelationshipChange } from './relationshipchangeservice.js';
 import { markStarted } from './ownershiplookupstore.js';
-import { admitCapitalEvents } from './capitaleventadmission.js';
+import { admitCapitalEvents, admitAcquisitions } from './capitaleventadmission.js';
 import { setAdmissionReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
@@ -114,7 +114,14 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         // KRYL-1401: match the named counterparties of the extracted capital events and admit the confirmed ones (a lookup of the snapshot's
         // settlement; if it does not finish in time it is recorded TIMEOUT, the admission continues live and appears at the next Refresh).
         const filer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
-        admitCapitalEvents({ filer, events: r?.capitalEvents ?? [], searchFn: secSearch, registryCache })
+        // KRYL-1409: acquisitions go through the same matching (shared cache) and the same single write path. They are matched FIRST (one or two names), so
+        // a financing-heavy filer's long counterparty list cannot push an acquisition past the snapshot's settlement time.
+        const ambiguous = (r?.acquisitionEvents ?? []).flatMap(e => (e.acquisition?.skipped ?? []).filter(x => /^AMBIGUOUS/.test(x.reason)).map(x => ({ accession: e.accession, reason: x.reason })));
+        admitAcquisitions({ filer, events: r?.acquisitionEvents ?? [], searchFn: secSearch, registryCache })
+          .then(async (acq) => {
+            const cap = await admitCapitalEvents({ filer, events: r?.capitalEvents ?? [], searchFn: secSearch, registryCache });
+            return { admitted: [...acq.admitted, ...cap.admitted], rejected: [...acq.rejected, ...cap.rejected], matched: cap.matched + acq.matched, deferred: cap.deferred + acq.deferred, acquisitionAmbiguous: ambiguous };
+          })
           .then((res) => { setAdmissionReport(scope.canonicalId, res); return settleLookup('counterparty', res.admitted.length === 0 && res.rejected.some(x => x.outcome === 'LOOKUP_FAILED') ? 'counterparty lookups failed' : null); })
           .catch((e) => settleLookup('counterparty', String(e?.message ?? e)))
           .finally(() => cpDone());

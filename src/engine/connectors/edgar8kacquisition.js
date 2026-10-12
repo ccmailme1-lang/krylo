@@ -18,24 +18,19 @@ import { extractCounterparties } from './edgar8kcontent.js';
 const AGREEMENT = /\b(?:Agreement\s+and\s+Plan\s+of\s+(?:Merger|Reorganization)|Plan\s+of\s+Merger|Merger\s+Agreement|(?:Stock|Share|Equity|Unit|Asset|Membership\s+Interest)\s+Purchase\s+Agreement|Business\s+Combination\s+Agreement|Transaction\s+Agreement|Tender\s+Offer\s+Agreement)\b/i;
 const NOT_ACQUISITION = /\b(?:Credit\s+Agreement|Indemnification\s+Agreement|Warrant|Securities\s+Purchase\s+Agreement|Underwriting\s+Agreement|Equity\s+Distribution\s+Agreement|Non-Prosecution|Deferred\s+Prosecution|Settlement\s+Agreement)\b/i;
 const SUBSIDIARY_OF = /^[^.;]{0,160}?\bsubsidiary\s+of\s+([^.;]{0,90})/i;
+const ACQUISITION_SUB = /\b(?:Merger\s+Sub(?:sidiary)?|Holdco|Newco|Acquisition\s+(?:Corp|Sub)|Sub,?\s+(?:Inc|LLC)\b)/i;   // a vehicle the acquirer forms to carry the merger
 const SUB_NAME = /\b(?:Merger\s+Sub|Merger\s+Subsidiary|Holdco|Newco|Acquisition\s+(?:Corp|Sub))\b/i;
 const norm = (s) => String(s ?? '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
 
 const passage = (text, start, end, pad = 120) => { let a = Math.max(0, start - pad), b = Math.min(text.length, end + pad); if (a > 0) { const sp = text.indexOf(' ', a); if (sp >= 0 && sp < start) a = sp + 1; } if (b < text.length) { const sp = text.lastIndexOf(' ', b); if (sp > end) b = sp; } return text.slice(a, b).trim(); };
 
-/** The ways the filer is referred to in the Item text: its first name word, defined terms ("Verizon", "Company") and the generic references. */
-export function filerAliases(body, registrant) {
+/** The ways the filer is referred to: generic references, its first name word, and the defined term that directly follows ITS OWN name. */
+export function filerAliases(registrant, filerTerm = null) {
   const reg = norm(registrant).split(' ').filter(w => !/^(inc|corp|corporation|co|company|ltd|plc|the)$/.test(w));
   const aliases = new Set(['company', 'registrant']);
   if (reg[0]) aliases.add(reg[0]);
-  const full = norm(registrant);
-  const rx = /\(\s*(?:the\s+)?[“"”']\s*([A-Z][A-Za-z0-9&.\- ]{1,30}?)\s*[“"”']\s*\)/g; let m;
-  while ((m = rx.exec(body))) {
-    // a defined term that directly follows the filer's own name
-    const before = norm(body.slice(Math.max(0, m.index - 70), m.index));
-    if (reg[0] && before.includes(reg[0])) aliases.add(norm(m[1]));
-  }
-  if (full) aliases.add(full);
+  if (filerTerm) aliases.add(norm(filerTerm));
+  const full = norm(registrant); if (full) aliases.add(full);
   return aliases;
 }
 
@@ -43,10 +38,10 @@ const isFiler = (name, aliases) => { const n = norm(name); return !!n && (aliase
 
 // Principals are the named entities the filing introduces with its own legal description ("Frontier Communications Parent, Inc., a Delaware
 // corporation"): the name is read backwards from that description over name-like words, so "Warner Bros. Discovery, Inc." stays whole.
-const ENTITY_KIND = /^,?\s*(?:a|an)\s+(?:newly\s+formed\s+)?(?:(?:[A-Z][A-Za-z]+|[a-z]+)\s+){0,3}?(?:corporation|limited\s+liability\s+company|limited\s+partnership|public\s+limited\s+company|company|partnership)\b/;
+const ENTITY_KIND = /^,?\s*(?:a|an)\s+(?:newly\s+formed\s+)?(?:(?:[A-Z][A-Za-z]+|[a-z]+)\s+){0,3}?(?:corporation|limited\s+liability\s+company|limited\s+partnership|public\s+limited\s+company|company|partnership|subsidiary)\b/;
 const NAME_SUFFIX = /^(?:Inc\.?|Corp\.?|Corporation|LLC|L\.L\.C\.|Ltd\.?|Limited|plc|PLC|L\.P\.|LP|Company|Co\.?|N\.V\.|S\.A\.|AG|SE)$/;
-const NAME_WORD = /^(?:[A-Z][A-Za-z0-9&.'’\-]*|&|of)$/;
-function principals(body, registrant, aliases) {
+const NAME_WORD = /^(?:[A-Z0-9][A-Za-z0-9&.'’\-]*|&|of)$/;
+export function principals(body, registrant, aliases = null) {
   const out = [];
   const words = []; const rx = /\S+/g; let w;
   while ((w = rx.exec(body))) words.push({ raw: w[0], start: w.index, end: w.index + w[0].length });
@@ -67,23 +62,24 @@ function principals(body, registrant, aliases) {
       j--;
       if (/[;:]$/.test(prev) || (/\.$/.test(prev) && !NAME_SUFFIX.test(pc) && !/^(?:Bros|Inc|Corp|Co|Ltd|St|Mr|Dr|Jr|Sr|U\.S|N\.A|L\.P)\.$/.test(prev))) { j++; break; }
     }
-    let startIdx = j; while (startIdx < i && /^(?:On|In|By|And|Among|Between|With|The|Agreement|Plan|Item|Section|and|by|with)$/.test(words[startIdx].raw.replace(/[,;]+$/, ''))) startIdx++;
+    let startIdx = j; while (startIdx < i && /^(?:On|In|By|And|Among|Between|With|The|Agreement|Plan|Item|Section|and|by|with|of|to|for|among|between)$/.test(words[startIdx].raw.replace(/[,;]+$/, ''))) startIdx++;
     const name = body.slice(words[startIdx].start, words[i].end).replace(/[\s,;]+$/, '').replace(/\s+/g, ' ');
     if (name.split(' ').length < 2 && !/^[A-Z][A-Za-z]+,?\s/.test(name)) continue;
     const after = body.slice(words[i].end, words[i].end + 300).split(/\(\s*(?:the\s+)?[“"”]/)[0];   // the clause describing THIS entity ends at its defined term
     const sub = after.match(SUBSIDIARY_OF);
-    out.push({ name, start: words[startIdx].start, end: words[i].end, isSub: !!sub || SUB_NAME.test(name), parent: sub ? sub[1].trim() : null, filer: isFiler(name, aliases) });
+    const term = (body.slice(words[i].end, words[i].end + 300).match(/\(\s*(?:the\s+)?[“"”]\s*([^“"”()]{1,40}?)\s*[“"”]\s*\)/) ?? [])[1] ?? null;
+    out.push({ name, start: words[startIdx].start, end: words[i].end, isSub: !!sub || SUB_NAME.test(name), parent: sub ? sub[1].trim() : null, term, filer: false });
   }
   const seen = new Set(); return out.filter(p => { const k = norm(p.name); if (seen.has(k)) return false; seen.add(k); return true; });
 }
 
-function direction(body, registrant, aliases, list) {
+export function direction(body, registrant, aliases, list) {
   // a subsidiary of the filer means the filer is the acquirer; a subsidiary of another principal means that principal is
   let filerIsAcquirer = null, other = null;
   for (const p of list.filter(x => x.isSub)) {
     const parent = p.parent ? norm(p.parent) : '';
     const ofFiler = [...aliases].some(a => parent === a || parent.startsWith(a + ' ') || parent.startsWith('the ' + a));
-    if (ofFiler && /merger\s+sub|acquisition\s+(corp|sub)|merger\s+subsidiary/i.test(p.name + ' ' + body.slice(p.start, p.end + 80))) { filerIsAcquirer = true; }
+    if (ofFiler && ACQUISITION_SUB.test(`${p.name} ${p.term ?? ''}`)) { filerIsAcquirer = true; }
   }
   const principalsOther = list.filter(x => !x.isSub && !x.filer);
   if (filerIsAcquirer === true) { other = principalsOther.length === 1 ? principalsOther[0] : null; return { filerIsAcquirer: true, other, reason: other ? null : 'AMBIGUOUS_COUNTERPARTY' }; }
@@ -91,7 +87,7 @@ function direction(body, registrant, aliases, list) {
   for (const p of list.filter(x => x.isSub)) {
     const parent = p.parent ? norm(p.parent) : '';
     const parentPrincipal = principalsOther.find(o => parent.startsWith(norm(o.name).split(' ')[0]) && norm(o.name).split(' ')[0].length > 2);
-    if (parentPrincipal && /merger\s+sub|acquisition\s+(corp|sub)/i.test(p.name)) return { filerIsAcquirer: false, other: parentPrincipal, reason: null };
+    if (parentPrincipal && ACQUISITION_SUB.test(`${p.name} ${p.term ?? ''}`)) return { filerIsAcquirer: false, other: parentPrincipal, reason: null };
   }
   // the filer as the subject of an acquisition verb with a named object
   const verb = /\b(?:to\s+acquire|will\s+acquire|has\s+agreed\s+to\s+acquire|agreed\s+to\s+acquire|acquisition\s+of|acquire[sd]?|completed\s+(?:its|the)\s+acquisition\s+of)\s+(?:all\s+of\s+the\s+(?:issued\s+and\s+outstanding\s+)?(?:shares|equity|capital\s+stock)\s+of\s+)?([A-Z][^,.;()]{2,80})/;
@@ -103,6 +99,16 @@ function direction(body, registrant, aliases, list) {
   return { filerIsAcquirer: null, other: null, reason: 'AMBIGUOUS_DIRECTION' };
 }
 
+// The parties are introduced in the sentence that states the agreement or the completion; later paragraphs (financing commitments, advisers, termination
+// fees) name other entities that are not principals of the acquisition.
+export function firstSentenceScope(body, item) {
+  const at = item === '1.01' ? body.search(AGREEMENT) : body.search(/completed\s+(?:its|the|their)|consummated|Merger\s+was/i);
+  const from = Math.max(0, at);
+  const rest = body.slice(from);
+  const end = rest.search(/[a-z)\"”]\.\s+(?:The|Pursuant|Subject|Upon|At|Each|In|On|As|Under|Following|Prior|Immediately)\b/);
+  return body.slice(0, from + (end > 0 ? end + 2 : Math.min(rest.length, 1600)));
+}
+
 /**
  * @param {{ bodies:Record<string,string>, registrant:string, accession:string }} p  bodies: Item text by item number (edgar8kcontent.js itemBodies)
  * @returns {{ candidates:object[], skipped:object[] }}
@@ -112,7 +118,7 @@ export function extractAcquisitions({ bodies, registrant, accession }) {
   for (const item of ['1.01', '2.01']) {
     const body = bodies?.[item]; if (!body) continue;
     const head = body.slice(0, 900);
-    const aliases = filerAliases(body, registrant);
+    const scoped = firstSentenceScope(body, item);
     if (item === '1.01') {
       if (!AGREEMENT.test(head) || (NOT_ACQUISITION.test(head.slice(0, 300)) && !/merger|acquir/i.test(head))) { skipped.push({ item, reason: 'NO_ACQUISITION_AGREEMENT' }); continue; }
     } else {
@@ -120,16 +126,18 @@ export function extractAcquisitions({ bodies, registrant, accession }) {
       const filerSells = /\b(?:Sellers?|completed\s+the\s+sale|sale\s+of|sold|divest\w+|dispos\w+)\b/i.test(head) && !/\bcompleted\s+(?:its|the)\s+acquisition\s+of\s+[A-Z]/.test(body);
       if (!completes || filerSells) { skipped.push({ item, reason: filerSells ? 'DISPOSITION' : 'NO_COMPLETED_ACQUISITION' }); continue; }
     }
-    const list = principals(body, registrant, aliases);
-    const dir = direction(body, registrant, aliases, list);
+    const list0 = principals(scoped, registrant);
+    const regTok = norm(registrant).split(' ').filter(w => !/^(inc|corp|corporation|co|company|ltd|plc|the)$/.test(w))[0];
+    const filerP = list0.find(p => !p.isSub && regTok && norm(p.name).startsWith(regTok));
+    const aliases = filerAliases(registrant, filerP?.term);
+    const list = list0.map(p => ({ ...p, filer: isFiler(p.name, aliases) }));
+    const dir = direction(scoped, registrant, aliases, list);
     if (!dir.other || dir.filerIsAcquirer == null) { skipped.push({ item, reason: dir.reason ?? 'AMBIGUOUS_DIRECTION' }); continue; }
     // the passage that states the acquisition: the agreement sentence (1.01) or the completion sentence (2.01)
-    const key = item === '1.01' ? (body.search(AGREEMENT)) : body.search(/completed\s+(?:its|the)|consummated|Merger\s+was/i);
-    const pStart = Math.max(0, key), pEnd = Math.min(body.length, Math.max(dir.other.end, pStart + 40));
     const agreement = (head.match(AGREEMENT) ?? [])[0] ?? null;
     candidates.push({
       item, accession, dealStatus: item === '1.01' ? 'PENDING' : 'CLOSED', filerRole: dir.filerIsAcquirer ? 'ACQUIRER' : 'TARGET',
-      otherParty: { name: dir.other.name, passage: passage(body, Math.min(pStart, dir.other.start), Math.max(pEnd, dir.other.end)) },
+      otherParty: { name: dir.other.name, passage: passage(scoped, dir.other.start, dir.other.end, 110) },   // a window around the other party's own name in the filing
       agreement: agreement ? agreement.replace(/\s+/g, ' ') : null,
     });
   }
