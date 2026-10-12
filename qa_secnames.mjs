@@ -86,7 +86,7 @@ console.log('Admission: candidates are verified by CIK; suggestions never bind')
     ok(!v.verified && v.reason === 'NEAR_MATCH' && v.candidates[0].includes('FORD MOTOR CO'), `${typo}: NEAR_MATCH, not verified`);
   }
   ok(calls.length === 0, 'a near match never reaches the filing-index search (nothing to bind)');
-  ok(nameResolutionNote('Frod') === ' Closest listed registrant: FORD MOTOR CO, not assumed.', 'the suggestion text is exactly "Closest listed registrant: FORD MOTOR CO, not assumed."');
+  ok(nameResolutionNote('Frod').startsWith(' Closest listed registrant: FORD MOTOR CO, not assumed.'), 'the suggestion text begins exactly "Closest listed registrant: FORD MOTOR CO, not assumed."');
   const before = resolve('Frod'); ok(before === null, 'a suggestion creates no registry entity');
   const adm = await admitPublicFiler('Tesle', { searchFn: searchFn([hit('Tesla, Inc.', 'TSLA', '0001318605')]), nameFn, now: NOW });
   ok(adm.entity === null && adm.outcome === 'NEAR_MATCH', 'admitPublicFiler binds nothing on a near match');

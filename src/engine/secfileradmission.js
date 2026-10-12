@@ -27,14 +27,28 @@ export const getAdmissionLog = () => [..._log];
 const _resolution = new Map();
 const keyOf = (t) => String(t ?? '').trim().toLowerCase();
 export const getNameResolution = (text) => _resolution.get(keyOf(text)) ?? null;
-/** The sentence appended to "its entity is not resolved": the closest listed registrant, explicitly not assumed. '' when there is nothing to say. */
+// Identity classes that exist as proposals but are NOT implemented or ratified: stated as "not checked", never as checked (specs/spec-entity-resolution-contract-for-architects-20261012.md).
+export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['SEC Form D issuers', 'GLEIF (LEI)', 'UK Companies House', 'the federal contractor registry (UEI)']);
+const OUTCOME_WORDS = { NO_MATCH: 'no match', AMBIGUOUS: 'several registrants share the name, none assumed', NEAR_MATCH: 'only a similar name, not assumed', NOT_LISTED: 'a registrant was found but it is not listed', NOT_VERIFIED: 'a candidate was found but its annual filings could not be confirmed', LOOKUP_FAILED: 'the lookup failed, so this is not evidence of absence', NO_QUERY_OR_SEARCH: 'not run', CANDIDATE: 'a candidate was found' };
+/**
+ * The sentences appended to "its entity is not resolved": the closest listed registrant, explicitly not assumed, and which identity sources were actually checked, what
+ * each returned, which were not checked, and what would resolve the subject. '' when nothing was recorded for this name.
+ */
 export function nameResolutionNote(text) {
-  const r = getNameResolution(text); if (!r?.candidates?.length) return '';
-  const names = r.candidates.slice(0, 4).map(c => c.name).join('; ');
-  if (r.tier === 'NEAR') return ` Closest listed registrant: ${names}, not assumed.`;
-  if (r.tier === 'AMBIGUOUS') return ` Several listed registrants match: ${names}. None is assumed.`;
-  if (r.tier === 'UNVERIFIED') return ` Listed registrant: ${names}; its annual filings could not be confirmed, so it is not assumed.`;
-  return '';
+  const r = getNameResolution(text); if (!r) return '';
+  const names = (r.candidates ?? []).slice(0, 4).map(c => c.name).join('; ');
+  let out = '';
+  if (names) {
+    if (r.tier === 'NEAR') out += ` Closest listed registrant: ${names}, not assumed.`;
+    else if (r.tier === 'AMBIGUOUS') out += ` Several listed registrants match: ${names}. None is assumed.`;
+    else if (r.tier === 'UNVERIFIED') out += ` Listed registrant: ${names}; its annual filings could not be confirmed, so it is not assumed.`;
+  }
+  if (r.checks?.length) {
+    out += ` Identity sources checked: static registry (no match); ${r.checks.map(c => `${c.source} (${OUTCOME_WORDS[c.outcome] ?? String(c.outcome).toLowerCase().replace(/_/g, ' ')})`).join('; ')}.`
+      + ` Not checked: ${IDENTITY_SOURCES_NOT_CHECKED.join(', ')} (identity classes not yet ratified).`
+      + ' What would resolve it: the exact legal name of an SEC registrant, or an identifier from one of the sources not yet checked.';
+  }
+  return out;
 }
 export const _clearNameResolutionForTests = () => _resolution.clear();
 const noteResolution = (text, r) => { _resolution.set(keyOf(text), r); try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('krylo-name-resolution', { detail: { text } })); } catch { /* no window */ } };
@@ -51,7 +65,11 @@ const threeYearsAgo = (now) => { const d = new Date(now); d.setUTCFullYear(d.get
 
 export async function verifyPublicFiler(name, { searchFn, nameFn = null, now = Date.now() } = {}) {
   const query = String(name ?? '').trim();
-  const out = (r) => { _log.push({ query, at: new Date(now).toISOString(), ...r }); return r; };
+  const checks = []; let indexStep = false;                       // which identity sources were actually checked, and what each returned
+  const out = (r) => {
+    if (indexStep && !r.verified) checks.push({ source: 'SEC annual-report filers (filing index)', outcome: r.reason, candidates: r.candidates ?? [] });
+    const full = { ...r, checks: [...checks] }; _log.push({ query, at: new Date(now).toISOString(), ...full }); return full;
+  };
   if (query.length < 3 || !searchFn) return out({ verified: false, reason: 'NO_QUERY_OR_SEARCH' });
   // KRYL-1407: the canonical name source decides what the typed name may mean. EXACT / UNIQUE_PREFIX give one CANDIDATE CIK that the filing-index check below
   // must confirm by that CIK; NEAR and AMBIGUOUS never bind; NONE or an unavailable source leaves the original name-based check in force.
@@ -59,16 +77,18 @@ export async function verifyPublicFiler(name, { searchFn, nameFn = null, now = D
   if (nameFn) {
     let nm = null;
     try { nm = await nameFn(query); } catch { nm = null; }
+    if (!nm || nm.error || !nm.tier) checks.push({ source: 'SEC listed companies (company_tickers.json)', outcome: 'LOOKUP_FAILED' });
+    else checks.push({ source: 'SEC listed companies (company_tickers.json)', outcome: nm.tier === 'NONE' ? 'NO_MATCH' : (nm.tier === 'NEAR' ? 'NEAR_MATCH' : (nm.tier === 'AMBIGUOUS' ? 'AMBIGUOUS' : 'CANDIDATE')) });
     if (nm && !nm.error && nm.tier) {
       nameTier = nm.tier;
       if (nm.tier === 'NEAR' || nm.tier === 'AMBIGUOUS') {
-        noteResolution(query, { tier: nm.tier, candidates: nm.candidates ?? [], asOf: nm.asOf ?? null });
+        noteResolution(query, { tier: nm.tier, candidates: nm.candidates ?? [], asOf: nm.asOf ?? null, checks: [...checks] });
         return out({ verified: false, reason: nm.tier === 'NEAR' ? 'NEAR_MATCH' : 'AMBIGUOUS', candidates: (nm.candidates ?? []).map(c => `${c.name} (CIK ${c.cik})`), nameTier });
       }
       if (nm.tier === 'EXACT' || nm.tier === 'UNIQUE_PREFIX') byCikOnly = nm.candidates[0];
     }
   }
-  let res;
+  let res; indexStep = true;
   try { res = await searchFn({ forms: ANNUAL_FORMS, startdt: threeYearsAgo(now), enddt: new Date(now).toISOString().slice(0, 10), hits: '100', entityName: byCikOnly ? byCikOnly.name : query }); }
   catch (e) { return out({ verified: false, reason: 'LOOKUP_FAILED', detail: String(e?.message ?? e) }); }
   if (!res?.ok) return out({ verified: false, reason: 'LOOKUP_FAILED', detail: `HTTP ${res?.status ?? 0}` });
@@ -91,7 +111,7 @@ export async function verifyPublicFiler(name, { searchFn, nameFn = null, now = D
   if (byCikOnly) {
     // Verification BY CIK: only the filing-index record of the candidate's own CIK can confirm it; the name never does.
     const m = rows.find(r => r.cik === byCikOnly.cik);
-    if (!m) { noteResolution(query, { tier: 'UNVERIFIED', candidates: [byCikOnly] }); return out({ verified: false, reason: 'NOT_VERIFIED', cik: byCikOnly.cik, candidates: [byCikOnly.name], nameTier }); }
+    if (!m) { noteResolution(query, { tier: 'UNVERIFIED', candidates: [byCikOnly], checks: [...checks, { source: 'SEC annual-report filers (filing index)', outcome: 'NOT_VERIFIED' }] }); return out({ verified: false, reason: 'NOT_VERIFIED', cik: byCikOnly.cik, candidates: [byCikOnly.name], nameTier }); }
     const tickers = new Set([...m.tickers, ...(byCikOnly.tickers ?? [])]);
     const latest = [...m.filings].sort((a, b) => String(b.filingDate).localeCompare(String(a.filingDate)))[0];
     return out({
@@ -118,7 +138,12 @@ export async function admitPublicFiler(name, opts = {}) {
   const known = resolve(name);
   if (known && known.confidence === 1.0) return { entity: known, outcome: 'ALREADY_KNOWN' };
   const v = await verifyPublicFiler(name, opts);
-  if (!v.verified) return { entity: null, outcome: v.reason, detail: v };
+  if (!v.verified) {
+    // every unresolved outcome records what was checked, so the subject's message is actionable (a NEAR or AMBIGUOUS note recorded earlier keeps its candidates)
+    const prev = getNameResolution(name);
+    noteResolution(name, { ...(prev ?? {}), tier: prev?.tier ?? (v.reason === 'AMBIGUOUS' ? 'AMBIGUOUS' : 'NO_MATCH'), candidates: prev?.candidates ?? [], checks: v.checks ?? prev?.checks ?? [], outcome: v.reason });
+    return { entity: null, outcome: v.reason, detail: v };
+  }
   const byCik = resolveByIdentifier('edgar', v.cik);
   if (byCik) return { entity: byCik, outcome: 'ALREADY_KNOWN' };
   const entity = createEntity({

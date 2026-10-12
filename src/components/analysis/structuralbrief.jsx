@@ -17,7 +17,8 @@
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
 import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';
-import { buildSynthesis } from '../../engine/analyticalsynthesis.js';   // Step 6: statements with an evidentiary status and their evidence
+import { buildSynthesis } from '../../engine/analyticalsynthesis.js';
+import { ineligibleNote } from '../../engine/produceridentifiers.js';   // evidence producers that could not run for want of an identifier   // Step 6: statements with an evidentiary status and their evidence
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';   // Step 5: formation from admitted relationships only
 // KRYL-1332 (Founder, 2026-09-28) — information-loss fix, not new computation: getDomainSignals()
 // already exists precisely for this (domaingravity.js's own comment: "Read-only, windowed,
@@ -132,6 +133,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   // Step 5: what the ADMITTED relationships establish (formation) is stated on its own; the pool's co-presence below is a contextual lead and says so.
   const admittedSentence = isEntity && admittedFormation ? admittedFormationSentence(admittedFormation, subjScope.entity.name) : null;
   const admittedClause = admittedSentence ? ` Formation (admitted relationships only): ${admittedSentence}` : '';
+  const eligibilityClause = isEntity ? (ineligibleNote(subjScope.entity) ? ` ${ineligibleNote(subjScope.entity)}` : '') : '';
   const failureClause = ownershipFailure
     ? ` ${ownershipFailureNotice(ownershipFailure, entityCanonicalRelationships.length)}`
     : (ownershipPending ? (entityCanonicalRelationships.length ? ' Checking SEC ownership filings — more relationships may follow.' : ' Checking SEC ownership filings — canonical relationships are not known yet.') : '');
@@ -148,8 +150,8 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
-        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`
-        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}`)
+        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}${eligibilityClause}`
+        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}${eligibilityClause}`)
     : selectedSubject
       ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it.${nameResolutionNote(selectedSubject)} ` +
         `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
@@ -182,7 +184,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
     relationships: (entityCanonicalRelationships.length
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
       : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${endSentence(subjectLabel)}`)) +
-      (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : ''),
+      (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : '') + eligibilityClause,
     formation: admittedSentence,                 // Step 5: the admitted-relationship formation (or why none is established)
   } : (!isEntity && !structurallyInterpretable) ? {
     // No subject resolved and no structural participants: the field alone, stated as rows.

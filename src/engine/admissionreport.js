@@ -9,3 +9,7 @@ const _labor = new Map();
 export const setLaborReport = (canonicalId, rep) => { if (canonicalId) _labor.set(canonicalId, { ...rep, at: Date.now() }); };
 export const getLaborReport = (canonicalId) => _labor.get(canonicalId) ?? null;
 export const _clearLaborReports = () => _labor.clear();
+// Which evidence producers could run for a subject and which could not (with the identifier each lacked): produceridentifiers.js. Frozen into the snapshot.
+const _elig = new Map();
+export const setEligibilityReport = (canonicalId, rep) => { if (canonicalId) _elig.set(canonicalId, rep); };
+export const getEligibilityReport = (canonicalId) => _elig.get(canonicalId) ?? null;

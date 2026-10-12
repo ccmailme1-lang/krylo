@@ -22,8 +22,9 @@ import { runRelationshipChange, getRelationshipChange } from './relationshipchan
 import { markStarted } from './ownershiplookupstore.js';
 import { admitCapitalEvents, admitAcquisitions } from './capitaleventadmission.js';
 import { fetchInsiderRoles } from './connectors/insiderroles.js';
+import { producerEligibility } from './produceridentifiers.js';
 import { admitInsiderRoles } from './insiderroleadmission.js';
-import { setAdmissionReport, setLaborReport } from './admissionreport.js';
+import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -87,7 +88,11 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   // runTargetedOwnershipObservation() needs the CIK, which subjectScope()'s entity already
   // carries (entity.identifiers.edgar), not just the canonicalId. Fires only when the query
   // resolves a real entity with a known EDGAR CIK; withholds otherwise (no fabrication).
-  if (scope.kind === 'ENTITY' && scope.entity?.identifiers?.edgar) {
+  // Producer eligibility is its own contract (produceridentifiers.js): the SEC-keyed producers run only for an entity that carries an SEC CIK; the ones that cannot run are
+  // recorded with the identifier they lack (shown to the reader), never skipped silently and never given a substituted identifier.
+  const elig = scope.kind === 'ENTITY' ? producerEligibility(scope.entity) : null;
+  if (scope.kind === 'ENTITY') setEligibilityReport(scope.canonicalId, elig);
+  if (scope.kind === 'ENTITY' && elig.eligible.includes('ownership')) {
     expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId }); expectLookup('counterparty', { canonicalId: scope.canonicalId }); expectLookup('labor', { canonicalId: scope.canonicalId });
     if (refresh) expectLookup('change', { canonicalId: scope.canonicalId });
     // Decision record step 4: the subject's stored relationships (with their stable ids and history) are loaded into the in-memory store BEFORE the
