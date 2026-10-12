@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 const CASES = [
   { name: 'Netflix', fcik: '0001065280', other: '0001437107', sentence: /entered an agreement to acquire Warner Bros\. Discovery, Inc\./i },
   { name: 'Boston Scientific', fcik: '0000885725', other: '0001321732', sentence: /entered an agreement to acquire Penumbra/i },
-  { name: 'Oracle', fcik: '0001341439', expectNone: true }, { name: 'Broadcom', fcik: '0001730168', expectNone: true }, { name: 'Ford Motor Company', fcik: '0000037996', expectNone: true },
+  { name: 'Oracle', fcik: '0001341439', expectNone: true }, { name: 'Sysco', fcik: '0000096021', expectNone: true }, { name: 'Tesla', fcik: '0001318605', expectNone: true }, { name: 'Costco', fcik: '0000909832', expectNone: true }, { name: 'Boeing', fcik: '0000012927', expectNone: true }, { name: 'Verizon', fcik: '0000732712', expectNone: true }, { name: 'Intel', fcik: '0000050863', expectNone: true }, { name: 'Broadcom', fcik: '0001730168', expectNone: true }, { name: 'Ford Motor Company', fcik: '0000037996', expectNone: true },
 ];
 const only = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
 const b = await chromium.launch(); let bad = 0;
@@ -20,7 +20,7 @@ for (const c of CASES.filter(x => !only || only.has(x.name))) {
   const info = await pg.evaluate(async (fcik) => {
     const p = await import('/src/engine/canonicalrelationshipprojection.js'); const probe = await import('/src/engine/benchmarkprobe.js');
     const acq = p.findAdmittedRelationshipsFor('CIK:' + fcik).filter(r => r.type === 'ACQUIRED').map(r => ({ id: r.id, part: r.part, status: r.nuState?.dealStatus ?? null, src: p.latestEvidenceFor(r.id)?.provenance?.source ?? null, acc: p.latestEvidenceFor(r.id)?.provenance?.accession ?? null }));
-    const pr = await probe.probeActiveAnalysis(); return { acq, relationships: pr.relationships, formation: pr.analysisSentence, history: pr.historySentence, historyRels: pr.historyRelationships, syn: pr.synthesisValidation };
+    const pr = await probe.probeActiveAnalysis(); return { byType: pr.byType, domains: pr.admittedDomains, links: pr.linkedDomains, acq, relationships: pr.relationships, formation: pr.analysisSentence, history: pr.historySentence, historyRels: pr.historyRelationships, syn: pr.synthesisValidation };
   }, c.fcik);
   const stored = await (await fetch('http://localhost:4000/v1/canonical-store/relationships?node=CIK:' + c.fcik.replace(/^0+/, '').padStart(10, '0'))).json().catch(() => ({}));
   const storedAcq = (stored.relationships ?? []).filter(r => r.type === 'ACQUIRED');
@@ -30,7 +30,7 @@ for (const c of CASES.filter(x => !only || only.has(x.name))) {
   const mapText = (await Promise.all(pg.frames().filter(f => /structure-field/.test(f.url())).map(f => f.evaluate(() => document.body.innerText).catch(() => '')))).join('\n');
   const mine = info.acq.filter(a => a.src === 'SEC_8K_ACQUISITION');
   let pass = s.ready && errs.length === 0 && info.syn.problems.length === 0;
-  if (c.expectNone) { console.log(`${c.name}: relationships=${info.relationships} (acquisitions from 8-K: ${mine.length}) history=${info.historyRels}`); if (!(info.historyRels === info.relationships)) pass = false; }
+  if (c.expectNone) { console.log(`${c.name}: relationships=${info.relationships} byType=${JSON.stringify(info.byType)} domains=${(info.domains ?? []).join('+')} linked=${(info.links ?? []).join('+') || 'none'} acquisitionsFrom8K=${mine.length}${mine.length ? ' [' + mine.map(a => a.status + ':' + a.part.join('>')).join('; ') + ']' : ''} historyAgrees=${info.historyRels === info.relationships}`); if (!(info.historyRels === info.relationships)) pass = false; }
   else {
     const hit = mine.find(a => a.part[0] === 'CIK:' + c.fcik && a.part[1] === 'CIK:' + c.other);
     pass = pass && !!hit && hit.status === 'PENDING' && storedAcq.some(r => r.relationship_id === hit.id) && c.sentence.test(text) && c.sentence.test(mapText) && info.historyRels === info.relationships && /acquire/i.test(info.history ?? '') === false;

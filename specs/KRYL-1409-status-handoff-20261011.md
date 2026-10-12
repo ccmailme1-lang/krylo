@@ -25,3 +25,23 @@ Still wrong or skipped (to fix next): Verizon-Frontier 2024-09-05 and Netflix 20
 - Wired through the existing path, no parallel pipeline: the same document read (`extractCapitalEvent` adds `acquisition`), a small acquisition-only read budget (4 further Item 1.01 / 2.01 filings), counterparty matching with the shared cache, `admitAcquisitions` through `admitAndProject`, the report, relationship text by deal status ("entered an agreement to acquire X (pending)" / "completed its acquisition of X"), detail lines, a DOCUMENTED synthesis statement validated against its evidence, MAP wording, History (stored nuState). Acquisitions are matched before the capital-event counterparties so a long financing list cannot push them past the 45 s snapshot settlement. `qa_acquisition_admission.mjs` 21/21 (real SEC responses recorded in `tests/fixtures/sec/acq-search-responses.json`).
 - Live, through the page (`scripts/acquired-live-check.mjs`): Netflix to Warner Bros. Discovery, Inc. (CIK 0001437107, PENDING) and Boston Scientific to Penumbra (CIK 0001321732, PENDING): admitted, persisted in the canonical store, in the analytical snapshot (8 and 10 admitted relationships), on Analysis and in the MAP relationship list, and History (rebuilt from the store) shows the same formation and relationship count. Oracle 10, Broadcom 6, Ford 2: unchanged.
 - Limits stated: only public registrants that match exactly one SEC registrant are admitted (private targets such as the Sysco target are reported unresolved); Item 1.02 terminations are not read, so TERMINATED is never produced; one relationship per (acquirer, target) pair (no transaction id).
+
+## Census of the ten benchmark subjects after KRYL-1409 (mechanism check, not a score; 2026-10-12, live through the page)
+| Subject | Admitted relationships | By type | Formation |
+|---|---|---|---|
+| Oracle | 10 | 2 ownership, 8 capital events | CAPITAL and OWNERSHIP linked |
+| Sysco | 13 | 7 ownership, 5 capital events, 1 ACQUIRED (the hand-entered Restaurant Depot case) | linked |
+| Tesla | 5 | 4 ownership, 1 capital event | linked |
+| Costco | 3 | 3 ownership | none (one domain) |
+| Boeing | 9 | 8 ownership, 1 capital event | linked |
+| Verizon | 4 | 4 ownership | none (one domain) |
+| Intel | 5 | 4 ownership, 1 capital event | linked |
+| Broadcom | 6 | 6 ownership | none (one domain) |
+| Netflix | 8 | 5 ownership, 2 capital events, 1 ACQUIRED (Warner Bros. Discovery, pending) | linked |
+| Boston Scientific | 10 | 7 ownership, 2 capital events, 1 ACQUIRED (Penumbra, pending) | linked |
+History agrees with the snapshot for all ten. Result: ACQUIRED from 8-K filings reaches 2 of 10 subjects. Seven subjects have a CAPITAL and OWNERSHIP formation; three are ownership-only; TECHNOLOGY, KNOWLEDGE, LABOR and MEDIA are 0 of 10.
+
+## Gap found while explaining why Boeing and Verizon show no acquisition (verified against the SEC index)
+- Boeing / Spirit AeroSystems: the agreement was Item 1.01 on 2024-07-01 (outside the 365-day window); the completion on 2025-12-08 was filed under Item 7.01 (press release), not 2.01.
+- Verizon / Frontier: the agreement was Item 1.01 on 2024-09-05 (outside the window); the completion on 2026-01-20 was filed under Item 8.01.
+So the ratified scope (Items 1.01 and 2.01, 12 months) misses completed deals whose completion is disclosed under 7.01 or 8.01 and deals whose agreement is older than a year. Two decisions for the Founder: (1) read Items 7.01 and 8.01 for completion statements (the open 8.01 decision); (2) look back further than 12 months for acquisition agreements that have not been completed or terminated. Neither is built.
