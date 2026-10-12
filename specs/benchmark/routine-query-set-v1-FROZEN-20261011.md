@@ -1,6 +1,6 @@
-# Routine-query acceptance population v1: PROPOSED (not frozen)
+# Routine-query acceptance population v1: FROZEN
 
-Date 2026-10-11 · Status: PROPOSED for the Founder's "freeze". Written before any implementation of the next capability, as required. Separate from the 35 frozen benchmark cases (specs/benchmark/); same frozen 10-point rubric and scoring procedure; reported separately; baseline and rules preserved; independent scores kept apart.
+Date 2026-10-11 · Status: FROZEN by the Founder on 2026-10-11 as v1 (all 20 queries kept, including the nine whose domains lack admitted relationship types; the stated selection and scoring procedures stand). Written before any implementation of the next capability, as required. No row is replaced or reworded after this point; any change is a new version recorded separately. Separate from the 35 frozen benchmark cases (specs/benchmark/); same frozen 10-point rubric and scoring procedure; reported separately; baseline and rules preserved; independent scores kept apart.
 
 ## First user (decision of 2026-10-11)
 A senior finance professional doing company-level structural analysis for an investment or strategic decision: who owns, finances, influences, supplies, partners with or competes with the company; what is forming or changing across the six domains; what is established, inferred, contradicted or unresolved; what it implies for position, dependencies, exposure and options; which evidence supports each finding and what is unknown.
@@ -41,6 +41,5 @@ G count: R01, R05, R06, R12, R14, R16, R17, R19, R20 = 9 cases expected to be ca
 ## Scoring (fixed before implementation)
 Each query scored with the frozen rubric (scorer 1 rules, `specs/benchmark/scoring-rules.md` and the m1 rules), separately from the 35-case benchmark, each individually; every score below 8 listed with its root cause; averages never hide a failure. Independent blind scores (finance professionals) recorded separately. This file defines the population only; it does not adopt the v0.4 "every case at or above 8" gate. That gate stays proposed until ratified explicitly.
 
-## Open for the Founder
-1. Say "freeze" (or edit rows) and this becomes the frozen set; after that rows are not replaced.
-2. Pattern-to-subject pairing is mine (source fit); change any you want before freezing.
+## Frozen
+Frozen 2026-10-11. The strict v0.4 gate (every case at or above 8) remains unadopted; the adopted benchmark target stays 8 on the 35-case set, and this set is reported separately.
