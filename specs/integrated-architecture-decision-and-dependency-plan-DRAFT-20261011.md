@@ -82,3 +82,14 @@ Freeze before implementation: the routine-query set (size, selection method, sco
 
 ## 6. Not reopened
 Canonical store, snapshot, formation input, temporal interpreter, evidence attribution, name-resolution rules, benchmark baseline and rubric.
+
+## Addendum: trace of the already-ratified types (2026-10-11, read-only; relayed GPT recommendation to trace before adding types)
+
+Method: lexical (who names the type), conceptual (who produces it under another name), behavioral (is it on a live call path, and did it reach the store).
+
+| Type | Producer | Live path | Store (as-diff/data, this machine) | Verdict |
+|---|---|---|---|---|
+| ACQUIRED | `rsievidencemigration.js`: ONE hand-entered fact (Sysco / Restaurant Depot, Form 425, 2026-03-30/31), registered by a side-effect import from `structuralentitysynthesis.js` | runs on import; no generator from filings or 8-K Items 1.01 or 2.01 | 1 relationship, 1 version | UNWIRED as a general capability: a single seeded case, not a producer |
+| SHARED_PATENT_ASSIGNMENT | `patentsviewconnector.js` (`runPatentsViewSync` calls `admitAndProject`, via `patentsviewmigrationproducer.js`) | called from `app.jsx` (lines 804 and 837) as an app-level periodic sync, not per query; limited to seven CPC clusters (AI, semiconductor, robotics, energy storage, quantum, defense, biotech) and to inventor migration between whitelisted companies | 0 relationships; the local `/api/patentsview` proxy answers HTTP 503 (the key is not provisioned here) | WIRED in code, NOT PRODUCING here; also not subject-scoped, so a company outside the whitelist can never gain one |
+
+Consequences for the plan: (1) the "first end-to-end cross-domain milestone via patents" in section 3 is not available on this machine until the PatentsView key is provisioned and a subject-scoped assignee lookup exists; (2) ACQUIRED needs a real producer (8-K Items 1.01 and 2.01 extraction, using the counterparty matching already built) before it counts as coverage; (3) both belong in workstream 3 as "connect existing ratified types through the existing pipeline" before any new type is proposed. The eight query-text-only sources remain observation-only until each has a defensible company-identity link.
