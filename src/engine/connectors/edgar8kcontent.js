@@ -34,7 +34,7 @@ export function htmlToText(html) {
 /** Item bodies: { '1.01': 'text…', … } for the items we read. A heading is "Item N.NN" followed by that item's standard title. */
 export function itemBodies(text) {
   const marks = [];
-  const re = /\bItem\s+(\d\.\d{2})\b\.?\s*(?=([A-Z][A-Za-z]+))/g;
+  const re = /\bItem\s+(\d\.\d{2})\b\.?\s*(?=([A-Za-z]+))/gi;   // headings are sometimes upper case ("ITEM 1.01 ENTRY INTO ...")
   let m;
   while ((m = re.exec(text))) {
     const t = TITLES[m[1]];
