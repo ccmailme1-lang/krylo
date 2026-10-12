@@ -57,7 +57,7 @@ const meanB = mean(base.map(r => r.raw)), meanM = mean(rows.map(r => r.raw));
 const reach = (arr) => arr.filter(r => r.scale >= 8).length;
 let L = [];
 L.push('# Benchmark v1: current build report (complete architecture, capital-event admission through History)', '');
-L.push(`Date: ${new Date().toISOString().slice(0, 10)} · Build: working tree after commit 4288072 · Environment: localhost (Dev) · Matrix, questions and rubric: the frozen v1 set (planning-pass-benchmark-matching-store-20261011.md, A6). Scorer 1 only; the independent second reviewer's scores are outstanding and are kept separate. The baseline (specs/benchmark/baseline*, baseline-scores.json) is unchanged.`, '');
+L.push(`Date: ${new Date().toISOString().slice(0, 10)} · Build: commit 232b703 plus the working tree · Environment: localhost (Dev) · Matrix, questions and rubric: the frozen v1 set (planning-pass-benchmark-matching-store-20261011.md, A6). Scorer 1 only; the independent second reviewer's scores are outstanding and are kept separate. The baseline (specs/benchmark/baseline*, baseline-scores.json) is unchanged.`, '');
 L.push('## Headline', '');
 L.push(`| | Baseline | Current build 2026-10-12 | Change |`, `|---|---|---|---|`);
 L.push(`| Mean raw score (0 to 10) | ${f1(meanB)} | ${f1(meanM)} | ${meanM - meanB >= 0 ? '+' : ''}${f1(meanM - meanB)} |`);
