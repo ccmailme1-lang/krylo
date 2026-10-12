@@ -3,7 +3,9 @@
 // (specs/benchmark/routine-query-needs-v1-20261012.md). Output: routine-current-20261012-scores.json and routine-current-20261012-report.md. Reported separately from the other populations.
 import fs from 'fs';
 const M = process.env.ROUTINE_DIR ?? 'specs/benchmark/routine-current-20261012';
-const QUERIES = JSON.parse(fs.readFileSync('specs/benchmark/routine-query-set-v1-queries.json', 'utf8'));
+const PREFIX = process.env.OUT_PREFIX ?? 'specs/benchmark/routine-current-20261012';
+const TITLE = process.env.OUT_TITLE ?? 'Routine-query set v1: current build scoring (scorer 1)';
+const QUERIES = JSON.parse(fs.readFileSync(process.env.QUERIES_FILE ?? 'specs/benchmark/routine-query-set-v1-queries.json', 'utf8'));
 const NEEDS_BY_CASE = Object.fromEntries(QUERIES.map(q => [q.id, q.needs]));
 const DOM = { O: 'OWNERSHIP', C: 'CAPITAL', T: 'TECHNOLOGY', K: 'KNOWLEDGE', L: 'LABOR', M: 'MEDIA' };
 const norm = (t) => String(t ?? '').toLowerCase().replace(/\*\*/g, '').replace(/\s+/g, ' ').trim();
@@ -47,15 +49,15 @@ function scoreRun(dir, rules) {
 }
 
 const rows = scoreRun(M, 'R2');
-fs.writeFileSync('specs/benchmark/routine-current-20261012-scores.json', JSON.stringify(rows, null, 2));
+fs.writeFileSync(`${PREFIX}-scores.json`, JSON.stringify(rows, null, 2));
 const cause = (r) => r.features.unresolved ? 'IDENTITY (subject unresolved)' : (r.features.covered.length === 0 ? 'NO_RATIFIED_SOURCE (no named domain has an admitted relationship type producing)' : 'FIXABLE_PIPELINE_DEFECT candidate: criteria lost ' + ['c1','c2','c3','c4','c5','c6','c7'].filter(k => r[k] < ({ c1: 2, c2: 2, c3: 1, c4: 2, c5: 1, c6: 1, c7: 1 })[k]).join(', '));
 const pass = rows.filter(r => r.scale >= 8), strict = rows.filter(r => r.raw >= 8);
-const L = ['# Routine-query set v1: current build scoring (scorer 1)', '', `Date 2026-10-12 · mechanical scorer, unchanged rubric and rules; independent blind scores are separate and outstanding.`, '',
+const L = [`# ${TITLE}`, '', `Date 2026-10-12 · mechanical scorer, unchanged rubric and rules; independent blind scores are separate and outstanding.`, '',
   `**At or above 8 (rounded rule): ${pass.length} of ${rows.length}. At raw 8.0 or more (strict): ${strict.length} of ${rows.length}. Mean raw ${(rows.reduce((a, r) => a + r.raw, 0) / rows.length).toFixed(3)}.**`, '',
   '| ID | Subject | Domains named | Raw | Scale | Covered | Result |', '|---|---|---|---|---|---|---|',
   ...rows.map(r => `| ${r.case} | ${r.subject} | ${r.features.needs.join('+')} | ${r.raw.toFixed(1)} | ${r.scale} | ${r.features.covered.join('+') || 'none'} | ${r.scale >= 8 ? 'pass' : 'BELOW 8'} |`), '',
   '## Every case below 8, with its cause', '', ...(rows.filter(r => r.scale < 8).map(r => `- ${r.case} (${r.subject}, ${r.features.needs.join('+')}): raw ${r.raw.toFixed(1)}. ${cause(r)}`)), '',
   '## Integrity', '', `- Statements checked: ${rows.reduce((a, r) => a + (r.features.statements ?? 0), 0)}; statements that did not hold up: ${rows.reduce((a, r) => a + (r.features.problems ?? 0), 0)}.`,
   `- Analysis and MAP agree: ${rows.filter(r => r.features.mapAgrees).length} of ${rows.filter(r => !r.features.unresolved).length} resolved; History agrees: ${rows.filter(r => r.features.historyAgrees).length} of ${rows.filter(r => !r.features.unresolved).length}.`];
-fs.writeFileSync('specs/benchmark/routine-current-20261012-report.md', L.join('\n'));
+fs.writeFileSync(`${PREFIX}-report.md`, L.join('\n'));
 console.log(L.slice(0, 4).join('\n'));

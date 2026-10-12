@@ -15,15 +15,18 @@ const reg = (name) => ({ source: 'x' });
 console.log('Producer identifier contracts');
 {
   const listed = producerEligibility({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } });
-  ok(listed.ineligible.length === 0 && listed.eligible.length === PRODUCERS.length, 'a company carrying an SEC CIK: every producer is eligible');
+  ok(listed.ineligible.map(x => x.id).join() === 'formd-people' && listed.eligible.length === PRODUCERS.length - 1, 'a listed company carrying an SEC CIK: every producer is eligible except the Form D one (private filers only)');
   const lei = producerEligibility({ name: 'DATABENTO INC.', identifiers: { lei: '254900DQ2GKA6Q48SJ38' } });
-  ok(lei.ineligible.map(x => x.id).sort().join() === '8k,counterparty,labor,ownership' && lei.eligible.join() === 'capital', 'an entity carrying only an LEI: the four SEC-keyed producers are ineligible, the name-based observation producer stays eligible');
-  ok(lei.ineligible.every(x => x.missing.join() === 'edgar'), 'each ineligible producer names the identifier it lacks');
+  ok(lei.ineligible.map(x => x.id).sort().join() === '8k,clinical,counterparty,formd-people,labor,ownership' && lei.eligible.join() === 'capital', 'an entity carrying only an LEI: the four SEC-keyed producers are ineligible, the name-based observation producer stays eligible');
+  ok(lei.ineligible.every(x => x.missing.join() === 'edgar' || x.missing.join() === 'edgar'), 'each ineligible producer names the identifier it lacks');
   const none = producerEligibility({ name: 'X', identifiers: {} });
-  ok(none.ineligible.length === 4 && none.eligible.join() === 'capital', 'an entity with no registry identifier: SEC producers do not run; no identifier is manufactured');
+  ok(none.ineligible.length === 6 && none.eligible.join() === 'capital', 'an entity with no registry identifier: SEC producers do not run; no identifier is manufactured');
   const note = ineligibleNote({ name: 'DATABENTO INC.', identifiers: { lei: '254900DQ2GKA6Q48SJ38' } });
-  ok(/not run for this entity because the identifier they require is not carried/.test(note) && /requires an SEC CIK/.test(note) && /carries lei/.test(note) && /no identifier is substituted or inferred/.test(note), 'the reader is told which producers did not run, what each requires, what the entity carries, and that nothing is substituted');
-  ok(ineligibleNote({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } }) === '', 'nothing is said when every producer could run');
+  ok(/Evidence sources not run for this entity:/.test(note) && /requires an SEC CIK/.test(note) && /carries lei/.test(note) && /no identifier is substituted or inferred/.test(note), 'the reader is told which producers did not run, what each requires, what the entity carries, and that nothing is substituted');
+  ok(ineligibleNote({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } }) === '', 'a listed company is not told that the private-filer producer did not run (it does not apply)');
+  ok(producerEligibility({ name: 'X', identifiers: { edgar: '0001784241' }, admissionClass: 'SEC_FORM_D_ISSUER' }).eligible.sort().join() === 'capital,clinical,formd-people', 'a private SEC filer (Form D class): the Form D and clinical-trial producers and the observation producer run; the four listed-company producers do not (they support registry and listed companies only)');
+  ok(/supports only registry or listed SEC companies; this entity is a private SEC filer \(Form D\)/.test(ineligibleNote({ name: 'X', identifiers: { edgar: '0001784241' }, admissionClass: 'SEC_FORM_D_ISSUER' })), 'and the reader is told why');
+  ok(producerEligibility({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } }).eligible.includes('clinical') && !producerEligibility({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } }).eligible.includes('formd-people'), 'a listed company runs the clinical-trial producer and not the Form D one');
   ok(PRODUCERS.every(p => p.requires.length && p.produces && p.evidence && p.why), 'every producer declares its required identifiers, what it produces, the evidence and why it needs that identifier');
   ok(PRODUCERS.find(p => p.id === 'capital').produces.includes('observation only'), 'the name-based producer is declared observation-only, never a relationship');
 }
@@ -34,8 +37,8 @@ console.log('Actionable resolution failures');
   let r = await admitPublicFiler('Databento', { searchFn: noHits, nameFn, now: Date.parse('2026-10-12') });
   const note = nameResolutionNote('Databento');
   ok(r.entity === null && r.outcome === 'NO_MATCH', 'a private company that matches no listed registrant stays unresolved');
-  ok(/Identity sources checked: static registry \(no match\); SEC listed companies \(company_tickers\.json\) \(no match\); SEC annual-report filers \(filing index\) \(no match\)\./.test(note), 'the message lists the sources actually checked and what each returned');
-  ok(/Not checked: SEC Form D issuers, GLEIF \(LEI\), UK Companies House, the federal contractor registry \(UEI\) \(identity classes not yet ratified\)\./.test(note) && IDENTITY_SOURCES_NOT_CHECKED.length === 4, 'sources not checked are named as not checked, never as checked');
+  ok(/Identity sources checked: static registry \(no match\); SEC listed companies \(company_tickers\.json\) \(no match\); SEC annual-report filers \(filing index\) \(no match\); SEC Form D issuers \(no match\)\./.test(note), 'the message lists the sources actually checked and what each returned');
+  ok(/Not checked: GLEIF \(LEI\), UK Companies House, the federal contractor registry \(UEI\) \(identity classes not yet ratified\)\./.test(note) && IDENTITY_SOURCES_NOT_CHECKED.length === 3, 'sources not checked are named as not checked, never as checked');
   ok(/What would resolve it: the exact legal name of an SEC registrant, or an identifier from one of the sources not yet checked\./.test(note), 'it says what would resolve the subject');
   ok(!/Closest listed registrant/.test(note), 'no suggestion is invented when nothing is similar');
 

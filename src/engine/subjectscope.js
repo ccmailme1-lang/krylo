@@ -94,7 +94,7 @@ export function subjectScope(input) {
       return {
         kind: 'ENTITY',
         canonicalId: e.canonicalId,
-        entity: { canonicalId: e.canonicalId, name: e.canonicalName, identifiers: e.identifiers ?? {}, domainTags: e.domainTags ?? [] },
+        entity: { canonicalId: e.canonicalId, name: e.canonicalName, identifiers: e.identifiers ?? {}, domainTags: e.domainTags ?? [], admissionClass: e.admissionClass ?? null, admissionSource: e.admissionSource ?? null, admissionEvidence: e.admissionEvidence ?? null },
         matchedOn: selected.text,
         confidence: e.confidence,
         contract,
@@ -125,6 +125,7 @@ export function subjectScope(input) {
         name: e.canonicalName,
         identifiers: e.identifiers ?? {},
         domainTags: e.domainTags ?? [],
+        admissionClass: e.admissionClass ?? null, admissionSource: e.admissionSource ?? null, admissionEvidence: e.admissionEvidence ?? null,
       },
       matchedOn: best.matchedOn,
       confidence: best.confidence,

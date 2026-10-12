@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+<edgarSubmission>
+
+    <schemaVersion>X0708</schemaVersion>
+
+    <submissionType>D</submissionType>
+
+    <testOrLive>LIVE</testOrLive>
+
+    <primaryIssuer>
+        <cik>0001784241</cik>
+        <entityName>Databento Inc.</entityName>
+        <issuerAddress>
+            <street1>26 S RIO GRANDE ST. #2072</street1>
+            <city>SALT LAKE CITY</city>
+            <stateOrCountry>UT</stateOrCountry>
+            <stateOrCountryDescription>UTAH</stateOrCountryDescription>
+            <zipCode>84101</zipCode>
+        </issuerAddress>
+        <issuerPhoneNumber>(857) 600-2005</issuerPhoneNumber>
+        <jurisdictionOfInc>DELAWARE</jurisdictionOfInc>
+        <edgarPreviousNameList>
+            <previousName>Databento, Inc.</previousName>
+            <previousName>Elisify, Inc.</previousName>
+        </edgarPreviousNameList>
+        <entityType>Corporation</entityType>
+        <yearOfInc>
+            <overFiveYears>true</overFiveYears>
+        </yearOfInc>
+    </primaryIssuer>
+
+    <relatedPersonsList>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Christina</firstName>
+                <lastName>Qi</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>c/o Databento Inc.</street1>
+                <street2>26 S RIO GRANDE ST. #2072</street2>
+                <city>SALT LAKE CITY</city>
+                <stateOrCountry>UT</stateOrCountry>
+                <stateOrCountryDescription>UTAH</stateOrCountryDescription>
+                <zipCode>84101</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Executive Officer</relationship>
+                <relationship>Director</relationship>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Luca</firstName>
+                <lastName>Lin</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>c/o Databento Inc.</street1>
+                <street2>26 S RIO GRANDE ST. #2072</street2>
+                <city>SALT LAKE CITY</city>
+                <stateOrCountry>UT</stateOrCountry>
+                <stateOrCountryDescription>UTAH</stateOrCountryDescription>
+                <zipCode>84101</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+                <relationship>Promoter</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+        <relatedPersonInfo>
+            <relatedPersonName>
+                <firstName>Geoffrey</firstName>
+                <lastName>Bernstein</lastName>
+            </relatedPersonName>
+            <relatedPersonAddress>
+                <street1>c/o Databento Inc.</street1>
+                <street2>26 S RIO GRANDE ST. #2072</street2>
+                <city>SALT LAKE CITY</city>
+                <stateOrCountry>UT</stateOrCountry>
+                <stateOrCountryDescription>UTAH</stateOrCountryDescription>
+                <zipCode>84101</zipCode>
+            </relatedPersonAddress>
+            <relatedPersonRelationshipList>
+                <relationship>Director</relationship>
+            </relatedPersonRelationshipList>
+            <relationshipClarification></relationshipClarification>
+        </relatedPersonInfo>
+    </relatedPersonsList>
+
+    <offeringData>
+        <industryGroup>
+            <industryGroupType>Other Technology</industryGroupType>
+        </industryGroup>
+        <issuerSize>
+            <revenueRange>Decline to Disclose</revenueRange>
+        </issuerSize>
+        <federalExemptionsExclusions>
+            <item>06b</item>
+        </federalExemptionsExclusions>
+        <typeOfFiling>
+            <newOrAmendment>
+                <isAmendment>false</isAmendment>
+            </newOrAmendment>
+            <dateOfFirstSale>
+                <value>2026-04-29</value>
+            </dateOfFirstSale>
+        </typeOfFiling>
+        <durationOfOffering>
+            <moreThanOneYear>false</moreThanOneYear>
+        </durationOfOffering>
+        <typesOfSecuritiesOffered>
+            <isEquityType>true</isEquityType>
+            <isOptionToAcquireType>true</isOptionToAcquireType>
+        </typesOfSecuritiesOffered>
+        <businessCombinationTransaction>
+            <isBusinessCombinationTransaction>false</isBusinessCombinationTransaction>
+            <clarificationOfResponse></clarificationOfResponse>
+        </businessCombinationTransaction>
+        <minimumInvestmentAccepted>0</minimumInvestmentAccepted>
+        <salesCompensationList></salesCompensationList>
+        <offeringSalesAmounts>
+            <totalOfferingAmount>97025539</totalOfferingAmount>
+            <totalAmountSold>97025539</totalAmountSold>
+            <totalRemaining>0</totalRemaining>
+            <clarificationOfResponse>Amount sold includes securities that converted in connection with the offering.</clarificationOfResponse>
+        </offeringSalesAmounts>
+        <investors>
+            <hasNonAccreditedInvestors>false</hasNonAccreditedInvestors>
+            <totalNumberAlreadyInvested>19</totalNumberAlreadyInvested>
+        </investors>
+        <salesCommissionsFindersFees>
+            <salesCommissions>
+                <dollarAmount>0</dollarAmount>
+            </salesCommissions>
+            <findersFees>
+                <dollarAmount>0</dollarAmount>
+            </findersFees>
+            <clarificationOfResponse></clarificationOfResponse>
+        </salesCommissionsFindersFees>
+        <useOfProceeds>
+            <grossProceedsUsed>
+                <dollarAmount>0</dollarAmount>
+            </grossProceedsUsed>
+            <clarificationOfResponse></clarificationOfResponse>
+        </useOfProceeds>
+        <signatureBlock>
+            <authorizedRepresentative>false</authorizedRepresentative>
+            <signature>
+                <issuerName>Databento Inc.</issuerName>
+                <signatureName>Christina Qi</signatureName>
+                <nameOfSigner>Christina Qi</nameOfSigner>
+                <signatureTitle>President</signatureTitle>
+                <signatureDate>2026-05-25</signatureDate>
+            </signature>
+        </signatureBlock>
+    </offeringData>
+</edgarSubmission>

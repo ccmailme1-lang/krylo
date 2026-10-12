@@ -73,6 +73,10 @@ export const RELATION_TYPES = Object.freeze({
   CAPITAL_EVENT_INVOLVES: 'CAPITAL_EVENT_INVOLVES',
   // KRYL-1411 (2026-10-12) -- added for the ratified HAS_OFFICER_OR_DIRECTOR_DISCLOSURE canonical relationship type (LABOR): an SEC Form 3, 4 or 5 states a person is an officer or director of the issuer.
   OFFICER_OR_DIRECTOR_OF: 'OFFICER_OR_DIRECTOR_OF',
+  // KRYL-1413 (2026-10-12) -- the issuer's own Form D states a related person is an executive officer or director (private SEC filers; person identity scoped to the filing).
+  FORM_D_OFFICER_OR_DIRECTOR_OF: 'FORM_D_OFFICER_OR_DIRECTOR_OF',
+  // KRYL-1414 (2026-10-12) -- ClinicalTrials.gov states the company is the lead sponsor of a registered study (KNOWLEDGE).
+  LEAD_SPONSOR_OF_TRIAL: 'LEAD_SPONSOR_OF_TRIAL',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

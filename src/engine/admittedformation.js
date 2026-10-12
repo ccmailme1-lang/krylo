@@ -19,7 +19,9 @@ const TYPE_DOMAINS = Object.freeze({
   ACQUIRED: ['CAPITAL', 'OWNERSHIP'],                 // an acquisition is capital deployed and a change of ownership (the 8-K map: ACQUISITION -> capital, ownership)
   SHARED_PATENT_ASSIGNMENT: ['TECHNOLOGY'],           // patent records feed TECHNOLOGY in patentsviewconnector.js
   CAPITAL_EVENT_INVOLVES: ['CAPITAL'],                // refined by the event class below
-  HAS_OFFICER_OR_DIRECTOR_DISCLOSURE: ['LABOR'],      // KRYL-1411: an officer or director of the issuer, as an SEC insider form states it
+  HAS_OFFICER_OR_DIRECTOR_DISCLOSURE: ['LABOR'],
+  HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE: ['LABOR'],
+  LEAD_SPONSOR_OF_CLINICAL_TRIAL: ['KNOWLEDGE'],           // KRYL-1414: ClinicalTrials.gov states the company leads a registered study   // KRYL-1413: a private filer's officer or director as its own Form D states it      // KRYL-1411: an officer or director of the issuer, as an SEC insider form states it
 });
 
 /** The domains one admitted relationship speaks to. */
@@ -73,7 +75,7 @@ export function buildAdmittedFormation({ relationships = [], evidenceFor = () =>
 }
 
 /** One sentence for the brief: what the admitted relationships establish, or why nothing is established. */
-const TYPE_NOUN = { HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE: ['beneficial-ownership disclosure', 'beneficial-ownership disclosures'], CAPITAL_EVENT_INVOLVES: ['capital-event relationship', 'capital-event relationships'], ACQUIRED: ['acquisition', 'acquisitions'], SHARED_PATENT_ASSIGNMENT: ['shared patent assignment', 'shared patent assignments'], HAS_OFFICER_OR_DIRECTOR_DISCLOSURE: ['officer or director disclosure', 'officer or director disclosures'] };
+const TYPE_NOUN = { HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE: ['beneficial-ownership disclosure', 'beneficial-ownership disclosures'], CAPITAL_EVENT_INVOLVES: ['capital-event relationship', 'capital-event relationships'], ACQUIRED: ['acquisition', 'acquisitions'], SHARED_PATENT_ASSIGNMENT: ['shared patent assignment', 'shared patent assignments'], HAS_OFFICER_OR_DIRECTOR_DISCLOSURE: ['officer or director disclosure', 'officer or director disclosures'], HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE: ['Form D officer or director disclosure', 'Form D officer or director disclosures'], LEAD_SPONSOR_OF_CLINICAL_TRIAL: ['clinical-trial sponsorship', 'clinical-trial sponsorships'] };
 const typeNoun = (t, n) => (TYPE_NOUN[t] ?? [t.toLowerCase().replace(/_/g, ' '), t.toLowerCase().replace(/_/g, ' ')])[n === 1 ? 0 : 1];
 export function admittedFormationSentence({ structure, formation }, subjectLabel) {
   if (!structure.relationships) return `No formation established: no admitted relationship is on record for ${subjectLabel} yet.`;

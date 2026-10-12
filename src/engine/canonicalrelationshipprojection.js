@@ -96,6 +96,20 @@ const PROJECTIONS = {
       source: meta.source ?? 'SEC_FORM_3_4_5',
     }),
   },
+  LEAD_SPONSOR_OF_CLINICAL_TRIAL: {
+    typedEdgeType: RELATION_TYPES.LEAD_SPONSOR_OF_TRIAL,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.sponsorName, to: meta.trialLabel, fromCik: meta.sponsorCik ?? null, toCik: null,
+      fromLabel: meta.sponsorName, toLabel: meta.trialLabel, source: meta.source ?? 'CLINICALTRIALS_GOV',
+    }),
+  },
+  HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE: {
+    typedEdgeType: RELATION_TYPES.FORM_D_OFFICER_OR_DIRECTOR_OF,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.personName, to: meta.issuerName, fromCik: null, toCik: meta.issuerCik ?? null,
+      fromLabel: meta.personName, toLabel: meta.issuerName, source: meta.source ?? 'SEC_FORM_D',
+    }),
+  },
   SHARED_PATENT_ASSIGNMENT: {
     // New vocabulary entry -- RELATION_TYPES is confirmed informational/non-gating (its own
     // comment: "does NOT gate registerTypedEdge"), so adding one is additive, same precedent as

@@ -15,6 +15,7 @@ import { lastFormationState, writeFormationState, formationStateHistory, formati
 import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv, historyFor, recentSnapshots } from './canonicalstore.js';
 import { secNames } from './secnames.js';
+import { clinicalTrialsFor } from './clinicaltrials.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1293,6 +1294,14 @@ async function handleSecNames(req, res) {
   send(res, 200, r);
 }
 
+// ── KRYL-1414: ClinicalTrials.gov lead-sponsor studies (public registry, cached on the server) ──
+async function handleClinicalTrials(req, res) {
+  const lead = new URL(req.url, 'http://localhost').searchParams.get('lead') ?? '';
+  const r = await clinicalTrialsFor(lead);
+  if (r.error) return send(res, r.error.startsWith('lead sponsor required') ? 400 : 502, { error: r.error });
+  send(res, 200, r);
+}
+
 // ── WO-2019: Service API proxy handlers ──────────────────────────────────────
 
 
@@ -1978,6 +1987,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/finnhub')                       return handleFinnhubProxy(req, res);
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/api/sec-names')                     return handleSecNames(req, res);
+  if (req.method === 'GET'  && url === '/api/clinical-trials')                return handleClinicalTrials(req, res);
   if (req.method === 'POST' && url === '/api/patentsview')                   return handlePatentsViewProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   // WO-2019 — Service API connectors

@@ -223,3 +223,54 @@ registerRelationshipType('HAS_OFFICER_OR_DIRECTOR_DISCLOSURE', {
   nuStateKeys: ['title'],
   classifyChange: ({ prior, incoming }) => ((prior.nuState?.title ?? null) !== (incoming.nuState?.title ?? null) ? 'RECONFIGURED' : 'PERSISTENT'),
 });
+
+// HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE -- ratified by the Founder 2026-10-12 (KRYL-1413, Decision Record section 3). LABOR, for PRIVATE SEC filers.
+// Canonical meaning: the issuer's own newest Form D states that a related person is an executive officer or a director of the issuer. It records the role as that FILING states
+// it, as of that filing. It does not assert that the role continues, the person's holdings, compensation or other roles. Only "Executive Officer" (OFFICER) and "Director" (DIRECTOR)
+// are admitted; "Promoter" and any other relationship are not.
+// part = (issuer, person), ORDERED. The issuer is identified by its SEC CIK. The PERSON HAS NO SEC CIK: the person node is the NAME AS THE ISSUER'S FILING STATES IT, scoped to that
+// issuer (personIdentity NAME_SCOPED_TO_ISSUER_FILING): never matched, merged or shared with any other person or entity. nu_id = { role }, nu_state = { clarification }.
+const FORM_D_OK = new Set(['Form D', 'Form D/A']);
+registerRelationshipType('HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [issuerId, personId] = assertion.part ?? [];
+    const p = assertion.evidence?.provenance ?? {};
+    if (!issuerId || !personId || issuerId === personId) return { admitted: false, reason: 'issuer and person must be two distinct entities' };
+    if (!['DIRECTOR', 'OFFICER'].includes(assertion.nuId?.role)) return { admitted: false, reason: 'role must be DIRECTOR or OFFICER, as the Form D states it (Promoter and other relationships are not admitted)' };
+    if (p.source !== 'SEC_FORM_D' || !FORM_D_OK.has(String(p.form ?? ''))) return { admitted: false, reason: 'the source must be the issuer\'s own SEC Form D' };
+    if (p.roleStated !== true) return { admitted: false, reason: 'the Form D itself must state the role' };
+    const ic = String(p.issuerCik ?? '').padStart(10, '0');
+    if (!p.issuerCik || issuerId !== `CIK:${ic}`) return { admitted: false, reason: 'the issuer must be identified by the SEC CIK of the Form D' };
+    if (p.personIdentity !== 'NAME_SCOPED_TO_ISSUER_FILING' || !p.personName || !String(personId).startsWith(`FORMD_PERSON:${ic}:`)) return { admitted: false, reason: 'the person is identified only as the name the issuer\'s Form D states, scoped to that issuer' };
+    if (!p.accession || !p.filingDate) return { admitted: false, reason: 'accession and filing date are required' };
+    return { admitted: true };
+  },
+  nuIdKeys: ['role'],
+  nuStateKeys: ['clarification'],
+  classifyChange: ({ prior, incoming }) => ((prior.nuState?.clarification ?? null) !== (incoming.nuState?.clarification ?? null) ? 'RECONFIGURED' : 'PERSISTENT'),
+});
+
+// LEAD_SPONSOR_OF_CLINICAL_TRIAL -- ratified by the Founder 2026-10-12 (KRYL-1414, Decision Record section 3). KNOWLEDGE, for companies already resolved by their SEC CIK.
+// Canonical meaning: ClinicalTrials.gov states that the company is the LEAD sponsor of a registered study. It records that fact as the registry states it, as of the registry record's
+// last update. It does not assert the study's results, its funding, the company's other trials, or that the status continues.
+// part = (sponsor entity by SEC CIK, trial node NCT:<registry id>), ORDERED. The registry never creates identity: the sponsor is matched to an entity ALREADY resolved by its SEC CIK, by
+// exact legal-name equality (suffixes removed); collaborator roles, non-industry sponsors and near names are not admitted. nu_state = { status } (the registry's overall status; a change is RECONFIGURED).
+registerRelationshipType('LEAD_SPONSOR_OF_CLINICAL_TRIAL', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [sponsorId, trialId] = assertion.part ?? [];
+    const p = assertion.evidence?.provenance ?? {};
+    if (!sponsorId || !trialId || sponsorId === trialId) return { admitted: false, reason: 'sponsor and trial must be two distinct nodes' };
+    if (p.source !== 'CLINICALTRIALS_GOV') return { admitted: false, reason: 'the source must be ClinicalTrials.gov' };
+    if (!/^NCT\d{8}$/.test(String(p.nctId ?? '')) || trialId !== `NCT:${p.nctId}`) return { admitted: false, reason: 'the trial must be identified by its registry id (NCT number)' };
+    if (p.leadSponsorClass !== 'INDUSTRY') return { admitted: false, reason: 'only an industry lead sponsor is admitted (collaborators and other classes are not)' };
+    if (p.sponsorMatch !== 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY' || !p.leadSponsorName) return { admitted: false, reason: 'the lead sponsor must equal the resolved entity\'s legal name exactly; the registry never creates identity' };
+    if (!/^CIK:\d{10}$/.test(String(sponsorId))) return { admitted: false, reason: 'the sponsor must be an entity identified by its SEC CIK' };
+    if (!p.lastUpdated && !p.retrievedAt) return { admitted: false, reason: 'the registry record\'s date is required' };
+    return { admitted: true };
+  },
+  nuIdKeys: [],
+  nuStateKeys: ['status'],
+  classifyChange: ({ prior, incoming }) => ((prior.nuState?.status ?? null) !== (incoming.nuState?.status ?? null) ? 'RECONFIGURED' : 'PERSISTENT'),
+});

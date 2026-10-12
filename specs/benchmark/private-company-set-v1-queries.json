@@ -1,0 +1,58 @@
+[
+ {
+  "id": "PC01",
+  "subject": "Databento",
+  "pattern": "A",
+  "text": "What structural relationships are forming around Databento across technology, ownership, and labor?",
+  "needs": "TOL"
+ },
+ {
+  "id": "PC02",
+  "subject": "Databento",
+  "pattern": "B",
+  "text": "Who has financed Databento, who are its officers and directors, and what has changed recently?",
+  "needs": "CL"
+ },
+ {
+  "id": "PC03",
+  "subject": "Integrated Biosciences",
+  "pattern": "A",
+  "text": "What structural relationships are forming around Integrated Biosciences across technology, ownership, and labor?",
+  "needs": "TOL"
+ },
+ {
+  "id": "PC04",
+  "subject": "Integrated Biosciences",
+  "pattern": "B",
+  "text": "Who has financed Integrated Biosciences, who are its officers and directors, and what has changed recently?",
+  "needs": "CL"
+ },
+ {
+  "id": "PC05",
+  "subject": "Daytona",
+  "pattern": "A",
+  "text": "What structural relationships are forming around Daytona across technology, ownership, and labor?",
+  "needs": "TOL"
+ },
+ {
+  "id": "PC06",
+  "subject": "Daytona",
+  "pattern": "B",
+  "text": "Who has financed Daytona, who are its officers and directors, and what has changed recently?",
+  "needs": "CL"
+ },
+ {
+  "id": "PC07",
+  "subject": "Anduril",
+  "pattern": "A",
+  "text": "What structural relationships are forming around Anduril across technology, ownership, and labor?",
+  "needs": "TOL"
+ },
+ {
+  "id": "PC08",
+  "subject": "Anduril",
+  "pattern": "B",
+  "text": "Who has financed Anduril, who are its officers and directors, and what has changed recently?",
+  "needs": "CL"
+ }
+]

@@ -85,7 +85,7 @@ function reindexRuntimeEntity(entity) {
  */
 export function createEntity({
   canonicalName, aliases = [], identifiers = {}, domainTags = [],
-  admissionSource = null, admissionEvidence = null,
+  admissionSource = null, admissionEvidence = null, admissionClass = null,
 } = {}) {
   if (!canonicalName || typeof canonicalName !== 'string') return null;
 
@@ -112,6 +112,7 @@ export function createEntity({
     // signal itself.
     admissionSource,
     admissionEvidence,
+    admissionClass,                  // KRYL-1412: the identity class that admitted it (for example SEC_FORM_D_ISSUER); null for registry entities
     createdAt: now,
     updatedAt: now,
     mergedInto: null, // set by mergeEntity when this entity is superseded

@@ -68,6 +68,21 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
         [{ relationshipId: h.id, accession: evidenceFor(h.id)?.provenance?.accession }, { relationshipId: l.r.id, accession: l.ev.accession }]);
     }
   }
+  // 2d. Officers and directors of a private SEC filer, as its own Form D states them (KRYL-1413). The people are identified only by the names in that filing.
+  const labD = relationships.filter(r => r.type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'SEC_FORM_D');
+  if (labD.length) {
+    const people = new Set(labD.map(x => x.r.part[1]));
+    const dirs = labD.filter(x => x.r.nuId?.role === 'DIRECTOR').length, offs = labD.filter(x => x.r.nuId?.role === 'OFFICER').length;
+    add(STATUS.SUPPORTED, `${people.size} ${people.size === 1 ? 'person is' : 'people are'} stated as officers or directors of ${subject} in its own Form D (${dirs} director role${dirs !== 1 ? 's' : ''}, ${offs} executive-officer role${offs !== 1 ? 's' : ''}); each role is stated as of that filing, no end of a role is stated, and the people are identified only by the names the filing states (the person has no SEC CIK and is not matched to any other person or entity).`,
+      labD.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.accession, form: x.ev.form, filingDate: x.ev.filingDate })));
+  }
+  // 2e. Clinical-trial sponsorship (KRYL-1414), as ClinicalTrials.gov states it. The registry never creates identity: the sponsor equals the resolved entity's legal name.
+  const trials = relationships.filter(r => r.type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'CLINICALTRIALS_GOV');
+  if (trials.length) {
+    const byStatus = {}; for (const x of trials) byStatus[x.ev.overallStatus ?? 'status not stated'] = (byStatus[x.ev.overallStatus ?? 'status not stated'] ?? 0) + 1;
+    add(STATUS.SUPPORTED, `${subject} is the lead (industry) sponsor of ${trials.length} registered clinical stud${trials.length !== 1 ? 'ies' : 'y'} on ClinicalTrials.gov among the newest read (${Object.entries(byStatus).map(([k, n]) => `${n} ${String(k).toLowerCase().replace(/_/g, ' ')}`).join(', ')}); each status is as of that record's last update, and the registry states the sponsorship, not the studies' results.`,
+      trials.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.nctId, form: x.ev.form, filingDate: x.ev.lastUpdated })));
+  }
   if (laborReport?.capped) add(STATUS.UNRESOLVED, `${laborReport.personsSeen - laborReport.personsRead} further reporting person${laborReport.personsSeen - laborReport.personsRead !== 1 ? 's' : ''} in the insider forms searched ${laborReport.personsSeen - laborReport.personsRead !== 1 ? 'were' : 'was'} not read in this analysis (the newest ${laborReport.personsRead} are read per analysis), so their roles are not shown.`, []);
 
   // 3. Ownership change over two 12-month periods, as the dated filings classify it.

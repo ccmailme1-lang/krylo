@@ -28,8 +28,8 @@ const _resolution = new Map();
 const keyOf = (t) => String(t ?? '').trim().toLowerCase();
 export const getNameResolution = (text) => _resolution.get(keyOf(text)) ?? null;
 // Identity classes that exist as proposals but are NOT implemented or ratified: stated as "not checked", never as checked (specs/spec-entity-resolution-contract-for-architects-20261012.md).
-export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['SEC Form D issuers', 'GLEIF (LEI)', 'UK Companies House', 'the federal contractor registry (UEI)']);
-const OUTCOME_WORDS = { NO_MATCH: 'no match', AMBIGUOUS: 'several registrants share the name, none assumed', NEAR_MATCH: 'only a similar name, not assumed', NOT_LISTED: 'a registrant was found but it is not listed', NOT_VERIFIED: 'a candidate was found but its annual filings could not be confirmed', LOOKUP_FAILED: 'the lookup failed, so this is not evidence of absence', NO_QUERY_OR_SEARCH: 'not run', CANDIDATE: 'a candidate was found' };
+export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['GLEIF (LEI)', 'UK Companies House', 'the federal contractor registry (UEI)']);
+const OUTCOME_WORDS = { NO_MATCH: 'no match', NO_MATCH_SIMILAR: 'no exact name; similar names exist and none is assumed', AMBIGUOUS: 'several registrants share the name, none assumed', NEAR_MATCH: 'only a similar name, not assumed', NOT_LISTED: 'a registrant was found but it is not listed', NOT_VERIFIED: 'a candidate was found but its annual filings could not be confirmed', LOOKUP_FAILED: 'the lookup failed, so this is not evidence of absence', NO_QUERY_OR_SEARCH: 'not run', CANDIDATE: 'a candidate was found' };
 /**
  * The sentences appended to "its entity is not resolved": the closest listed registrant, explicitly not assumed, and which identity sources were actually checked, what
  * each returned, which were not checked, and what would resolve the subject. '' when nothing was recorded for this name.
@@ -138,6 +138,27 @@ export async function admitPublicFiler(name, opts = {}) {
   const known = resolve(name);
   if (known && known.confidence === 1.0) return { entity: known, outcome: 'ALREADY_KNOWN' };
   const v = await verifyPublicFiler(name, opts);
+  // KRYL-1412: a name that is not a listed SEC registrant is tried as a private SEC filer (Form D issuer): exact legal name, exactly one issuer, verified by its own Form D.
+  let fd = null;
+  if (!v.verified && (v.reason === 'NO_MATCH' || v.reason === 'LOOKUP_FAILED') && opts.searchFn) {
+    const { verifyFormDIssuer, FORM_D_CLASS, FORM_D_LABEL } = await import('./secformdissuer.js');
+    fd = await verifyFormDIssuer(name, { searchFn: opts.searchFn, now: opts.now ?? Date.now(), sleep: opts.sleep, gapMs: opts.formDGapMs });
+    const check = { source: 'SEC Form D issuers', outcome: fd.verified ? 'VERIFIED' : (fd.reason === 'NO_MATCH' && fd.similar?.length ? 'NO_MATCH_SIMILAR' : fd.reason), candidates: fd.candidates ?? fd.similar ?? [] };
+    if (fd.verified) {
+      const byCikFd = resolveByIdentifier('edgar', fd.cik);
+      if (byCikFd) return { entity: byCikFd, outcome: 'ALREADY_KNOWN' };
+      const entityFd = createEntity({
+        canonicalName: fd.canonicalName, aliases: [String(name).trim()], identifiers: { edgar: fd.cik }, domainTags: [],
+        admissionSource: `SEC/EDGAR Form D issuer (${FORM_D_LABEL})`, admissionClass: FORM_D_CLASS,
+        admissionEvidence: `${fd.evidence.form} ${fd.evidence.accession} filed ${fd.evidence.filingDate}; issuer name equals the query name and no other Form D issuer does (${fd.evidence.lookAlikesNotBound} look-alike issuer${fd.evidence.lookAlikesNotBound !== 1 ? 's' : ''} not bound); not listed (no ticker); rule ${fd.rule}`,
+      });
+      if (!entityFd) return { entity: null, outcome: 'SLUG_COLLISION', detail: { ...v, formD: fd } };
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('krylo-entity-admitted', { detail: { canonicalId: entityFd.canonicalId, cik: fd.cik } })); } catch { /* no window */ }
+      return { entity: entityFd, outcome: 'ADMITTED', detail: { ...v, formD: fd } };
+    }
+    v.checks = [...(v.checks ?? []), check];
+    if (fd.reason === 'AMBIGUOUS') v.candidates = fd.candidates;
+  }
   if (!v.verified) {
     // every unresolved outcome records what was checked, so the subject's message is actionable (a NEAR or AMBIGUOUS note recorded earlier keeps its candidates)
     const prev = getNameResolution(name);

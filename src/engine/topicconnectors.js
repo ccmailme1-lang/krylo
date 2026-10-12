@@ -24,6 +24,10 @@ import { admitCapitalEvents, admitAcquisitions } from './capitaleventadmission.j
 import { fetchInsiderRoles } from './connectors/insiderroles.js';
 import { producerEligibility } from './produceridentifiers.js';
 import { admitInsiderRoles } from './insiderroleadmission.js';
+import { fetchFormDPeople } from './connectors/formdpeople.js';
+import { admitFormDRoles } from './formdpeopleadmission.js';
+import { fetchClinicalTrials } from './connectors/clinicaltrials.js';
+import { admitClinicalTrials } from './clinicaltrialadmission.js';
 import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
@@ -92,6 +96,19 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   // recorded with the identifier they lack (shown to the reader), never skipped silently and never given a substituted identifier.
   const elig = scope.kind === 'ENTITY' ? producerEligibility(scope.entity) : null;
   if (scope.kind === 'ENTITY') setEligibilityReport(scope.canonicalId, elig);
+  // KRYL-1414 (Founder ratified 2026-10-12): ClinicalTrials.gov lead sponsorship for a company already resolved by its SEC CIK (the registry never creates identity; an exact legal-name match
+  // is required, so a company with no studies yields none). Launched after the durable store has been loaded, like every other producer.
+  const launchClinical = () => {
+    if (!elig.eligible.includes('clinical')) return;
+    const entity = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+    expectLookup('clinical', { canonicalId: scope.canonicalId });
+    fetchClinicalTrials({ entity }).then((r) => {
+      if (r.failed) return settleLookup('clinical', `the ClinicalTrials.gov lookup failed (${r.failed})`);
+      admitClinicalTrials({ entity, trials: r.trials });
+      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+      return settleLookup('clinical', null);
+    }).catch((e) => settleLookup('clinical', String(e?.message ?? e)));
+  };
   if (scope.kind === 'ENTITY' && elig.eligible.includes('ownership')) {
     expectLookup('ownership', { canonicalId: scope.canonicalId }); expectLookup('8k', { canonicalId: scope.canonicalId }); expectLookup('counterparty', { canonicalId: scope.canonicalId }); expectLookup('labor', { canonicalId: scope.canonicalId });
     if (refresh) expectLookup('change', { canonicalId: scope.canonicalId });
@@ -102,6 +119,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
     let cpDone; const cpPromise = new Promise((r) => { cpDone = r; });
     const launchLookups = () => {
       markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
+      launchClinical();
       const ownershipObservation = runTargetedOwnershipObservation({
         entityCik:   scope.entity.identifiers.edgar,
         canonicalId: scope.canonicalId,
@@ -185,5 +203,22 @@ function fireEntityScoped(q, { refresh = false } = {}) {
       });
     };
     hydrateFor([toTopologyNodeId(scope.canonicalId)]).then((h) => settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null)).catch((e) => settleLookup('store', String(e?.message ?? e))).finally(launchLookups);
+
+  }
+
+  // KRYL-1413 (Founder ratified 2026-10-12): a private SEC filer (Form D issuer class) has no Forms 3, 4 or 5; its executive officers and directors are read from its own newest Form D
+  // (the person identified only by the name in that filing, scoped to the issuer) and admitted through the single write path. The producer contract (produceridentifiers.js) decides who runs.
+  if (scope.kind === 'ENTITY' && elig.eligible.includes('formd-people')) {
+    const issuer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+    expectLookup('store', { canonicalId: scope.canonicalId }); expectLookup('formd-people', { canonicalId: scope.canonicalId });
+    hydrateFor([toTopologyNodeId(scope.canonicalId)])
+      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchClinical(); return fetchFormDPeople({ issuer, searchFn: secSearch }); })
+      .then((r) => {
+        if (r.failed) return settleLookup('formd-people', `the SEC Form D lookup failed (${r.failed})`);
+        admitFormDRoles({ issuer, roles: r.roles });
+        window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+        return settleLookup('formd-people', r.failedDoc && r.roles.length === 0 ? 'the Form D document could not be read' : null);
+      })
+      .catch((e) => { settleLookup('store', String(e?.message ?? e)); settleLookup('formd-people', String(e?.message ?? e)); });
   }
 }

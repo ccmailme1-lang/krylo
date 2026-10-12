@@ -283,6 +283,11 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
       <h2 style={{ margin: '8px 0 0', fontFamily: HELV, fontSize: 22, fontWeight: 300, color: BRIGHT }}>
         {subjectLabel}
       </h2>
+      {isEntity && subjScope.entity.admissionClass === 'SEC_FORM_D_ISSUER' && (
+        <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: LBL }}>
+          IDENTITY: SEC CIK {subjScope.entity.identifiers?.edgar} · private SEC filer (Form D), not listed · {subjScope.entity.admissionEvidence ? truncate(subjScope.entity.admissionEvidence.replace(/; rule .*$/, ''), 230) : 'identity from its own Form D'}
+        </div>
+      )}
       {question && (
         <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: LBL }}>
           QUESTION: {truncate(question, 160)}
