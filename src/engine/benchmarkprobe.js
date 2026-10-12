@@ -7,8 +7,22 @@ import { toTopologyNodeId } from './entityresolution.js';
 import { NODE_LABELS } from './entitytopologyregistry.js';
 import { buildAdmittedFormation, admittedFormationSentence } from './admittedformation.js';
 import { buildSynthesis } from './analyticalsynthesis.js';
+import { buildFindings, questionDomainsFrom } from './analyticalfindings.js';
 import { fetchHistory } from './canonicalstoreclient.js';
 import { reconstructSnapshot } from './historyview.js';
+
+/** A finding must stand on admitted relationships in the frozen set, carry a valid strength, the basis it claims and why it matters to the question. */
+export function validateFindings(findings, rels, evidenceFor) {
+  const ids = new Set(rels.map(r => r.id)); const problems = [];
+  for (const f of findings) {
+    if (!['DOCUMENTED', 'SUPPORTED', 'INFERRED', 'UNRESOLVED'].includes(f.strength)) problems.push(`${f.id} ${f.kind}: no valid strength`);
+    for (const s of f.supporting ?? []) if (!ids.has(s.relationshipId)) problems.push(`${f.id} ${f.kind}: supporting relationship ${String(s.relationshipId).slice(0, 8)} is not in the frozen set`);
+    if (f.strength !== 'UNRESOLVED' && !(f.supporting ?? []).length) problems.push(`${f.id} ${f.kind} ${f.strength}: asserts without supporting relationships`);
+    if (f.strength === 'DOCUMENTED' && !(f.evidence ?? []).some(e => e.accession)) problems.push(`${f.id} ${f.kind} DOCUMENTED: no filing accession in its evidence`);
+    if (!f.headline || !f.significance || !Array.isArray(f.alternatives)) problems.push(`${f.id} ${f.kind}: missing headline, significance or alternatives`);
+  }
+  return { findings: findings.length, problems };
+}
 
 export function validateSynthesis(syn, rels, evidenceFor, report) {
   const byId = new Map(rels.map(r => [r.id, r])); const problems = [];
@@ -54,6 +68,8 @@ export async function probeActiveAnalysis() {
   const report = snap.reports?.capitalAdmission ?? null;
   const syn = buildSynthesis({ subject, relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation, change: change?.result ?? null, admissionReport: report });
   const validation = validateSynthesis(syn, rels, latestEvidenceFor, report);
+  const found = buildFindings({ subject, relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation, change: change?.result ?? null, admissionReport: report, questionDomains: questionDomainsFrom(snap.query) });
+  const findingsValidation = validateFindings(found.findings, rels, latestEvidenceFor);
   let past = null, historyError = null;
   for (let i = 0; i < 8 && !past; i++) {                                   // the snapshot record is written a moment after the freeze
     const h = await fetchHistory(snap.canonicalId, node);
@@ -64,6 +80,8 @@ export async function probeActiveAnalysis() {
   return {
     snapshotId: snap.id, canonicalId: snap.canonicalId, subject, relationships: rels.length, byType: formation.structure.byType,
     admittedDomains: formation.structure.domains, linkedDomains: formation.structure.linkedDomains, links: formation.structure.links,
+    findings: found.findings.map(f => ({ kind: f.kind, strength: f.strength, headline: f.headline, supporting: f.supporting.length })), findingsValidation,
+    historyFindingsAgree: !!past && JSON.stringify((past.findings ?? []).map(f => f.headline)) === JSON.stringify(found.findings.map(f => f.headline)),
     analysisSentence, historySentence: past?.formationSentence ?? null, historyRelationships: past?.relationships.length ?? null, historyError,
     synthesisCounts: syn.statements.reduce((c, s) => { c[s.status] = (c[s.status] ?? 0) + 1; return c; }, {}), synthesisValidation: validation,
     admission: report ? { admitted: report.admitted, rejected: report.rejected.length, deferred: report.deferred } : null,
