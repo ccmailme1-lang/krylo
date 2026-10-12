@@ -26,9 +26,10 @@ const CASES = [
   ['C22','Intel',4],['C23','Costco',1],['C24','Costco',10],['C25','Broadcom',1],['C26','Broadcom',2],['C27','Broadcom',5],['C28','Broadcom',12],
   ['C29','Netflix',1],['C30','Netflix',8],['C31','Netflix',9],['C32','Boston Scientific',1],['C33','Boston Scientific',3],['C34','Boston Scientific',7],['C35','Boston Scientific',10],
 ];
+const ROUTINE = process.env.ROUTINE ? JSON.parse(fs.readFileSync(process.env.ROUTINE, 'utf8')) : null;   // the frozen routine set: [{ id, subject, text }]
 const only = process.env.ONLY ? new Set(process.env.ONLY.split(',')) : null;
 const bySubject = new Map();
-for (const c of CASES) { if (only && !only.has(c[0])) continue; (bySubject.get(c[1]) ?? bySubject.set(c[1], []).get(c[1])).push(c); }
+for (const c of (ROUTINE ? ROUTINE.map(r => [r.id, r.subject, r.id]) : CASES)) { if (only && !only.has(c[0])) continue; (bySubject.get(c[1]) ?? bySubject.set(c[1], []).get(c[1])).push(c); }
 fs.mkdirSync(OUT, { recursive: true });
 const index = [];
 const b = await chromium.launch();
@@ -37,7 +38,7 @@ for (const [subject, cases] of bySubject) {
   const errs = []; pg.on('pageerror', e => errs.push(String(e).slice(0, 200)));
   await pg.goto(URL, { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForTimeout(4000);
   for (const [id, , qn] of cases) {
-    const q = Q[qn](subject); const t0 = Date.now(); errs.length = 0;
+    const q = ROUTINE ? ROUTINE.find(r => r.id === id).text : Q[qn](subject); const t0 = Date.now(); errs.length = 0;
     await pg.evaluate(async (q) => { const st = await import('/src/store/useanalysisstore.js'); st.useAnalysisStore.getState().createSession('bench', 'GENERAL', q, {}); const tc = await import('/src/engine/topicconnectors.js'); tc.fireTopicConnectors(q); }, q);
     let state = null;
     for (let i = 0; i < 100; i++) {   // up to ~50 s for the snapshot, then up to ~45 s for the pinned relationship-change result

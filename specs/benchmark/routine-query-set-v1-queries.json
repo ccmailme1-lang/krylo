@@ -1,0 +1,142 @@
+[
+ {
+  "id": "R01",
+  "subject": "Sysco",
+  "pattern": "P1",
+  "text": "What is the overall structural picture around Sysco across ownership, capital, technology, labor, knowledge and media?",
+  "needs": "OCTKLM"
+ },
+ {
+  "id": "R02",
+  "subject": "Sysco",
+  "pattern": "P8",
+  "text": "Which of Sysco's disclosed ownership positions have changed over the last two years, and which are unresolved?",
+  "needs": "O"
+ },
+ {
+  "id": "R03",
+  "subject": "Oracle",
+  "pattern": "P3",
+  "text": "Who has Oracle raised capital through in its recent offerings, and what do the filings say about those arrangements?",
+  "needs": "C"
+ },
+ {
+  "id": "R04",
+  "subject": "Oracle",
+  "pattern": "P9",
+  "text": "How do Oracle's financing relationships connect to who owns it, and what does that connection support?",
+  "needs": "CO"
+ },
+ {
+  "id": "R05",
+  "subject": "Tesla",
+  "pattern": "P5",
+  "text": "What leadership changes has Tesla disclosed recently and who is involved?",
+  "needs": "L"
+ },
+ {
+  "id": "R06",
+  "subject": "Tesla",
+  "pattern": "P4",
+  "text": "What technology relationships or dependencies can be established for Tesla from public evidence?",
+  "needs": "T"
+ },
+ {
+  "id": "R07",
+  "subject": "Costco",
+  "pattern": "P10",
+  "text": "What is established, and what is not, about the structure around Costco?",
+  "needs": "OC"
+ },
+ {
+  "id": "R08",
+  "subject": "Costco",
+  "pattern": "P2",
+  "text": "Who holds or controls a disclosed stake in Costco and how has that changed?",
+  "needs": "O"
+ },
+ {
+  "id": "R09",
+  "subject": "Boeing",
+  "pattern": "P8",
+  "text": "What changed in Boeing's ownership and financing structure in the last twelve months?",
+  "needs": "OC"
+ },
+ {
+  "id": "R10",
+  "subject": "Boeing",
+  "pattern": "P9",
+  "text": "Which connections between Boeing's ownership and its capital events are established and which are only inferred?",
+  "needs": "OC"
+ },
+ {
+  "id": "R11",
+  "subject": "Verizon",
+  "pattern": "P2",
+  "text": "Who are Verizon's disclosed beneficial owners and are any of those positions ending or reconfigured?",
+  "needs": "O"
+ },
+ {
+  "id": "R12",
+  "subject": "Verizon",
+  "pattern": "P7",
+  "text": "What public-attention signals around Verizon can be tied to a specific relationship or event?",
+  "needs": "M"
+ },
+ {
+  "id": "R13",
+  "subject": "Intel",
+  "pattern": "P3",
+  "text": "Which counterparties are named in Intel's recent capital events and how certain is each identification?",
+  "needs": "C"
+ },
+ {
+  "id": "R14",
+  "subject": "Intel",
+  "pattern": "P6",
+  "text": "What knowledge or intellectual-property relationships connect Intel to other participants?",
+  "needs": "K"
+ },
+ {
+  "id": "R15",
+  "subject": "Broadcom",
+  "pattern": "P1",
+  "text": "What structural relationships are forming around Broadcom across all six domains?",
+  "needs": "OCTKLM"
+ },
+ {
+  "id": "R16",
+  "subject": "Broadcom",
+  "pattern": "P4",
+  "text": "What technology relationships and dependencies connect Broadcom to other companies?",
+  "needs": "T"
+ },
+ {
+  "id": "R17",
+  "subject": "Netflix",
+  "pattern": "P7",
+  "text": "What can be established about public attention to Netflix that connects to its capital or ownership events?",
+  "needs": "MCO"
+ },
+ {
+  "id": "R18",
+  "subject": "Netflix",
+  "pattern": "P10",
+  "text": "Where does the evidence about Netflix's structure contradict itself or run out?",
+  "needs": "OC"
+ },
+ {
+  "id": "R19",
+  "subject": "Boston Scientific",
+  "pattern": "P5",
+  "text": "What leadership and labor-related relationships can be established for Boston Scientific?",
+  "needs": "L"
+ },
+ {
+  "id": "R20",
+  "subject": "Boston Scientific",
+  "pattern": "P6",
+  "text": "What knowledge and intellectual-property relationships can be established for Boston Scientific?",
+  "needs": "K"
+ }
+]
