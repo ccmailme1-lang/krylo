@@ -1,6 +1,6 @@
 # Benchmark v1: current build report (complete architecture, capital-event admission through History)
 
-Date: 2026-10-12 · Build: commit 232b703 plus the working tree · Environment: localhost (Dev) · Matrix, questions and rubric: the frozen v1 set (planning-pass-benchmark-matching-store-20261011.md, A6). Scorer 1 only; the independent second reviewer's scores are outstanding and are kept separate. The baseline (specs/benchmark/baseline*, baseline-scores.json) is unchanged.
+Date: 2026-10-13 · Build: commit 232b703 plus the working tree · Environment: localhost (Dev) · Matrix, questions and rubric: the frozen v1 set (planning-pass-benchmark-matching-store-20261011.md, A6). Scorer 1 only; the independent second reviewer's scores are outstanding and are kept separate. The baseline (specs/benchmark/baseline*, baseline-scores.json) is unchanged.
 
 ## Headline
 
@@ -45,7 +45,7 @@ Date: 2026-10-12 · Build: commit 232b703 plus the working tree · Environment: 
 | C13 | Boeing | 1 | 6.5 | 8.0 | +1.5 | 2/3 |
 | C14 | Boeing | 3 | 4.5 | 10.0 | +5.5 | 1/1 |
 | C15 | Boeing | 4 | 6.5 | 10.0 | +3.5 | 2/2 |
-| C16 | Boeing | 12 | 6.5 | 8.0 | +1.5 | 3/6 |
+| C16 | Boeing | 12 | 6.5 | 8.0 | +1.5 | 4/6 |
 | C17 | Verizon | 1 | 6.5 | 8.0 | +1.5 | 1/3 |
 | C18 | Verizon | 2 | 7.5 | 10.0 | +2.5 | 1/1 |
 | C19 | Verizon | 10 | 6.5 | 8.0 | +1.5 | 1/2 |
@@ -88,7 +88,7 @@ Date: 2026-10-12 · Build: commit 232b703 plus the working tree · Environment: 
 | OWNERSHIP | 33 | 35 |
 | CAPITAL | 0 | 25 |
 | TECHNOLOGY | 0 | 0 |
-| KNOWLEDGE | 0 | 0 |
+| KNOWLEDGE | 0 | 8 |
 | LABOR | 0 | 35 |
 | MEDIA | 0 | 0 |
 
@@ -102,7 +102,7 @@ Baseline admitted only ownership-disclosure relationships (the only type produce
 
 ## Synthesis labels against their evidence, and Analysis / MAP / History agreement
 
-- Statements checked: 351 across 35 cases. Statements whose status or evidence did not hold up: 0.
+- Statements checked: 359 across 35 cases. Statements whose status or evidence did not hold up: 0.
 - Analysis and MAP show the same formation: 35 of 35 resolved cases.
 - History rebuilt from the store shows the same formation and relationship count as Analysis: 35 of 35 resolved cases.
 

@@ -704,6 +704,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -713,14 +714,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 35,
+      "relationships": 37,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 9,
-      "supported": 5,
+      "statements": 10,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 68,
@@ -752,6 +754,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -760,14 +763,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 35,
+      "relationships": 37,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 9,
-      "supported": 5,
+      "statements": 10,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 68,
@@ -800,6 +804,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -809,14 +814,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 35,
+      "relationships": 37,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 9,
-      "supported": 5,
+      "statements": 10,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 68,
@@ -853,24 +859,27 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
       "covered": [
         "OWNERSHIP",
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR"
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 35,
+      "relationships": 37,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 9,
-      "supported": 5,
+      "statements": 10,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 68,
@@ -1521,6 +1530,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -1530,14 +1540,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 28,
+      "relationships": 48,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 12,
-      "supported": 5,
+      "statements": 13,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 69,
@@ -1569,6 +1580,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -1577,14 +1589,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 28,
+      "relationships": 48,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 12,
-      "supported": 5,
+      "statements": 13,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 69,
@@ -1616,6 +1629,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -1624,14 +1638,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 28,
+      "relationships": 48,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 12,
-      "supported": 5,
+      "statements": 13,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 69,
@@ -1664,6 +1679,7 @@
       ],
       "admitted": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
@@ -1673,14 +1689,15 @@
       ],
       "linked": [
         "CAPITAL",
+        "KNOWLEDGE",
         "LABOR",
         "OWNERSHIP"
       ],
-      "relationships": 28,
+      "relationships": 48,
       "hasSynthesis": true,
       "problems": 0,
-      "statements": 12,
-      "supported": 5,
+      "statements": 13,
+      "supported": 6,
       "mapAgrees": true,
       "historyAgrees": true,
       "accessionLines": 69,

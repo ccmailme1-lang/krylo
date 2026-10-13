@@ -1,0 +1,184 @@
+[
+  {
+    "case": "PC01",
+    "subject": "Databento",
+    "question": "PC01",
+    "questionText": "What structural relationships are forming around Databento across technology, ownership, and labor?",
+    "build": "c456e30",
+    "snapshotId": "snap-mv6nnh7i-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 51.3,
+    "capturedAt": "2026-10-13T12:27:16.976Z",
+    "probe": {
+      "snapshotId": "snap-mv6nnh7i-1",
+      "canonicalId": "databento",
+      "subject": "Databento Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC02",
+    "subject": "Databento",
+    "question": "PC02",
+    "questionText": "Who has financed Databento, who are its officers and directors, and what has changed recently?",
+    "build": "c456e30",
+    "snapshotId": "snap-mv6nokhi-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 49.5,
+    "capturedAt": "2026-10-13T12:28:06.428Z",
+    "probe": {
+      "snapshotId": "snap-mv6nokhi-2",
+      "canonicalId": "databento",
+      "subject": "Databento Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC03",
+    "subject": "Integrated Biosciences",
+    "question": "PC03",
+    "questionText": "What structural relationships are forming around Integrated Biosciences across technology, ownership, and labor?",
+    "build": "c456e30",
+    "snapshotId": "snap-mv6nprl6-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 53.2,
+    "capturedAt": "2026-10-13T12:29:04.817Z",
+    "probe": {
+      "snapshotId": "snap-mv6nprl6-1",
+      "canonicalId": "integrated-biosciences",
+      "subject": "Integrated Biosciences, Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC04",
+    "subject": "Integrated Biosciences",
+    "question": "PC04",
+    "questionText": "Who has financed Integrated Biosciences, who are its officers and directors, and what has changed recently?",
+    "build": "c456e30",
+    "snapshotId": "snap-mv6nqvoo-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 50.5,
+    "capturedAt": "2026-10-13T12:29:55.339Z",
+    "probe": {
+      "snapshotId": "snap-mv6nqvoo-2",
+      "canonicalId": "integrated-biosciences",
+      "subject": "Integrated Biosciences, Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  }
+]

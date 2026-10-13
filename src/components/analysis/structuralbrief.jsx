@@ -484,6 +484,18 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
         </Row>
       )}
 
+      {isEntity && subjScope.entity.admissionClass === 'SEC_FORM_D_ISSUER' && (() => {
+        // A private SEC filer has no Schedule 13D/13G filings, so the two-period ownership comparison does not apply: said plainly, with the one filing the roles come from.
+        const fd = entityCanonicalRelationships.map(r => latestEvidenceFor(r.id)?.provenance).filter(p => p?.source === 'SEC_FORM_D').sort((a, b) => String(b.filingDate).localeCompare(String(a.filingDate)))[0];
+        return (
+          <Row label="RELATIONSHIP CHANGE">
+            <span style={{ color: ABSENCE }}>
+              Source-dated comparison: nothing to compare. The two-period comparison reads Schedule 13D and 13G filings, which a private SEC filer does not have. {fd ? `The roles shown are stated as of its ${fd.form} filed ${String(fd.filingDate).slice(0, 10)} (accession ${fd.accession}); ` : ''}no earlier filing was compared, so change over time is not assessed here and no change is implied.
+            </span>
+          </Row>
+        );
+      })()}
+
       <Row label="UNRESOLVED">
         <span style={{ color: ABSENCE }}>
           {isEntity && temporalStatement(changeEntry)
