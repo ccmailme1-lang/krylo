@@ -16,6 +16,7 @@ import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv, historyFor, recentSnapshots } from './canonicalstore.js';
 import { secNames } from './secnames.js';
 import { clinicalTrialsFor } from './clinicaltrials.js';
+import { patentsFor } from './patentbulk.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1302,6 +1303,15 @@ async function handleClinicalTrials(req, res) {
   send(res, 200, r);
 }
 
+// ── KRYL-1416: granted-patent assignee lookup over the local USPTO PatentsView bulk file (no key held by the engine; the file is downloaded while signed in to data.uspto.gov) ──
+async function handlePatentAssignee(req, res) {
+  const name = new URL(req.url, 'http://localhost').searchParams.get('name') ?? '';
+  const r = await patentsFor(name);
+  if (r.error === 'FILE_MISSING') return send(res, 200, r);                 // reported as missing, never as "no patents"
+  if (r.error) return send(res, r.error.startsWith('name required') ? 400 : 502, { error: r.error });
+  send(res, 200, r);
+}
+
 // ── WO-2019: Service API proxy handlers ──────────────────────────────────────
 
 
@@ -1988,6 +1998,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/api/sec-names')                     return handleSecNames(req, res);
   if (req.method === 'GET'  && url === '/api/clinical-trials')                return handleClinicalTrials(req, res);
+  if (req.method === 'GET'  && url === '/api/patent-assignee')                return handlePatentAssignee(req, res);
   if (req.method === 'POST' && url === '/api/patentsview')                   return handlePatentsViewProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);
   // WO-2019 — Service API connectors

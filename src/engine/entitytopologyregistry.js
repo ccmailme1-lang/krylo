@@ -77,6 +77,8 @@ export const RELATION_TYPES = Object.freeze({
   FORM_D_OFFICER_OR_DIRECTOR_OF: 'FORM_D_OFFICER_OR_DIRECTOR_OF',
   // KRYL-1414 (2026-10-12) -- ClinicalTrials.gov states the company is the lead sponsor of a registered study (KNOWLEDGE).
   LEAD_SPONSOR_OF_TRIAL: 'LEAD_SPONSOR_OF_TRIAL',
+  // KRYL-1416 (2026-10-13) -- the USPTO granted-patent table states a patent is assigned to the company (TECHNOLOGY).
+  PATENT_ASSIGNEE_OF: 'PATENT_ASSIGNEE_OF',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

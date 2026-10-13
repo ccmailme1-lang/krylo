@@ -274,3 +274,25 @@ registerRelationshipType('LEAD_SPONSOR_OF_CLINICAL_TRIAL', {
   nuStateKeys: ['status'],
   classifyChange: ({ prior, incoming }) => ((prior.nuState?.status ?? null) !== (incoming.nuState?.status ?? null) ? 'RECONFIGURED' : 'PERSISTENT'),
 });
+
+// ASSIGNEE_OF_GRANTED_PATENT -- ratified by the Founder 2026-10-13, narrowly (KRYL-1416, Decision Record section 3). TECHNOLOGY, for companies already resolved by their SEC CIK.
+// Canonical meaning: the USPTO PatentsView granted-patent table states that a granted patent is assigned to the company. It records that fact as the USPTO record states it, as of the
+// dataset file's date. It does not assert what the patent covers, its value, whether it is still in force, or any other patent held by a different legal entity (a subsidiary or a similarly
+// named company is NOT the company: only the EXACT legal name matches). part = (company by SEC CIK, patent node PATENT:US<number>), ORDERED. nu_state = {}.
+registerRelationshipType('ASSIGNEE_OF_GRANTED_PATENT', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [companyId, patentId] = assertion.part ?? [];
+    const p = assertion.evidence?.provenance ?? {};
+    if (!companyId || !patentId || companyId === patentId) return { admitted: false, reason: 'company and patent must be two distinct nodes' };
+    if (!/^CIK:\d{10}$/.test(String(companyId))) return { admitted: false, reason: 'the company must be an entity identified by its SEC CIK' };
+    if (p.source !== 'USPTO_PATENTSVIEW_BULK' || p.table !== 'g_assignee_disambiguated') return { admitted: false, reason: 'the source must be the USPTO PatentsView granted-patent assignee table' };
+    if (!/^(?:\d{7,8}|D\d{6,7}|RE\d{5,6}|PP\d{5,6}|T\d{6,7}|X\d{6,7})$/.test(String(p.patentId ?? '')) || patentId !== `PATENT:US${p.patentId}`) return { admitted: false, reason: 'the patent must be identified by its granted patent number' };
+    if (p.assigneeMatch !== 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY' || !p.assigneeName) return { admitted: false, reason: 'the assignee must equal the resolved entity\'s legal name exactly; no fuzzy matching' };
+    if (!p.fileAsOf) return { admitted: false, reason: 'the dataset file\'s date is required' };
+    return { admitted: true };
+  },
+  nuIdKeys: [],
+  nuStateKeys: [],
+  classifyChange: () => 'PERSISTENT',
+});

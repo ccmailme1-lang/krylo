@@ -30,6 +30,8 @@ import { admitFormDRoles } from './formdpeopleadmission.js';
 import { buildFormDOfferingSignal } from './connectors/formdoffering.js';
 import { fetchClinicalTrials } from './connectors/clinicaltrials.js';
 import { admitClinicalTrials } from './clinicaltrialadmission.js';
+import { fetchPatentAssignments } from './connectors/patentassignee.js';
+import { admitPatentAssignments } from './patentassigneeadmission.js';
 import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
@@ -100,6 +102,19 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   if (scope.kind === 'ENTITY') setEligibilityReport(scope.canonicalId, elig);
   // KRYL-1414 (Founder ratified 2026-10-12): ClinicalTrials.gov lead sponsorship for a company already resolved by its SEC CIK (the registry never creates identity; an exact legal-name match
   // is required, so a company with no studies yields none). Launched after the durable store has been loaded, like every other producer.
+  // KRYL-1416 (Founder ratified 2026-10-13, narrowly): granted-patent assignee from the local USPTO PatentsView bulk file, exact legal name of the resolved company only. A missing file is stated, never read as "no patents".
+  const launchPatents = () => {
+    if (!elig.eligible.includes('patents')) return;
+    const entity = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+    expectLookup('patents', { canonicalId: scope.canonicalId });
+    fetchPatentAssignments({ entity }).then((r) => {
+      if (r.fileMissing) return settleLookup('patents', `the USPTO granted-patent file is not installed (${r.fileMissing.where}); technology patents are not read`);
+      if (r.failed) return settleLookup('patents', `the granted-patent lookup failed (${r.failed})`);
+      admitPatentAssignments({ entity, patents: r.patents });
+      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+      return settleLookup('patents', null);
+    }).catch((e) => settleLookup('patents', String(e?.message ?? e)));
+  };
   const launchClinical = () => {
     if (!elig.eligible.includes('clinical')) return;
     const entity = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
@@ -121,7 +136,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
     let cpDone; const cpPromise = new Promise((r) => { cpDone = r; });
     const launchLookups = () => {
       markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
-      launchClinical();
+      launchClinical(); launchPatents();
       const ownershipObservation = runTargetedOwnershipObservation({
         entityCik:   scope.entity.identifiers.edgar,
         canonicalId: scope.canonicalId,
@@ -214,7 +229,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
     const issuer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
     expectLookup('store', { canonicalId: scope.canonicalId }); expectLookup('formd-people', { canonicalId: scope.canonicalId });
     hydrateFor([toTopologyNodeId(scope.canonicalId)])
-      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchClinical(); return fetchFormDPeople({ issuer, searchFn: secSearch }); })
+      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchClinical(); launchPatents(); return fetchFormDPeople({ issuer, searchFn: secSearch }); })
       .then((r) => {
         if (r.failed) return settleLookup('formd-people', `the SEC Form D lookup failed (${r.failed})`);
         admitFormDRoles({ issuer, roles: r.roles });

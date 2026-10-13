@@ -96,6 +96,13 @@ const PROJECTIONS = {
       source: meta.source ?? 'SEC_FORM_3_4_5',
     }),
   },
+  ASSIGNEE_OF_GRANTED_PATENT: {
+    typedEdgeType: RELATION_TYPES.PATENT_ASSIGNEE_OF,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.companyName, to: meta.patentLabel, fromCik: meta.companyCik ?? null, toCik: null,
+      fromLabel: meta.companyName, toLabel: meta.patentLabel, source: meta.source ?? 'USPTO_PATENTSVIEW_BULK',
+    }),
+  },
   LEAD_SPONSOR_OF_CLINICAL_TRIAL: {
     typedEdgeType: RELATION_TYPES.LEAD_SPONSOR_OF_TRIAL,
     toEdgeArgs: (relationship, meta) => ({

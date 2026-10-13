@@ -24,6 +24,10 @@ export function ownershipFailureNotice(reason, admittedCount) {
 // an unnamed affiliate is never described as the named entity.
 export function canonicalDetailLines(ev) {
   const p = ev?.provenance;
+  if (p?.source === 'USPTO_PATENTSVIEW_BULK') {              // KRYL-1416: what the USPTO granted-patent table states, as of the dataset file
+    return [`assignee of granted patent US${p.patentId} as the USPTO PatentsView table states it (${p.product}, ${p.table}) · dataset file dated ${String(p.fileAsOf).slice(0, 10)}; grant date, subject matter and whether the patent is in force are not stated here`,
+      `the assignee organization "${p.assigneeName}" equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity and is not matched`];
+  }
   if (p?.source === 'CLINICALTRIALS_GOV') {                  // KRYL-1414: what the registry states about the study
     return [`lead sponsor (industry) as ClinicalTrials.gov states it · ${p.nctId}${p.overallStatus ? ` · status ${p.overallStatus}` : ''}${p.phase ? ` · phase ${p.phase}` : ''} · registry record updated ${p.lastUpdated ?? 'date not stated'}; the status is as of that update`,
       `the sponsor name "${p.leadSponsorName}" equals the resolved entity's legal name; the registry did not create the identity${p.title ? ` · title: ${String(p.title).length > 120 ? String(p.title).slice(0, 117) + '…' : p.title}` : ''}`];
@@ -58,6 +62,7 @@ export function canonicalDetailLines(ev) {
 export function canonicalRelationshipSentence(type, a, b, nuId = null, dealStatus = null) {
   if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
+  if (type === 'ASSIGNEE_OF_GRANTED_PATENT') return `${a} is the assignee of granted patent ${b}`;
   if (type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}`;
   if (type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D`;
   if (type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is disclosed as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an officer'} of ${a}`;

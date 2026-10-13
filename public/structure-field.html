@@ -933,6 +933,7 @@
   function relationshipSentence(r) {
     const [a, b] = r.part;
     if (r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}.`;
+    if (r.type === 'ASSIGNEE_OF_GRANTED_PATENT') return `${a} is the assignee of granted patent ${b}.`;
     if (r.type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}.`;
     if (r.type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${r.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D.`;
     if (r.type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is disclosed as ${r.role === 'DIRECTOR' ? 'a director' : 'an officer'} of ${a}.`;
