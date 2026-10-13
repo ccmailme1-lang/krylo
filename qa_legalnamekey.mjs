@@ -1,0 +1,10 @@
+import { legalNameKey as k } from './src/engine/legalnamekey.js';
+let pass = 0, fail = 0;
+const t = (n, ok) => { ok ? pass++ : fail++; console.log(`  ${ok ? '✓' : '✗'} ${n}`); };
+t('punctuation and case ignored', k('Tesla, Inc.') === k('TESLA INC'));
+t('Corp = Corporation (same form, spelled differently)', k('INTEL CORP') === k('Intel Corporation'));
+t('Broadcom Inc. is NOT Broadcom Corporation', k('Broadcom Inc.') !== k('Broadcom Corporation'));
+t('Boston Scientific Corporation is NOT Boston Scientific Limited', k('Boston Scientific Corporation') !== k('Boston Scientific Limited'));
+t('Oracle Corporation is NOT Oracle International Corporation', k('Oracle Corporation') !== k('Oracle International Corporation'));
+t('no suffix dropped: Tesla is NOT Tesla, Inc.', k('Tesla') !== k('Tesla, Inc.'));
+console.log(`\n${pass} passed, ${fail} failed`); process.exit(fail ? 1 : 0);
