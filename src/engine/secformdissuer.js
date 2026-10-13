@@ -8,14 +8,19 @@
 //
 //   verifyFormDIssuer(name, { searchFn, now, sleep }) -> { verified:true, cik, canonicalName, evidence } | { verified:false, reason, candidates?, similar? }
 import { normalizeEntityName, parseDisplayName } from './secfileradmission.js';
+import CURATED from '../data/curatedaliases.json' with { type: 'json' };
 
 export const FORM_D_CLASS = 'SEC_FORM_D_ISSUER';
+/** The Founder-curated alias record for a typed name, or null. The record is applied only through verifyFormDIssuer (the issuer's own Form D under the recorded CIK). */
+export const curatedAliasFor = (name) => (CURATED.aliases ?? []).find(a => normalizeEntityName(a.alias) === normalizeEntityName(name) && a.class === 'SEC_FORM_D_ISSUER') ?? null;
 export const FORM_D_LABEL = 'private SEC filer (Form D), not listed';
 const FROM = '2009-01-01';                          // electronic Form D filing began in 2009
 const dateOnly = (ms) => new Date(ms).toISOString().slice(0, 10);
 
 export async function verifyFormDIssuer(name, { searchFn, now = Date.now(), sleep = (ms) => new Promise(r => setTimeout(r, ms)), gapMs = 1500 } = {}) {
-  const query = String(name ?? '').trim(); const want = normalizeEntityName(query);
+  const typed = String(name ?? '').trim();
+  const curated = curatedAliasFor(typed);                                           // a curated alias is looked up by the issuer's legal name and must come back with the recorded CIK
+  const query = curated ? curated.legalName : typed; const want = normalizeEntityName(query);
   if (query.length < 3 || !want || !searchFn) return { verified: false, reason: 'NO_QUERY_OR_SEARCH' };
   const run = async () => searchFn({ forms: 'D', startdt: FROM, enddt: dateOnly(now), hits: '100', entityName: query });
   let res;
@@ -40,8 +45,9 @@ export async function verifyFormDIssuer(name, { searchFn, now = Date.now(), slee
   if (exact.length > 1) return { verified: false, reason: 'AMBIGUOUS', candidates: exact.map(r => `${r.name} (CIK ${r.cik})`) };
   if (exact.length === 0) return { verified: false, reason: 'NO_MATCH', similar: rows.filter(r => normalizeEntityName(r.name).split(' ')[0] === want.split(' ')[0]).slice(0, 4).map(r => r.name) };
   const m = exact[0];
+  if (curated && m.cik !== curated.cik) return { verified: false, reason: 'CURATED_CIK_MISMATCH', candidates: [`${m.name} (CIK ${m.cik})`] };   // the alias is never applied to a different issuer
   return {
-    verified: true, cik: m.cik, canonicalName: m.name.replace(/\s+/g, ' ').trim(), rule: 'form-d-issuer-exact-name+cik',
+    verified: true, cik: m.cik, canonicalName: m.name.replace(/\s+/g, ' ').trim(), rule: curated ? 'form-d-issuer-curated-alias+exact-legal-name+cik' : 'form-d-issuer-exact-name+cik', curatedAlias: curated ? { alias: curated.alias, curatedBy: curated.curatedBy, verification: curated.verification } : null,
     evidence: { accession: m.newest.accession, form: m.newest.form, filingDate: m.newest.filingDate, formDFilingsSeen: m.filings, retrievedAt: new Date(now).toISOString(), source: 'SEC EDGAR filing index (Form D)', lookAlikesNotBound: rows.length - 1 },
   };
 }

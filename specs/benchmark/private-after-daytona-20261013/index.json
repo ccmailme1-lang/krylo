@@ -1,0 +1,93 @@
+[
+  {
+    "case": "PC05",
+    "subject": "Daytona",
+    "question": "PC05",
+    "questionText": "What structural relationships are forming around Daytona across technology, ownership, and labor?",
+    "build": "5f5aab8",
+    "snapshotId": "snap-mv6zbcu9-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 53.9,
+    "capturedAt": "2026-10-13T17:53:48.306Z",
+    "probe": {
+      "snapshotId": "snap-mv6zbcu9-1",
+      "canonicalId": "daytona-platforms",
+      "subject": "Daytona Platforms Inc.",
+      "relationships": 5,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 5
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 5,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC06",
+    "subject": "Daytona",
+    "question": "PC06",
+    "questionText": "Who has financed Daytona, who are its officers and directors, and what has changed recently?",
+    "build": "5f5aab8",
+    "snapshotId": "snap-mv6zch8i-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 50.4,
+    "capturedAt": "2026-10-13T17:54:38.724Z",
+    "probe": {
+      "snapshotId": "snap-mv6zch8i-2",
+      "canonicalId": "daytona-platforms",
+      "subject": "Daytona Platforms Inc.",
+      "relationships": 5,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 5
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 5,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  }
+]

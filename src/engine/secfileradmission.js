@@ -150,7 +150,7 @@ export async function admitPublicFiler(name, opts = {}) {
       const entityFd = createEntity({
         canonicalName: fd.canonicalName, aliases: [String(name).trim()], identifiers: { edgar: fd.cik }, domainTags: [],
         admissionSource: `SEC/EDGAR Form D issuer (${FORM_D_LABEL})`, admissionClass: FORM_D_CLASS,
-        admissionEvidence: `${fd.evidence.form} ${fd.evidence.accession} filed ${fd.evidence.filingDate}; issuer name equals the query name and no other Form D issuer does (${fd.evidence.lookAlikesNotBound} look-alike issuer${fd.evidence.lookAlikesNotBound !== 1 ? 's' : ''} not bound); not listed (no ticker); rule ${fd.rule}`,
+        admissionEvidence: `${fd.curatedAlias ? `curated alias "${fd.curatedAlias.alias}" (${fd.curatedAlias.curatedBy}); ` : ''}${fd.evidence.form} ${fd.evidence.accession} filed ${fd.evidence.filingDate}; issuer name equals the query name and no other Form D issuer does (${fd.evidence.lookAlikesNotBound} look-alike issuer${fd.evidence.lookAlikesNotBound !== 1 ? 's' : ''} not bound); not listed (no ticker); rule ${fd.rule}`,
       });
       if (!entityFd) return { entity: null, outcome: 'SLUG_COLLISION', detail: { ...v, formD: fd } };
       try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('krylo-entity-admitted', { detail: { canonicalId: entityFd.canonicalId, cik: fd.cik } })); } catch { /* no window */ }
