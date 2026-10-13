@@ -37,7 +37,7 @@ console.log('Exact legal name, by column name, from the table');
   const o = await patentsFor('Oracle Corporation');
   ok(o.total === 0 && o.newest.length === 0, 'Oracle Corporation: the subsidiary "Oracle International Corporation" is a different legal entity and does not match');
   const i = await patentsFor('Intel Corporation'); ok(i.total === 2 && i.newest.includes('D1100008'), 'design patents are read as granted patents (D1100008)');
-  ok((await patentsFor('Tesla, Inc.')).cached === true, 'a repeat lookup is served from the on-disk cache (same file size and date)');
+  { const again = await patentsFor('TESLA INC'); ok(again.total === 4 && again.newest.join() === r.newest.join(), 'a repeat lookup (the SEC-style spelling of the name) is answered from the in-memory index with the same exact-name rows'); }
   const bad = path.join(dir, 'bad.tsv'); fs.writeFileSync(bad, 'foo\tbar\nx\ty\n');
   const e = await scanForNames(['Tesla'], { path: bad, zip: false, size: 1, mtime: 'x', key: 'k' }); ok(String(e.error).startsWith('COLUMNS_NOT_FOUND'), 'a file without the expected columns is an error naming what was found, not an empty result');
   fs.copyFileSync('tests/fixtures/patentsview/g_assignee_disambiguated.SYNTHETIC-SAMPLE.tsv', path.join(dir, 'x.tsv'));

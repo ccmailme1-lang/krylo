@@ -47,7 +47,7 @@ function scoreRun(dir, rules) {
 }
 const rows = scoreRun(M, 'R2');
 const run1 = [];
-fs.writeFileSync('specs/benchmark/current-20261012-scores.json', JSON.stringify(rows, null, 2));
+fs.writeFileSync(`${process.env.OUT_PREFIX ?? 'specs/benchmark/current-20261012'}-scores.json`, JSON.stringify(rows, null, 2));
 
 // ── comparison
 const bmap = new Map(base.map(r => [r.case, r]));
@@ -86,5 +86,5 @@ L.push('', '## Cases not at the target, and why', '', 'Most remaining points are
 const p1 = run1.reduce((n, r) => n + r.features.problems, 0);
 // (run 1 section omitted in the current-build scoring)
 L.push('## Limits stated', '', '- Scorer 1 is mechanical (rules in scoring-rules-m1.md) and sees only what is on the page and in the probe; it cannot judge the quality of a synthesis beyond whether its labels are supported by its evidence. The independent reviewer\'s scores on the eight designated cases (C01, C04, C08, C13, C17, C20, C25, C29) are outstanding and are not mixed with these.', '- The file store (as-diff/data/canonical_store.jsonl) is the effective durable store in this environment: PostgreSQL is not reachable on this machine, and the engine\'s code notes it was unreachable from the VPS on 2026-10-03.', '- Capture method as for the baseline: one page session per subject, a new snapshot per case, SEC documents and stored history reused within a subject; run on localhost. Nothing is deployed and /v1/canonical-store is not exposed in production.', '- Cases ran grouped by subject, not strictly C01 to C35 (as in the baseline).', '');
-fs.writeFileSync('specs/benchmark/current-20261012-report.md', L.join('\n'));
+fs.writeFileSync(`${process.env.OUT_PREFIX ?? 'specs/benchmark/current-20261012'}-report.md`, L.join('\n'));
 console.log(L.slice(0, 22).join('\n'));

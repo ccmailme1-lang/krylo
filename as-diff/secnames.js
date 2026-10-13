@@ -25,7 +25,7 @@ function download() {
 }
 
 function fromDisk() {
-  try { if (!existsSync(fileOf())) return null; const j = JSON.parse(readFileSync(fileOf(), 'utf8')); return j?.rows?.length ? { index: buildNameIndex(j.rows), fetchedAt: j.fetchedAt } : null; } catch { return null; }
+  try { if (!existsSync(fileOf())) return null; const j = JSON.parse(readFileSync(fileOf(), 'utf8')); return j?.rows?.length ? { index: buildNameIndex(j.rows), fetchedAt: j.fetchedAt, rows: j.rows } : null; } catch { return null; }
 }
 
 async function load(now = Date.now(), fetchFn = download) {
@@ -37,7 +37,7 @@ async function load(now = Date.now(), fetchFn = download) {
       if (!rows.length) throw new Error('empty SEC file');
       const fetchedAt = new Date(now).toISOString();
       try { mkdirSync(path.dirname(fileOf()), { recursive: true }); writeFileSync(fileOf(), JSON.stringify({ fetchedAt, rows })); } catch { /* disk cache is best effort */ }
-      _mem = { index: buildNameIndex(rows), fetchedAt }; return { ..._mem, stale: false };
+      _mem = { index: buildNameIndex(rows), fetchedAt, rows }; return { ..._mem, stale: false };
     } catch (e) {
       if (_mem) return { ..._mem, stale: true };                    // serve the last good copy, flagged
       return { error: String(e?.message ?? e) };
@@ -52,5 +52,14 @@ export async function secNames(name, opts = {}) {
   const src = await load(opts.now, opts.fetchFn);
   if (src.error) return { error: src.error };
   return { ...matchListedName(src.index, text), source: SOURCE, asOf: src.fetchedAt, stale: src.stale };
+}
+/** The SEC's own registered name for a CIK (company_tickers.json title); the legal name a company-name match is made against. */
+export async function secTitleForCik(cik, opts = {}) {
+  const want = String(cik ?? '').replace(/\D/g, '').replace(/^0+/, '');
+  if (!want) return { error: 'cik required' };
+  const src = await load(opts.now, opts.fetchFn);
+  if (src.error) return { error: src.error };
+  const row = (src.rows ?? []).find(r => String(r.cik_str).replace(/^0+/, '') === want);
+  return row?.title ? { name: String(row.title), source: SOURCE, asOf: src.fetchedAt } : { notListed: true, source: SOURCE, asOf: src.fetchedAt };
 }
 export const _resetSecNamesForTests = () => { _mem = null; _inflight = null; };

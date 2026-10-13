@@ -14,9 +14,9 @@ import { pool, migrate } from './db.js';
 import { lastFormationState, writeFormationState, formationStateHistory, formationStateHistoryBySubject } from './formationstatestore.js';
 import { decideWrite } from '../src/engine/formationsnapshot.js';
 import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, writeMatch, readMatch, writeKv, readKv, historyFor, recentSnapshots } from './canonicalstore.js';
-import { secNames } from './secnames.js';
+import { secNames, secTitleForCik } from './secnames.js';
 import { clinicalTrialsFor } from './clinicaltrials.js';
-import { patentsFor } from './patentbulk.js';
+import { patentsFor, warmPatentIndex } from './patentbulk.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1305,8 +1305,12 @@ async function handleClinicalTrials(req, res) {
 
 // ── KRYL-1416: granted-patent assignee lookup over the local USPTO PatentsView bulk file (no key held by the engine; the file is downloaded while signed in to data.uspto.gov) ──
 async function handlePatentAssignee(req, res) {
-  const name = new URL(req.url, 'http://localhost').searchParams.get('name') ?? '';
+  const sp = new URL(req.url, 'http://localhost').searchParams; let name = sp.get('name') ?? ''; const cik = sp.get('cik');
+  // With a CIK the match is made against the SEC's own registered name for that CIK (the legal name), never against a display name.
+  let legal = null;
+  if (cik) { legal = await secTitleForCik(cik); if (legal.error) return send(res, 502, { error: legal.error }); if (legal.notListed) return send(res, 200, { error: 'LEGAL_NAME_NOT_FOUND' }); name = legal.name; }
   const r = await patentsFor(name);
+  if (legal && !r.error) { r.legalName = legal.name; r.legalNameSource = legal.source; }
   if (r.error === 'FILE_MISSING') return send(res, 200, r);                 // reported as missing, never as "no patents"
   if (r.error) return send(res, r.error.startsWith('name required') ? 400 : 502, { error: r.error });
   send(res, 200, r);
@@ -2039,6 +2043,7 @@ function routeRequest(req, res) {
 const server = http.createServer(routeRequest);
 
 server.listen(PORT, async () => {
+  warmPatentIndex((m) => console.log('[patents]', m));
   console.log(`[AS-DIFF] engine live on port ${PORT}`);
   await migrate();
   // WO-1768-A: YCID daily poll — update on startup then every 24h

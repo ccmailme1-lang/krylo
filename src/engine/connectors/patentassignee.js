@@ -12,15 +12,15 @@ export async function fetchPatentAssignments({ entity, fetchImpl = (typeof fetch
   if (!fetchImpl || !entity?.name) return { ...empty, failed: 'no lookup available' };
   let j;
   try {
-    const r = await fetchImpl('/api/patent-assignee?' + new URLSearchParams({ name: entity.name }));
+    const r = await fetchImpl('/api/patent-assignee?' + new URLSearchParams({ name: entity.name, ...(entity.cik ? { cik: String(entity.cik) } : {}) }));
     if (!r.ok) return { ...empty, failed: `HTTP ${r.status}` };
     j = await r.json();
   } catch (e) { return { ...empty, failed: String(e?.message ?? e).slice(0, 80) }; }
   if (j.error === 'FILE_MISSING') return { ...empty, fileMissing: { where: j.where, need: j.need } };
   if (j.error) return { ...empty, failed: j.error };
-  const want = legalNameKey(entity.name);
+  const want = legalNameKey(j.legalName ?? entity.name);   // with a CIK the server names the SEC's registered name; that is the legal name matched
   const names = (j.assigneeNames ?? []).filter(n => legalNameKey(n) === want);
   if (!names.length || !(j.newest ?? []).length) return { ...empty, source: j.source, fileAsOf: j.fileAsOf };
   const patents = j.newest.slice(0, cap).map(id => ({ id, assigneeName: names[0], fileAsOf: j.fileAsOf, product: j.source?.product, table: j.source?.table }));
-  return { patents, total: j.total ?? patents.length, capped: (j.total ?? 0) > patents.length, source: j.source, fileAsOf: j.fileAsOf, assigneeNames: names };
+  return { patents, total: j.total ?? patents.length, capped: (j.total ?? 0) > patents.length, source: j.source, fileAsOf: j.fileAsOf, assigneeNames: names, legalName: j.legalName };
 }
