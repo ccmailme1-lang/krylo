@@ -52,6 +52,7 @@ export function observationDetailLines(o) {
   const ev = o?.capitalEvent;
   if (!ev || !ev.attempted) return [];
   const lines = [];
+  if (ev.facts?.length) { lines.push(...ev.facts); lines.push('counterparty: not stated (a Form D names no investors); the offering alone is not a financing relationship'); return lines; }   // KRYL-1415: a Form D offering, quoted as stated
   const more = (n, shown) => (n > shown ? ` (+${n - shown} more in the filing text)` : '');
   const absentOf = (f) => ev.absent.find(a => a.field === f);
   if (ev.amounts.length) lines.push(`amount: ${ev.amounts.slice(0, 2).map(money).join(' · ')}${more(ev.amounts.length, 2)} — ${quote(ev.amounts[0].passage)}`);

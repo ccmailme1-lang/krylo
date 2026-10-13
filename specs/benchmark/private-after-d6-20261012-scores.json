@@ -1,0 +1,156 @@
+[
+  {
+    "case": "PC01",
+    "subject": "Databento",
+    "q": "PC01",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC02",
+    "subject": "Databento",
+    "q": "PC02",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC03",
+    "subject": "Integrated Biosciences",
+    "q": "PC03",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC04",
+    "subject": "Integrated Biosciences",
+    "q": "PC04",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  }
+]

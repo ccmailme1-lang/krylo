@@ -13,6 +13,7 @@ import { runGdeltSync }              from './connectors/gdeltconnector.js';
 import { runRedditSync }             from './connectors/redditconnector.js';
 import { runTargetedOwnershipObservation } from './connectors/secownershipconnector.js';
 import { runTargetedEdgar8KSignalSync } from './connectors/edgar8ksignal.js';
+import { surfaceRouter } from './surfacerouter.js';
 import { subjectScope }              from './subjectscope.js';
 import { admitPublicFiler }          from './secfileradmission.js';
 import { toTopologyNodeId }          from './entityresolution.js';
@@ -26,6 +27,7 @@ import { producerEligibility } from './produceridentifiers.js';
 import { admitInsiderRoles } from './insiderroleadmission.js';
 import { fetchFormDPeople } from './connectors/formdpeople.js';
 import { admitFormDRoles } from './formdpeopleadmission.js';
+import { buildFormDOfferingSignal } from './connectors/formdoffering.js';
 import { fetchClinicalTrials } from './connectors/clinicaltrials.js';
 import { admitClinicalTrials } from './clinicaltrialadmission.js';
 import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
@@ -216,6 +218,9 @@ function fireEntityScoped(q, { refresh = false } = {}) {
       .then((r) => {
         if (r.failed) return settleLookup('formd-people', `the SEC Form D lookup failed (${r.failed})`);
         admitFormDRoles({ issuer, roles: r.roles });
+        // KRYL-1415 (D6): the offering the same Form D states, as a dated issuer-bound CAPITAL observation (quoted as stated; not a relationship, no counterparty inferred).
+        const sig = buildFormDOfferingSignal({ canonicalId: scope.canonicalId, issuerName: scope.entity.name, filing: r.filing, offering: r.offering });
+        if (sig) surfaceRouter.dispatchBatch([sig]);
         window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
         return settleLookup('formd-people', r.failedDoc && r.roles.length === 0 ? 'the Form D document could not be read' : null);
       })

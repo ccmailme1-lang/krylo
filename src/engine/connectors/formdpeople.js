@@ -19,7 +19,21 @@ export function parseFormD(xml) {
     const name = [tag(nm, 'firstName'), tag(nm, 'middleName'), tag(nm, 'lastName')].filter(Boolean).join(' ');
     return { name, relationships: all((blk.match(/<relatedPersonRelationshipList>([\s\S]*?)<\/relatedPersonRelationshipList>/i) ?? [])[1] ?? '', 'relationship'), clarification: tag(blk, 'relationshipClarification') };
   }).filter(p => p.name);
-  return { submissionType: tag(x, 'submissionType'), issuerCik: tag(issuer, 'cik') ? pad(tag(issuer, 'cik')) : null, issuerName: tag(issuer, 'entityName'), previousNames: all(issuer, 'previousName'), persons, dateOfFirstSale: tag(x, 'dateOfFirstSale') ? tag((x.match(/<dateOfFirstSale>([\s\S]*?)<\/dateOfFirstSale>/i) ?? [])[1], 'value') : null };
+  const od = (x.match(/<offeringData>([\s\S]*?)<\/offeringData>/i) ?? [])[1] ?? '';
+  const sales = (od.match(/<offeringSalesAmounts>([\s\S]*?)<\/offeringSalesAmounts>/i) ?? [])[1] ?? '';
+  const types = (od.match(/<typesOfSecuritiesOffered>([\s\S]*?)<\/typesOfSecuritiesOffered>/i) ?? [])[1] ?? '';
+  const flagTrue = (b, t) => new RegExp(`<${t}>\\s*true\\s*</${t}>`, 'i').test(b);
+  const SEC_TYPES = { isEquityType: 'equity', isDebtType: 'debt', isOptionToAcquireType: 'option to acquire', isSecurityToBeAcquiredType: 'security to be acquired', isPooledInvestmentFundType: 'pooled investment fund interest', isTenantInCommonType: 'tenant-in-common security', isMineralPropertyType: 'mineral property security', isOtherType: 'other' };
+  const offering = od ? {
+    industryGroup: tag((od.match(/<industryGroup>([\s\S]*?)<\/industryGroup>/i) ?? [])[1] ?? '', 'industryGroupType'),
+    dateOfFirstSale: tag((od.match(/<dateOfFirstSale>([\s\S]*?)<\/dateOfFirstSale>/i) ?? [])[1] ?? '', 'value'),
+    totalOfferingAmount: tag(sales, 'totalOfferingAmount'), totalAmountSold: tag(sales, 'totalAmountSold'), totalRemaining: tag(sales, 'totalRemaining'), amountClarification: tag(sales, 'clarificationOfResponse'),
+    investorsAlreadyInvested: tag((od.match(/<investors>([\s\S]*?)<\/investors>/i) ?? [])[1] ?? '', 'totalNumberAlreadyInvested'),
+    securityTypes: Object.entries(SEC_TYPES).filter(([k]) => flagTrue(types, k)).map(([, v]) => v),
+    exemptions: all((od.match(/<federalExemptionsExclusions>([\s\S]*?)<\/federalExemptionsExclusions>/i) ?? [])[1] ?? '', 'item'),
+    isAmendment: flagTrue(od, 'isAmendment'),
+  } : null;
+  return { offering, submissionType: tag(x, 'submissionType'), issuerCik: tag(issuer, 'cik') ? pad(tag(issuer, 'cik')) : null, issuerName: tag(issuer, 'entityName'), previousNames: all(issuer, 'previousName'), persons, dateOfFirstSale: tag(x, 'dateOfFirstSale') ? tag((x.match(/<dateOfFirstSale>([\s\S]*?)<\/dateOfFirstSale>/i) ?? [])[1], 'value') : null };
 }
 
 /** The roles Form D states that are LABOR relationships: Executive Officer (OFFICER) and Director (DIRECTOR). Promoter and any other relationship yield nothing. */
@@ -59,5 +73,5 @@ export async function fetchFormDPeople({ issuer, searchFn, fetchImpl = (typeof f
     doc = parseFormD(await r.text());
   } catch { return { roles: [], formDFilings: hits.length, failedDoc: true }; }
   if (doc.issuerCik !== pad(issuer.cik)) return { roles: [], formDFilings: hits.length, failedDoc: true };     // the document must be the issuer's own
-  return { roles: rolesFromFormD(doc).map(r => ({ ...r, form: src.form === 'D/A' ? 'Form D/A' : 'Form D', accession: src.adsh, filingDate: src.file_date, issuerCik: doc.issuerCik })), formDFilings: hits.length, peopleListed: doc.persons.length };
+  return { roles: rolesFromFormD(doc).map(r => ({ ...r, form: src.form === 'D/A' ? 'Form D/A' : 'Form D', accession: src.adsh, filingDate: src.file_date, issuerCik: doc.issuerCik })), formDFilings: hits.length, peopleListed: doc.persons.length, offering: doc.offering, filing: { form: src.form === 'D/A' ? 'Form D/A' : 'Form D', accession: src.adsh, filingDate: src.file_date, issuerCik: doc.issuerCik, issuerName: doc.issuerName } };
 }
