@@ -85,9 +85,16 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
   }
   // 2f. Granted-patent assignment (KRYL-1416), as the USPTO PatentsView table states it. Only the exact legal name of the resolved company matches.
   const pats = relationships.filter(r => r.type === 'ASSIGNEE_OF_GRANTED_PATENT').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'USPTO_PATENTSVIEW_BULK');
-  if (pats.length) {
-    add(STATUS.SUPPORTED, `The USPTO PatentsView granted-patent table lists ${subject} (exact legal name) as the assignee of ${pats.length} granted patent${pats.length !== 1 ? 's' : ''} among the newest read (US ${pats.slice(0, 3).map(x => x.ev.patentId).join(', US ')}${pats.length > 3 ? ', …' : ''}); the dataset file is dated ${String(pats[0].ev.fileAsOf).slice(0, 10)}, and patents assigned to subsidiaries or similarly named companies are different legal entities and are not counted.`,
-      pats.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.accession, form: x.ev.form, filingDate: x.ev.fileAsOf })));
+  const isSub = (x) => x.ev.assigneeMatch === 'EXACT_LEGAL_NAME_OF_EXHIBIT_21_SUBSIDIARY';
+  const patsDirect = pats.filter(x => !isSub(x)), patsSub = pats.filter(isSub);
+  const patRefs = (xs) => xs.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.accession, form: x.ev.form, filingDate: x.ev.fileAsOf }));
+  const patIds = (xs) => `US ${xs.slice(0, 3).map(x => x.ev.patentId).join(', US ')}${xs.length > 3 ? ', …' : ''}`;
+  if (patsDirect.length) {
+    add(STATUS.SUPPORTED, `The USPTO PatentsView granted-patent table lists ${subject} (exact legal name) as the assignee of ${patsDirect.length} granted patent${patsDirect.length !== 1 ? 's' : ''} among the newest read (${patIds(patsDirect)}); the dataset file is dated ${String(patsDirect[0].ev.fileAsOf).slice(0, 10)}, and patents assigned to a similarly named company, or to a subsidiary the company's own Form 10-K Exhibit 21 does not list, are different legal entities and are not counted.`, patRefs(patsDirect));
+  }
+  if (patsSub.length) {
+    const subNames = [...new Set(patsSub.map(x => x.ev.subsidiary?.name))].slice(0, 4), x21 = patsSub[0].ev.subsidiary?.exhibit21 ?? {};
+    add(STATUS.SUPPORTED, `The USPTO PatentsView granted-patent table lists ${patsSub.length} granted patent${patsSub.length !== 1 ? 's' : ''} among the newest read (${patIds(patsSub)}) as assigned to ${subNames.join(', ')}, named exactly in the Exhibit 21 of ${subject}'s own Form 10-K (accession ${x21.accession}, filed ${x21.filedAt}); the exhibit is as of its filing date and does not state that the subsidiary held a patent when it was granted, and patents of entities the exhibit does not name are not counted. The dataset file is dated ${String(patsSub[0].ev.fileAsOf).slice(0, 10)}.`, patRefs(patsSub));
   }
   if (laborReport?.capped) add(STATUS.UNRESOLVED, `${laborReport.personsSeen - laborReport.personsRead} further reporting person${laborReport.personsSeen - laborReport.personsRead !== 1 ? 's' : ''} in the insider forms searched ${laborReport.personsSeen - laborReport.personsRead !== 1 ? 'were' : 'was'} not read in this analysis (the newest ${laborReport.personsRead} are read per analysis), so their roles are not shown.`, []);
 

@@ -17,6 +17,7 @@ import { writeAdmission, relationshipsForNodes, writeSnapshot, snapshotsFor, wri
 import { secNames, secTitleForCik } from './secnames.js';
 import { clinicalTrialsFor } from './clinicaltrials.js';
 import { patentsFor, warmPatentIndex } from './patentbulk.js';
+import { exhibit21For } from './exhibit21.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1310,7 +1311,17 @@ async function handlePatentAssignee(req, res) {
   let legal = null;
   if (cik) { legal = await secTitleForCik(cik); if (legal.error) return send(res, 502, { error: legal.error }); if (legal.notListed) return send(res, 200, { error: 'LEGAL_NAME_NOT_FOUND' }); name = legal.name; }
   const r = await patentsFor(name);
-  if (legal && !r.error) { r.legalName = legal.name; r.legalNameSource = legal.source; }
+  if (legal && !r.error) {
+    r.legalName = legal.name; r.legalNameSource = legal.source;
+    // Ratified 2026-10-13: patents of a subsidiary the company's OWN latest 10-K lists in its Exhibit 21, matched to the assignee by exact legal name.
+    const ex = await exhibit21For(cik);
+    if (ex.error) r.exhibit21Error = ex.error;
+    else {
+      r.exhibit21 = { accession: ex.accession, file: ex.file, form: ex.form, filedAt: ex.filedAt, listed: ex.names.length };
+      r.subsidiaryHolders = [];
+      for (const sub of ex.names) { const sr = await patentsFor(sub); if (!sr.error && sr.total > 0) r.subsidiaryHolders.push({ name: sub, assigneeNames: sr.assigneeNames, total: sr.total, newest: sr.newest }); }
+    }
+  }
   if (r.error === 'FILE_MISSING') return send(res, 200, r);                 // reported as missing, never as "no patents"
   if (r.error) return send(res, r.error.startsWith('name required') ? 400 : 502, { error: r.error });
   send(res, 200, r);

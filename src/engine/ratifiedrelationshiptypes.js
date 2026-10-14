@@ -288,11 +288,16 @@ registerRelationshipType('ASSIGNEE_OF_GRANTED_PATENT', {
     if (!/^CIK:\d{10}$/.test(String(companyId))) return { admitted: false, reason: 'the company must be an entity identified by its SEC CIK' };
     if (p.source !== 'USPTO_PATENTSVIEW_BULK' || p.table !== 'g_assignee_disambiguated') return { admitted: false, reason: 'the source must be the USPTO PatentsView granted-patent assignee table' };
     if (!/^(?:\d{7,8}|D\d{6,7}|RE\d{5,6}|PP\d{5,6}|T\d{6,7}|X\d{6,7})$/.test(String(p.patentId ?? '')) || patentId !== `PATENT:US${p.patentId}`) return { admitted: false, reason: 'the patent must be identified by its granted patent number' };
-    if (p.assigneeMatch !== 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY' || !p.assigneeName) return { admitted: false, reason: 'the assignee must equal the resolved entity\'s legal name exactly; no fuzzy matching' };
+    if (p.assigneeMatch === 'EXACT_LEGAL_NAME_OF_EXHIBIT_21_SUBSIDIARY') {
+      // Exhibit 21 rule (Founder ratified 2026-10-13): the assignee is a subsidiary the company's OWN Form 10-K lists in Exhibit 21, matched by exact legal name; the exhibit is cited.
+      const sub = p.subsidiary ?? {}, ex = sub.exhibit21 ?? {};
+      if (!p.assigneeName || !sub.name || assertion.nuId?.heldBy !== sub.name) return { admitted: false, reason: 'a subsidiary-held patent must name the subsidiary the Exhibit 21 lists' };
+      if (!/^\d{10}-\d{2}-\d{6}$/.test(String(ex.accession ?? '')) || !/^EX-21/i.test(String(ex.form ?? '')) || !ex.filedAt || ex.filerCik !== String(companyId).replace(/^CIK:/, '')) return { admitted: false, reason: 'the company\'s own 10-K Exhibit 21 (accession, filing date, filer CIK) must be cited' };
+    } else if (p.assigneeMatch !== 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY' || !p.assigneeName) return { admitted: false, reason: 'the assignee must equal the resolved entity\'s legal name exactly, or a subsidiary the company\'s own 10-K Exhibit 21 lists exactly; no fuzzy matching' };
     if (!p.fileAsOf) return { admitted: false, reason: 'the dataset file\'s date is required' };
     return { admitted: true };
   },
-  nuIdKeys: [],
+  nuIdKeys: ['heldBy'],
   nuStateKeys: [],
   classifyChange: () => 'PERSISTENT',
 });

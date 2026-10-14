@@ -25,8 +25,13 @@ export function ownershipFailureNotice(reason, admittedCount) {
 export function canonicalDetailLines(ev) {
   const p = ev?.provenance;
   if (p?.source === 'USPTO_PATENTSVIEW_BULK') {              // KRYL-1416: what the USPTO granted-patent table states, as of the dataset file
-    return [`assignee of granted patent US${p.patentId} as the USPTO PatentsView table states it (${p.product}, ${p.table}) · dataset file dated ${String(p.fileAsOf).slice(0, 10)}; grant date, subject matter and whether the patent is in force are not stated here`,
-      `the assignee organization "${p.assigneeName}" equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity and is not matched`];
+    const head = `assignee of granted patent US${p.patentId} as the USPTO PatentsView table states it (${p.product}, ${p.table}) · dataset file dated ${String(p.fileAsOf).slice(0, 10)}; grant date, subject matter and whether the patent is in force are not stated here`;
+    if (p.assigneeMatch === 'EXACT_LEGAL_NAME_OF_EXHIBIT_21_SUBSIDIARY') {
+      const x = p.subsidiary?.exhibit21 ?? {};
+      return [head,
+        `the assignee organization "${p.assigneeName}" equals, exactly, a subsidiary named in the company's own Form 10-K Exhibit 21 (accession ${x.accession}, filed ${x.filedAt}); that exhibit is as of its filing date and does not state that the subsidiary held this patent when it was granted, or the company's ownership share`];
+    }
+    return [head, `the assignee organization "${p.assigneeName}" equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity and is not matched unless the company's own 10-K Exhibit 21 lists it`];
   }
   if (p?.source === 'CLINICALTRIALS_GOV') {                  // KRYL-1414: what the registry states about the study
     return [`lead sponsor (industry) as ClinicalTrials.gov states it · ${p.nctId}${p.overallStatus ? ` · status ${p.overallStatus}` : ''}${p.phase ? ` · phase ${p.phase}` : ''} · registry record updated ${p.lastUpdated ?? 'date not stated'}; the status is as of that update`,
@@ -62,7 +67,7 @@ export function canonicalDetailLines(ev) {
 export function canonicalRelationshipSentence(type, a, b, nuId = null, dealStatus = null) {
   if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
-  if (type === 'ASSIGNEE_OF_GRANTED_PATENT') return `${a} is the assignee of granted patent ${b}`;
+  if (type === 'ASSIGNEE_OF_GRANTED_PATENT') return nuId?.heldBy ? `${nuId.heldBy}, a subsidiary listed in ${a}'s 10-K Exhibit 21, is the assignee of granted patent ${b}` : `${a} is the assignee of granted patent ${b}`;
   if (type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}`;
   if (type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D`;
   if (type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is disclosed as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an officer'} of ${a}`;

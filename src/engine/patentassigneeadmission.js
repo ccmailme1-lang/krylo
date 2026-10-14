@@ -10,12 +10,14 @@ export function buildPatentAssertion({ entity, patent }) {
   return {
     node, label: `US ${patent.id}`,
     assertion: {
-      part: [nodeId(entity.cik, entity.name), node], type: 'ASSIGNEE_OF_GRANTED_PATENT', nuId: {}, nuState: {},
+      part: [nodeId(entity.cik, entity.name), node], type: 'ASSIGNEE_OF_GRANTED_PATENT', nuId: patent.subsidiary ? { heldBy: patent.subsidiary.name } : {}, nuState: {},
       evidence: {
         ts: Date.parse(patent.fileAsOf) || Date.now(),
         provenance: {
           source: 'USPTO_PATENTSVIEW_BULK', product: patent.product ?? 'pvgpatdis', table: patent.table ?? 'g_assignee_disambiguated', patentId: patent.id, assigneeName: patent.assigneeName,
-          assigneeMatch: 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY', fileAsOf: patent.fileAsOf, accession: `US${patent.id}`, filingDate: patent.fileAsOf, form: 'USPTO granted-patent record',
+          assigneeMatch: patent.subsidiary ? 'EXACT_LEGAL_NAME_OF_EXHIBIT_21_SUBSIDIARY' : 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY',
+          ...(patent.subsidiary ? { subsidiary: { name: patent.subsidiary.name, exhibit21: { accession: patent.subsidiary.exhibit21.accession, file: patent.subsidiary.exhibit21.file, form: patent.subsidiary.exhibit21.form, filedAt: patent.subsidiary.exhibit21.filedAt, filerCik: entity.cik } } } : {}),
+          fileAsOf: patent.fileAsOf, accession: `US${patent.id}`, filingDate: patent.fileAsOf, form: 'USPTO granted-patent record',
         },
       },
     },

@@ -76,9 +76,58 @@ console.log('Admission through the ratified rule');
   ok(/grant date, subject matter and whether the patent is in force are not stated here/.test(lines[0]) && /equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity/.test(lines[1]), 'detail lines: the table\'s statement and the limits; the subsidiary rule');
   const S = buildSynthesis({ subject: 'Tesla, Inc.', relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation: f });
   const st = S.statements.find(s => /lists Tesla, Inc\. \(exact legal name\) as the assignee of 3 granted patents/.test(s.text));
-  ok(st && st.status === 'SUPPORTED' && /subsidiaries or similarly named companies are different legal entities/.test(st.text) && st.evidence.length === 3, 'a SUPPORTED statement counts the patents and says subsidiaries are not counted');
+  ok(st && st.status === 'SUPPORTED' && /similarly named company, or to a subsidiary the company's own Form 10-K Exhibit 21 does not list, are different legal entities/.test(st.text) && st.evidence.length === 3, 'a SUPPORTED statement counts the patents and says subsidiaries are not counted');
   ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
   ok(producerEligibility({ name: 'Tesla, Inc.', identifiers: { edgar: '0001318605' } }).eligible.includes('patents') && !producerEligibility({ name: 'X', identifiers: {} }).eligible.includes('patents'), 'the patents producer needs a resolved entity carrying an SEC CIK');
+}
+
+console.log('Exhibit 21 subsidiary rule (Founder ratified 2026-10-13)');
+{
+  const { parseExhibit21, exhibit21For } = await import('./as-diff/exhibit21.js');
+  const bc = parseExhibit21(fs.readFileSync('tests/fixtures/sec/ex21-broadcom-0001730168-25-000121.htm', 'utf8'));
+  ok(bc.length === 10 && bc.includes('Broadcom Corporation') && bc.includes('Avago Technologies International Sales Pte. Limited') && !bc.some(n => /^name of subsidiary$/i.test(n)), 'Broadcom Exhibit 21 (real filing 0001730168-25-000121): the subsidiary names, no header row');
+  const or = parseExhibit21(fs.readFileSync('tests/fixtures/sec/ex21-oracle-0001193125-26-277521.htm', 'utf8'));
+  ok(or.length === 8 && or.includes('Oracle International Corporation') && or.includes('Oracle America, Inc.'), 'Oracle Exhibit 21 (real filing 0001193125-26-277521): the subsidiary names');
+  const bs = parseExhibit21(fs.readFileSync('tests/fixtures/sec/ex21-bostonscientific-0000885725-26-000010.htm', 'utf8'));
+  ok(bs.length > 100 && bs.includes('Boston Scientific AG') && bs.includes('American Medical Systems Europe B.V.') && !bs.some(n => /\)$/.test(n) && /\((Germany|Switzerland|China)\)$/.test(n)), 'Boston Scientific Exhibit 21 (div list, "(Country)" after each name): names without the jurisdiction');
+  ok(parseExhibit21('<p>Subsidiaries of Acme</p><p>Acme Labs, Inc.</p><p>Acme Europe GmbH</p>').join('|') === 'Acme Labs, Inc.|Acme Europe GmbH', 'an exhibit without a table: the lines that end in a legal form');
+  const search = (id, type, date) => JSON.stringify({ hits: { hits: [{ _id: id, _source: { file_type: type, file_date: date } }, { _id: '0000000001-24-000001:main.htm', _source: { file_type: '10-K', file_date: '2024-01-01' } }] } });
+  const calls = [];
+  const mock = async (host, pth) => { calls.push(host); return host === 'efts.sec.gov' ? search('0001730168-25-000121:ex211.htm', 'EX-21.1', '2025-12-18') : fs.readFileSync('tests/fixtures/sec/ex21-broadcom-0001730168-25-000121.htm', 'utf8'); };
+  const ex = await exhibit21For('1730168', { getFn: mock });
+  ok(ex.accession === '0001730168-25-000121' && ex.form === 'EX-21.1' && ex.filedAt === '2025-12-18' && ex.names.length === 10, 'the latest 10-K Exhibit 21 is found by its file type, with accession and filing date');
+  ok((await exhibit21For('0000000000', { getFn: mock })).error === 'cik required', 'a CIK is required');
+  ok((await exhibit21For('999', { getFn: async () => JSON.stringify({ hits: { hits: [] } }) })).error === 'EXHIBIT21_NOT_FOUND', 'no Exhibit 21 found: stated as not found, not as no subsidiaries');
+  ok(String((await exhibit21For('998', { getFn: async () => { throw new Error('boom'); } })).error).startsWith('EXHIBIT21_LOOKUP_FAILED'), 'a failed lookup is stated as failed');
+
+  const BR = { cik: '0001730168', name: 'BROADCOM INC' };
+  const ex21 = { accession: '0001730168-25-000121', file: 'ex211.htm', form: 'EX-21.1', filedAt: '2025-12-18', listed: 10 };
+  const row = { source: { product: 'pvgpatdis', table: 'g_assignee_disambiguated' }, fileAsOf: '2026-10-01T00:00:00.000Z', legalName: 'Broadcom Inc.', total: 0, assigneeNames: [], newest: [], exhibit21: ex21,
+    subsidiaryHolders: [{ name: 'Broadcom Corporation', assigneeNames: ['Broadcom Corporation'], total: 120, newest: ['9000003', '8000002'] }, { name: 'Avago Technologies U.S. Inc.', assigneeNames: ['Avago Technologies U.S. Inc', 'Avago Technologies General IP (Singapore) Pte. Ltd.'], total: 30, newest: ['10000009'] }] };
+  const c = await fetchPatentAssignments({ entity: BR, fetchImpl: async () => ({ ok: true, json: async () => row }) });
+  ok(c.patents.length === 3 && c.patents[0].id === '10000009' && c.patents.every(p => p.subsidiary?.exhibit21?.accession === '0001730168-25-000121') && c.total === 150, 'subsidiary-held patents: newest first, each carries its subsidiary and the Exhibit 21, total counts both holders');
+  ok(c.patents.find(p => p.id === '10000009').assigneeName === 'Avago Technologies U.S. Inc', 'the assignee name is the one the table states, matched to the listed subsidiary only by exact legal name (punctuation and Inc spelling aside)');
+  const none = await fetchPatentAssignments({ entity: BR, fetchImpl: async () => ({ ok: true, json: async () => ({ ...row, exhibit21: null }) }) });
+  ok(none.patents.length === 0, 'with no Exhibit 21 cited, a holder the server returned is not read as a subsidiary');
+  const wrong = await fetchPatentAssignments({ entity: BR, fetchImpl: async () => ({ ok: true, json: async () => ({ ...row, subsidiaryHolders: [{ name: 'Broadcom Corporation', assigneeNames: ['Broadcom Corporation of Texas'], total: 5, newest: ['7000001'] }] }) }) });
+  ok(wrong.patents.length === 0, 'a holder whose assignee name is not exactly the listed subsidiary is dropped');
+  _clearAdmittedForTests();
+  const res = admitPatentAssignments({ entity: BR, patents: c.patents });
+  ok(res.admitted.length === 3 && res.rejected.length === 0, 'subsidiary-held patents admitted through the single write path');
+  const rels = findAdmittedRelationshipsFor('CIK:0001730168').filter(r => r.type === 'ASSIGNEE_OF_GRANTED_PATENT');
+  ok(rels.length === 3 && rels.every(r => r.nuId?.heldBy), 'identity carries the subsidiary (heldBy)');
+  ok(canonicalRelationshipSentence('ASSIGNEE_OF_GRANTED_PATENT', 'Broadcom Inc.', 'US 9000003', { heldBy: 'Broadcom Corporation' }) === "Broadcom Corporation, a subsidiary listed in Broadcom Inc.'s 10-K Exhibit 21, is the assignee of granted patent US 9000003", 'wording names the subsidiary and the Exhibit 21; it does not say the company is the assignee');
+  const lines = canonicalDetailLines(latestEvidenceFor(rels[0].id));
+  ok(/accession 0001730168-25-000121, filed 2025-12-18/.test(lines[1]) && /does not state that the subsidiary held this patent when it was granted/.test(lines[1]), 'detail lines cite the exhibit and state its limits');
+  const mk = (mut) => { const b = buildPatentAssertion({ entity: BR, patent: c.patents[0] }); mut(b.assertion); return admitAndProject(b.assertion, { companyName: BR.name, companyCik: BR.cik, patentLabel: 'x' }); };
+  ok(mk(a => { delete a.evidence.provenance.subsidiary.exhibit21.accession; }).admitted === false, 'no Exhibit 21 accession: refused');
+  ok(mk(a => { a.evidence.provenance.subsidiary.exhibit21.filerCik = '0000000001'; }).admitted === false, 'an Exhibit 21 of a different filer: refused');
+  ok(mk(a => { a.nuId = {}; }).admitted === false, 'a subsidiary-held patent that does not name the subsidiary: refused');
+  const labelOf = (id) => String(NODE_LABELS[id] ?? id);
+  const S = buildSynthesis({ subject: 'Broadcom Inc.', relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation: buildAdmittedFormation({ relationships: rels, evidenceFor: latestEvidenceFor, labelOf }) });
+  const st = S.statements.find(x => /named exactly in the Exhibit 21 of Broadcom Inc\.'s own Form 10-K \(accession 0001730168-25-000121, filed 2025-12-18\)/.test(x.text));
+  ok(st && st.status === 'SUPPORTED' && /does not state that the subsidiary held a patent when it was granted/.test(st.text) && st.evidence.length === 3 && !S.statements.some(x => /lists Broadcom Inc\. \(exact legal name\)/.test(x.text)), 'a SUPPORTED statement for the subsidiary-held patents, citing the exhibit and its limit; no claim that the company itself is the assignee');
+  ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
 }
 
 fs.rmSync(dir, { recursive: true, force: true });

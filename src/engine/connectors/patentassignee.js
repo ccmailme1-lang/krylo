@@ -20,7 +20,20 @@ export async function fetchPatentAssignments({ entity, fetchImpl = (typeof fetch
   if (j.error) return { ...empty, failed: j.error };
   const want = legalNameKey(j.legalName ?? entity.name);   // with a CIK the server names the SEC's registered name; that is the legal name matched
   const names = (j.assigneeNames ?? []).filter(n => legalNameKey(n) === want);
-  if (!names.length || !(j.newest ?? []).length) return { ...empty, source: j.source, fileAsOf: j.fileAsOf };
-  const patents = j.newest.slice(0, cap).map(id => ({ id, assigneeName: names[0], fileAsOf: j.fileAsOf, product: j.source?.product, table: j.source?.table }));
-  return { patents, total: j.total ?? patents.length, capped: (j.total ?? 0) > patents.length, source: j.source, fileAsOf: j.fileAsOf, assigneeNames: names, legalName: j.legalName };
+  const direct = names.length ? (j.newest ?? []).map(id => ({ id, assigneeName: names[0] })) : [];
+  // Ratified 2026-10-13 (Exhibit 21 rule): a subsidiary the company's own 10-K Exhibit 21 lists, matched to the assignee by exact legal name. Each holder is checked again here.
+  const ex = j.exhibit21 ?? null; const listedKeys = new Set();
+  const held = [];
+  for (const h of (ex ? (j.subsidiaryHolders ?? []) : [])) {
+    const hk = legalNameKey(h.name); listedKeys.add(hk);
+    const an = (h.assigneeNames ?? []).filter(n => legalNameKey(n) === hk); if (!an.length) continue;
+    for (const id of h.newest ?? []) held.push({ id, assigneeName: an[0], subsidiary: { name: h.name, exhibit21: ex } });
+  }
+  const byNewest = (x, y) => (/^\d+$/.test(y.id) ? Number(y.id) : -1) - (/^\d+$/.test(x.id) ? Number(x.id) : -1);
+  const all = [...direct, ...held].sort(byNewest);
+  const subTotal = (j.subsidiaryHolders ?? []).reduce((n, h) => n + (h.total ?? 0), 0);
+  const total = (direct.length ? (j.total ?? direct.length) : 0) + (held.length ? subTotal : 0);
+  if (!all.length) return { ...empty, source: j.source, fileAsOf: j.fileAsOf, exhibit21: ex, exhibit21Error: j.exhibit21Error };
+  const patents = all.slice(0, cap).map(x => ({ id: x.id, assigneeName: x.assigneeName, fileAsOf: j.fileAsOf, product: j.source?.product, table: j.source?.table, ...(x.subsidiary ? { subsidiary: x.subsidiary } : {}) }));
+  return { patents, total, capped: total > patents.length, source: j.source, fileAsOf: j.fileAsOf, assigneeNames: names, legalName: j.legalName, exhibit21: ex, exhibit21Error: j.exhibit21Error, viaSubsidiaries: held.length > 0 };
 }
