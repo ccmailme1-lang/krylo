@@ -29,17 +29,22 @@ function getText(p) {
 }
 
 /** @returns {Promise<{ phrase, legalName, articles: object[], source, retrievedAt, timespan, capped } | { error: string }>} */
-export async function mediaFor(cik, { now = Date.now(), getFn = getText, titleFn = secTitleForCik, noCache = false } = {}) {
+const RETRY_GAP_MS = 6000, ATTEMPTS = 3;   // GDELT asks for one request every 5 seconds: a limited answer is repeated after a pause (twice at most) before it is reported as a failure
+export async function mediaFor(cik, { now = Date.now(), getFn = getText, titleFn = secTitleForCik, noCache = false, sleep = (ms) => new Promise(r => setTimeout(r, ms)) } = {}) {
   const t = await titleFn(cik);
   if (t.error) return { error: t.error };
   if (t.notListed) return { error: 'LEGAL_NAME_NOT_FOUND' };
   const phrase = phraseOf(t.name); if (phrase.length < 3) return { error: 'LEGAL_NAME_NOT_FOUND' };
   const hit = noCache ? null : _cache.get(phrase); if (hit && now - hit.at < TTL) return hit.value;
-  let body;
-  try {
-    body = await getFn('/api/v2/doc/doc?' + new URLSearchParams({ query: `"${phrase}" sourcelang:english`, mode: 'artlist', maxrecords: '25', sort: 'datedesc', timespan: '7d', format: 'json' }));
-  } catch (e) { return { error: 'GDELT_LOOKUP_FAILED: ' + String(e?.message ?? e).slice(0, 80) }; }
-  let j; try { j = JSON.parse(body); } catch { return { error: 'GDELT_NOT_JSON: ' + String(body).replace(/\s+/g, ' ').slice(0, 80) }; }   // GDELT answers a rate limit with text
+  let body, j, last = null;
+  for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
+    if (attempt) await sleep(RETRY_GAP_MS);
+    try {
+      body = await getFn('/api/v2/doc/doc?' + new URLSearchParams({ query: `"${phrase}" sourcelang:english`, mode: 'artlist', maxrecords: '25', sort: 'datedesc', timespan: '7d', format: 'json' }));
+    } catch (e) { last = 'GDELT_LOOKUP_FAILED: ' + String(e?.message ?? e).slice(0, 80); if (/HTTP 429/.test(last)) continue; return { error: last }; }
+    try { j = JSON.parse(body); last = null; break; } catch { last = 'GDELT_NOT_JSON: ' + String(body).replace(/\s+/g, ' ').slice(0, 80); }   // GDELT answers a rate limit with text
+  }
+  if (last) return { error: last };
   const articles = (j.articles ?? []).filter(a => a?.url && a?.title && a?.seendate).map(a => ({ url: a.url, title: String(a.title).replace(/\s+/g, ' ').trim(), domain: a.domain ?? null, seenDate: a.seendate, language: a.language ?? null, sourceCountry: a.sourcecountry ?? null }));
   const value = { phrase, legalName: t.name, articles, source: SOURCE, retrievedAt: new Date(now).toISOString(), timespan: '7d', capped: (j.articles ?? []).length >= 25 };
   if (!noCache) _cache.set(phrase, { at: now, value });

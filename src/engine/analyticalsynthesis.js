@@ -100,6 +100,12 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
     // Ratified 2026-10-13 (Intel): the same granted patents also support KNOWLEDGE, identified here as patent-derived knowledge evidence only.
     add(STATUS.SUPPORTED, `KNOWLEDGE is shown for ${subject} from patent-derived evidence only: the ${pats.length} granted patent${pats.length !== 1 ? 's' : ''} above (${patIds(pats)}), as the USPTO PatentsView table states them. This does not establish research impact, author affiliation, publications or any other knowledge relationship, and it forms no link to another domain.`, patRefs(pats));
   }
+  // 2g. Dated articles whose title names the company (KRYL-1418): the naming and its citation, nothing more.
+  const arts = relationships.filter(r => r.type === 'NAMED_IN_ARTICLE').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'GDELT');
+  if (arts.length) {
+    add(STATUS.SUPPORTED, `${arts.length} dated article${arts.length !== 1 ? 's' : ''} name${arts.length === 1 ? 's' : ''} ${subject} in ${arts.length === 1 ? 'its' : 'their'} title, as GDELT states ${arts.length === 1 ? 'it' : 'them'} (${arts.slice(0, 2).map(x => `${x.ev.domain}, first seen ${x.ev.seenDate}`).join('; ')}${arts.length > 2 ? '; …' : ''}); the relationship established is only that the title names the company's SEC registered name, and no endorsement, causation, event participation or other connection is inferred.`,
+      arts.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.url, form: 'GDELT article', filingDate: x.ev.seenDate })));
+  }
   if (laborReport?.capped) add(STATUS.UNRESOLVED, `${laborReport.personsSeen - laborReport.personsRead} further reporting person${laborReport.personsSeen - laborReport.personsRead !== 1 ? 's' : ''} in the insider forms searched ${laborReport.personsSeen - laborReport.personsRead !== 1 ? 'were' : 'was'} not read in this analysis (the newest ${laborReport.personsRead} are read per analysis), so their roles are not shown.`, []);
 
   // 3. Ownership change over two 12-month periods, as the dated filings classify it.

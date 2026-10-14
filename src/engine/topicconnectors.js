@@ -37,7 +37,8 @@ import { SETTLE_TIMEOUT_MS } from './analyticalsnapshot.js';
 // The durable store's read may wait as long as the snapshot itself waits for any lookup (its decided settlement contract, 45 s): the browser allows only a few parallel connections to the
 // engine, and slow source lookups can hold them, so a 3 s abort recorded a healthy store as failed (seen on the first case of a subject, 2026-10-14).
 const STORE_HYDRATE_MS = SETTLE_TIMEOUT_MS;
-import { fetchMediaObservations, buildMediaSignals } from './connectors/gdeltmediaobservation.js';import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
+import { fetchMediaObservations, buildMediaSignals } from './connectors/gdeltmediaobservation.js';
+import { admitMediaArticles } from './mediaarticleadmission.js';import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -149,6 +150,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
       if (r.failed) return settleLookup('media', `the GDELT lookup failed (${r.failed})`);
       const sigs = buildMediaSignals({ canonicalId: scope.canonicalId, entityName: scope.entity.name, result: r });
       if (sigs.length) surfaceRouter.dispatchBatch(sigs);
+      admitMediaArticles({ entity, result: r });   // KRYL-1418: only an article whose title names the company becomes a relationship (cited, "named in article")
       window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
       return settleLookup('media', null);
     }).catch((e) => settleLookup('media', String(e?.message ?? e)));

@@ -25,6 +25,10 @@ function scoreRun(dir, rules) {
   const problems = probe.synthesisValidation?.problems?.length ?? 0; const supported = probe.synthesisCounts?.SUPPORTED ?? 0;
   const changeShown = /RELATIONSHIP CHANGE/.test(page) && /Retrieval basis|nothing to compare/.test(page);
   const accessionLines = (page.match(/\b\d{10}-\d{2}-\d{6}\b/g) ?? []).length;
+  // Founder ratification 2026-10-13: for an entity with NO SEC filings (identified by its GLEIF LEI), the cited source records are valid traceability: each distinct USPTO granted-patent record
+  // cited on the page ("accession US<number>") and the cited GLEIF record. SEC-filing entities are scored exactly as before (SEC accession numbers only).
+  const noSecFilings = /IDENTITY: GLEIF LEI [A-Z0-9]{20}/.test(page);
+  const citedRecords = accessionLines + (noSecFilings ? new Set(page.match(/\baccession US\d{4,9}\b/g) ?? []).size + (/\bLEI [A-Z0-9]{20}\b/.test(page) ? 1 : 0) : 0);
   const mapFormation = (() => { const lines = String(mapText ?? '').split('\n').map(x => x.trim()); const end = lines.findIndex(x => /^structural resolution field$/i.test(x)); let i = -1; for (let k = 0; k < (end < 0 ? 0 : end); k++) if (/^formation$/i.test(lines[k])) i = k; return i < 0 ? '' : norm(lines.slice(i + 1, end).join(' ')); })();   // the Formation row: the last 'FORMATION' label line before the field
   const mapAgrees = !!probe.analysisSentence && mapFormation.startsWith(norm(probe.analysisSentence).slice(0, 60));
   const historyAgrees = !!probe.historySentence && probe.historySentence === probe.analysisSentence && probe.historyRelationships === probe.relationships;
@@ -39,11 +43,11 @@ function scoreRun(dir, rules) {
   const connective = (synText.match(/connect \d+ domains|is named as a counterparty in|appears both as a disclosed holder|(^|\n)\s*INFERRED/g) ?? []).length;
   const guard = rules === 'R2';
   c.c4 = unresolved || !hasSynthesis || problems > 0 || (guard && covered.length === 0) ? 0 : ((covered.length === needs.length && (needs.length >= 2 ? linkedNeeds.length >= 2 : supported >= 1) && (!guard || connective >= 1)) ? 2 : 1);
-  c.c5 = (!unresolved && problems === 0 && hasSynthesis && accessionLines >= 3) ? 1 : 0;
+  c.c5 = (!unresolved && problems === 0 && hasSynthesis && citedRecords >= 3) ? 1 : 0;
   c.c6 = unresolved ? 0 : (changeShown ? 1 : 0);
   c.c7 = (rec.snapshotReady && rec.pageErrors.length === 0 && !unresolved && mapAgrees ? 0.5 : 0) + (historyAgrees ? 0.5 : 0);
   const raw = Object.values(c).reduce((a, b) => a + b, 0);
-  rows.push({ case: rec.case, subject: rec.subject, q: rec.question, ...c, raw, scale: Math.max(1, Math.round(raw)), features: { connective, unresolved, needs, admitted, covered, linked: probe.linkedDomains ?? [], relationships: probe.relationships ?? 0, hasSynthesis, problems, statements: probe.synthesisValidation?.statements ?? 0, supported, mapAgrees, historyAgrees, accessionLines, admission: probe.admission ?? null } });
+  rows.push({ case: rec.case, subject: rec.subject, q: rec.question, ...c, raw, scale: Math.max(1, Math.round(raw)), features: { citedRecords, connective, unresolved, needs, admitted, covered, linked: probe.linkedDomains ?? [], relationships: probe.relationships ?? 0, hasSynthesis, problems, statements: probe.synthesisValidation?.statements ?? 0, supported, mapAgrees, historyAgrees, accessionLines, admission: probe.admission ?? null } });
 }
   return rows;
 }

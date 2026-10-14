@@ -309,3 +309,26 @@ registerRelationshipType('ASSIGNEE_OF_GRANTED_PATENT', {
   nuStateKeys: [],
   classifyChange: () => 'PERSISTENT',
 });
+
+// NAMED_IN_ARTICLE -- ratified by the Founder 2026-10-13 (KRYL-1418, MEDIA). Canonical meaning: a dated article, as GDELT states it, explicitly names the company: the article's TITLE contains the
+// company's SEC registered name (legal form set aside). It records that fact and the citation (title, publisher domain, URL, first-seen date). It does NOT establish endorsement, causation, event
+// participation, sentiment, importance or any other connection between the article and the company. part = (company by SEC CIK, article node ARTICLE:<id>), ORDERED. nu_state = {}.
+const ARTICLE_KEY = (t) => ` ${String(t ?? '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim()} `;
+registerRelationshipType('NAMED_IN_ARTICLE', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const [companyId, articleId] = assertion.part ?? [];
+    const p = assertion.evidence?.provenance ?? {};
+    if (!companyId || !articleId || companyId === articleId) return { admitted: false, reason: 'company and article must be two distinct nodes' };
+    if (!/^CIK:\d{10}$/.test(String(companyId))) return { admitted: false, reason: 'the company must be an entity identified by its SEC CIK' };
+    if (p.source !== 'GDELT' || p.phraseSource !== 'SEC_REGISTERED_NAME') return { admitted: false, reason: 'the source must be GDELT, queried by the company\'s SEC registered name' };
+    if (!/^https?:\/\//.test(String(p.url ?? '')) || !p.title || !p.domain) return { admitted: false, reason: 'the article must be cited by URL, title and publisher domain' };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(p.seenDate ?? ''))) return { admitted: false, reason: 'the article\'s date is required' };
+    if (!/^ARTICLE:[a-z0-9]+$/.test(String(articleId)) || articleId !== `ARTICLE:${p.articleId}`) return { admitted: false, reason: 'the article must be identified by its article id' };
+    if (!p.phrase || !ARTICLE_KEY(p.title).includes(ARTICLE_KEY(p.phrase))) return { admitted: false, reason: 'the article\'s title must explicitly name the company (its SEC registered name); an article that matched only in its text is an observation, not a relationship' };
+    return { admitted: true };
+  },
+  nuIdKeys: [],
+  nuStateKeys: [],
+  classifyChange: () => 'PERSISTENT',
+});

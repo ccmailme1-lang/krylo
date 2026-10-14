@@ -33,6 +33,10 @@ export function canonicalDetailLines(ev) {
     }
     return [head, `the assignee organization "${p.assigneeName}" equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity and is not matched unless the company's own 10-K Exhibit 21 lists it`];
   }
+  if (p?.source === 'GDELT' && p.phraseSource === 'SEC_REGISTERED_NAME') {   // KRYL-1418: a dated article that names the company in its title
+    return [`named in article · "${String(p.title).length > 150 ? String(p.title).slice(0, 147).trimEnd() + '…' : p.title}" · ${p.domain} · first seen ${p.seenDate} (as GDELT states it)`,
+      `the article's title contains "${p.phrase}", the company's SEC registered name; that is all this establishes: no endorsement, causation, event participation, sentiment or other connection is inferred, and the article text was not read here`];
+  }
   if (p?.source === 'CLINICALTRIALS_GOV') {                  // KRYL-1414: what the registry states about the study
     return [`lead sponsor (industry) as ClinicalTrials.gov states it · ${p.nctId}${p.overallStatus ? ` · status ${p.overallStatus}` : ''}${p.phase ? ` · phase ${p.phase}` : ''} · registry record updated ${p.lastUpdated ?? 'date not stated'}; the status is as of that update`,
       `the sponsor name "${p.leadSponsorName}" equals the resolved entity's legal name; the registry did not create the identity${p.title ? ` · title: ${String(p.title).length > 120 ? String(p.title).slice(0, 117) + '…' : p.title}` : ''}`];
@@ -68,6 +72,7 @@ export function canonicalRelationshipSentence(type, a, b, nuId = null, dealStatu
   if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
   if (type === 'ASSIGNEE_OF_GRANTED_PATENT') return nuId?.heldBy ? `${nuId.heldBy}, a subsidiary listed in ${a}'s 10-K Exhibit 21, is the assignee of granted patent ${b}` : `${a} is the assignee of granted patent ${b}`;
+  if (type === 'NAMED_IN_ARTICLE') return `${a} is named in the article ${b}`;
   if (type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}`;
   if (type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D`;
   if (type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is disclosed as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an officer'} of ${a}`;

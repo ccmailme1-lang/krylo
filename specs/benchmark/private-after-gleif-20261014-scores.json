@@ -13,6 +13,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 8,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -52,6 +53,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 8,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -90,6 +92,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 8,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -129,6 +132,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 8,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -167,6 +171,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 9,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -206,6 +211,7 @@
     "raw": 8,
     "scale": 8,
     "features": {
+      "citedRecords": 9,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -238,12 +244,13 @@
     "c2": 0,
     "c3": 1,
     "c4": 0,
-    "c5": 0,
+    "c5": 1,
     "c6": 1,
     "c7": 1,
-    "raw": 5,
-    "scale": 5,
+    "raw": 6,
+    "scale": 6,
     "features": {
+      "citedRecords": 21,
       "connective": 0,
       "unresolved": false,
       "needs": [
@@ -275,12 +282,13 @@
     "c2": 1,
     "c3": 1,
     "c4": 1,
-    "c5": 0,
+    "c5": 1,
     "c6": 1,
     "c7": 1,
-    "raw": 7,
-    "scale": 7,
+    "raw": 8,
+    "scale": 8,
     "features": {
+      "citedRecords": 21,
       "connective": 0,
       "unresolved": false,
       "needs": [

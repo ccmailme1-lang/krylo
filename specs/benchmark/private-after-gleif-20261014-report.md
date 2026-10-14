@@ -2,7 +2,7 @@
 
 Date 2026-10-12 · mechanical scorer, unchanged rubric and rules; independent blind scores are separate and outstanding.
 
-**At or above 8 (rounded rule): 6 of 8. At raw 8.0 or more (strict): 6 of 8. Mean raw 7.500.**
+**At or above 8 (rounded rule): 7 of 8. At raw 8.0 or more (strict): 7 of 8. Mean raw 7.750.**
 
 | ID | Subject | Domains named | Raw | Scale | Covered | Result |
 |---|---|---|---|---|---|---|
@@ -12,13 +12,12 @@ Date 2026-10-12 · mechanical scorer, unchanged rubric and rules; independent bl
 | PC04 | Integrated Biosciences | CAPITAL+LABOR | 8.0 | 8 | LABOR | pass |
 | PC05 | Daytona | TECHNOLOGY+OWNERSHIP+LABOR | 8.0 | 8 | LABOR | pass |
 | PC06 | Daytona | CAPITAL+LABOR | 8.0 | 8 | LABOR | pass |
-| PC08 | Anduril | CAPITAL+LABOR | 5.0 | 5 | none | BELOW 8 |
-| PC07 | Anduril | TECHNOLOGY+OWNERSHIP+LABOR | 7.0 | 7 | TECHNOLOGY | BELOW 8 |
+| PC08 | Anduril | CAPITAL+LABOR | 6.0 | 6 | none | BELOW 8 |
+| PC07 | Anduril | TECHNOLOGY+OWNERSHIP+LABOR | 8.0 | 8 | TECHNOLOGY | pass |
 
 ## Every case below 8, with its cause
 
-- PC08 (Anduril, CAPITAL+LABOR): raw 5.0. NO_RATIFIED_SOURCE (no named domain has an admitted relationship type producing)
-- PC07 (Anduril, TECHNOLOGY+OWNERSHIP+LABOR): raw 7.0. FIXABLE_PIPELINE_DEFECT candidate: criteria lost c2, c4, c5
+- PC08 (Anduril, CAPITAL+LABOR): raw 6.0. NO_RATIFIED_SOURCE (no named domain has an admitted relationship type producing)
 
 ## Integrity
 

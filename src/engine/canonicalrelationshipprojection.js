@@ -103,6 +103,13 @@ const PROJECTIONS = {
       fromLabel: meta.companyName, toLabel: meta.patentLabel, source: meta.source ?? 'USPTO_PATENTSVIEW_BULK',
     }),
   },
+  NAMED_IN_ARTICLE: {
+    typedEdgeType: RELATION_TYPES.NAMED_IN_ARTICLE,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.companyName, to: meta.articleLabel, fromCik: meta.companyCik ?? null, toCik: null,
+      fromLabel: meta.companyName, toLabel: meta.articleLabel, source: meta.source ?? 'GDELT',
+    }),
+  },
   LEAD_SPONSOR_OF_CLINICAL_TRIAL: {
     typedEdgeType: RELATION_TYPES.LEAD_SPONSOR_OF_TRIAL,
     toEdgeArgs: (relationship, meta) => ({

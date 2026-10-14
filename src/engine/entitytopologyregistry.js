@@ -79,6 +79,8 @@ export const RELATION_TYPES = Object.freeze({
   LEAD_SPONSOR_OF_TRIAL: 'LEAD_SPONSOR_OF_TRIAL',
   // KRYL-1416 (2026-10-13) -- the USPTO granted-patent table states a patent is assigned to the company (TECHNOLOGY).
   PATENT_ASSIGNEE_OF: 'PATENT_ASSIGNEE_OF',
+  // KRYL-1418 (2026-10-13) -- a dated article's title names the company's SEC registered name (MEDIA); nothing beyond the naming is established.
+  NAMED_IN_ARTICLE: 'NAMED_IN_ARTICLE',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

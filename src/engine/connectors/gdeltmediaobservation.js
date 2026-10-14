@@ -7,7 +7,7 @@ import { POLARITY, DECAY } from '../signalconstants.js';
 
 export const MAX_ARTICLES = 5;
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
-const hash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); };
+export const articleHash = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36); };
 /** GDELT "20260930T193000Z" -> "2026-09-30" */
 export const seenDay = (d) => (/^\d{8}T/.test(String(d)) ? `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}` : null);
 
@@ -28,7 +28,7 @@ export function buildMediaSignals({ canonicalId, entityName, result, now = Date.
   const all = result.articles.filter(a => a.url && a.title && seenDay(a.seenDate));
   const count = all.length, conf = clamp(0.3 + Math.min(1, count / 100) * 0.6, 0, 1), signal = clamp(Math.round(Math.min(100, (count / 200) * 100)), 0, 100);
   return all.slice(0, MAX_ARTICLES).map((a, i) => ({
-    id: `gdelt-${hash(a.url)}-media`, source: 'GDELT', domain: 'media', signal, confidence: conf * 100, originId: `gdelt-${hash(a.url)}`, fanout: 1, fanoutIndex: 0,
+    id: `gdelt-${articleHash(a.url)}-media`, source: 'GDELT', domain: 'media', signal, confidence: conf * 100, originId: `gdelt-${articleHash(a.url)}`, fanout: 1, fanoutIndex: 0,
     fs: parseFloat((signal / 100).toFixed(3)), polarity: POLARITY.ABSENT, decay: DECAY.DAILY, ts: now, eventClass: 'MEDIA_ARTICLE', entityName: entityName ?? null,
     meta: {
       canonicalId, eventDate: seenDay(a.seenDate), accession: a.url,
