@@ -1,0 +1,1765 @@
+[
+  {
+    "case": "C01",
+    "subject": "Sysco",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 101,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 60,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 21,
+      "supported": 10,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 101,
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C02",
+    "subject": "Sysco",
+    "q": 3,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 101,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 60,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 21,
+      "supported": 10,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 101,
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C03",
+    "subject": "Sysco",
+    "q": 7,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 101,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 60,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 21,
+      "supported": 10,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 101,
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C04",
+    "subject": "Oracle",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 77,
+      "connective": 6,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 73,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 24,
+      "supported": 11,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C05",
+    "subject": "Oracle",
+    "q": 5,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 77,
+      "connective": 6,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 73,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 24,
+      "supported": 11,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C06",
+    "subject": "Oracle",
+    "q": 8,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 72,
+      "connective": 6,
+      "unresolved": false,
+      "needs": [
+        "KNOWLEDGE",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "KNOWLEDGE",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "linked": [],
+      "relationships": 73,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 24,
+      "supported": 11,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 72,
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C07",
+    "subject": "Oracle",
+    "q": 11,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 72,
+      "connective": 6,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "linked": [],
+      "relationships": 73,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 24,
+      "supported": 11,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 72,
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C08",
+    "subject": "Tesla",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 42,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 13,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 42,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C09",
+    "subject": "Tesla",
+    "q": 6,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 42,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "LABOR",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "LABOR",
+        "CAPITAL"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 13,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 42,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C10",
+    "subject": "Tesla",
+    "q": 9,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 42,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "MEDIA",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "MEDIA",
+        "CAPITAL"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 13,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 42,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C11",
+    "subject": "Tesla",
+    "q": 11,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 42,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 13,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 42,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C12",
+    "subject": "Costco",
+    "q": 6,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 53,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "LABOR",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 28,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 6,
+      "supported": 4,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 53,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C23",
+    "subject": "Costco",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 53,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 28,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 6,
+      "supported": 4,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 53,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C24",
+    "subject": "Costco",
+    "q": 10,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 53,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 28,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 6,
+      "supported": 4,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 53,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C13",
+    "subject": "Boeing",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 89,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 58,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 14,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 89,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C14",
+    "subject": "Boeing",
+    "q": 3,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 89,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL"
+      ],
+      "linked": [],
+      "relationships": 58,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 14,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 89,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C15",
+    "subject": "Boeing",
+    "q": 4,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 84,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 58,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 14,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 84,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C16",
+    "subject": "Boeing",
+    "q": 12,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 84,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "linked": [],
+      "relationships": 58,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 14,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 84,
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C17",
+    "subject": "Verizon",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 77,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C18",
+    "subject": "Verizon",
+    "q": 2,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 77,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C19",
+    "subject": "Verizon",
+    "q": 10,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 77,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 37,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C20",
+    "subject": "Intel",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 55,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 46,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 11,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C21",
+    "subject": "Intel",
+    "q": 3,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 55,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 46,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 11,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C22",
+    "subject": "Intel",
+    "q": 4,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 55,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 46,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 11,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C25",
+    "subject": "Broadcom",
+    "q": 1,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 72,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 45,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 72,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C26",
+    "subject": "Broadcom",
+    "q": 2,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 67,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [],
+      "relationships": 45,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 67,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C27",
+    "subject": "Broadcom",
+    "q": 5,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 67,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 45,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 67,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C28",
+    "subject": "Broadcom",
+    "q": 12,
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 67,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "TECHNOLOGY",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA"
+      ],
+      "linked": [],
+      "relationships": 45,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 67,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C29",
+    "subject": "Netflix",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 55,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 52,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 16,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C30",
+    "subject": "Netflix",
+    "q": 8,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 55,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "KNOWLEDGE",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "KNOWLEDGE",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 52,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 16,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C31",
+    "subject": "Netflix",
+    "q": 9,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 9,
+    "scale": 9,
+    "features": {
+      "citedRecords": 55,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "MEDIA",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "MEDIA",
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 52,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 16,
+      "supported": 8,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C32",
+    "subject": "Boston Scientific",
+    "q": 1,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 90,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL",
+        "TECHNOLOGY"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 87,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 17,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 90,
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C33",
+    "subject": "Boston Scientific",
+    "q": 3,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 90,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 87,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 17,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 90,
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C34",
+    "subject": "Boston Scientific",
+    "q": 7,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 85,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 87,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 17,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 85,
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C35",
+    "subject": "Boston Scientific",
+    "q": 10,
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 85,
+      "connective": 3,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 87,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 17,
+      "supported": 9,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 85,
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  }
+]

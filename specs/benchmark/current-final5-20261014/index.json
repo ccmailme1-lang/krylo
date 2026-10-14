@@ -1,0 +1,2343 @@
+[
+  {
+    "case": "C01",
+    "subject": "Sysco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Sysco across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hb10d-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.5,
+    "capturedAt": "2026-10-14T19:05:06.900Z",
+    "probe": {
+      "snapshotId": "snap-mv8hb10d-1",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "UNRESOLVED": 5,
+        "DOCUMENTED": 5,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 21,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C02",
+    "subject": "Sysco",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Sysco in the last 12 months?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hc1c2-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 8.8,
+    "capturedAt": "2026-10-14T19:05:15.659Z",
+    "probe": {
+      "snapshotId": "snap-mv8hc1c2-2",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "UNRESOLVED": 5,
+        "DOCUMENTED": 5,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 21,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C03",
+    "subject": "Sysco",
+    "question": 7,
+    "questionText": "Which relationships around Sysco dissolved or are indeterminate, and why?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hc82u-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.1,
+    "capturedAt": "2026-10-14T19:06:02.722Z",
+    "probe": {
+      "snapshotId": "snap-mv8hc82u-3",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "UNRESOLVED": 5,
+        "DOCUMENTED": 5,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 21,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C04",
+    "subject": "Oracle",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Oracle across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hdi3b-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.2,
+    "capturedAt": "2026-10-14T19:07:02.379Z",
+    "probe": {
+      "snapshotId": "snap-mv8hdi3b-1",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 6,
+        "INFERRED": 3
+      },
+      "synthesisValidation": {
+        "statements": 24,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C05",
+    "subject": "Oracle",
+    "question": 5,
+    "questionText": "What technology relationships connect Oracle to other participants?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8heigy-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 7.9,
+    "capturedAt": "2026-10-14T19:07:10.247Z",
+    "probe": {
+      "snapshotId": "snap-mv8heigy-2",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 6,
+        "INFERRED": 3
+      },
+      "synthesisValidation": {
+        "statements": 24,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C06",
+    "subject": "Oracle",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Oracle?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8heoj4-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 32.7,
+    "capturedAt": "2026-10-14T19:07:42.987Z",
+    "probe": {
+      "snapshotId": "snap-mv8heoj4-3",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 6,
+        "INFERRED": 3
+      },
+      "synthesisValidation": {
+        "statements": 24,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C07",
+    "subject": "Oracle",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Oracle?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hfdul-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4,
+    "capturedAt": "2026-10-14T19:07:46.998Z",
+    "probe": {
+      "snapshotId": "snap-mv8hfdul-4",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 6,
+        "INFERRED": 3
+      },
+      "synthesisValidation": {
+        "statements": 24,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C08",
+    "subject": "Tesla",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Tesla across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hfoe7-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.1,
+    "capturedAt": "2026-10-14T19:08:43.530Z",
+    "probe": {
+      "snapshotId": "snap-mv8hfoe7-1",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C09",
+    "subject": "Tesla",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Tesla show, and what connects them?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hgogs-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 7.3,
+    "capturedAt": "2026-10-14T19:08:50.784Z",
+    "probe": {
+      "snapshotId": "snap-mv8hgogs-2",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C10",
+    "subject": "Tesla",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Tesla?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hgu1x-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47,
+    "capturedAt": "2026-10-14T19:09:37.737Z",
+    "probe": {
+      "snapshotId": "snap-mv8hgu1x-3",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C11",
+    "subject": "Tesla",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Tesla?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hhuak-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 25.4,
+    "capturedAt": "2026-10-14T19:10:03.111Z",
+    "probe": {
+      "snapshotId": "snap-mv8hhuak-4",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 6,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 4 domains (CAPITAL, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C12",
+    "subject": "Costco",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Costco show, and what connects them?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hikft-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.8,
+    "capturedAt": "2026-10-14T19:10:58.707Z",
+    "probe": {
+      "snapshotId": "snap-mv8hikft-1",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 1,
+      "analysisSentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historySentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 6,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C23",
+    "subject": "Costco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Costco across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hjkru-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 14.3,
+    "capturedAt": "2026-10-14T19:11:13.016Z",
+    "probe": {
+      "snapshotId": "snap-mv8hjkru-2",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 1,
+      "analysisSentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historySentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 6,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C24",
+    "subject": "Costco",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Costco?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hjvtj-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 46.9,
+    "capturedAt": "2026-10-14T19:11:59.957Z",
+    "probe": {
+      "snapshotId": "snap-mv8hjvtj-3",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 1,
+      "analysisSentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historySentence": "No formation established: the 28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) speak to 2 domains (LABOR, OWNERSHIP) and no single admitted relationship speaks to two of them.",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 6,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C13",
+    "subject": "Boeing",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boeing across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hl7tz-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.2,
+    "capturedAt": "2026-10-14T19:13:01.963Z",
+    "probe": {
+      "snapshotId": "snap-mv8hl7tz-1",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 10,
+      "analysisSentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 14,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C14",
+    "subject": "Boeing",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boeing in the last 12 months?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hm7ve-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 6.7,
+    "capturedAt": "2026-10-14T19:13:08.627Z",
+    "probe": {
+      "snapshotId": "snap-mv8hm7ve-2",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 10,
+      "analysisSentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 14,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C15",
+    "subject": "Boeing",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Boeing connected?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hmd1m-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 32.9,
+    "capturedAt": "2026-10-14T19:13:41.536Z",
+    "probe": {
+      "snapshotId": "snap-mv8hmd1m-3",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 10,
+      "analysisSentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 14,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C16",
+    "subject": "Boeing",
+    "question": 12,
+    "questionText": "Where do domains diverge around Boeing, and on what evidence?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hn2ej-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.1,
+    "capturedAt": "2026-10-14T19:13:44.673Z",
+    "probe": {
+      "snapshotId": "snap-mv8hn2ej-4",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 10,
+      "analysisSentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) speak to 5 domains (CAPITAL, KNOWLEDGE, LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 14,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C17",
+    "subject": "Verizon",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Verizon across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hnpl9-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.2,
+    "capturedAt": "2026-10-14T19:14:58.621Z",
+    "probe": {
+      "snapshotId": "snap-mv8hnpl9-1",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C18",
+    "subject": "Verizon",
+    "question": 2,
+    "questionText": "Which ownership relationships around Verizon changed in the last 12 months, and what is the coverage behind that?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hopw7-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 5.2,
+    "capturedAt": "2026-10-14T19:15:03.825Z",
+    "probe": {
+      "snapshotId": "snap-mv8hopw7-2",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C19",
+    "subject": "Verizon",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Verizon?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hotwz-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47,
+    "capturedAt": "2026-10-14T19:15:50.826Z",
+    "probe": {
+      "snapshotId": "snap-mv8hotwz-3",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C20",
+    "subject": "Intel",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Intel across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hqjjq-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 46.9,
+    "capturedAt": "2026-10-14T19:17:10.455Z",
+    "probe": {
+      "snapshotId": "snap-mv8hqjjq-1",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 46,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 46,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 3,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C21",
+    "subject": "Intel",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Intel in the last 12 months?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hrjn7-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 10.4,
+    "capturedAt": "2026-10-14T19:17:20.844Z",
+    "probe": {
+      "snapshotId": "snap-mv8hrjn7-2",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 46,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 46,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 3,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C22",
+    "subject": "Intel",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Intel connected?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hrrnt-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 46.7,
+    "capturedAt": "2026-10-14T19:18:07.574Z",
+    "probe": {
+      "snapshotId": "snap-mv8hrrnt-3",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 46,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "46 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 46,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 3,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C25",
+    "subject": "Broadcom",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Broadcom across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8ht3qu-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.2,
+    "capturedAt": "2026-10-14T19:19:10.271Z",
+    "probe": {
+      "snapshotId": "snap-mv8ht3qu-1",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 45,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 45,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C26",
+    "subject": "Broadcom",
+    "question": 2,
+    "questionText": "Which ownership relationships around Broadcom changed in the last 12 months, and what is the coverage behind that?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hu43s-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 13,
+    "capturedAt": "2026-10-14T19:19:23.285Z",
+    "probe": {
+      "snapshotId": "snap-mv8hu43s-2",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 45,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 45,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C27",
+    "subject": "Broadcom",
+    "question": 5,
+    "questionText": "What technology relationships connect Broadcom to other participants?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hue3o-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.3,
+    "capturedAt": "2026-10-14T19:19:25.548Z",
+    "probe": {
+      "snapshotId": "snap-mv8hue3o-3",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 45,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 45,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C28",
+    "subject": "Broadcom",
+    "question": 12,
+    "questionText": "Where do domains diverge around Broadcom, and on what evidence?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hufw1-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.4,
+    "capturedAt": "2026-10-14T19:19:27.951Z",
+    "probe": {
+      "snapshotId": "snap-mv8hufw1-4",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 45,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "leads": 3,
+      "analysisSentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "No formation established: the 45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) speak to 3 domains (LABOR, OWNERSHIP, TECHNOLOGY) and no single admitted relationship speaks to two of them; KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 45,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C29",
+    "subject": "Netflix",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Netflix across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hupwb-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 27.8,
+    "capturedAt": "2026-10-14T19:20:06.197Z",
+    "probe": {
+      "snapshotId": "snap-mv8hupwb-1",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 16,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C30",
+    "subject": "Netflix",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Netflix?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hvbba-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4,
+    "capturedAt": "2026-10-14T19:20:10.149Z",
+    "probe": {
+      "snapshotId": "snap-mv8hvbba-2",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 16,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C31",
+    "subject": "Netflix",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Netflix?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hveek-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.9,
+    "capturedAt": "2026-10-14T19:20:14.091Z",
+    "probe": {
+      "snapshotId": "snap-mv8hveek-3",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 16,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C32",
+    "subject": "Boston Scientific",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boston Scientific across ownership, technology, and capital?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hvxk1-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.2,
+    "capturedAt": "2026-10-14T19:21:22.063Z",
+    "probe": {
+      "snapshotId": "snap-mv8hvxk1-1",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 9,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 17,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C33",
+    "subject": "Boston Scientific",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boston Scientific in the last 12 months?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hwxva-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 13,
+    "capturedAt": "2026-10-14T19:21:35.078Z",
+    "probe": {
+      "snapshotId": "snap-mv8hwxva-2",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 9,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 17,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C34",
+    "subject": "Boston Scientific",
+    "question": 7,
+    "questionText": "Which relationships around Boston Scientific dissolved or are indeterminate, and why?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hx8am-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 38.6,
+    "capturedAt": "2026-10-14T19:22:13.651Z",
+    "probe": {
+      "snapshotId": "snap-mv8hx8am-3",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 9,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 17,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C35",
+    "subject": "Boston Scientific",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Boston Scientific?",
+    "build": "6e10494",
+    "snapshotId": "snap-mv8hy1qn-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.1,
+    "capturedAt": "2026-10-14T19:22:17.706Z",
+    "probe": {
+      "snapshotId": "snap-mv8hy1qn-4",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 9,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 3,
+        "INFERRED": 1
+      },
+      "synthesisValidation": {
+        "statements": 17,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  }
+]
