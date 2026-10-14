@@ -1,0 +1,201 @@
+[
+  {
+    "case": "LO1",
+    "subject": "Live Oak Bancshares",
+    "q": "LO1",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 60,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linked": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 27,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 8,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 60,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO2",
+    "subject": "Live Oak Bancshares",
+    "q": "LO2",
+    "c1": 2,
+    "c2": 0,
+    "c3": 1,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 6,
+    "scale": 6,
+    "features": {
+      "citedRecords": 60,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [],
+      "linked": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 27,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 8,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 60,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO3",
+    "subject": "Live Oak Bancshares",
+    "q": "LO3",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 60,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "LABOR",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 27,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 8,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 60,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO4",
+    "subject": "Live Oak Bancshares",
+    "q": "LO4",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 60,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP"
+      ],
+      "linked": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 27,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 8,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 60,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  }
+]

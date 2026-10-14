@@ -1,0 +1,259 @@
+[
+  {
+    "case": "LO1",
+    "subject": "Live Oak Bancshares",
+    "question": "LO1",
+    "questionText": "What structural relationships are forming around Live Oak Bancshares across ownership, technology, and capital?",
+    "build": "d2f4f7d",
+    "snapshotId": "snap-mv8ewb5s-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 47.1,
+    "capturedAt": "2026-10-14T17:57:40.942Z",
+    "probe": {
+      "snapshotId": "snap-mv8ewb5s-1",
+      "canonicalId": "live-oak-bancshares",
+      "subject": "Live Oak Bancshares, Inc.",
+      "relationships": 27,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 20,
+        "ASSIGNEE_OF_GRANTED_PATENT": 1
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historySentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historyRelationships": 27,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO2",
+    "subject": "Live Oak Bancshares",
+    "question": "LO2",
+    "questionText": "What capital events involving named counterparties were reported for Live Oak Bancshares in the last 12 months?",
+    "build": "d2f4f7d",
+    "snapshotId": "snap-mv8exbft-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.6,
+    "capturedAt": "2026-10-14T17:57:43.578Z",
+    "probe": {
+      "snapshotId": "snap-mv8exbft-2",
+      "canonicalId": "live-oak-bancshares",
+      "subject": "Live Oak Bancshares, Inc.",
+      "relationships": 27,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 20,
+        "ASSIGNEE_OF_GRANTED_PATENT": 1
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historySentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historyRelationships": 27,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO3",
+    "subject": "Live Oak Bancshares",
+    "question": "LO3",
+    "questionText": "What do labor and capital activity around Live Oak Bancshares show, and what connects them?",
+    "build": "d2f4f7d",
+    "snapshotId": "snap-mv8exdhh-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 2.2,
+    "capturedAt": "2026-10-14T17:57:45.796Z",
+    "probe": {
+      "snapshotId": "snap-mv8exdhh-3",
+      "canonicalId": "live-oak-bancshares",
+      "subject": "Live Oak Bancshares, Inc.",
+      "relationships": 27,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 20,
+        "ASSIGNEE_OF_GRANTED_PATENT": 1
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historySentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historyRelationships": 27,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "LO4",
+    "subject": "Live Oak Bancshares",
+    "question": "LO4",
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Live Oak Bancshares?",
+    "build": "d2f4f7d",
+    "snapshotId": "snap-mv8exf6l-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.7,
+    "capturedAt": "2026-10-14T17:57:49.462Z",
+    "probe": {
+      "snapshotId": "snap-mv8exf6l-4",
+      "canonicalId": "live-oak-bancshares",
+      "subject": "Live Oak Bancshares, Inc.",
+      "relationships": 27,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 20,
+        "ASSIGNEE_OF_GRANTED_PATENT": 1
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historySentence": "27 admitted relationships (6 beneficial-ownership disclosures, 20 officer or director disclosures, 1 granted-patent assignment) connect 3 domains: LABOR ↔ OWNERSHIP (control of organizational capacity · through Live Oak Bancshares, Inc., MAHAN JAMES S III); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through Live Oak Bancshares, Inc.); OWNERSHIP ↔ TECHNOLOGY (control of IP or platform · through Live Oak Bancshares, Inc.).",
+      "historyRelationships": 27,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  }
+]
