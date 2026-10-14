@@ -14,8 +14,9 @@ const reg = (name) => ({ source: 'x' });
 
 console.log('Producer identifier contracts');
 {
+  ok(!producerEligibility({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } }).ineligible.some(x => x.id === 'issuer-page'), 'a producer that applies only to curated companies (issuer-page) is not reported as a gap for a company without curated pages');
   const listed = producerEligibility({ name: 'ORACLE CORP', identifiers: { edgar: '0001341439' } });
-  ok(listed.ineligible.map(x => x.id).join() === 'formd-people' && listed.eligible.length === PRODUCERS.length - 1, 'a listed company carrying an SEC CIK: every producer is eligible except the Form D one (private filers only)');
+  ok(listed.ineligible.map(x => x.id).join() === 'formd-people' && listed.eligible.length === PRODUCERS.filter(p => !p.curatedOnly).length - 1, 'a listed company carrying an SEC CIK: every producer is eligible except the Form D one (private filers only)');
   const lei = producerEligibility({ name: 'DATABENTO INC.', identifiers: { lei: '254900DQ2GKA6Q48SJ38' } });
   ok(lei.ineligible.map(x => x.id).sort().join() === '8k,clinical,counterparty,formd-people,labor,media,ownership' && lei.eligible.join() === 'patents,capital', 'an entity carrying only an LEI (KRYL-1417): the SEC-keyed producers are ineligible; the patent producer (an SEC CIK or an LEI confirmed by GLEIF) and the name-based observation producer are eligible');
   ok(lei.ineligible.every(x => x.missing.join() === 'edgar' || x.missing.join() === 'edgar'), 'each ineligible producer names the identifier it lacks');

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "LO1",
+    "subject": "Live Oak Bancshares",
+    "pattern": "Q1",
+    "text": "What structural relationships are forming around Live Oak Bancshares across ownership, technology, and capital?",
+    "needs": "OTC"
+  },
+  {
+    "id": "LO2",
+    "subject": "Live Oak Bancshares",
+    "pattern": "Q3",
+    "text": "What capital events involving named counterparties were reported for Live Oak Bancshares in the last 12 months?",
+    "needs": "C"
+  },
+  {
+    "id": "LO3",
+    "subject": "Live Oak Bancshares",
+    "pattern": "Q6",
+    "text": "What do labor and capital activity around Live Oak Bancshares show, and what connects them?",
+    "needs": "LC"
+  },
+  {
+    "id": "LO4",
+    "subject": "Live Oak Bancshares",
+    "pattern": "Q10",
+    "text": "What does the evidence not establish about the ownership and capital structure of Live Oak Bancshares?",
+    "needs": "OC"
+  }
+]

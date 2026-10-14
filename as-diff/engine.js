@@ -20,6 +20,7 @@ import { patentsFor, warmPatentIndex } from './patentbulk.js';
 import { exhibit21For } from './exhibit21.js';
 import { gleifByLegalName, gleifByLei } from './gleif.js';
 import { mediaFor } from './mediaobservation.js';
+import { issuerPagesFor } from './issuerpage.js';
 import { gdeltTryTurn } from './gdeltgate.js';
 import { applyUpstreamDeadline } from './upstreamdeadline.js';
 import { loadProxyCache, scheduleProxyCacheSave } from './proxycachestore.js';
@@ -1316,6 +1317,13 @@ async function handleClinicalTrials(req, res) {
 }
 
 // ── KRYL-1416: granted-patent assignee lookup over the local USPTO PatentsView bulk file (no key held by the engine; the file is downloaded while signed in to data.uspto.gov) ──
+async function handleIssuerPage(req, res) {
+  const id = new URL(req.url, 'http://localhost').searchParams.get('id') ?? '';
+  const r = await issuerPagesFor(id);
+  if (r.error) return send(res, 200, { error: r.error });     // a failure or an uncurated company is returned as an error, never as an empty page
+  send(res, 200, r);
+}
+
 async function handleMediaObservation(req, res) {
   const cik = new URL(req.url, 'http://localhost').searchParams.get('cik') ?? '';
   const r = await mediaFor(cik);
@@ -2041,6 +2049,7 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/api/sec-names')                     return handleSecNames(req, res);
   if (req.method === 'GET'  && url === '/api/clinical-trials')                return handleClinicalTrials(req, res);
+  if (req.method === 'GET'  && url === '/api/issuer-page')                    return handleIssuerPage(req, res);
   if (req.method === 'GET'  && url === '/api/media-observation')              return handleMediaObservation(req, res);
   if (req.method === 'GET'  && url === '/api/gleif-entity')                   return handleGleifEntity(req, res);
   if (req.method === 'GET'  && url === '/api/patent-assignee')                return handlePatentAssignee(req, res);

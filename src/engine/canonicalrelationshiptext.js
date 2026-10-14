@@ -33,6 +33,13 @@ export function canonicalDetailLines(ev) {
     }
     return [head, `the assignee organization "${p.assigneeName}" equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity and is not matched unless the company's own 10-K Exhibit 21 lists it`];
   }
+  if (p?.source === 'ISSUER_PAGE') {                       // KRYL-1419: the company's own published page, quoted as it states it
+    const asOf = String(p.retrievedAt ?? '').slice(0, 10);
+    if (p.pageKind === 'LEADERSHIP') return [`role as the company's own leadership page states it: "${p.role}" · ${p.url} · page read ${asOf}`,
+      `the company's own statement: it is not independently confirmed, it is not a filing, and a listing on a web page is not a formal officer disclosure; the page does not state board membership, and the person is identified only by the name the page gives`];
+    return [`"${String(p.sentence).length > 230 ? String(p.sentence).slice(0, 227).trimEnd() + '…' : p.sentence}" · ${p.url} · announcement dated ${p.announcementDate ?? 'date not stated'} · page read ${asOf}`,
+      `the company's own statement: ${p.round}, ${p.amount}${p.valuation ? `, valuation ${p.valuation}` : ''}; it is not independently confirmed, it does not state the other investors or later rounds, and the investor is identified only by the name the page gives`];
+  }
   if (p?.source === 'GDELT' && p.phraseSource === 'SEC_REGISTERED_NAME') {   // KRYL-1418: a dated article that names the company in its title
     return [`named in article · "${String(p.title).length > 150 ? String(p.title).slice(0, 147).trimEnd() + '…' : p.title}" · ${p.domain} · first seen ${p.seenDate} (as GDELT states it)`,
       `the article's title contains "${p.phrase}", the company's SEC registered name; that is all this establishes: no endorsement, causation, event participation, sentiment or other connection is inferred, and the article text was not read here`];
@@ -72,6 +79,8 @@ export function canonicalRelationshipSentence(type, a, b, nuId = null, dealStatu
   if (type === 'CAPITAL_EVENT_INVOLVES') return `${a} reported a capital event involving ${nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF' ? 'an unnamed affiliate of ' : ''}${b}`;
   if (type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}`;
   if (type === 'ASSIGNEE_OF_GRANTED_PATENT') return nuId?.heldBy ? `${nuId.heldBy}, a subsidiary listed in ${a}'s 10-K Exhibit 21, is the assignee of granted patent ${b}` : `${a} is the assignee of granted patent ${b}`;
+  if (type === 'HAS_STATED_ROLE_ON_ISSUER_PAGE') return `${b} is listed as ${nuId?.role ?? 'a role-holder'} on ${a}'s own page`;
+  if (type === 'LED_FUNDING_ROUND_PER_ISSUER') return `${b} is stated by ${a} to have led its ${nuId?.round ?? 'funding round'}`;
   if (type === 'NAMED_IN_ARTICLE') return `${a} is named in the article ${b}`;
   if (type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}`;
   if (type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${nuId?.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D`;

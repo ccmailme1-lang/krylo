@@ -4,7 +4,7 @@
 // any late answer from the upstream is discarded (never written to a finished response).
 export const UPSTREAM_DEADLINE_MS = 20_000;
 // Routes that manage their own timing or are long-lived: streams, the SEC routes the admission path depends on, and the routes with their own gates and timeouts.
-export const SELF_TIMED = /^\/api\/(?:signals\/stream|stats\/stream|edgar|edgar-document|sec-names|clinical-trials|patent-assignee|gleif-entity|media-observation|gdelt-doc|tester-telemetry|guest-state)\b|^\/v1\//;
+export const SELF_TIMED = /^\/api\/(?:signals\/stream|stats\/stream|edgar|edgar-document|sec-names|clinical-trials|patent-assignee|gleif-entity|media-observation|issuer-page|gdelt-doc|tester-telemetry|guest-state)\b|^\/v1\//;
 
 export function applyUpstreamDeadline(req, res, { ms = UPSTREAM_DEADLINE_MS, setT = setTimeout, clearT = clearTimeout } = {}) {
   const url = String(req.url ?? '').split('?')[0];

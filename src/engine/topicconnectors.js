@@ -38,7 +38,9 @@ import { SETTLE_TIMEOUT_MS } from './analyticalsnapshot.js';
 // engine, and slow source lookups can hold them, so a 3 s abort recorded a healthy store as failed (seen on the first case of a subject, 2026-10-14).
 const STORE_HYDRATE_MS = SETTLE_TIMEOUT_MS;
 import { fetchMediaObservations, buildMediaSignals } from './connectors/gdeltmediaobservation.js';
-import { admitMediaArticles } from './mediaarticleadmission.js';import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
+import { admitMediaArticles } from './mediaarticleadmission.js';
+import { fetchIssuerPage } from './connectors/issuerpage.js';
+import { admitIssuerPage } from './issuerpageadmission.js';import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -140,6 +142,22 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         return settleLookup('patents', null);
       });
     }).catch((e) => settleLookup('patents', String(e?.message ?? e)));
+  };
+  // KRYL-1419 (Founder ratified 2026-10-14): the company's OWN published pages (leadership page and funding announcement), for a company already identified by a GLEIF LEI that carries a curated
+  // official domain. The live GLEIF record must confirm the entity first; only what the page states is admitted (source-stated, not independently confirmed).
+  const launchIssuerPage = (alreadyExpected = false) => {
+    if (!elig.eligible.includes('issuer-page')) return;
+    if (!alreadyExpected) expectLookup('issuer-page', { canonicalId: scope.canonicalId });
+    verifyGleifLei(scope.entity, { gleifLeiFn }).then((v) => {
+      if (!v.verified) return settleLookup('issuer-page', `the GLEIF record for LEI ${scope.entity.identifiers.lei} did not confirm the entity (${v.reason})`);
+      const entity = { lei: v.lei, name: v.legalName, displayName: scope.entity.name, gleif: v.evidence };
+      return fetchIssuerPage({ entity: { canonicalId: scope.canonicalId } }).then((r) => {
+        if (r.failed) return settleLookup('issuer-page', `the company's own pages were not read (${r.failed})`);
+        admitIssuerPage({ entity, page: r });
+        window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+        return settleLookup('issuer-page', null);
+      });
+    }).catch((e) => settleLookup('issuer-page', String(e?.message ?? e)));
   };
   // KRYL-1418 (Founder ratified 2026-10-13): dated GDELT articles naming the company's SEC registered name, as subject-bound MEDIA observations (never relationships; nothing inferred from an article).
   const launchMedia = () => {
@@ -268,9 +286,10 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   if (scope.kind === 'ENTITY' && !scope.entity.identifiers?.edgar && scope.entity.identifiers?.lei) {
     expectLookup('store', { canonicalId: scope.canonicalId });
     if (elig.eligible.includes('patents')) expectLookup('patents', { canonicalId: scope.canonicalId });   // registered now: nothing else keeps the snapshot open for an entity with no SEC filings
+    if (elig.eligible.includes('issuer-page')) expectLookup('issuer-page', { canonicalId: scope.canonicalId });
     hydrateFor([toTopologyNodeId(scope.canonicalId)], { timeoutMs: STORE_HYDRATE_MS })
-      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchPatents(true); })
-      .catch((e) => { settleLookup('store', String(e?.message ?? e)); if (elig.eligible.includes('patents')) settleLookup('patents', 'the durable store step failed first'); });
+      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchPatents(true); launchIssuerPage(true); })
+      .catch((e) => { settleLookup('store', String(e?.message ?? e)); if (elig.eligible.includes('patents')) settleLookup('patents', 'the durable store step failed first'); if (elig.eligible.includes('issuer-page')) settleLookup('issuer-page', 'the durable store step failed first'); });
   }
 
   // KRYL-1413 (Founder ratified 2026-10-12): a private SEC filer (Form D issuer class) has no Forms 3, 4 or 5; its executive officers and directors are read from its own newest Form D

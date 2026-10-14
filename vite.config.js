@@ -95,6 +95,7 @@ export default defineConfig({
       '/api/patent-assignee': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/gleif-entity': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/media-observation': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/api/issuer-page': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/patentsview':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/github':          { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/arxiv':           { target: 'http://localhost:4000', changeOrigin: true, secure: false },

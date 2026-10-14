@@ -100,6 +100,17 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
     // Ratified 2026-10-13 (Intel): the same granted patents also support KNOWLEDGE, identified here as patent-derived knowledge evidence only.
     add(STATUS.SUPPORTED, `KNOWLEDGE is shown for ${subject} from patent-derived evidence only: the ${pats.length} granted patent${pats.length !== 1 ? 's' : ''} above (${patIds(pats)}), as the USPTO PatentsView table states them. This does not establish research impact, author affiliation, publications or any other knowledge relationship, and it forms no link to another domain.`, patRefs(pats));
   }
+  // 2h. The company's own published pages (KRYL-1419): who the page lists with which role, and the round it announces, each as the company's own statement.
+  const pageRel = relationships.map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'ISSUER_PAGE');
+  const pageRoles = pageRel.filter(x => x.r.type === 'HAS_STATED_ROLE_ON_ISSUER_PAGE'), pageLeads = pageRel.filter(x => x.r.type === 'LED_FUNDING_ROUND_PER_ISSUER');
+  const pageRefs = (xs) => xs.slice(0, 20).map(x => ({ relationshipId: x.r.id, accession: x.ev.url, form: 'Issuer web page', filingDate: String(x.ev.retrievedAt).slice(0, 10) }));
+  if (pageRoles.length) {
+    add(STATUS.SUPPORTED, `${subject}'s own leadership page lists ${pageRoles.length} ${pageRoles.length !== 1 ? 'people' : 'person'} with roles (${pageRoles.slice(0, 3).map(x => `${x.ev.personName}, ${x.ev.role}`).join('; ')}${pageRoles.length > 3 ? '; …' : ''}), read ${String(pageRoles[0].ev.retrievedAt).slice(0, 10)}; this is the company's own statement, not independently confirmed, not a filing, and a listing on a web page is not a formal officer disclosure; board membership is not stated.`, pageRefs(pageRoles));
+  }
+  if (pageLeads.length) {
+    const e = pageLeads[0].ev;
+    add(STATUS.SUPPORTED, `${subject}'s own announcement states ${e.round}, ${e.amount}${e.valuation ? ` at a valuation of ${e.valuation}` : ''}, led by ${pageLeads.map(x => x.ev.investorName).join(' and ')}${e.announcementDate ? ` (announcement dated ${e.announcementDate})` : ''}; this is the company's own statement, not independently confirmed; it states no other investor and no later round.`, pageRefs(pageLeads));
+  }
   // 2g. Dated articles whose title names the company (KRYL-1418): the naming and its citation, nothing more.
   const arts = relationships.filter(r => r.type === 'NAMED_IN_ARTICLE').map(r => ({ r, ev: evidenceFor(r.id)?.provenance })).filter(x => x.ev?.source === 'GDELT');
   if (arts.length) {

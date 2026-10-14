@@ -81,6 +81,9 @@ export const RELATION_TYPES = Object.freeze({
   PATENT_ASSIGNEE_OF: 'PATENT_ASSIGNEE_OF',
   // KRYL-1418 (2026-10-13) -- a dated article's title names the company's SEC registered name (MEDIA); nothing beyond the naming is established.
   NAMED_IN_ARTICLE: 'NAMED_IN_ARTICLE',
+  // KRYL-1419 (2026-10-14) -- the company's OWN page states a person's role (LABOR) / the investors that led its funding round (CAPITAL); source-stated, not independently confirmed.
+  ISSUER_PAGE_ROLE_OF: 'ISSUER_PAGE_ROLE_OF',
+  ISSUER_PAGE_ROUND_LED_BY: 'ISSUER_PAGE_ROUND_LED_BY',
 });
 
 // Informational only — does NOT gate registerTypedEdge. A closed vocabulary that silently

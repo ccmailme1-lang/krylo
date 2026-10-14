@@ -103,6 +103,18 @@ const PROJECTIONS = {
       fromLabel: meta.companyName, toLabel: meta.patentLabel, source: meta.source ?? 'USPTO_PATENTSVIEW_BULK',
     }),
   },
+  HAS_STATED_ROLE_ON_ISSUER_PAGE: {
+    typedEdgeType: RELATION_TYPES.ISSUER_PAGE_ROLE_OF,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.companyName, to: meta.partyLabel, fromCik: null, toCik: null, fromLabel: meta.companyName, toLabel: meta.partyLabel, source: meta.source ?? 'ISSUER_PAGE',
+    }),
+  },
+  LED_FUNDING_ROUND_PER_ISSUER: {
+    typedEdgeType: RELATION_TYPES.ISSUER_PAGE_ROUND_LED_BY,
+    toEdgeArgs: (relationship, meta) => ({
+      from: meta.companyName, to: meta.partyLabel, fromCik: null, toCik: null, fromLabel: meta.companyName, toLabel: meta.partyLabel, source: meta.source ?? 'ISSUER_PAGE',
+    }),
+  },
   NAMED_IN_ARTICLE: {
     typedEdgeType: RELATION_TYPES.NAMED_IN_ARTICLE,
     toEdgeArgs: (relationship, meta) => ({

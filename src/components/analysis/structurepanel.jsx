@@ -119,6 +119,7 @@ function FormationMapTab({ query }) {
         phiClass: r.phiClass,
         qualifier: r.nuId?.partyQualifier ?? null,   // KRYL-1401: an unnamed affiliate is worded as one
         dealStatus: r.nuState?.dealStatus ?? null,
+        round: r.nuId?.round ?? null,                // KRYL-1419: the funding round the company's own page states
         heldBy: r.nuId?.heldBy ?? null,              // KRYL-1416 Exhibit 21 rule: a subsidiary-held patent is worded as one
         role: r.nuId?.role ?? null,                  // KRYL-1411: DIRECTOR or OFFICER   // KRYL-1409: an ACQUIRED relationship is worded by its deal status
         part: r.part.map(id => NODE_LABELS[id] ?? id),

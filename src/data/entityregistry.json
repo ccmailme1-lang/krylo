@@ -396,7 +396,13 @@
     "canonicalName": "ANDURIL INDUSTRIES",
     "aliases": ["Anduril", "Anduril Industries Inc"],
     "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null, "lei": "254900CIXLZUXXNYQW57" },
-    "domainTags": ["TECHNOLOGY", "CAPITAL"]
+    "domainTags": ["TECHNOLOGY", "CAPITAL"],
+    "officialDomain": "anduril.com",
+    "officialPages": [
+      { "kind": "LEADERSHIP", "url": "https://www.anduril.com/anduril-leadership" },
+      { "kind": "FINANCING_ANNOUNCEMENT", "url": "https://www.anduril.com/news/anduril-announces-usd5b-series-h-raise" }
+    ],
+    "officialPagesNote": "Curated by the Founder's ratification of 2026-10-14 (the issuer's own published page as a source for officers and financing): the company's own domain and its own pages, read only for what they state."
   },
   {
     "canonicalId": "sysco",

@@ -15,7 +15,7 @@ export const CLASS_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'registry or lis
 const ENTITY_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'a registry or listed SEC company', SEC_FORM_D_ISSUER: 'a private SEC filer (Form D)', GLEIF_LEI: 'an entity identified by a GLEIF LEI (not an SEC filer)' });
 const classOf = (entity) => entity?.admissionClass ?? 'REGISTRY_OR_LISTED';
 
-export const IDENTIFIER_LABELS = Object.freeze({ edgar: 'an SEC CIK', lei: 'an LEI', uei: 'a federal contractor UEI', companiesHouse: 'a UK Companies House number', canonicalName: 'a verified canonical name' });
+export const IDENTIFIER_LABELS = Object.freeze({ edgar: 'an SEC CIK', lei: 'an LEI', uei: 'a federal contractor UEI', companiesHouse: 'a UK Companies House number', canonicalName: 'a verified canonical name', officialDomain: 'a curated official domain' });
 
 export const PRODUCERS = Object.freeze([
   { id: 'ownership', classes: ['REGISTRY_OR_LISTED'], label: 'SEC beneficial-ownership disclosures (Schedules 13D and 13G)', requires: ['edgar'], produces: 'relationship HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', evidence: 'the filing states the holder and the issuer, both by SEC CIK', why: 'the SEC dataset is keyed by the issuer CIK' },
@@ -26,15 +26,17 @@ export const PRODUCERS = Object.freeze([
   { id: 'clinical', classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER'], label: 'ClinicalTrials.gov lead sponsorship', requires: ['edgar', 'canonicalName'], produces: 'relationship LEAD_SPONSOR_OF_CLINICAL_TRIAL', evidence: 'the registry states the study and its lead sponsor; admitted only when the sponsor name equals the already-resolved entity\'s legal name', why: 'the sponsor is matched to an entity already resolved by its SEC CIK; the registry never creates identity' },
   { id: 'patents', classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER', 'GLEIF_LEI'], requiresAny: [['edgar', 'canonicalName'], ['lei', 'canonicalName']], label: 'USPTO PatentsView granted-patent assignees (local bulk file)', requires: ['edgar', 'canonicalName'], produces: 'relationship ASSIGNEE_OF_GRANTED_PATENT', evidence: 'the USPTO granted-patent table lists the company, by its exact legal name, as assignee', why: 'the assignee is matched to an entity already resolved by its SEC CIK; the table never creates identity' },
   { id: 'media', classes: ['REGISTRY_OR_LISTED'], label: 'GDELT dated articles naming the company (SEC registered name)', requires: ['edgar', 'canonicalName'], produces: 'MEDIA observations, and relationship NAMED_IN_ARTICLE only for an article whose title names the company', evidence: 'GDELT returns the article for the exact phrase of the SEC registered name; title, domain and date as GDELT states them', why: 'the phrase is the company\'s SEC registered name, so the entity must carry an SEC CIK' },
+  { id: 'issuer-page', curatedOnly: true, classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER', 'GLEIF_LEI'], label: 'the company\'s own published pages (leadership page and funding announcement)', requires: ['lei', 'officialDomain'], produces: 'relationships HAS_STATED_ROLE_ON_ISSUER_PAGE (LABOR) and LED_FUNDING_ROUND_PER_ISSUER (CAPITAL)', evidence: 'the company\'s own page states the role or the round; quoted as stated; not independently confirmed', why: 'the pages are read only from the company\'s own curated domain, and only for a company already identified by a GLEIF LEI' },
   { id: 'capital', label: 'USAspending awards (name-based observation)', requires: ['canonicalName'], produces: 'observation only, never a relationship', evidence: 'federal award history for the resolved name', why: 'the lookup is by recipient name; its result is an observation, not company-bound evidence' },
 ]);
 
 /** Which producers can run for an entity, and for each that cannot, the identifier types it is missing. */
 export function producerEligibility(entity) {
   const ids = entity?.identifiers ?? {};
-  const have = (t) => (t === 'canonicalName' ? !!entity?.name : !!ids[t]);
+  const have = (t) => (t === 'canonicalName' ? !!entity?.name : (!!ids[t] || !!entity?.[t]));   // officialDomain is a curated field of the entity card, not a registry identifier
   const eligible = [], ineligible = [];
   for (const p of PRODUCERS) {
+    if (p.curatedOnly && !entity?.officialDomain) continue;     // a producer that applies only to companies with curated pages is not a gap for the rest: it is neither eligible nor ineligible
     const alts = p.requiresAny ?? [p.requires];                      // a producer keyed by one of several identifiers (patents: an SEC CIK, or an LEI confirmed by GLEIF)
     const missing = alts.map(a => a.filter(t => !have(t))).sort((x, y) => x.length - y.length)[0];
     const wrongClass = p.classes && !p.classes.includes(classOf(entity));

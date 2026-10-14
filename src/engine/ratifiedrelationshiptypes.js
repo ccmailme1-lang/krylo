@@ -332,3 +332,49 @@ registerRelationshipType('NAMED_IN_ARTICLE', {
   nuStateKeys: [],
   classifyChange: () => 'PERSISTENT',
 });
+
+// HAS_STATED_ROLE_ON_ISSUER_PAGE (LABOR) and LED_FUNDING_ROUND_PER_ISSUER (CAPITAL) -- ratified by the Founder 2026-10-14 (KRYL-1419): the issuer's OWN published page as a source for officers and
+// financing, for a company already identified by a GLEIF LEI that carries a curated official domain. Canonical meaning: the company's own page states that a person holds a role / that investors
+// led its funding round, as the page states it, as of the retrieval time. It is the company's own statement: it is not independently confirmed, it is not a filing, a listing on a web page is not a
+// formal officer disclosure, and the page does not state other investors, board membership or later rounds. The person and the investor are the names as the page states them, SCOPED to the issuer's
+// page (no matching, no merging with any other identity). part = (company by LEI, scoped node), ORDERED.
+const PAGE_KEY = (t) => ` ${String(t ?? '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9]+/g, ' ').trim()} `;
+const issuerPageCommon = (assertion, nodePrefix) => {
+  const [companyId, nodeId_] = assertion.part ?? [];
+  const p = assertion.evidence?.provenance ?? {};
+  if (!companyId || !nodeId_ || companyId === nodeId_) return { admitted: false, reason: 'company and named party must be two distinct nodes' };
+  if (!/^LEI:[A-Z0-9]{20}$/.test(String(companyId))) return { admitted: false, reason: 'the company must be an entity identified by its GLEIF LEI' };
+  const id = p.identity ?? {};
+  if (id.source !== 'GLEIF' || id.class !== 'GLEIF_LEI' || `LEI:${id.lei}` !== companyId || !id.legalName || id.entityStatus !== 'ACTIVE' || id.registrationStatus !== 'ISSUED') return { admitted: false, reason: 'the company must be confirmed by an ACTIVE, ISSUED GLEIF record' };
+  if (p.source !== 'ISSUER_PAGE' || !p.officialDomain) return { admitted: false, reason: 'the source must be the company\'s own published page' };
+  let host = ''; try { host = new URL(String(p.url ?? '')).hostname.toLowerCase(); } catch { /* not a URL */ }
+  if (!String(p.url ?? '').startsWith('https://') || !(host === p.officialDomain || host.endsWith('.' + p.officialDomain))) return { admitted: false, reason: 'the page must be on the company\'s own domain' };
+  if (!p.retrievedAt) return { admitted: false, reason: 'the retrieval time is required' };
+  if (!new RegExp(`^${nodePrefix}:[A-Z0-9]{20}:[a-z0-9_]+$`).test(String(nodeId_))) return { admitted: false, reason: 'the named party must be a node scoped to the issuer\'s page' };
+  return { admitted: true, p };
+};
+registerRelationshipType('HAS_STATED_ROLE_ON_ISSUER_PAGE', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const c = issuerPageCommon(assertion, 'ISSUER_PAGE_PERSON'); if (!c.admitted) return c; const p = c.p;
+    if (p.pageKind !== 'LEADERSHIP' || !p.personName || !p.role || assertion.nuId?.role !== p.role) return { admitted: false, reason: 'a person and the role the page states are required' };
+    if (p.personIdentity !== 'NAME_SCOPED_TO_ISSUER_PAGE') return { admitted: false, reason: 'the person is identified only by the name the page states, scoped to the issuer\'s page' };
+    return { admitted: true };
+  },
+  nuIdKeys: ['role'],
+  nuStateKeys: [],
+  classifyChange: () => 'PERSISTENT',
+});
+registerRelationshipType('LED_FUNDING_ROUND_PER_ISSUER', {
+  phiClass: PhiClass.SEMANTIC,
+  admissionRule: (assertion) => {
+    const c = issuerPageCommon(assertion, 'ISSUER_PAGE_INVESTOR'); if (!c.admitted) return c; const p = c.p;
+    if (p.pageKind !== 'FINANCING_ANNOUNCEMENT' || !p.investorName || !p.round || !p.sentence || assertion.nuId?.round !== p.round) return { admitted: false, reason: 'an investor and the round the page states are required' };
+    if (!PAGE_KEY(p.sentence).includes(PAGE_KEY(p.investorName))) return { admitted: false, reason: 'the stated sentence must name the investor' };
+    if (p.investorIdentity !== 'NAME_SCOPED_TO_ISSUER_PAGE') return { admitted: false, reason: 'the investor is identified only by the name the page states, scoped to the issuer\'s page' };
+    return { admitted: true };
+  },
+  nuIdKeys: ['round'],
+  nuStateKeys: [],
+  classifyChange: () => 'PERSISTENT',
+});
