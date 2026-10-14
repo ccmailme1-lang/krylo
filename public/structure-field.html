@@ -1072,11 +1072,31 @@
         <span class="rel-meta">${r.type}</span>
       </div>`).join('');
   }
-  function relayoutForBrief() { resize(); positionHudBelowAxis(); positionPanelDefault(); draw(currentT); positionRelChip(); }
+  // The open list shares the window with the plot, the axis and the scrubber. It used to take up to 38% of the window height whatever stood above it, so in a shorter window the plot was
+  // squeezed to a strip and its labels were drawn over the legend (found 2026-10-14, also present on the 2026-10-11 and 2026-10-12 builds). It now takes only what leaves the plot a minimum
+  // working height and scrolls inside that; the plot and the list never share the same pixels.
+  const MIN_PLOT_H = 170, MIN_LIST_H = 90;
+  function fitRelExpand() {
+    if (relExpandEl.hidden) { relExpandEl.style.maxHeight = ''; return true; }
+    relExpandEl.style.maxHeight = '';                                          // measure from where the list starts, under its CSS cap
+    const top = relExpandEl.getBoundingClientRect().top;
+    const marginB = Math.max(90, AXIS_LABEL_GAP + scrubberWrapEl.offsetHeight + 16);   // as resize() reserves below the plot
+    const above = 14 + 14 + 34;                                                // gap under the brief, the header row, and the margin resize() adds above the plot
+    const room = window.innerHeight - marginB - MIN_PLOT_H - above - top;
+    if (room < MIN_LIST_H) return false;                                       // the plot keeps its minimum: there is no room to show a useful list here
+    relExpandEl.style.maxHeight = Math.min(0.38 * window.innerHeight, room) + 'px';
+    return true;
+  }
+  function flashTooShort() {
+    relChipEl.textContent = 'WINDOW TOO SHORT · SEE THE ANALYSIS LIST';
+    setTimeout(syncChipState, 4000);
+  }
+  function relayoutForBrief() { fitRelExpand(); resize(); positionHudBelowAxis(); positionPanelDefault(); draw(currentT); positionRelChip(); }
   function setEntityPanelOpen(open) {
     if (open) {
       fillRelExpand(entityRelsData);
       relExpandEl.hidden = false;
+      if (!fitRelExpand()) { relExpandEl.hidden = true; relExpandEl.style.maxHeight = ''; flashTooShort(); return; }   // never at the cost of the plot
       entityPanelOpen = true;
     } else if (entityPanelOpen) {
       relExpandEl.hidden = true;
@@ -2080,7 +2100,7 @@
     setT(0, false);
     rafId = requestAnimationFrame(loop);
   }
-  window.addEventListener('resize', () => { resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); thinTickLabels(); });
+  window.addEventListener('resize', () => { if (entityPanelOpen && !fitRelExpand()) { relExpandEl.hidden = true; entityPanelOpen = false; syncChipState(); } resize(); positionPanelDefault(); positionHudBelowAxis(); draw(currentT); positionRelChip(); thinTickLabels(); });
   init();
 })();
 </script>

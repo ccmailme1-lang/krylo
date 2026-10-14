@@ -74,7 +74,6 @@ import LensProjection    from './components/analysis/lensprojection.jsx';
 import OracleEngine      from './components/analysis/oracleengine.jsx';
 import ActionMatrix      from './components/analysis/actionmatrix.jsx';
 import AnalysisSubstrate  from './components/analysis/analysissubstrate.jsx';
-import AnalysisDomainField from './components/analysis/analysisdomainfield.jsx';
 import { recordMetricsSnapshot } from './engine/domainmetricsstore.js';
 import { registerChokepointEdges, buildChokepointStructure } from './engine/chokepointedges.js';
 import AnalysisField      from './components/analysis/analysisfield.jsx';
@@ -1259,18 +1258,6 @@ export default function App() {
 
   const isSurface = navMode === 'surface';
 
-  const globalPressure = useMemo(() => {
-    const r = streamStats?.received ?? 0;
-    return Math.min(1, r / 40);
-  }, [streamStats?.received]);
-
-  const globalCS = useMemo(() => {
-    if (globalPressure < 0.25) return 'INSUFFICIENT_SIGNAL';
-    if (globalPressure < 0.5)  return 'BUILDING_CONVERGENCE';
-    if (globalPressure < 0.75) return 'TURBULENT_CONVERGENCE';
-    return 'HIGH_CONVERGENCE';
-  }, [globalPressure]);
-
   return (
     <ecosystemcontext.Provider value={{ query, setquery }}>
 
@@ -1487,10 +1474,6 @@ export default function App() {
 
       {navMode === 'analysis' && (
         <div style={{ position: 'fixed', top: 48, left: 72, right: 0, bottom: 0, zIndex: 15, background: (homeMarquee && !activeSessionId) ? 'transparent' : '#000000', overflow: 'hidden' }}>
-          {/* Hidden (not unmounted) while Analysis is idle: it was always covered by the idle page's opaque background; the page is now transparent so the marquee shows through. */}
-          <div style={{ display: 'contents', visibility: (homeMarquee && !activeSessionId) ? 'hidden' : 'visible' }}>
-            <AnalysisDomainField signals={domainFieldSignals} pressure={globalPressure} convergenceState={globalCS} activeDomain={activeAnalysisDomain} />
-          </div>
           <AnalysisIdleField transparentBg={homeMarquee && !activeSessionId} activeCones={activeCones} onDomainSelect={setActiveAnalysisDomain} rawSignals={routedSignals} />
         </div>
       )}
