@@ -1,0 +1,389 @@
+[
+  {
+    "case": "PC01",
+    "subject": "Databento",
+    "question": "PC01",
+    "questionText": "What structural relationships are forming around Databento across technology, ownership, and labor?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8efkyf-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 60.5,
+    "capturedAt": "2026-10-14T17:44:53.476Z",
+    "probe": {
+      "snapshotId": "snap-mv8efkyf-1",
+      "canonicalId": "databento",
+      "subject": "Databento Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC02",
+    "subject": "Databento",
+    "question": "PC02",
+    "questionText": "Who has financed Databento, who are its officers and directors, and what has changed recently?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8egv8p-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 50,
+    "capturedAt": "2026-10-14T17:45:43.495Z",
+    "probe": {
+      "snapshotId": "snap-mv8egv8p-2",
+      "canonicalId": "databento",
+      "subject": "Databento Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC03",
+    "subject": "Integrated Biosciences",
+    "question": "PC03",
+    "questionText": "What structural relationships are forming around Integrated Biosciences across technology, ownership, and labor?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8ei465-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 53.1,
+    "capturedAt": "2026-10-14T17:46:44.732Z",
+    "probe": {
+      "snapshotId": "snap-mv8ei465-1",
+      "canonicalId": "integrated-biosciences",
+      "subject": "Integrated Biosciences, Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC04",
+    "subject": "Integrated Biosciences",
+    "question": "PC04",
+    "questionText": "Who has financed Integrated Biosciences, who are its officers and directors, and what has changed recently?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8ej92v-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 51.4,
+    "capturedAt": "2026-10-14T17:47:36.155Z",
+    "probe": {
+      "snapshotId": "snap-mv8ej92v-2",
+      "canonicalId": "integrated-biosciences",
+      "subject": "Integrated Biosciences, Inc.",
+      "relationships": 4,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 4
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 4 admitted relationships (4 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 4,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC05",
+    "subject": "Daytona",
+    "question": "PC05",
+    "questionText": "What structural relationships are forming around Daytona across technology, ownership, and labor?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8ekkkr-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 52.6,
+    "capturedAt": "2026-10-14T17:48:38.779Z",
+    "probe": {
+      "snapshotId": "snap-mv8ekkkr-1",
+      "canonicalId": "daytona-platforms",
+      "subject": "Daytona Platforms Inc.",
+      "relationships": 5,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 5
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 5,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC06",
+    "subject": "Daytona",
+    "question": "PC06",
+    "questionText": "Who has financed Daytona, who are its officers and directors, and what has changed recently?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8elp2h-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "formd-people:OK",
+      "clinical:OK",
+      "patents:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 50.9,
+    "capturedAt": "2026-10-14T17:49:29.683Z",
+    "probe": {
+      "snapshotId": "snap-mv8elp2h-2",
+      "canonicalId": "daytona-platforms",
+      "subject": "Daytona Platforms Inc.",
+      "relationships": 5,
+      "byType": {
+        "HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE": 5
+      },
+      "admittedDomains": [
+        "LABOR"
+      ],
+      "linkedDomains": [],
+      "links": 0,
+      "analysisSentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historySentence": "No formation established: the 5 admitted relationships (5 Form D officer or director disclosures) speak to one domain only (LABOR).",
+      "historyRelationships": 5,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 2
+      },
+      "synthesisValidation": {
+        "statements": 2,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC07",
+    "subject": "Anduril",
+    "question": "PC07",
+    "questionText": "What structural relationships are forming around Anduril across technology, ownership, and labor?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8emxqn-1",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "patents:OK",
+      "issuer-page:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 48.7,
+    "capturedAt": "2026-10-14T17:50:24.454Z",
+    "probe": {
+      "snapshotId": "snap-mv8emxqn-1",
+      "canonicalId": "anduril-industries",
+      "subject": "ANDURIL INDUSTRIES",
+      "relationships": 26,
+      "byType": {
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "HAS_STATED_ROLE_ON_ISSUER_PAGE": 4,
+        "LED_FUNDING_ROUND_PER_ISSUER": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "26 admitted relationships (20 granted-patent assignments, 4 roles the company's own page states, 2 funding-round leads the company states) connect 3 domains: CAPITAL ↔ LABOR (investment in / cost of capacity · through ANDURIL INDUSTRIES); CAPITAL ↔ TECHNOLOGY (capability funded / R&D capital intensity · through ANDURIL INDUSTRIES); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through ANDURIL INDUSTRIES).",
+      "historySentence": "26 admitted relationships (20 granted-patent assignments, 4 roles the company's own page states, 2 funding-round leads the company states) connect 3 domains: CAPITAL ↔ LABOR (investment in / cost of capacity · through ANDURIL INDUSTRIES); CAPITAL ↔ TECHNOLOGY (capability funded / R&D capital intensity · through ANDURIL INDUSTRIES); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through ANDURIL INDUSTRIES).",
+      "historyRelationships": 26,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 5
+      },
+      "synthesisValidation": {
+        "statements": 5,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "PC08",
+    "subject": "Anduril",
+    "question": "PC08",
+    "questionText": "Who has financed Anduril, who are its officers and directors, and what has changed recently?",
+    "build": "6a1d3ac",
+    "snapshotId": "snap-mv8enyn5-2",
+    "snapshotReady": true,
+    "relationshipChange": "none",
+    "lookups": [
+      "capital:OK",
+      "store:OK",
+      "patents:OK",
+      "issuer-page:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 48.1,
+    "capturedAt": "2026-10-14T17:51:12.512Z",
+    "probe": {
+      "snapshotId": "snap-mv8enyn5-2",
+      "canonicalId": "anduril-industries",
+      "subject": "ANDURIL INDUSTRIES",
+      "relationships": 26,
+      "byType": {
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "HAS_STATED_ROLE_ON_ISSUER_PAGE": 4,
+        "LED_FUNDING_ROUND_PER_ISSUER": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "26 admitted relationships (20 granted-patent assignments, 4 roles the company's own page states, 2 funding-round leads the company states) connect 3 domains: CAPITAL ↔ LABOR (investment in / cost of capacity · through ANDURIL INDUSTRIES); CAPITAL ↔ TECHNOLOGY (capability funded / R&D capital intensity · through ANDURIL INDUSTRIES); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through ANDURIL INDUSTRIES).",
+      "historySentence": "26 admitted relationships (20 granted-patent assignments, 4 roles the company's own page states, 2 funding-round leads the company states) connect 3 domains: CAPITAL ↔ LABOR (investment in / cost of capacity · through ANDURIL INDUSTRIES); CAPITAL ↔ TECHNOLOGY (capability funded / R&D capital intensity · through ANDURIL INDUSTRIES); LABOR ↔ TECHNOLOGY (substitution or complementarity (automation) · through ANDURIL INDUSTRIES).",
+      "historyRelationships": 26,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 5
+      },
+      "synthesisValidation": {
+        "statements": 5,
+        "problems": []
+      },
+      "admission": null
+    }
+  }
+]
