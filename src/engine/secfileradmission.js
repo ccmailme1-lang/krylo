@@ -28,7 +28,7 @@ const _resolution = new Map();
 const keyOf = (t) => String(t ?? '').trim().toLowerCase();
 export const getNameResolution = (text) => _resolution.get(keyOf(text)) ?? null;
 // Identity classes that exist as proposals but are NOT implemented or ratified: stated as "not checked", never as checked (specs/spec-entity-resolution-contract-for-architects-20261012.md).
-export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['GLEIF (LEI)', 'UK Companies House', 'the federal contractor registry (UEI)']);
+export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['UK Companies House', 'the federal contractor registry (UEI)']);   // GLEIF is a ratified identity class since 2026-10-13 (KRYL-1417): it is listed under the checks when it ran
 const OUTCOME_WORDS = { NO_MATCH: 'no match', NO_MATCH_SIMILAR: 'no exact name; similar names exist and none is assumed', AMBIGUOUS: 'several registrants share the name, none assumed', NEAR_MATCH: 'only a similar name, not assumed', NOT_LISTED: 'a registrant was found but it is not listed', NOT_VERIFIED: 'a candidate was found but its annual filings could not be confirmed', LOOKUP_FAILED: 'the lookup failed, so this is not evidence of absence', NO_QUERY_OR_SEARCH: 'not run', CANDIDATE: 'a candidate was found' };
 /**
  * The sentences appended to "its entity is not resolved": the closest listed registrant, explicitly not assumed, and which identity sources were actually checked, what
@@ -158,6 +158,27 @@ export async function admitPublicFiler(name, opts = {}) {
     }
     v.checks = [...(v.checks ?? []), check];
     if (fd.reason === 'AMBIGUOUS') v.candidates = fd.candidates;
+  }
+  // KRYL-1417 (GLEIF identity class, ratified 2026-10-13): a name that is neither a listed SEC registrant nor a Form D issuer is tried against the GLEIF Global LEI Index: one ACTIVE,
+  // ISSUED record whose legal name equals the query (or a curated alias's recorded LEI). Identity only, for the patent producer.
+  if (!v.verified && opts.gleifFn && (fd ? ['NO_MATCH', 'LOOKUP_FAILED'].includes(fd.reason) : ['NO_MATCH', 'LOOKUP_FAILED'].includes(v.reason))) {
+    const { verifyGleifEntity, GLEIF_CLASS, GLEIF_LABEL } = await import('./gleifidentity.js');
+    const gl = await verifyGleifEntity(name, { gleifFn: opts.gleifFn, now: opts.now ?? Date.now() });
+    const checkG = { source: 'GLEIF Global LEI Index', outcome: gl.verified ? 'VERIFIED' : gl.reason, candidates: gl.candidates ?? [] };
+    if (gl.verified) {
+      const byLei = resolveByIdentifier('lei', gl.lei);
+      if (byLei) return { entity: byLei, outcome: 'ALREADY_KNOWN' };
+      const entityG = createEntity({
+        canonicalName: gl.canonicalName, aliases: [String(name).trim()], identifiers: { lei: gl.lei }, domainTags: [],
+        admissionSource: `GLEIF Global LEI Index (${GLEIF_LABEL})`, admissionClass: GLEIF_CLASS,
+        admissionEvidence: `${gl.curatedAlias ? `curated alias "${gl.curatedAlias.alias}" (${gl.curatedAlias.curatedBy}); ` : ''}LEI ${gl.lei} · entity status ${gl.evidence.entityStatus} · registration ${gl.evidence.registrationStatus} · ${gl.evidence.jurisdiction ?? 'jurisdiction not stated'}${gl.evidence.registeredAs ? ` · registered as ${gl.evidence.registeredAs}` : ''} · record updated ${String(gl.evidence.lastUpdate ?? 'date not stated').slice(0, 10)}; legal name equals the query name; identity only; rule ${gl.rule}`,
+      });
+      if (!entityG) return { entity: null, outcome: 'SLUG_COLLISION', detail: { ...v, gleif: gl } };
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('krylo-entity-admitted', { detail: { canonicalId: entityG.canonicalId, lei: gl.lei } })); } catch { /* no window */ }
+      return { entity: entityG, outcome: 'ADMITTED', detail: { ...v, gleif: gl } };
+    }
+    v.checks = [...(v.checks ?? []), checkG];
+    if (gl.reason === 'AMBIGUOUS') v.candidates = gl.candidates;
   }
   if (!v.verified) {
     // every unresolved outcome records what was checked, so the subject's message is actionable (a NEAR or AMBIGUOUS note recorded earlier keeps its candidates)

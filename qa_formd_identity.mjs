@@ -59,7 +59,7 @@ console.log('Admission: identity only, labelled, after the listed-company path')
   _clearNameResolutionForTests();
   const d = await admitPublicFiler('Daytona Beach Hotel', { searchFn: listedSearch, nameFn, now: NOW, sleep: noSleep, formDGapMs: 0 });
   const note = nameResolutionNote('Daytona Beach Hotel');
-  ok(d.entity === null && !/Not checked: SEC Form D/.test(note) && /SEC Form D issuers \(/.test(note) && /Not checked: GLEIF/.test(note), 'an unresolved name states that Form D was checked and that GLEIF, Companies House and UEI were not');
+  ok(d.entity === null && !/Not checked: SEC Form D/.test(note) && /SEC Form D issuers \(/.test(note) && /Not checked: UK Companies House, the federal contractor registry \(UEI\)/.test(note), 'an unresolved name states that Form D was checked (and GLEIF, when its lookup ran), and that Companies House and UEI were not');
   _clearNameResolutionForTests();
   const dy = await admitPublicFiler('Daytona', { searchFn: listedSearch, nameFn, now: NOW, sleep: noSleep, formDGapMs: 0 });
   ok(dy.outcome === 'ADMITTED' && dy.entity.canonicalName === 'Daytona Platforms Inc.' && dy.entity.identifiers.edgar === '0001977563' && /curated alias "Daytona"/.test(dy.entity.admissionEvidence), 'Daytona is admitted as Daytona Platforms Inc. with the curated alias recorded in its provenance');

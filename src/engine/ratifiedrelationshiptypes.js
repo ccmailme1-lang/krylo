@@ -285,7 +285,15 @@ registerRelationshipType('ASSIGNEE_OF_GRANTED_PATENT', {
     const [companyId, patentId] = assertion.part ?? [];
     const p = assertion.evidence?.provenance ?? {};
     if (!companyId || !patentId || companyId === patentId) return { admitted: false, reason: 'company and patent must be two distinct nodes' };
-    if (!/^CIK:\d{10}$/.test(String(companyId))) return { admitted: false, reason: 'the company must be an entity identified by its SEC CIK' };
+    const byLei = /^LEI:[A-Z0-9]{20}$/.test(String(companyId));
+    if (!/^CIK:\d{10}$/.test(String(companyId)) && !byLei) return { admitted: false, reason: 'the company must be an entity identified by its SEC CIK or (KRYL-1417) its GLEIF LEI' };
+    if (byLei) {
+      // GLEIF identity class (Founder ratified 2026-10-13): identity only; the assignee must equal the GLEIF legal name exactly, and no subsidiary rule applies (there is no 10-K Exhibit 21).
+      const id = p.identity ?? {};
+      if (id.source !== 'GLEIF' || id.class !== 'GLEIF_LEI' || `LEI:${id.lei}` !== companyId || !id.legalName) return { admitted: false, reason: 'an LEI-identified company must cite its GLEIF record' };
+      if (id.entityStatus !== 'ACTIVE' || id.registrationStatus !== 'ISSUED') return { admitted: false, reason: 'the GLEIF record must show an ACTIVE entity with an ISSUED registration' };
+      if (p.assigneeMatch !== 'EXACT_LEGAL_NAME_OF_RESOLVED_ENTITY') return { admitted: false, reason: 'an LEI-identified company matches only by the exact GLEIF legal name' };
+    }
     if (p.source !== 'USPTO_PATENTSVIEW_BULK' || p.table !== 'g_assignee_disambiguated') return { admitted: false, reason: 'the source must be the USPTO PatentsView granted-patent assignee table' };
     if (!/^(?:\d{7,8}|D\d{6,7}|RE\d{5,6}|PP\d{5,6}|T\d{6,7}|X\d{6,7})$/.test(String(p.patentId ?? '')) || patentId !== `PATENT:US${p.patentId}`) return { admitted: false, reason: 'the patent must be identified by its granted patent number' };
     if (p.assigneeMatch === 'EXACT_LEGAL_NAME_OF_EXHIBIT_21_SUBSIDIARY') {

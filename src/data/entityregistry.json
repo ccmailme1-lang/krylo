@@ -395,7 +395,7 @@
     "canonicalId": "anduril-industries",
     "canonicalName": "ANDURIL INDUSTRIES",
     "aliases": ["Anduril", "Anduril Industries Inc"],
-    "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null },
+    "identifiers": { "edgar": null, "ticker": null, "fec": null, "uei": null, "lei": "254900CIXLZUXXNYQW57" },
     "domainTags": ["TECHNOLOGY", "CAPITAL"]
   },
   {

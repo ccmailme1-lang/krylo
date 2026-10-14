@@ -132,6 +132,7 @@ surfaceRouter.subscribe('__gravity__', ['oracle', 'feed', 'analysis'], (event) =
     // (edgar8ksignal.js). Additive and informational: no reader's magnitude, polarity or domain logic uses them.
     eventClass: event.eventClass ?? null,
     accession: event.meta?.accession ?? null,
+    mediaArticle: event.meta?.mediaArticle ?? null,   // KRYL-1418: a dated article exactly as GDELT states it (title, domain, date); nothing inferred from it
     capitalEvent: event.meta?.capitalEvent ?? null,   // KRYL-1399 step B: quoted amount / instrument / counterparties, or its stated absence
   };
   const arr = _pool.get(domain);

@@ -10,7 +10,7 @@ const { fetchPatentAssignments } = await import('./src/engine/connectors/patenta
 const { admitPatentAssignments, buildPatentAssertion } = await import('./src/engine/patentassigneeadmission.js');
 const { admitAndProject, findAdmittedRelationshipsFor, latestEvidenceFor, _clearAdmittedForTests } = await import('./src/engine/canonicalrelationshipprojection.js');
 const { canonicalRelationshipSentence, canonicalDetailLines } = await import('./src/engine/canonicalrelationshiptext.js');
-const { buildAdmittedFormation } = await import('./src/engine/admittedformation.js');
+const { buildAdmittedFormation, admittedFormationSentence } = await import('./src/engine/admittedformation.js');
 const { buildSynthesis } = await import('./src/engine/analyticalsynthesis.js');
 const { validateSynthesis } = await import('./src/engine/benchmarkprobe.js');
 const { producerEligibility } = await import('./src/engine/produceridentifiers.js');
@@ -70,13 +70,16 @@ console.log('Admission through the ratified rule');
   console.log('Formation, words, synthesis, contract');
   const labelOf = (id) => String(NODE_LABELS[id] ?? id);
   const f = buildAdmittedFormation({ relationships: rels, evidenceFor: latestEvidenceFor, labelOf });
-  ok(f.structure.domains.join() === 'TECHNOLOGY', 'TECHNOLOGY is an admitted domain');
+  ok(f.structure.domains.join() === 'KNOWLEDGE,TECHNOLOGY' && f.structure.patentDerivedKnowledge === true && f.structure.links === 0, 'TECHNOLOGY is an admitted domain; KNOWLEDGE is counted from patent-derived evidence only and forms no link (Intel ratification 2026-10-13)');
   ok(canonicalRelationshipSentence('ASSIGNEE_OF_GRANTED_PATENT', 'Tesla, Inc.', 'US 11700009', {}) === 'Tesla, Inc. is the assignee of granted patent US 11700009', 'wording: "is the assignee of granted patent ..."');
   const lines = canonicalDetailLines(latestEvidenceFor(rels[0].id));
   ok(/grant date, subject matter and whether the patent is in force are not stated here/.test(lines[0]) && /equals the resolved entity's legal name exactly; a subsidiary or a similarly named company would be a different legal entity/.test(lines[1]), 'detail lines: the table\'s statement and the limits; the subsidiary rule');
   const S = buildSynthesis({ subject: 'Tesla, Inc.', relationships: rels, evidenceFor: latestEvidenceFor, labelOf, formation: f });
   const st = S.statements.find(s => /lists Tesla, Inc\. \(exact legal name\) as the assignee of 3 granted patents/.test(s.text));
   ok(st && st.status === 'SUPPORTED' && /similarly named company, or to a subsidiary the company's own Form 10-K Exhibit 21 does not list, are different legal entities/.test(st.text) && st.evidence.length === 3, 'a SUPPORTED statement counts the patents and says subsidiaries are not counted');
+  const kn = S.statements.find(x => /^KNOWLEDGE is shown for Tesla, Inc\. from patent-derived evidence only/.test(x.text));
+  ok(kn && kn.status === 'SUPPORTED' && /does not establish research impact, author affiliation, publications/.test(kn.text) && kn.evidence.length === 3, 'a statement identifies the knowledge as patent-derived and states what it does not establish');
+  ok(/KNOWLEDGE is counted from patent-derived evidence only/.test(admittedFormationSentence(f, 'Tesla, Inc.')) && /one domain only \(TECHNOLOGY\)/.test(admittedFormationSentence(f, 'Tesla, Inc.')), 'the formation sentence says the same');
   ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
   ok(producerEligibility({ name: 'Tesla, Inc.', identifiers: { edgar: '0001318605' } }).eligible.includes('patents') && !producerEligibility({ name: 'X', identifiers: {} }).eligible.includes('patents'), 'the patents producer needs a resolved entity carrying an SEC CIK');
 }

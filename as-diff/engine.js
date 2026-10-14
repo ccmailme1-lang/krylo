@@ -18,6 +18,8 @@ import { secNames, secTitleForCik } from './secnames.js';
 import { clinicalTrialsFor } from './clinicaltrials.js';
 import { patentsFor, warmPatentIndex } from './patentbulk.js';
 import { exhibit21For } from './exhibit21.js';
+import { gleifByLegalName, gleifByLei } from './gleif.js';
+import { mediaFor } from './mediaobservation.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -1305,6 +1307,20 @@ async function handleClinicalTrials(req, res) {
 }
 
 // ── KRYL-1416: granted-patent assignee lookup over the local USPTO PatentsView bulk file (no key held by the engine; the file is downloaded while signed in to data.uspto.gov) ──
+async function handleMediaObservation(req, res) {
+  const cik = new URL(req.url, 'http://localhost').searchParams.get('cik') ?? '';
+  const r = await mediaFor(cik);
+  if (r.error) return send(res, /required/.test(r.error) ? 400 : 200, { error: r.error });   // a failure is returned as an error, never as an empty answer
+  send(res, 200, r);
+}
+
+async function handleGleifEntity(req, res) {
+  const sp = new URL(req.url, 'http://localhost').searchParams; const lei = sp.get('lei');
+  const r = lei ? await gleifByLei(lei) : await gleifByLegalName(sp.get('name') ?? '');
+  if (r.error) return send(res, /required/.test(r.error) ? 400 : 502, { error: r.error });
+  send(res, 200, r);
+}
+
 async function handlePatentAssignee(req, res) {
   const sp = new URL(req.url, 'http://localhost').searchParams; let name = sp.get('name') ?? ''; const cik = sp.get('cik');
   // With a CIK the match is made against the SEC's own registered name for that CIK (the legal name), never against a display name.
@@ -2013,6 +2029,8 @@ function routeRequest(req, res) {
   if (req.method === 'GET'  && url === '/api/edgar')                         return handleEdgarProxy(req, res);
   if (req.method === 'GET'  && url === '/api/sec-names')                     return handleSecNames(req, res);
   if (req.method === 'GET'  && url === '/api/clinical-trials')                return handleClinicalTrials(req, res);
+  if (req.method === 'GET'  && url === '/api/media-observation')              return handleMediaObservation(req, res);
+  if (req.method === 'GET'  && url === '/api/gleif-entity')                   return handleGleifEntity(req, res);
   if (req.method === 'GET'  && url === '/api/patent-assignee')                return handlePatentAssignee(req, res);
   if (req.method === 'POST' && url === '/api/patentsview')                   return handlePatentsViewProxy(req, res);
   if (req.method === 'GET'  && url === '/v1/timing-proxy')                   return handleTimingProxy(req, res);

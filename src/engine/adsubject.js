@@ -49,6 +49,11 @@ export function observationLabel(o, { accession = true } = {}) {
 const money = (a) => `${a.raw}${a.wording ? ` (${a.wording})` : ''}`;
 const quote = (p) => `"${String(p ?? '').length > 170 ? String(p).slice(0, 167).trimEnd() + '…' : String(p ?? '')}"`;
 export function observationDetailLines(o) {
+  if (o?.mediaArticle) {                     // KRYL-1418 (Founder ratified 2026-10-13): a dated article, quoted as GDELT states it; no relationship or event connection is inferred
+    const m = o.mediaArticle;
+    return [`article: "${String(m.title).length > 150 ? String(m.title).slice(0, 147).trimEnd() + '…' : m.title}" · ${m.domain ?? 'domain not stated'} · first seen ${m.seenDate} (as GDELT states it)`,
+      `GDELT returned it for the exact phrase "${m.phrase}"; the article text was not read here, and no relationship or event connection is inferred from an article alone`];
+  }
   const ev = o?.capitalEvent;
   if (!ev || !ev.attempted) return [];
   const lines = [];
@@ -142,6 +147,7 @@ export function A(domain, scope) {
       eventClass: s.eventClass ?? null,   // KRYL-1399 step A
       accession: s.accession ?? null,
       capitalEvent: s.capitalEvent ?? null,
+      mediaArticle: s.mediaArticle ?? null,   // KRYL-1418
       ts: s.ts,
     }));
 

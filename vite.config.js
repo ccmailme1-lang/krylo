@@ -93,6 +93,8 @@ export default defineConfig({
       '/api/sec-names':       { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/clinical-trials': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/patent-assignee': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/api/gleif-entity': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
+      '/api/media-observation': { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/patentsview':     { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/github':          { target: 'http://localhost:4000', changeOrigin: true, secure: false },
       '/api/arxiv':           { target: 'http://localhost:4000', changeOrigin: true, secure: false },

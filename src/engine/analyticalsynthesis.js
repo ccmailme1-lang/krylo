@@ -96,6 +96,10 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
     const subNames = [...new Set(patsSub.map(x => x.ev.subsidiary?.name))].slice(0, 4), x21 = patsSub[0].ev.subsidiary?.exhibit21 ?? {};
     add(STATUS.SUPPORTED, `The USPTO PatentsView granted-patent table lists ${patsSub.length} granted patent${patsSub.length !== 1 ? 's' : ''} among the newest read (${patIds(patsSub)}) as assigned to ${subNames.join(', ')}, named exactly in the Exhibit 21 of ${subject}'s own Form 10-K (accession ${x21.accession}, filed ${x21.filedAt}); the exhibit is as of its filing date and does not state that the subsidiary held a patent when it was granted, and patents of entities the exhibit does not name are not counted. The dataset file is dated ${String(patsSub[0].ev.fileAsOf).slice(0, 10)}.`, patRefs(patsSub));
   }
+  if (pats.length) {
+    // Ratified 2026-10-13 (Intel): the same granted patents also support KNOWLEDGE, identified here as patent-derived knowledge evidence only.
+    add(STATUS.SUPPORTED, `KNOWLEDGE is shown for ${subject} from patent-derived evidence only: the ${pats.length} granted patent${pats.length !== 1 ? 's' : ''} above (${patIds(pats)}), as the USPTO PatentsView table states them. This does not establish research impact, author affiliation, publications or any other knowledge relationship, and it forms no link to another domain.`, patRefs(pats));
+  }
   if (laborReport?.capped) add(STATUS.UNRESOLVED, `${laborReport.personsSeen - laborReport.personsRead} further reporting person${laborReport.personsSeen - laborReport.personsRead !== 1 ? 's' : ''} in the insider forms searched ${laborReport.personsSeen - laborReport.personsRead !== 1 ? 'were' : 'was'} not read in this analysis (the newest ${laborReport.personsRead} are read per analysis), so their roles are not shown.`, []);
 
   // 3. Ownership change over two 12-month periods, as the dated filings classify it.

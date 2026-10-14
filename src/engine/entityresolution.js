@@ -329,6 +329,7 @@ export function resolveAny(ref) {
  */
 export function toTopologyNodeId(ref) {
   const card = resolveAny(ref);
+  if (card && !card.identifiers?.edgar && card.identifiers?.lei) return `LEI:${String(card.identifiers.lei).toUpperCase()}`;   // KRYL-1417: an entity identified by its GLEIF LEI
   return nodeId(card?.identifiers?.edgar, card?.canonicalName ?? ref);
 }
 

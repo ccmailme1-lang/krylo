@@ -1,5 +1,5 @@
 {
-  "_note": "Aliases curated by the Founder for SEC Form D issuers (KRYL-1412 identity class). An alias applies only when the issuer's own Form D, found by the legal name, carries exactly the recorded CIK; a mismatch leaves the subject unresolved. Never used for similarity matching.",
+  "_note": "Aliases curated by the Founder, each for one identity class (SEC_FORM_D_ISSUER, KRYL-1412; GLEIF_LEI, KRYL-1417). An alias applies only when the issuer's own Form D, found by the legal name, carries exactly the recorded CIK; a mismatch leaves the subject unresolved. Never used for similarity matching. A GLEIF alias applies only when the GLEIF record found by the legal name carries exactly the recorded LEI.",
   "aliases": [
     {
       "alias": "Daytona",
@@ -8,6 +8,14 @@
       "class": "SEC_FORM_D_ISSUER",
       "curatedBy": "Founder, 2026-10-13 (ratified conditionally: curate only after verifying the registry entity and identifier are the same company)",
       "verification": "Form D 0001977563-26-000002 filed 2026-08-17 by Daytona Platforms Inc. (Delaware, New York NY, Other Technology) lists Ivan Burazin (Executive Officer, Director) and Vedran Jukic (Director), the founders of Daytona (daytona.io); an earlier Form D 0001977563-26-000001 filed 2026-02-05 is under the same CIK."
+    },
+    {
+      "alias": "Anduril",
+      "legalName": "Anduril Industries, Inc.",
+      "lei": "254900CIXLZUXXNYQW57",
+      "class": "GLEIF_LEI",
+      "curatedBy": "Founder ratification 2026-10-13 (GLEIF identity class, Anduril); curated after verification",
+      "verification": "GLEIF record 254900CIXLZUXXNYQW57: legal name ANDURIL INDUSTRIES, INC., entity status ACTIVE, registration ISSUED, jurisdiction US-DE, registered as 6386483. No SEC registrant bears the name; the 22 SEC registrants containing 'Anduril' are investment vehicles (different legal entities) and are not bound."
     }
   ]
 }

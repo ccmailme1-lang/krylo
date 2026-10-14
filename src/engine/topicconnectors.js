@@ -32,7 +32,12 @@ import { fetchClinicalTrials } from './connectors/clinicaltrials.js';
 import { admitClinicalTrials } from './clinicaltrialadmission.js';
 import { fetchPatentAssignments } from './connectors/patentassignee.js';
 import { admitPatentAssignments } from './patentassigneeadmission.js';
-import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
+import { verifyGleifLei } from './gleifidentity.js';
+import { SETTLE_TIMEOUT_MS } from './analyticalsnapshot.js';
+// The durable store's read may wait as long as the snapshot itself waits for any lookup (its decided settlement contract, 45 s): the browser allows only a few parallel connections to the
+// engine, and slow source lookups can hold them, so a 3 s abort recorded a healthy store as failed (seen on the first case of a subject, 2026-10-14).
+const STORE_HYDRATE_MS = SETTLE_TIMEOUT_MS;
+import { fetchMediaObservations, buildMediaSignals } from './connectors/gdeltmediaobservation.js';import { setAdmissionReport, setLaborReport, setEligibilityReport } from './admissionreport.js';
 import { installStoreSink, hydrateFor, registryCache } from './canonicalstoreclient.js';
 installStoreSink();   // the durable store sees every admission (single write path)
 import { beginAnalysis, expectLookup, settleLookup, armSettlement } from './analyticalsnapshot.js';
@@ -56,7 +61,7 @@ export function fireTopicConnectors(q, { refresh = false } = {}) {
   const pre = subjectScope(q);
   if (pre.kind === 'UNRESOLVED' && pre.subject?.text) {
     expectLookup('admission');
-    admitPublicFiler(pre.subject.text, { searchFn: secSearch, nameFn: secNameLookup }).then((r) => {
+    admitPublicFiler(pre.subject.text, { searchFn: secSearch, nameFn: secNameLookup, gleifFn }).then((r) => {
       if (r.outcome === 'ADMITTED') fireEntityScoped(q, { refresh });   // registers the entity lookups before 'admission' settles
       settleLookup('admission', r.outcome === 'LOOKUP_FAILED' ? 'the SEC filer lookup failed' : null);
     }).catch((e) => { settleLookup('admission', String(e?.message ?? e)); });
@@ -72,6 +77,18 @@ async function secNameLookup(text) {
     if (!r.ok) return { error: 'HTTP ' + r.status };
     return await r.json();
   } catch (e) { return { error: String(e?.message ?? e) }; }
+}
+
+// GLEIF binding for the admission path (the engine's /api/gleif-entity route; KRYL-1417).
+async function gleifFn(name) {
+  const r = await fetch('/api/gleif-entity?' + new URLSearchParams({ name }));
+  if (!r.ok) return { error: `HTTP ${r.status}` };
+  return r.json();
+}
+async function gleifLeiFn(lei) {
+  const r = await fetch('/api/gleif-entity?' + new URLSearchParams({ lei }));
+  if (!r.ok) return { error: `HTTP ${r.status}` };
+  return r.json();
 }
 
 // Search binding for the admission path (the engine's /api/edgar proxy).
@@ -103,17 +120,38 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   // KRYL-1414 (Founder ratified 2026-10-12): ClinicalTrials.gov lead sponsorship for a company already resolved by its SEC CIK (the registry never creates identity; an exact legal-name match
   // is required, so a company with no studies yields none). Launched after the durable store has been loaded, like every other producer.
   // KRYL-1416 (Founder ratified 2026-10-13, narrowly): granted-patent assignee from the local USPTO PatentsView bulk file, exact legal name of the resolved company only. A missing file is stated, never read as "no patents".
-  const launchPatents = () => {
+  const launchPatents = (alreadyExpected = false) => {
     if (!elig.eligible.includes('patents')) return;
-    const entity = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
-    expectLookup('patents', { canonicalId: scope.canonicalId });
-    fetchPatentAssignments({ entity }).then((r) => {
-      if (r.fileMissing) return settleLookup('patents', `the USPTO granted-patent file is not installed (${r.fileMissing.where}); technology patents are not read`);
-      if (r.failed) return settleLookup('patents', `the granted-patent lookup failed (${r.failed})`);
-      admitPatentAssignments({ entity, patents: r.patents });
-      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
-      return settleLookup('patents', null);
+    const ids = scope.entity.identifiers;
+    if (!alreadyExpected) expectLookup('patents', { canonicalId: scope.canonicalId });
+    // An entity with no SEC CIK that carries an LEI (KRYL-1417): the producer runs only once the live GLEIF record for that LEI confirms the entity now (ACTIVE, ISSUED, legal name equal);
+    // the patents are then matched to the GLEIF legal name exactly. Identity only; nothing else is read from the record.
+    const ready = ids.edgar ? Promise.resolve({ ok: true, entity: { cik: ids.edgar, lei: ids.lei, name: scope.entity.name } })
+      : verifyGleifLei(scope.entity, { gleifLeiFn }).then(v => (v.verified ? { ok: true, entity: { lei: v.lei, name: v.legalName, displayName: scope.entity.name, gleif: v.evidence } } : { ok: false, why: `the GLEIF record for LEI ${ids.lei} did not confirm the entity (${v.reason}${v.detail ? `: ${v.detail}` : ''})` }));
+    ready.then((g) => {
+      if (!g.ok) return settleLookup('patents', g.why);
+      const entity = g.entity;
+      return fetchPatentAssignments({ entity }).then((r) => {
+        if (r.fileMissing) return settleLookup('patents', `the USPTO granted-patent file is not installed (${r.fileMissing.where}); technology patents are not read`);
+        if (r.failed) return settleLookup('patents', `the granted-patent lookup failed (${r.failed})`);
+        admitPatentAssignments({ entity, patents: r.patents });
+        window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+        return settleLookup('patents', null);
+      });
     }).catch((e) => settleLookup('patents', String(e?.message ?? e)));
+  };
+  // KRYL-1418 (Founder ratified 2026-10-13): dated GDELT articles naming the company's SEC registered name, as subject-bound MEDIA observations (never relationships; nothing inferred from an article).
+  const launchMedia = () => {
+    if (!elig.eligible.includes('media')) return;
+    const entity = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
+    expectLookup('media', { canonicalId: scope.canonicalId });
+    fetchMediaObservations({ entity }).then((r) => {
+      if (r.failed) return settleLookup('media', `the GDELT lookup failed (${r.failed})`);
+      const sigs = buildMediaSignals({ canonicalId: scope.canonicalId, entityName: scope.entity.name, result: r });
+      if (sigs.length) surfaceRouter.dispatchBatch(sigs);
+      window.dispatchEvent(new CustomEvent('krylo-rho-updated', { detail: { canonicalId: scope.canonicalId, error: null } }));
+      return settleLookup('media', null);
+    }).catch((e) => settleLookup('media', String(e?.message ?? e)));
   };
   const launchClinical = () => {
     if (!elig.eligible.includes('clinical')) return;
@@ -136,7 +174,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
     let cpDone; const cpPromise = new Promise((r) => { cpDone = r; });
     const launchLookups = () => {
       markStarted(scope.canonicalId); // DEF-1396: a new run resets any earlier outcome to pending
-      launchClinical(); launchPatents();
+      launchClinical(); launchPatents(); launchMedia();
       const ownershipObservation = runTargetedOwnershipObservation({
         entityCik:   scope.entity.identifiers.edgar,
         canonicalId: scope.canonicalId,
@@ -219,8 +257,18 @@ function fireEntityScoped(q, { refresh = false } = {}) {
         }).catch(() => {});
       });
     };
-    hydrateFor([toTopologyNodeId(scope.canonicalId)]).then((h) => settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null)).catch((e) => settleLookup('store', String(e?.message ?? e))).finally(launchLookups);
+    hydrateFor([toTopologyNodeId(scope.canonicalId)], { timeoutMs: STORE_HYDRATE_MS }).then((h) => settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null)).catch((e) => settleLookup('store', String(e?.message ?? e))).finally(launchLookups);
 
+  }
+
+  // KRYL-1417 (Founder ratified 2026-10-13): an entity identified by its GLEIF LEI has no SEC filings; the patent producer is the one producer its identity class supports. The store is
+  // loaded first, like every other producer; the other producers are reported with the identifier they need (produceridentifiers.js), never skipped silently.
+  if (scope.kind === 'ENTITY' && !scope.entity.identifiers?.edgar && scope.entity.identifiers?.lei) {
+    expectLookup('store', { canonicalId: scope.canonicalId });
+    if (elig.eligible.includes('patents')) expectLookup('patents', { canonicalId: scope.canonicalId });   // registered now: nothing else keeps the snapshot open for an entity with no SEC filings
+    hydrateFor([toTopologyNodeId(scope.canonicalId)], { timeoutMs: STORE_HYDRATE_MS })
+      .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchPatents(true); })
+      .catch((e) => { settleLookup('store', String(e?.message ?? e)); if (elig.eligible.includes('patents')) settleLookup('patents', 'the durable store step failed first'); });
   }
 
   // KRYL-1413 (Founder ratified 2026-10-12): a private SEC filer (Form D issuer class) has no Forms 3, 4 or 5; its executive officers and directors are read from its own newest Form D
@@ -228,7 +276,7 @@ function fireEntityScoped(q, { refresh = false } = {}) {
   if (scope.kind === 'ENTITY' && elig.eligible.includes('formd-people')) {
     const issuer = { cik: scope.entity.identifiers.edgar, name: scope.entity.name };
     expectLookup('store', { canonicalId: scope.canonicalId }); expectLookup('formd-people', { canonicalId: scope.canonicalId });
-    hydrateFor([toTopologyNodeId(scope.canonicalId)])
+    hydrateFor([toTopologyNodeId(scope.canonicalId)], { timeoutMs: STORE_HYDRATE_MS })
       .then((h) => { settleLookup('store', h.error ? `the durable store was not reachable (${h.error})` : null); launchClinical(); launchPatents(); return fetchFormDPeople({ issuer, searchFn: secSearch }); })
       .then((r) => {
         if (r.failed) return settleLookup('formd-people', `the SEC Form D lookup failed (${r.failed})`);

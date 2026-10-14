@@ -288,6 +288,11 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           IDENTITY: SEC CIK {subjScope.entity.identifiers?.edgar} · private SEC filer (Form D), not listed · {subjScope.entity.admissionEvidence ? truncate(subjScope.entity.admissionEvidence.replace(/; rule .*$/, ''), 230) : 'identity from its own Form D'}
         </div>
       )}
+      {isEntity && !subjScope.entity.identifiers?.edgar && subjScope.entity.identifiers?.lei && (
+        <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: LBL }}>
+          IDENTITY: GLEIF LEI {subjScope.entity.identifiers.lei} · legal entity, not an SEC filer · {subjScope.entity.admissionEvidence ? truncate(subjScope.entity.admissionEvidence.replace(/; (legal name equals|identity only).*$/, ''), 230) : 'the LEI is a registry identifier, confirmed against the live GLEIF record when the patent source runs'}; identity only, no relationship is drawn from it
+        </div>
+      )}
       {question && (
         <div style={{ marginTop: 6, fontFamily: MONO, fontSize: 10, color: LBL }}>
           QUESTION: {truncate(question, 160)}
@@ -467,8 +472,11 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                 {observationDetailLines(o).map((l, k) => <div key={k} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>{l}</div>)}
               </div>
             ))}
-            {evidence.some(o => observationDetailLines(o).length > 0) && (
+            {evidence.some(o => !o.mediaArticle && observationDetailLines(o).length > 0) && (
               <div style={{ marginTop: 4, fontSize: 10, color: ABSENCE }}>Amounts, instruments and names are quoted from the filing text; nothing is computed from them (capital-event magnitude is INDETERMINATE).</div>
+            )}
+            {evidence.some(o => o.mediaArticle) && (
+              <div style={{ marginTop: 4, fontSize: 10, color: ABSENCE }}>MEDIA: article titles, domains and dates are quoted as GDELT states them; an article is an observation, not a relationship, and no connection to an event or relationship is inferred from it.</div>
             )}
           </div>
         ) : (
@@ -495,6 +503,14 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
           </Row>
         );
       })()}
+
+      {isEntity && !subjScope.entity.identifiers?.edgar && subjScope.entity.identifiers?.lei && (
+        <Row label="RELATIONSHIP CHANGE">
+          <span style={{ color: ABSENCE }}>
+            Source-dated comparison: nothing to compare. The two-period comparison reads Schedule 13D and 13G filings, which an entity with no SEC filings does not have. Its granted patents are read from one USPTO file, so no earlier reading was compared, change over time is not assessed here and no change is implied.
+          </span>
+        </Row>
+      )}
 
       <Row label="UNRESOLVED">
         <span style={{ color: ABSENCE }}>

@@ -11,8 +11,8 @@
 
 // The identity class an entity was admitted under: the SEC Form D issuer class is recorded on the entity card (secformdissuer.js); every other entity (the static registry and the
 // listed-company path) is REGISTRY_OR_LISTED. A producer may restrict the identity classes it supports.
-export const CLASS_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'registry or listed SEC companies', SEC_FORM_D_ISSUER: 'private SEC filers (Form D)' });
-const ENTITY_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'a registry or listed SEC company', SEC_FORM_D_ISSUER: 'a private SEC filer (Form D)' });
+export const CLASS_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'registry or listed SEC companies', SEC_FORM_D_ISSUER: 'private SEC filers (Form D)', GLEIF_LEI: 'entities identified by a GLEIF LEI' });
+const ENTITY_LABELS = Object.freeze({ REGISTRY_OR_LISTED: 'a registry or listed SEC company', SEC_FORM_D_ISSUER: 'a private SEC filer (Form D)', GLEIF_LEI: 'an entity identified by a GLEIF LEI (not an SEC filer)' });
 const classOf = (entity) => entity?.admissionClass ?? 'REGISTRY_OR_LISTED';
 
 export const IDENTIFIER_LABELS = Object.freeze({ edgar: 'an SEC CIK', lei: 'an LEI', uei: 'a federal contractor UEI', companiesHouse: 'a UK Companies House number', canonicalName: 'a verified canonical name' });
@@ -24,7 +24,8 @@ export const PRODUCERS = Object.freeze([
   { id: 'labor', classes: ['REGISTRY_OR_LISTED'], label: 'SEC insider forms (Forms 3, 4 and 5): officers and directors', requires: ['edgar'], produces: 'relationship HAS_OFFICER_OR_DIRECTOR_DISCLOSURE', evidence: 'the filing states the role; both parties by SEC CIK', why: 'the insider forms are keyed by the issuer CIK' },
   { id: 'formd-people', classes: ['SEC_FORM_D_ISSUER'], label: 'the issuer\'s own Form D: executive officers and directors', requires: ['edgar'], produces: 'relationship HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE', evidence: 'the Form D states the role; the person is identified only by the name the filing states, scoped to the issuer', why: 'the Form D is keyed by the issuer CIK' },
   { id: 'clinical', classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER'], label: 'ClinicalTrials.gov lead sponsorship', requires: ['edgar', 'canonicalName'], produces: 'relationship LEAD_SPONSOR_OF_CLINICAL_TRIAL', evidence: 'the registry states the study and its lead sponsor; admitted only when the sponsor name equals the already-resolved entity\'s legal name', why: 'the sponsor is matched to an entity already resolved by its SEC CIK; the registry never creates identity' },
-  { id: 'patents', classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER'], label: 'USPTO PatentsView granted-patent assignees (local bulk file)', requires: ['edgar', 'canonicalName'], produces: 'relationship ASSIGNEE_OF_GRANTED_PATENT', evidence: 'the USPTO granted-patent table lists the company, by its exact legal name, as assignee', why: 'the assignee is matched to an entity already resolved by its SEC CIK; the table never creates identity' },
+  { id: 'patents', classes: ['REGISTRY_OR_LISTED', 'SEC_FORM_D_ISSUER', 'GLEIF_LEI'], requiresAny: [['edgar', 'canonicalName'], ['lei', 'canonicalName']], label: 'USPTO PatentsView granted-patent assignees (local bulk file)', requires: ['edgar', 'canonicalName'], produces: 'relationship ASSIGNEE_OF_GRANTED_PATENT', evidence: 'the USPTO granted-patent table lists the company, by its exact legal name, as assignee', why: 'the assignee is matched to an entity already resolved by its SEC CIK; the table never creates identity' },
+  { id: 'media', classes: ['REGISTRY_OR_LISTED'], label: 'GDELT dated articles naming the company (SEC registered name)', requires: ['edgar', 'canonicalName'], produces: 'observation only (MEDIA), never a relationship', evidence: 'GDELT returns the article for the exact phrase of the SEC registered name; title, domain and date as GDELT states them', why: 'the phrase is the company\'s SEC registered name, so the entity must carry an SEC CIK' },
   { id: 'capital', label: 'USAspending awards (name-based observation)', requires: ['canonicalName'], produces: 'observation only, never a relationship', evidence: 'federal award history for the resolved name', why: 'the lookup is by recipient name; its result is an observation, not company-bound evidence' },
 ]);
 
@@ -34,7 +35,8 @@ export function producerEligibility(entity) {
   const have = (t) => (t === 'canonicalName' ? !!entity?.name : !!ids[t]);
   const eligible = [], ineligible = [];
   for (const p of PRODUCERS) {
-    const missing = p.requires.filter(t => !have(t));
+    const alts = p.requiresAny ?? [p.requires];                      // a producer keyed by one of several identifiers (patents: an SEC CIK, or an LEI confirmed by GLEIF)
+    const missing = alts.map(a => a.filter(t => !have(t))).sort((x, y) => x.length - y.length)[0];
     const wrongClass = p.classes && !p.classes.includes(classOf(entity));
     if (missing.length || wrongClass) ineligible.push({ id: p.id, label: p.label, missing, ...(wrongClass ? { wrongClass: true, supports: p.classes } : {}) }); else eligible.push(p.id);
   }

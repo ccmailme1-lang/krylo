@@ -37,7 +37,9 @@ export function domainsOf(rho, evidence) {
 }
 
 export function buildAdmittedFormation({ relationships = [], evidenceFor = () => null, labelOf = (id) => id, domainMagnitudes = {} } = {}) {
-  const rels = relationships.map(r => ({ id: r.id, type: r.type, part: r.part, nuId: r.nuId ?? {}, domains: domainsOf(r, evidenceFor(r.id)) })).filter(r => r.domains.length);
+  // Ratified 2026-10-13 (Intel, patents as KNOWLEDGE): an admitted granted-patent relationship also counts toward the KNOWLEDGE domain's COVERAGE, as patent-derived evidence only. It never forms a
+  // cross-domain link (linkDomains excludes it): a patent does not establish research impact, author affiliation or any other knowledge relationship, and no link wording may imply one.
+  const rels = relationships.map(r => { const link = domainsOf(r, evidenceFor(r.id)); return { id: r.id, type: r.type, part: r.part, nuId: r.nuId ?? {}, linkDomains: link, domains: r.type === 'ASSIGNEE_OF_GRANTED_PATENT' && link.length ? [...link, 'KNOWLEDGE'] : link }; }).filter(r => r.domains.length);
   const byType = {}, byDomain = {}; const entities = new Set();
   const domainEntities = new Map(), domainRels = new Map();
   for (const r of rels) {
@@ -54,8 +56,8 @@ export function buildAdmittedFormation({ relationships = [], evidenceFor = () =>
   for (let i = 0; i < domains.length; i++) for (let k = i + 1; k < domains.length; k++) {
     const a = domains[i], b = domains[k];
     const adm = admitCrossDomainRelationship(a, b); if (!adm.admitted) continue;
-    const same = rels.filter(r => r.domains.includes(a) && r.domains.includes(b));                       // (a) one relationship speaks to both
-    const aOnly = rels.filter(r => r.domains.includes(a) && !r.domains.includes(b)), bOnly = rels.filter(r => r.domains.includes(b) && !r.domains.includes(a));
+    const same = rels.filter(r => r.linkDomains.includes(a) && r.linkDomains.includes(b));                       // (a) one relationship speaks to both
+    const aOnly = rels.filter(r => r.linkDomains.includes(a) && !r.linkDomains.includes(b)), bOnly = rels.filter(r => r.linkDomains.includes(b) && !r.linkDomains.includes(a));
     const entsA = new Set(aOnly.flatMap(r => r.part)), entsB = new Set(bOnly.flatMap(r => r.part));
     const shared = [...entsA].filter(e => entsB.has(e));                                                 // (b) a participant takes part in a relationship of each domain
     if (!same.length && !shared.length) continue;
@@ -63,7 +65,7 @@ export function buildAdmittedFormation({ relationships = [], evidenceFor = () =>
     links.push({ a, b, pairType: adm.type, basis: same.length && shared.length ? 'RELATIONSHIP_AND_SHARED_PARTICIPANT' : (same.length ? 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' : 'SHARED_PARTICIPANT'), via: shared.map(e => ({ id: e, label: labelOf(e) })), relationshipIds: relIds });
   }
   const linkedDomains = [...new Set(links.flatMap(l => [l.a, l.b]))].sort();
-  const structure = { relationships: rels.length, byType, byDomain, entities: entities.size, domains, links: links.length, linkedDomains, unlinkedDomains: domains.filter(d => !linkedDomains.includes(d)) };
+  const structure = { relationships: rels.length, byType, byDomain, entities: entities.size, domains, links: links.length, linkedDomains, unlinkedDomains: domains.filter(d => !linkedDomains.includes(d)), patentDerivedKnowledge: domainRels.has('KNOWLEDGE') && !rels.some(r => r.linkDomains.includes('KNOWLEDGE')) };
   if (!links.length) return { structure, formation: null };
   const formation = {
     id: `admitted:${links.map(l => `${l.a}-${l.b}`).join('+')}`, basis: 'ADMITTED_RELATIONSHIPS',
@@ -81,7 +83,7 @@ const typeNoun = (t, n) => (TYPE_NOUN[t] ?? [t.toLowerCase().replace(/_/g, ' '),
 export function admittedFormationSentence({ structure, formation }, subjectLabel) {
   if (!structure.relationships) return `No formation established: no admitted relationship is on record for ${subjectLabel} yet.`;
   const parts = Object.entries(structure.byType).map(([t, n]) => `${n} ${typeNoun(t, n)}`).join(', ');
-  if (!formation) return `No formation established: the ${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) speak${structure.relationships === 1 ? 's' : ''} to ${structure.domains.length === 1 ? 'one domain only (' + structure.domains[0] + ')' : 'domains with no shared participant'}.`;
+  if (!formation) return `No formation established: the ${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) speak${structure.relationships === 1 ? 's' : ''} to ${(structure.patentDerivedKnowledge ? structure.domains.filter(d => d !== 'KNOWLEDGE') : structure.domains).length === 1 ? 'one domain only (' + (structure.patentDerivedKnowledge ? structure.domains.filter(d => d !== 'KNOWLEDGE') : structure.domains)[0] + ')' : 'domains with no shared participant'}${structure.patentDerivedKnowledge ? '; KNOWLEDGE is counted from patent-derived evidence only' : ''}.`;
   const ls = formation.links.map(l => `${l.a} ↔ ${l.b} (${l.pairType}${l.via.length ? ` · through ${l.via.slice(0, 2).map(v => v.label).join(', ')}` : ''})`).join('; ');
   return `${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) connect ${formation.participatingDomains.length} domains: ${ls}.`;
 }
