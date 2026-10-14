@@ -16,7 +16,7 @@
 
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
-import { buildAdmittedFormation, admittedFormationSentence } from '../../engine/admittedformation.js';
+import { buildAdmittedFormation, admittedFormationSentence, describeLinkSupport } from '../../engine/admittedformation.js';
 import { buildSynthesis } from '../../engine/analyticalsynthesis.js';
 import { ineligibleNote } from '../../engine/produceridentifiers.js';   // evidence producers that could not run for want of an identifier   // Step 6: statements with an evidentiary status and their evidence
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';   // Step 5: formation from admitted relationships only
@@ -312,7 +312,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
             <div>{admittedFormationSentence(admittedFormation, subjectLabel)}</div>
             {admittedFormation.formation?.links.map((l, i) => (
               <div key={`af${i}`} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>
-                {l.a} ↔ {l.b} — {l.pairType} · {l.basis === 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' ? 'one admitted relationship speaks to both' : `connected through ${l.via.map(v => v.label).slice(0, 3).join(', ')}`} · {l.relationshipIds.length} admitted relationship{l.relationshipIds.length !== 1 ? 's' : ''} (listed below with their filings)
+                {(() => { const d = describeLinkSupport(l, entityCanonicalRelationships, (id) => latestEvidenceFor(id)); return <>{l.a} ↔ {l.b} — pair name in the ontology: {l.pairType} · basis: {d.basis} · supporting relationships ({d.total}; a relationship counts in every pair its domain belongs to, so pair counts overlap): {d.sides}</>; })()}
               </div>
             ))}
           </div>

@@ -45,7 +45,7 @@ const link = r.formation.links[0];
 ok(link.pairType === 'financing of control / control financed' && link.basis === 'SHARED_PARTICIPANT' && link.via.some(v => /Alphabet/.test(v.label)), 'the link carries the ratified domain-pair type and the connecting entity (Alphabet), by shared participant');
 ok(link.relationshipIds.length === 3, 'it lists the admitted relationships behind it (3), each traceable to a filing');
 ok(r.formation.existence === null && r.formation.basis === 'ADMITTED_RELATIONSHIPS' && r.formation.graph.vertices.every(v => typeof v.meanMagnitude === 'number'), 'no composite score is computed (existence null); vertices carry the field magnitude only as context for the map');
-ok(/connect 2 domains: CAPITAL ↔ OWNERSHIP \(financing of control/.test(admittedFormationSentence(r, 'Alphabet')), 'the sentence names the domains, the ratified pair type and the entity');
+ok(/connect 2 domains: CAPITAL ↔ OWNERSHIP \(pair name: financing of control/.test(admittedFormationSentence(r, 'Alphabet')) && /connected only because [^)]*takes part in a relationship of each domain\)/.test(admittedFormationSentence(r, 'Alphabet')), 'the sentence names the domains, the ontology\'s pair name and says how the pair is connected (only because the entity takes part in a relationship of each)');
 
 console.log('A relationship that speaks to two domains links them by itself');
 const eq = admitAndProject({ part: ['CIK:0000050863', 'CIK:0001045810'], type: 'CAPITAL_EVENT_INVOLVES', nuId: { event: 'X-EQ', partyQualifier: 'NONE' }, nuState: {}, evidence: { ts: 1, provenance: { source: 'SEC_8K_CAPITAL_EVENT', accession: 'X-EQ', form: '8-K', filingDate: '2025-12-29', items: ['3.02'], eventClass: 'EQUITY_OFFERING', instrument: 'Securities Purchase Agreement', passage: 'to NVIDIA Corporation ("NVIDIA")', counterpartyName: 'NVIDIA Corporation', counterpartyMatch: { outcome: 'SAME_ENTITY_CONFIRMED', identifier: { value: '0001045810' }, canonicalName: 'NVIDIA CORP', partyIsNamed: true, evidence: { accession: 'E' } }, ladderStep: 'ESTABLISHED_RELATIONSHIP', magnitude: 'INDETERMINATE' } } }, { filerName: 'INTEL CORP', filerCik: '0000050863', counterpartyName: 'NVIDIA CORP', counterpartyCik: '0001045810', counterpartyLabel: 'NVIDIA CORP (CIK 0001045810)' });
@@ -55,6 +55,19 @@ ok(eq.admitted && domainsOf(eq.relationship, latestEvidenceFor(eq.relationship.i
 console.log('The unnamed-affiliate qualification and evidence survive into the link');
 const bhRel = findAdmittedRelationshipsFor('CIK:0001652044').find(x => x.nuId?.partyQualifier === 'UNNAMED_AFFILIATE_OF');
 ok(!!bhRel && latestEvidenceFor(bhRel.id).provenance.counterpartyMatch.partyIsNamed === false, 'the Berkshire relationship is still an unnamed affiliate in the evidence the link points at');
+
+console.log('A pair says how it is supported (found 2026-10-14)');
+{
+  const { buildAdmittedFormation: baf, describeLinkSupport } = await import('./src/engine/admittedformation.js');
+  const rels = [
+    ...Array.from({ length: 3 }, (_, i) => ({ id: `o${i}`, type: 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE', part: ['CIK:0000000001', `P${i}`], nuId: {} })),
+    ...Array.from({ length: 2 }, (_, i) => ({ id: `b${i}`, type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', part: ['CIK:0000000001', `H${i}`], nuId: {} })),
+  ];
+  const f = baf({ relationships: rels, evidenceFor: () => null, labelOf: (id) => (id === 'CIK:0000000001' ? 'Acme' : id) });
+  const l = f.formation.links[0], d = describeLinkSupport(l, rels);
+  ok(l.basis === 'SHARED_PARTICIPANT' && /no single relationship connects the two domains; Acme takes part in a relationship of each/.test(d.basis), 'a shared-participant pair says no single relationship connects the two domains');
+  ok(/LABOR: 3 officer or director disclosures/.test(d.sides) && /OWNERSHIP: 2 beneficial-ownership disclosures/.test(d.sides) && d.total === 5, 'it lists which admitted relationships sit on each side');
+}
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

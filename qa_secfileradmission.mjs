@@ -68,5 +68,19 @@ console.log('Registry wins, idempotence, log');
   ok(getAdmissionLog().length >= 8 && getAdmissionLog().every(x => x.query && x.at), 'every verification attempt is logged with its time and outcome');
 }
 
+console.log('A lookup that has not finished is said plainly (found 2026-10-14)');
+{
+  const { nameResolutionNote, identityLookupInFlight, _clearIdentityInFlightForTests } = await import('./src/engine/secfileradmission.js');
+  _clearIdentityInFlightForTests();
+  let release; const gate = new Promise(r => { release = r; });
+  const pending = admitPublicFiler('Slowpoke Quartz Holdings', { searchFn: async () => { await gate; return { ok: true, status: 200, hits: [] }; }, nameFn: async () => { await gate; return { tier: 'NONE', candidates: [] }; }, sleep: async () => {}, formDGapMs: 0 });
+  await new Promise(r => setTimeout(r, 20));
+  ok(identityLookupInFlight('Slowpoke Quartz Holdings') === true, 'a started identity lookup is recorded as in flight');
+  const note = nameResolutionNote('Slowpoke Quartz Holdings');
+  ok(/has started and has not finished; that is not a finding that the company is unknown\. Refresh analysis once it completes\./.test(note), 'while it runs the page says it has not finished, and that this is not a finding that the company is unknown');
+  release(); await pending;
+  ok(identityLookupInFlight('Slowpoke Quartz Holdings') === false && !/has not finished/.test(nameResolutionNote('Slowpoke Quartz Holdings')), 'when it finishes the in-flight note goes away and the recorded outcome is stated instead');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

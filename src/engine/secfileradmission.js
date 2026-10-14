@@ -27,6 +27,10 @@ export const getAdmissionLog = () => [..._log];
 const _resolution = new Map();
 const keyOf = (t) => String(t ?? '').trim().toLowerCase();
 export const getNameResolution = (text) => _resolution.get(keyOf(text)) ?? null;
+// An identity lookup that has started and not finished: said plainly on the page as "not finished", never as "the company is unknown" (found 2026-10-14: a slow first lookup read as unresolved).
+const _identityInFlight = new Map();
+export const identityLookupInFlight = (text) => _identityInFlight.has(keyOf(text));
+export const _clearIdentityInFlightForTests = () => _identityInFlight.clear();
 // Identity classes that exist as proposals but are NOT implemented or ratified: stated as "not checked", never as checked (specs/spec-entity-resolution-contract-for-architects-20261012.md).
 export const IDENTITY_SOURCES_NOT_CHECKED = Object.freeze(['UK Companies House', 'the federal contractor registry (UEI)']);   // GLEIF is a ratified identity class since 2026-10-13 (KRYL-1417): it is listed under the checks when it ran
 const OUTCOME_WORDS = { NO_MATCH: 'no match', NO_MATCH_SIMILAR: 'no exact name; similar names exist and none is assumed', AMBIGUOUS: 'several registrants share the name, none assumed', NEAR_MATCH: 'only a similar name, not assumed', NOT_LISTED: 'a registrant was found but it is not listed', NOT_VERIFIED: 'a candidate was found but its annual filings could not be confirmed', LOOKUP_FAILED: 'the lookup failed, so this is not evidence of absence', NO_QUERY_OR_SEARCH: 'not run', CANDIDATE: 'a candidate was found' };
@@ -35,6 +39,7 @@ const OUTCOME_WORDS = { NO_MATCH: 'no match', NO_MATCH_SIMILAR: 'no exact name; 
  * each returned, which were not checked, and what would resolve the subject. '' when nothing was recorded for this name.
  */
 export function nameResolutionNote(text) {
+  if (identityLookupInFlight(text)) return ' Its identity lookup (SEC listed companies, then private SEC filers, then GLEIF) has started and has not finished; that is not a finding that the company is unknown. Refresh analysis once it completes.';
   const r = getNameResolution(text); if (!r) return '';
   const names = (r.candidates ?? []).slice(0, 4).map(c => c.name).join('; ');
   let out = '';
@@ -137,6 +142,10 @@ export async function verifyPublicFiler(name, { searchFn, nameFn = null, now = D
 export async function admitPublicFiler(name, opts = {}) {
   const known = resolve(name);
   if (known && known.confidence === 1.0) return { entity: known, outcome: 'ALREADY_KNOWN' };
+  const k = keyOf(name); _identityInFlight.set(k, Date.now());
+  try { return await admitPublicFilerUnguarded(name, opts); } finally { _identityInFlight.delete(k); }
+}
+async function admitPublicFilerUnguarded(name, opts = {}) {
   const v = await verifyPublicFiler(name, opts);
   // KRYL-1412: a name that is not a listed SEC registrant is tried as a private SEC filer (Form D issuer): exact legal name, exactly one issuer, verified by its own Form D.
   let fd = null;

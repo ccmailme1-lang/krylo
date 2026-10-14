@@ -42,7 +42,7 @@ export function canonicalDetailLines(ev) {
   }
   if (p?.source === 'GDELT' && p.phraseSource === 'SEC_REGISTERED_NAME') {   // KRYL-1418: a dated article that names the company in its title
     return [`named in article · "${String(p.title).length > 150 ? String(p.title).slice(0, 147).trimEnd() + '…' : p.title}" · ${p.domain} · first seen ${p.seenDate} (as GDELT states it)`,
-      `the article's title contains "${p.phrase}", the company's SEC registered name; that is all this establishes: no endorsement, causation, event participation, sentiment or other connection is inferred, and the article text was not read here`];
+      `the article's title contains "${p.phrase}", the company's SEC registered name with its legal form set aside; that is all this establishes: no endorsement, causation, event participation, sentiment or other connection is inferred, and the article text was not read here`];
   }
   if (p?.source === 'CLINICALTRIALS_GOV') {                  // KRYL-1414: what the registry states about the study
     return [`lead sponsor (industry) as ClinicalTrials.gov states it · ${p.nctId}${p.overallStatus ? ` · status ${p.overallStatus}` : ''}${p.phase ? ` · phase ${p.phase}` : ''} · registry record updated ${p.lastUpdated ?? 'date not stated'}; the status is as of that update`,
