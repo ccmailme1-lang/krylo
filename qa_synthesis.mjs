@@ -81,5 +81,20 @@ ok(oneDomain.statements[0].status === 'SUPPORTED' && oneDomain.statements[0].evi
 const none = buildSynthesis({ subject: 'X', relationships: [], formation: buildAdmittedFormation({ relationships: [] }) });
 ok(none.statements[0].status === 'UNRESOLVED' && none.statements[0].evidence.length === 0, 'no admitted relationship at all: the statement is an absence, labelled UNRESOLVED');
 
+console.log('A relationship filed by ANOTHER company in which the subject is the holder or the counterparty is not the subject\'s own (found 2026-10-14, NVIDIA)');
+{
+  const rels = [
+    { id: 'r1', type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', part: ['CIK:NEB', 'CIK:NVD'], nuId: {} },
+    { id: 'r2', type: 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', part: ['CIK:NVD', 'CIK:VAN'], nuId: {} },
+    { id: 'r3', type: 'CAPITAL_EVENT_INVOLVES', part: ['CIK:INT', 'CIK:NVD'], nuId: { event: 'E1', partyQualifier: 'NONE' } },
+  ];
+  const evidence = { r1: { source: 'SEC_13D_13G', accession: '0001045810-26-000062', form: 'SCHEDULE 13G', filingDate: '2026-07-20' }, r2: { source: 'SEC_13D_13G', accession: '0000102909-26-000426', form: 'SCHEDULE 13G/A', filingDate: '2026-03-26' },
+    r3: { source: 'SEC_8K_CAPITAL_EVENT', accession: '0000050863-25-000204', form: '8-K', filingDate: '2025-12-29', instrument: 'Securities Purchase Agreement', amounts: [], counterpartyMatch: { outcome: 'SAME_ENTITY_CONFIRMED' } } };
+  const lab = (i) => ({ 'CIK:NEB': 'Nebius', 'CIK:NVD': 'NVIDIA', 'CIK:VAN': 'Vanguard', 'CIK:INT': 'Intel' }[i] ?? i);
+  const S = buildSynthesis({ subject: 'NVIDIA', relationships: rels, evidenceFor: (id) => ({ provenance: evidence[id] }), labelOf: lab, formation: buildAdmittedFormation({ relationships: rels, evidenceFor: (id) => ({ provenance: evidence[id] }), labelOf: lab }) });
+  ok(!S.statements.some(x => /appears both as a disclosed holder/.test(x.text)) && !S.statements.some(x => /may hold more than one role/.test(x.text)), 'NVIDIA is not said to appear as both a holder and a counterparty "of NVIDIA": the holder (in Nebius) and the counterparty (in Intel\'s event) relationships were filed by other companies');
+  ok(S.statements.some(x => /Intel reported a capital event/.test(x.text)), 'the capital event Intel reported is still stated, as Intel\'s');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

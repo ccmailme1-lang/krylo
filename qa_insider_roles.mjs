@@ -89,9 +89,9 @@ console.log('LABOR joins formation through a shared participant, never by name')
   own('0000777777', 'SOME UNRELATED HOLDER LLC', '0000000-26-000002');
   const rels = findAdmittedRelationshipsFor('CIK:0001341439');
   const f = buildAdmittedFormation({ relationships: rels, evidenceFor: latestEvidenceFor, labelOf });
-  const link = f.formation?.links.find(l => [l.a, l.b].sort().join() === 'LABOR,OWNERSHIP');
-  ok(!!link && link.basis === 'SHARED_PARTICIPANT' && link.via.some(v => /RUSCKOWSKI/.test(v.label)), 'a person who is both a disclosed holder and a director links LABOR and OWNERSHIP through that person (same SEC CIK)');
-  ok(link.via.some(v => /RUSCKOWSKI/.test(v.label)) && link.via.some(v => /ORACLE/.test(v.label)) && !link.via.some(v => /UNRELATED/.test(v.label)), 'the link runs through the issuer (every admitted relationship has it) and through the shared person; an unrelated holder is not a participant of the link');
+  const link = f.leads?.find(l => [l.a, l.b].sort().join() === 'LABOR,OWNERSHIP');
+  ok(!f.formation && !!link && link.basis === 'SHARED_PARTICIPANT' && link.via.some(v => /RUSCKOWSKI/.test(v.label)), 'a person who is both a disclosed holder and a director makes LABOR and OWNERSHIP a contextual LEAD through that person (same SEC CIK), not a formation (Founder ruling 2026-10-14)');
+  ok(link.via.some(v => /RUSCKOWSKI/.test(v.label)) && link.via.some(v => /ORACLE/.test(v.label)) && !link.via.some(v => /UNRELATED/.test(v.label)), 'the lead runs through the issuer (every admitted relationship has it) and through the shared person; an unrelated holder is not a participant of the link');
   ok(f.structure.byDomain.LABOR === 4 && f.structure.domains.includes('LABOR'), 'LABOR appears among the admitted domains (4 role relationships)');
 
   console.log('Words and synthesis');

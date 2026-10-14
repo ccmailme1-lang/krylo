@@ -63,7 +63,7 @@ ok(past.formationSentence === liveSentence, 'the formation sentence equals the o
 const sameLines = past.relationships.every(r => liveLines.some(l => l.s === r.sentence && l.p === r.provenance && JSON.stringify(l.d) === JSON.stringify(r.detail)));
 ok(sameLines, 'every relationship reads identically in History: same sentence, same filing line, same evidence lines');
 ok(past.relationships.some(r => /an unnamed affiliate of BERKSHIRE HATHAWAY INC/i.test(r.sentence) && r.detail.some(l => /the party itself is not named/.test(l))), 'the unnamed-affiliate wording and its documentation survive into History');
-ok(past.formation.formation && past.formation.formation.participatingDomains.join() === 'CAPITAL,OWNERSHIP', 'the formation links (CAPITAL, OWNERSHIP) are rebuilt from the admitted relationships only');
+ok(past.formation.formation === null && past.formation.leads.length === 1 && past.formation.leads[0].a === 'CAPITAL' && past.formation.leads[0].b === 'OWNERSHIP', 'History rebuilds the same reading from the admitted relationships only: no formation, and CAPITAL / OWNERSHIP as a contextual lead (shared participant)');
 
 console.log('A later view of the store includes later admissions; the old analysis does not change');
 const later = reconstructSnapshot({ ...snap, relationship_refs: [...snap.relationship_refs, { id: h.relationships.find(r => r.part.includes('CIK:0000999999')).relationship_id, accession: 'LATE-1' }] }, h.relationships);

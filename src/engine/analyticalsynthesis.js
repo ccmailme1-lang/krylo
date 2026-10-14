@@ -12,7 +12,7 @@
 // Pure: inputs are the admitted relationships (the displayed snapshot's frozen view), the pinned temporal result and the capital-event admission report.
 //
 //   buildSynthesis({ subject, relationships, evidenceFor, labelOf, formation, change, admissionReport }) -> { statements, counts }
-import { admittedFormationSentence } from './admittedformation.js';
+import { admittedFormationSentence, formationLeadsSentence } from './admittedformation.js';
 
 export const STATUS = Object.freeze({ DOCUMENTED: 'DOCUMENTED', SUPPORTED: 'SUPPORTED', INFERRED: 'INFERRED', UNRESOLVED: 'UNRESOLVED' });
 const money = (a) => `${a.raw}${a.wording ? ` (${a.wording})` : ''}`;
@@ -30,6 +30,8 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
   if (formation) {
     const ids = (formation.formation ? formation.formation.relationships : relationships.map(r => r.id)).slice(0, 20).map(id => ({ relationshipId: id }));
     add(formation.structure.relationships ? STATUS.SUPPORTED : STATUS.UNRESOLVED, admittedFormationSentence(formation, subject), formation.structure.relationships ? ids : [], { basis: 'admitted relationships' });
+    // Founder ruling 2026-10-14: pairs joined only by a shared participant are not a formation; whether those domains are connected is NOT established, so the statement is UNRESOLVED.
+    if (formation.leads?.length) add(STATUS.UNRESOLVED, `${formationLeadsSentence(formation)} Whether these domains are connected for ${subject} is not established by the admitted relationships.`, [], { basis: 'admitted relationships' });
   }
 
   // 2. Capital events, as the filings state them.
@@ -128,18 +130,22 @@ export function buildSynthesis({ subject = 'the subject', relationships = [], ev
   }
 
   // 4. Structure over the admitted graph: repeat counterparties and holders who are also counterparties.
+  // The subject is the participant common to the admitted relationships. A relationship in which the SUBJECT is the holder or the counterparty (it was filed by another company) says nothing about
+  // the subject's own holders and counterparties, so it takes no part in the statements below (found 2026-10-14: "NVIDIA appears both as a disclosed holder and as a counterparty of NVIDIA").
+  const nodeCount = new Map(); for (const r of relationships) for (const n of r.part) nodeCount.set(n, (nodeCount.get(n) ?? 0) + 1);
+  const subjectNode = [...nodeCount.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   const byParty = new Map();
-  for (const { r, ev } of cap) { const k = r.part[1]; (byParty.get(k) ?? byParty.set(k, []).get(k)).push({ r, ev }); }
+  for (const { r, ev } of cap) { if (r.part[0] !== subjectNode) continue; const k = r.part[1]; (byParty.get(k) ?? byParty.set(k, []).get(k)).push({ r, ev }); }
   for (const [party, list] of byParty) {
     if (list.length < 2) continue;
     const name = labelOf(party); const ids = list.map(x => ({ relationshipId: x.r.id, accession: x.ev.accession, filingDate: x.ev.filingDate }));
     add(STATUS.SUPPORTED, `${name} is named as a counterparty in ${list.length} of the ${cap.length} admitted capital events (${list.map(x => day(x.ev.filingDate)).join(', ')}).`, ids);
     add(STATUS.INFERRED, `The repeated naming of ${name} points to a recurring financing relationship with ${subject}; the filings document each event, not the relationship over time.`, ids, { rests_on: ['recurrence count above'] });
   }
-  const holders = new Set(relationships.filter(r => r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE').map(r => r.part[1]));
+  const holders = new Set(relationships.filter(r => r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE' && r.part[0] === subjectNode).map(r => r.part[1]));
   for (const [party, list] of byParty) {
-    if (!holders.has(party)) continue;
-    const holderRel = relationships.find(r => r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE' && r.part[1] === party);
+    if (!holders.has(party) || party === subjectNode) continue;
+    const holderRel = relationships.find(r => r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE' && r.part[0] === subjectNode && r.part[1] === party);
     add(STATUS.SUPPORTED, `${labelOf(party)} appears both as a disclosed holder and as a capital-event counterparty of ${subject}.`, [{ relationshipId: holderRel.id, accession: evidenceFor(holderRel.id)?.provenance?.accession }, ...list.slice(0, 3).map(x => ({ relationshipId: x.r.id, accession: x.ev.accession }))]);
     add(STATUS.INFERRED, `${labelOf(party)} may hold more than one role toward ${subject} (investor and financing counterparty); the filings document each role separately.`, [{ relationshipId: holderRel.id }], { rests_on: ['dual presence above'] });
   }

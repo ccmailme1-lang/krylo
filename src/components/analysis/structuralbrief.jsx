@@ -16,7 +16,7 @@
 
 import { useState, useEffect } from 'react';
 import { A, observationLabel, observationDetailLines } from '../../engine/adsubject.js';
-import { buildAdmittedFormation, admittedFormationSentence, describeLinkSupport } from '../../engine/admittedformation.js';
+import { buildAdmittedFormation, admittedFormationSentence, formationLeadsSentence, describeLinkSupport } from '../../engine/admittedformation.js';
 import { buildSynthesis } from '../../engine/analyticalsynthesis.js';
 import { ineligibleNote } from '../../engine/produceridentifiers.js';   // evidence producers that could not run for want of an identifier   // Step 6: statements with an evidentiary status and their evidence
 import { useAnalyticalSnapshot } from '../../hooks/useanalyticalsnapshot.js';   // Step 5: formation from admitted relationships only
@@ -133,6 +133,9 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   // Step 5: what the ADMITTED relationships establish (formation) is stated on its own; the pool's co-presence below is a contextual lead and says so.
   const admittedSentence = isEntity && admittedFormation ? admittedFormationSentence(admittedFormation, subjScope.entity.name) : null;
   const admittedClause = admittedSentence ? ` Formation (admitted relationships only): ${admittedSentence}` : '';
+  // Founder ruling 2026-10-14: a pair joined only by a shared participant is a contextual lead, stated apart from the formation on every surface.
+  const leadsSentence = isEntity && admittedFormation ? formationLeadsSentence(admittedFormation, { compact: true }) : '';   // one line here and on the MAP; the full list with each pair's support is under RELATIONSHIPS
+  const leadsClause = leadsSentence ? ` ${leadsSentence}` : '';
   const eligibilityClause = isEntity ? (ineligibleNote(subjScope.entity) ? ` ${ineligibleNote(subjScope.entity)}` : '') : '';
   const failureClause = ownershipFailure
     ? ` ${ownershipFailureNotice(ownershipFailure, entityCanonicalRelationships.length)}`
@@ -150,8 +153,8 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
   const fieldLevelOpen = `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), `;
   const briefSentence = isEntity
     ? (relationshipCount > 0
-        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}${eligibilityClause}`
-        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${failureClause}${eligibilityClause}`)
+        ? `${fieldLevelOpen}with ${relationshipCount} domain pair${relationshipCount !== 1 ? 's' : ''} co-present (contextual leads, not admitted relationships) — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${leadsClause}${failureClause}${eligibilityClause}`
+        : `${fieldLevelOpen}but fewer than two domains are co-present — a field-level reading, not bound to ${endSentence(subjectLabel)}${subjectLevel}${canonicalClause}${admittedClause}${leadsClause}${failureClause}${eligibilityClause}`)
     : selectedSubject
       ? `Subject selected: ${selectedSubject}${selectedObjective ? ` (objective: ${selectedObjective})` : ''}. Its entity is not resolved, so no structure is attributed to it.${nameResolutionNote(selectedSubject)} ` +
         `Field level: ${domainLines.length} of 6 domains${domainList} carry live signal (${observationTotal} signal${observationTotal !== 1 ? 's' : ''}), ` +
@@ -185,7 +188,7 @@ export function computeBriefSummary({ subjScope, activeDomainPressures, fieldFor
       ? `**${entityCanonicalRelationships.length} admitted** · ${typeNames.join(' · ')}${ownershipPending && !ownershipFailure ? ' · checking SEC ownership filings for more' : ''}`
       : (ownershipPending && !ownershipFailure ? `Checking SEC ownership filings for ${subjectLabel}…` : `No canonical relationships admitted for ${endSentence(subjectLabel)}`)) +
       (ownershipFailure ? ` ${entityCanonicalRelationships.length ? `Lookup for this query: ${ownershipFailure}; admitted in this page session, not confirmed by it.` : `Ownership observation failed (${ownershipFailure}); their absence is not evidence that none exist.`}` : '') + eligibilityClause,
-    formation: admittedSentence,                 // Step 5: the admitted-relationship formation (or why none is established)
+    formation: admittedSentence ? `${admittedSentence}${leadsClause}` : admittedSentence,     // Step 5: the admitted-relationship formation (or why none is established), then the contextual leads, stated apart
   } : (!isEntity && !structurallyInterpretable) ? {
     // No subject resolved and no structural participants: the field alone, stated as rows.
     field: domainLines.length
@@ -315,6 +318,16 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                 {(() => { const d = describeLinkSupport(l, entityCanonicalRelationships, (id) => latestEvidenceFor(id)); return <>{l.a} ↔ {l.b} — pair name in the ontology: {l.pairType} · basis: {d.basis} · supporting relationships ({d.total}; a relationship counts in every pair its domain belongs to, so pair counts overlap): {d.sides}</>; })()}
               </div>
             ))}
+            {admittedFormation.leads?.length > 0 && (
+              <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div style={{ fontSize: 9, letterSpacing: '0.2em', color: LBL }}>CONTEXTUAL LEADS · SHARED PARTICIPANT · NOT ADMITTED, NOT A FORMATION</div>
+                {admittedFormation.leads.map((l, i) => (
+                  <div key={`al${i}`} style={{ marginLeft: 14, fontSize: 10, color: ABSENCE }}>
+                    {(() => { const d = describeLinkSupport(l, entityCanonicalRelationships, (id) => latestEvidenceFor(id)); return <>{l.a} ↔ {l.b} — pair name in the ontology: {l.pairType} · lead only: {d.basis} · relationships on each side ({d.total}; a relationship counts in every pair its domain belongs to, so counts overlap): {d.sides}</>; })()}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
         {structurallyInterpretable && entityRelPairs.length ? (

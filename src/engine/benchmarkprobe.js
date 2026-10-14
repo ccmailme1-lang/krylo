@@ -63,7 +63,7 @@ export async function probeActiveAnalysis() {
   }
   return {
     snapshotId: snap.id, canonicalId: snap.canonicalId, subject, relationships: rels.length, byType: formation.structure.byType,
-    admittedDomains: formation.structure.domains, linkedDomains: formation.structure.linkedDomains, links: formation.structure.links,
+    admittedDomains: formation.structure.domains, linkedDomains: formation.structure.linkedDomains, links: formation.structure.links, leads: formation.structure.leads,
     analysisSentence, historySentence: past?.formationSentence ?? null, historyRelationships: past?.relationships.length ?? null, historyError,
     synthesisCounts: syn.statements.reduce((c, s) => { c[s.status] = (c[s.status] ?? 0) + 1; return c; }, {}), synthesisValidation: validation,
     admission: report ? { admitted: report.admitted, rejected: report.rejected.length, deferred: report.deferred } : null,

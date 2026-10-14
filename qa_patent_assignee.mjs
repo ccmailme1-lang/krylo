@@ -79,7 +79,7 @@ console.log('Admission through the ratified rule');
   ok(st && st.status === 'SUPPORTED' && /similarly named company, or to a subsidiary the company's own Form 10-K Exhibit 21 does not list, are different legal entities/.test(st.text) && st.evidence.length === 3, 'a SUPPORTED statement counts the patents and says subsidiaries are not counted');
   const kn = S.statements.find(x => /^KNOWLEDGE is shown for Tesla, Inc\. from patent-derived evidence only/.test(x.text));
   ok(kn && kn.status === 'SUPPORTED' && /does not establish research impact, author affiliation, publications/.test(kn.text) && kn.evidence.length === 3, 'a statement identifies the knowledge as patent-derived and states what it does not establish');
-  ok(/KNOWLEDGE is counted from patent-derived evidence only/.test(admittedFormationSentence(f, 'Tesla, Inc.')) && /one domain only \(TECHNOLOGY\)/.test(admittedFormationSentence(f, 'Tesla, Inc.')), 'the formation sentence says the same');
+  ok(/KNOWLEDGE \(patent-derived\) counts toward coverage and forms no link/.test(admittedFormationSentence(f, 'Tesla, Inc.')) && /one domain only \(TECHNOLOGY\)/.test(admittedFormationSentence(f, 'Tesla, Inc.')), 'the formation sentence says the same');
   ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
   ok(producerEligibility({ name: 'Tesla, Inc.', identifiers: { edgar: '0001318605' } }).eligible.includes('patents') && !producerEligibility({ name: 'X', identifiers: {} }).eligible.includes('patents'), 'the patents producer needs a resolved entity carrying an SEC CIK');
 }

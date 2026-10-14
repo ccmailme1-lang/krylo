@@ -57,29 +57,32 @@ export function buildAdmittedFormation({ relationships = [], evidenceFor = () =>
     }
   }
   const domains = [...domainRels.keys()].sort();
-  const links = [];
+  // Founder ruling 2026-10-14 (reviewer finding, Broadcom): a pair belongs to the FORMATION only when ONE admitted relationship itself speaks to both domains. A pair whose only support is that the
+  // same participant takes part in a relationship of each domain is NOT a formation: no record states a connection between the two domains. It is kept as a contextual lead, said to be one.
+  const links = [], leads = [];
   for (let i = 0; i < domains.length; i++) for (let k = i + 1; k < domains.length; k++) {
     const a = domains[i], b = domains[k];
     const adm = admitCrossDomainRelationship(a, b); if (!adm.admitted) continue;
-    const same = rels.filter(r => r.linkDomains.includes(a) && r.linkDomains.includes(b));                       // (a) one relationship speaks to both
-    const aOnly = rels.filter(r => r.linkDomains.includes(a) && !r.linkDomains.includes(b)), bOnly = rels.filter(r => r.linkDomains.includes(b) && !r.linkDomains.includes(a));
+    const same = rels.filter(r => r.linkDomains.includes(a) && r.linkDomains.includes(b));                       // one relationship speaks to both
+    if (same.length) { links.push({ a, b, pairType: adm.type, basis: 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH', via: [], relationshipIds: same.map(r => r.id) }); continue; }
+    const aOnly = rels.filter(r => r.linkDomains.includes(a)), bOnly = rels.filter(r => r.linkDomains.includes(b));
     const entsA = new Set(aOnly.flatMap(r => r.part)), entsB = new Set(bOnly.flatMap(r => r.part));
-    const shared = [...entsA].filter(e => entsB.has(e));                                                 // (b) a participant takes part in a relationship of each domain
-    if (!same.length && !shared.length) continue;
-    const relIds = [...new Set([...same.map(r => r.id), ...[...aOnly, ...bOnly].filter(r => r.part.some(e => shared.includes(e))).map(r => r.id)])];
-    links.push({ a, b, pairType: adm.type, basis: same.length && shared.length ? 'RELATIONSHIP_AND_SHARED_PARTICIPANT' : (same.length ? 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' : 'SHARED_PARTICIPANT'), via: shared.map(e => ({ id: e, label: labelOf(e) })), relationshipIds: relIds });
+    const shared = [...entsA].filter(e => entsB.has(e));                                                         // a participant takes part in a relationship of each domain
+    if (!shared.length) continue;
+    const relIds = [...new Set([...aOnly, ...bOnly].filter(r => r.part.some(e => shared.includes(e))).map(r => r.id))];
+    leads.push({ a, b, pairType: adm.type, basis: 'SHARED_PARTICIPANT', via: shared.map(e => ({ id: e, label: labelOf(e) })), relationshipIds: relIds });
   }
   const linkedDomains = [...new Set(links.flatMap(l => [l.a, l.b]))].sort();
-  const structure = { relationships: rels.length, byType, byDomain, entities: entities.size, domains, links: links.length, linkedDomains, unlinkedDomains: domains.filter(d => !linkedDomains.includes(d)), patentDerivedKnowledge: domainRels.has('KNOWLEDGE') && !rels.some(r => r.linkDomains.includes('KNOWLEDGE')), articleOnlyMedia: domainRels.has('MEDIA') && !rels.some(r => r.linkDomains.includes('MEDIA')) };
-  if (!links.length) return { structure, formation: null };
+  const structure = { relationships: rels.length, byType, byDomain, entities: entities.size, domains, links: links.length, linkedDomains, unlinkedDomains: domains.filter(d => !linkedDomains.includes(d)), patentDerivedKnowledge: domainRels.has('KNOWLEDGE') && !rels.some(r => r.linkDomains.includes('KNOWLEDGE')), articleOnlyMedia: domainRels.has('MEDIA') && !rels.some(r => r.linkDomains.includes('MEDIA')), leads: leads.length, sharedParticipantLeads: leads };
+  if (!links.length) return { structure, formation: null, leads };
   const formation = {
     id: `admitted:${links.map(l => `${l.a}-${l.b}`).join('+')}`, basis: 'ADMITTED_RELATIONSHIPS',
     participatingDomains: linkedDomains,
     graph: { vertices: linkedDomains.map(d => ({ domain: d, meanMagnitude: domainMagnitudes[d] ?? 0 })), edges: links.map(l => ({ a: l.a, b: l.b, admittedType: l.pairType, pairType: l.pairType, basis: l.basis, via: l.via, relationshipIds: l.relationshipIds })) },
     existence: null,                                   // no composite score: admitted relationships carry no magnitude
-    links, relationships: rels.map(r => r.id),
+    links, relationships: [...new Set(links.flatMap(l => l.relationshipIds))],
   };
-  return { structure, formation };
+  return { structure, formation, leads };
 }
 
 /** One sentence for the brief: what the admitted relationships establish, or why nothing is established. */
@@ -88,9 +91,15 @@ export const typeNoun = (t, n) => (TYPE_NOUN[t] ?? [t.toLowerCase().replace(/_/g
 export function admittedFormationSentence({ structure, formation }, subjectLabel) {
   if (!structure.relationships) return `No formation established: no admitted relationship is on record for ${subjectLabel} yet.`;
   const parts = Object.entries(structure.byType).map(([t, n]) => `${n} ${typeNoun(t, n)}`).join(', ');
-  if (!formation) return `No formation established: the ${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) speak${structure.relationships === 1 ? 's' : ''} to ${structure.domains.filter(d => !(structure.patentDerivedKnowledge && d === 'KNOWLEDGE') && !(structure.articleOnlyMedia && d === 'MEDIA')).length === 1 ? 'one domain only (' + structure.domains.filter(d => !(structure.patentDerivedKnowledge && d === 'KNOWLEDGE') && !(structure.articleOnlyMedia && d === 'MEDIA'))[0] + ')' : 'domains with no shared participant'}${structure.patentDerivedKnowledge ? '; KNOWLEDGE is counted from patent-derived evidence only' : ''}${structure.articleOnlyMedia ? '; MEDIA is counted from named-in-article relationships only and forms no link to another domain' : ''}.`;
-  const ls = formation.links.map(l => `${l.a} ↔ ${l.b} (pair name: ${l.pairType}${l.via.length ? ` · ${l.basis === 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' ? 'one relationship speaks to both' : `connected only because ${l.via.slice(0, 2).map(v => v.label).join(', ')} takes part in a relationship of each domain`}` : ''})`).join('; ');
-  return `${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) connect ${formation.participatingDomains.length} domains: ${ls}${structure.patentDerivedKnowledge ? '; KNOWLEDGE is counted from patent-derived evidence only and forms no link to another domain' : ''}${structure.articleOnlyMedia ? '; MEDIA is counted from named-in-article relationships only and forms no link to another domain' : ''}.`;
+  const setAside = (d) => !(structure.patentDerivedKnowledge && d === 'KNOWLEDGE') && !(structure.articleOnlyMedia && d === 'MEDIA');
+  // One short clause each: the MAP shows this sentence in a panel with a fixed budget of height, and a longer text takes the plot's room (found 2026-10-14).
+  const notes = `${structure.patentDerivedKnowledge ? '; KNOWLEDGE (patent-derived) counts toward coverage and forms no link' : ''}${structure.articleOnlyMedia ? '; MEDIA (named-in-article) counts toward coverage and forms no link' : ''}`;
+  if (!formation) {
+    const dl = structure.domains.filter(setAside);
+    return `No formation established: the ${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) speak${structure.relationships === 1 ? 's' : ''} to ${dl.length === 1 ? 'one domain only (' + dl[0] + ')' : `${dl.length} domains (${dl.join(', ')}) and no single admitted relationship speaks to two of them`}${notes}.`;
+  }
+  const ls = formation.links.map(l => `${l.a} ↔ ${l.b} (pair name: ${l.pairType} · one admitted relationship speaks to both)`).join('; ');
+  return `${structure.relationships} admitted relationship${structure.relationships !== 1 ? 's' : ''} (${parts}) connect ${formation.participatingDomains.length} domains: ${ls}${notes}.`;
 }
 
 /**
@@ -107,7 +116,16 @@ export function describeLinkSupport(link, relationships, evidenceFor = () => nul
   };
   const via = (link.via ?? []).map(v => v.label).slice(0, 3).join(', ');
   const basis = link.basis === 'ONE_RELATIONSHIP_SPEAKS_TO_BOTH' ? 'one admitted relationship speaks to both domains'
-    : link.basis === 'RELATIONSHIP_AND_SHARED_PARTICIPANT' ? `one admitted relationship speaks to both domains, and ${via} takes part in a relationship of each`
     : `no single relationship connects the two domains; ${via} takes part in a relationship of each`;
   return { basis, sides: `${link.a}: ${side(link.a)} · ${link.b}: ${side(link.b)}`, total: (link.relationshipIds ?? []).length };
+}
+
+/** The pairs that are NOT a formation: connected only because one participant takes part in a relationship of each domain. A contextual lead, never an admitted relationship.
+ *  compact: one short line for the brief and the MAP (the full list, with each pair's support, is on the Analysis); the full form is for the synthesis. */
+export function formationLeadsSentence({ leads = [] } = {}, { compact = false } = {}) {
+  if (!leads.length) return '';
+  const via = [...new Set(leads.flatMap(l => l.via.map(v => v.label)))].slice(0, 2).join(', ');
+  const n = leads.length, pairs = `${n} domain pair${n !== 1 ? 's share' : ' shares'} a participant (${via})`;
+  if (compact) return `Contextual leads, not a formation: ${pairs} and no admitted relationship speaks to both domains of ${n !== 1 ? 'any of them' : 'it'}.`;
+  return `Contextual leads, not a formation: ${pairs} but no single admitted relationship speaks to both domains of a pair: ${leads.map(l => `${l.a} ↔ ${l.b} (pair name: ${l.pairType})`).join('; ')}.`;
 }
