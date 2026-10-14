@@ -668,70 +668,6 @@
     }
   },
   {
-    "case": "R12",
-    "subject": "Verizon",
-    "question": "R12",
-    "questionText": "What public-attention signals around Verizon can be tied to a specific relationship or event?",
-    "build": "23cfe93",
-    "snapshotId": "snap-mv816rhb-2",
-    "snapshotReady": true,
-    "relationshipChange": "done",
-    "lookups": [
-      "capital:OK",
-      "ownership:OK",
-      "8k:OK",
-      "counterparty:OK",
-      "labor:OK",
-      "store:OK",
-      "clinical:OK",
-      "patents:OK",
-      "media:OK"
-    ],
-    "pageErrors": [],
-    "seconds": 2.6,
-    "capturedAt": "2026-10-14T11:33:09.518Z",
-    "probe": {
-      "snapshotId": "snap-mv816rhb-2",
-      "canonicalId": "verizon",
-      "subject": "VERIZON",
-      "relationships": 35,
-      "byType": {
-        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
-        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
-        "ASSIGNEE_OF_GRANTED_PATENT": 20
-      },
-      "admittedDomains": [
-        "KNOWLEDGE",
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "linkedDomains": [
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "links": 3,
-      "analysisSentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
-      "historySentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
-      "historyRelationships": 35,
-      "historyError": null,
-      "synthesisCounts": {
-        "SUPPORTED": 6,
-        "UNRESOLVED": 1
-      },
-      "synthesisValidation": {
-        "statements": 7,
-        "problems": []
-      },
-      "admission": {
-        "admitted": 0,
-        "rejected": 0,
-        "deferred": 0
-      }
-    }
-  },
-  {
     "case": "R13",
     "subject": "Intel",
     "question": "R13",
@@ -1347,6 +1283,73 @@
       "admission": {
         "admitted": 1,
         "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "R12",
+    "subject": "Verizon",
+    "question": "R12",
+    "questionText": "What public-attention signals around Verizon can be tied to a specific relationship or event?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83udh4-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 24.9,
+    "capturedAt": "2026-10-14T12:47:52.325Z",
+    "probe": {
+      "snapshotId": "snap-mv83udh4-1",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
         "deferred": 0
       }
     }

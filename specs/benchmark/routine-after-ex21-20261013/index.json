@@ -466,68 +466,6 @@
     }
   },
   {
-    "case": "R12",
-    "subject": "Verizon",
-    "question": "R12",
-    "questionText": "What public-attention signals around Verizon can be tied to a specific relationship or event?",
-    "build": "4624780",
-    "snapshotId": "snap-mv7snph0-2",
-    "snapshotReady": true,
-    "relationshipChange": "done",
-    "lookups": [
-      "capital:OK",
-      "ownership:OK",
-      "8k:OK",
-      "counterparty:OK",
-      "labor:OK",
-      "store:OK",
-      "clinical:OK",
-      "patents:OK"
-    ],
-    "pageErrors": [],
-    "seconds": 3.7,
-    "capturedAt": "2026-10-14T07:34:24.398Z",
-    "probe": {
-      "snapshotId": "snap-mv7snph0-2",
-      "canonicalId": "verizon",
-      "subject": "VERIZON",
-      "relationships": 35,
-      "byType": {
-        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
-        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
-        "ASSIGNEE_OF_GRANTED_PATENT": 20
-      },
-      "admittedDomains": [
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "linkedDomains": [
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "links": 3,
-      "analysisSentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
-      "historySentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
-      "historyRelationships": 35,
-      "historyError": null,
-      "synthesisCounts": {
-        "SUPPORTED": 5,
-        "UNRESOLVED": 1
-      },
-      "synthesisValidation": {
-        "statements": 6,
-        "problems": []
-      },
-      "admission": {
-        "admitted": 0,
-        "rejected": 0,
-        "deferred": 0
-      }
-    }
-  },
-  {
     "case": "R13",
     "subject": "Intel",
     "question": "R13",
@@ -552,72 +490,6 @@
     "capturedAt": "2026-10-14T08:01:37.595Z",
     "probe": {
       "snapshotId": "snap-mv7snzm5-1",
-      "canonicalId": "intel",
-      "subject": "INTEL CORP",
-      "relationships": 44,
-      "byType": {
-        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
-        "CAPITAL_EVENT_INVOLVES": 1,
-        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
-        "ASSIGNEE_OF_GRANTED_PATENT": 20
-      },
-      "admittedDomains": [
-        "CAPITAL",
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "linkedDomains": [
-        "CAPITAL",
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "links": 6,
-      "analysisSentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
-      "historySentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
-      "historyRelationships": 44,
-      "historyError": null,
-      "synthesisCounts": {
-        "SUPPORTED": 5,
-        "DOCUMENTED": 1,
-        "UNRESOLVED": 2
-      },
-      "synthesisValidation": {
-        "statements": 8,
-        "problems": []
-      },
-      "admission": {
-        "admitted": 1,
-        "rejected": 0,
-        "deferred": 0
-      }
-    }
-  },
-  {
-    "case": "R14",
-    "subject": "Intel",
-    "question": "R14",
-    "questionText": "What knowledge or intellectual-property relationships connect Intel to other participants?",
-    "build": "4624780",
-    "snapshotId": "snap-mv7tmsaq-2",
-    "snapshotReady": true,
-    "relationshipChange": "done",
-    "lookups": [
-      "capital:OK",
-      "ownership:OK",
-      "8k:OK",
-      "counterparty:OK",
-      "labor:OK",
-      "store:FAILED",
-      "clinical:OK",
-      "patents:OK"
-    ],
-    "pageErrors": [],
-    "seconds": 15.3,
-    "capturedAt": "2026-10-14T08:01:52.913Z",
-    "probe": {
-      "snapshotId": "snap-mv7tmsaq-2",
       "canonicalId": "intel",
       "subject": "INTEL CORP",
       "relationships": 44,
@@ -1309,6 +1181,139 @@
       },
       "admission": {
         "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "R12",
+    "subject": "Verizon",
+    "question": "R12",
+    "questionText": "What public-attention signals around Verizon can be tied to a specific relationship or event?",
+    "build": "23cfe93",
+    "snapshotId": "snap-mv7zj49x-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 67.8,
+    "capturedAt": "2026-10-14T10:47:09.679Z",
+    "probe": {
+      "snapshotId": "snap-mv7zj49x-1",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 35,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historySentence": "35 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historyRelationships": 35,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 7,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "R14",
+    "subject": "Intel",
+    "question": "R14",
+    "questionText": "What knowledge or intellectual-property relationships connect Intel to other participants?",
+    "build": "23cfe93",
+    "snapshotId": "snap-mv7zqggv-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 14,
+    "capturedAt": "2026-10-14T10:52:40.406Z",
+    "probe": {
+      "snapshotId": "snap-mv7zqggv-1",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 44,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historySentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historyRelationships": 44,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
         "rejected": 0,
         "deferred": 0
       }

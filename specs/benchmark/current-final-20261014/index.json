@@ -1,0 +1,2416 @@
+[
+  {
+    "case": "C01",
+    "subject": "Sysco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Sysco across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83vi1j-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 50.4,
+    "capturedAt": "2026-10-14T12:49:10.536Z",
+    "probe": {
+      "snapshotId": "snap-mv83vi1j-1",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "DOCUMENTED": 5,
+        "INFERRED": 1,
+        "UNRESOLVED": 4
+      },
+      "synthesisValidation": {
+        "statements": 20,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C02",
+    "subject": "Sysco",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Sysco in the last 12 months?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83wkrb-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 12.8,
+    "capturedAt": "2026-10-14T12:49:23.387Z",
+    "probe": {
+      "snapshotId": "snap-mv83wkrb-2",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "DOCUMENTED": 5,
+        "INFERRED": 1,
+        "UNRESOLVED": 4
+      },
+      "synthesisValidation": {
+        "statements": 20,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C03",
+    "subject": "Sysco",
+    "question": 7,
+    "questionText": "Which relationships around Sysco dissolved or are indeterminate, and why?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83wunc-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 6.2,
+    "capturedAt": "2026-10-14T12:49:29.625Z",
+    "probe": {
+      "snapshotId": "snap-mv83wunc-3",
+      "canonicalId": "sysco",
+      "subject": "SYSCO",
+      "relationships": 60,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 5,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historySentence": "60 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 5 capital-event relationships, 22 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through SYSCO); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through SYSCO); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through SYSCO); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through SYSCO); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through SYSCO); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through SYSCO); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through SYSCO); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through SYSCO); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through SYSCO); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through SYSCO).",
+      "historyRelationships": 60,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "DOCUMENTED": 5,
+        "INFERRED": 1,
+        "UNRESOLVED": 4
+      },
+      "synthesisValidation": {
+        "statements": 20,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 15,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C04",
+    "subject": "Oracle",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Oracle across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83x3a6-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:TIMEOUT",
+      "counterparty:TIMEOUT",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 66.6,
+    "capturedAt": "2026-10-14T12:50:41.148Z",
+    "probe": {
+      "snapshotId": "snap-mv83x3a6-1",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 72,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "72 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historySentence": "72 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historyRelationships": 72,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 10,
+        "DOCUMENTED": 6,
+        "INFERRED": 3,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 21,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "C05",
+    "subject": "Oracle",
+    "question": 5,
+    "questionText": "What technology relationships connect Oracle to other participants?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83yitg-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 39.5,
+    "capturedAt": "2026-10-14T12:51:20.678Z",
+    "probe": {
+      "snapshotId": "snap-mv83yitg-2",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historySentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "DOCUMENTED": 6,
+        "INFERRED": 3,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 23,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C06",
+    "subject": "Oracle",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Oracle?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83zdwq-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 5.3,
+    "capturedAt": "2026-10-14T12:51:25.952Z",
+    "probe": {
+      "snapshotId": "snap-mv83zdwq-3",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historySentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "DOCUMENTED": 6,
+        "INFERRED": 3,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 23,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C07",
+    "subject": "Oracle",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Oracle?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83zhjx-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.2,
+    "capturedAt": "2026-10-14T12:51:30.191Z",
+    "probe": {
+      "snapshotId": "snap-mv83zhjx-4",
+      "canonicalId": "oracle",
+      "subject": "ORACLE",
+      "relationships": 73,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 2,
+        "CAPITAL_EVENT_INVOLVES": 8,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 22,
+        "ASSIGNEE_OF_GRANTED_PATENT": 40,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historySentence": "73 admitted relationships (2 beneficial-ownership disclosures, 8 capital-event relationships, 22 officer or director disclosures, 40 granted-patent assignments, 1 named-in-article relationship) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through ORACLE); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through ORACLE); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through ORACLE); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through ORACLE); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through ORACLE); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through ORACLE, ELLISON LAWRENCE JOSEPH); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through ORACLE); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through ORACLE); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through ORACLE); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through ORACLE).",
+      "historyRelationships": 73,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 11,
+        "DOCUMENTED": 6,
+        "INFERRED": 3,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 23,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 8,
+        "rejected": 6,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C08",
+    "subject": "Tesla",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Tesla across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv83zrg6-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 49,
+    "capturedAt": "2026-10-14T12:52:26.041Z",
+    "probe": {
+      "snapshotId": "snap-mv83zrg6-1",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 32,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "32 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historySentence": "32 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historyRelationships": 32,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C09",
+    "subject": "Tesla",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Tesla show, and what connects them?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv840rm7-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 5.2,
+    "capturedAt": "2026-10-14T12:52:31.288Z",
+    "probe": {
+      "snapshotId": "snap-mv840rm7-2",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 32,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "32 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historySentence": "32 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historyRelationships": 32,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C10",
+    "subject": "Tesla",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Tesla?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv840vnu-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 35.6,
+    "capturedAt": "2026-10-14T12:53:06.915Z",
+    "probe": {
+      "snapshotId": "snap-mv840vnu-3",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through TESLA); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through TESLA); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 12,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C11",
+    "subject": "Tesla",
+    "question": 11,
+    "questionText": "Across all six domains, what formation exists around Tesla?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv841n5v-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 8.9,
+    "capturedAt": "2026-10-14T12:53:15.839Z",
+    "probe": {
+      "snapshotId": "snap-mv841n5v-4",
+      "canonicalId": "tesla",
+      "subject": "TESLA",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 7,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through TESLA); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 7 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through TESLA); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through TESLA); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through TESLA); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through TESLA); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through TESLA); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through TESLA, Musk Elon); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through TESLA); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through TESLA); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through TESLA); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through TESLA).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 12,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C12",
+    "subject": "Costco",
+    "question": 6,
+    "questionText": "What do labor and capital activity around Costco show, and what connects them?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv841z5g-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 48.1,
+    "capturedAt": "2026-10-14T12:54:09.325Z",
+    "probe": {
+      "snapshotId": "snap-mv841z5g-1",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "analysisSentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historySentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 5,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C23",
+    "subject": "Costco",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Costco across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv842zfa-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 7.8,
+    "capturedAt": "2026-10-14T12:54:17.097Z",
+    "probe": {
+      "snapshotId": "snap-mv842zfa-2",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "analysisSentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historySentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 5,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C24",
+    "subject": "Costco",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Costco?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv8435h7-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 43.8,
+    "capturedAt": "2026-10-14T12:55:00.880Z",
+    "probe": {
+      "snapshotId": "snap-mv8435h7-3",
+      "canonicalId": "costco-wholesale",
+      "subject": "COSTCO WHOLESALE CORP",
+      "relationships": 28,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 3,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 25
+      },
+      "admittedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "analysisSentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historySentence": "28 admitted relationships (3 beneficial-ownership disclosures, 25 officer or director disclosures) connect 2 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through COSTCO WHOLESALE CORP).",
+      "historyRelationships": 28,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 4,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 5,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C13",
+    "subject": "Boeing",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boeing across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv844c1h-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:TIMEOUT",
+      "8k:TIMEOUT",
+      "counterparty:TIMEOUT",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:TIMEOUT",
+      "patents:TIMEOUT",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 72.6,
+    "capturedAt": "2026-10-14T12:56:21.254Z",
+    "probe": {
+      "snapshotId": "snap-mv844c1h-1",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 57,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "57 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historySentence": "57 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historyRelationships": 57,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 11,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "C14",
+    "subject": "Boeing",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boeing in the last 12 months?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv845t86-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 38.5,
+    "capturedAt": "2026-10-14T12:56:59.728Z",
+    "probe": {
+      "snapshotId": "snap-mv845t86-2",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 57,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "57 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historySentence": "57 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historyRelationships": 57,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 12,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C15",
+    "subject": "Boeing",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Boeing connected?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv846mrs-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 29.9,
+    "capturedAt": "2026-10-14T12:57:29.654Z",
+    "probe": {
+      "snapshotId": "snap-mv846mrs-3",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 15,
+      "analysisSentence": "58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOEING); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historySentence": "58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOEING); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C16",
+    "subject": "Boeing",
+    "question": 12,
+    "questionText": "Where do domains diverge around Boeing, and on what evidence?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv8479w0-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 21.5,
+    "capturedAt": "2026-10-14T12:57:51.108Z",
+    "probe": {
+      "snapshotId": "snap-mv8479w0-4",
+      "canonicalId": "boeing",
+      "subject": "BOEING",
+      "relationships": 58,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 8,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 26,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 2,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 1
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 15,
+      "analysisSentence": "58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOEING); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historySentence": "58 admitted relationships (8 beneficial-ownership disclosures, 1 capital-event relationship, 26 officer or director disclosures, 2 clinical-trial sponsorships, 20 granted-patent assignments, 1 named-in-article relationship) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOEING); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOEING); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOEING); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOEING); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOEING); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOEING); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOEING); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOEING); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOEING); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOEING); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOEING); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOEING); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOEING); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOEING); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOEING).",
+      "historyRelationships": 58,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 13,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C17",
+    "subject": "Verizon",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Verizon across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv847ukj-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 60.7,
+    "capturedAt": "2026-10-14T12:58:57.128Z",
+    "probe": {
+      "snapshotId": "snap-mv847ukj-1",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C18",
+    "subject": "Verizon",
+    "question": 2,
+    "questionText": "Which ownership relationships around Verizon changed in the last 12 months, and what is the coverage behind that?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv8495e6-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 3.2,
+    "capturedAt": "2026-10-14T12:59:00.351Z",
+    "probe": {
+      "snapshotId": "snap-mv8495e6-2",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C19",
+    "subject": "Verizon",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Verizon?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv8497ul-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 6.2,
+    "capturedAt": "2026-10-14T12:59:06.587Z",
+    "probe": {
+      "snapshotId": "snap-mv8497ul-3",
+      "canonicalId": "verizon",
+      "subject": "VERIZON",
+      "relationships": 37,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 11,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historySentence": "37 admitted relationships (4 beneficial-ownership disclosures, 11 officer or director disclosures, 20 granted-patent assignments, 2 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through VERIZON); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through VERIZON); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through VERIZON); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through VERIZON); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through VERIZON); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through VERIZON).",
+      "historyRelationships": 37,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C20",
+    "subject": "Intel",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Intel across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv849gvg-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:TIMEOUT",
+      "8k:TIMEOUT",
+      "counterparty:TIMEOUT",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:OK",
+      "patents:TIMEOUT",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 67,
+    "capturedAt": "2026-10-14T13:00:18.737Z",
+    "probe": {
+      "snapshotId": "snap-mv849gvg-1",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 44,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historySentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historyRelationships": 44,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": null
+    }
+  },
+  {
+    "case": "C21",
+    "subject": "Intel",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Intel in the last 12 months?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84awbu-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 46.8,
+    "capturedAt": "2026-10-14T13:01:05.551Z",
+    "probe": {
+      "snapshotId": "snap-mv84awbu-2",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 44,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historySentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historyRelationships": 44,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C22",
+    "subject": "Intel",
+    "question": 4,
+    "questionText": "How are the capital and ownership structures around Intel connected?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84bwg8-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 23.5,
+    "capturedAt": "2026-10-14T13:01:29.084Z",
+    "probe": {
+      "snapshotId": "snap-mv84bwg8-3",
+      "canonicalId": "intel",
+      "subject": "INTEL CORP",
+      "relationships": 44,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 4,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historySentence": "44 admitted relationships (4 beneficial-ownership disclosures, 1 capital-event relationship, 19 officer or director disclosures, 20 granted-patent assignments) connect 4 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through INTEL CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through INTEL CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through INTEL CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through INTEL CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through INTEL CORP).",
+      "historyRelationships": 44,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "DOCUMENTED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 9,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 1,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C25",
+    "subject": "Broadcom",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Broadcom across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84cl1g-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 50,
+    "capturedAt": "2026-10-14T13:02:24.873Z",
+    "probe": {
+      "snapshotId": "snap-mv84cl1g-1",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 40,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historySentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historyRelationships": 40,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 7,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C26",
+    "subject": "Broadcom",
+    "question": 2,
+    "questionText": "Which ownership relationships around Broadcom changed in the last 12 months, and what is the coverage behind that?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84dlwk-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 14.3,
+    "capturedAt": "2026-10-14T13:02:39.208Z",
+    "probe": {
+      "snapshotId": "snap-mv84dlwk-2",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 40,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historySentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historyRelationships": 40,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 7,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C27",
+    "subject": "Broadcom",
+    "question": 5,
+    "questionText": "What technology relationships connect Broadcom to other participants?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84dwrt-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 46.8,
+    "capturedAt": "2026-10-14T13:03:26.053Z",
+    "probe": {
+      "snapshotId": "snap-mv84dwrt-3",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 40,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 3,
+      "analysisSentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historySentence": "40 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments) connect 3 domains: LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historyRelationships": 40,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 6,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 7,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C28",
+    "subject": "Broadcom",
+    "question": 12,
+    "questionText": "Where do domains diverge around Broadcom, and on what evidence?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84ewu8-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.8,
+    "capturedAt": "2026-10-14T13:03:30.809Z",
+    "probe": {
+      "snapshotId": "snap-mv84ewu8-4",
+      "canonicalId": "broadcom",
+      "subject": "Broadcom Inc.",
+      "relationships": 45,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 14,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 6,
+      "analysisSentence": "45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through Broadcom Inc.); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through Broadcom Inc.); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historySentence": "45 admitted relationships (6 beneficial-ownership disclosures, 14 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 4 domains: LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through Broadcom Inc.); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through Broadcom Inc.); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through Broadcom Inc.); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through Broadcom Inc.); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through Broadcom Inc.); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through Broadcom Inc.).",
+      "historyRelationships": 45,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 1
+      },
+      "synthesisValidation": {
+        "statements": 8,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C30",
+    "subject": "Netflix",
+    "question": 8,
+    "questionText": "What structure is forming across knowledge, technology and capital around Netflix?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84gk6n-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 5.7,
+    "capturedAt": "2026-10-14T13:04:48.516Z",
+    "probe": {
+      "snapshotId": "snap-mv84gk6n-2",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 15,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C31",
+    "subject": "Netflix",
+    "question": 9,
+    "questionText": "What relationships exist between media attention and capital events around Netflix?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84gokm-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 4.3,
+    "capturedAt": "2026-10-14T13:04:52.862Z",
+    "probe": {
+      "snapshotId": "snap-mv84gokm-3",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 15,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 5,
+        "rejected": 16,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C32",
+    "subject": "Boston Scientific",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Boston Scientific across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84h031-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 51.8,
+    "capturedAt": "2026-10-14T13:05:50.534Z",
+    "probe": {
+      "snapshotId": "snap-mv84h031-1",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 85,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "85 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historySentence": "85 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historyRelationships": 85,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 15,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C33",
+    "subject": "Boston Scientific",
+    "question": 3,
+    "questionText": "What capital events involving named counterparties were reported for Boston Scientific in the last 12 months?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84i0h1-2",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 29.3,
+    "capturedAt": "2026-10-14T13:06:19.792Z",
+    "probe": {
+      "snapshotId": "snap-mv84i0h1-2",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 85,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "85 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historySentence": "85 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments) connect 5 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historyRelationships": 85,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 15,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C34",
+    "subject": "Boston Scientific",
+    "question": 7,
+    "questionText": "Which relationships around Boston Scientific dissolved or are indeterminate, and why?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84imy7-3",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 30.1,
+    "capturedAt": "2026-10-14T13:06:49.942Z",
+    "probe": {
+      "snapshotId": "snap-mv84imy7-3",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 15,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 16,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C35",
+    "subject": "Boston Scientific",
+    "question": 10,
+    "questionText": "What does the evidence not establish about the ownership and capital structure of Boston Scientific?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv84jaaa-4",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:FAILED"
+    ],
+    "pageErrors": [],
+    "seconds": 14.5,
+    "capturedAt": "2026-10-14T13:07:04.467Z",
+    "probe": {
+      "snapshotId": "snap-mv84jaaa-4",
+      "canonicalId": "boston-scientific",
+      "subject": "BOSTON SCIENTIFIC CORP",
+      "relationships": 87,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 7,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 18,
+        "LEAD_SPONSOR_OF_CLINICAL_TRIAL": 37,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 2
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 15,
+      "analysisSentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historySentence": "87 admitted relationships (7 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 18 officer or director disclosures, 37 clinical-trial sponsorships, 20 granted-patent assignments, 2 named-in-article relationships) connect 6 domains: CAPITAL \u2194 KNOWLEDGE (research financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through BOSTON SCIENTIFIC CORP); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 LABOR (embodied-expertise movement / labor market depends on expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 MEDIA (attention to a discovery or controversy \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 OWNERSHIP (control of IP / expertise \u00b7 through BOSTON SCIENTIFIC CORP); KNOWLEDGE \u2194 TECHNOLOGY (knowledge amplifies capability / capability embodies expertise \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through BOSTON SCIENTIFIC CORP); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through BOSTON SCIENTIFIC CORP); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through BOSTON SCIENTIFIC CORP); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through BOSTON SCIENTIFIC CORP).",
+      "historyRelationships": 87,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 9,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 3
+      },
+      "synthesisValidation": {
+        "statements": 16,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 3,
+        "rejected": 3,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "C29",
+    "subject": "Netflix",
+    "question": 1,
+    "questionText": "What structural relationships are forming around Netflix across ownership, technology, and capital?",
+    "build": "be5f8dc",
+    "snapshotId": "snap-mv85qfwb-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "admission:OK",
+      "capital:OK",
+      "ownership:OK",
+      "8k:TIMEOUT",
+      "counterparty:TIMEOUT",
+      "labor:TIMEOUT",
+      "store:OK",
+      "clinical:OK",
+      "patents:TIMEOUT",
+      "media:TIMEOUT"
+    ],
+    "pageErrors": [],
+    "seconds": 66.4,
+    "capturedAt": "2026-10-14T13:41:29.853Z",
+    "probe": {
+      "snapshotId": "snap-mv85qfwb-1",
+      "canonicalId": "netflix",
+      "subject": "NETFLIX INC",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 5,
+        "ACQUIRED": 1,
+        "CAPITAL_EVENT_INVOLVES": 2,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 19,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "links": 10,
+      "analysisSentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historySentence": "52 admitted relationships (5 beneficial-ownership disclosures, 1 acquisition, 2 capital-event relationships, 19 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 5 domains: CAPITAL \u2194 LABOR (investment in / cost of capacity \u00b7 through NETFLIX INC); CAPITAL \u2194 MEDIA (sentiment-sensitive flow / attention to a capital event \u00b7 through NETFLIX INC); CAPITAL \u2194 OWNERSHIP (financing of control / control financed \u00b7 through NETFLIX INC); CAPITAL \u2194 TECHNOLOGY (capability funded / R&D capital intensity \u00b7 through NETFLIX INC); LABOR \u2194 MEDIA (attention to a workforce event / labor conflict \u00b7 through NETFLIX INC); LABOR \u2194 OWNERSHIP (control of organizational capacity \u00b7 through NETFLIX INC); LABOR \u2194 TECHNOLOGY (substitution or complementarity (automation) \u00b7 through NETFLIX INC); MEDIA \u2194 OWNERSHIP (propagation control / attention to a control change \u00b7 through NETFLIX INC); MEDIA \u2194 TECHNOLOGY (attention to a capability \u00b7 through NETFLIX INC); OWNERSHIP \u2194 TECHNOLOGY (control of IP or platform \u00b7 through NETFLIX INC).",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 8,
+        "DOCUMENTED": 3,
+        "INFERRED": 1,
+        "UNRESOLVED": 2
+      },
+      "synthesisValidation": {
+        "statements": 14,
+        "problems": []
+      },
+      "admission": null
+    }
+  }
+]

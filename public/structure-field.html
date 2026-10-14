@@ -934,6 +934,9 @@
     const [a, b] = r.part;
     if (r.type === 'HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE') return `${b} has disclosed beneficial ownership in ${a}.`;
     if (r.type === 'ASSIGNEE_OF_GRANTED_PATENT') return r.heldBy ? `${r.heldBy}, a subsidiary listed in ${a}'s 10-K Exhibit 21, is the assignee of granted patent ${b}.` : `${a} is the assignee of granted patent ${b}.`;
+    if (r.type === 'HAS_STATED_ROLE_ON_ISSUER_PAGE') return `${b} is listed as ${r.role ?? 'a role-holder'} on ${a}'s own page.`;
+    if (r.type === 'LED_FUNDING_ROUND_PER_ISSUER') return `${b} is stated by ${a} to have led its ${r.round ?? 'funding round'}.`;
+    if (r.type === 'NAMED_IN_ARTICLE') return `${a} is named in the article ${b}.`;
     if (r.type === 'LEAD_SPONSOR_OF_CLINICAL_TRIAL') return `${a} is the lead sponsor of clinical trial ${b}.`;
     if (r.type === 'HAS_FORM_D_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is stated as ${r.role === 'DIRECTOR' ? 'a director' : 'an executive officer'} of ${a} in its Form D.`;
     if (r.type === 'HAS_OFFICER_OR_DIRECTOR_DISCLOSURE') return `${b} is disclosed as ${r.role === 'DIRECTOR' ? 'a director' : 'an officer'} of ${a}.`;

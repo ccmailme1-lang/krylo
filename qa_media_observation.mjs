@@ -29,7 +29,7 @@ console.log('Server: the exact phrase of the SEC registered name; failures stay 
 
 console.log('Packets: dated, subject-bound, observation only');
 {
-  const res = await fetchMediaObservations({ entity: { cik: '0000732712' }, fetchImpl: async (u) => ({ ok: true, json: async () => ({ phrase: 'VERIZON COMMUNICATIONS', legalName: 'VERIZON COMMUNICATIONS INC', articles: real.articles.map(a => ({ url: a.url, title: a.title, domain: a.domain, seenDate: a.seendate, language: a.language, sourceCountry: a.sourcecountry })), source: 'GDELT DOC 2.0 API (api.gdeltproject.org)', retrievedAt: '2026-10-13T20:00:00.000Z', timespan: '7d' }) }) });
+  const res = await fetchMediaObservations({ entity: { cik: '0000732712' }, fetchImpl: async (u) => ({ ok: true, json: async () => ({ phrase: 'VERIZON COMMUNICATIONS', legalName: 'VERIZON COMMUNICATIONS INC', articles: real.articles.map(a => ({ url: a.url, title: a.title, domain: a.domain, seenDate: a.seendate, language: a.language, sourceCountry: a.sourcecountry })), source: 'GDELT DOC 2.0 API (api.gdeltproject.org)', retrievedAt: '2026-10-13T20:00:00.000Z', timespan: '30d' }) }) });
   const sigs = buildMediaSignals({ canonicalId: 'verizon', entityName: 'VERIZON', result: res });
   ok(sigs.length === 2 && sigs.every(s => s.domain === 'media' && s.source === 'GDELT' && s.eventClass === 'MEDIA_ARTICLE' && s.polarity === POLARITY.ABSENT && s.meta.canonicalId === 'verizon'), 'one MEDIA packet per article, bound to the subject, no polarity inferred');
   ok(sigs[0].meta.eventDate === '2026-09-30' && sigs[0].meta.accession === real.articles[0].url && sigs[0].meta.mediaArticle.title === real.articles[0].title && sigs[0].meta.mediaArticle.domain === 'tickerreport.com', 'dated by GDELT\'s first-seen day; the article title, domain and URL are recorded as stated');
@@ -66,7 +66,7 @@ console.log('Relationship: NAMED_IN_ARTICLE (ratified 2026-10-13), only when the
   const VZ = { cik: '0000732712', name: 'VERIZON COMMUNICATIONS INC' };
   const arts = [...real.articles.map(a => ({ url: a.url, title: a.title, domain: a.domain, seenDate: a.seendate })),
     { url: 'https://example.com/a-text-only-match', title: 'Telecom stocks rally on dividend news', domain: 'example.com', seenDate: '20260930T100000Z' }];
-  const result = { phrase: 'VERIZON COMMUNICATIONS', articles: arts, retrievedAt: '2026-10-13T20:00:00.000Z', timespan: '7d' };
+  const result = { phrase: 'VERIZON COMMUNICATIONS', articles: arts, retrievedAt: '2026-10-13T20:00:00.000Z', timespan: '30d' };
   ok(titleNames('Verizon Communications ( NYSE : VZ ) Stock', 'VERIZON COMMUNICATIONS') && !titleNames('Verizon wins a contract', 'VERIZON COMMUNICATIONS') && !titleNames('If You Invest $500 a Month', 'VERIZON COMMUNICATIONS'), 'the title must contain the registered name; a title with only part of it, or none, does not name the company');
   const res = admitMediaArticles({ entity: VZ, result });
   ok(res.admitted.length === 1 && res.namedInTitle === 1 && res.returned === 3, 'only the article whose title names the company is admitted; the other two stay observations');
@@ -83,7 +83,7 @@ console.log('Relationship: NAMED_IN_ARTICLE (ratified 2026-10-13), only when the
   const st = S.statements.find(x => /dated article name VERIZON in its title/.test(x.text) || /dated article names VERIZON in its title/.test(x.text));
   ok(st && st.status === 'SUPPORTED' && /no endorsement, causation, event participation or other connection is inferred/.test(st.text) && st.evidence.length === 1 && st.evidence[0].accession === real.articles[0].url, 'a SUPPORTED statement cites the article and states the limit');
   ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
-  const mk = (mut) => { const b = buildArticleAssertion({ entity: VZ, article: arts[0], phrase: 'VERIZON COMMUNICATIONS', retrievedAt: 'x', timespan: '7d' }); mut(b.assertion); return admitAndProject(b.assertion, { companyName: VZ.name, companyCik: VZ.cik, articleLabel: 'x', source: 'GDELT' }); };
+  const mk = (mut) => { const b = buildArticleAssertion({ entity: VZ, article: arts[0], phrase: 'VERIZON COMMUNICATIONS', retrievedAt: 'x', timespan: '30d' }); mut(b.assertion); return admitAndProject(b.assertion, { companyName: VZ.name, companyCik: VZ.cik, articleLabel: 'x', source: 'GDELT' }); };
   ok(mk(a => { a.evidence.provenance.title = 'Telecom stocks rally'; }).admitted === false, 'a title that does not name the company: refused');
   ok(mk(a => { a.evidence.provenance.url = 'not a url'; }).admitted === false, 'no citable URL: refused');
   ok(mk(a => { a.evidence.provenance.seenDate = null; }).admitted === false, 'no date: refused');

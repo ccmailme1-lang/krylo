@@ -5,6 +5,7 @@
 import https from 'https';
 import { legalNameKey } from '../src/engine/legalnamekey.js';
 import { secTitleForCik } from './secnames.js';
+import { gdeltTurn } from './gdeltgate.js';
 
 const TTL = 30 * 60 * 1000;
 const _cache = new Map();
@@ -18,7 +19,8 @@ export function phraseOf(title) {
   return words.join(' ');
 }
 
-function getText(p) {
+async function getText(p) {
+  await gdeltTurn();                      // GDELT's one-request-per-5-seconds limit is shared with the app's ambient poll
   return new Promise((resolve, reject) => {
     const req = https.get({ hostname: 'api.gdeltproject.org', path: p, headers: { 'User-Agent': 'krylo/1.0', Accept: 'application/json' } }, (up) => {
       let body = ''; up.on('data', (c) => { body += c; });
@@ -40,13 +42,13 @@ export async function mediaFor(cik, { now = Date.now(), getFn = getText, titleFn
   for (let attempt = 0; attempt < ATTEMPTS; attempt++) {
     if (attempt) await sleep(RETRY_GAP_MS);
     try {
-      body = await getFn('/api/v2/doc/doc?' + new URLSearchParams({ query: `"${phrase}" sourcelang:english`, mode: 'artlist', maxrecords: '25', sort: 'datedesc', timespan: '7d', format: 'json' }));
+      body = await getFn('/api/v2/doc/doc?' + new URLSearchParams({ query: `"${phrase}" sourcelang:english`, mode: 'artlist', maxrecords: '25', sort: 'datedesc', timespan: '30d', format: 'json' }));
     } catch (e) { last = 'GDELT_LOOKUP_FAILED: ' + String(e?.message ?? e).slice(0, 80); if (/HTTP 429/.test(last)) continue; return { error: last }; }
     try { j = JSON.parse(body); last = null; break; } catch { last = 'GDELT_NOT_JSON: ' + String(body).replace(/\s+/g, ' ').slice(0, 80); }   // GDELT answers a rate limit with text
   }
   if (last) return { error: last };
   const articles = (j.articles ?? []).filter(a => a?.url && a?.title && a?.seendate).map(a => ({ url: a.url, title: String(a.title).replace(/\s+/g, ' ').trim(), domain: a.domain ?? null, seenDate: a.seendate, language: a.language ?? null, sourceCountry: a.sourcecountry ?? null }));
-  const value = { phrase, legalName: t.name, articles, source: SOURCE, retrievedAt: new Date(now).toISOString(), timespan: '7d', capped: (j.articles ?? []).length >= 25 };
+  const value = { phrase, legalName: t.name, articles, source: SOURCE, retrievedAt: new Date(now).toISOString(), timespan: '30d', capped: (j.articles ?? []).length >= 25 };
   if (!noCache) _cache.set(phrase, { at: now, value });
   return value;
 }

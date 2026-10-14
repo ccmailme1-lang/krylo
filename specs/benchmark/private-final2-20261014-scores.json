@@ -1,0 +1,314 @@
+[
+  {
+    "case": "PC01",
+    "subject": "Databento",
+    "q": "PC01",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 8,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC02",
+    "subject": "Databento",
+    "q": "PC02",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 8,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC03",
+    "subject": "Integrated Biosciences",
+    "q": "PC03",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 8,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC04",
+    "subject": "Integrated Biosciences",
+    "q": "PC04",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 8,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 4,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 8,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC05",
+    "subject": "Daytona",
+    "q": "PC05",
+    "c1": 0,
+    "c2": 0,
+    "c3": 0,
+    "c4": 0,
+    "c5": 0,
+    "c6": 0,
+    "c7": 0,
+    "raw": 0,
+    "scale": 1,
+    "features": {
+      "citedRecords": 0,
+      "connective": 0,
+      "unresolved": true,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [],
+      "covered": [],
+      "linked": [],
+      "relationships": 0,
+      "hasSynthesis": false,
+      "problems": 0,
+      "statements": 0,
+      "supported": 0,
+      "mapAgrees": false,
+      "historyAgrees": false,
+      "accessionLines": 0,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC06",
+    "subject": "Daytona",
+    "q": "PC06",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 9,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "LABOR"
+      ],
+      "covered": [
+        "LABOR"
+      ],
+      "linked": [],
+      "relationships": 5,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 2,
+      "supported": 2,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 9,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC07",
+    "subject": "Anduril",
+    "q": "PC07",
+    "c1": 2,
+    "c2": 1,
+    "c3": 1,
+    "c4": 1,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 8,
+    "scale": 8,
+    "features": {
+      "citedRecords": 21,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "TECHNOLOGY",
+        "OWNERSHIP",
+        "LABOR"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "TECHNOLOGY"
+      ],
+      "linked": [],
+      "relationships": 20,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 3,
+      "supported": 3,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 0,
+      "admission": null
+    }
+  },
+  {
+    "case": "PC08",
+    "subject": "Anduril",
+    "q": "PC08",
+    "c1": 2,
+    "c2": 0,
+    "c3": 1,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 6,
+    "scale": 6,
+    "features": {
+      "citedRecords": 21,
+      "connective": 0,
+      "unresolved": false,
+      "needs": [
+        "CAPITAL",
+        "LABOR"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "TECHNOLOGY"
+      ],
+      "covered": [],
+      "linked": [],
+      "relationships": 20,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 3,
+      "supported": 3,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 0,
+      "admission": null
+    }
+  }
+]

@@ -351,51 +351,6 @@
     }
   },
   {
-    "case": "R12",
-    "subject": "Verizon",
-    "q": "R12",
-    "c1": 2,
-    "c2": 0,
-    "c3": 1,
-    "c4": 0,
-    "c5": 1,
-    "c6": 1,
-    "c7": 1,
-    "raw": 6,
-    "scale": 6,
-    "features": {
-      "connective": 1,
-      "unresolved": false,
-      "needs": [
-        "MEDIA"
-      ],
-      "admitted": [
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "covered": [],
-      "linked": [
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "relationships": 35,
-      "hasSynthesis": true,
-      "problems": 0,
-      "statements": 6,
-      "supported": 5,
-      "mapAgrees": true,
-      "historyAgrees": true,
-      "accessionLines": 77,
-      "admission": {
-        "admitted": 0,
-        "rejected": 0,
-        "deferred": 0
-      }
-    }
-  },
-  {
     "case": "R13",
     "subject": "Intel",
     "q": "R13",
@@ -423,53 +378,6 @@
       "covered": [
         "CAPITAL"
       ],
-      "linked": [
-        "CAPITAL",
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "relationships": 44,
-      "hasSynthesis": true,
-      "problems": 0,
-      "statements": 8,
-      "supported": 5,
-      "mapAgrees": true,
-      "historyAgrees": true,
-      "accessionLines": 55,
-      "admission": {
-        "admitted": 1,
-        "rejected": 0,
-        "deferred": 0
-      }
-    }
-  },
-  {
-    "case": "R14",
-    "subject": "Intel",
-    "q": "R14",
-    "c1": 2,
-    "c2": 0,
-    "c3": 1,
-    "c4": 0,
-    "c5": 1,
-    "c6": 1,
-    "c7": 1,
-    "raw": 6,
-    "scale": 6,
-    "features": {
-      "connective": 1,
-      "unresolved": false,
-      "needs": [
-        "KNOWLEDGE"
-      ],
-      "admitted": [
-        "CAPITAL",
-        "LABOR",
-        "OWNERSHIP",
-        "TECHNOLOGY"
-      ],
-      "covered": [],
       "linked": [
         "CAPITAL",
         "LABOR",
@@ -985,6 +893,102 @@
       "accessionLines": 53,
       "admission": {
         "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "R12",
+    "subject": "Verizon",
+    "q": "R12",
+    "c1": 2,
+    "c2": 0,
+    "c3": 1,
+    "c4": 0,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 6,
+    "scale": 6,
+    "features": {
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "MEDIA"
+      ],
+      "admitted": [
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [],
+      "linked": [
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 35,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 7,
+      "supported": 6,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 77,
+      "admission": {
+        "admitted": 0,
+        "rejected": 0,
+        "deferred": 0
+      }
+    }
+  },
+  {
+    "case": "R14",
+    "subject": "Intel",
+    "q": "R14",
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "KNOWLEDGE"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "KNOWLEDGE"
+      ],
+      "linked": [
+        "CAPITAL",
+        "LABOR",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "relationships": 44,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 9,
+      "supported": 6,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 55,
+      "admission": {
+        "admitted": 1,
         "rejected": 0,
         "deferred": 0
       }
