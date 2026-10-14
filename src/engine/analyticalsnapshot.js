@@ -54,9 +54,15 @@ export function beginAnalysis(query, { refresh = false, timeoutMs } = {}) {
   return run.id;
 }
 
+// Per-lookup deadline, shorter than the full-run SETTLE_TIMEOUT_MS. Progressive freeze (2026-10-14): a slow optional lookup (media, clinical, issuer-page) no longer makes the whole snapshot wait
+// 45 s. After its own deadline, it is marked TIMEOUT and the snapshot can freeze; a late result changes nothing until the next Refresh (as before).
+const LOOKUP_DEADLINE_MS = { media: 8_000, clinical: 10_000, 'issuer-page': 10_000 };
 export function expectLookup(kind, { canonicalId = null } = {}) {
   if (!_run || _run.frozen || _run.dead) return false;
-  _run.lookups.set(kind, { kind, state: 'RUNNING', error: null, startedAt: Date.now(), finishedAt: null });
+  const run = _run; const l = { kind, state: 'RUNNING', error: null, startedAt: Date.now(), finishedAt: null, timer: null };
+  run.lookups.set(kind, l);
+  const d = LOOKUP_DEADLINE_MS[kind];
+  if (d) l.timer = setTimeout(() => { if (l.state === 'RUNNING' && !run.frozen && !run.dead) { l.state = 'TIMEOUT'; l.finishedAt = Date.now(); check(run); } }, d);
   if (canonicalId && !_run.canonicalId) _run.canonicalId = canonicalId;
   return true;
 }
@@ -67,6 +73,7 @@ export function settleLookup(kind, error = null) {
   if (!run || run.frozen || run.dead) return false;
   const l = run.lookups.get(kind);
   if (!l || l.state !== 'RUNNING') return false;
+  if (l.timer) { clearTimeout(l.timer); l.timer = null; }
   l.state = error ? 'FAILED' : 'OK'; l.error = error ? String(error) : null; l.finishedAt = Date.now();
   check(run);
   return true;
