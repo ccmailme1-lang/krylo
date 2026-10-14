@@ -36,7 +36,12 @@ const b = await chromium.launch();
 for (const [subject, cases] of bySubject) {
   const pg = await b.newPage({ viewport: { width: 2000, height: 1100 } });
   const errs = []; pg.on('pageerror', e => errs.push(String(e).slice(0, 200)));
-  await pg.goto(URL, { waitUntil: 'domcontentloaded', timeout: 90000 }); await pg.waitForTimeout(4000);
+  // Startup hygiene (2026-10-14): the dev server allows about six connections per host and the app fires ~100 ambient requests at load; some answer in 20 s or more and held the connections the
+  // subject's admission needed (production nginx multiplexes, so this is a dev-harness artifact). Wait for the startup requests to settle (4 s minimum, 40 s maximum; the two permanent streams are not counted).
+  const inflight = new Set(); const track = (r) => { if (!/\/(signals|stats)\/stream/.test(r.url())) inflight.add(r); };
+  pg.on('request', track); pg.on('requestfinished', r => inflight.delete(r)); pg.on('requestfailed', r => inflight.delete(r));
+  await pg.goto(URL, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  for (let i = 0; i < 80 && (i < 8 || inflight.size > 0); i++) await pg.waitForTimeout(500);
   for (const [id, , qn] of cases) {
     const q = ROUTINE ? ROUTINE.find(r => r.id === id).text : Q[qn](subject); const t0 = Date.now(); errs.length = 0;
     await pg.evaluate(async (q) => { const st = await import('/src/store/useanalysisstore.js'); st.useAnalysisStore.getState().createSession('bench', 'GENERAL', q, {}); const tc = await import('/src/engine/topicconnectors.js'); tc.fireTopicConnectors(q); }, q);

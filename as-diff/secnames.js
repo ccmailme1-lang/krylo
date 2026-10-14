@@ -60,6 +60,20 @@ export async function secTitleForCik(cik, opts = {}) {
   const src = await load(opts.now, opts.fetchFn);
   if (src.error) return { error: src.error };
   const row = (src.rows ?? []).find(r => String(r.cik_str).replace(/^0+/, '') === want);
-  return row?.title ? { name: String(row.title), source: SOURCE, asOf: src.fetchedAt } : { notListed: true, source: SOURCE, asOf: src.fetchedAt };
+  if (row?.title) return { name: String(row.title), source: SOURCE, asOf: src.fetchedAt };
+  // Not a listed company (a private Form D issuer, for example): the SEC's own registered name for that CIK, from its submissions record.
+  const sub = await (opts.submissionsFn ?? submissionsName)(want);
+  return sub?.name ? { name: sub.name, source: 'SEC EDGAR submissions record (data.sec.gov)', asOf: new Date(opts.now ?? Date.now()).toISOString() } : { notListed: true, source: SOURCE, asOf: src.fetchedAt };
+}
+const _subs = new Map();
+function submissionsName(cikDigits) {
+  if (_subs.has(cikDigits)) return Promise.resolve(_subs.get(cikDigits));
+  return new Promise((resolve) => {
+    const req = https.get({ hostname: 'data.sec.gov', path: `/submissions/CIK${cikDigits.padStart(10, '0')}.json`, headers: { 'User-Agent': 'Krylo Signal Engine admin@krylo.org', Accept: 'application/json' } }, (up) => {
+      let body = ''; up.on('data', (c) => { body += c; });
+      up.on('end', () => { try { const j = up.statusCode === 200 ? JSON.parse(body) : null; const v = j?.name ? { name: String(j.name) } : null; if (v) _subs.set(cikDigits, v); resolve(v); } catch { resolve(null); } });
+    });
+    req.on('error', () => resolve(null)); req.setTimeout(15000, () => { req.destroy(); resolve(null); });
+  });
 }
 export const _resetSecNamesForTests = () => { _mem = null; _inflight = null; };

@@ -20,6 +20,9 @@ import { patentsFor, warmPatentIndex } from './patentbulk.js';
 import { exhibit21For } from './exhibit21.js';
 import { gleifByLegalName, gleifByLei } from './gleif.js';
 import { mediaFor } from './mediaobservation.js';
+import { gdeltTryTurn } from './gdeltgate.js';
+import { applyUpstreamDeadline } from './upstreamdeadline.js';
+import { loadProxyCache, scheduleProxyCacheSave } from './proxycachestore.js';
 import { computeFsStar, computeDFC, reconcile } from '../src/engine/timingproxy.js';
 import { evaluateVendorPortfolio, MAX_PORTFOLIO_SIZE } from '../src/engine/vendorportfolioview.js';
 
@@ -55,11 +58,14 @@ const COMPANIES_HOUSE_KEY = process.env.COMPANIES_HOUSE_API_KEY ||
 // TTL matched to hook poll intervals: FRED = 5min, EDGAR = 15min.
 // Prevents redundant upstream calls when multiple clients poll simultaneously.
 const PROXY_CACHE     = new Map();
+const PROXY_CACHE_FILE = fileURLToPath(new URL('./data/proxy_cache.json', import.meta.url));   // the upstream cache survives an engine restart (proxycachestore.js)
+const _restoredProxyEntries = loadProxyCache(PROXY_CACHE, PROXY_CACHE_FILE);
 const FRED_TTL_MS     = 300_000;
 const EDGAR_TTL_MS    = 900_000;
 const FINNHUB_TTL_MS  = 30_000;  // 30s — matches daemon polling interval
 const KALSHI_TTL_MS   = 300_000; // 5 min — prevents 429 on simultaneous polls
-const EIA_TTL_MS      = 3_600_000; // 1h — WPSR releases weekly, no need to re-fetch often
+const EIA_TTL_MS      = 7 * 86_400_000; // 7d — WPSR releases weekly; the Founder ruled "cache once a week" (2026-10-14)
+const EIA_FUEL_TTL_MS = 7 * 86_400_000; // 7d — EIA retail gasoline and diesel prices are a weekly series
 const PATENTSVIEW_TTL_MS = 3_600_000; // 1h — PatentsView data is weekly/monthly, not live (connector's own comment)
 const FUEL_CACHE_TTL_MS = 24 * 3_600_000; // 24h — Gas Go regional/per-station prices, dedicated TTL
 // WO-2019 — Service API connector TTLs
@@ -100,6 +106,7 @@ function getCached(key, ttlMs) {
 function setCached(key, statusCode, body) {
   if (statusCode >= 400) return; // don't cache failures — let the next request retry upstream instead of replaying a stale error for the full TTL
   PROXY_CACHE.set(key, { statusCode, body, ts: Date.now() });
+  scheduleProxyCacheSave(PROXY_CACHE, PROXY_CACHE_FILE);
 }
 
 // ── WO-1041: Middleware ───────────────────────────────────────────────────────
@@ -1063,6 +1070,7 @@ function handleEiaProxy(req, res) {
     return;
   }
   const apiKey  = process.env.EIA_API_KEY ?? '';
+  if (!apiKey) return send(res, 503, { error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['EIA_API_KEY'] });   // same as the fuel proxy: without a key the upstream only hangs, holding a browser connection
   const options = {
     hostname: 'api.eia.gov',
     path:     '/v2/petroleum/stoc/wstk/data/' + qs + (qs ? '&' : '?') + 'api_key=' + apiKey,
@@ -1088,13 +1096,14 @@ function handleEiaProxy(req, res) {
 function handleEiaFuelProxy(req, res) {
   const qs  = req.url.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
   const key = 'eiafuel:' + qs;
-  const hit = getCached(key, FUEL_CACHE_TTL_MS);
+  const hit = getCached(key, EIA_FUEL_TTL_MS);
   if (hit) {
     res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' });
     res.end(hit.body);
     return;
   }
   const apiKey  = process.env.EIA_API_KEY ?? '';
+  if (!apiKey) return send(res, 503, { error: 'UPSTREAM_DATA_UNAVAILABLE', missing: ['EIA_API_KEY'] });
   const options = {
     hostname: 'api.eia.gov',
     path:     '/v2/petroleum/pri/gnd/data/' + qs + (qs ? '&' : '?') + 'api_key=' + apiKey,
@@ -1539,6 +1548,8 @@ function handleGdeltDocProxy(req, res) {
   const key = 'gdelt-doc:' + q;
   const hit = getCached(key, GDELT_DOC_TTL_MS);
   if (hit) { res.writeHead(hit.statusCode, { 'Content-Type': 'application/json', 'X-Cache': 'HIT' }); res.end(hit.body); return; }
+  // Ambient poll: goes only if GDELT's one-request-per-5-seconds quota is free right now (the media-observation lookup has priority); otherwise empty at once, never queued, never cached.
+  if (!gdeltTryTurn()) { res.writeHead(200, { 'Content-Type': 'application/json', 'X-Gdelt': 'QUOTA_BUSY' }); res.end(JSON.stringify({ articles: [] })); return; }
   const options = {
     hostname: 'api.gdeltproject.org',
     path: `/api/v2/doc/doc?query=${encodeURIComponent(q)}&mode=artlist&maxrecords=50&timespan=1d&format=json`,
@@ -1997,6 +2008,7 @@ function routeRequest(req, res) {
   if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
   const url = req.url?.split('?')[0];
+  applyUpstreamDeadline(req, res);   // ambient upstream proxies answer within the engine's 20 s upstream timeout or are cut with 504 (they were holding browser connections for up to 52 s)
 
   if (req.method === 'POST' && url === '/compare')                            return handleCompare(req, res);
   if (req.method === 'POST' && url === '/api/v1/persistence/execution-plan') return handlePersistExecutionPlan(req, res);
@@ -2073,6 +2085,7 @@ const server = http.createServer(routeRequest);
 
 server.listen(PORT, async () => {
   warmPatentIndex((m) => console.log('[patents]', m));
+  console.log(`[proxy-cache] restored ${_restoredProxyEntries} cached upstream answers from disk`);
   console.log(`[AS-DIFF] engine live on port ${PORT}`);
   await migrate();
   // WO-1768-A: YCID daily poll — update on startup then every 24h

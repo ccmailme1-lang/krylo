@@ -133,6 +133,21 @@ console.log('Exhibit 21 subsidiary rule (Founder ratified 2026-10-13)');
   ok(validateSynthesis(S, rels, latestEvidenceFor, null).problems.length === 0, 'every label is supported by its evidence (validator: no problems)');
 }
 
+console.log('Legal name by CIK: listed title, else the SEC submissions record');
+{
+  const { secTitleForCik, _resetSecNamesForTests } = await import('./as-diff/secnames.js');
+  _resetSecNamesForTests();
+  const listed = async () => ({ 0: { cik_str: 1318605, ticker: 'TSLA', title: 'Tesla, Inc.' } });
+  const none = async () => null;
+  const t = await secTitleForCik('0001318605', { fetchFn: listed, submissionsFn: none, now: Date.now() + 1e9 });
+  ok(t.name === 'Tesla, Inc.' && /company_tickers/.test(t.source), 'a listed company: the SEC listed title');
+  const priv = await secTitleForCik('1977563', { fetchFn: listed, submissionsFn: async (c) => (c === '1977563' ? { name: 'Daytona Platforms Inc.' } : null) });
+  ok(priv.name === 'Daytona Platforms Inc.' && /submissions/.test(priv.source), 'a private Form D issuer (not listed): the SEC registered name from its submissions record');
+  const unk = await secTitleForCik('999999', { fetchFn: listed, submissionsFn: none });
+  ok(unk.notListed === true, 'a CIK the SEC does not name: stated as not found, never guessed');
+  ok((await secTitleForCik('', { fetchFn: listed })).error === 'cik required', 'a CIK is required');
+}
+
 fs.rmSync(dir, { recursive: true, force: true });
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

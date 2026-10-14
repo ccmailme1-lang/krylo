@@ -1,0 +1,17 @@
+import fs from 'fs'; import os from 'os'; import path from 'path';
+let pass = 0, fail = 0; const ok = (c, m) => { c ? pass++ : fail++; console.log(`  ${c ? '✓' : '✗'} ${m}`); };
+const { loadProxyCache, saveProxyCache, scheduleProxyCacheSave, MAX_AGE_MS, MAX_BODY, _resetSaveTimerForTests } = await import('./as-diff/proxycachestore.js');
+const dir = fs.mkdtempSync(path.join(process.env.TMPDIR || os.tmpdir(), 'pc-')); const file = path.join(dir, 'x', 'proxy_cache.json');
+const now = Date.now(); const m = new Map();
+m.set('eia:a', { statusCode: 200, body: '{"ok":1}', ts: now - 3 * 86_400_000 });
+m.set('old', { statusCode: 200, body: '{}', ts: now - MAX_AGE_MS - 1000 });
+m.set('big', { statusCode: 200, body: 'x'.repeat(MAX_BODY + 1), ts: now });
+ok(saveProxyCache(m, file, now) === 1, 'saved: the fresh entry only (an entry older than 30 days and an oversized one are left out)');
+const m2 = new Map(); ok(loadProxyCache(m2, file, now) === 1 && m2.get('eia:a').body === '{"ok":1}' && m2.get('eia:a').ts === now - 3 * 86_400_000, 'a restart restores it with its ORIGINAL time, so its lifetime is not extended by the restart');
+const m3 = new Map(); ok(loadProxyCache(m3, file, now + MAX_AGE_MS) === 0, 'entries past 30 days are dropped at load');
+ok(loadProxyCache(new Map(), path.join(dir, 'missing.json'), now) === 0, 'no file: nothing restored, no error');
+fs.writeFileSync(path.join(dir, 'bad.json'), '{not json'); ok(loadProxyCache(new Map(), path.join(dir, 'bad.json'), now) === 0, 'a damaged file: nothing restored, no error');
+let fired = 0, delayArg = 0; _resetSaveTimerForTests();
+const setT = (f, d) => { delayArg = d; fired++; return { unref() {} }; };
+ok(scheduleProxyCacheSave(m, file, { setT, delay: 5000 }) === true && scheduleProxyCacheSave(m, file, { setT }) === false && fired === 1 && delayArg === 5000, 'writes are batched: one pending save at a time');
+console.log(`\n${pass} passed, ${fail} failed`); fs.rmSync(dir, { recursive: true, force: true }); process.exit(fail ? 1 : 0);
