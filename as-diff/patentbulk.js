@@ -32,7 +32,27 @@ const idNum = (id) => (/^\d+$/.test(id) ? Number(id) : -1);
 
 let _idx = null;   // { key, promise }
 /** One pass over the file builds a map of exact-legal-name key -> { total, assigneeNames, newest ids } for every assignee organization; a lookup is then instant. */
+// Cache the index on disk so an engine restart does not pay the 50-340s rebuild cost (found 2026-10-14: an idle machine took 340s to re-index). The on-disk key is the file's size+mtime,
+// so a new patent dataset invalidates it automatically. Serialized as [key, assigneeName, latestNewestIds, total] rows so the whole structure can stream in and out in JSON.
+const INDEX_CACHE = () => path.join(DIR, 'assignee_index.json');
+function readIndexFromDisk(f) {
+  try {
+    const j = JSON.parse(fs.readFileSync(INDEX_CACHE(), 'utf8'));
+    if (j.key !== f.key) return null;
+    const map = new Map();
+    for (const [k, names, newest, total] of j.rows) { const a = { assigneeNames: new Map(names), ids: newest.slice(), total }; map.set(k, a); }
+    return { map, rows: j.rowsScanned ?? 0 };
+  } catch { return null; }
+}
+function writeIndexToDisk(f, map, rowsScanned) {
+  try { const rows = [...map.entries()].map(([k, a]) => [k, [...a.assigneeNames.entries()], a.ids, a.total]);
+    fs.writeFileSync(INDEX_CACHE(), JSON.stringify({ key: f.key, rowsScanned, savedAt: new Date().toISOString(), rows })); } catch { /* best effort */ }
+}
+
 function buildIndex(f) {
+  const cached = readIndexFromDisk(f);
+  if (cached) return Promise.resolve(cached);
+
   return (async () => {
     const map = new Map(); const rl = openRows(f); let header = null, iOrg = -1, iPat = -1, rows = 0;
     for await (const line of rl) {
@@ -49,6 +69,7 @@ function buildIndex(f) {
       a.total++; a.assigneeNames.set(org, (a.assigneeNames.get(org) ?? 0) + 1); a.ids.push(id);
       if (a.ids.length > KEEP * 4) a.ids = a.ids.sort((x, y) => idNum(y) - idNum(x)).slice(0, KEEP);
     }
+    writeIndexToDisk(f, map, rows);
     return { map, rows };
   })();
 }
