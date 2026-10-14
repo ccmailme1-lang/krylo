@@ -51,26 +51,41 @@ export function buildCapitalEventAssertion({ filer, event, counterparty, match }
  * (matching is spaced SEC requests; results are cached per name for the page session, so a later call continues where this one stopped).
  * @returns {{ admitted: object[], rejected: object[], matched: number, deferred: number }}
  */
-export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs, now = Date.now(), maxNames = 12, registryCache = null }) {
+export async function admitCapitalEvents({ filer, events, searchFn, sleep, gapMs, now = Date.now(), maxNames = 12, registryCache = null, concurrency = 5 }) {
   const admitted = [], rejected = []; const seen = new Set(); let matched = 0, deferred = 0;
   const ordered = [...(events ?? [])].sort((a, b) => String(b.filingDate).localeCompare(String(a.filingDate)));
+  // Collect the names to match (newest first, deduplicated, capped at maxNames), THEN match them concurrently (SEC's rate limit is 10 req/s, so a pool of 5
+  // is safe). Berkshire's 17 counterparties were taking ~15 seconds serially; this drops that leg to ~3. The match's own per-name cache (registryCache) is
+  // shared, so a repeat still answers from memory.
+  const work = [];
   for (const event of ordered) {
     const cap = event.capital;
     if (!cap?.attempted || !cap.counterparties?.length) continue;
     for (const cp of cap.counterparties) {
       const key = cp.name.toLowerCase();
-      if (!seen.has(key)) {
-        if (seen.size >= maxNames) { deferred++; continue; }
-        seen.add(key); matched++;
-      }
-      const match = await matchCounterparty({ name: cp.name, registrant: filer.name, passage: cp.passage, searchFn, now, sleep, gapMs, registryCache });
-      const built = buildCapitalEventAssertion({ filer, event, counterparty: cp, match });
-      if (built.skip) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: built.skip }); continue; }
-      if (!built.assertion.evidence.provenance.instrument) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: 'no instrument stated in the filing: not admitted' }); continue; }
-      const res = admitAndProject(built.assertion, built.meta);
-      if (res.admitted) admitted.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, predicate: res.predicate, relationship: res.relationship });
-      else rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: res.reason });
+      if (seen.has(key)) { work.push({ event, cp }); continue; }
+      if (seen.size >= maxNames) { deferred++; continue; }
+      seen.add(key); matched++; work.push({ event, cp });
     }
+  }
+  const results = new Array(work.length);
+  let next = 0;
+  async function worker() {
+    while (true) {
+      const i = next++; if (i >= work.length) return;
+      const { cp } = work[i];
+      results[i] = await matchCounterparty({ name: cp.name, registrant: filer.name, passage: cp.passage, searchFn, now, sleep, gapMs, registryCache });
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, work.length) }, worker));
+  for (let i = 0; i < work.length; i++) {
+    const { event, cp } = work[i]; const match = results[i];
+    const built = buildCapitalEventAssertion({ filer, event, counterparty: cp, match });
+    if (built.skip) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: built.skip }); continue; }
+    if (!built.assertion.evidence.provenance.instrument) { rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: 'no instrument stated in the filing: not admitted' }); continue; }
+    const res = admitAndProject(built.assertion, built.meta);
+    if (res.admitted) admitted.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, predicate: res.predicate, relationship: res.relationship });
+    else rejected.push({ accession: event.accession, counterparty: cp.name, outcome: match.outcome, reason: res.reason });
   }
   return { admitted, rejected, matched, deferred };
 }
