@@ -1,0 +1,71 @@
+[
+  {
+    "case": "NV1",
+    "subject": "NVIDIA",
+    "question": "NV1",
+    "questionText": "What structural relationships are forming around NVIDIA across ownership, technology, and capital?",
+    "build": "d080c94",
+    "snapshotId": "snap-mv8h23rf-1",
+    "snapshotReady": true,
+    "relationshipChange": "done",
+    "lookups": [
+      "capital:OK",
+      "ownership:OK",
+      "8k:OK",
+      "counterparty:OK",
+      "labor:OK",
+      "store:OK",
+      "clinical:OK",
+      "patents:OK",
+      "media:OK"
+    ],
+    "pageErrors": [],
+    "seconds": 11.5,
+    "capturedAt": "2026-10-14T18:57:34.877Z",
+    "probe": {
+      "snapshotId": "snap-mv8h23rf-1",
+      "canonicalId": "nvidia",
+      "subject": "NVIDIA",
+      "relationships": 52,
+      "byType": {
+        "HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE": 6,
+        "CAPITAL_EVENT_INVOLVES": 1,
+        "HAS_OFFICER_OR_DIRECTOR_DISCLOSURE": 20,
+        "ASSIGNEE_OF_GRANTED_PATENT": 20,
+        "NAMED_IN_ARTICLE": 5
+      },
+      "admittedDomains": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "linkedDomains": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "links": 1,
+      "leads": 5,
+      "analysisSentence": "52 admitted relationships (6 beneficial-ownership disclosures, 1 capital-event relationship, 20 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historySentence": "52 admitted relationships (6 beneficial-ownership disclosures, 1 capital-event relationship, 20 officer or director disclosures, 20 granted-patent assignments, 5 named-in-article relationships) connect 2 domains: CAPITAL ↔ OWNERSHIP (pair name: financing of control / control financed · one admitted relationship speaks to both); KNOWLEDGE (patent-derived) counts toward coverage and forms no link; MEDIA (named-in-article) counts toward coverage and forms no link.",
+      "historyRelationships": 52,
+      "historyError": null,
+      "synthesisCounts": {
+        "SUPPORTED": 7,
+        "UNRESOLVED": 4,
+        "DOCUMENTED": 1
+      },
+      "synthesisValidation": {
+        "statements": 12,
+        "problems": []
+      },
+      "admission": {
+        "admitted": 0,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  }
+]

@@ -1,0 +1,56 @@
+[
+  {
+    "case": "NV1",
+    "subject": "NVIDIA",
+    "q": "NV1",
+    "c1": 2,
+    "c2": 2,
+    "c3": 1,
+    "c4": 2,
+    "c5": 1,
+    "c6": 1,
+    "c7": 1,
+    "raw": 10,
+    "scale": 10,
+    "features": {
+      "citedRecords": 52,
+      "connective": 1,
+      "unresolved": false,
+      "needs": [
+        "OWNERSHIP",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "admitted": [
+        "CAPITAL",
+        "KNOWLEDGE",
+        "LABOR",
+        "MEDIA",
+        "OWNERSHIP",
+        "TECHNOLOGY"
+      ],
+      "covered": [
+        "OWNERSHIP",
+        "TECHNOLOGY",
+        "CAPITAL"
+      ],
+      "linked": [
+        "CAPITAL",
+        "OWNERSHIP"
+      ],
+      "relationships": 52,
+      "hasSynthesis": true,
+      "problems": 0,
+      "statements": 12,
+      "supported": 7,
+      "mapAgrees": true,
+      "historyAgrees": true,
+      "accessionLines": 52,
+      "admission": {
+        "admitted": 0,
+        "rejected": 1,
+        "deferred": 0
+      }
+    }
+  }
+]
