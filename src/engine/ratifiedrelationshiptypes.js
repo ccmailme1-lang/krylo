@@ -34,6 +34,11 @@ registerRelationshipType('HAS_BENEFICIAL_OWNERSHIP_DISCLOSURE', {
     if (!subjectId || !filerId) {
       return { admitted: false, reason: 'both subject and filer must be identified (structurally guaranteed by the 13D/13G filing schema)' };
     }
+    // An all-zero CIK is a missing value that was padded to ten digits, not an identity (a Walmart SC 13G/A whose filing-index hit names no holder was admitted with holder CIK:0000000000).
+    const unidentified = (id) => /^CIK:0*$/.test(String(id));
+    if (unidentified(subjectId) || unidentified(filerId)) {
+      return { admitted: false, reason: 'the holder is not identified in the filing index (no CIK, or an all-zero CIK): the source observation stands, but it is not admitted as a relationship with an identified party' };
+    }
     if (!assertion.evidence?.provenance?.accession) {
       return { admitted: false, reason: 'a real SEC accession number is required as provenance -- no unsourced disclosure' };
     }

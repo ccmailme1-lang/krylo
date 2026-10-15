@@ -30,7 +30,7 @@ export function describeChange(r) {
   if (r.evidence.inP1.length) evidence.push(`in the current period: ${r.evidence.inP1.map(ev).join('; ')}`);
   else evidence.push('in the current period: no filing');
   if (r.evidence.conflicts?.length) evidence.push(`conflicting filings: ${r.evidence.conflicts.map(x => `${x.eventDate} ${x.accessions.join(' vs ')}`).join('; ')}`);
-  return { headline: `${r.holderName ?? 'holder'} · ${cls} — ${r.summary}`, lines, evidence, rules: r.rules };
+  return { headline: `${r.holderName ?? 'Holder not identified in the filing index'} · ${cls} — ${r.summary}`, lines, evidence, rules: r.rules };
 }
 
 // DEF-1397: the retrieval basis behind a NEW or DISSOLVED classification, built only from the stored record of the run that
