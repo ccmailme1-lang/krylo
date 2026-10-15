@@ -1392,7 +1392,21 @@
       const es = nodeStateAt(entN, t);
       // Only as many rows as fit inside the plot (one row is 44 px): with the relationship list open the plot is short, and five rows ran out of it onto the legend or the list. The rest are counted in "+N more".
       const ROW = 44;
-      const list = mapExtras.counterparties.slice(0, Math.max(1, Math.min(5, Math.floor((plot.h - 70) / ROW))));
+      // How many rows fit in each direction from the subject, counting the "+N more" line and the stated-absence line at the top of the plot (its band is reserved). The direction that holds more is used
+      // (below on a tie), so no row or the "+N more" line is drawn into the banner, the header counts or the legend.
+      const TOP = plot.y + 34, BOTTOM = plot.y + plot.h - 8, total = mapExtras.counterparties.length, wantMore = plot.h >= 200;
+      const capacity = (below) => {
+        for (let n = Math.min(5, total); n >= 1; n--) {
+          const last = below ? es.py + 40 + (n - 1) * ROW + 18 : es.py - 40 - (n - 1) * ROW - 12;
+          const more = (total > n && wantMore) ? (below ? es.py + 40 + n * ROW + 4 : es.py - 40 - n * ROW - 10) : null;
+          const ok = below ? (last <= BOTTOM && (more == null || more <= BOTTOM)) : (last >= TOP && (more == null || more >= TOP));
+          if (ok) return n;
+        }
+        return 0;
+      };
+      const capBelow = capacity(true), capAbove = capacity(false);
+      const goBelow = capBelow >= capAbove;
+      const list = mapExtras.counterparties.slice(0, Math.max(1, goBelow ? capBelow : capAbove));
       // A single column beside the subject, one row per counterparty, so labels never overlap each other or sit on
       // the plot edge (a fan around a subject near the edge stacked them on one line). Side with more room, below
       // the subject when it fits, else above.
@@ -1404,7 +1418,7 @@
       // Node labels can sit on either side of a node, so each box covers both.
       const nodeBoxes = lcStates.map(q => ({ x0: q.px - 150, x1: q.px + 150, y0: q.py - 34, y1: q.py + 34 }));
       let best = null;
-      for (const dx of [78, 170, 260, 350]) for (const dX of [1, -1]) for (const bl of [true, false]) {
+      for (const dx of [78, 170, 260, 350]) for (const dX of [1, -1]) for (const bl of [goBelow]) {
         let pen = (dx - 78) * 0.05; // prefer the closest column when nothing overlaps
         for (let i = 0; i < N; i++) {
           const px = es.px + dX * dx, py = bl ? es.py + 40 + i * ROW : es.py - 40 - i * ROW;
