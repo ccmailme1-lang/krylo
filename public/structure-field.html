@@ -990,7 +990,7 @@
         const all = NODES.map(n => n.path[0]);
         const cx = all.length ? all.reduce((s, p) => s + p.x, 0) / all.length : 0;
         const cy = all.length ? all.reduce((s, p) => s + p.y, 0) / all.length : 0;
-        let x = 0.75, y = -0.75; // no formation nodes at all: lower-right corner, clear of the centred absence text
+        let x = 0, y = 0; // no formation nodes at all: the centre of the plot (the centre of the field's coordinates), its counterparty rows beside it; the absence text is at the top. It sat in the lower-right corner, which left the rest of the plot empty and put its label against the border.
         if (!anchors.length && all.length) {
           // Unanchored: the point on a coarse grid farthest from every existing node and edge, so
           // the edge-less subject node never sits on someone else's edge and reads as joined to it.
@@ -1294,7 +1294,7 @@
       ctx.save();
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = getVar('--text-mono-dim');
+      ctx.fillStyle = 'rgba(224,224,220,0.9)';   // the same light gray as the counterparty names; this line is the view's stated result
       ctx.font = "600 11px 'IBM Plex Mono', monospace";
       ctx.fillText('NO FORMATION ESTABLISHED · the admitted relationships connect no two domains', plot.x + plot.w / 2, plot.y + 18);
       ctx.restore();
@@ -1387,6 +1387,7 @@
     // KRYL-1378: named counterparties of the subject's admitted canonical relationships, with their filing dates.
     // Positions are a layout choice (spread away from the formation); they carry no data.
     const entN = NODES.find(nn => nn.entity);
+    let cpAngles = [];   // directions of the counterparty lines leaving the subject node: its label must not sit on them
     if (entN && mapExtras.counterparties && mapExtras.counterparties.length) {
       const es = nodeStateAt(entN, t);
       // Only as many rows as fit inside the plot (one row is 44 px): with the relationship list open the plot is short, and five rows ran out of it onto the legend or the list. The rest are counted in "+N more".
@@ -1418,6 +1419,7 @@
         if (!best || pen < best.pen) best = { pen, dirX: dX, below: bl, dx };
       }
       const dirX = best.dirX, below = best.below, colDx = best.dx;
+      cpAngles = list.map((c, i) => Math.atan2((below ? 40 + i * ROW : -40 - i * ROW), dirX * colDx));
       ctx.save();
       list.forEach((c, i) => {
         const px = es.px + dirX * colDx;
@@ -1430,7 +1432,7 @@
         const tx = px + dirX * 12;
         ctx.font = "11px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.9)';
         ctx.fillText(c.name, tx, py + 1);
-        ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.4)';
+        ctx.font = "10px 'IBM Plex Mono', monospace"; ctx.fillStyle = 'rgba(224,224,220,0.7)';
         ctx.fillText(c.detail, tx, py + 14);
       });
       if (mapExtras.counterparties.length > list.length && plot.h >= 200) {   // not while the list is open (short plot): the list is already on screen, and the line collided with other text
@@ -1588,6 +1590,7 @@
         const os = nodeStateAt(o, t);
         incident.push(Math.atan2(os.py - s.py, os.px - s.px));
       }
+      if (n.entity) incident.push(...cpAngles);
       const angDist = (x, y) => { const d = Math.abs(x - y) % (2 * Math.PI); return d > Math.PI ? 2 * Math.PI - d : d; };
       const clearance = (c) => incident.reduce((m, a) => Math.min(m, angDist(c, a)), Math.PI);
       const outward = Math.atan2(s.py - lcy, s.px - lcx);
@@ -1597,8 +1600,16 @@
       else if (hasOutward && clearance(outward) >= 0.5) theta = outward; // radially outward when no edge is in the way
       else {
         const DIRS = [0, Math.PI, -Math.PI / 2, Math.PI / 2, -Math.PI / 4, Math.PI / 4, -3 * Math.PI / 4, 3 * Math.PI / 4];
+        // The subject node's label also needs room: a direction whose label would run past the plot's edge is pushed back over the node and its lines, so it is not taken when another fits.
+        const fits = (c) => {
+          if (!n.entity) return true;
+          const gap = Math.max(18, r + 11), cx = Math.cos(c), w = Math.max(mainW, subW), ax = s.px + cx * gap;
+          const x0 = cx > 0.35 ? ax : cx < -0.35 ? ax - w : ax - w / 2;
+          return x0 >= plot.x + 8 && x0 + w <= plot.x + plot.w - 8;
+        };
+        const pool = DIRS.filter(fits);
         let bestClear = -1;
-        for (const c of DIRS) { const k = clearance(c); if (k > bestClear + 1e-6) { bestClear = k; theta = c; } }
+        for (const c of (pool.length ? pool : DIRS)) { const k = clearance(c); if (k > bestClear + 1e-6) { bestClear = k; theta = c; } }
       }
       const GAP = Math.max(18, r + 11), cs = Math.cos(theta), sn = Math.sin(theta);
       const textAlign = cs > 0.35 ? 'left' : cs < -0.35 ? 'right' : 'center';

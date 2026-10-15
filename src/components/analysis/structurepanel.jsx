@@ -213,13 +213,15 @@ function FormationMapTab({ query }) {
     }
     const strip = (l) => String(l ?? '').replace(/\s*\(CIK\s*\d+\)\s*$/, '');
     const subj = (entitySubjectLabel ?? '').toLowerCase();
-    const seen = new Set(), counterparties = [];
+    const seen = new Map(), counterparties = [];   // one row per counterparty; the header counts relationships, so a counterparty with several (a person who is both director and officer) says how many
     for (const r of entityRelationships) {
       for (const part of r.part ?? []) {
-        const name = strip(part);
-        if (!name || name.toLowerCase().startsWith(subj) || subj.startsWith(name.toLowerCase()) || seen.has(name.toLowerCase())) continue;
-        seen.add(name.toLowerCase());
-        counterparties.push({ name: name.toUpperCase(), detail: [r.evidence?.form, r.evidence?.filingDate].filter(Boolean).join(' · ') || 'date n/a' });
+        const name = strip(part), k = name.toLowerCase();
+        if (!name || k.startsWith(subj) || subj.startsWith(k)) continue;
+        if (seen.has(k)) { const row = seen.get(k); row.count += 1; row.detail = `${row.base} · ${row.count} relationships`; continue; }
+        const base = [r.evidence?.form, r.evidence?.filingDate].filter(Boolean).join(' · ') || 'date n/a';
+        const row = { name: name.toUpperCase(), detail: base, base, count: 1 };
+        seen.set(k, row); counterparties.push(row);
       }
     }
     return { states, polarity, bound, counterparties };
