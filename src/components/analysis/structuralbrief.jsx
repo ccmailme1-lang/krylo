@@ -422,7 +422,7 @@ export default function StructuralBrief({ subjScope, question, domainPressures, 
                     <summary style={{ cursor: 'pointer' }}>evidence ({st.evidence.length})</summary>
                     {st.evidence.map((e, k) => (
                       <div key={k} style={{ marginTop: 2 }}>
-                        {[e.form, e.filingDate && `filed ${String(e.filingDate).slice(0, 10)}`, e.accession && `accession ${e.accession}`, e.match && `counterparty ${e.match}`, e.counterparty && `named: ${e.counterparty}`, e.holder && `holder ${e.holder}`, e.cusip && `CUSIP ${e.cusip}`, e.relationshipId && `relationship ${String(e.relationshipId).slice(0, 8)}`].filter(Boolean).join(' · ')}
+                        {[e.form, e.filingDate && (e.form === 'USPTO granted-patent record' ? `dataset file dated ${String(e.filingDate).slice(0, 10)}` : `filed ${String(e.filingDate).slice(0, 10)}`), e.accession && `accession ${e.accession}`, e.match && `counterparty ${e.match}`, e.counterparty && `named: ${e.counterparty}`, e.holder && `holder ${e.holder}`, e.cusip && `CUSIP ${e.cusip}`, e.relationshipId && `relationship ${String(e.relationshipId).slice(0, 8)}`].filter(Boolean).join(' · ')}
                         {e.passage ? <div style={{ marginLeft: 10 }}>"{String(e.passage).length > 220 ? String(e.passage).slice(0, 217).trimEnd() + '…' : e.passage}"</div> : null}
                       </div>
                     ))}

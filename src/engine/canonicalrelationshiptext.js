@@ -9,7 +9,9 @@
 export function canonicalProvenanceLine(ev) {
   const p = ev?.provenance;
   if (!p || (!p.accession && !p.filingDate)) return 'filing not recorded for this admission';
-  return [p.form, p.filingDate ? `filed ${p.filingDate}` : null, p.accession ? `accession ${p.accession}` : null].filter(Boolean).join(' · ');
+  // A granted-patent record carries the dataset file's date, not a filing or grant date: it is labelled as the file's date.
+  const dated = p.filingDate ? (p.fileAsOf ? `dataset file dated ${String(p.fileAsOf).slice(0, 10)}` : `filed ${p.filingDate}`) : null;
+  return [p.form, dated, p.accession ? `accession ${p.accession}` : null].filter(Boolean).join(' · ');
 }
 
 // DEF-1396: when this query's ownership lookup has not reported, relationships already in rho are named for what they are:
