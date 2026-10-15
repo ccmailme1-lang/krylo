@@ -184,7 +184,7 @@ function FormationMapTab({ query }) {
       subjScope, activeDomainPressures, fieldFormation: subjScope.kind === 'ENTITY' ? subjectFormation : fieldFormation, ambientFormation: fieldFormation, admittedFormation,
       structuralQuery: synthesis?.structuralQuery, entityCanonicalRelationships, ownershipFailure, ownershipPending: lookup.pending,
     });
-    const attribution = subjScope?.contract?.subject?.attribution ?? null;
+    const attribution = subjScope?.kind === 'ENTITY' ? 'RESOLVED' : (subjScope?.contract?.subject?.attribution ?? null);   // the entity the page resolved, not the contract's reading of how many names the question holds
     return { subjectLabel, stateLabel: synthesis?.stateLabel ?? null, sentence: briefSentence, rows, attribution };
   }, [subjScope, domainPressures, fieldFormation, subjectFormation, synthesis, lookup.error, lookup.pending, rhoTick, admittedFormation]);
 
