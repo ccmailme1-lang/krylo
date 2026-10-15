@@ -146,12 +146,18 @@ export async function admitPublicFiler(name, opts = {}) {
   try { return await admitPublicFilerUnguarded(name, opts); } finally { _identityInFlight.delete(k); }
 }
 async function admitPublicFilerUnguarded(name, opts = {}) {
+  // The Form D and GLEIF checks depend only on the typed name, so they start now, beside the listed-name and annual-filer checks, instead of waiting for them: in a browser that holds
+  // several requests already, each step in turn waited its own turn in the queue. Their answers are used only where the order of precedence below reaches them (listed, then Form D, then GLEIF),
+  // so which identity qualifies is unchanged; an answer that is not reached is discarded.
+  const fdStart = opts.searchFn ? import('./secformdissuer.js').then(async (mod) => ({ mod, fd: await mod.verifyFormDIssuer(name, { searchFn: opts.searchFn, now: opts.now ?? Date.now(), sleep: opts.sleep, gapMs: opts.formDGapMs }) })) : null;
+  const glStart = opts.gleifFn ? import('./gleifidentity.js').then(async (mod) => ({ mod, gl: await mod.verifyGleifEntity(name, { gleifFn: opts.gleifFn, now: opts.now ?? Date.now() }) })) : null;
+  fdStart?.catch(() => {}); glStart?.catch(() => {});
   const v = await verifyPublicFiler(name, opts);
   // KRYL-1412: a name that is not a listed SEC registrant is tried as a private SEC filer (Form D issuer): exact legal name, exactly one issuer, verified by its own Form D.
   let fd = null;
   if (!v.verified && (v.reason === 'NO_MATCH' || v.reason === 'LOOKUP_FAILED') && opts.searchFn) {
-    const { verifyFormDIssuer, FORM_D_CLASS, FORM_D_LABEL } = await import('./secformdissuer.js');
-    fd = await verifyFormDIssuer(name, { searchFn: opts.searchFn, now: opts.now ?? Date.now(), sleep: opts.sleep, gapMs: opts.formDGapMs });
+    const started = await fdStart; const { FORM_D_CLASS, FORM_D_LABEL } = started.mod;
+    fd = started.fd;
     const check = { source: 'SEC Form D issuers', outcome: fd.verified ? 'VERIFIED' : (fd.reason === 'NO_MATCH' && fd.similar?.length ? 'NO_MATCH_SIMILAR' : fd.reason), candidates: fd.candidates ?? fd.similar ?? [] };
     if (fd.verified) {
       const byCikFd = resolveByIdentifier('edgar', fd.cik);
@@ -171,8 +177,8 @@ async function admitPublicFilerUnguarded(name, opts = {}) {
   // KRYL-1417 (GLEIF identity class, ratified 2026-10-13): a name that is neither a listed SEC registrant nor a Form D issuer is tried against the GLEIF Global LEI Index: one ACTIVE,
   // ISSUED record whose legal name equals the query (or a curated alias's recorded LEI). Identity only, for the patent producer.
   if (!v.verified && opts.gleifFn && (fd ? ['NO_MATCH', 'LOOKUP_FAILED'].includes(fd.reason) : ['NO_MATCH', 'LOOKUP_FAILED'].includes(v.reason))) {
-    const { verifyGleifEntity, GLEIF_CLASS, GLEIF_LABEL } = await import('./gleifidentity.js');
-    const gl = await verifyGleifEntity(name, { gleifFn: opts.gleifFn, now: opts.now ?? Date.now() });
+    const startedG = await glStart; const { GLEIF_CLASS, GLEIF_LABEL } = startedG.mod;
+    const gl = startedG.gl;
     const checkG = { source: 'GLEIF Global LEI Index', outcome: gl.verified ? 'VERIFIED' : gl.reason, candidates: gl.candidates ?? [] };
     if (gl.verified) {
       const byLei = resolveByIdentifier('lei', gl.lei);

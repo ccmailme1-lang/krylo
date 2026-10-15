@@ -60,18 +60,34 @@ export async function fetchInsiderRoles({ issuer, from, searchFn, fetchImpl = (t
   const byHit = new Map();                                           // one document read per hit, however many persons it names
   for (const [pc, h] of chosen) (byHit.get(h._id) ?? byHit.set(h._id, { h, persons: [] }).get(h._id)).persons.push(pc);
   const roles = []; let failedDocs = 0;
-  for (const { h, persons: pcs } of byHit.values()) {
-    const src = h._source ?? {}; const acc = src.adsh; const file = String(h._id ?? '').split(':')[1];
-    let doc = _docCache.get(acc);
-    if (!doc) {
-      if (!fetchImpl || !file) { failedDocs++; continue; }
+  // The documents are read by a small pool (the SEC allows about 10 requests a second; three readers each pausing gapMs after an upstream read stay under that), and a document the engine already
+  // holds (X-Cache: HIT) is not followed by a pause. Roles are still built in the search's order, so the result does not depend on which read finishes first.
+  const entries = [...byHit.values()];
+  const docs = new Array(entries.length).fill(null);
+  let next = 0;
+  const worker = async () => {
+    while (next < entries.length) {
+      const idx = next++; const { h } = entries[idx];
+      const src = h._source ?? {}; const acc = src.adsh; const file = String(h._id ?? '').split(':')[1];
+      const cached = _docCache.get(acc);
+      if (cached) { docs[idx] = cached; continue; }
+      if (!fetchImpl || !file) { docs[idx] = false; continue; }
+      let fromEngineCache = false;
       try {
         const r = await fetchImpl('/api/edgar-document?' + new URLSearchParams({ cik: String(parseInt(issuerCik, 10)), accession: String(acc).replace(/-/g, ''), file }));
-        if (!r.ok) { failedDocs++; continue; }
-        doc = parseOwnershipDocument(await r.text()); _docCache.set(acc, doc);
-      } catch { failedDocs++; continue; }
-      await sleep(gapMs);
+        if (!r.ok) { docs[idx] = false; continue; }
+        fromEngineCache = r.headers?.get?.('X-Cache') === 'HIT';
+        const doc = parseOwnershipDocument(await r.text()); _docCache.set(acc, doc); docs[idx] = doc;
+      } catch { docs[idx] = false; continue; }
+      if (!fromEngineCache) await sleep(gapMs);
     }
+  };
+  await Promise.all(Array.from({ length: Math.min(3, entries.length) }, worker));
+  for (let k = 0; k < entries.length; k++) {
+    const { h, persons: pcs } = entries[k];
+    const src = h._source ?? {}; const acc = src.adsh;
+    const doc = docs[k];
+    if (!doc) { failedDocs++; continue; }
     for (const pc of pcs) {
       const owner = doc.owners.find(o => o.cik === pc);
       for (const r of rolesFromDocument(doc, pc)) roles.push({ personCik: pc, personName: owner?.name ?? null, role: r.role, officerTitle: r.officerTitle, form: src.form ? `Form ${src.form}` : 'Form 4', accession: acc, filingDate: src.file_date ?? null, periodOfReport: doc.periodOfReport, jointFiling: doc.owners.length > 1, issuerCik: doc.issuerCik ?? issuerCik });
