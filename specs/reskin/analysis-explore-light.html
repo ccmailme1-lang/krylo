@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KRYLO Analysis Explore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: Glimpse's flow outfitted for KRYLO. Top tab bar; question box (current size) with
+   type-ahead; "OR browse by domain" (six locked domains left, entities right); clicking an
+   entity or submitting opens a results table. §6 values only. Single light look by choice. */
+:root {
+  color-scheme: light;
+  --ground: #F5F5F7;
+  --ink:    #1A1A1A;
+  --line:   #e0e0dc;
+  --dim:    #3a3d4a;
+  --lime:   #66FF00;
+  --blue:   #007FFF;   /* TURBULENT only */
+  --purple: #8A2BE2;   /* HIGH only */
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body { margin: 0; font-family: var(--mono); }
+button { font-family: var(--mono); }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.note { max-width: 1120px; margin-inline: auto; padding-inline: 16px; padding-block: 16px 0; font-size: 11.5px; line-height: 1.6; color: var(--dim); }
+.frame { max-width: 1120px; margin-block: 12px 40px; margin-inline: max(16px, calc((100% - 1120px) / 2)); border: 1px solid var(--line); min-height: 760px; }
+
+/* Top bar */
+.bar { display: flex; align-items: center; gap: 28px; height: 52px; padding-inline: 24px; border-bottom: 1px solid var(--line); }
+.logo { font-weight: 600; letter-spacing: .3em; font-size: 12px; }
+.tabs { display: flex; gap: 22px; align-self: stretch; }
+.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; font-size: 10px; letter-spacing: .14em; color: var(--dim); padding: 0; cursor: pointer; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--ink); }
+.bar .state { margin-left: auto; font-size: 9px; letter-spacing: .2em; color: var(--dim); display: flex; align-items: center; gap: 8px; }
+.bar .state i { width: 8px; height: 8px; background: #3a3d4a; display: block; }
+
+/* Landing */
+.view[hidden] { display: none !important; }
+.land { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-block: 44px 40px; padding-inline: 24px; }
+.hero { text-align: center; display: flex; flex-direction: column; gap: 10px; }
+.hero h1 { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; letter-spacing: .04em; margin: 0; }
+.hero h1 .edge { box-shadow: inset 0 -0.35em 0 var(--lime); padding-inline: 2px; }
+.hero p { margin: 0; font-size: 11.5px; letter-spacing: .18em; color: var(--dim); }
+.ask { position: relative; width: min(600px, 100%); }
+.box { border: 1px solid var(--ink); border-radius: 20px; overflow: hidden; }
+.box:focus-within { box-shadow: 0 0 0 3px var(--line); }
+.box textarea { display: block; width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; background: transparent; font: 14px/1.9 var(--mono); color: var(--ink); padding: 20px 24px 10px; }
+.box textarea::placeholder { color: var(--dim); opacity: .75; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 14px; }
+.tools { display: flex; align-items: center; gap: 8px; }
+.plus { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim); font-size: 16px; line-height: 1; cursor: pointer; }
+.mic { width: 30px; height: 30px; border: 0; background: transparent; color: var(--dim); cursor: pointer; display: grid; place-items: center; }
+.go { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--ink); background: var(--lime); cursor: pointer; display: grid; place-items: center; }
+
+/* Type-ahead */
+.suggest { position: absolute; left: 0; right: 0; top: calc(100% + 6px); background: var(--ground); border: 1px solid var(--ink); border-radius: 12px; padding: 6px; z-index: 5; box-shadow: 0 6px 18px rgba(26,26,26,.08); }
+.suggest .first { display: flex; justify-content: space-between; width: 100%; text-align: left; background: color-mix(in srgb, var(--line) 60%, transparent); border: 0; border-radius: 8px; padding: 9px 12px; font-size: 12px; color: var(--ink); cursor: pointer; }
+.suggest h4 { margin: 10px 12px 4px; font-size: 8px; font-weight: 500; letter-spacing: .22em; color: var(--dim); }
+.suggest .opt { display: flex; justify-content: space-between; gap: 12px; width: 100%; text-align: left; background: none; border: 0; border-radius: 8px; padding: 7px 12px; font-size: 11.5px; color: var(--ink); cursor: pointer; }
+.suggest .opt:hover, .suggest .first:hover { background: var(--line); }
+.suggest .opt span { color: var(--dim); font-size: 9.5px; letter-spacing: .08em; }
+
+.or { display: flex; align-items: center; gap: 14px; width: min(600px, 100%); font-size: 9px; letter-spacing: .3em; color: var(--dim); }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* Browse */
+.browse { width: min(880px, 100%); border: 1px solid var(--line); display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 300px; }
+.domains { border-right: 1px solid var(--line); display: flex; flex-direction: column; }
+.dom { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-left: 3px solid transparent; border-bottom: 1px solid var(--line); padding: 14px 16px; font-size: 11px; letter-spacing: .14em; color: var(--ink); cursor: pointer; }
+.dom:last-child { border-bottom: 0; }
+.dom.on { border-left-color: var(--ink); background: color-mix(in srgb, var(--line) 45%, transparent); font-weight: 600; }
+.count { font-size: 9px; letter-spacing: .04em; font-variant-numeric: tabular-nums; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px; color: var(--dim); font-weight: 400; }
+.ents { padding: 18px 20px; display: flex; flex-direction: column; gap: 12px; }
+.ents h3 { margin: 0; font-size: 9px; font-weight: 500; letter-spacing: .22em; color: var(--dim); }
+.egrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 4px 18px; }
+.ent { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 2px; font-family: var(--serif); font-size: 14px; color: var(--ink); cursor: pointer; }
+.ent:hover { background: color-mix(in srgb, var(--line) 45%, transparent); }
+
+/* Results */
+.res { padding-block: 24px 32px; padding-inline: 32px; display: flex; flex-direction: column; gap: 14px; }
+.res-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.back { background: none; border: 0; font-size: 10px; letter-spacing: .08em; color: var(--ink); cursor: pointer; padding: 0; }
+.csv { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 9px; letter-spacing: .1em; color: var(--dim); cursor: pointer; }
+.qline { border: 1px solid var(--ink); border-radius: 999px; padding: 10px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+.qline svg { flex: none; color: var(--dim); }
+.res-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.res-head h2 { margin: 0; font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.15; }
+.res-head span { font-size: 11.5px; color: var(--dim); }
+.table-wrap { overflow-x: auto; border-top: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; min-width: 820px; }
+th { text-align: left; font-size: 8.5px; font-weight: 500; letter-spacing: .18em; color: var(--dim); padding: 10px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th.sort::after { content: ' ↓'; }
+td { padding: 11px 10px; border-bottom: 1px solid var(--line); font-size: 11px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+tbody tr:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+td.name { font-family: var(--serif); font-size: 14px; }
+.chg { font-size: 10px; }
+.vol { display: flex; align-items: center; gap: 8px; }
+.vol b { display: block; height: 4px; background: var(--ink); min-width: 2px; }
+.vol span { font-size: 9.5px; color: var(--dim); }
+.doms { display: flex; gap: 3px; }
+.doms i { width: 9px; height: 9px; border: 1px solid var(--ink); display: block; }
+.doms i.on { background: var(--ink); }
+.st { display: inline-flex; align-items: center; gap: 7px; font-size: 9.5px; letter-spacing: .06em; white-space: nowrap; }
+.st i { width: 9px; height: 9px; border: 1px solid var(--ink); display: block; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 14px; font-size: 10px; color: var(--dim); }
+.pager button { background: none; border: 1px solid var(--line); border-radius: 50%; width: 26px; height: 26px; cursor: pointer; color: var(--ink); }
+</style>
+
+<p class="note">Mockup only. Glimpse's flow (ask or browse, type-ahead, results table) outfitted for KRYLO on #F5F5F7, keeping the current question box size. Try it: type in the box, pick a domain, click an entity. All entities, counts and trends are examples, not data. §6 colors only; blue and purple appear only as convergence states. Not built, not approved.</p>
+
+<div class="frame">
+  <div class="bar">
+    <span class="logo">KRYLO</span>
+    <nav class="tabs" aria-label="Sections">
+      <button type="button" class="on">ANALYSIS</button><button type="button">SURFACE</button><button type="button">NEWS FEED</button><button type="button">COMMUNITY</button><button type="button">HISTORY</button>
+    </nav>
+    <span class="state"><i></i>INSUFFICIENT SIGNAL</span>
+  </div>
+
+  <!-- Landing -->
+  <section class="view land" id="land">
+    <div class="hero">
+      <h1>WHAT'S YOUR <span class="edge">EDGE?</span></h1>
+      <p>Map structural relationships across entities</p>
+    </div>
+    <div class="ask">
+      <div class="box">
+        <label for="q" hidden>Question</label>
+        <textarea id="q" rows="4" autocomplete="off" placeholder="e.g. Amazon — automation's impact on warehouse labor — next 3 years"></textarea>
+        <div class="toolbar">
+          <button class="plus" type="button" aria-label="Attach">+</button>
+          <div class="tools">
+            <button class="mic" type="button" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+            <button class="go" id="go" type="button" aria-label="Run query"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+          </div>
+        </div>
+      </div>
+      <div class="suggest" id="suggest" hidden></div>
+    </div>
+    <div class="or">OR BROWSE BY DOMAIN</div>
+    <div class="browse">
+      <div class="domains" id="domains" role="tablist" aria-label="Domains"></div>
+      <div class="ents">
+        <h3 id="ents-title"></h3>
+        <div class="egrid" id="ents"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Results -->
+  <section class="view res" id="res" hidden>
+    <div class="res-top">
+      <button class="back" id="back" type="button">← Back to domains</button>
+      <button class="csv" type="button">Download CSV</button>
+    </div>
+    <div class="qline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg><span id="qtext"></span></div>
+    <div class="res-head"><h2 id="rtitle"></h2><span id="rsub"></span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ENTITY</th><th>OBSERVATIONS · 12 MO</th><th class="sort">CHANGE · YOY</th><th>VOLUME</th><th>DOMAINS</th><th>STATE</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pager"><button type="button" aria-label="Previous page">‹</button><span>Page 1 of 6</span><button type="button" aria-label="Next page">›</button></div>
+  </section>
+</div>
+
+<script>
+// Six locked domains (CLAUDE.md §13). Counts and entities are examples.
+const DOMAINS = [
+  ['CAPITAL', 14970, ['JPMorgan Chase', 'BlackRock', 'Regional banks', 'Private credit', 'Sovereign funds', 'SPAC issuers']],
+  ['OWNERSHIP', 9204, ['Berkshire Hathaway', 'KKR', 'Family offices', 'Activist funds', 'Cap tables · Series B', 'Cross holdings']],
+  ['TECHNOLOGY', 17362, ['NVIDIA', 'TSMC', 'OpenAI', 'Subcritical Systems', 'Data-center REITs', 'Edge compute']],
+  ['KNOWLEDGE', 6118, ['NRC filings', 'Patent clusters', 'University spinouts', 'Standards bodies', 'Clinical trials', 'Open-source labs']],
+  ['LABOR', 12361, ['Amazon', 'UPS', 'Warehouse automation', 'Teamsters', 'Nurse staffing', 'H-1B demand']],
+  ['MEDIA', 8535, ['Substack', 'Netflix', 'Local news', 'Podcast networks', 'Creator platforms', 'Ad-tech']],
+];
+const STATES = {
+  INSUFFICIENT: ['#3a3d4a', 'INSUFFICIENT SIGNAL'], LOW: ['#1a1a1a', 'LOW SIGNAL YIELD'],
+  BUILDING: ['#66FF00', 'BUILDING CONVERGENCE'], TURBULENT: ['#007FFF', 'TURBULENT CONVERGENCE'], HIGH: ['#8A2BE2', 'HIGH CONVERGENCE'],
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let active = 2;
+
+function renderDomains() {
+  document.getElementById('domains').innerHTML = DOMAINS.map(([d, n], i) =>
+    `<button class="dom ${i === active ? 'on' : ''}" type="button" role="tab" aria-selected="${i === active}" data-i="${i}">${d}<span class="count">${n.toLocaleString()}</span></button>`).join('');
+  const [d, , ents] = DOMAINS[active];
+  document.getElementById('ents-title').textContent = `${d} · TOP ENTITIES BY OBSERVATIONS`;
+  document.getElementById('ents').innerHTML = ents.map((e, j) =>
+    `<button class="ent" type="button" data-e="${esc(e)}">${esc(e)}<span class="count">${(2140 - j * 287).toLocaleString()}</span></button>`).join('');
+}
+document.getElementById('domains').addEventListener('click', e => {
+  const b = e.target.closest('.dom'); if (!b) return; active = +b.dataset.i; renderDomains();
+});
+document.getElementById('ents').addEventListener('click', e => {
+  const b = e.target.closest('.ent'); if (b) openResults(b.dataset.e, DOMAINS[active][0]);
+});
+
+// Type-ahead: the exact text first, then matching entities and domains.
+const q = document.getElementById('q'), sug = document.getElementById('suggest');
+q.addEventListener('input', () => {
+  const v = q.value.trim();
+  if (!v) { sug.hidden = true; return; }
+  const lv = v.toLowerCase();
+  const ents = DOMAINS.flatMap(([d, , es]) => es.map(e => [e, d])).filter(([e]) => e.toLowerCase().includes(lv)).slice(0, 4);
+  const doms = DOMAINS.filter(([d]) => d.toLowerCase().includes(lv)).slice(0, 2);
+  sug.innerHTML = `<button class="first" type="button" data-q="${esc(v)}">Analyze “${esc(v)}”<span>↵</span></button>` +
+    (ents.length ? `<h4>ENTITIES</h4>` + ents.map(([e, d]) => `<button class="opt" type="button" data-e="${esc(e)}" data-d="${d}">${esc(e)}<span>${d}</span></button>`).join('') : '') +
+    (doms.length ? `<h4>DOMAINS</h4>` + doms.map(([d]) => `<button class="opt" type="button" data-dom="${d}">${d}<span>browse</span></button>`).join('') : '');
+  sug.hidden = false;
+});
+q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (q.value.trim()) openResults(q.value.trim(), null); } if (e.key === 'Escape') sug.hidden = true; });
+document.getElementById('go').addEventListener('click', () => { if (q.value.trim()) openResults(q.value.trim(), null); });
+sug.addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.q) openResults(b.dataset.q, null);
+  else if (b.dataset.e) openResults(b.dataset.e, b.dataset.d);
+  else if (b.dataset.dom) { active = DOMAINS.findIndex(([d]) => d === b.dataset.dom); renderDomains(); sug.hidden = true; q.value = ''; }
+});
+document.addEventListener('click', e => { if (!e.target.closest('.ask')) sug.hidden = true; });
+
+// Results: example related entities with a 12-month observation trend.
+function spark(seed) {
+  let s = seed, y = 14, pts = [];
+  for (let x = 0; x <= 80; x += 6.6) { s = (s * 9301 + 49297) % 233280; y = Math.max(3, Math.min(19, y - 1.4 + (s / 233280) * 2.4)); pts.push(`${x.toFixed(1)},${y.toFixed(1)}`); }
+  return `<svg width="80" height="22" viewBox="0 0 80 22" aria-hidden="true"><polyline points="${pts.join(' ')}" fill="none" stroke="#1A1A1A" stroke-width="1.4"/></svg>`;
+}
+const RESULT_ROWS = [
+  ['Warehouse automation', 27, 2140, [1,0,1,1,1,0], 'BUILDING'],
+  ['Teamsters', 13, 1860, [1,1,0,0,1,1], 'TURBULENT'],
+  ['UPS', 13, 1590, [1,1,1,0,1,0], 'BUILDING'],
+  ['Robotics suppliers', 30, 1420, [1,1,1,1,1,1], 'HIGH'],
+  ['Regional distribution REITs', 16, 1180, [1,1,0,0,0,0], 'LOW'],
+  ['Labor arbitration filings', -4, 960, [0,0,0,1,1,0], 'INSUFFICIENT'],
+  ['Last-mile carriers', 12, 840, [1,0,1,0,1,0], 'BUILDING'],
+  ['Union density data', -8, 610, [0,0,0,1,1,1], 'LOW'],
+];
+function openResults(text, domain) {
+  sug.hidden = true;
+  document.getElementById('land').hidden = true;
+  document.getElementById('res').hidden = false;
+  document.getElementById('qtext').textContent = text;
+  document.getElementById('rtitle').textContent = text.length > 48 ? text.slice(0, 48) + '…' : text;
+  document.getElementById('rsub').textContent = (domain ? domain + ' · ' : '') + 'Related entities by observation volume · example rows, same for every query';
+  const max = RESULT_ROWS[0][2];
+  document.getElementById('rows').innerHTML = RESULT_ROWS.map(([n, c, v, ds, st], i) => `
+    <tr>
+      <td class="name">${esc(n)}</td>
+      <td>${spark(i * 7 + 3)}</td>
+      <td class="chg">${c > 0 ? '+' : ''}${c}%</td>
+      <td><div class="vol"><b style="width:${Math.round(v / max * 90)}px"></b><span>${v.toLocaleString()}</span></div></td>
+      <td><div class="doms" title="CAPITAL · OWNERSHIP · TECHNOLOGY · KNOWLEDGE · LABOR · MEDIA">${ds.map(o => `<i class="${o ? 'on' : ''}"></i>`).join('')}</div></td>
+      <td><span class="st"><i style="background:${STATES[st][0]}"></i>${STATES[st][1]}</span></td>
+    </tr>`).join('');
+  window.scrollTo({ top: 0 });
+}
+document.getElementById('back').addEventListener('click', () => {
+  document.getElementById('res').hidden = true;
+  document.getElementById('land').hidden = false;
+});
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
+});
+renderDomains();
+</script>

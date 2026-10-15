@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KRYLO Analysis and History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: one screen. One-line question box on top (analysisidlefield.jsx); one control row
+   (signal scope left, Recent questions + date filter right); history list below (historybay.jsx).
+   §6 values only. Single light look by choice. */
+:root {
+  color-scheme: light;
+  --ground: #F5F5F7;
+  --ink:    #1A1A1A;
+  --line:   #e0e0dc;
+  --dim:    #3a3d4a;
+  --lime:   #66FF00;
+  --mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --serif: Georgia, 'Times New Roman', serif;
+}
+html, body { background: var(--ground); color: var(--ink); }
+body { margin: 0; font-family: var(--mono); }
+.note { max-width: 1040px; margin-inline: auto; padding-inline: 16px; padding-block: 16px 0; font-size: 11.5px; line-height: 1.6; color: var(--dim); }
+.frame { max-width: 1040px; margin-block: 12px 40px; margin-inline: max(16px, calc((100% - 1040px) / 2)); border: 1px solid var(--line); }
+header { height: 64px; border-bottom: 1px solid var(--line); padding-inline: 32px; display: flex; align-items: center; gap: 24px; text-transform: uppercase; letter-spacing: .25em; font-size: 11px; }
+header .state { color: var(--dim); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Search */
+.top { display: flex; flex-direction: column; align-items: center; gap: 22px; padding-block: 40px 28px; padding-inline: 24px; }
+.hero { text-align: center; display: flex; flex-direction: column; gap: 10px; }
+.hero h1 { font-family: var(--serif); font-weight: 400; font-size: 24px; letter-spacing: .06em; margin: 0; }
+.hero h1 .edge { box-shadow: inset 0 -0.35em 0 var(--lime); padding-inline: 2px; }
+.hero p { margin: 0; font-size: 11px; letter-spacing: .22em; color: var(--dim); }
+/* Question box: size and spacing from analysisidlefield.jsx (600px wide, radius 20,
+   textarea rows=4, 14px / 1.9, padding 20px 24px 10px, toolbar below). */
+.box { width: min(600px, 100%); box-sizing: border-box; border: 1px solid var(--ink); border-radius: 20px; overflow: hidden; }
+.box:focus-within { box-shadow: 0 0 0 3px var(--line); }
+.box textarea { display: block; width: 100%; box-sizing: border-box; resize: none; border: 0; outline: 0; background: transparent; font: 14px/1.9 var(--mono); color: var(--ink); padding: 20px 24px 10px; }
+.box textarea::placeholder { color: var(--dim); opacity: .75; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px 14px; }
+.tools { display: flex; align-items: center; gap: 8px; }
+.plus { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--dim); font-size: 16px; line-height: 1; cursor: pointer; }
+.mic { width: 30px; height: 30px; border: 0; background: transparent; color: var(--dim); cursor: pointer; display: grid; place-items: center; }
+.go { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--ink); background: var(--lime); cursor: pointer; display: grid; place-items: center; }
+
+/* Control row + history */
+.hist { width: min(760px, 100%); margin-inline: auto; padding-block: 0 36px; padding-inline: 24px; box-sizing: content-box; display: flex; flex-direction: column; gap: 14px; }
+.controls { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px 20px; padding-bottom: 14px; border-bottom: 1px solid var(--line); }
+.scope { display: flex; flex-direction: column; gap: 6px; }
+.k { font-size: 8px; letter-spacing: .24em; color: var(--dim); }
+.pills { display: flex; gap: 6px; }
+.pill { font: 9px var(--mono); letter-spacing: .14em; padding: 6px 12px; border-radius: 999px; background: transparent; border: 1px solid var(--line); color: var(--dim); cursor: pointer; }
+.pill.on { background: var(--lime); border-color: var(--ink); color: var(--ink); font-weight: 600; }
+.right { display: flex; align-items: center; flex-wrap: wrap; gap: 10px 16px; }
+.right h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .08em; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; }
+.seg button { font: 9px var(--mono); letter-spacing: .06em; background: transparent; border: 0; border-radius: 999px; padding: 5px 11px; color: var(--dim); cursor: pointer; }
+.seg button.on { background: var(--ink); color: var(--ground); }
+
+.list { list-style: none; margin: 0; padding: 0; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 4px 14px; padding: 14px 4px; border-bottom: 1px solid var(--line); }
+.item:hover { background: color-mix(in srgb, var(--line) 40%, transparent); }
+.text { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.q { font-family: var(--serif); font-size: 15px; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meta { font-size: 9.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.tags { display: flex; gap: 6px; justify-content: flex-start; width: 170px; }
+.tag { font-size: 9px; letter-spacing: .06em; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--dim); white-space: nowrap; }
+.tag.done { background: var(--lime); border-color: var(--ink); color: var(--ink); }
+.tag.open { border-color: var(--ink); color: var(--ink); border-style: dashed; }
+.rerun { display: inline-flex; align-items: center; gap: 7px; font: 9px var(--mono); letter-spacing: .08em; background: transparent; border: 1px solid var(--ink); border-radius: 999px; color: var(--ink); padding: 6px 12px; cursor: pointer; }
+.rerun:hover { background: var(--lime); }
+.more { align-self: center; font: 9px var(--mono); letter-spacing: .08em; background: transparent; border: 0; color: var(--dim); text-decoration: underline; cursor: pointer; }
+@media (max-width: 640px) {
+  header, .hist { padding-inline: 16px; }
+  .item { grid-template-columns: minmax(0, 1fr) auto; }
+  .tags { grid-column: 1; grid-row: 2; width: auto; }
+  .rerun { grid-column: 2; grid-row: 1 / span 2; }
+}
+</style>
+
+<p class="note">Mockup only. The question box keeps its current size (600px, 4 rows). Analysis search and History on one screen, on #F5F5F7. Search wording comes from analysisidlefield.jsx; history fields (type, time, status, drift, re-run) from historybay.jsx. All rows are examples. Re-run fills the question box with that query and does not run it. Status is shown by word and tag style (filled vs dashed), not color alone. §6 colors only: no amber, no tints, no blue. Not built, not approved.</p>
+
+<div class="frame">
+  <header><span>Analysis</span><span class="state">Insufficient signal</span></header>
+
+  <section class="top">
+    <div class="hero">
+      <h1>WHAT'S YOUR <span class="edge">EDGE?</span></h1>
+      <p>Map structural relationships across entities</p>
+    </div>
+    <div class="box">
+      <label for="q" hidden>Question</label>
+      <textarea id="q" rows="4" placeholder="e.g. Amazon — automation's impact on warehouse labor — next 3 years"></textarea>
+      <div class="toolbar">
+        <button class="plus" type="button" aria-label="Attach">+</button>
+        <div class="tools">
+          <button class="mic" type="button" aria-label="Voice input"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></button>
+          <button class="go" type="button" aria-label="Run query"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1A1A1A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="hist">
+    <div class="controls">
+      <div class="scope">
+        <span class="k">SIGNAL SCOPE</span>
+        <div class="pills" role="group" aria-label="Signal scope">
+          <button class="pill on" type="button">LIVE</button>
+          <button class="pill" type="button">HISTORICAL</button>
+        </div>
+      </div>
+      <div class="right">
+        <h2>Recent questions</h2>
+        <div class="seg" role="group" aria-label="Time range">
+          <button type="button">Today</button><button type="button" class="on">7 days</button><button type="button">30 days</button><button type="button">All</button>
+        </div>
+      </div>
+    </div>
+    <ul class="list" id="rows"></ul>
+    <button class="more" type="button">View full audit trail</button>
+  </section>
+</div>
+
+<script>
+// Rows are examples.
+const ROWS = [
+  { type: 'Search',   when: 'Today, 09:42',     q: 'Amazon — automation’s impact on warehouse labor — next 3 years', drift: 0, done: true },
+  { type: 'Search',   when: 'Yesterday, 16:08', q: 'NVIDIA — data-center capex concentration — next 12 months', drift: 2, done: true },
+  { type: 'Analysis', when: 'Oct 12, 11:30',    q: 'Subcritical Systems — NRC approval path — 30 months', drift: 0, done: false },
+  { type: 'Search',   when: 'Oct 10, 14:55',    q: 'Regional banks — commercial real-estate exposure — next 2 years', drift: 1, done: true },
+];
+const ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7"/><polyline points="21 3 21 9 15 9"/></svg>';
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+document.getElementById('rows').innerHTML = ROWS.map((r, i) => `
+  <li class="item">
+    <div class="text">
+      <div class="q" title="${esc(r.q)}">${esc(r.q)}</div>
+      <div class="meta">${r.type} · ${r.when}</div>
+    </div>
+    <div class="tags">
+      <span class="tag ${r.done ? 'done' : 'open'}">${r.done ? 'Complete' : 'Incomplete'}</span>
+      ${r.drift ? `<span class="tag">Drift ${r.drift}</span>` : ''}
+    </div>
+    <button class="rerun" type="button" data-i="${i}">Re-run ${ICON}</button>
+  </li>`).join('');
+
+// Re-run puts the exact saved query back in the box for editing; it never submits.
+document.getElementById('rows').addEventListener('click', e => {
+  const b = e.target.closest('.rerun'); if (!b) return;
+  const q = document.getElementById('q');
+  q.value = ROWS[b.dataset.i].q; q.focus();
+  window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+});
+for (const sel of ['.pills', '.seg']) {
+  const group = document.querySelector(sel);
+  group.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    group.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  });
+}
+</script>
