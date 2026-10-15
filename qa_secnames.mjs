@@ -3,6 +3,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+process.env.KRYLO_SEC_NAMES_MIN_ROWS = '1';
 process.env.KRYLO_SEC_NAMES_FILE = path.join(process.env.TMPDIR || os.tmpdir(), `sec-names-test-${process.pid}.json`);
 const { buildNameIndex, matchListedName, editDistance } = await import('./src/engine/secnamematch.js');
 const { secNames, _resetSecNamesForTests, SEC_NAMES_TTL_MS } = await import('./as-diff/secnames.js');
@@ -56,6 +57,13 @@ console.log('Server module: daily cache, stale copy, failure');
   const c = await secNames('Ford', { now: T0 + 3 * SEC_NAMES_TTL_MS, fetchFn: dead }); ok(c.tier === 'UNIQUE_PREFIX' && c.stale === true, 'SEC unreachable: the last good copy answers and is flagged stale');
   _resetSecNamesForTests(); try { fs.unlinkSync(process.env.KRYLO_SEC_NAMES_FILE); } catch {}
   const d = await secNames('Ford', { now: T0, fetchFn: dead }); ok(!!d.error, 'SEC unreachable and no copy: an error, not a guess');
+  // A response far smaller than the real ~10,000-row file is not the SEC file: never cached, never served (a 1-row cache once made every listed name resolve to NONE).
+  process.env.KRYLO_SEC_NAMES_MIN_ROWS = '1000'; _resetSecNamesForTests(); try { fs.unlinkSync(process.env.KRYLO_SEC_NAMES_FILE); } catch {}
+  const tiny = async () => ({ 0: { cik_str: 1318605, ticker: 'TSLA', title: 'Tesla, Inc.' } });
+  const e = await secNames('Tesla', { now: T0, fetchFn: tiny }); ok(!!e.error && !fs.existsSync(process.env.KRYLO_SEC_NAMES_FILE), 'a 1-row SEC response: an error, and nothing written to the cache file');
+  fs.writeFileSync(process.env.KRYLO_SEC_NAMES_FILE, JSON.stringify({ fetchedAt: new Date(T0).toISOString(), rows: [{ cik_str: 1318605, ticker: 'TSLA', title: 'Tesla, Inc.' }] }));
+  _resetSecNamesForTests(); const f = await secNames('Tesla', { now: T0 + 1000, fetchFn: dead }); ok(!!f.error, 'a 1-row cache file already on disk is not served');
+  process.env.KRYLO_SEC_NAMES_MIN_ROWS = '1'; _resetSecNamesForTests(); try { fs.unlinkSync(process.env.KRYLO_SEC_NAMES_FILE); } catch {}
   ok(!!(await secNames('x')).error, 'a name under two characters is rejected');
 }
 

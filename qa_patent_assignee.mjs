@@ -135,6 +135,7 @@ console.log('Exhibit 21 subsidiary rule (Founder ratified 2026-10-13)');
 
 console.log('Legal name by CIK: listed title, else the SEC submissions record');
 {
+  process.env.KRYLO_SEC_NAMES_MIN_ROWS = '1'; process.env.KRYLO_SEC_NAMES_FILE = path.join(dir, 'sec-names.json');   // never the engine's real cache file
   const { secTitleForCik, _resetSecNamesForTests } = await import('./as-diff/secnames.js');
   _resetSecNamesForTests();
   const listed = async () => ({ 0: { cik_str: 1318605, ticker: 'TSLA', title: 'Tesla, Inc.' } });

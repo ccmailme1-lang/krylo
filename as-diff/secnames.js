@@ -10,6 +10,8 @@ import { buildNameIndex, matchListedName } from '../src/engine/secnamematch.js';
 const DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'data');
 const fileOf = () => process.env.KRYLO_SEC_NAMES_FILE || path.join(DIR, 'sec_company_tickers.json');   // the override is for tests
 export const SEC_NAMES_TTL_MS = 24 * 60 * 60 * 1000;
+// The real file lists ~10,000 companies. A copy far smaller than that is not the SEC file (a truncated response, a test mock): it is never cached or served.
+const minRows = () => Number(process.env.KRYLO_SEC_NAMES_MIN_ROWS) || 1000;   // the override is for tests
 const SOURCE = 'SEC company_tickers.json';
 let _mem = null;                                                       // { index, fetchedAt }
 let _inflight = null;
@@ -25,7 +27,7 @@ function download() {
 }
 
 function fromDisk() {
-  try { if (!existsSync(fileOf())) return null; const j = JSON.parse(readFileSync(fileOf(), 'utf8')); return j?.rows?.length ? { index: buildNameIndex(j.rows), fetchedAt: j.fetchedAt, rows: j.rows } : null; } catch { return null; }
+  try { if (!existsSync(fileOf())) return null; const j = JSON.parse(readFileSync(fileOf(), 'utf8')); return j?.rows?.length >= minRows() ? { index: buildNameIndex(j.rows), fetchedAt: j.fetchedAt, rows: j.rows } : null; } catch { return null; }
 }
 
 async function load(now = Date.now(), fetchFn = download) {
@@ -34,7 +36,7 @@ async function load(now = Date.now(), fetchFn = download) {
   if (!_inflight) _inflight = (async () => {
     try {
       const j = await fetchFn(); const rows = Object.values(j);
-      if (!rows.length) throw new Error('empty SEC file');
+      if (rows.length < minRows()) throw new Error('SEC file too small (' + rows.length + ' rows)');
       const fetchedAt = new Date(now).toISOString();
       try { mkdirSync(path.dirname(fileOf()), { recursive: true }); writeFileSync(fileOf(), JSON.stringify({ fetchedAt, rows })); } catch { /* disk cache is best effort */ }
       _mem = { index: buildNameIndex(rows), fetchedAt, rows }; return { ..._mem, stale: false };
