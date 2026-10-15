@@ -8,7 +8,9 @@
 export const INSIDER_FORMS = '3,4,5';
 const pad = (c) => String(c ?? '').replace(/\D/g, '').padStart(10, '0');
 const flag = (blk, t) => new RegExp(`<${t}>\\s*(?:1|true)\\s*</${t}>`, 'i').test(blk);
-const tag = (blk, t) => { const m = blk.match(new RegExp(`<${t}>\\s*([^<]*?)\\s*</${t}>`, 'i')); return m && m[1] !== '' ? m[1].replace(/\s+/g, ' ') : null; };
+// The XML escapes in a value ("President &amp; CEO") are decoded; the text is otherwise as the filing wrote it.
+const unescapeXml = (t) => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;|&#39;/g, "'").replace(/&amp;/g, '&');
+const tag = (blk, t) => { const m = blk.match(new RegExp(`<${t}>\\s*([^<]*?)\\s*</${t}>`, 'i')); return m && m[1] !== '' ? unescapeXml(m[1].replace(/\s+/g, ' ')) : null; };
 
 /** @returns {{ documentType, periodOfReport, issuerCik, issuerName, owners: {cik,name,isDirector,isOfficer,isTenPercentOwner,isOther,officerTitle,otherText}[] }} */
 export function parseOwnershipDocument(xml) {

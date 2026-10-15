@@ -108,5 +108,11 @@ console.log('LABOR joins formation through a shared participant, never by name')
   const v = validateSynthesis(S, rels, latestEvidenceFor, null); ok(v.problems.length === 0, 'every statement\'s label is supported by its evidence (validator: no problems)');
 }
 
+console.log('XML escapes in titles are decoded');
+{
+  const d = parseOwnershipDocument('<ownershipDocument><issuer><issuerCik>0000104169</issuerCik><issuerName>Walmart Inc.</issuerName></issuer><reportingOwner><reportingOwnerId><rptOwnerCik>0001696737</rptOwnerCik><rptOwnerName>Furner John R.</rptOwnerName></reportingOwnerId><reportingOwnerRelationship><isOfficer>1</isOfficer><officerTitle>President &amp; CEO</officerTitle></reportingOwnerRelationship></reportingOwner></ownershipDocument>');
+  ok(d.owners[0].officerTitle === 'President & CEO', 'a title written "President &amp; CEO" in the filing reads "President & CEO"');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
