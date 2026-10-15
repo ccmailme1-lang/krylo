@@ -84,6 +84,9 @@ function splitQuestion(text) {
     const idx = t.search(/[?+:\n]/);
     const cut = idx === -1 ? Math.min(t.length, 80) : idx;
     if (cut <= 140) return { question: t.slice(0, cut).trim(), content: t.slice(cut + (idx === -1 ? 0 : 1)).trim() };
+    // One question and nothing else (a single line whose only ? is the last character, no other sentence break): the whole input is the question however long it runs,
+    // so its subject is EXPLICIT_IN_QUESTION and not read as content (a 210-character Berkshire query had no subject selected and no SEC filer admission).
+    if (idx === t.length - 1 && t[idx] === '?' && !/[.!:+\n]/.test(t.slice(0, idx))) return { question: t.slice(0, idx).trim(), content: '' };
   }
   const tail = t.match(/([^.?!\n]*\b(?:is|are|should|would|could|can|does|do|will|good|worth)\b[^.?!\n]*\?)\s*$/i);
   if (tail && tail.index > 0 && tail[1].length <= 140) return { question: tail[1].trim(), content: t.slice(0, tail.index).trim() };

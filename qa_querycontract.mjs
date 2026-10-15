@@ -197,6 +197,13 @@ console.log('Sentence openers are not names (KRYL-1406)');
   ok(buildQueryContract('Across all six domains, what formation exists around Oracle?').selectionRule === 'EXPLICIT_IN_QUESTION', 'a fronted scope phrase does not stop the sentence being the question');
 }
 
+console.log('A long single question is the question (over 140 characters)');
+{
+  const q = 'What disclosed relationships connect Berkshire Hathaway’s ownership, capital, technology, labor, knowledge, and media domains, and which connections are supported by admitted evidence rather than shared-participant context alone?';
+  const c = buildQueryContract(q);
+  ok(q.length > 140 && c.subject.text === 'Berkshire Hathaway' && c.selectionRule === 'EXPLICIT_IN_QUESTION', 'a 210-character single question: its subject is selected from the question (was SINGLE_ENTITY, so no SEC filer admission)');
+}
+
 console.log('Invariants');
 {
   const t = 'Is this a good investment? Daytona Daytona gives every AI agent its own sandbox. Backed by Meta.';
