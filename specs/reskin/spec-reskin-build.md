@@ -208,3 +208,23 @@ git grep -IcE "color: *(LIME|'#66FF00'|\"#66FF00\"|var\(--signal-lime\))" -- src
 ### A.5 Blue used outside state (candidates for R4)
 
 Files containing `#007FFF` / `0,127,255` on `main` include `historybay.jsx` (stat tiles alternate lime/blue; DRIFT tag blue), `metricstrip.jsx`, `communitychatboard.jsx`, `targetpacket.jsx`, `whythismatters.jsx`, `perceptionrisk.jsx` and others. Each use must be classified: convergence state (keep) or decoration (replace).
+
+---
+
+## Appendix B — R3 checklist from the light preview review (2026-10-20)
+
+Source: Founder-relayed review of the light preview recording, cross-checked by the build agent in its own preview. Input only, not a go. Ticket assignment (KRYL-1459 to 1463, 1466) is the Founder's call.
+
+| # | Item | Status in build agent's preview | Group / ticket type |
+|---|------|------|------|
+| 1 | Top bar, left menu (`krylo2-feed.html`) and bottom status bar stay dark around light panels. The ANALYSIS strip is already light. | Confirmed | G1 Shell |
+| 2 | Lime used as text on light is unreadable: EDGE?, BEFORE THEY BECOME OBVIOUS, KRYLO, green section labels, Refresh analysis, LIVE pill, checkbox labels, world clocks. Switch text uses to `--accent-text`; keep lime for fills and underlines. | Confirmed | All groups, **including G7**: engine code (e.g. `src/engine/querysynthesis.js`, 53 lime-as-color uses on `main`) must return a token name or state key, not a hex value, or the UI cannot theme it |
+| 3 | Faint text (subtitle "Map structural relationships across entities", Signal scope and Output labels). Raise the text token in light only until it passes §9.4 contrast. | Confirmed | G2 Analysis |
+| 4 | MAP relationship lines (lime) have no dark outline on light. Draw `--casing` under them. | Not yet checked | G3 MAP |
+| 5 | In dark mode the question box is light gray. **Check against the commit before R1 first**: if it was already light gray, it is the original look and not a defect. | Not yet checked | G2 Analysis (only if a regression) |
+| 6 | Loading screen: empty light panels with faint lime LOADING text. | Not yet checked | G2 Analysis |
+| 7 | Bottom status bar covers page content (both themes). **Layout defect, not color** — file as its own small ticket, outside the reskin. | Dark: pre-existing. Light: dark gray strip | Separate DEF ticket |
+
+Already fixed in R2 (build agent, 2026-10-20): 14 near-black hex-named tokens (e.g. `--c-05070a`) were left dark by the light rule and covered the landing; now mapped to the light surface. Dark values unchanged.
+
+Rule for every remaining hex-named token (`--c-xxxxxx`): acceptable in R1 (no visual change), but before R3 sign-off each must be assigned a **role** (surface, text, line, state, accent) so its light value comes from §4, not from the old hex.
